@@ -1,0 +1,71 @@
+
+
+local ActorChangeMpHp = {}
+
+
+ActorChangeMpHp.register = function(sceneid, func)
+	if func == nil then return end
+	nSceneid = tonumber(sceneid)
+	if ActorChangeMpHp[nSceneid] == nil then
+		table.insert(nSceneid, func)
+	else
+		print("sceneid hp mp is change")
+	end
+end
+
+ActorChangeMpHp.dispatch = function(actorobj , sceneid)
+	if not actorobj or not sceneid then
+		print("ActorChangeMpHp.dispatch 参数错误")
+		return
+	end
+	--优先处理特殊的副本需求，然后直接返回不走下面的逻辑
+	if ActorChangeMpHp[sceneid] ~= nil then
+		ActorChangeMpHp[sceneid](actorobj , sceneid)
+		return
+	end
+
+	local fubenid = LActor.getFubenId(actorobj)
+	--野外场景不能这样搞，广播太厉害
+	if fubenid == 0 then
+		print("=============野外长江======")
+		return
+	end
+	local fubenptr = LActor.getFubenPrt(actorobj)
+	if fubenptr == nil then
+		print("获取副本指针错误")
+		return
+	end
+	local actorList = LuaHelp.getFbActorList( fubenptr)
+	if actorList == nil then
+		print("=============获取副本玩家错误======")
+		return
+	end
+	local handle = LActor.getHandle( actorobj )
+	local maxhp = LActor.getIntProperty(actorobj ,PROP_MAXHP)
+	local hp = LActor.getIntProperty(actorobj ,PROP_HP)
+	local maxmp = LActor.getIntProperty(actorobj ,PROP_MAXMP)
+	local mp = LActor.getIntProperty(actorobj ,PROP_MP)
+	local level = LActor.getLevel( actorobj )
+	local name = LActor.getName( actorobj )
+	for i = 1 , #actorList do
+		--if actorList[i] ~= actorobj then
+			local npack = DataPack.allocPacket(actorList[i], 0, 55)
+			if npack ~= nil then
+				DataPack.writeInt64(npack, handle)
+				DataPack.writeInt(npack, level)
+				DataPack.writeInt(npack, hp)
+				DataPack.writeInt(npack, maxhp)
+				DataPack.writeInt(npack, mp)
+				DataPack.writeInt(npack, maxmp)
+				DataPack.writeString(npack , name)
+				DataPack.flush(npack)
+			end
+		--end
+	end
+end
+
+
+function OnActorHpMpChanged(actorobj, sceneid)
+	-- print("===================OnActorHpMpChanged======",sceneid,actorobj)
+	ActorChangeMpHp.dispatch(actorobj, sceneid)
+end

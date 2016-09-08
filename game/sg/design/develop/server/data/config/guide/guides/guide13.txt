@@ -1,0 +1,44 @@
+﻿{
+  maxLevel = 40,
+  
+  --引导装备
+  trigger = 
+  { 
+    type = 1,
+    value = 30,
+  },
+
+  --引导中锁定的窗口ID
+  lockUI = 
+  {
+    110,
+  },
+
+  --引导的步骤 
+  steps = 
+  {
+	--第1步 判定任务追踪是否已经有任务
+    {
+      cond = { type = 1, helpId = 53, data = 0 },
+
+      action = { type = 5, helpId = 30, data = Lang.GuideLang.npc16, desc = Lang.GuideLang.desc101, showType = 1 },
+	  
+	  hideCond = { type = 2, helpId = 53, data = 0 },
+    },
+	
+	--第1步 引导点击提示装备界面的立即装备
+    {
+      cond = { type = 1,  helpId = 111, data = 0 },
+
+      action = { type = 0, helpId = 0, data = 0, desc = "" },
+    },
+
+	--第2步 点击后引导结束
+    {
+      cond = { type = 2, helpId = 111, data = 0 },
+
+      action = { type = 16, helpId = 0, data = Lang.GuideLang.func13, desc = "" },
+    },
+
+  } 
+}

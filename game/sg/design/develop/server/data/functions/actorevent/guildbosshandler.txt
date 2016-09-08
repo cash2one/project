@@ -1,0 +1,534 @@
+-- 世族boss
+
+-- 请求宗门boss信息
+GuildOpFuncList[89] = function(sysarg, dp)
+	local guild = LActor.getGuildPtr(sysarg)
+	if not guild then return end
+	local guild_var = LGuild.getStaticVar(guild)
+	if not guild_var then return end
+
+	local npack = DataPack.allocPacket(sysarg, 10, 89)
+	if npack == nil then return end
+	DataPack.writeInt(npack, guild_var.boss_count or 0)
+	DataPack.writeInt(npack, guild_var.boss_state or 0)
+	DataPack.writeInt(npack, guild_var.boss_level or 1)
+	DataPack.writeUInt(npack, guild_var.boss_createtime or 0)
+	DataPack.flush(npack)
+end
+
+-- 召唤宗门boss
+GuildOpFuncList[90] = function(sysarg, dp)
+	local guild = LActor.getGuildPtr(sysarg)
+	if not guild then return end
+	local guild_var = LGuild.getStaticVar(guild)
+	if not guild_var then return end
+
+	-- 已开启
+	if guild_var.boss_state == 1 then
+		return
+	end
+
+	-- 职位
+	local guild_pos = LActor.getGuildPos(sysarg)
+	if guild_pos ~= 4 and guild_pos ~= 3 then
+		LActor.sendTipmsg(sysarg, Lang.GuildLang.t396, ttMessage)
+		return
+	end
+
+	-- 次数
+	if not guild_var.boss_count then
+		guild_var.boss_count = 0
+	end
+	if guild_var.boss_count >= Guild.guildboss.count then
+		LActor.sendTipmsg(sysarg, Lang.GuildLang.t397, ttMessage)
+		return
+	end
+
+	-- 消耗宗门财产
+	local guild_pro = LGuild.getGuildProperty(guild)
+	if guild_pro < Guild.guildboss.property then
+		LActor.SendGeneralTips(sysarg, 4, 0, Guild.guildboss.property-guild_pro)
+		return
+	end
+
+	--召唤
+	local hfb = Fuben.createGuildFuBen(Guild.guildboss.fbid, Guild.guildboss.time, sysarg)
+	if hfb <= 0 then 
+		print("guildbosshandler hfb error")
+		return
+	end
+	local hsc = Fuben.getSceneHandleById(Guild.guildboss.sceneid, hfb)
+	if hsc <= 0 then
+		print("guildbosshandler hsc error")
+		return
+	end
+	Fuben.postSceneTimeCall(hsc, TimerMsg.GuildBossEnd, (Guild.guildboss.boss.time), 1, LActor.getGuildId(sysarg))
+	local level = guild_var.boss_level or 1
+	local monster = Fuben.createMonster(hsc, Guild.guildboss.boss.id, Guild.guildboss.boss.x, Guild.guildboss.boss.y, Guild.guildboss.boss.time)
+	-- 成长buff
+	if monster then
+		if level <= 0 then
+			level = 1
+		elseif level > #Guild.guildboss.level then
+			level = #Guild.guildboss.level
+		end
+		if Guild.guildboss.level[level] then
+			for i=1,#Guild.guildboss.level[level] do
+				local buff = Guild.guildboss.level[level][i]
+				LActor.addBuff( monster, buff.type, buff.group, buff.value, buff.times, buff.interval, buff.name, buff.timeOverlay )
+			end
+		end
+	end
+
+	-- 扣除消耗
+	LGuild.addGuildProperty(guild, -Guild.guildboss.property)
+	guild_var.boss_count = guild_var.boss_count + 1
+	guild_var.boss_state = 1
+	guild_var.boss_createtime = System.getCurrMiniTime()
+
+	-- GuildOpFuncList[89](sysarg)
+	local dp = LDataPack.allocPacket()
+	if dp == nil then return end
+	LDataPack.writeByte(dp, 10)
+	LDataPack.writeByte(dp, 89)
+	LDataPack.writeInt(dp, guild_var.boss_count or 0)
+	LDataPack.writeInt(dp, guild_var.boss_state or 0)
+	LDataPack.writeInt(dp, guild_var.boss_level or 1)
+	LDataPack.writeUInt(dp, guild_var.boss_createtime or 0)
+	LGuild.broadcastData(guild, dp)
+
+	-- 伤害排行榜
+	local guildid = LActor.getGuildId(sysarg)
+	local rank = Ranking.getRanking("guildboss_"..Guild.guildboss.boss.id.."_"..guildid)
+	if not rank then
+		rank = Ranking.add("guildboss_"..Guild.guildboss.boss.id.."_"..guildid, 100, 0)
+		if rank then
+			Ranking.addColumn(rank, "name")
+			Ranking.addColumn(rank, "level")
+		else
+			return
+		end
+	end
+	Ranking.clearRanking(rank)
+	-- 清掉上一次的击杀者
+	guild_var.boss_killer = {}
+	-- 广播
+	System.broadcastGuildTipmsg(guildid, Lang.GuildLang.t403, ttHearsay)
+end
+
+-- 进入宗门副本
+GuildOpFuncList[91] = function(sysarg, dp)
+	local guild = LActor.getGuildPtr(sysarg)
+	if not guild then return end
+	local guild_var = LGuild.getStaticVar(guild)
+	if not guild_var then return end
+
+	if guild_var.boss_state ~= 1 then
+		return
+	end
+	local hfb = Fuben.getGuildFuBen(sysarg)
+	if hfb <= 0 then
+		return
+	end
+
+	--是否在副本中
+	if LActor.isInFuben(sysarg) then
+	    LActor.sendTipmsg(sysarg, Lang.GuildLang.t405, ttMessage)
+	    return
+	end
+	-- 护送状态
+	if LActor.hasState(sysarg, esProtection) then
+		LActor.sendTipmsg( sysarg, Lang.ScriptTips.sx019, ttMessage )
+		return
+	end
+
+	LActor.enterFuBen(sysarg, hfb, Guild.guildboss.sceneid, Guild.guildboss.pos[1], Guild.guildboss.pos[2])
+end
+
+-- 下发宗门BOSS伤害排行
+GuildOpFuncList[92] = function(sysarg, dp)
+	
+	local guildid = LActor.getGuildId(sysarg)
+	if guildid <= 0 then return end
+	local guild = LActor.getGuildPtr(sysarg)
+	if not guild then return end
+	local guild_var = LGuild.getStaticVar(guild)
+	if not guild_var then return end
+	if not guild_var.boss_killer then
+		guild_var.boss_killer = {}
+	end
+	-- 伤害排行榜
+	local rank = Ranking.getRanking("guildboss_"..Guild.guildboss.boss.id.."_"..guildid)
+	if rank then
+		local rankdata = {}
+		local count = Ranking.getRankItemCount(rank)
+		for i=1,count do
+			rankdata[i] = {}
+			local item = Ranking.getItemFromIndex(rank, i-1)
+			if item then
+				rankdata[i].aid = Ranking.getId(item)
+				rankdata[i].level = Ranking.getSubInt(item, 1)
+				rankdata[i].point = Ranking.getPoint(item)
+				rankdata[i].name = Ranking.getSub(item, 0)
+			end
+		end
+
+		local npack = DataPack.allocPacket(sysarg, 10, 92)
+		if npack == nil then return end
+		DataPack.writeInt(npack, guild_var.boss_killer.id or 0)
+		DataPack.writeInt(npack, guild_var.boss_killer.level or 0)
+		DataPack.writeString(npack, guild_var.boss_killer.name or "")
+		DataPack.writeInt(npack, #rankdata)
+		for i=1,#rankdata do
+			DataPack.writeInt(npack, rankdata[i].aid)
+			DataPack.writeInt(npack, rankdata[i].level)
+			DataPack.writeInt(npack, rankdata[i].point)
+			DataPack.writeString(npack, rankdata[i].name)
+		end
+		DataPack.flush(npack)
+	end
+end
+
+-- 公会新的一天
+function GuildBossNewDay()
+	local guildlist = LGuild.getGuildList()
+	if guildlist == nil then return end
+	for i=1,#guildlist do
+		local guild_var = LGuild.getStaticVar(guildlist[i])
+		if guild_var then
+			guild_var.boss_count = 0
+		end
+	end
+end
+
+-- 宗门boss结束
+GuildOpFuncList.GuildBossEnd = function( msgid, psc, guildid )
+	if not psc or guildid <= 0 then return end
+	local guild = LGuild.getGuildById(guildid)
+	if not guild then return end
+	local guild_var = LGuild.getStaticVar(guild)
+	if guild_var == nil or guild_var.boss_state ~= 1 then
+		return
+	end
+
+	local pfb = Fuben.getGuildFuBenById(guildid)
+	if not pfb then
+		return
+	end
+	local hfb = Fuben.getFubenHandle(pfb)
+	if hfb <= 0 then
+		return
+	end
+	guild_var.boss_state = 0
+	-- local actors = LuaHelp.getFbActorList(pfb)
+	-- for i=1,#actors do
+	-- 	LActor.exitFuben(actors[i])
+	-- end
+	Fuben.SetFubenTime(hfb, 5)
+	-- 降低成长等级
+	guild_var.boss_level = (guild_var.boss_level or 1) - 1
+	if guild_var.boss_level <= 0 then
+		guild_var.boss_level = 1
+	end
+	-- 保存击杀者
+	guild_var.boss_killer = {}
+	-- 奖励
+	GuildOpFuncList.GuildBossAward( Guild.guildboss.boss.id, nil, guildid )
+	-- 更新状态
+	local dp = LDataPack.allocPacket()
+	if dp == nil then return end
+	LDataPack.writeByte(dp, 10)
+	LDataPack.writeByte(dp, 89)
+	LDataPack.writeInt(dp, guild_var.boss_count or 0)
+	LDataPack.writeInt(dp, guild_var.boss_state or 0)
+	LDataPack.writeInt(dp, guild_var.boss_level or 1)
+	LDataPack.writeUInt(dp, guild_var.boss_createtime or 0)
+	LGuild.broadcastData(guild, dp)
+end
+
+-- 宗门boss死亡
+GuildOpFuncList.GuildBossDie = function( monster, sysarg, monId )
+	local guild = LActor.getGuildPtr(sysarg)
+	if not guild then return end
+	local guild_var = LGuild.getStaticVar(guild)
+	if not guild_var then return end
+
+	if guild_var.boss_state ~= 1 then
+		return
+	end
+	guild_var.boss_state = 0
+	if guild_var.boss_level == nil then
+		guild_var.boss_level = 1
+	end
+	local hfb = Fuben.getGuildFuBen(sysarg)
+	if hfb <= 0 then
+		print("-==-=-==-=-=")
+		return
+	end
+	Fuben.SetFubenTime(hfb, 5)
+	--boss等级
+	local curtime = System.getCurrMiniTime()
+	local usetime = curtime - guild_var.boss_createtime 
+	if usetime <= Guild.guildboss.uplvltime then
+		guild_var.boss_level = (guild_var.boss_level or 1) + 1
+	elseif usetime > Guild.guildboss.downlvltime then
+		guild_var.boss_level = (guild_var.boss_level or 1) - 1
+	end
+	if guild_var.boss_level <= 0 then
+		guild_var.boss_level = 1
+	elseif guild_var.boss_level > #Guild.guildboss.level then
+		guild_var.boss_level = #Guild.guildboss.level
+	end
+	-- 保存击杀者
+	guild_var.boss_killer = {}
+	guild_var.boss_killer.id = LActor.getActorId(sysarg)
+	guild_var.boss_killer.name = LActor.getName(sysarg)
+	guild_var.boss_killer.level = LActor.getLevel(sysarg)
+	-- 奖励
+	GuildOpFuncList.GuildBossAward( monId, sysarg, LActor.getGuildId(sysarg) )
+	-- 更新状态
+	local dp = LDataPack.allocPacket()
+	if dp == nil then return end
+	LDataPack.writeByte(dp, 10)
+	LDataPack.writeByte(dp, 89)
+	LDataPack.writeInt(dp, guild_var.boss_count or 0)
+	LDataPack.writeInt(dp, guild_var.boss_state or 0)
+	LDataPack.writeInt(dp, guild_var.boss_level or 1)
+	LDataPack.writeUInt(dp, guild_var.boss_createtime or 0)
+	LGuild.broadcastData(guild, dp)
+end
+
+-- 宗门boss收到伤害
+GuildOpFuncList.OnGuildBossDamage = function( monster, mid ,val ,sysarg )
+	local guild = LActor.getGuildPtr(sysarg)
+	if not guild then return end
+	local guildid = LActor.getGuildId(sysarg)
+
+	local rank = Ranking.getRanking("guildboss_"..mid.."_"..guildid) -- 获取排行榜
+	if rank == nil then return end
+	local aid = LActor.getActorId(sysarg)
+	if aid == nil or aid == 0 then return end
+	local item = Ranking.getItemPtrFromId(rank, aid)
+	if item then
+		Ranking.updateItem(rank, aid, val)
+	else
+		local item = Ranking.addItem(rank, aid, val)
+		Ranking.setSub(item, 0, LActor.getName(sysarg))
+		Ranking.setSubInt(item, 1, LActor.getLevel(sysarg))
+		-- 触发参与boss事件
+		OnTakePartInGuildBoss(sysarg, mid)
+	end
+end
+
+-- 触发参与boss事件
+function OnTakePartInGuildBoss( sysarg, mid )
+	-- 活跃度
+	ActivationTrigger(sysarg, 30)
+end
+
+-- 下发宗门boss奖励
+GuildOpFuncList.GuildBossAward = function( mid, sysarg, guildid )
+	-- 伤害排行榜
+	local double = getAcitivityIsDouble(daGuildBoss)
+	local rank = Ranking.getRanking("guildboss_"..mid.."_"..guildid)
+	if rank then
+		local count = Ranking.getRankItemCount(rank)
+		-- 发放排名奖励
+		local conf = Guild.guildboss.awards
+		for i=1,#conf do
+			if conf[i].rank[2] < conf[i].rank[1] then return end -- 配置错误
+			local from_, to_
+			if count >= conf[i].rank[2] then
+				from_ = conf[i].rank[1]
+				to_ = conf[i].rank[2]
+			elseif count >= conf[i].rank[1] and count < conf[i].rank[2] then
+				from_ = conf[i].rank[1]
+				to_ = count
+			end
+			if from_ and to_ then
+				-- 发放排名from_到to_的奖励
+				for j=from_,to_ do -- j为排名
+					local item = Ranking.getItemFromIndex(rank, j-1)
+					local aid = Ranking.getId(item)
+					if #conf[i].item > 0 and #conf[i].item <= 5 then
+						local award_list = {}
+						for ai=1,5 do
+							if conf[i].item[ai] then
+								award_list[ai] = conf[i].item[ai]
+							else
+								award_list[ai] = {type = 0, id = 0, count = 0, bind = 0}
+							end
+						end
+						local mail_content = string.format(Lang.GuildLang.t398, j)
+						System.sendGmMailOffLine(aid, mail_content , award_list[1].type, award_list[1].id, award_list[1].count*double, award_list[1].bind, Lang.GuildLang.t400
+							, award_list[2].type, award_list[2].id, award_list[2].count*double, award_list[2].bind
+							, award_list[3].type, award_list[3].id, award_list[3].count*double, award_list[3].bind
+							, award_list[4].type, award_list[4].id, award_list[4].count*double, award_list[4].bind
+							, award_list[5].type, award_list[5].id, award_list[5].count*double, award_list[5].bind)
+					else
+						print("-------guildboss award conf error")
+					end
+					--[[ 下发伤害奖励
+					local point = Ranking.getPoint(item)
+					local award_count = math.modf(point/360) -- 公式
+					System.sendGmMailOffLine(aid, string.format(Lang.GuildLang.t402, point), 2, 0, award_count, 0, Lang.GuildLang.t400) -- 贝币]]
+				end
+			end
+		end
+		-- 保存排行榜
+		Ranking.save(rank, "guildboss_"..mid.."_"..guildid..".txt")
+	end
+	-- 最后一击奖励
+	local killerid = LActor.getActorId(sysarg)
+	if sysarg and killerid and killerid > 0 then
+		local conf = Guild.guildboss.kill_awards
+		if #conf > 0 and #conf <=5 then
+			local award_list = {}
+			for ai=1,5 do
+				if conf[ai] then
+					award_list[ai] = conf[ai]
+				else
+					award_list[ai] = {type = 0, id = 0, count = 0, bind = 0}
+				end
+			end
+			System.sendGmMailOffLine(killerid, Lang.GuildLang.t399 , award_list[1].type, award_list[1].id, award_list[1].count*double, award_list[1].bind, Lang.GuildLang.t401
+				, award_list[2].type, award_list[2].id, award_list[2].count*double, award_list[2].bind
+				, award_list[3].type, award_list[3].id, award_list[3].count*double, award_list[3].bind
+				, award_list[4].type, award_list[4].id, award_list[4].count*double, award_list[4].bind
+				, award_list[5].type, award_list[5].id, award_list[5].count*double, award_list[5].bind)
+		else
+			print("-------guildboss award conf error")
+		end
+	end
+end
+
+GuildOpFuncList.guildbosstest = function( sysarg, arg )
+	local guild = LActor.getGuildPtr(sysarg)
+	if not guild then return end
+	local guild_var = LGuild.getStaticVar(guild)
+	if not guild_var then return end
+
+	guild_var.boss_state = 0
+	guild_var.boss_count = 0
+end
+
+-- 创建公会时清除boss排行榜
+GuildOpFuncList.guildboss_onjoinguild = function( sysarg, arg )
+	local guildptr = arg[1]
+	local guildid = LActor.getGuildId(sysarg)
+	if guildptr == nil or guildid <= 0 then return end
+	-- 清除boss排行榜
+	local membercount = LGuild.getGuildMemberCount(guildptr)
+	if membercount == 1 then
+		local rank = Ranking.getRanking("guildboss_"..Guild.guildboss.boss.id.."_"..guildid)
+		if not rank then
+			rank = Ranking.add("guildboss_"..Guild.guildboss.boss.id.."_"..guildid, 100, 0)
+			if rank then
+				Ranking.addColumn(rank, "name")
+				Ranking.addColumn(rank, "level")
+			else
+				return
+			end
+		end
+		Ranking.clearRanking(rank)
+		Ranking.save(rank, "guildboss_"..Guild.guildboss.boss.id.."_"..guildid..".txt")
+	end
+end
+
+-- 离开世族退出副本
+GuildOpFuncList.guildboss_onleftguild = function( sysarg, arg )
+	-- 删除排行榜里的我
+	local guildptr = arg[1]
+	if not sysarg or not guildptr then return end
+	local guildid = LGuild.getGuildId(guildptr)
+	if guildid <= 0 then return end
+	local rank = Ranking.getRanking("guildboss_"..Guild.guildboss.boss.id.."_"..guildid)
+	if rank then
+		Ranking.removeId(rank, LActor.getActorId(sysarg))
+	end
+	-- 退出世族
+	if LActor.getFubenId(sysarg) == Guild.guildboss.fbid then
+		LActor.exitFuben(sysarg)
+	end
+end
+
+-- 进入世族boss场景
+GuildOpFuncList.OnEnterGuildBossScene = function( sysarg, sid )
+	local var = LActor.getStaticVar(sysarg)
+	if not var then return end
+	local oldmode = LActor.getPkMode(sysarg)
+	var.GuildBoss_PKmode = oldmode
+	LActor.setExitSceneEvent( sysarg, true )
+	LActor.setPkMode(sysarg, 2)
+end
+
+-- 退出世族boss场景
+GuildOpFuncList.OnExitrGuildossScene = function( sysarg )
+	local var = LActor.getStaticVar(sysarg)
+	if not var then return end
+	if var.GuildBoss_PKmode and var.GuildBoss_PKmode >= 0 and var.GuildBoss_PKmode ~= LActor.getPkMode(sysarg) then
+		LActor.setPkMode(sysarg, var.GuildBoss_PKmode)
+	end
+end
+
+function GuildBoss_Init(  )
+	local guildlist = LGuild.getGuildList()
+	if guildlist == nil then return end
+	for i=1,#guildlist do
+		local guild_var = LGuild.getStaticVar(guildlist[i])
+		if guild_var then
+			guild_var.boss_state = 0
+		end
+		-- 排行榜
+		local guildid = LGuild.getGuildId(guildlist[i])
+		if guildid > 0 then
+			local rank = Ranking.getRanking("guildboss_"..Guild.guildboss.boss.id.."_"..guildid)
+			if rank then
+				-- Ranking.load(rank, "guildboss_"..Guild.guildboss.boss.id.."_"..guildid..".txt")
+			else
+				rank = Ranking.add("guildboss_"..Guild.guildboss.boss.id.."_"..guildid, 100, 0)
+				if rank then
+					Ranking.addColumn(rank, "name")
+					Ranking.addColumn(rank, "level")
+					Ranking.load(rank, "guildboss_"..Guild.guildboss.boss.id.."_"..guildid..".txt")
+				end
+			end
+		end
+	end
+end
+
+function GuildBoss_Fina(  )
+	local guildlist = LGuild.getGuildList()
+	if guildlist == nil then return end
+	for i=1,#guildlist do
+		local guild_var = LGuild.getStaticVar(guildlist[i])
+		if guild_var then
+			guild_var.boss_state = 0
+		end
+		-- 排行榜
+		local guildid = LGuild.getGuildId(guildlist[i])
+		if guildid > 0 then
+			local rank = Ranking.getRanking("guildboss_"..Guild.guildboss.boss.id.."_"..guildid)
+			if rank then
+				Ranking.save(rank, "guildboss_"..Guild.guildboss.boss.id.."_"..guildid..".txt")
+			end
+		end
+	end
+end
+
+function gmstopmonsterrunone( sysarg )
+	Fuben.setStopMonsterRunOne(sysarg)
+end
+
+GmEventFuncList.register( "guildboss", GuildOpFuncList.guildbosstest, 1) -- 测试GM
+GmEventFuncList.register( "stopmonster", gmstopmonsterrunone, 1) -- 测试GM，导致怪物无法攻击
+TimerMsgFunc.register(TimerMsg.GuildBossEnd, GuildOpFuncList.GuildBossEnd)
+MonDieDispatcher.register( Guild.guildboss.boss.id, GuildOpFuncList.GuildBossDie )
+MonsterDamageDispatch.register( Guild.guildboss.boss.id, GuildOpFuncList.OnGuildBossDamage )
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeJoinGuild, GuildOpFuncList.guildboss_onjoinguild)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeLeftGuild, GuildOpFuncList.guildboss_onleftguild)
+EventCallDispatcher.registerSceneEnter(Guild.guildboss.sceneid, GuildOpFuncList.OnEnterGuildBossScene)
+EventCallDispatcher.registerSceneExit(Guild.guildboss.sceneid, GuildOpFuncList.OnExitrGuildossScene)
+
+table.insert(InitFnTable,GuildBoss_Init)
+table.insert(FinaFnTable,GuildBoss_Fina)

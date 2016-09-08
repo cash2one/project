@@ -1,0 +1,86 @@
+﻿--lua script
+--副本怪物通用的死亡处理函数，一般来说，所有以杀怪为目的的副本的怪物都注册成这个函数即可，包括boss和小怪
+--这里会判断副本的通关条件是否已经杀死要求的boss或小怪
+
+--#include "data\envir\FuBenTongGuan.txt" once		--这里是副本通过的条件配置
+--#include "data\functions\entrustfunc.txt" once
+
+TongGuanTable = {} -- 通关副本处理函数表
+
+MonDieDispatcher.CommonDieFunc = function (monster,sysarg,monId)
+	--判断副本的通关条件是否达到
+	local fbid = LActor.getFubenId(sysarg)
+	local conds = TongGuanCondition[fbid]
+	if conds == nil then
+		return
+	end
+	local isFinish = true		--判断副本是否达到完成条件
+
+	for i = 1,#conds do
+		local condItem = conds[i]
+		if condItem then
+			if condItem.type == 2 then	--杀掉所有怪物
+				if not LActor.isKillAllMonster(sysarg) then			
+					isFinish = false
+				end
+				break			--如果是以杀死所有怪物为目的的，不用判断其他条件了
+			elseif condItem.type == 1 then	--杀死某个boss
+				local rest = LActor.isKillAllMonster(sysarg,condItem.monsterid)
+				if not rest then
+					isFinish = false
+					break			
+				end
+			end
+		end
+	end
+
+	if isFinish then
+		--通关条件都达到，发奖励消息
+		-- TODO:
+	end
+end 
+
+-- 杀死场景所有怪的处理
+MonAllKilledDispatcher.CommonKillAllFunc = function(sceneId, scenePtr, flag, et)
+	if et == nil then return end
+
+	local fbid = LActor.getFubenId( et )
+
+	local func = TongGuanTable[fbid]
+
+	if func ~= nil then
+		func(fbid, et)
+	end
+end 
+
+-- 历练副本通关处理
+TongGuanTable[4] = function(fbid, et)
+	local actors = LuaHelp.getSceneActorList( et )
+	if actors == nil then return end
+	for i = 1, #actors do
+		LActor.triggerAchieveEvent( actors[i], 46, fbid ) --触发通关副本成就事件
+		EntrustFunc.SetFubenValue(actors[i], 4, 1) -- 设置副本委托相关值
+	end
+end
+
+-- 伙伴岛副本通关处理
+TongGuanTable[63] = function(fbid, et)
+	local actors = LuaHelp.getSceneActorList( et )
+	if actors == nil then return end
+	for i = 1, #actors do
+		EntrustFunc.SetFubenValue(actors[i], 63, 1) -- 设置副本委托相关值
+	end
+end
+
+-- 杀死某种怪物就完成的任务
+MonDieDispatcher.MonsterQuestFunc = function (monster,sysarg,monId)
+	if sysarg == nil then return end
+
+	local quests = KillMonsterQuest[monId]
+	if quests == nil then return end
+
+	for i=1,#quests do
+		local quest = quests[i]
+		LActor.setQuestValue(sysarg, quest.qid, quest.tid, quest.count)
+	end
+end

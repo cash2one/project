@@ -1,0 +1,236 @@
+--lua script
+--#include "..\..\language\LangCode.txt"
+
+FCActivityConf = {
+	dailyReward = {500,600,700,800,900},	-- 每日登录奖励
+
+	activityReward = {50,100,150,200},	-- 活跃度奖励
+	activity = {40,60,80,100}, --活跃度
+
+	onlineRewardTime = { --在线奖励领取奖励
+		{
+			startHour = 12,
+			startMin = 0,
+			startSec = 0,
+			endHour = 12,
+			endMin = 30,
+			endSec = 0,
+			award = 500,
+		},
+		{
+			startHour = 20,
+			startMin = 0,
+			startSec = 0,
+			endHour = 20,
+			endMin = 30,
+			endSec = 0,
+			award = 500,
+		},
+	},
+
+	keeptimeaward = {300,450,600,900,1200,1500},  --在线奖励
+	keeptime = {1,2,3,4,5,6},		 --在线时长
+
+	uplevelReward = {200,400,600,800,1000}, -- 冲级奖励值
+	uplevel = {30,35,40,45,50}, -- 冲级等级
+	
+	plantformGift = {
+	
+
+		{ type = 0, id = 44423, count = 1},--斩仙封测礼包
+
+		
+	},
+	
+	platformaward = {
+	
+		--斩仙封测礼包
+		{
+			{id = 18512, count = 1},--三级攻击宝石
+			{id = 18522, count = 1},--三级物防宝石
+			{id = 18710, count = 5},--初级强化石
+			{id = 18711, count = 2},--中级强化石
+			{id = 18720, count = 2},--中级保护符
+			{id = 18210, count = 1},--初级经验丹
+			{id = 18606, count = 3},--星蕴结晶
+			{id = 18608, count = 5},--1朵玫瑰
+		},		
+
+	},
+
+        --修仙初成
+	JuniorEffort = 
+	{
+		--人物等级达到36级
+		{
+			condition = 36,
+			award = {
+				{id = 48289, count = 1},
+			},
+			gold = 100,
+		},
+		--人物战斗力达到5500
+		{
+			condition = 5500,
+			award = {
+				{id = 18230, count = 1},
+			},
+			gold = 100,
+		},
+		--伙伴战斗力达到2500
+		{
+			condition = 2500,
+			award = {
+				{id = 28221, count = 1},
+				{id = 28231, count = 1},
+			},
+			gold = 100,
+		},
+		--坐骑战斗力达到500
+		{
+			condition = 500,
+			award = {
+				{id = 18612, count = 2},
+				{id = 18227, count = 2},
+			},
+			gold = 100,
+		},
+		--翅膀战斗力达到1000
+		{
+			condition = 1000,
+			award = {
+				{id = 18628, count = 2},
+			},
+			gold = 100,
+		},
+		--灵器战斗力到达500
+		{
+			condition = 500,
+			award = {
+				{id = 18603, count = 2},
+				{id = 18604, count = 2},
+			},
+			gold = 100,
+		},
+		--成就达到100
+		{
+			condition = 100,
+			award = {
+				{id = 18606, count = 2},
+			},
+			gold = 100,
+		},
+		--灵根达到月狐·风灵根
+		{
+			condition = 108,
+			award = {
+				{id = 28209, count = 2},
+			},
+			gold = 100,
+		},
+		--渡劫达到筑基一阶
+		{
+			condition = 10,
+			award = {
+				{id = 18600, count = 2},
+			},
+			gold = 100,
+		},
+		--点将台排名500
+		{
+			condition = 500,
+			award = {
+				{id = 18634, count = 2},
+			},
+			gold = 100,
+		},
+	},	
+
+	--7日留存礼包
+	SevenAward = {44712,44713,44714,44715,44716,44717,44718},
+
+	--A,B类奖励 broadcast:是否广播   itemid:代表物品id   count表示物品个数
+	--A,B类奖励 broadcast:是否广播   itemid:代表物品id   count表示物品个数
+	ABAward = {
+	             --A类奖励列表
+                 AAwardPos ={
+                       {count=1,itemid=18800, broadcast=1 },
+                       {count=1,itemid=18730, broadcast=1 },
+                       {count=1,itemid=18740, broadcast=1 },
+                       {count=1,itemid=18512, broadcast=1 },
+                       {count=1,itemid=18542, broadcast=1 },
+                       {count=1,itemid=18712, broadcast=1 },
+                       {count=1,itemid=18610, broadcast=1 },
+                       {count=1,itemid=18635, broadcast=1 },
+                       {count=1,itemid=48287, broadcast=1 },
+                       {count=1,itemid=11630, broadcast=1 },
+                 },
+                 --B类奖励列表
+                 BAwardPos ={
+                       {count=1,itemid=18720, broadcast=0 },
+                       {count=1,itemid=18710, broadcast=0 },
+                       {count=1,itemid=18511, broadcast=0 },
+                       {count=1,itemid=18628, broadcast=0 },
+                       {count=1,itemid=28220, broadcast=0 },
+                       {count=1,itemid=28230, broadcast=0 },
+                       {count=1,itemid=28226, broadcast=0 },
+                       {count=1,itemid=28236, broadcast=0 },
+                       {count=1,itemid=28245, broadcast=0 },
+                       {count=1,itemid=18612, broadcast=0 }, 
+                       {count=1,itemid=18604, broadcast=0 },
+                       {count=1,itemid=18603, broadcast=0 },
+                       {count=1,itemid=18609, broadcast=0 },
+                       {count=1,itemid=19300, broadcast=0 },
+                       {count=1,itemid=19301, broadcast=0 },
+                       {count=1,itemid=19100, broadcast=0 },
+                       {count=1,itemid=18211, broadcast=0 },
+                       {count=1,itemid=18600, broadcast=0 },
+                       {count=1,itemid=18606, broadcast=0 },
+                       {count=1,itemid=18227, broadcast=0 }, 
+                       {count=1,itemid=18621, broadcast=0 },
+                       {count=1,itemid=18613, broadcast=0 },                    
+                 },
+              },
+    --这里配置购A类奖励列表，是否要广播，如果broadcast：需要广播则把相应物品id加入以下这个列表里面
+    AAwardBroadcastData = 
+    {
+	    --[奖品唯一ID] = {系统广播,全屏广播}
+       [18800] = {Lang.ScriptTips.fc005},
+       [18730] = {Lang.ScriptTips.fc005},
+       [18740] = {Lang.ScriptTips.fc005},
+       [18512] = {Lang.ScriptTips.fc005},
+       [18542] = {Lang.ScriptTips.fc005},
+       [18712] = {Lang.ScriptTips.fc005},
+       [18610] = {Lang.ScriptTips.fc005},
+       [18635] = {Lang.ScriptTips.fc005},
+       [48287] = {Lang.ScriptTips.fc005},
+       [11630] = {Lang.ScriptTips.fc005},
+    },
+    --登录礼包,每个礼包的id
+    denglulibao ={44731,44732,44733},
+    --幸运猜猜
+    GuessAward = {
+        {count=1,itemid=18720, broadcast=0 },
+        {count=1,itemid=18710, broadcast=0 },
+        {count=1,itemid=18511, broadcast=0 },
+		{count=1,itemid=18628, broadcast=0 },
+        {count=1,itemid=28220, broadcast=0 },
+		{count=1,itemid=28230, broadcast=0 },
+        {count=1,itemid=28226, broadcast=0 },
+        {count=1,itemid=28236, broadcast=0 },
+        {count=1,itemid=28245, broadcast=0 },
+        {count=1,itemid=18612, broadcast=0 }, 
+        {count=1,itemid=18604, broadcast=0 },
+        {count=1,itemid=18603, broadcast=0 },
+        {count=1,itemid=18609, broadcast=0 },
+        {count=1,itemid=19300, broadcast=0 },
+        {count=1,itemid=19301, broadcast=0 },
+		{count=1,itemid=19100, broadcast=0 },
+        {count=1,itemid=18211, broadcast=0 },
+        {count=1,itemid=18600, broadcast=0 },
+        {count=1,itemid=18606, broadcast=0 },
+        {count=1,itemid=18227, broadcast=0 }, 
+        {count=1,itemid=18621, broadcast=0 },
+        {count=1,itemid=18613, broadcast=0 },
+	}
+}

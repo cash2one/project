@@ -1,0 +1,53 @@
+--击退 并对目前造成100%物理伤害
+{
+	actions=
+	{
+		{act=0,effect=0,},
+	},
+	
+	desc=Lang.Skill.s119L1Desc,
+	
+	iconID=5,
+	
+	actRange=
+	{
+		{
+			xStart=0,
+			xEnd=0,
+			yStart=0,
+			yEnd=0,
+			
+			rangeType=0,
+			rangeCenter=0,		
+			acts=
+			{
+				{
+					conds=
+					{
+					{cond=13,value=true},
+					},
+
+					results=
+					{
+						{mj=0,timeParam=1,type=27,delay=0,value={rate=10000,value=0}},					
+            			{mj=0,timeParam=1,type=28,delay=0,value=7},
+					},
+					specialEffects=
+					{
+						{type=2,mj=0,id=1202,keepTime=0,delay=200,always=false,targetpos=true},
+					},
+				},
+			},
+		},
+	},
+	trainConds=
+	{
+	},
+	
+	spellConds=
+	{
+	},
+	singTime=0,
+
+	cooldownTime=5000,
+},

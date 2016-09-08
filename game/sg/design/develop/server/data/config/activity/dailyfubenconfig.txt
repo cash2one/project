@@ -1,0 +1,519 @@
+  -- 副本
+--#include "..\..\language\LangCode.txt"  
+  DailyFuben =
+  {
+    -- 天机奇缘
+    {
+      -- 副本id 
+      FBID = 1, 
+      -- 描述
+      fuben_name = "天机奇缘",
+      fuben_time = "00:00:00-23:59:59", -- 副本时间
+      -- end 副本难度分级
+      diff_table =
+      {
+        {
+          diff = 1,
+          level = 24,           -- 进入等级
+          fight_num = 3000,       -- 推荐战斗力
+          desc = "产出伙伴资质、熟练度、熟练等级的提升材料。",            -- 副本描述
+          entry_count = 2,                  -- 进入次数
+          vip = 2,                          -- vip等级
+          member_count = {1},               -- 副本人数
+          awards=
+          {
+            {type = 1, id = 26173, count = 1,  bind = true, job = -1, sex = -1, group=0},--真言命格
+            {type = 1, id = 30494, count = 1,  bind = true, job = -1, sex = -1, group=0},--伙伴碎片1
+            {type = 1, id = 30495, count = 1,  bind = true, job = -1, sex = -1, group=0},--伙伴碎片2           
+          }, 
+        },
+        {
+            diff = 2,
+            level = 35,           -- 进入等级
+            fight_num = 30000,       -- 推荐战斗力
+            desc = "产出伙伴资质、熟练度、熟练等级的提升材料。",            -- 副本描述
+            entry_count = 2,                  -- 进入次数
+            vip = 2,                          -- vip等级
+            member_count = {1},               -- 副本人数
+            awards=
+            {
+            {type = 1, id = 26173, count = 1,  bind = true, job = -1, sex = -1, group=0},--真言命格
+            {type = 1, id = 30494, count = 1,  bind = true, job = -1, sex = -1, group=0},--伙伴碎片1
+            {type = 1, id = 30495, count = 1,  bind = true, job = -1, sex = -1, group=0},--伙伴碎片2  
+            }, 
+        },
+        {
+            level = 45,
+            diff = 3,           -- 进入等级
+            fight_num = 80000,       -- 推荐战斗力
+            desc = "产出伙伴资质、熟练度、熟练等级的提升材料。",            -- 副本描述
+            entry_count = 2,                  -- 进入次数
+            vip = 2,                          -- vip等级
+            member_count = {1},               -- 副本人数
+            awards=
+            {
+            {type = 1, id = 26173, count = 1,  bind = true, job = -1, sex = -1, group=0},--真言命格
+            {type = 1, id = 30494, count = 1,  bind = true, job = -1, sex = -1, group=0},--伙伴碎片1
+            {type = 1, id = 30495, count = 1,  bind = true, job = -1, sex = -1, group=0},--伙伴碎片2  
+            }, 
+        },
+		  }, -- end 副本难度
+	  }, -- end 天机奇缘
+
+    -- 神驹猎狩
+    {
+      -- 副本id 
+      FBID = 2, 
+      -- 描述
+      fuben_name = "神驹猎狩",
+      fuben_time = "00:00:00-23:59:59", -- 副本时间
+      -- end 副本难度分级
+      diff_table ={
+        {
+          diff = 1,
+          level = 24,           -- 进入等级
+          fight_num = 5000,       -- 推荐战斗力
+          desc = "产出坐骑培养材料、坐骑进阶材料，小概率掉落坐骑技能书。",            -- 副本描述
+          entry_count = 2,                  -- 进入次数
+          vip = 2,                          -- vip等级
+          member_count = {1},               -- 副本人数
+          awards=
+          {
+				{type = 1, id = 26151, count = 0,bind = true, job = -1, sex = -1, group=0},--御兽石
+				{type = 1, id = 26152, count = 0,bind = true, job = -1, sex = -1, group=0},--幻兽石
+				{type = 1, id = 24201, count = 0,bind = true, job = -1, sex = -1, group=0},--坐骑技能书
+          }, 
+        },
+       {
+            diff = 2,
+            level = 35,           -- 进入等级
+            fight_num = 25000,       -- 推荐战斗力
+            desc = "产出坐骑培养材料、坐骑进阶材料，小概率掉落坐骑技能书。",            -- 副本描述
+            entry_count = 2,                  -- 进入次数
+            vip = 2,                          -- vip等级
+            member_count = {1},               -- 副本人数
+            awards=
+            {
+				{type = 1, id = 26151, count = 0,bind = true, job = -1, sex = -1, group=0},--御兽石
+				{type = 1, id = 26152, count = 0,bind = true, job = -1, sex = -1, group=0},--幻兽石
+				{type = 1, id = 24201, count = 0,bind = true, job = -1, sex = -1, group=0},--坐骑技能书
+            }, 
+        },
+        {
+            level = 45,
+            diff = 3,           -- 进入等级
+            fight_num = 80000,       -- 推荐战斗力
+            desc = "产出坐骑培养材料、坐骑进阶材料，小概率掉落坐骑技能书。",            -- 副本描述
+            entry_count = 2,                  -- 进入次数
+            vip = 2,                          -- vip等级
+            member_count = {1},               -- 副本人数
+            awards=
+            {
+				{type = 1, id = 26151, count = 0,bind = true, job = -1, sex = -1, group=0},--御兽石
+				{type = 1, id = 26152, count = 0,bind = true, job = -1, sex = -1, group=0},--幻兽石
+				{type = 1, id = 24201, count = 0,bind = true, job = -1, sex = -1, group=0},--坐骑技能书
+            }, 
+        },
+      }, -- end 副本难度
+     }, -- end 神驹猎狩
+
+    -- 云台将录
+    {
+      -- 副本id 
+      FBID = 3, 
+      -- 描述
+      fuben_name = "云台将录",
+      fuben_time = "00:00:00-23:59:59", -- 副本时间
+      -- end 副本难度分级
+      diff_table ={
+        {
+          level = 30,           -- 进入等级
+          diff = 1,
+          fight_num = 42000,       -- 推荐战斗力
+          desc = "产出武将培养材料、武将进阶材料、武将技能升级材料。",            -- 副本描述
+          entry_count = 2,                  -- 进入次数
+          vip = 2,                          -- vip等级
+          member_count = {1},               -- 副本人数
+          awards=
+          {
+				{type = 1, id = 26181, count = 0, bind = true, job = -1, sex = -1, group=0},--将魂命珠
+				{type = 1, id = 26182, count = 0, bind = true, job = -1, sex = -1, group=0},--武将灵魄
+				{type = 1, id = 26183, count = 0, bind = true, job = -1, sex = -1, group=0},--武将真元
+          }, 
+        },
+        {
+            level = 40,           -- 进入等级
+            diff = 2,
+            fight_num = 64000,       -- 推荐战斗力
+            desc = "产出武将培养材料、武将进阶材料、武将技能升级材料。",            -- 副本描述
+            entry_count = 2,                  -- 进入次数
+            vip = 2,                          -- vip等级
+            member_count = {1},               -- 副本人数
+            awards=
+            {
+				{type = 1, id = 26181, count = 0, bind = true, job = -1, sex = -1, group=0},--将魂命珠
+				{type = 1, id = 26182, count = 0, bind = true, job = -1, sex = -1, group=0},--武将灵魄
+				{type = 1, id = 26183, count = 0, bind = true, job = -1, sex = -1, group=0},--武将真元
+            }, 
+        },
+        {
+            level = 45,           -- 进入等级
+            diff = 3,
+            fight_num = 80000,       -- 推荐战斗力
+            desc = "产出武将培养材料、武将进阶材料、武将技能升级材料。",            -- 副本描述
+            entry_count = 2,                  -- 进入次数
+            vip = 2,                          -- vip等级
+            member_count = {1},               -- 副本人数
+            awards=
+            {
+				{type = 1, id = 26181, count = 0, bind = true, job = -1, sex = -1, group=0},--将魂命珠
+				{type = 1, id = 26182, count = 0, bind = true, job = -1, sex = -1, group=0},--武将灵魄
+				{type = 1, id = 26183, count = 0, bind = true, job = -1, sex = -1, group=0},--武将真元
+            }, 
+        },
+      }, -- end 副本难度
+     }, -- end 云台将录
+
+     -- 守卫昆阳
+    {
+      -- 副本id 
+      FBID = 4, 
+      -- 描述
+      fuben_name = "守卫昆阳",
+      fuben_time = "00:00:00-23:59:59", -- 副本时间
+      -- end 副本难度分级
+      diff_table ={
+        {
+          diff = 1,
+          level = 29,           -- 进入等级
+          fight_num = 25000,       -- 推荐战斗力
+          desc = "产出海量经验和碎星。",            -- 副本描述
+          entry_count = 2,                  -- 进入次数
+          vip = 2,                          -- vip等级
+          member_count = {1,3},               -- 副本人数
+          awards=
+          {
+				{type = 2, id = 0, count = 0, bind = true, job = -1, sex = -1, group=0},--铜钱			
+				{type = 6, id = 0, count = 0, bind = true, job = -1, sex = -1, group=0},--经验
+				{type = 1, id = 26121, count = 0, bind = true, job = -1, sex = -1, group=0},--碎星
+          }, 
+        },
+        {
+            level = 40,  
+            diff = 2,         -- 进入等级
+            fight_num = 64000,       -- 推荐战斗力
+            desc = "产出海量经验和碎星。",            -- 副本描述
+            entry_count = 2,                  -- 进入次数
+            vip = 2,                          -- vip等级
+            member_count = {1,3},               -- 副本人数
+            awards=
+            {
+				{type = 2, id = 0, count = 0, bind = true, job = -1, sex = -1, group=0},--铜钱			
+				{type = 6, id = 0, count = 0, bind = true, job = -1, sex = -1, group=0},--经验
+				{type = 1, id = 26121, count = 0, bind = true, job = -1, sex = -1, group=0},--碎星
+            }, 
+        },
+        {
+            level = 55,
+            diff = 3,           -- 进入等级
+            fight_num = 132000,       -- 推荐战斗力
+            desc = "产出海量经验和碎星。",            -- 副本描述
+            entry_count = 2,                  -- 进入次数
+            vip = 2,                          -- vip等级
+            member_count = {1,3},               -- 副本人数
+            awards=
+            {
+				{type = 2, id = 0, count = 0, bind = true, job = -1, sex = -1, group=0},--铜钱			
+				{type = 6, id = 0, count = 0, bind = true, job = -1, sex = -1, group=0},--经验
+				{type = 1, id = 26121, count = 0, bind = true, job = -1, sex = -1, group=0},--碎星
+            }, 
+        },
+      }, -- end 副本难度
+     }, -- end 守卫昆阳
+
+      -- 无尽秘藏
+    {
+      -- 副本id 
+      FBID = 5, 
+      -- 描述
+      fuben_name = "无尽秘藏",
+      fuben_time = "00:00:00-23:59:59", -- 副本时间
+      -- end 副本难度分级
+      diff_table ={
+        {
+          diff = 1,
+          level = 29,           -- 进入等级
+          fight_num = 25000,       -- 推荐战斗力
+          desc = "产出铜钱、经验、装备强化材料。",            -- 副本描述
+          entry_count = 2,                  -- 进入次数
+          vip = 2,                          -- vip等级
+          member_count = {1,3},               -- 副本人数
+          awards=
+          {
+				{type = 2, id = 0, count = 0, bind = true, job = -1, sex = -1, group=0},--铜钱
+				{type = 6, id = 0, count = 0, bind = true, job = -1, sex = -1, group=0},--经验
+				{type = 1, id = 26101, count = 0, bind = true, job = -1, sex = -1, group=0},--寒铁
+          }, 
+        },
+        {
+            level = 40,  
+            diff = 2,         -- 进入等级
+            fight_num = 64000,       -- 推荐战斗力
+            desc = "产出铜钱、经验、装备强化材料。",            -- 副本描述
+            entry_count = 2,                  -- 进入次数
+            vip = 2,                          -- vip等级
+            member_count = {1,3},               -- 副本人数
+            awards=
+            {
+				{type = 2, id = 0, count = 0, bind = true, job = -1, sex = -1, group=0},--铜钱
+				{type = 6, id = 0, count = 0, bind = true, job = -1, sex = -1, group=0},--经验
+				{type = 1, id = 26101, count = 0, bind = true, job = -1, sex = -1, group=0},--寒铁
+            }, 
+        },
+        {
+            level = 55,
+            diff = 3,           -- 进入等级
+            fight_num = 132000,       -- 推荐战斗力
+            desc = "产出铜钱、经验、装备强化材料。",            -- 副本描述
+            entry_count = 2,                  -- 进入次数
+            vip = 2,                          -- vip等级
+            member_count = {1,3},               -- 副本人数
+            awards=
+            {
+				{type = 2, id = 0, count = 0, bind = true, job = -1, sex = -1, group=0},--铜钱
+				{type = 6, id = 0, count = 0, bind = true, job = -1, sex = -1, group=0},--经验
+				{type = 1, id = 26101, count = 0, bind = true, job = -1, sex = -1, group=0},--寒铁
+            }, 
+        },
+      }, -- end 副本难度
+     }, -- end 无尽秘藏
+
+     -- 剑试云台
+    {
+      -- 副本id 
+      FBID = 15, 
+      -- 描述
+      fuben_name = "剑试云台",
+      fuben_time = "00:00:00-23:59:59", -- 副本时间
+      -- end 副本难度分级
+      diff_table ={
+        {
+          diff = 1,
+          level = 33,           -- 进入等级
+          fight_num = 25000,       -- 推荐战斗力
+          desc = "产出洗炼石和洗炼锁。",            -- 副本描述
+          entry_count = 1,                  -- 进入次数
+          vip = 2,                          -- vip等级
+          member_count = {1,3},               -- 副本人数
+          awards=
+          {
+				{type = 2, id = 0, count = 0,bind = true, job = -1, sex = -1, group=0},--铜钱			
+				{type = 1, id = 26119, count = 0,bind = true, job = -1, sex = -1, group=0},--洗炼锁
+				{type = 1, id = 26112, count = 0,bind = true, job = -1, sex = -1, group=0},--洗炼石（紫）
+          }, 
+        },
+        {
+            level = 40,  
+            diff = 2,         -- 进入等级
+            fight_num = 64000,       -- 推荐战斗力
+            desc = "产出洗炼石和洗炼锁。",            -- 副本描述
+            entry_count = 1,                  -- 进入次数
+            vip = 2,                          -- vip等级
+            member_count = {1,3},               -- 副本人数
+            awards=
+            {
+				{type = 2, id = 0, count = 0,bind = true, job = -1, sex = -1, group=0},--铜钱			
+				{type = 1, id = 26119, count = 0,bind = true, job = -1, sex = -1, group=0},--洗炼锁
+				{type = 1, id = 26112, count = 0,bind = true, job = -1, sex = -1, group=0},--洗炼石（紫）
+            }, 
+        },
+        {
+            level = 55,
+            diff = 3,           -- 进入等级
+            fight_num = 132000,       -- 推荐战斗力
+            desc = "产出洗炼石和洗炼锁。",            -- 副本描述
+            entry_count = 1,                  -- 进入次数
+            vip = 2,                          -- vip等级
+            member_count = {1,3},               -- 副本人数
+            awards=
+            {
+				{type = 2, id = 0, count = 0,bind = true, job = -1, sex = -1, group=0},--铜钱			
+				{type = 1, id = 26119, count = 0,bind = true, job = -1, sex = -1, group=0},--洗炼锁
+				{type = 1, id = 26112, count = 0,bind = true, job = -1, sex = -1, group=0},--洗炼石（紫）
+            }, 
+        },
+      }, -- end 副本难度
+     }, -- end 
+
+    -- 龙脉珍宝
+    {
+      -- 副本id 
+      FBID = 16, 
+      -- 描述
+      fuben_name = "龙脉珍宝",
+      fuben_time = "00:00:00-23:59:59", -- 副本时间
+      -- end 副本难度分级
+      diff_table ={
+        {
+          diff = 1,
+          level = 32,           -- 进入等级
+          fight_num = 25000,       -- 推荐战斗力
+          desc = "产出宝石和少量经验。",            -- 副本描述
+          entry_count = 1,                  -- 进入次数
+          vip = 2,                          -- vip等级
+          member_count = {1,3},               -- 副本人数
+          awards=
+          {
+				{type = 6, id = 0, count = 0, bind = true, job = -1, sex = -1, group=0},--经验
+				{type = 2, id = 0, count = 0, bind = true, job = -1, sex = -1, group=0},--铜钱
+				{type = 1, id = 30202, count = 0, bind = true, job = -1, sex = -1, group=0},--宝石
+          }, 
+        },
+        {
+            level = 40,  
+            diff = 2,         -- 进入等级
+            fight_num = 64000,       -- 推荐战斗力
+            desc = "产出宝石和少量经验。",            -- 副本描述
+            entry_count = 1,                  -- 进入次数
+            vip = 2,                          -- vip等级
+            member_count = {1,3},               -- 副本人数
+            awards=
+            {
+				{type = 6, id = 0, count = 0, bind = true, job = -1, sex = -1, group=0},--经验
+				{type = 2, id = 0, count = 0, bind = true, job = -1, sex = -1, group=0},--铜钱
+				{type = 1, id = 30202, count = 0, bind = true, job = -1, sex = -1, group=0},--宝石
+            }, 
+        },
+        {
+            level = 55,
+            diff = 3,           -- 进入等级
+            fight_num = 132000,       -- 推荐战斗力
+            desc = "产出宝石和少量经验。",            -- 副本描述
+            entry_count = 1,                  -- 进入次数
+            vip = 2,                          -- vip等级
+            member_count = {1,3},               -- 副本人数
+            awards=
+            {
+				{type = 6, id = 0, count = 0, bind = true, job = -1, sex = -1, group=0},--经验
+				{type = 2, id = 0, count = 0, bind = true, job = -1, sex = -1, group=0},--铜钱
+				{type = 1, id = 30202, count = 0, bind = true, job = -1, sex = -1, group=0},--宝石
+            }, 
+        },
+      }, -- end 副本难度
+     }, -- end 
+     -- 血战豫州
+    {
+      -- 副本id 
+      FBID = 17, 
+      -- 描述
+      fuben_name = "血战豫州",
+      fuben_time = "00:00:00-23:59:59", -- 副本时间
+      -- end 副本难度分级
+      diff_table ={
+        {
+          diff = 1,
+          level = 37,           -- 进入等级
+          fight_num = 25000,       -- 推荐战斗力
+          desc = "产出武将培养材料。",            -- 副本描述
+          entry_count = 1,                  -- 进入次数
+          vip = 2,                          -- vip等级
+          member_count = {1,3},               -- 副本人数
+          awards=
+          {
+				{type = 6, id = 0, count = 0,bind = true, job = -1, sex = -1, group=0},--经验
+				{type = 1, id = 26181, count = 0,bind = true, job = -1, sex = -1, group=0},--将魂命珠
+				{type = 1, id = 26182, count = 0,bind = true, job = -1, sex = -1, group=0},--武将灵魄				
+				{type = 1, id = 26183, count = 0,bind = true, job = -1, sex = -1, group=0},--武将真元
+          }, 
+        },
+        {
+            level = 40,  
+            diff = 2,         -- 进入等级
+            fight_num = 64000,       -- 推荐战斗力
+            desc = "产出武将培养材料。",            -- 副本描述
+            entry_count = 1,                  -- 进入次数
+            vip = 2,                          -- vip等级
+            member_count = {1,3},               -- 副本人数
+            awards=
+            {
+				{type = 6, id = 0, count = 0,bind = true, job = -1, sex = -1, group=0},--经验
+				{type = 1, id = 26181, count = 0,bind = true, job = -1, sex = -1, group=0},--将魂命珠
+				{type = 1, id = 26182, count = 0,bind = true, job = -1, sex = -1, group=0},--武将灵魄				
+				{type = 1, id = 26183, count = 0,bind = true, job = -1, sex = -1, group=0},--武将真元
+            }, 
+        },
+        {
+            level = 50,
+            diff = 3,           -- 进入等级
+            fight_num = 132000,       -- 推荐战斗力
+            desc = "产出武将培养材料。",            -- 副本描述
+            entry_count = 1,                  -- 进入次数
+            vip = 2,                          -- vip等级
+            member_count = {1,3},               -- 副本人数
+            awards=
+            {
+				{type = 6, id = 0, count = 0,bind = true, job = -1, sex = -1, group=0},--经验
+				{type = 1, id = 26181, count = 0,bind = true, job = -1, sex = -1, group=0},--将魂命珠
+				{type = 1, id = 26182, count = 0,bind = true, job = -1, sex = -1, group=0},--武将灵魄				
+				{type = 1, id = 26183, count = 0,bind = true, job = -1, sex = -1, group=0},--武将真元瑰
+            }, 
+        },
+      }, -- end 副本难度
+     }, -- end 
+     -- 烽火长安
+    {
+      -- 副本id 
+      FBID = 18, 
+      -- 描述
+      fuben_name = "烽火长安",
+      fuben_time = "00:00:00-23:59:59", -- 副本时间
+      -- end 副本难度分级
+      diff_table ={
+        {
+          diff = 1,
+          level = 40,           -- 进入等级
+          fight_num = 25000,       -- 推荐战斗力
+          desc = "产出伙伴培养材料。",            -- 副本描述
+          entry_count = 1,                  -- 进入次数
+          vip = 2,                          -- vip等级
+          member_count = {1,3},               -- 副本人数
+          awards=
+          {
+				{type = 1, id = 26173, count = 0,  bind = true, job = -1, sex = -1, group=0},--真言命格
+				{type = 1, id = 26172, count = 0,  bind = true, job = -1, sex = -1, group=0},--天行丹
+				{type = 1, id = 26171, count = 0,  bind = true, job = -1, sex = -1, group=0},--机关玩偶
+          }, 
+        },
+        {
+            level = 40,  
+            diff = 2,         -- 进入等级
+            fight_num = 64000,       -- 推荐战斗力
+            desc = "产出伙伴培养材料。",            -- 副本描述
+            entry_count = 1,                  -- 进入次数
+            vip = 2,                          -- vip等级
+            member_count = {1,3},               -- 副本人数
+            awards=
+            {
+				{type = 1, id = 26173, count = 0,  bind = true, job = -1, sex = -1, group=0},--真言命格
+				{type = 1, id = 26172, count = 0,  bind = true, job = -1, sex = -1, group=0},--天行丹
+				{type = 1, id = 26171, count = 0,  bind = true, job = -1, sex = -1, group=0},--机关玩偶
+            }, 
+        },
+        {
+            level = 50,
+            diff = 3,           -- 进入等级
+            fight_num = 132000,       -- 推荐战斗力
+            desc = "产出伙伴培养材料。",            -- 副本描述
+            entry_count = 1,                  -- 进入次数
+            vip = 2,                          -- vip等级
+            member_count = {1,3},               -- 副本人数
+            awards=
+            {
+				{type = 1, id = 26173, count = 0,  bind = true, job = -1, sex = -1, group=0},--真言命格
+				{type = 1, id = 26172, count = 0,  bind = true, job = -1, sex = -1, group=0},--天行丹
+				{type = 1, id = 26171, count = 0,  bind = true, job = -1, sex = -1, group=0},--机关玩偶
+            }, 
+        },
+      }, -- end 副本难度
+     }, -- end 
+  } -- end 副本

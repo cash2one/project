@@ -1,0 +1,326 @@
+﻿--lua script
+--VIP 相关的脚本处理   
+-- var.fb.addFbCount 变量保存着增加副本进入次数  
+-- var.addHoleTrainCnt 变量保存着增加洞窟修炼进入次数                                          
+--#include "data\config\vip\vip.txt" once
+--#include "data\config\vocation\VocationConfig.txt" once
+--#include "data\config\quest\RefreshQuests.txt" once
+
+
+EventCallDispatcher.SendVipExpTime = function(sysarg, leftTime)
+	local npack = DataPack.allocPacket(sysarg,139,65)
+    if npack == nil then return end
+    DataPack.writeInt( npack, leftTime )
+    DataPack.flush(npack)
+end
+
+
+-- @brief: 角色VIP状态发生改变
+EventCallDispatcher.OnActorVipUpdate = function(sysarg, arg)
+	if (arg == nil or table.getn(arg) < 2) then 
+		print("OnActorVipUpdate param count not match")
+		return 
+	end
+  local newLevel = arg[1]
+  local oldLevel = arg[2]
+  if newLevel == oldLevel then
+    return 
+  end
+  if oldLevel < 9 and newLevel == 10 then
+    qianghongbao.SystemHB(sysarg,4,2,false)
+    qianghongbao.SystemHB(sysarg,5,2) 
+  elseif oldLevel < 9 and newLevel == 9 then
+    qianghongbao.SystemHB(sysarg,4,2)
+  elseif oldLevel == 9 and newLevel == 10 then
+    qianghongbao.SystemHB(sysarg,5,2)
+  elseif newLevel == 11 then 
+    qianghongbao.SystemHB(sysarg,44,2)   
+    --qianghongbao.SystemHB(sysarg,44,2) 
+   -- qianghongbao.SystemHB(sysarg,44,2) 
+  end 
+  -- if newLevel >= 9 then
+  --   if oldLevel < 9 then
+  --     print("---kkkkkk1111")
+  --     qianghongbao.SystemHB(sysarg,4,2)
+  --   end
+    
+  --   if oldLevel < 10 and newLevel >= 10 then
+  --       print("---kkkkkk22222")
+  --       qianghongbao.SystemHB(sysarg,5,2)
+  --   end
+
+  -- end
+
+  -- vip等级
+  LActor.SetAchieveProcessByType(sysarg, 83, 2, newLevel)
+  
+	-- 领取VIP等级上升奖励
+  --[[
+  local actorid = LActor.getActorId(sysarg)
+
+	local levels = VIPConfig.levels
+	if newLevel > #levels then --还没配到这个等级
+		return 
+	end
+
+  if newLevel < oldLevel then
+    --print("OnActorVipUpdate lower")
+    for i = 1,#RefreshQuests do
+      local refreshQuest = RefreshQuests[i]
+      --今天剩余刷星任务次数
+      local times
+      if newLevel > 0 then
+        times = refreshQuest.timesVips[newLevel]
+      else
+        times = refreshQuest.times
+      end
+
+      local info = nil
+
+      local var = LActor.getStaticVar( sysarg )
+      if var ~= nil and var.star ~= nil then
+        info = var.star[refreshQuest.id]
+      end
+      if info ~= nil and info.count ~= nil then -- 减去已经使用的次数
+        times = times - info.count
+      end
+
+      --print("OnActorVipUpdate check task:"..refreshQuest.id..",times:"..times)
+
+      if times < 0 and info.quest ~= nil then
+        if LActor.hasQuest( sysarg, info.quest ) then
+          --print("OnActorVipUpdate GiveUpQuest quest:"..info.quest)
+          LActor.GiveUpQuest(sysarg, info.quest)
+        end
+      end
+    end
+  else
+    for i=oldLevel+1, newLevel do
+    	local awards = levels[i].awards
+    	if awards ~= nil then
+    		for i=1, #awards do
+    			LActor.giveAward( sysarg, awards[i].type, awards[i].value, 83, 0, "vipupdateaward" )
+    		end
+    	end
+      local mailitem = levels[i].mailitem
+      if mailitem ~= nil then
+        local content = string.format(VIPConfig.vipMailItemContent, i)
+        System.sendGmMailOffLine(actorid, content, 1, mailitem, 1, 1)
+      end
+    end
+  end
+  --]]
+end
+
+-- @brief:玩家上线时初始化玩家每日可以进入副本增加的次数变量
+EventCallDispatcher.OnActorLoginInitVipInfo = function(sysarg, arg)	
+	local var = LActor.getStaticVar(sysarg)
+ 	local fb = var.fb
+ 	if fb == nil then 
+	    var.fb = {}
+	    fb = var.fb
+  	end
+  --[[
+  -- 重置增加副本进入次数变量
+  if (fb.addFbCount ~= nil) then  	
+  	fb.addFbCount = 0
+  	print("vipinit set fb.addFbCount=0")
+  end	
+  -- 重置增加洞窟精修进入次数变量
+  local dvar = LActor.getDyanmicVar(sysarg)
+  if (dvar.addHoleTrainCnt ~= nil) then  	
+  	dvar.addHoleTrainCnt = 0
+  end	
+  --]]  
+    --[[
+  	local vipExpTime = var.vipExpTime
+  	if vipExpTime == nil then
+  		vipExpTime = 0
+  	end
+
+    local nowSec = System.getCurrMiniTime()
+    if vipExpTime <= nowSec then
+      var.vipExpTime = 0
+      vvipExpTime = 0
+    end
+
+  	LActor.setVipExpTime(sysarg, vipExpTime)
+
+  	local leftTime = vipExpTime - System.getCurrMiniTime()
+  	if leftTime < 0 then
+  		leftTime = 0
+  	end
+
+  	-- 发送VIP体验卡剩余时间
+  	EventCallDispatcher.SendVipExpTime(sysarg, leftTime)
+    --]]
+end
+
+VipOpFuncList = {}
+VipOpFuncList.HandlerVipOp = function(sysarg, args)
+  local sys_id = args[1]
+  local cmd = args[2]
+  if 138 == sys_id then
+    local nCmd = tonumber(cmd)
+    if 115 == nCmd then
+      VipOpFuncList.getVipPrize(sysarg, args[3])
+    elseif 116 == nCmd then
+      VipOpFuncList.receiveVipPrize(sysarg, args[3])
+    end
+  end
+end
+
+--请求VIP礼包
+VipOpFuncList.getVipPrize = function(sysarg)
+  local var = LActor.getStaticVar(sysarg)
+  if var == nil then
+      --print("getStaticVar = nil ")
+      return
+  end
+  if nil == var.vipPrize then
+    var.vipPrize = {}
+  end
+  local vipPrize = var.vipPrize
+
+  local vip_level = LActor.getVIPLevel(sysarg)
+  local nNum = #(VIPConfig.vipPrize)
+  local npack = DataPack.allocPacket(sysarg,138,115)
+  DataPack.writeInt(npack,nNum)
+  if nNum > 0 then
+    for i = 1 , nNum do
+      local nFlag = 0
+      if vip_level < i then
+        nFlag = 2
+      else
+        if 1 == vipPrize[i] then
+          nFlag = 1
+        end
+      end
+      DataPack.writeChar(npack, nFlag)
+    end
+  end
+  DataPack.flush(npack)
+end
+
+--请求领取vip礼包
+VipOpFuncList.receiveVipPrize = function(sysarg , dp)
+  local nReceiveId = DataPack.readChar(dp)
+  print("nReceiveId:"..tostring(nReceiveId))
+  if nil == VIPConfig.vipPrize[nReceiveId] then
+    return
+  end
+  local vip_level = LActor.getVIPLevel(sysarg)
+  local nSuccess = 1
+  local var = LActor.getStaticVar(sysarg)
+  if vip_level >= nReceiveId then           --vip等级够了
+    if var == nil then
+        --print("getStaticVar = nil ")
+        return
+    end
+    if nil == var.vipPrize then
+      var.vipPrize = {}
+    end
+    local vipPrize = var.vipPrize
+    if 1 ~= vipPrize[nReceiveId] then       --没领取过
+      local awards = VIPConfig.vipPrize[nReceiveId]
+
+      local needspace = 0
+      if awards ~= nil then
+
+        --检测背包是否已满
+        for i=1, #awards do
+          if awards[i].tp == 2 then
+            needspace = needspace + Item.getAddItemNeedGridCount( sysarg, awards[i].id, awards[i].n ) 
+          end
+        end
+        if needspace > Item.getBagEmptyGridCount( sysarg ) then
+          -- LActor.sendTipmsg( sysarg, Lang.ScriptTips.vip003, ttMessage )
+          LActor.SendGeneralTips(sysarg, 7, 0, 0)
+          return
+        end
+
+        --给物品了
+        for i=1, #awards do
+          if awards[i].tp == 2 then
+            LActor.addItem( sysarg, awards[i].id, 0, 0, awards[i].n, awards[i].bind, "vip_prize", 82 )
+          elseif awards[i].tp == 1 then
+            LActor.changeMoney( sysarg, awards[i].id, awards[i].n, 1, true, "vip_prize" )
+          elseif awards[i].tp == 5 then --星魂(原灵根)
+            LActor.giveAward(sysarg, 9 , awards[i].n, 0, 0, "viphandler.txt", 1, false, "")
+          end
+        end
+
+        vipPrize[nReceiveId] = 1
+        nSuccess = 0
+
+
+      else      --还没配到这个VIP等级的礼包
+        return
+      end
+
+
+    else        --已领取过
+    end
+  else          --vip等级不够
+  end
+
+  local state = 0
+  if var.vipPrize and 1 == var.vipPrize[nReceiveId] then
+    state = 1
+  else
+    state = 0
+    if vip_level < nReceiveId then
+        state = 2
+    end
+  end
+
+  local npack = DataPack.allocPacket(sysarg,138,116)
+  DataPack.writeChar(npack, state)
+  DataPack.writeInt(npack , nReceiveId)
+  DataPack.flush(npack)
+end
+
+--获取vip增加的日常副本次数
+VipOpFuncList.GetDayFubenNum = function(vipLevel , funbenId)
+  local currFubenAdd = VIPConfig.dayFubenAdd[vipLevel]
+  if nil == currFubenAdd then
+      return 0
+  end
+  return (tonumber(currFubenAdd[funbenId]) or 0)
+end
+
+--玩家充值
+VipOpFuncList.ActorRecharge = function(sysarg, arg)
+  local name = LActor.getName(sysarg)
+  local addNum = 0
+  if arg and arg[1] then
+    addNum = tonumber(arg[1]) or 0
+  end
+  if addNum >= 6 and addNum <= 60 then
+    qianghongbao.SystemHB(sysarg,1,1)
+  elseif addNum >= 61 and addNum <= 600 then
+    qianghongbao.SystemHB(sysarg,2 ,1)
+  elseif addNum >= 601 then
+    qianghongbao.SystemHB(sysarg,3,1)
+  end
+
+end
+
+--vip专享活动，vip等级变化时通知前端
+function VipOpFuncList.onVipZhuanxiangActivity(actor)
+  local vipLevel = LActor.getVIPLevel(actor)
+  for _, conf in pairs(ActivityControl) do
+    if ONLINEREWARD.GetActivityState(conf.id) ~= 0 then
+      if activityConf[conf.id] and activityConf[conf.id].activities[37] then
+        activityFunc.getActivityInfo(actor, conf.id, 37)
+      end
+    end
+  end
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUpdateVipInfo, EventCallDispatcher.OnActorVipUpdate)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, EventCallDispatcher.OnActorLoginInitVipInfo)
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeOnClientData, VipOpFuncList.HandlerVipOp)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeRecharge, VipOpFuncList.ActorRecharge)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUpdateVipInfo, VipOpFuncList.onVipZhuanxiangActivity)

@@ -1,0 +1,185 @@
+﻿-- 竞技场相关配置
+
+--#include "..\..\language\LangCode.txt" once
+
+ArenaConf = {
+	showLevel = 1, -- 显示图标等级
+	openLevel = 40, -- 开启等级
+	openWeek = { 2, 2 }, -- 开启竞技场时间，开服第几周周几
+	fbId = 71, -- 自由赛副本ID
+	sid = { 1132, 1133, 1134 }, -- 自由赛场景ID， 多个随机一个
+	sceneId = 0, -- 自由赛报名场景ID
+	zysTime = 1800, -- 自由赛持续时间(秒)
+	zysPkTime = 132, -- 自由赛PK持续时间(秒)
+	zysPkPos = { {4, 14}, {31, 14} }, -- 自由赛PK两个玩家的位置
+	zysRyAward = { 100, 50 }, -- 自由赛胜利和失败获得的荣誉值
+	zysJfAward = { 10, 0 }, -- 自由赛胜利和失败获得的积分
+	zysWeekDays = { 2, 4 }, -- 两场自由赛分别是周几
+	zysCountDown = 10, -- 自由赛倒计时(秒)
+	zysUnusualTime = 60, -- 自由赛PK没有正常退出要等多久才能重新报名(秒)
+	zysRyLimit = 10, -- 超过多少场不会再获得荣誉
+	buffGroup = 150,  -- 进入后添加buff的的分组，一般不用改
+	zysBuff = {
+		{ type = 17, value = 5000, times=135, interval=1 },
+		{ type = 18, value = 2, times=135, interval=1 },
+	}, -- 开始比赛后玩家增加的buff
+	zysPetBuff = {
+		{ type = 17, value = 5000, times=135, interval=1 },
+		{ type = 18, value = 2, times=135, interval=1 },
+	}, -- 开始比赛后伙伴增加的buff
+	zbsFubenId = 72, -- 争霸赛副本ID
+	zbsSceneId = 1135, -- 争霸赛场景ID
+	matchPoint = 30, -- 积分相差几分匹配成功
+	matchDelay = 30, -- 延时多久再检查匹配(秒)
+	zbsNPlayer = 16, -- 争霸赛人数，
+	zbsTime = 1800, -- 争霸赛持续时间
+	zbsPkTime = 180, -- 争霸赛PK时间
+	zbsCountDown = 20, -- 争霸赛倒计时(秒)
+	zbsBuff = {
+		{ type = 17, value = 5000, times=187, interval=1 },
+		{ type = 18, value = 5, times=187, interval=1 },
+	}, -- 开始比赛后玩家增加的buff
+	zbsPetBuff = {
+		{ type = 17, value = 5000, times=187, interval=1 },
+		{ type = 18, value = 5, times=187, interval=1 },
+	}, -- 开始比赛后伙伴增加的buff
+	ljxwCount = 50, -- 历届仙王个数
+	zbsPos = {	-- 争霸赛4个擂台的位置
+		{ {65, 51}, {76, 51} },
+		{ {46, 30}, {57, 30} },
+		{ {110, 60}, {121, 60}},
+		{ {82, 75}, {93, 75} },
+		{ {17, 45}, {28, 45} },
+	},
+	zbsViewerPos = { -- 争霸赛观众位置
+		{ 14, 40 },
+		{ 44, 24 },
+		{ 78, 71 },
+		{ 107, 55 },
+	},
+	zbsInfos = { -- 争霸赛每一轮相关信息
+		{
+			-- 第一轮
+			nplayer = 8, -- 每次PK的玩家人数
+			nsub = 2, -- 分多少次
+			states = { -- 每一轮的状态改变的时间
+				{ stype = 1, time = { 20, 10, 0 }, tips = Lang.ScriptTips.jjc021, countdown = 300 },	-- 准备
+				{ stype = 2, sub = 1, time = { 20, 15, 0 }, pkidx = 1, tips = Lang.ScriptTips.jjc022, countdown = 180 },	-- 开始1
+				{ stype = 3, sub = 1, time = { 20, 18, 0 }, pkidx = 1, countdown = 0 },	-- 结束1
+				{ stype = 2, sub = 2, time = { 20, 18, 0 }, pkidx = 2, countdown = 180 },	-- 开始2
+				{ stype = 3, sub = 2, time = { 20, 21, 0 }, pkidx = 2, countdown = 3 },	-- 结束2
+			},
+
+			betXb = 2500, -- 下注需要的贝币
+			betWinXb = 10000, -- 下注胜利赢得的贝币(玩家增加的身价也是这个)
+		},
+		{
+			nplayer = 8, -- 每次PK的玩家人数
+			nsub = 1, -- 分多少次
+			-- 第二轮
+			states = { -- 每一轮的状态改变的时间
+				{ stype = 1, time = { 20, 21, 3 }, tips = Lang.ScriptTips.jjc023, countdown = 117 },	-- 准备
+				{ stype = 2, time = { 20, 23, 0 }, pkidx = 3, tips = Lang.ScriptTips.jjc024, countdown = 180 },	-- 开始
+				{ stype = 3, time = { 20, 26, 0 }, pkidx = 3, countdown = 3 },	-- 结束
+			},
+
+			betXb = 5000, -- 下注需要的贝币
+			betWinXb = 30000, -- 下注胜利赢得的贝币(玩家增加的身价也是这个)
+		},
+		{
+			-- 第三轮
+			nplayer = 4, -- 每次PK的玩家人数
+			nsub = 1, -- 分多少次
+			states = { -- 每一轮的状态改变的时间
+				{ stype = 1, time = { 20, 26, 3 }, tips = Lang.ScriptTips.jjc025, countdown = 117 },	-- 准备
+				{ stype = 2, time = { 20, 28, 0 }, pkidx = 4, tips = Lang.ScriptTips.jjc026, countdown = 180 },	-- 开始
+				{ stype = 3, time = { 20, 31, 0 }, pkidx = 4, countdown = 3 },	-- 结束
+			},
+
+			betXb = 7500, -- 下注需要的贝币
+			betWinXb = 60000, -- 下注胜利赢得的贝币(玩家增加的身价也是这个)
+		},
+		{
+			-- 第四轮
+			nplayer = 2, -- 每次PK的玩家人数
+			nsub = 1, -- 分多少次
+			states = { -- 每一轮的状态改变的时间
+				{ stype = 1, time = { 20, 31, 3 }, tips = Lang.ScriptTips.jjc027, countdown = 117 },	-- 准备
+				{ stype = 2, time = { 20, 33, 0 }, pkidx = 5, tips = Lang.ScriptTips.jjc028, countdown = 180 },	-- 开始
+				{ stype = 3, time = { 20, 36, 0 }, pkidx = 5, countdown = 0 },	-- 结束
+			},
+
+			betXb = 10000, -- 下注需要的贝币
+			betWinXb = 120000, -- 下注胜利赢得的贝币(玩家增加的身价也是这个)
+		},
+	},
+	freeTotalAward = 10, --参加自由赛多少场才能领取奖励
+	flowerCD = 120,	--送鲜花cd时间
+	flowerTimes = 5,	--送鲜花次数
+	eggCD = 120,	--丢鸡蛋cd时间
+	eggTimes = 5,	--丢鸡蛋cd次数
+	addExp = 620, --增加经验的系数，这个系数要和场景里配的一致(除以10000的系数)
+	addRootExp = 8000, --增加真气，这个系数要和场景里配的一致
+	Bet = {
+		{cost = 2500, award = 10000},
+		{cost = 5000, award = 30000},
+		{cost = 7500, award = 60000},
+		{cost = 10000, award = 120000},
+	},
+	--xbAwards = 			-- 贝币奖励
+	--{
+		--{ 0, 0 , 30000},		-- 表示排名1000名以外的玩家可获得的贝币奖励为3000
+		--{ 1, 1 , 300000 },	-- 表示排名1到1的玩家获得的贝币为300000
+		--{ 2, 2 , 250000 },
+		--{ 3, 3 , 242000 },
+	--},
+	swAwards = 			-- 荣誉奖励
+	{
+		{0, 	0, 	2600		},		--表示排名1000名以外的玩家获得的威望为400
+		{1,		1,	10000	},	-- 表示排名1到1的玩家获得的威望为20000
+		{2,		2,	9000	},
+		{3,		3,	8000	},
+		{4,		16,	7000	},
+		{17,		32,	6000	},
+		{33,		64,	5500	},
+		{65,		100,	5000	},
+		{101,		150,	4800	},
+		{151,		200,	4600	},
+		{201,		250,	4400	},
+		{251,		300,	4200	},
+		{301,		350,	4000	},
+		{351,		400,	3800	},
+		{401,		450,	3600	},
+		{451,		500,	3400	},
+		{501,		550,	3200	},
+		{551,		600,	3000	},
+		{601,		1000,	2800	},
+	
+	},
+	feast = {
+		id = 598,				--盛宴的ID
+		livetime = 60,		--盛宴生存时间
+		addExp = 1000, --增加经验的系数，这个系数要和场景里配的一致(除以10000的系数)
+		addRootExp = 10000, --增加真气，这个系数要和场景里配的一致
+		refresh = {
+--{x1,x2,y1,y2}
+--Param int posX1:坐标范围的x起始坐标
+--Param int posX2:坐标范围的x终止坐标,posx2必须大于等于posx1，否则产生不了正确的怪物
+--Param int posY:y坐标， 这3个值表示在x1-x2的水平线上随机位置产生N个怪物
+			{38,38,38,38},
+			{94,94,40,40},
+			{100,100,67,67},
+			{46,46,58,58},
+			{62,62,65,65},
+		},
+	},
+	zbsAwards = 			-- 争霸赛奖励
+	{
+
+		{1,		1,	58296, 16	},	-- 表示排名1到1的玩家获得的威望为20000
+		{2,		2,	58296, 9	},
+		{3,		4,	58296, 6	},
+		{5,		8,	58296, 4	},
+		{9,		16,	58296, 2	},
+	},
+}

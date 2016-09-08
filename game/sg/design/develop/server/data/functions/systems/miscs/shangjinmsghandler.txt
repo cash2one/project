@@ -1,0 +1,127 @@
+﻿--#include "data\language\LangCode.txt" once   --语言包
+--#include "data\functions\Tasks\ShangJin\ShangJinSet.txt" once
+
+-- 赏金小游戏开始消息
+MiscsImplement.ShangJinGameStart = function(sysarg, msgid, packet)
+local fbprt = LActor.getFubenPrt(sysarg)
+	local var = Fuben.getDyanmicVar(fbprt)
+	local Hfuben = Fuben.getFubenHandle(fbprt)
+	--print("ShangJinGameStart1")
+	if var.gametime == nil then return end
+	--print("ShangJinGameStart2")
+	Fuben.SetFubenMonTime(Hfuben,var.gametime)
+	LActor.SendAndChangeCaleValue(sysarg,caleMonTime,var.gametime,false)
+	Fuben.SetFubenTime(Hfuben,var.gametime + 10) --需要设置游戏时间
+	LActor.SendAndChangeCaleValue(sysarg,caleFubenTime,0,false)
+
+	var.shangjin_cur_pet = nil
+	local cur_pet = LActor.petGetBattlePetPtr(sysarg)
+	if cur_pet ~= nil then
+		var.shangjin_cur_pet = LActor.petGetCurrId(sysarg)
+		LActor.petCallBack(sysarg, false)
+	end
+end
+
+
+MiscsImplement.ShangJinOver = function (sysarg, msgid, packet)
+	local hfb =	LActor.getFubenHandle(sysarg)
+	local pfb = Fuben.getFubenPtr(hfb)
+	local var = Fuben.getDyanmicVar(pfb)
+	local fbid = LActor.getFubenId(sysarg)
+	if fbid ~= ShangJinSet.Fbid then return end
+	if var.ShJMonStep == nil then return end
+
+	if var.ShJGameStart == nil or var.ShJGameStart ~= 1 then return end -- 赏金游戏没有开始
+	
+	LActor.enterScene(sysarg,ShangJinSet.Scene,ShangJinSet.nx,ShangJinSet.ny)
+
+	var.ShJGameStart = 0
+			
+	local bindCoin = DataPack.readInt(packet)		-- 获得的仙币
+	local coin = DataPack.readInt(packet)			-- 获得的银两
+
+	if coin == nil or bindCoin == nil or coin > 7000 or bindCoin > 7000 then -- 错误数据
+		return 
+	end
+
+	if coin > 0 then
+		LActor.changeMoney(sysarg, mtCoin, coin, 1, true, "shangjin", "gamereward")
+		LActor.SendAndChangeCaleValue(sysarg, caleCoin, coin)
+	end
+
+	if bindCoin > 0 then
+		LActor.changeMoney(sysarg, mtBindCoin, bindCoin, 1, true, "shangjin", "gamereward")
+		LActor.SendAndChangeCaleValue(sysarg, caleBindCoin, bindCoin)
+	end
+	
+	for i=1,#ShangJinMonster do
+		if ShangJinMonster[i].bossstep == var.ShJMonStep + 1 then
+			if ShangJinMonster[i].bboss == "false" then
+				local hScene = LActor.getSceneHandle(sysarg)
+				Fuben.SetFubenTime(hfb,ShangJinSet.LimitTime[var.ShJMonStep + 1]) 
+				LActor.SendAndChangeCaleValue(sysarg,caleFubenTime,ShangJinSet.LimitTime[var.ShJMonStep + 1],false)
+				Fuben.createMonsters(hScene, ShangJinMonster[i].monsterId, ShangJinMonster[i].posX1, ShangJinMonster[i].posX2, ShangJinMonster[i].posY1, ShangJinMonster[i].posY2, ShangJinMonster[i].nCount,0)
+				--print("shangjing..createmonster"..var.ShJMonStep)
+			end
+		end
+	end
+
+	 if var.ShJMonStep == 10 then
+		LActor.triggerAchieveEvent( sysarg, 46, ShangJinSet.Fbid ) --
+		LActor.exitFuben(sysarg)
+	end
+
+	if var.shangjin_cur_pet ~= nil then
+		LActor.petBattle(sysarg, var.shangjin_cur_pet)
+	end
+end
+
+-- 重新登录赏金副本的处理
+EventCallDispatcher.ShangJinRelogin = function(sysarg, hfb, way)
+	--if way ~= efwRelogin then return end -- 只处理重新登录
+	if way ~= 2 then return end -- 只处理重新登录
+
+	local hfb =	LActor.getFubenHandle(sysarg)
+	local pfb = Fuben.getFubenPtr(hfb)
+	local var = Fuben.getDyanmicVar(pfb)
+	if var == nil then return end
+
+	if var.ShJGameStart == nil or var.ShJGameStart ~= 1 then return end -- 赏金小游戏没有开始
+
+	var.ShJGameStart = 0
+
+	if var.ShJMonStep == nil then return end
+
+	--最后一波把玩家传出去
+	if var.ShJMonStep == 10 then
+		LActor.triggerAchieveEvent( sysarg, 46, ShangJinSet.Fbid ) --
+		LActor.exitFuben(sysarg)
+		return 
+	end
+
+	-- LActor.enterScene(sysarg,ShangJinSet.Scene,ShangJinSet.nx,ShangJinSet.ny)
+	-- System.telportSceneDelay(sysarg, ShangJinSet.Scene, ShangJinSet.nx, ShangJinSet.ny, 500)
+
+end
+
+-- 退出赏金副本的处理
+EventCallDispatcher.ShangJinLogout = function(sysarg, hfb, way)
+	--if way ~= xfwLogout then return end -- 只处理下线离开副本的情况
+	if way ~= 2 then return end -- 只处理下线离开副本的情况
+	
+	local hfb =	LActor.getFubenHandle(sysarg)
+	local pfb = Fuben.getFubenPtr(hfb)
+	local var = Fuben.getDyanmicVar(pfb)
+	if var == nil then return end
+
+	if var.ShJGameStart ~= nil and var.ShJGameStart == 1 then
+		-- 接金币游戏时退出游戏则回到场景起点
+		LActor.setIntProperty(sysarg, PROP_ENTITY_POSX, ShangJinSet.nx)
+		LActor.setIntProperty(sysarg, PROP_ENTITY_POSY, ShangJinSet.ny)
+	end
+end
+
+MiscsImplement.registerMsgHandler(LogicCmd.miscSys.sub.cShangJinOver, MiscsImplement.ShangJinOver)
+MiscsImplement.registerMsgHandler(LogicCmd.miscSys.sub.cShangJinGameStart, MiscsImplement.ShangJinGameStart)
+-- EventCallDispatcher.registerFubenEnter(ShangJinSet.Fbid, EventCallDispatcher.ShangJinRelogin)	-- 赏金重新登陆处理
+-- EventCallDispatcher.registerFubenExit(ShangJinSet.Fbid, EventCallDispatcher.ShangJinLogout)		-- 赏金登出处理

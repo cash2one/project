@@ -1,0 +1,133 @@
+--#include "..\..\language\LangCode.txt" once
+
+TianYuanConfig = 
+{
+	NOTGETAWARD= {0},--轩辕战第一名的宗门，一周中能不领取的奖励 日常奖励 0-6
+	NOTICEPOINTTIEM = 10,--	轩辕之战 在活动开启的时候 多久广播一次数据 单位秒
+	LEVEL = 31,
+	FBID = 13,  --副本id
+	MAPX = 4,--玩家进入副本的坐标
+	MAPY = 21,
+	SCENEID = 93,  --战斗场景
+	KILLSCORE = 5, 	--杀人者分数
+	BOSSSCORE = 100, --杀boss个人分数
+	BOSSGUILDSCORE = 100, --杀boss仙踪加的分数
+	BOSSSHARESCORE = 20, --杀boss共享者分数
+	CLEARMAPID = {93},  --活动结束清除人物场景ID1 
+	TIANYUANMAPID = {3}, --活动结束后那些场景属于天元城主
+	--ACTTIME = 60 * 30 * 2 * 12, 		--设置副本剩余时间
+	ACTTIME = 60 * 30, 		--设置副本剩余时间
+	RANKCOUNT = 1000, --积分表最大数量
+	RETURNMAPID = 6, --返回的地图idf
+	RETURNMAPX = 62, --返回地图的x坐标
+	RETURNMAPY = 48, --返回地图的y坐标
+	STONE = 20, --灵石数量
+	STATUENPCSCENE = 6,--雕像所在场景
+	STATUENPCX = 98, --雕像所在的x
+	STATUENPCY = 70, --雕像所在的Y
+	CHENGZHUNPCID = 627, --轩辕城城主npcid
+	STARTTIME = "2012-06-03 19:30:00", --天元开始时间
+	GETTIME = "2012-06-04 00:00:00", --领主结束领奖时间
+	GETITEMDIFF = 4*3600, --到结束领奖时间的秒数,超过后不可以领奖
+	TITLEID	  = 27, -- 天元城主称号
+	MODEL = {--雕像变化
+				{
+				  job=1,sex=0,modelid=2121,
+				},
+				{
+				  job=1,sex=1,modelid=2121,
+				},
+				{
+				  job=2,sex=0,modelid=2122,
+				},
+				{
+				  job=2,sex=1,modelid=2122,
+				},
+				{
+				  job=3,sex=0,modelid=2123,
+				},
+				{
+				  job=3,sex=1,modelid=2123,
+				},
+				{
+				  job=4,sex=0,modelid=2124,
+				},
+				{
+				  job=4,sex=1,modelid=2124,
+				},
+	},--3职业,2性别
+	punishment_time = 60,
+	deathScore = 1, -- 玩家死亡获得的积分
+	--刷新的boss,因为要随机区域,所以独立出来
+	refreshNpc=
+	{
+		--小boss
+		[826] =
+		{	id=826,
+			time=30,	
+			firstTime=0,
+			entityid=826,
+			entityLevel=1,
+			areas=
+			{
+				mapx1=112,	
+				mapx2=112,
+				mapy1=28,
+				mapy2=28,
+			},
+		},
+		[827] =
+		{	id=827,
+			time=30,	
+			firstTime=0,
+			entityid=827,
+			entityLevel=1,
+			areas=
+			{
+				mapx1=18,	
+				mapx2=18,
+				mapy1=77,
+				mapy2=77,
+			},
+		},
+		--大boss
+		[828] =
+		{	id=828,
+			time=20,	
+			firstTime=0,
+			entityid=828,
+			entityLevel=1,
+			areas=
+			{
+				mapx1=57,	
+				mapx2=57,
+				mapy1=47,
+				mapy2=47,
+			},
+		},
+
+	},
+}
+--怪物积分表 
+TianYuanMonsterPoint = {--monsterPoint 杀死怪物获得的积分 sharePoint 周围玩家共享人数 monsterId怪物ID  monsterName怪物名称
+	{monsterId = 821, monsterPoint = 2,  sharePoint = 0, bisboss = "false"},
+	{monsterId = 822, monsterPoint = 2,  sharePoint = 0, bisboss = "false"},
+	{monsterId = 823, monsterPoint = 2,  sharePoint = 0, bisboss = "false"},
+	{monsterId = 824, monsterPoint = 10,  sharePoint = 0, bisboss = "false"},
+	{monsterId = 825, monsterPoint = 10,  sharePoint = 0, bisboss = "false"}, 
+	{monsterId = 826, monsterPoint = 50,  sharePoint = 0, bisboss = "false"},
+	{monsterId = 827, monsterPoint = 50, sharePoint = 0, bisboss = "false"},
+	{monsterId = 828, monsterPoint = 200,sharePoint = 0,bisboss = "true"},
+}
+
+TianYuanBossAttac =
+{
+	826,827,828,
+}
+
+TianYuanMonsterRankPoint = 
+{
+	[826] = { interval = 1 , allpoint = 20 , count = 20 },-- 小boss积分规则 count 表示对boss 伤害前20名的玩家, allpoint 击杀boss 排行玩家总共积分 ，每一个名次递减的积分
+	[827] = { interval = 1 , allpoint = 20 , count = 20 },-- 小boss积分规则 count 表示对boss 伤害前20名的玩家, allpoint 击杀boss 排行玩家总共积分 ，每一个名次递减的积分
+	[828] = { interval = 2 , allpoint = 40 , count = 20 },-- 大boss积分规则 count 表示对boss 伤害前20名的玩家, allpoint 击杀boss 排行玩家总共积分 ，每一个名次递减的积分
+}

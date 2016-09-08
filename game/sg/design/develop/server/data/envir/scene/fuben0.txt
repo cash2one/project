@@ -1,0 +1,39 @@
+﻿{
+	--副本id
+	--副本id如果是0，表示是常规副本
+	fbid = 0,
+	--副本的适合等级(推荐等级)，
+	recommandLevel = 20,
+	--这个副本需要用到的场景列表
+	
+	caleType = {}, 
+	--caleDes = { caletype = 4 , calestring = "采集上限",} ,
+	--activeid : 1表示采集蟠桃,2表示仙灵封印(默认每个副本为1,用于显示统计窗口,当2个副本时)
+	
+	
+	scenes =
+	{	
+--#include "scene0.txt"	--场景0是测试场景，在游戏中是不出现的，在副本里，如果指定的场景id不存在，默认就会进入副本的第一个场景，所以场景0不放到第一位置
+--#include "scene1.txt"
+--#include "scene2.txt"
+--#include "scene3.txt"
+--#include "scene4.txt"
+--#include "scene5.txt"
+--#include "scene6.txt"
+--#include "scene7.txt"
+--#include "scene8.txt"
+--#include "scene9.txt"
+--#include "scene10.txt"
+--#include "scene11.txt"
+--#include "scene12.txt"
+--#include "scene13.txt"
+--#include "scene14.txt"
+--#include "scene15.txt"
+--#include "scene16.txt"
+--#include "scene17.txt"
+--#include "scene18.txt"
+--#include "scene19.txt"
+--#include "scene20.txt"
+--#include "scene21.txt"
+	},
+},

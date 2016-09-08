@@ -1,0 +1,140 @@
+﻿--#include "data\functions\Tasks\CrossSystem\CrossSet.txt" once
+--#include "data\functions\GlobalDefine.txt" once
+----#include "data\functions\miscfunc.txt"  once
+
+MonAllKilledDispatcher.CroessKillAllMonster = function(sceneId, scenePtr, flag, monster)
+	--print("CroessKillAllMonster")
+	--获得玩家
+	local players = LuaHelp.getSceneActorList(monster)
+	if players == nil or #players < 1 then return end
+	local sysarg = players[1]
+	if sysarg == nil then return end
+
+	local FBptr = Fuben.getSceneFuben(scenePtr)
+	local hfb = Fuben.getFubenHandle(FBptr)
+	if FBptr == nil then return end
+
+	-- 根据副本ID得到是那一阶的渡劫
+	local coresspos = 0
+	for i = 1 ,#CrossSet  do
+		if CrossSet[i].fbId == Fuben.getFubenIdbyFuBenPtr(FBptr) then
+			coresspos = i
+			break
+		end
+	end
+
+	--print("coresspos:"..coresspos)
+
+	if coresspos < 1 or CrossSet[coresspos] == nil then return end
+
+	--计算多少星
+	local gametime = Fuben.GetFubenGameTime(FBptr)
+	local start = 0
+	if gametime > CrossSet[coresspos].threeStarTime then
+		start = 4
+	elseif gametime > CrossSet[coresspos].twoStarTime then
+		start = 3
+	elseif gametime > CrossSet[coresspos].oneStarTime then
+		start = 2
+	elseif gametime > CrossSet[coresspos].noStarTime then
+		start = 1
+	end
+
+	-- start = 4 -- 测试
+	
+	if start < 1 then return end -- 没有星级，渡劫失败，直接返回
+
+	Fuben.SetFubenGameTime(hfb,0)
+
+	local firstcross = true
+	local nstar = LActor.GetCrossStart(sysarg,coresspos)
+	if nstar > 0 then
+		firstcross = false
+	else
+		LActor.triggerAchieveEvent(sysarg, 10, coresspos)  -- 第一次则给予渡劫成就
+	end
+	LActor.AddCrossList(sysarg,coresspos,start)
+	--人物加buff和称号,后面加上
+	--if CrossSet[coresspos].bufftype > 0 then
+		--LActor.addBuff(sysarg,CrossSet[coresspos].bufftype,-1, CrossSet[coresspos].buffvalue, CrossSet[coresspos].bufftimes, CroessSet[coresspos].interval, CroessSet[coresspos].buffname, true) --添加buff
+	--end
+	if CrossSet[coresspos].titleId > 0 then
+		LActor.GiveTitle(sysarg,CrossSet[coresspos].titleId, -1, true)
+	end
+	if start == 4 and LActor.IsCrossGiveAchieve(sysarg,coresspos) then -- 4表示3星，这是要判断是否全部都是3星
+		local step = math.floor((coresspos-1)/9) + 1 --得到第几个渡劫
+		--print("step:"..step)
+		LActor.triggerAchieveEvent(sysarg, 48, step) 
+	end
+
+	-------------------------------------------------------log
+
+	local allcount = LActor.GetCrossStarCount(sysarg)
+	local jingjie = allcount / 9
+	local jieduan = allcount % 9
+	jingjie = math.floor(jingjie)
+	jieduan = math.floor(jieduan)
+		
+	System.logCounter(LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), "dujie", "", "", "fight", "success", tostring(jingjie), tostring(jieduan), "", lfBI)
+
+	-------------------------------------------------------
+
+	--客户端处理成谈一个箱子
+	local npack = DataPack.allocPacket(sysarg,139,42)  --申请一个数据包
+	if npack == nil then return end
+	DataPack.writeInt(npack, coresspos)
+	DataPack.writeInt(npack, start)
+	if firstcross then--是第一次渡劫
+		DataPack.writeInt(npack,1)
+	else
+		DataPack.writeInt(npack,0)
+	end
+	DataPack.flush(npack)
+
+
+	--发一条消息确认退出游戏
+
+	--从炼气四阶开始，成功渡劫的玩家发世界公告
+	if firstcross and coresspos >= 8 then
+		local zy = LActor.getIntProperty(sysarg,PROP_CAMP)
+		local name = LActor.getName(sysarg)
+		local tipmsg = string.format(Lang.TaskTalk.cross005, CampColor[zy], CampShortName[zy], name, CrossSet[coresspos].name)
+		System.broadcastTipmsg( tipmsg, ttScreenCenter )
+		--System.broadcastTipmsg( tipmsg..Lang.TaskTalk.cross006, ttHearsay )
+	end
+
+	--首次通关奖励,主要是外网有数据了,所以用这种坑爹写法
+	--[[local iffirstreward = false
+	--print("MonAllKilledDispatcher.CroessKillAllMonster coresspos:"..coresspos)
+	if CrossSet[coresspos].awardMoneyType ~= nil then
+		local var = LActor.getStaticVar(sysarg)
+		if var.coressprocess == nil then 
+			var.coressprocess = {}
+		end
+		local processindex = math.floor((coresspos - 1) / 32) + 1
+		local tmppos = coresspos - (processindex - 1) * 32 - 1
+		if var.coressprocess[processindex] == nil then var.coressprocess[processindex] = 0 end
+		if not System.bitOPMask(var.coressprocess[processindex], tmppos) then
+			iffirstreward = true
+			var.coressprocess[processindex] = System.bitOpSetMask(var.coressprocess[processindex], tmppos, true)
+		end
+	end
+	if iffirstreward then
+		--print("MonAllKilledDispatcher.CroessKillAllMonster reward coresspos:"..coresspos)
+		local effects = {} -- 特效项
+		local effect = {} -- 特效
+		effect.type = 2
+		effect.id = CrossSet[coresspos].awardMoneyType
+		effect.count = CrossSet[coresspos].awardMoneyNum
+		effects[#effects+1] = effect
+		MiscFunc.PlayItemEffect(sysarg, 4, effects)
+		LActor.changeMoney(sysarg, CrossSet[coresspos].awardMoneyType, CrossSet[coresspos].awardMoneyNum, 1, true, "dujie", "firstcross_"..coresspos.."_award")
+	end]]
+
+	LActor.onAcTivityEvent(sysarg, 3, coresspos, 0) --开服活动渡劫监听
+end
+
+for i = 1 ,#CrossSet  do
+	--print("registercross"..CrossSet[i].scene)
+	MonAllKilledDispatcher.register( CrossSet[i].scene, MonAllKilledDispatcher.CroessKillAllMonster )
+end

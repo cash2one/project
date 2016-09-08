@@ -1,0 +1,1256 @@
+-- 组队副本相关处理
+
+--#include "data\config\team\teamfuben.txt" once
+--#include "data\config\task\TianYuanConfig.txt" once
+--#include "data\functions\miscfunc.txt" once
+--#include "data\functions\fubennpcfunc\onenterfubenfunc.txt" once
+--#include "data\envir\fuben.txt" once
+
+TeamFbFunc = {}
+
+TeamFbFunc.RankNames = {}
+local function  GetCurrentDaySec()
+    local hour,minute,second = 0,0,0
+    hour, minute, second = System.getTime(hour, minute, second)
+    return hour * 60 *60 + minute * 60 + second
+end
+
+
+-- 初始化
+TeamFbFunc.OnInit = function()
+	local var_sys_d = System.getDyanmicVar()
+	for i=1,#TeamFuben.fubens do
+		TeamFbFunc.RankNames[i] = "recruit"..i
+	end
+end
+
+-- 结束
+TeamFbFunc.OnFina = function()
+end
+
+TeamFbFunc.getTeamFigth = function ( teamid )
+	local teamptr = TeamFun.getTeam(teamid)
+	local sumfigth = 0
+	if teamptr ~= nil then
+    	local members = TeamFun.getMemberList(teamptr)
+		if members ~= nil then
+			for j = 1,table.getn(members) do
+				local memptr = members[j]
+    			local ptr = TeamFun.getMemberActor(memptr)
+    			if ptr ~= nil then
+    				sumfigth = sumfigth + tonumber(LActor.getIntProperty(ptr, PROP_ACTOR_FIGHT_VALUE))		 
+			    end
+			end
+	    end
+    end
+	return sumfigth
+end
+-- 获取招募信息
+TeamFbFunc[1] = function(sysarg, dp)
+	--print("请问获取招募信息")
+
+	local idx = DataPack.readInt(dp) -- 第几个副本
+	--print("idx>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>:"..idx)
+	--local npage = DataPack.readInt(dp) -- 第几页
+	local rank = TeamFun.getRecruitList(idx-1) 
+	if rank == nil then
+		print("team fb rank is nil")
+		return
+	end
+
+	local sys_var = System.getStaticVar()
+
+    local count = TeamFun.getRecruitCount(rank)
+
+    if count == 0 then
+    	--print("将全局变量置空")
+    	sys_var.teamfblist = nil
+    end
+    local npack = DataPack.allocPacket(sysarg,154,1)
+    DataPack.writeInt(npack, idx)
+    DataPack.writeInt(npack, 1)
+    DataPack.writeInt(npack, 1)
+
+    local team_table = {}
+    for i = 0 , count - 1 do
+    	local id = TeamFun.getRecruitItem(rank, i)
+    	local teamptr = TeamFun.getTeam(id) 
+    	if teamptr ~= nil then
+    		local nActor = TeamFun.getTeamCaptain(teamptr)
+    		if nActor ~= nil and nActor ~= sysarg then
+    			if LActor.getSceneId(nActor) == LActor.getSceneId( sysarg ) then
+	    			local temp = {}
+	    			temp.teamid = id
+	    			temp.copyid = 0
+	    			temp.capname = LActor.getName(nActor)
+	    			temp.vocation = LActor.getIntProperty(nActor, PROP_VOCATION)
+	    			temp.sex = LActor.getIntProperty(nActor, PROP_SEX)
+	    			temp.nmember = TeamFun.getMemberCount(teamptr)
+	    			temp.level = LActor.getLevel(nActor)
+	    			temp.teamfigth = 0
+	    			temp.vip = LActor.getVIPLevel(nActor)
+	    			table.insert(team_table,temp)
+	    		end
+    		end
+    	end
+    end
+    local send_table = {}
+    local team_count = 10
+    local team_len = #team_table
+    if team_count > 10 then
+	    while (team_count > 0)
+	    do
+	    	team_len = #team_table
+	    	local nradom_num = System.getRandomNumber(team_len)
+	    	table.insert(send_table,team_table[nradom_num])
+	    	table.remove(team_table,nradom_num)
+	    	team_count = team_count -1
+	    end
+	    DataPack.writeInt(npack, team_count)
+	    for k , v in pairs ( send_table) do
+	    	if v.teamid > 0 then
+	    		DataPack.writeUInt(npack, v.teamid)
+	    		DataPack.writeInt(npack, 0)
+	    		DataPack.writeString(npack, v.capname)
+	    		DataPack.writeInt(npack, v.vocation)
+	    		DataPack.writeInt(npack, v.sex)
+	    		DataPack.writeInt(npack, v.nmember)
+	    		DataPack.writeInt(npack, TeamFbFunc.getTeamFigth(v.teamid))
+	    		DataPack.writeInt(npack, v.level)
+	    		DataPack.writeInt(npack, v.vip)
+	    	end
+		end
+	else
+		DataPack.writeInt(npack, team_len)
+		for k , v in pairs ( team_table ) do 
+			if v.teamid > 0 then
+	    		DataPack.writeUInt(npack, v.teamid)
+	    		DataPack.writeInt(npack, 0)
+	    		DataPack.writeString(npack, v.capname)
+	    		DataPack.writeInt(npack, v.vocation)
+	    		DataPack.writeInt(npack, v.sex)
+	    		DataPack.writeInt(npack, v.nmember)
+	    		DataPack.writeInt(npack, TeamFbFunc.getTeamFigth(v.teamid))
+	    		DataPack.writeInt(npack, v.level)
+	    		DataPack.writeInt(npack, v.vip)
+	    	end
+		end
+	end
+	DataPack.flush(npack)
+--[[
+
+    if count > 20 then count = 20 end
+
+	if sys_var.teamfblist == nil then sys_var.teamfblist = {} end
+
+	local npack = DataPack.allocPacket(sysarg,154,1)
+    if npack == nil then return end
+    DataPack.writeInt(npack, idx)
+   -- print("idx======================:"..idx)
+    DataPack.writeInt(npack, 1)
+   -- print("1=================:"..1)
+    DataPack.writeInt(npack, 1)
+   -- print("1=====================:"..1)
+    DataPack.writeInt(npack, count)
+   -- print("count====================:"..count)
+    
+    	for i=0, count-1 do
+    		local capname = ""
+    		local nmember = 0
+    		local vocation = 0
+    		local sex =  0
+    		local id = TeamFun.getRecruitItem(rank, i)
+    		local teamptr = TeamFun.getTeam(id) 
+    		if teamptr == nil then  
+    			TeamFun.removeRecruit(rank,id)
+    		end
+
+    		local sumfigth = 0
+    		if teamptr ~= nil then
+    			local actor = TeamFun.getTeamCaptain(teamptr) 
+    			if actor == nil then return end
+				capname = LActor.getName(actor)
+				vocation = LActor.getIntProperty(actor, PROP_VOCATION)
+				sex = LActor.getIntProperty(actor, PROP_SEX)
+    			nmember = TeamFun.getMemberCount(teamptr) 
+    			--yefeng add
+    			local members = TeamFun.getMemberList(teamptr)
+    			if members ~= nil then
+	    			for j = 1,table.getn(members) do
+	    				local memptr = members[j]
+		    			local ptr = TeamFun.getMemberActor(memptr)
+		    			if ptr ~= nil then
+		    				sumfigth = sumfigth + tonumber(LActor.getIntProperty(ptr, PROP_ACTOR_FIGHT_VALUE))		 
+	    			    end
+	    			end
+    		    end
+    			--yefeng add
+    		else
+    			id = 0
+    		end
+
+    		if sys_var.teamfblist[id] == nil then
+    			--print("有没有进到这里")
+    			sys_var.teamfblist[id] = 0
+    		end
+
+    		DataPack.writeUInt(npack, id)
+    		--print("id=================:"..id)
+    		DataPack.writeInt(npack, sys_var.teamfblist[id])
+
+    		DataPack.writeString(npack, capname)
+    		--print("capname==================:"..capname)
+    		DataPack.writeInt(npack, vocation)
+    		--print("vocation=================:"..vocation)
+    		DataPack.writeInt(npack, sex)
+    		--print("sex==================:"..sex)
+    		DataPack.writeInt(npack, nmember)
+    		--print("nmember====================:"..nmember)
+    		--yefeng add
+    		DataPack.writeInt(npack, tonumber(sumfigth))
+    		--print("tonumber(sumfigth)==================:"..tonumber(sumfigth))
+    		--yefegn add
+		end
+]]
+    
+end
+
+-- 申请入队回应
+TeamFbFunc[2] = function(sysarg, dp)
+	local reqid = DataPack.readInt(dp) -- 申请玩家的ID
+	local ret = DataPack.readByte(dp) -- 结果
+
+	if not TeamFun.isCaptain(sysarg) then -- 不是队长
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.zd015, ttMessage)
+		return
+	end
+
+	local actor = LActor.getActorById(reqid)
+	if actor == nil then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.zd016, ttMessage)
+		return
+	end
+
+	if LActor.getTeamId(actor) > 0 then -- 已有队伍
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.zd017, ttMessage)
+		return
+	end
+
+	if ret == 1 then -- 如果同意，加到队伍中
+		local teamptr = nil
+		local teamid = LActor.getTeamId(sysarg)
+		if teamid > 0 then
+			teamptr = TeamFun.getTeam(teamid) 
+		end
+		if teamptr == nil then -- 一般不会
+			print("teamptr is nil")
+			return 
+		end
+
+		if TeamFun.getMemberCount(teamptr) >= 3 then -- 人数已满 
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.zd014, ttMessage)
+			return
+		end
+
+		LActor.addToTeam(actor, teamid)
+	end
+
+	-- 通知玩家结果
+	local npack = DataPack.allocPacket(actor,154,2)
+    if npack ~= nil then
+    	DataPack.writeByte(npack, ret)
+    	DataPack.flush(npack)
+    end
+
+ 	local teamid = LActor.getTeamId(sysarg)
+    local nTeam = TeamFun.getTeam(teamid)
+	local nCount = TeamFun.getMemberCount(nTeam)
+	if nCount == 3 then
+		local pCaptian = TeamFun.getTeamCaptain(teamid)
+		local nCopyid = TeamFun.getTeamCopyId(teamid)
+		if nCopyid <= 0 then
+			printf("组队副本中 队伍副本id小于等于0")
+			return
+		end
+		EnterCopy( pCaptian,nCopyid)
+	end
+end
+
+-- 发布招募
+TeamFbFunc[3] = function(sysarg, dp)
+	--print("发布招募3")
+	local idx = 1
+	local fbid = 0
+	local teamid = LActor.getTeamId(sysarg)
+	if teamid <= 0 then
+		return
+	end
+
+	if TeamFun.isCaptain(sysarg) == false then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.zd011, ttMessage)
+		return 
+	end
+
+	local sys_var = System.getStaticVar()
+	if sys_var.teamfblist == nil then sys_var.teamfblist = {} end
+
+	if sys_var.teamfblist[teamid] ~= nil then 
+		fbid = sys_var.teamfblist[teamid]
+	end
+
+	if not TeamFbFunc.Recruit(sysarg, idx, teamid,fbid) then 
+		-- 招募失败
+		print("发布招募失败")
+		return 
+	end
+
+	local fbname = ""
+	for i = 1,#TeamFuben.fubens do 
+		if tonumber(fbid) == tonumber(TeamFuben.fubens[i].fbid) then
+			fbname = TeamFuben.fubens[i].fbname
+			break
+		end
+	end
+
+	--local info = TeamFuben.fubens[idx]
+	--local tips = string.format(Lang.ScriptTips.zd022, LActor.getName(sysarg),info.fbname, teamid,idx)
+	local tips = string.format(Lang.ScriptTips.zd022, LActor.getName(sysarg),fbname, teamid,idx-1)
+	--TeamFun.broadcastTeamMsg(sysarg, tips, info.level) 
+--	print(tips)
+	System.broadcastTipmsg(tips, ttChatWindow)
+end
+
+-- 取消招募
+--[[TeamFbFunc[4] = function(sysarg, dp)
+	local idx = DataPack.readInt(dp) -- 第几个副本
+	
+
+	local teamid = LActor.getTeamId(sysarg)
+	if teamid <= 0 then
+		TeamFbFunc.SendRecruitRet(sysarg, idx, 0) 
+		return
+	end
+
+	if not TeamFbFunc.RemoveRecruit(idx, teamid) then
+		TeamFbFunc.SendRecruitRet(sysarg, idx, 0) 
+		return 
+	end
+
+	local teamptr = TeamFun.getTeam(teamid) 
+	if teamptr ~= nil then
+		TeamFun.setRecruitId(teamptr, 0) 
+	end
+
+	TeamFbFunc.SendRecruitRet(sysarg, idx, 1)
+end]]
+
+-- 申请入队
+TeamFbFunc[5] = function(sysarg, dp)
+	if LActor.getTeamId(sysarg) > 0 then -- 已有队伍
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.zd013, ttMessage)
+		return
+	end
+
+	local var = LActor.getStaticVar(sysarg)
+
+	local name = LActor.getName(sysarg)
+	local teamptr = nil
+	local teamid = DataPack.readUInt(dp)	
+	if teamid > 0 then
+		teamptr = TeamFun.getTeam(teamid) 
+	end
+	if var.tick_teamid_sign ~= null and var.tick_teamid_sign == teamid then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.zd025, ttMessage)
+		return
+	end
+ 
+	if teamptr == nil then -- 队伍不存在
+		--print("队伍不存在")
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.zd012, ttMessage)
+		return
+	end
+
+	if TeamFun.getMemberCount(teamptr) >= 3 then -- 人数已满 
+		--print("人数已满")
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.zd014, ttMessage)
+		return
+	end
+
+
+    -- 加到队伍
+    LActor.addToTeam(sysarg, teamid)
+
+	-- 通知玩家结果
+	--[[]]
+
+	local npack = DataPack.allocPacket(sysarg,154,2)
+    if npack ~= nil then
+    	DataPack.writeByte(npack, 1)
+    	DataPack.flush(npack)
+    end
+ 
+end
+
+--[[TeamFbFunc.SendRecruitRet = function(sysarg, idx, ret)
+	-- 通知招募成功
+	local npack = DataPack.allocPacket(sysarg,154,3)
+    if npack ~= nil then
+    	DataPack.writeInt(npack, idx)
+    	DataPack.writeInt(npack, ret)
+    	DataPack.flush(npack)
+    end
+end]]
+
+-- 招募(第几个副本，队伍id)
+TeamFbFunc.Recruit = function(sysarg, idx, teamid,fbid)
+	
+	local sys_var = System.getStaticVar()
+
+	if sys_var.teamfblist == nil then sys_var.teamfblist = {} end
+
+	local teamptr = TeamFun.getTeam(teamid) 
+	if teamptr == nil then
+		print("team ptr is nil")
+		return false
+	end
+
+	local fbname = ""
+	for i = 1,#TeamFuben.fubens do 
+		if tonumber(fbid) == tonumber(TeamFuben.fubens[i].fbid) then
+			fbname = TeamFuben.fubens[i].fbname
+			break
+		end
+	end
+
+	-- 如果之前加入了一个招募副本则先退出
+	if sys_var.teamfblist[teamid] ~= nil then
+		--print("之前已经招募一个副本")
+		local tips = string.format(Lang.ScriptTips.zd022, LActor.getName(sysarg),fbname, teamid,idx-1) 
+		System.broadcastTipmsg(tips, ttChatWindow)
+		return false
+	end
+
+	-- 添加到列表
+	local rank = TeamFun.getRecruitList(idx-1) 
+	if rank == nil then
+		print("team fb rank is nil")
+		return false
+	end
+
+	if TeamFun.getRecruitIdx(rank, teamid) >= 0 then 
+		print("recruit rank item exist")
+		return false
+	end
+
+	if sys_var.teamfblist[teamid] == nil then
+		sys_var.teamfblist[teamid] = fbid
+		--print("传进来的fubenid==============:"..fbid)
+	end
+
+	TeamFun.addRecruit(rank, teamid) 
+
+	TeamFun.setRecruitId(teamptr, idx-1) 
+
+	-- 广播
+
+	return true
+end
+
+-- 移除招募信息
+TeamFbFunc.RemoveRecruit = function(idx, teamid)
+
+	local rank = TeamFun.getRecruitList(idx) 
+	if rank == nil then
+		return false
+	end
+
+	if TeamFun.getRecruitIdx(rank, teamid) < 0 then 
+		--print("TeamFbFunc.RemoveRecruit===========:"..TeamFun.getRecruitIdx(rank, teamid))
+		return false
+	end
+
+	local teamptr = TeamFun.getTeam(teamid) 
+	if teamptr == nil then
+		print("team ptr is nil")
+		return false
+	end
+
+	TeamFun.removeRecruit(rank, teamid) 
+	--print("正确移除招募信息")
+
+	return true
+end
+
+-- 确定创建队伍并招募
+function TeamFbZmConfirm(sysarg, fbid)
+	--print("确定创建队伍并招募")
+	local idx = 1
+	local teamptr = TeamFbFunc.CreateTeam(sysarg, idx,fbid)
+	if teamptr == nil then return end
+
+	local fbname = ""
+	for i = 1,#TeamFuben.fubens do 
+		if tonumber(fbid) == tonumber(TeamFuben.fubens[i].fbid) then
+			fbname = TeamFuben.fubens[i].fbname
+			break
+		end
+	end
+	local teamid = TeamFun.getTeamId(teamptr)
+	local tips = string.format(Lang.ScriptTips.zd022, LActor.getName(sysarg),fbname, teamid,idx - 1)
+	print(tips)
+	System.broadcastTipmsg(tips, ttChatWindow)
+	
+end
+
+-- 取消招募
+function TeamFbZmCancel(sysarg)
+	-- body
+end
+
+-- 队员确认进入
+function TeamFbEnterConfirm(sysarg,fbid, diff)
+	fbid = tonumber(fbid)
+	diff = tonumber(diff)
+	idx = 1
+	local conf = FuBen[fbid]
+	if not conf then 
+		print("teamfuben conf info is nil         "..fbid)
+		return
+	end
+
+	local teamptr = nil
+	local teamid = LActor.getTeamId(sysarg)
+	if teamid > 0 then
+		teamptr = TeamFun.getTeam(teamid) 
+	end
+
+	local members = nil
+	if teamptr ~= nil then
+		members = TeamFun.getMemberList(teamptr) 
+	end
+
+	if members == nil then return end
+
+	TeamFun.setMemberStatus(teamptr, LActor.getActorId(sysarg), 1) 
+
+	local memberCount = table.getn(members)
+	for i = 1, memberCount do
+		local memptr = members[i]
+		if TeamFun.getMemberStatus(memptr) == 0 then -- 未准备好 
+			return
+		end
+	end
+
+	--都准备好了
+	for i = 1, memberCount do
+		local actor = TeamFun.getMemberActor(members[i])
+		if actor ~= nil then
+			if LActor.hasState(actor, esProtection) or LActor.isInFuben(actor) or LActor.getSceneId(actor) == TianYuanConfig.SCENEID then
+				LActor.sendTipmsg(sysarg, Lang.ScriptTips.zd008, ttMessage) -- 通知队长
+				return
+			end
+		end
+	end
+	-- 创建副本
+	local hfb = Fuben.createFuBen(conf.fbid, diff)
+	if hfb == nil then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.f00065, ttMessage)
+		return 
+	end
+	TeamFun.setFubenHdl(teamptr, hfb) 
+
+	local enterFunc = fubenbase.OnEnterCopy[fbid]
+	if enterFunc then
+		enterFunc(sysarg, hfb)
+	end
+	-- 进入副本
+	for i = 1,table.getn(members) do
+		local actor = TeamFun.getMemberActor(members[i]) 
+		local nenter, nadd = Fuben.getEnterFubenInfo(actor, conf.fbid)
+		if actor ~= nil and nenter < (conf.daycount + nadd) then
+			if not enterFunc then
+				LActor.enterFuBen(actor, hfb, -1, -1, -1)
+			end
+			LActor.OnQuestEvent(qtTeamfuben, 0, 1, true, actor)
+			if conf.daycount > 0 then
+				Fuben.changeEnterCount(actor, conf.fbid, 1)
+			end
+			--进入副本时是死亡状态，复活之
+		    	if LActor.isDeath(actor) then 
+		    		LActor.relive(actor)
+		    	end
+			LActor.triggerAchieveEvent(actor, 14, conf.fbid) -- 触发进入副本成就
+
+			System.logCounter(LActor.getActorId(actor), LActor.getAccountName(actor), tostring(LActor.getLevel(actor)), "fuben", "", "userid:"..LActor.getActorId(sysarg), "zudui", tostring(idx), "", "", "", lfBI)
+			System.logCounter( LActor.getActorId(actor), LActor.getAccountName(actor), tostring(LActor.getLevel(actor)) , "fuben" ,""  , tostring(diff) , "copy" , conf.fbname , tostring(fbid) , "start" , "" , lfBI)
+		end
+
+		ActivationTrigger(actor, activation_type[fbid])
+
+		TeamFun.setMemberStatus(teamptr, LActor.getActorId(actor), 0) 
+	end
+
+	-- 移除招募信息
+	TeamFbFunc.RemoveRecruit(idx-1, teamid)
+
+	LActor.cancelMatch(sysarg)
+end
+
+-- 队员取消进入
+function TeamFbEnterCancel(sysarg)
+	local cap = TeamFun.getTeamCaptain(LActor.getTeamId(sysarg))
+	if cap == nil then return end
+	local tips = string.format(Lang.ScriptTips.f00073, LActor.getName(sysarg))
+	LActor.sendTipmsg(cap, tips, ttMessage)
+	LActor.cancelMatch(sysarg)
+end
+
+-- 进入副本
+TeamFbFunc[6] = function(sysarg, dp)
+	local idx = DataPack.readInt(dp)
+	local fbid = DataPack.readInt(dp) -- 第几个副本
+
+	local conf = TeamFuben.fubens
+	local sign = false
+	for i = 1,#conf do 
+		if tonumber(fbid) == tonumber(conf[i].fbid) then
+			conf = TeamFuben.fubens[i]
+			sign = true
+			break
+		end
+	end
+
+	if not sign then
+		print("teamfuben conf info is nil")
+		return
+	end
+
+	local teamptr = nil
+	local teamid = LActor.getTeamId(sysarg)
+	if teamid > 0 then
+		teamptr = TeamFun.getTeam(teamid) 
+	end
+
+	local globalNpc = LActor.getHandle(System.getGlobalNpc())
+
+	if teamptr == nil then -- 没有队伍
+		--print("没有队伍要进来的---------------------------------------------")
+		LActor.messageBox(sysarg,globalNpc,0,Lang.ScriptTips.zd001,Lang.ScriptTips.zd002.."/TeamFbZmConfirm,"..fbid,Lang.ScriptTips.zd003.."/TeamFbZmCancel",nil)
+		return
+	end
+
+	if not TeamFun.isCaptain(sysarg) then -- 不是队长
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.zd004, ttMessage)
+		return
+	end
+
+	-- 各队员的进入条件
+	local actors = LuaHelp.getTeamMemberListByPtr(teamptr)
+	if actors == nil then -- 已经不在队伍中
+		--LActor.sendTipmsg(sysarg, Lang.ScriptTips.zd023, ttMessage)
+		print("getTeamMemberListByPtr return nil ptr")
+		return 
+	end
+
+	local members = TeamFun.getMemberList(teamptr)
+	if #members <2 then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.zd023, ttMessage)
+		return
+	end
+
+	for i = 1,table.getn(actors) do
+		local actor = actors[i]
+		if LActor.getLevel(actor) < conf.level then -- 等级
+			--LActor.sendTipmsg(sysarg, Lang.ScriptTips.zd005, ttMessage)
+			local tips = string.format(Lang.ScriptTips.zd005, LActor.getName(actor))
+			LActor.sendTipmsg(sysarg, tips, ttMessage)
+			return 
+		end
+
+		if conf.daycount > 0 then -- 次数
+			local nenter, nadd = Fuben.getEnterFubenInfo(actor, fbid)
+			if nenter >= conf.daycount + nadd then
+				local tips = string.format(Lang.ScriptTips.zd006, LActor.getName(actor))
+				LActor.sendTipmsg(sysarg, tips, ttMessage)
+				return
+			end
+		end
+
+		if LActor.hasState(actor, esProtection) or LActor.isInFuben(actor) or LActor.getSceneId(actor) == TianYuanConfig.SCENEID then
+			local tips = string.format(Lang.ScriptTips.zd007, conf.fbname)
+			if actor ~= sysarg then
+				LActor.sendTipmsg(actor, tips, ttMessage) -- 通知队员
+			end
+    		LActor.sendTipmsg(sysarg, Lang.ScriptTips.zd008, ttMessage) -- 通知队长
+    		return
+    	end 
+  	end
+
+  	TeamFun.setMemberStatus(teamptr, LActor.getActorId(sysarg), 1) 
+
+	-- 发送确认窗口
+	local tips = string.format( Lang.ScriptTips.f00071,  conf.fbname)
+	for i = 1,table.getn(actors) do
+		local actor = actors[i]
+		if actor ~= sysarg then
+			TeamFun.setMemberStatus(teamptr, LActor.getActorId(actor), 0)
+			LActor.messageBox(actor,globalNpc,0,tips,Lang.ScriptTips.zd002.."/TeamFbEnterConfirm,"..fbid,Lang.ScriptTips.zd003.."/TeamFbEnterCancel","",10, 0, "", 0, 2)
+
+		end
+	end
+end
+
+
+-- 创建队伍
+TeamFbFunc.CreateTeam = function(sysarg, idx,fbid) 
+--	print("------TeamFbFunc.CreateTeam--------",idx,fbid)
+	if LActor.getTeamId(sysarg) > 0 then -- 已有队伍
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.zd009, ttMessage)
+		return
+	end
+
+	-- 创建队伍
+	local teamptr = TeamFun.createTeam(sysarg)
+	if teamptr == nil then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.zd010, ttMessage)
+		return
+	end
+
+	-- TODO: 是否要设置队伍副本ID
+
+	return teamptr
+end
+
+-- 创建队伍
+TeamFbFunc[7] = function(sysarg, dp)
+	local idx = DataPack.readInt(dp) -- 第几个副本
+	local fbid = DataPack.readInt(dp)
+--	print("-111111-qe-----7--")
+	print("fbid---",fbid)
+	local teamptr = TeamFbFunc.CreateTeam(sysarg, idx,fbid)
+	if teamptr == nil then return end
+	local nTeamId = LActor.getTeamId ( sysarg )
+	if nTeamId <= 0 then return end
+	if fbid > 0 then
+		TeamFun.setTeamFubenId(nTeamId,fbid)
+	end
+	-- local fbname = ""
+	-- for i = 1,#TeamFuben.fubens do 
+	-- 	if tonumber(fbid) == tonumber(TeamFuben.fubens[i].fbid) then
+	-- 		fbname = TeamFuben.fubens[i].fbname
+	-- 		break
+	-- 	end
+	-- end
+
+	-- local tips = string.format(Lang.ScriptTips.zd022, LActor.getName(sysarg), fbname,TeamFun.getTeamId(teamptr),idx)
+
+	-- print(tips)
+	-- --print("tips----------------------------:"..tips)
+	-- --TeamFun.broadcastTeamMsg(sysarg, tips, info.level) 
+	-- System.broadcastTipmsg(tips, ttChatWindow)
+end
+
+
+-- 增加组队副本次数
+TeamFbFunc[8] = function(sysarg, dp)
+	local fbid = DataPack.readInt(dp) -- 第几个副本
+	--print("增加组队副本次数============fbid:"..fbid)
+	local conf = TeamFuben.fubens
+	local sign = false
+	for i = 1,#conf do 
+		if tonumber(fbid) == tonumber(conf[i].fbid) then
+			conf = TeamFuben.fubens[i]
+			sign = true
+			break
+		end
+	end
+
+	if not sign then
+		--print("增加组队副本次数teamfuben conf info is nil")
+		return
+	end
+
+	if conf == nil then
+		print("add teamfuben count conf info is nil")
+		return
+	end
+
+	local nenter, nadd = Fuben.getEnterFubenInfo(sysarg, conf.fbid)
+	if nadd > 0 then -- 已经增加过
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.zd018, ttMessage)
+		return
+	end
+
+	-- 消耗物品
+	local itemid = TeamFuben.countItem
+	--print("消耗物品:"..itemid)
+	if LActor.getItemCount(sysarg, itemid) < 1 then
+		local tips = string.format(Lang.ScriptTips.zd019, Item.getItemName(itemid))
+		LActor.sendTipmsg(sysarg, tips, ttMessage)
+		return
+	end
+	LActor.removeItem(sysarg, itemid, 1)
+
+	Fuben.addFubenCount(sysarg, conf.fbid, 1)
+end
+
+--获取队伍信息
+TeamFbFunc[9] = function(sysarg, dp) 
+    --mod  wupeng 队伍id类型修改
+
+	local id = DataPack.readUInt(dp) -- 队伍ID
+	local teamptr = TeamFun.getTeam(id) 
+	if teamptr ~= nil then
+		local npack = DataPack.allocPacket(sysarg,154,9)
+		DataPack.writeInt(npack, id)
+
+		local nmember = TeamFun.getMemberCount(teamptr)
+		DataPack.writeInt(npack, nmember)
+		
+		local isMember = 0
+		local actorId = LActor.getActorId(sysarg)
+		local members = TeamFun.getMemberList(teamptr)
+		local nLeader = TeamFun.getTeamCaptain(teamptr)
+		if members ~= nil then
+			local num = 0
+			for i = 1,table.getn(members) do
+				local memptr = members[i]
+    			local ptr = TeamFun.getMemberActor(memptr)
+    			if ptr ~= nil then
+    				DataPack.writeUint64(npack, LActor.getHandle(ptr))
+    				DataPack.writeInt(npack, LActor.getActorId(ptr))
+    				DataPack.writeString(npack, LActor.getName(ptr))
+    				DataPack.writeInt(npack, LActor.getLevel(ptr))
+    				DataPack.writeInt(npack, LActor.getIntProperty(ptr, PROP_ACTOR_FIGHT_VALUE))
+    				DataPack.writeInt(npack, LActor.getIntProperty(ptr, PROP_SEX))
+    				DataPack.writeInt(npack, LActor.getIntProperty(ptr, PROP_VOCATION))
+    				if nLeader == ptr then
+    					DataPack.writeByte(npack,1)
+    				else
+    					DataPack.writeByte(npack,0)
+    				end
+    				DataPack.writeInt(npack, LActor.getVIPLevel(ptr))
+    				if (LActor.getActorId(ptr) == actorId) then 
+    					isMember = 1
+    				end
+    			else
+    				print("玩家不存在")
+			    end
+			    num = num + 1
+			end
+
+			
+			local leaveData = TeamFun.getLeaveMemberList(teamptr)
+			if leaveData ~= nil then
+				for i = 1, table.getn(leaveData) do
+					local nLevelMenber = leaveData[i]
+					local nActorid = 0
+					local nName =""
+					local nLevel = 0
+					local nFight = 0
+					local nSex = 0
+					local nVocation = 0
+					local nFlag = 0
+					local nVip = 0
+					nName ,nActorid ,  nLevel , nFight ,nSex , nVocation , nFlag , nVip= TeamFun.getLeaveMemberDate(nLevelMenber , nActorid , nLevel , nFight , nSex , nVocation,nFlag,nVip)
+
+					if nFlag == 1 then
+						DataPack.writeUint64(npack, 0)
+	    				DataPack.writeInt(npack, nActorid)
+	    				DataPack.writeString(npack, nName)
+	    				DataPack.writeInt(npack, nLevel)
+	    				DataPack.writeInt(npack, nFight)
+	    				DataPack.writeInt(npack, nSex)
+	    				DataPack.writeInt(npack, nVocation)
+	    				DataPack.writeByte(npack,0)
+	    				DataPack.writeInt(npack, nVip)
+					else
+						print("获取离线玩家数据")
+					end
+				end
+			end
+
+	    end
+	    DataPack.writeChar(npack, isMember)
+		DataPack.flush(npack)
+	end
+end
+--[[
+TeamFbFunc.AutoMatching = function ( sysarg, nCopyId, targetDiff)
+	local rank = TeamFun.getRecruitList(0) 
+	if rank == nil then
+		print("team fb rank is nil")
+		return
+	end
+	local nAutoSuccess = false
+	local count = TeamFun.getRecruitCount(rank)
+	print("当前有多少个匹配的            "..count)
+	for i= 0, count-1 do
+		local teamid = TeamFun.getRecruitItem(rank, i)
+		local teamptr = TeamFun.getTeam(teamid)
+		local fubeid = TeamFun.getTeamCopyId(teamid)
+		print("------3333-------"..nCopyId.."   "..fubeid)
+		if fubeid == nCopyId and teamptr ~= nil then		
+			LActor.exitTeam(sysarg)	--退出原来的一个人的队伍
+			--if TeamFun.getMemberCount(teamptr) < 3 then
+				TeamFbFunc.AddToTeam(sysarg, teamid)
+				local leader = TeamFun.getTeamCaptain(teamptr)
+				if not leader or LActor.getIntProperty(leader, PROP_ACTOR_FIGHT_VALUE) < LActor.getIntProperty(sysarg, PROP_ACTOR_FIGHT_VALUE) then
+					--战力高的当队长
+					TeamFun.setCaptain(sysarg)
+				end
+				nAutoSuccess = true
+				print("加入的队伍id         "..teamid)
+				print("玩家        "..LActor.getName(sysarg))
+				print("匹配成功 加入其它队伍         "..LActor.getTeamId(sysarg).."  "..LActor.getTeamMemberCount(sysarg))
+				break
+			--end
+			
+		end
+	end
+
+	if nAutoSuccess == false then
+
+		-- LActor.sendTipmsg(sysarg,nTips,ttWarmTip)
+
+		local nStaticVar = LActor.getStaticVar( sysarg )
+		nStaticVar.TeamFuben_Auto_Team = 1
+		local teamptr = TeamFun.createTeam(sysarg)
+		if teamptr == nil then
+			print("创建队伍失败")
+			return
+		end
+		local nTeamId = TeamFun.getTeamId(teamptr)
+		if nTeamId <= 0 then
+			print("获取副本失败")
+			return
+		end
+		TeamFun.setTeamFubenId(nTeamId,nCopyId)
+	end
+	local npack = DataPack.allocPacket(sysarg , 154 , 16)
+	DataPack.writeChar(npack , 1)
+	DataPack.writeInt(npack , 0)
+	DataPack.writeString(npack , LActor.getName( player ))
+	DataPack.flush( npack )
+end
+
+---一键匹配副本
+TeamFbFunc[16] = function(sysarg, dp)
+	local nCaptain = TeamFun.isCaptain(sysarg)
+	local nTeamId = LActor.getTeamId(sysarg)
+	if nCaptain == false and nTeamId >0 then
+		print("-------已有队伍不能，且不是队长 不能使用一键组队功能-------")
+		return
+	end
+	local nCopyId = DataPack.readInt(dp)
+	local targetDiff = DataPack.readInt(dp)
+	if nCopyId <= 0 or targetDiff < 0 then
+		return
+	end
+
+	if nTeamId <= 0 or LActor.getTeamMemberCount(sysarg) == 1 then
+		-- 加入到其他队伍
+		print("加入到其他队伍")
+		TeamFbFunc.AutoMatching(sysarg , nCopyId, targetDiff)
+	else
+		print("多人的")
+		-- 设置副本队伍
+		local nTeam = TeamFun.getTeam(nTeamId)
+		local nCount = TeamFun.getMemberCount(nTeam)
+		if nCount >= 3 then
+			 LActor.sendTipmsg( sysarg, "您的队伍已满，无法匹配", ttWarmTip )
+			 return
+		end
+		--检查队伍中的成员是否满足副本要求
+		local fbdata = FuBen[nCopyId]
+		--判断副本人数
+		local minLevel = fbdata.minLevel      --等级
+		local daycount = fbdata.daycount or 0     --当天进入次数
+
+		print("------copy level count-------",minLevel,daycount)
+		players = LuaHelp.getTeamMemberList(sysarg)   --获取队伍玩家列表
+		if players == nil or #players ~= nCount then
+			LActor.sendTipmsg(sysarg,Lang.ScriptTips.f00010,ttDialog)
+			return 
+		end
+		for _, player in pairs(players) do		
+			--  等级判断
+			if minLevel ~= nil and minLevel > 0 then
+				local playerlevel = LActor.getIntProperty(player,PROP_LEVEL)
+				if playerlevel < minLevel then
+					--LActor.sendTipmsg( sysarg, Lang.ScriptTips.f00069, ttDialog )
+					local npack = DataPack.allocPacket(sysarg,154, 16)
+					DataPack.writeChar(npack , 0 )
+					DataPack.writeInt(npack , 1)
+					DataPack.writeString( npack , LActor.getName( player ) )
+					DataPack.flush( npack)
+					return 
+				end
+   			end
+			 -- 副本次数
+			if daycount > 0 then
+			    	local enterCount, addCount = Fuben.getEnterFubenInfo(player, nCopyId)
+				if enterCount == nil or addCount == nil or enterCount >= daycount+addCount then
+					--LActor.sendTipmsg( sysarg, Lang.ScriptTips.f00006, ttDialog )
+			           		local npack = DataPack.allocPacket(sysarg,154, 16)
+					DataPack.writeChar(npack,0)
+					DataPack.writeInt( npack, 2)
+					DataPack.writeString(npack,LActor.getName( player ))
+					DataPack.flush( npack)
+					return 
+				end
+			end
+		end
+		--副本开启时间
+		--设置队伍副本id
+		local nStaticVar = LActor.getStaticVar( sysarg )
+		nStaticVar.TeamFuben_Auto_Team = 1
+
+		TeamFun.setTeamFubenId(nTeamId,nCopyId)
+		local npack = DataPack.allocPacket(sysarg,154, 16)
+		DataPack.writeChar(npack , 1)
+		DataPack.writeInt(npack , 0)
+		DataPack.writeString(npack,LActor.getName( player ))
+		DataPack.flush( npack )
+	end
+	local teamid = LActor.getTeamId(sysarg)
+	if teamid <= 0 then
+		print("------没有队伍-------")
+		return
+	end
+
+	local nTeam = TeamFun.getTeam(teamid)
+	if nTeam == nil then
+		print("------没有队伍-------")
+		return
+	end
+
+	local nCount = TeamFun.getMemberCount(nTeam)
+	local fbdata = FuBen[nCopyId]
+	if fbdata == nil then
+		return
+	end
+	local  nMemberCount = fbdata.maxPlayCount
+	print(string.format("--------队伍人数 = %d----副本最大次数 = %d -----",nCount,nMemberCount))
+	if nMemberCount <= nCount  then
+		local pCaptian = TeamFun.getTeamCaptain(teamid)
+		if pCaptian == nil then
+			print("没有队长")
+			return
+		end
+		local nCopyid = TeamFun.getTeamCopyId(teamid)
+		if nCopyid <= 0 then
+			print("组队副本中 队伍副本id小于等于0")
+			return
+		end
+		
+		EnterCopy( pCaptian,nCopyid )
+	end
+end
+--]]
+TeamFbFunc.AddToTeam = function ( sysarg, teamid )
+	-- local teamid = LActor.getTeamId(sysarg)
+	if teamid <= 0 then
+		return
+	end
+	LActor.addToTeam(sysarg,teamid)
+end
+
+-- 
+
+-- --召回队友
+-- TeamFbFunc[17] = function(sysarg, dp)
+-- 	print("--------------TeamFbFunc[17] ---------------")
+-- 	local id = DataPack.readUInt(dp) -- 队伍ID
+-- 	print("-------------",id)
+-- 	local teamptr = TeamFun.getTeam(id) 
+-- 	if teamptr ~= nil then
+-- 		local nLeader = TeamFun.getTeamCaptain(teamptr)
+-- 		if sysarg ~= nLeader then
+-- 			LActor.sendTipmsg(sysarg,"不是队长不能使用召回功能",ttWarmTip)
+-- 			return
+-- 		end
+
+-- 		local players = LuaHelp.getTeamMemberList(sysarg) 
+-- 		local y = 0
+-- 		local x = 0
+-- 		local dir = 0
+--   		local result = false
+-- 		reuslt,x,y = LActor.getPositionByDir( sysarg , dir , x , y )
+-- 		local nSceneId =  LActor.getSceneId(sysarg)
+-- 		if nSceneId ==  88 then
+-- 			LActor.sendTipmsg( sysarg , "特殊场景中不能召唤队友" , ttWarmTip )
+-- 			return
+-- 		end
+-- 		if reuslt == false then
+-- 			LActor.sendTipmsg(sysarg,"获取坐标失败",ttWarmTip)
+-- 			return
+-- 		end
+-- 		for i = 1,table.getn( players ) do
+-- 			if nLeader ~= players[i] then
+-- 				local npack = DataPack.allocPacket(players[i],154,17)
+-- 				DataPack.writeInt(npack, nSceneId)
+-- 				DataPack.writeInt(npack, x)
+-- 				DataPack.writeInt(npack, y)
+-- 				DataPack.flush(npack)
+-- 			end
+--         end
+-- 	else
+-- 		LActor.sendTipmsg(sysarg,"还没有队伍信息",ttWarmTip)
+-- 	end
+-- end
+
+-- TeamFbFunc[18] = function(sysarg, dp)
+-- 	local id = DataPack.readUInt(dp) -- 队伍ID
+-- 	local id = LActor.getTeamId( sysarg )
+
+-- 	if id <= 0 then
+-- 		LActor.sendTipmsg(sysarg , "没有组队",ttWarmTip)
+-- 		return
+-- 	end
+
+-- 	local teamptr = TeamFun.getTeam(id) 
+-- 	if teamptr ~= nil then
+-- 		local nLeader = TeamFun.getTeamCaptain(teamptr)
+-- 		if nLeader == nil then
+-- 			LActor.sendTipmsg(sysarg , "没有队长", ttWarmTip)
+-- 			return
+-- 		end
+-- 		local y = 0
+-- 		local x = 0
+-- 		local dir = 0
+--   		local result = false
+-- 		reuslt,x,y = LActor.getPositionByDir( nLeader , dir , x , y )
+-- 		local nSceneId =  LActor.getSceneId(nLeader)
+-- 		if reuslt == false then
+-- 			LActor.sendTipmsg(sysarg,"获取坐标失败",ttWarmTip)
+-- 			return
+-- 		end
+-- 		local npack = DataPack.allocPacket(sysarg,154,18)
+-- 		DataPack.writeInt(npack, nSceneId)
+-- 		DataPack.writeInt(npack, x)
+-- 		DataPack.writeInt(npack, y)
+-- 		DataPack.flush(npack)
+-- 	else
+-- 		LActor.sendTipmsg(sysarg,"没有组队",ttWarmTip)
+-- 	end
+-- end
+
+--获取玩家拥有的令
+TeamFbFunc[10] = function(sysarg)
+	local var = LActor.getStaticVar(sysarg)
+	if var.teamfb_count == nil then var.teamfb_count = {} end 
+	for i=1,3 do
+		if var.teamfb_count[i] == nil then  var.teamfb_count[i] = 0  end
+		 	if LActor.getTeamToken(sysarg,i-1) < 0 then
+		 		var.teamfb_count[i] = 0
+			else
+				var.teamfb_count[i] = LActor.getTeamToken(sysarg,i-1)
+			end
+	end
+
+	local npack = DataPack.allocPacket(sysarg,154,10) 
+	for i=1,#var.teamfb_count do
+		--print("获取玩家拥有的令:"..var.teamfb_count[i])
+		DataPack.writeInt(npack, var.teamfb_count[i])
+	end
+	DataPack.flush(npack)
+end
+
+
+
+-- 客户端消息处理
+TeamFbFunc.HandlerOp = function (sysarg, systemid, msgid, packet)
+	local func = TeamFbFunc[msgid]
+	if func ~= nil then
+		func(sysarg, packet) 
+	end
+end
+
+--玩家离开队伍
+TeamFbFunc.OnLeaveTeam = function (sysarg,arg)
+	--print("玩家离开队
+	--print("玩家的名字++++++++++++++++++++:"..LActor.getName(sysarg))
+	local fbid = LActor.getFubenId(sysarg)
+	if fbid <= 0 then return end
+
+	-- 如果在组队副本中则退出副本
+	for i=1,#TeamFuben.fubens do
+		if fbid == TeamFuben.fubens[i].fbid then
+			LActor.exitFuben(sysarg)
+			return
+		end
+	end
+
+end
+
+-- 删除一个队伍
+TeamFbFunc.OnDestroyTeam = function(sysarg, arg)
+	--[[local teamptr = arg[1]
+	if teamptr == nil then return end
+
+	-- 删除招募信息
+	local idx = TeamFun.getRecruitId(teamptr)
+	if idx > 0 then
+		TeamFbFunc.RemoveRecruit(idx, TeamFun.getTeamId(teamptr))
+	end
+
+	-- 释放对应的副本
+	local hfb = TeamFun.getFubenHdl(teamptr) 
+	if hfb ~= 0 then
+		Fuben.SetFubenTime(hfb, 1) -- 这里没有判断副本有没有释放，SetFubenTime里面会判断
+	end]]
+	--print("删除一个队伍===============================")
+	local teamid = arg[1]
+	local sys_var = System.getStaticVar()
+	if sys_var.teamfblist ~= nil and sys_var.teamfblist[teamid] ~= nil then
+		--print("删除一个队伍所有的信息")
+		sys_var.teamfblist[teamid] = nil
+	end
+end
+
+--踢出副本处理
+TeamFbFunc.OnTickTeam  = function (sysarg,args)
+	if args == nil then return end 
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return  end 
+	local teamid = args[1]
+	if teamid ~= nil then 
+		var.tick_teamid_sign = teamid
+		--print("var.tick_teamid_sign=================:",var.tick_teamid_sign)
+	end 
+end
+
+function OnEnterFubenMessBox(actor, fbid, diff)
+	local members = LuaHelp.getTeamMemberList(actor)
+	if not members then return end
+
+	if not FuBen[fbid] or FuBen[fbid].maxPlayCount ~= #members then return end
+
+	local globalNpcHandle = LActor.getHandle(System.getGlobalNpc())
+	local tips = string.format( Lang.ScriptTips.f00071,  FuBen[fbid].fbname)
+	local tips1 = string.format("%s/TeamFbEnterCancel", Lang.ScriptTips.zd003)
+	local tips2 = string.format("%s/TeamFbEnterConfirm,%d,%d", Lang.ScriptTips.zd002, fbid, diff)
+	for _, member in pairs(members) do
+		LActor.messageBox(member, globalNpcHandle, 0, tips, tips1, tips2, "", 10,  0,  "",  0,  1)
+	end
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeTickTeam, TeamFbFunc.OnTickTeam)                                    
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeLeftTeam, TeamFbFunc.OnLeaveTeam)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeDestroyTeam, TeamFbFunc.OnDestroyTeam)
+SystemHandlerDispatcher.registerSystemHander(BaseTypes.SystemId.teamfbSystem, TeamFbFunc.HandlerOp)
+table.insert(InitFnTable,TeamFbFunc.OnInit)
+table.insert(FinaFnTable,TeamFbFunc.OnFina)
+
+function testteamfb(sysarg)
+	TeamFbFunc[6](sysarg)
+end
+
+
+
+function TeamFbFunc.gmFunction(actor, args)
+	LActor.setTeamTarget(actor, 1, 1, 1)
+end
+
+GmEventFuncList.register( "teamfb", TeamFbFunc.gmFunction,1)

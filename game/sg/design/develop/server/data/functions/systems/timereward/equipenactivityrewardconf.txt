@@ -1,0 +1,16 @@
+--开服活动套装搜集配置表
+
+EquipenActivityConf = {
+	activityId = 11,	--和activitycontrol.txt里应该一致
+	
+	aimlevel ={6,7,8,9,10,11,12},
+	rewardlist={
+		{id = 44430, count = 1, quality=0, strong=0, bind = 1},     --物品id，
+		{id = 44431, count = 1, quality=0, strong=0, bind = 1},     --物品id，
+		{id = 44432, count = 1, quality=0, strong=0, bind = 1},     --物品id，
+		{id = 44433, count = 1, quality=0, strong=0, bind = 1},     --物品id，
+		{id = 44434, count = 1, quality=0, strong=0, bind = 1},     --物品id，
+		{id = 44435, count = 1, quality=0, strong=0, bind = 1},     --物品id，
+		{id = 44436, count = 1, quality=0, strong=0, bind = 1},     --物品id，
+	},
+}

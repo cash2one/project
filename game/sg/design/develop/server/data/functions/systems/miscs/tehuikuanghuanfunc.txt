@@ -1,0 +1,742 @@
+--特惠狂欢活动 logic
+--#include "data\config\misc\tehuikuanghuanconf.txt" once
+--#include "data\config\misc\tehuikuanghuanconf2.txt" once
+--#include "data\config\misc\tehuikuanghuanconf3.txt" once
+--#include "data\language\LangCode.txt" once
+
+
+local TeHuiKuangHuanImpl = 
+{
+} 
+
+TeHuiKuangHuanConfig = 
+{
+	 { activityID = 51, config = TeHuiKuangHuanConf1 },--强化特惠
+	 { activityID = 52, config = TeHuiKuangHuanConf2 },--装备特惠
+	 { activityID = 54, config = TeHuiKuangHuanConf3 },--秘籍特惠
+}
+
+TeHuiKuangHuanImpl.getTeHuiConf = function()
+	local serverId = System.getServerId()
+	for i = 1, #TeHuiKuangHuanConfig do 
+		local activityID = TeHuiKuangHuanConfig[i].activityID
+		if ONLINEREWARD.GetActivityState(activityID) ~= 0 then
+			local activityControlConf = ActivityControl[activityID]
+			-- for i=1,#ActivityControl do
+			-- 	if ActivityControl[i] ~= nil and ActivityControl[i].id == activityID then
+			-- 		activityControlConf = ActivityControl[i]
+			-- 	end
+			-- end
+			if activityControlConf then  
+				--print("__________________activityID = "..activityID..", state = "..state)
+				local openServer = false
+				if activityControlConf.serveropen then
+					for j=1,#activityControlConf.serveropen do
+						if serverId >= activityControlConf.serveropen[j][1] and serverId <= activityControlConf.serveropen[j][2] then
+							openServer = true
+							break
+						end 
+					end
+				else
+					openServer = true
+				end
+				if openServer then 
+					return TeHuiKuangHuanConfig[i].config,activityID
+				end
+			end
+		end
+	end
+end
+
+TeHuiKuangHuanImpl.main = function (sysarg, systemid, msgid, packet)
+  if TeHuiKuangHuanImpl[msgid] then
+    TeHuiKuangHuanImpl[msgid](sysarg, msgid, packet)
+  end
+end
+
+TeHuiKuangHuanImpl.registerMsgHandler = function (msgid, proc)
+  if TeHuiKuangHuanImpl[msgid] then
+    return false
+  else
+    TeHuiKuangHuanImpl[msgid] = proc
+    return true
+  end
+end
+
+TeHuiKuangHuanImpl.unregisterMsgHandler = function (msgid, proc)
+  if TeHuiKuangHuanImpl[msgid] == proc then
+    TeHuiKuangHuanImpl[msgid] = nil
+    return true
+  else
+    return false
+  end
+end     
+-------------------------
+
+TeHuiKuangHuanFunc = {}
+TeHuiKuangHuanFunc.TreasureLogList = {}
+TeHuiKuangHuanFunc.TreasureLogCount = 0
+
+function SetTeHuiKuangHuanOpenTime(activityId)
+     local TeHuiKuangHuanConf = TeHuiKuangHuanImpl.getTeHuiConf()
+     if not TeHuiKuangHuanConf then return end
+     local idx = tonumber(activityId)
+     local state,starttime,endtime = ONLINEREWARD.GetActivityState(TeHuiKuangHuanConf.activityID)
+
+     if idx == nil then return end
+     local conf = TeHuiKuangHuanConf[idx]
+     if conf == nil then return end
+
+     local sys_var = System.getStaticVar()
+     if sys_var == nil then return end
+
+     if sys_var.TeHuiKuangHuan == nil then
+          sys_var.TeHuiKuangHuan = {}
+     end
+     if sys_var.TeHuiKuangHuan[idx] == nil then
+          sys_var.TeHuiKuangHuan[idx] = {}
+     end
+     if sys_var.TeHuiKuangHuan[idx].TuHaoBuyCountHistory == nil then
+          sys_var.TeHuiKuangHuan[idx].TuHaoBuyCountHistory = {}
+     end
+
+     if sys_var.TeHuiKuangHuan[idx].CurrentFlag == nil then
+          sys_var.TeHuiKuangHuan[idx].CurrentFlag = 0
+     end
+     sys_var.TeHuiKuangHuan[idx].CurrentFlag = sys_var.TeHuiKuangHuan[idx].CurrentFlag + 1
+     local flag =  sys_var.TeHuiKuangHuan[idx].CurrentFlag
+     if sys_var.TeHuiKuangHuan[idx].TuHaoBuyCountHistory[flag] == nil then
+          sys_var.TeHuiKuangHuan[idx].TuHaoBuyCountHistory[flag] = {}
+     end
+     --所有人购买的个数
+     if sys_var.TeHuiKuangHuan[idx].TuHaoBuyCountHistory[flag].TotalCount == nil then
+          sys_var.TeHuiKuangHuan[idx].TuHaoBuyCountHistory[flag].TotalCount = 0
+     end
+     --可以领取的个数
+     if sys_var.TeHuiKuangHuan[idx].TuHaoBuyCountHistory[flag].CanGetCount == nil then
+          sys_var.TeHuiKuangHuan[idx].TuHaoBuyCountHistory[flag].CanGetCount = 0
+     end
+     sys_var.TeHuiKuangHuan[idx].UpdateTime = System.getCurrMiniTime()
+
+     local today_tm = System.getToday()    
+     sys_var.TeHuiKuangHuan[idx].start_tm = starttime
+     sys_var.TeHuiKuangHuan[idx].end_tm = endtime
+     if sys_var.TeHuiKuangHuan[idx].TuHaoBuyLogs then sys_var.TeHuiKuangHuan[idx].TuHaoBuyLogs = {} end
+     if sys_var.TeHuiKuangHuan[idx].LevelBuyCount then sys_var.TeHuiKuangHuan[idx].LevelBuyCount = {} end
+     local actors = LuaHelp.getAllActorList()
+     if actors ~= nil then
+          for i=1,#actors do
+            local actor = actors[i]
+            TeHuiKuangHuanFunc.OnLoginTrigger(actor)
+          end
+     end
+     --sys_var.RechargeRotaryTableSYS.status = 1
+end
+
+--检测是否在活动期间
+TeHuiKuangHuanFunc.CheckIsActivityTime = function(series)
+     local sys_var = System.getStaticVar()
+     if sys_var == nil then return false end
+     if sys_var.TeHuiKuangHuan == nil then return false end
+     if sys_var.TeHuiKuangHuan[series] == nil then return false end
+     if sys_var.TeHuiKuangHuan[series].start_tm == nil or sys_var.TeHuiKuangHuan[series].end_tm == nil then return false end
+
+     local now = System.getCurrMiniTime()
+     --print("now=====:"..System.getCurrMiniTime().." ,sys_var.TeHuiKuangHuan[series].start_tm:"..sys_var.TeHuiKuangHuan[series].start_tm)
+     --print("sys_var.TeHuiKuangHuan[series].end_tm:"..sys_var.TeHuiKuangHuan[series].end_tm)
+     if now >= sys_var.TeHuiKuangHuan[series].start_tm and now <= sys_var.TeHuiKuangHuan[series].end_tm then return true end
+
+     return false
+end
+
+TeHuiKuangHuanFunc.IconStatus = function(sysarg)
+
+     local sys_var = System.getStaticVar()
+     if sys_var == nil then return 0 end
+     if sys_var.TeHuiKuangHuan == nil then return 0 end
+	
+     local TeHuiKuangHuanConf = TeHuiKuangHuanImpl.getTeHuiConf()
+     if not TeHuiKuangHuanConf then return end
+     local conf = TeHuiKuangHuanConf
+     local now = System.getCurrMiniTime()
+     for i=1, #conf do
+          if sys_var.TeHuiKuangHuan[i] ~= nil and sys_var.TeHuiKuangHuan[i].start_tm ~= nil and sys_var.TeHuiKuangHuan[i].end_tm ~= nil then
+               if now >= sys_var.TeHuiKuangHuan[i].start_tm and now <= sys_var.TeHuiKuangHuan[i].end_tm then return 1 end
+          end
+     end
+
+     return 0
+end
+
+--[[TeHuiKuangHuanFunc.SendActivityInfo = function(sysarg)
+
+     ------------------------
+     local sys_var = System.getStaticVar()
+     if sys_var == nil then return 0 end
+     if sys_var.TeHuiKuangHuan == nil then return 0 end
+
+     local conf = TeHuiKuangHuanConf
+     local now = System.getCurrMiniTime()
+
+     local npack = DataPack.allocPacket(sysarg, 139, 135)
+     if npack == nil then return end
+     DataPack.writeChar(npack, #conf)
+     local isLevel = false
+     for i=1, #conf do
+          --local over_tm = 0
+          local start_tm = 0
+          local end_tm = 0
+          if sys_var.TeHuiKuangHuan[i] ~= nil and sys_var.TeHuiKuangHuan[i].start_tm ~= nil and sys_var.TeHuiKuangHuan[i].end_tm ~= nil then
+               --over_tm = sys_var.TeHuiKuangHuan[i].end_tm - now
+               --if over_tm < 0 then
+               --     over_tm = 0
+               --end
+               start_tm = sys_var.TeHuiKuangHuan[i].start_tm
+               end_tm = sys_var.TeHuiKuangHuan[i].end_tm
+          end
+          local str = string.format("%d", start_tm)
+          print("str=================:"..str)
+          DataPack.writeString(npack, str)
+          str = string.format("%d", end_tm)
+          print("str=====222========:"..str)
+          DataPack.writeString(npack,str)
+
+          if not isLevel and conf[i].lmlevel <= LActor.getLevel(sysarg) and TeHuiKuangHuanFunc.CheckIsActivityTime(i) then
+               isLevel = true
+          end
+     end
+     local stat = TeHuiKuangHuanFunc.IconStatus(sysarg)
+     if not isLevel then
+          stat = 0
+     end
+     --DataPack.writeChar(npack, stat)
+     DataPack.flush(npack)
+end]]
+
+---------------------------------------------------------------------------
+TeHuiKuangHuanFunc.OnLoginTrigger = function(sysarg)
+     
+     local sys_var = System.getStaticVar()
+     if sys_var == nil then return end
+     if sys_var.TeHuiKuangHuan == nil then return end
+
+     local var = LActor.getStaticVar(sysarg)
+     if var == nil then return end
+     if var.TeHuiKuangHuan == nil then
+          var.TeHuiKuangHuan = {}
+     end
+	
+     local TeHuiKuangHuanConf,activityID = TeHuiKuangHuanImpl.getTeHuiConf()
+     if not TeHuiKuangHuanConf then return end
+     local conf = TeHuiKuangHuanConf
+     local aId = LActor.getActorId(sysarg)
+     for i=1, #conf do
+          if var.TeHuiKuangHuan[i] == nil then
+               var.TeHuiKuangHuan[i] = {}
+          end
+          if var.TeHuiKuangHuan[i].Levels == nil then
+               var.TeHuiKuangHuan[i].Levels = {}
+          end
+          var.TeHuiKuangHuan[i].Flag = var.TeHuiKuangHuan[i].Flag or 0
+
+          for j=1, #conf[i].goods do
+               if var.TeHuiKuangHuan[i].Levels[j] == nil then
+                    var.TeHuiKuangHuan[i].Levels[j] = {}
+               end
+               var.TeHuiKuangHuan[i].Levels[j].BuyCount = var.TeHuiKuangHuan[i].Levels[j].BuyCount or 0
+          end
+     end
+     TeHuiKuangHuanFunc.CheckResetActivityInfo(sysarg, activityID)
+     local nowtime = System.getCurrMiniTime()
+
+     for i=1, #conf do
+          if sys_var.TeHuiKuangHuan[i] ~= nil and sys_var.TeHuiKuangHuan[i].CurrentFlag ~= nil and var.TeHuiKuangHuan[i].Flag ~= sys_var.TeHuiKuangHuan[i].CurrentFlag then
+
+               if sys_var.TeHuiKuangHuan[i].UpdateTime ~= nil and System.isSameDay(sys_var.TeHuiKuangHuan[i].UpdateTime, nowtime) then
+                    local buyCount = 0
+                    for j=1, #conf[i].goods do
+                         buyCount = buyCount + var.TeHuiKuangHuan[i].Levels[j].BuyCount
+                         var.TeHuiKuangHuan[i].Levels[j].BuyCount = 0                         
+                    end                    
+                    if buyCount > 0 and sys_var.TeHuiKuangHuan[i].TuHaoBuyCountHistory ~= nil then
+                         local flag = var.TeHuiKuangHuan[i].Flag
+                         local val = sys_var.TeHuiKuangHuan[i].TuHaoBuyCountHistory[flag]
+                         if val ~= nil and val.CanGetCount > 0 then
+                              local overCount = val.CanGetCount - var.TeHuiKuangHuan[i].GetTuHaoGiftCount                              
+                              if overCount > 0 then
+                                   local tempCount_1 = overCount / 255
+                                   tempCount_1 = math.floor(tempCount_1)
+                                   local tempCount_2 = math.fmod(overCount, 255)
+                                   for j=1, tempCount_1 do                                        
+                                        --System.sendGmMailOffLine(aId, conf[i].mailContext, 1, conf[i].tuhaoGift.itemId, 255, 1)
+                                   end
+                                   if tempCount_2 > 0 then                                        
+                                        --System.sendGmMailOffLine(aId, conf[i].mailContext, 1, conf[i].tuhaoGift.itemId, tempCount_2, 1)
+                                   end
+                                   var.TeHuiKuangHuan[i].GetTuHaoGiftCount = val.CanGetCount
+                              end
+                         end
+                    end
+                    var.TeHuiKuangHuan[i].Flag = sys_var.TeHuiKuangHuan[i].CurrentFlag
+                    var.TeHuiKuangHuan[i].GetTuHaoGiftCount = 0
+               end
+          end
+     end
+     --TeHuiKuangHuanFunc.SendActivityInfo(sysarg)
+end
+
+--购买道具
+TeHuiKuangHuanFunc.BuyItem = function(sysarg, msgid, dp)
+
+     local TeHuiKuangHuanConf = TeHuiKuangHuanImpl.getTeHuiConf()
+     if not TeHuiKuangHuanConf then return end
+     local conf = TeHuiKuangHuanConf
+     local var = LActor.getStaticVar(sysarg)
+     if var == nil then return end
+     if var.TeHuiKuangHuan == nil then
+          var.TeHuiKuangHuan = {}
+     end
+
+     --1：强化特惠,2：法宝特惠,3：装备特惠
+     local seriesIdx = DataPack.readInt(dp)
+     --1:平民礼包,2:小康礼包,3:至尊礼包
+     local itemLevel = DataPack.readInt(dp)
+     --购买数量
+     local buyCount = DataPack.readChar(dp)
+     if seriesIdx == nil or itemLevel == nil or buyCount == nil then return end
+     
+     local series = conf[seriesIdx]
+     if series == nil then return end
+
+     if series.lmlevel > LActor.getLevel(sysarg) then
+          return
+     end
+     local goods = series.goods[itemLevel]
+     if goods == nil then return end
+
+     if var.TeHuiKuangHuan[seriesIdx] == nil then
+          var.TeHuiKuangHuan[seriesIdx] = {}
+     end
+     if var.TeHuiKuangHuan[seriesIdx].Levels == nil then
+          var.TeHuiKuangHuan[seriesIdx].Levels = {} -- 一般是三个级别。平民，小康，至尊
+     end
+     if var.TeHuiKuangHuan[seriesIdx].Levels[itemLevel] == nil then
+          var.TeHuiKuangHuan[seriesIdx].Levels[itemLevel] = {}
+     end
+     var.TeHuiKuangHuan[seriesIdx].Levels[itemLevel].BuyCount = var.TeHuiKuangHuan[seriesIdx].Levels[itemLevel].BuyCount or 0
+
+     if not TeHuiKuangHuanFunc.CheckIsActivityTime(seriesIdx) then
+          print("不在活动期内，购买失败！")
+          LActor.sendTipmsg(sysarg, "不在活动期内，购买失败！", ttMessage)
+          return
+     end
+     if Item.getBagEmptyGridCount( sysarg ) < 1 then --获取背包剩格子数
+          LActor.sendTipmsg( sysarg, "背包空间不足，购买失败!", ttMessage )
+          print("背包空间不足，购买失败!")
+          return 
+     end
+
+     local user_yuanbao = LActor.getMoneyCount(sysarg, mtYuanbao)
+     local totalPrice = goods.price * buyCount
+     if totalPrice > user_yuanbao then
+          LActor.sendTipmsg( sysarg, "天珠不足，购买失败!", ttMessage )
+          print("天珠不足，购买失败!")
+          return 
+     end
+     if var.TeHuiKuangHuan[seriesIdx].Levels[itemLevel].BuyCount + buyCount > goods.singleQuantity then
+          LActor.sendTipmsg( sysarg, "购买个数已超上限，不能购买!", ttMessage )
+          return
+     end
+
+     if LActor.changeMoney( sysarg, mtYuanbao, -totalPrice, 192, true, "TeHuiKuangHuan", "buy" ) then
+          if LActor.addItem(sysarg, goods.itemId, 0, 0, buyCount, 1,"TeHuiKuangHuan", 1) > 0 then --添加物品
+               -- 用于播放特效
+               local effects = {}
+               local effect = {}
+               effect.type = 1  -- 1为物品,暂时只支持发物品所以写死
+               effect.id = goods.itemId
+               effect.count = buyCount
+               effects[#effects+1] = effect
+               -- 播放特效
+               if #effects > 0 then
+                    MiscFunc.PlayItemEffect(sysarg, 7, effects)
+               end                         
+               var.TeHuiKuangHuan[seriesIdx].Levels[itemLevel].BuyCount = var.TeHuiKuangHuan[seriesIdx].Levels[itemLevel].BuyCount + buyCount               
+               TeHuiKuangHuanFunc.Cost(sysarg, seriesIdx, itemLevel, buyCount)
+               TeHuiKuangHuanFunc.SendSeriesInfo(sysarg, seriesIdx)
+
+               if goods.notice ~= nil then
+                    local annostr = string.format(goods.notice, LActor.getName(sysarg) or " ")
+                    -- System.broadcastTipmsg(annostr, ttHearsay)
+               end
+              
+          end
+          
+     end
+end
+
+--领取至尊送的礼包
+TeHuiKuangHuanFunc.GetTuHaoGift = function(sysarg, msgid, dp)
+      --1：强化特惠,2：法宝特惠,3：装备特惠
+     local seriesIdx = DataPack.readInt(dp)
+
+     if not TeHuiKuangHuanFunc.CheckIsActivityTime(seriesIdx) then
+          print("不在活动期内，领取至尊礼包失败！")
+          LActor.sendTipmsg(sysarg, "不在活动期内，领取至尊礼包失败！", ttMessage)
+          return
+     end
+
+     local var = LActor.getStaticVar(sysarg)
+     if var == nil then return end
+     if var.TeHuiKuangHuan == nil then return end
+     if var.TeHuiKuangHuan[seriesIdx] == nil then return end
+     if var.TeHuiKuangHuan[seriesIdx].Levels == nil then return end
+
+     local TeHuiKuangHuanConf = TeHuiKuangHuanImpl.getTeHuiConf()
+     if not TeHuiKuangHuanConf then return end
+     local conf = TeHuiKuangHuanConf
+     local series = conf[seriesIdx]
+     if series == nil then return end
+     local isBuy = false
+     for i=1, #series.goods do
+          if var.TeHuiKuangHuan[seriesIdx].Levels[i] ~= nil and var.TeHuiKuangHuan[seriesIdx].Levels[i].BuyCount > 0 then
+               isBuy = true
+          end
+     end
+     if isBuy then
+          if Item.getBagEmptyGridCount( sysarg ) < 1 then --获取背包剩格子数
+               LActor.sendTipmsg(sysarg, "背包空间不足，请清理后再领", ttMessage)
+               return
+          end
+
+          local sys_var = System.getStaticVar()
+          if sys_var == nil then return end
+          if sys_var.TeHuiKuangHuan == nil then
+               sys_var.TeHuiKuangHuan = {}
+          end
+          local flag = sys_var.TeHuiKuangHuan[seriesIdx].CurrentFlag or 0
+          local val = sys_var.TeHuiKuangHuan[seriesIdx].TuHaoBuyCountHistory[flag]
+          if val == nil then
+               print("----------出错了1")
+               return
+          end
+          if val.CanGetCount == nil then
+               print("----------出错了2")
+               return
+          end
+          var.TeHuiKuangHuan[seriesIdx].GetTuHaoGiftCount = var.TeHuiKuangHuan[seriesIdx].GetTuHaoGiftCount or 0
+
+          if var.TeHuiKuangHuan[seriesIdx].GetTuHaoGiftCount >=  series.maxGiftCount then
+               LActor.sendTipmsg(sysarg, "亲，至尊送礼已经达到今日上限咯。明天才能继续重新开始领咯。", ttMessage)
+               return
+          end
+          local canGetCount = val.CanGetCount
+          if canGetCount > series.maxGiftCount then
+               canGetCount = series.maxGiftCount
+          end
+
+          local getCount = canGetCount - var.TeHuiKuangHuan[seriesIdx].GetTuHaoGiftCount
+          if getCount > 0 then
+               local addCount = LActor.addItem(sysarg, series.tuhaoGift.itemId, 0, 0, getCount, 1,"TeHuiKuangHuanGift", 1) --添加物品
+               if addCount > 0 then
+                    var.TeHuiKuangHuan[seriesIdx].GetTuHaoGiftCount = var.TeHuiKuangHuan[seriesIdx].GetTuHaoGiftCount + addCount
+                    local effects = {}
+                    local effect = {}
+                    effect.type = 1  -- 1为物品,暂时只支持发物品所以写死
+                    effect.id = series.tuhaoGift.itemId
+                    effect.count = addCount
+                    effects[#effects+1] = effect
+                    -- 播放特效
+                    if #effects > 0 then
+                         MiscFunc.PlayItemEffect(sysarg, 7, effects)
+                    end
+                    TeHuiKuangHuanFunc.SendSeriesInfo(sysarg, seriesIdx)
+               end
+          end
+     else
+          LActor.sendTipmsg(sysarg, "请购买左侧任意礼包，获得立即领取资格。", ttMessage)
+     end
+
+end
+
+TeHuiKuangHuanFunc.Cost = function(sysarg, seriesIdx, itemLevel, count)
+     local TeHuiKuangHuanConf = TeHuiKuangHuanImpl.getTeHuiConf()
+     if not TeHuiKuangHuanConf then return end
+     local conf = TeHuiKuangHuanConf
+     local series = conf[seriesIdx]
+     if series == nil then return end
+     local goods = series.goods[itemLevel]
+     if goods == nil then return end
+
+     if series.multiple == nil then return end
+
+     local sys_var = System.getStaticVar()
+     if sys_var == nil then return end
+     if sys_var.TeHuiKuangHuan == nil or sys_var.TeHuiKuangHuan[seriesIdx] == nil then return end
+     if sys_var.TeHuiKuangHuan[seriesIdx].TuHaoBuyCountHistory == nil then return end
+     if sys_var.TeHuiKuangHuan[seriesIdx].CurrentFlag == nil then return end
+
+     local flag = sys_var.TeHuiKuangHuan[seriesIdx].CurrentFlag
+     if sys_var.TeHuiKuangHuan[seriesIdx].TuHaoBuyCountHistory[flag] == nil then
+          sys_var.TeHuiKuangHuan[seriesIdx].TuHaoBuyCountHistory[flag] = {}
+     end
+     if sys_var.TeHuiKuangHuan[seriesIdx].LevelBuyCount == nil then
+          sys_var.TeHuiKuangHuan[seriesIdx].LevelBuyCount = {}
+     end
+     sys_var.TeHuiKuangHuan[seriesIdx].LevelBuyCount[itemLevel] = sys_var.TeHuiKuangHuan[seriesIdx].LevelBuyCount[itemLevel] or 0
+     sys_var.TeHuiKuangHuan[seriesIdx].LevelBuyCount[itemLevel] = sys_var.TeHuiKuangHuan[seriesIdx].LevelBuyCount[itemLevel] + count
+
+     if itemLevel == #series.goods then --写死，只统计买最后一个礼包的
+          local totalCount = sys_var.TeHuiKuangHuan[seriesIdx].TuHaoBuyCountHistory[flag].TotalCount or 0
+          local canGetCount = sys_var.TeHuiKuangHuan[seriesIdx].TuHaoBuyCountHistory[flag].CanGetCount or 0
+          totalCount = totalCount + count
+
+          if series.multiple > 0 then
+               canGetCount = math.modf(totalCount/series.multiple)
+          elseif series.multiple < 0 then
+               local multiple = series.multiple * (-1)
+               canGetCount = totalCount * multiple
+          end
+          -- if canGetCount > series.maxGiftCount then
+          --      canGetCount = series.maxGiftCount
+          --      LActor.sendTipmsg(sysarg, "亲，至尊送礼已经达到今日上限咯。明天才能继续重新开始领咯。", ttMessage)
+          -- end
+          sys_var.TeHuiKuangHuan[seriesIdx].TuHaoBuyCountHistory[flag].TotalCount = totalCount
+          sys_var.TeHuiKuangHuan[seriesIdx].TuHaoBuyCountHistory[flag].CanGetCount = canGetCount
+
+          --[[
+          if sys_var.TeHuiKuangHuan[seriesIdx].TuHaoBuyCountHistory[flag].logs == nil then
+               sys_var.TeHuiKuangHuan[seriesIdx].TuHaoBuyCountHistory[flag].logs = {}
+          end
+          local index = #(sys_var.TeHuiKuangHuan[seriesIdx].TuHaoBuyCountHistory[flag].logs) + 1
+          sys_var.TeHuiKuangHuan[seriesIdx].TuHaoBuyCountHistory[flag].logs[index] = {}
+          sys_var.TeHuiKuangHuan[seriesIdx].TuHaoBuyCountHistory[flag].logs[index].aName = LActor.getName(sysarg) or " "
+          sys_var.TeHuiKuangHuan[seriesIdx].TuHaoBuyCountHistory[flag].logs[index].aId = LActor.getActorId(sysarg)
+          --]]
+
+          if sys_var.TeHuiKuangHuan[seriesIdx].TuHaoBuyLogs == nil then
+               sys_var.TeHuiKuangHuan[seriesIdx].TuHaoBuyLogs = {}
+          end
+          local index = #(sys_var.TeHuiKuangHuan[seriesIdx].TuHaoBuyLogs) + 1
+          sys_var.TeHuiKuangHuan[seriesIdx].TuHaoBuyLogs[index] = {}
+          sys_var.TeHuiKuangHuan[seriesIdx].TuHaoBuyLogs[index].aName = LActor.getName(sysarg) or " "
+          sys_var.TeHuiKuangHuan[seriesIdx].TuHaoBuyLogs[index].aId = LActor.getActorId(sysarg)
+     end
+end
+
+TeHuiKuangHuanFunc.SendSeriesInfo = function(sysarg, seriesIdx)
+     local var = LActor.getStaticVar(sysarg)
+     if var == nil then return end
+     if var.TeHuiKuangHuan == nil then
+          var.TeHuiKuangHuan = {}
+     end
+
+     local sys_var = System.getStaticVar()
+     if sys_var == nil then return end
+     if sys_var.TeHuiKuangHuan == nil then return end
+     if sys_var.TeHuiKuangHuan[seriesIdx] == nil then return end
+
+     local flag = sys_var.TeHuiKuangHuan[seriesIdx].CurrentFlag or 0
+     if sys_var.TeHuiKuangHuan[seriesIdx].TuHaoBuyCountHistory == nil then return end
+
+     if sys_var.TeHuiKuangHuan[seriesIdx].TuHaoBuyCountHistory[flag] == nil then return end
+     local canGetCount = sys_var.TeHuiKuangHuan[seriesIdx].TuHaoBuyCountHistory[flag].CanGetCount or 0
+
+
+     local TeHuiKuangHuanConf = TeHuiKuangHuanImpl.getTeHuiConf()
+     if not TeHuiKuangHuanConf then return end
+     local conf = TeHuiKuangHuanConf
+     local series = conf[seriesIdx]
+     if series == nil then return end
+
+     if var.TeHuiKuangHuan[seriesIdx] == nil then
+          var.TeHuiKuangHuan[seriesIdx] = {}
+     end
+     if var.TeHuiKuangHuan[seriesIdx].Levels == nil then
+          var.TeHuiKuangHuan[seriesIdx].Levels = {}
+     end
+     var.TeHuiKuangHuan[seriesIdx].GetTuHaoGiftCount = var.TeHuiKuangHuan[seriesIdx].GetTuHaoGiftCount or 0
+
+     local npack = DataPack.allocPacket(sysarg, 139, 142)
+     if npack == nil then return end
+     DataPack.writeInt(npack, seriesIdx)
+     DataPack.writeChar(npack, #series.goods)
+     for i=1, #series.goods do
+          if var.TeHuiKuangHuan[seriesIdx].Levels[i] == nil then
+               var.TeHuiKuangHuan[seriesIdx].Levels[i] = {}
+          end
+          var.TeHuiKuangHuan[seriesIdx].Levels[i].BuyCount = var.TeHuiKuangHuan[seriesIdx].Levels[i].BuyCount or 0
+
+          DataPack.writeChar(npack, var.TeHuiKuangHuan[seriesIdx].Levels[i].BuyCount)
+          if sys_var.TeHuiKuangHuan[seriesIdx].LevelBuyCount == nil then
+               sys_var.TeHuiKuangHuan[seriesIdx].LevelBuyCount = {}
+          end
+          sys_var.TeHuiKuangHuan[seriesIdx].LevelBuyCount[i] = sys_var.TeHuiKuangHuan[seriesIdx].LevelBuyCount[i] or 0
+
+          DataPack.writeInt(npack, sys_var.TeHuiKuangHuan[seriesIdx].LevelBuyCount[i])
+     end
+
+     --local canGetCount = sys_var.TeHuiKuangHuan[seriesIdx].TuHaoBuyCountHistory[flag].CanGetCount
+     local getCount = var.TeHuiKuangHuan[seriesIdx].GetTuHaoGiftCount
+     local overCount = canGetCount - getCount
+     DataPack.writeInt(npack, overCount)
+
+     -- if sys_var.TeHuiKuangHuan[seriesIdx].TuHaoBuyCountHistory[flag].logs == nil then
+     --      sys_var.TeHuiKuangHuan[seriesIdx].TuHaoBuyCountHistory[flag].logs = {}
+     -- end
+     if sys_var.TeHuiKuangHuan[seriesIdx].TuHaoBuyLogs == nil then
+          sys_var.TeHuiKuangHuan[seriesIdx].TuHaoBuyLogs = {}
+     end
+
+     --local tempCount = #(sys_var.TeHuiKuangHuan[seriesIdx].TuHaoBuyCountHistory[flag].logs)
+     local tempCount = #(sys_var.TeHuiKuangHuan[seriesIdx].TuHaoBuyLogs)
+     if tempCount > 999 then
+          tempCount = 999
+     end
+     DataPack.writeInt(npack, tempCount)
+     for i=1, tempCount do
+          -- DataPack.writeInt(npack, sys_var.TeHuiKuangHuan[seriesIdx].TuHaoBuyCountHistory[flag].logs[i].aId or 0)
+          -- DataPack.writeString(npack, sys_var.TeHuiKuangHuan[seriesIdx].TuHaoBuyCountHistory[flag].logs[i].aName or " ")
+          DataPack.writeInt(npack, sys_var.TeHuiKuangHuan[seriesIdx].TuHaoBuyLogs[i].aId or 0)
+          DataPack.writeString(npack, sys_var.TeHuiKuangHuan[seriesIdx].TuHaoBuyLogs[i].aName or " ")
+     end
+     DataPack.flush(npack)
+end
+
+TeHuiKuangHuanFunc.GetSeriesInfo = function(sysarg, msgid, dp)
+     local seriesIdx = DataPack.readInt(dp)
+     if seriesIdx == nil then return end
+     TeHuiKuangHuanFunc.SendSeriesInfo(sysarg, seriesIdx)
+end
+---------------------------------------------------------------------------
+TeHuiKuangHuanFunc.ActivitySysInit = function()
+     local sys_var = System.getStaticVar()
+     if sys_var == nil then return end
+     if sys_var.TeHuiKuangHuan == nil then
+          sys_var.TeHuiKuangHuan = {}
+     end
+     local TeHuiKuangHuanConf = TeHuiKuangHuanImpl.getTeHuiConf()
+     if not TeHuiKuangHuanConf then return end
+     local conf = TeHuiKuangHuanConf
+     for i=1, #conf do
+          if sys_var.TeHuiKuangHuan[i] == nil then
+               sys_var.TeHuiKuangHuan[i] = {}
+          end
+          if sys_var.TeHuiKuangHuan[i].TuHaoBuyCountHistory == nil then
+               sys_var.TeHuiKuangHuan[i].TuHaoBuyCountHistory = {}
+          end
+     end
+end
+
+TeHuiKuangHuanFunc.init = function()
+     TeHuiKuangHuanFunc.ActivitySysInit()
+end
+
+function TeHuiKuangHuanSystemNewDayInit()
+     local TeHuiKuangHuanConf = TeHuiKuangHuanImpl.getTeHuiConf()
+     if not TeHuiKuangHuanConf then return end
+     local sys_var = System.getStaticVar()
+     if sys_var == nil then return end
+     if sys_var.TeHuiKuangHuan == nil then
+          sys_var.TeHuiKuangHuan = {}
+     end
+     local conf = TeHuiKuangHuanConf
+     for i=1, #conf do
+          if sys_var.TeHuiKuangHuan[i] == nil then
+               sys_var.TeHuiKuangHuan[i] = {}
+          end
+          --if sys_var.TeHuiKuangHuan[i].UpdateTime ~= nil then
+          sys_var.TeHuiKuangHuan[i].UpdateTime = System.getCurrMiniTime()
+          --end
+          if sys_var.TeHuiKuangHuan[i] ~= nil and sys_var.TeHuiKuangHuan[i].CurrentFlag ~= nil then
+               sys_var.TeHuiKuangHuan[i].CurrentFlag = sys_var.TeHuiKuangHuan[i].CurrentFlag + 1
+          end
+
+          if TeHuiKuangHuanFunc.CheckIsActivityTime(i) then
+               sys_var.TeHuiKuangHuan[i].TuHaoBuyLogs = {}
+               -- if sys_var.TeHuiKuangHuan[i] ~= nil and sys_var.TeHuiKuangHuan[i].CurrentFlag ~= nil then
+               --      sys_var.TeHuiKuangHuan[i].CurrentFlag = sys_var.TeHuiKuangHuan[i].CurrentFlag + 1
+               -- end
+               --sys_var.TeHuiKuangHuan[i].UpdateTime = System.getCurrMiniTime()
+
+               local flag = sys_var.TeHuiKuangHuan[i].CurrentFlag
+               if sys_var.TeHuiKuangHuan[i].TuHaoBuyCountHistory[flag] == nil then
+                    sys_var.TeHuiKuangHuan[i].TuHaoBuyCountHistory[flag] = {}
+               end
+               --所有人购买的个数
+               sys_var.TeHuiKuangHuan[i].TuHaoBuyCountHistory[flag].TotalCount = sys_var.TeHuiKuangHuan[i].TuHaoBuyCountHistory[flag].TotalCount or 0
+
+               --可以领取的个数
+               sys_var.TeHuiKuangHuan[i].TuHaoBuyCountHistory[flag].CanGetCount = sys_var.TeHuiKuangHuan[i].TuHaoBuyCountHistory[flag].CanGetCount or 0
+
+          end
+
+          for j=1, #conf[i].goods do
+               if sys_var.TeHuiKuangHuan[i].LevelBuyCount ~= nil and sys_var.TeHuiKuangHuan[i].LevelBuyCount[j] ~= nil then
+                    sys_var.TeHuiKuangHuan[i].LevelBuyCount[j] = 0
+               end
+          end
+     end
+
+     local actors = LuaHelp.getAllActorList()
+     if actors ~= nil then
+          for i=1,#actors do
+               local actor = actors[i]
+               TeHuiKuangHuanFunc.OnLoginTrigger(actor)
+          end
+     end
+end
+
+--活动重置
+TeHuiKuangHuanFunc.CheckResetActivityInfo = function(sysarg, id)
+     local var = LActor.getStaticVar(sysarg)
+     if var.ActivityControl == nil then var.ActivityControl = {} end
+     if var.ActivityControl[id] == nil then var.ActivityControl[id] = 0 end
+     local sysvar = System.getStaticVar()
+     if sysvar.activityControl == nil or sysvar.activityControl[id] == nil or sysvar.activityControl[id].flag == nil or var.ActivityControl[id] == sysvar.activityControl[id].flag then return false end
+     var.ActivityControl[id] = sysvar.activityControl[id].flag
+     local TeHuiKuangHuanConf = TeHuiKuangHuanImpl.getTeHuiConf()
+     if not TeHuiKuangHuanConf then return end
+     if var.TeHuiKuangHuan then
+          for i=1, #TeHuiKuangHuanConf do
+               if sysvar.TeHuiKuangHuan and sysvar.TeHuiKuangHuan[i] ~= nil and sysvar.TeHuiKuangHuan[i].CurrentFlag ~= nil and var.TeHuiKuangHuan[i].Flag == sysvar.TeHuiKuangHuan[i].CurrentFlag then
+                    var.TeHuiKuangHuan[i].Flag = 0
+               end
+          end
+     end
+end
+
+table.insert(InitFnTable, TeHuiKuangHuanFunc.init)
+
+--请求特惠狂欢活动指定系列信息
+MiscsImplement.registerMsgHandler(142, TeHuiKuangHuanFunc.GetSeriesInfo)
+--请求购买特惠狂欢活动礼包
+MiscsImplement.registerMsgHandler(143, TeHuiKuangHuanFunc.BuyItem)
+--请求领取特惠狂欢活动至尊礼包
+MiscsImplement.registerMsgHandler(144, TeHuiKuangHuanFunc.GetTuHaoGift)
+
+--EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, TeHuiKuangHuanFunc.SendActivityInfo)
+--EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, TeHuiKuangHuanFunc.SendActivityInfo)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, TeHuiKuangHuanFunc.OnLoginTrigger)
+--EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, TeHuiKuangHuanFunc.OnLoginTrigger)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeLevel, TeHuiKuangHuanFunc.OnLoginTrigger)
+
+function testAAA()
+     local sys_var = System.getStaticVar()
+     if sys_var == nil then return end
+
+     local TeHuiKuangHuanConf = TeHuiKuangHuanImpl.getTeHuiConf()
+     if not TeHuiKuangHuanConf then return end
+     if sys_var.TeHuiKuangHuan ~= nil then
+          for i=1, #TeHuiKuangHuanConf do
+               if sys_var.TeHuiKuangHuan[i] ~= nil and sys_var.TeHuiKuangHuan[i].CurrentFlag ~= nil then
+                    sys_var.TeHuiKuangHuan[i].CurrentFlag = 0
+               end
+          end
+
+     end
+     sys_var.TeHuiKuangHuan = nil
+     print("特惠狂欢活动调用测试函数")
+end
+
+

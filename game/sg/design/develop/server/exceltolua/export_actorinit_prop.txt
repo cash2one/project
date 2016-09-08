@@ -1,0 +1,152 @@
+﻿
+----------------------------------------------------------------------------------------
+
+function cyctable(t)
+	if type(t) ~= 'table' then
+		return
+	end
+
+	local strt = "{"
+	for k, v in pairs(t) do
+		if type(v) == 'table' then
+			 strt =  strt .. cyctable(v)
+		else
+			if type(v) == 'string' then
+				strt = strt .. string.format("%s=\"%s\",", tostring(k), tostring(v))
+			else
+				strt = strt .. string.format("%s=%s,", tostring(k), tostring(v))
+			end
+		end
+	end
+	strt = strt .. "},"
+
+	return strt
+end
+
+
+function format_output(concent)
+	local str = "{\n"
+	for k, v in pairs(concent) do
+		if type(v) ~= 'table' then
+			if type(v) == 'string' and k ~= "shape" then
+				str = str .. string.format("\t%s=\"%s\",\n", tostring(k), tostring(v))
+			else
+				str = str .. string.format("\t%s=%s,\n", tostring(k), tostring(v))
+			end
+		else
+			str = str .. string.format("\t%s=%s\n", tostring(k), cyctable(v))
+		end
+	end
+
+	str = str ..'},'
+
+	print(str)
+	return str
+end
+
+----------------------------------------------------------------------------------------
+--读主角裸装属性 excel表
+function ReadActorInitProp()
+	local objexcel = CExcelReader:new()
+	if not objexcel then
+		print("objexcel is null")
+		return
+	end
+
+	objexcel:Init_App()
+	objexcel:OpenRead()
+
+	--------------------------------------------------------------------
+	--插入注释
+	--数组下标表示每一等级,表里属性分别表示{最大生命,最大灵力,物理攻击,道法攻击,物理防御,道法防御,命中值,闪避值,暴击值,抗暴值,暴击倍数(会心)}
+	--level	max_hp	max_mp	phy_atk	mag_atk	phy_def	mag_def	hit_val	dodge_val	crit_v	anti_crit_v	crit_multi
+
+
+
+	--local allprop = "--数组下标表示每一等级,表里属性分别表示{最大生命,最大灵力,物理攻击,道法攻击,物理防御,道法防御,命中值,闪避值,暴击值,抗暴值,暴击倍数(会心)}\n"
+	local allprop = ""
+	for nJob = 1, 4 do
+
+		local obj = objexcel:LoadSheetByIndex(nJob) --战士 主角裸装属性
+		if not obj then
+			print("LoadSheetByIndex失败!")
+			objexcel:Close()
+			objexcel:Quit_App()
+			return
+		end
+
+		local nCount = objexcel:GetCurrentSheetColCount()
+		local mCount = objexcel:GetCurrentSheetRowCount()
+
+		local mCommCnt = objexcel:GetCurrentSheetCommentCount()
+		print("==================mCommCnt"..mCommCnt)
+
+		local strComment = objexcel:ReadComment(1)
+		print("============strComment "..strComment)
+		strComment = objexcel:ReadComment(2)
+		print("============strComment "..strComment)
+
+
+		local strAllLevel = ""
+
+
+		for m = 3, mCount do
+			local strLevel
+
+	--[[  1等级   2最大生命  3最大灵力  4物理攻击  5道法攻击  6物理防御  7道法防御  8命中值  9闪避值  10暴击值  11抗暴值   12暴击倍数(会心)
+                  1外功攻击、2内功攻击、3外功防御、4内功防御、5生命值、  6内力值、  7命中值、8闪避值、9暴击值、10抗暴击值
+    --]]
+			local strMsg = objexcel:ReadCellAsString(m, 1) --等级
+			strLevel = string.format("{", tonumber(strMsg))
+
+			strMsg = objexcel:ReadCellAsString(m, 4) --物理攻击
+			strLevel = strLevel..strMsg..","
+			
+			strMsg = objexcel:ReadCellAsString(m, 5) --道法攻击
+			strLevel = strLevel..strMsg..","
+
+			strMsg = objexcel:ReadCellAsString(m, 6) --物理防御
+			strLevel = strLevel..strMsg..","
+
+			strMsg = objexcel:ReadCellAsString(m, 7)
+			strLevel = strLevel..strMsg..","
+
+			strMsg = objexcel:ReadCellAsString(m, 2)
+			strLevel = strLevel..strMsg..","
+
+			strMsg = objexcel:ReadCellAsString(m, 3)
+			strLevel = strLevel..strMsg..","
+
+			strMsg = objexcel:ReadCellAsString(m, 8)
+			strLevel = strLevel..strMsg..","
+
+			strMsg = objexcel:ReadCellAsString(m, 9)
+			strLevel = strLevel..strMsg..","
+
+			strMsg = objexcel:ReadCellAsString(m, 10)
+			strLevel = strLevel..strMsg..","
+
+			strMsg = objexcel:ReadCellAsString(m, 11)
+			strLevel = strLevel..strMsg..","
+
+			strMsg = objexcel:ReadCellAsString(m, 12)
+			strLevel = strLevel..strMsg..","
+
+			strLevel =  strLevel.."},\n"
+			strAllLevel = strAllLevel..strLevel
+		end
+		
+		print(strAllLevel)
+
+		
+		--写文件
+		local strFile = string.format(".\\data\\config\\vocation\\levelprop%d.txt", nJob)
+		print(":", strFile)
+		objexcel:WriteFile(strFile, strAllLevel)
+	end
+
+	objexcel:Close()
+	objexcel:Quit_App()
+	objexcel:delete()
+end
+

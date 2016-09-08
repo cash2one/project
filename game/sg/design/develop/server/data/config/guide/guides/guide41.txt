@@ -1,0 +1,108 @@
+﻿{
+  maxLevel = 40,
+  
+  --接受任务后引导完成购买道具任务
+  trigger = 
+  { 
+    type = 1,
+    value = 102,
+  },
+
+  --引导中锁定的窗口ID
+  lockUI = 
+  {
+    210,190,105,
+  },
+
+  --引导的步骤 
+  steps = 
+  {
+
+	--第1步 自动寻路去找NPC
+    {
+      cond = { type = 16,  helpId = 0, data = 102 },
+
+      action = { type = 16, helpId = 1, data = Lang.GuideLang.func41, desc = "" },
+    },
+
+	--第2步 引导点击历练副本
+    {
+      cond = { type = 1, helpId = 210, data = 0 },
+
+      action = { type = 10, helpId = 210, data = Lang.GuideLang.npc2, desc = "" },
+
+      hideCond = { type = 2, helpId = 210, data = 0 },
+    },
+
+	--第3步 引导点击挂机
+    {
+      cond = { type = 27, helpId = 0, data = 1058 },
+
+      action = { type = 16, helpId = 0, data = Lang.GuideLang.func58 },
+    },
+
+	--判断挂机
+    {
+      cond = { type = 2, helpId = 243, data = 0 },
+
+      action = { type = 0, helpId = 0, data = 0, desc = "" },
+    },
+
+	--第4步 完成任务引导点击离开副本
+    {
+      cond = { type = 30, helpId = 0, data = 102 },
+
+      action = { type = 1, helpId = 13, data = 0, desc = "" },
+    },
+
+    {
+      cond = { type = 27, helpId = 0, data = 11 },
+
+      action = { type = 16, helpId = 0, data = Lang.GuideLang.func52, desc = "" },
+    },
+
+    {
+      cond = { type = 1, helpId = 210, data = 11 },
+
+      action = { type = 0, helpId = 0, data = 0, desc = "" },
+    },
+
+	--第6步 引导点击兑换按钮
+    {
+      cond = { type = 17, helpId = 0, data = 102 },
+
+      action = { type = 1, helpId = 14, data = 0, desc = Lang.GuideLang.desc13, showType = 2 },
+    },
+
+	--第7步 引导点击兑换武器
+    {
+      cond = { type = 1, helpId = 190, data = 0 },
+
+      action = { type = 17, helpId = 191, data = 0, desc = "" },
+
+      hideCond = { type = 2, helpId = 190, data = 0 },
+    },
+
+	--第8步 引导点击购买
+    {
+      cond = { type = 1, helpId = 105, data = 0 },
+
+      action = { type = 1, helpId = 106, data = 0, desc = "" },
+    },
+
+
+	--第9步 引导关闭兑换窗口
+    {
+      cond = { type = 2, helpId = 105, data = 0 },
+
+      action = { type = 1, helpId = 192, data = 0, desc = "" },
+    },
+
+	--第10步 兑换窗口关闭结束引导
+    {
+      cond = { type = 2, helpId = 190, data = 0 },
+
+      action = { type = 16, helpId = 0, data = Lang.GuideLang.func52, desc = "" },
+    },
+  } 
+}

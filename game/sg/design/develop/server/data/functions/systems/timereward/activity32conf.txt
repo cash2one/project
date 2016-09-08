@@ -1,0 +1,18 @@
+--专题活动
+--#include "..\..\..\language\LangCode.txt" once
+activity32Conf = {
+	activityId = 32,
+
+	activities ={
+		[111] = {
+			id = 111,	--专题兑换活动
+			itemId = 23106,	--兑换的物品
+			needItems = {
+				{itemId = 27101, count = 2},
+				{itemId = 27102, count = 1},
+				{itemId = 27103, count = 1},
+				{itemId = 27104, count = 1},
+			},
+		},
+	}
+}

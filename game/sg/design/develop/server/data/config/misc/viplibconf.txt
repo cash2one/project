@@ -1,0 +1,65 @@
+--VIP礼包配置
+--#include "..\..\language\LangCode.txt" once
+ViplibConf = 
+{
+	{	
+		vip_level = 1,
+		price = 25,  --礼包价格
+		pre_price = 120, --礼包原价格
+		vipBuyLib = {30521,1},--礼包id,礼包个数
+	},
+	{	
+		vip_level = 2,
+		price = 50, --礼包价格
+		pre_price = 250, --礼包原价格
+		vipBuyLib = {30522,1},--礼包id,礼包个数
+	},
+	{	
+		vip_level = 3,
+		price = 90,  --礼包价格
+		pre_price = 450, --礼包原价格
+		vipBuyLib = {30523,1},--礼包id,礼包个数
+	},	
+	{	
+		vip_level = 4,
+		price = 215,  --礼包价格
+		pre_price = 1080, --礼包原价格
+		vipBuyLib = {30524,1},--礼包id,礼包个数
+	},
+	{	
+		vip_level = 5,
+		price = 350,  --礼包价格
+		pre_price = 1770, --礼包原价格
+		vipBuyLib = {30525,1},--礼包id,礼包个数
+	},
+	{	
+		vip_level = 6,
+		price = 480,  --礼包价格
+		pre_price = 2430, --礼包原价格
+		vipBuyLib = {30526,1},--礼包id,礼包个数
+	},
+	{
+		vip_level = 7,
+		price = 680,  --礼包价格
+		pre_price = 3400, --礼包原价格
+		vipBuyLib = {30527,1},
+	},
+	{	
+		vip_level = 8,
+		price = 1000,  --礼包价格
+		pre_price = 4810, --礼包原价格
+		vipBuyLib = {30528,1},--礼包id,礼包个数
+	},
+	{	
+		vip_level = 9,
+		price = 1500,  --礼包价格
+		pre_price = 5000, --礼包原价格
+		vipBuyLib = {30529,1},--礼包id,礼包个数
+	},
+	{	
+		vip_level = 10,
+		price = 2100,  --礼包价格
+		pre_price = 7000, --礼包原价格
+		vipBuyLib = {30530,1},--礼包id,礼包个数
+	},
+}

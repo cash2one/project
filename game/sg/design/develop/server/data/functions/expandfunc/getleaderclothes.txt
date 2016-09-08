@@ -1,0 +1,76 @@
+﻿--lua script
+--领取军团长时装
+--[[
+日月城：张九烈
+无忌城：莫正羽
+逍遥城：凌云志
+--]]
+ 
+--剑宗=1,气宗=2,灵华=3,司命=4,易筋=5,洗髓=6,剑士=7,忍者=8 
+local getClothesTbl = 
+{
+	--男
+	{
+		{job = 2, item = 2021,},
+		{job = 4, item = 2023,},
+		{job = 7, item = 2019,},
+		{job = 8, item = 2017,},
+	},
+	--女
+	{        
+		{job = 2, item = 2022,},
+		{job = 4, item = 2024,},
+		{job = 7, item = 2020,},
+		{job = 8, item = 2018,},
+	},
+}
+
+function GetLeaderClothes_Main(sysarg) 
+  local str = ""
+	local level = LActor.getIntProperty( sysarg, PROP_LEVEL )
+  if level < 20 then return "" end
+  str = str..Lang.ScriptTips.x00135.."/@GetLeaderClothes\\"  --领取军团长时装
+  return str
+end
+
+function GetLeaderClothes(sysarg)
+	local sex = LActor.getIntProperty(sysarg, PROP_SEX)   
+	local job = LActor.getIntProperty(sysarg, PROP_VOCATION)
+	local camp = LActor.getCamp(sysarg)
+	local userName =LActor.getName(sysarg) 
+	local titleid = LActor.getCampTitle(sysarg)
+	if titleid ~= 1 then
+		LActor.sendTipmsg(sysarg,Lang.ScriptTips.x00136,ttDialog )
+		return false
+	end
+	local clothes = getClothesTbl[sex+1]
+	if not clothes then return false end
+	local hasCloth = false
+	for i=1, table.getn(clothes) do
+		local item = clothes[i].item
+		if LActor.getItemCount(sysarg, item, -1, -1, -1) > 0 or LActor.hasEquiment(sysarg, item) == true then
+			hasCloth = true
+			break
+		end
+	end
+	if hasCloth == true then
+		LActor.sendTipmsg(sysarg,Lang.ScriptTips.x00137,ttDialog )
+		return false
+	end
+	if Item.getBagEmptyGridCount(sysarg) < 1 then
+		LActor.sendTipmsg(sysarg,Lang.ScriptTips.x00138,ttDialog )
+		return false
+	end
+	for i=1, table.getn(clothes) do
+		local item = clothes[i].item
+		if clothes[i].job == job then
+			LActor.addItem(sysarg, item, 0, 0, 1, 1, "GetLeaderClothes", 1) 
+			local tip = string.format(Lang.ScriptTips.x00139, Camp.getCampName(camp),userName,Item.getItemName(item))
+			System.broadcastTipmsg(tip, ttScreenCenter)
+			break
+		end
+	end
+	LActor.closeNPCDialog(sysarg)
+end
+
+table.insert(MainFnTable,GetLeaderClothes_Main)

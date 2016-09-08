@@ -1,0 +1,735 @@
+﻿--NPC商店子子系统消息处理实现 
+
+--#include "data\config\store\RenownShopConfig.txt" once
+--#include "data\functions\NpcTradeEventFunc.txt" once
+--#include "data\config\store\teampointshopconfig.txt" once
+
+local TokenType = {
+	[8] = 0,
+	[9] = 1,
+	[10] = 2,
+}
+
+local NPCTradeImplement = {}
+	NPCTradeImplement.StoreQuestData = 
+	{
+	   [18301] = {
+	   				{qid = 29, tid = 20205,count=1},  
+	   			},  --任务目标,表示购买了物品1234，则完成任务1862，tid和count对应任务配置表的值
+
+	   [18301] = {
+	   				{qid = 9340, tid = 18301,count=1},  
+	   				{qid = 9341, tid = 18301,count=1},
+	   				{qid = 9342, tid = 18301,count=1},
+	   				{qid = 9343, tid = 18301,count=1},
+	   				{qid = 9376, tid = 18301,count=1},
+	   				{qid = 9377, tid = 18301,count=1},
+	   				{qid = 9378, tid = 18301,count=1},
+	   				{qid = 9379, tid = 18301,count=1},
+	   				{qid = 9412, tid = 18301,count=1},
+	   				{qid = 9413, tid = 18301,count=1},
+	   				{qid = 9414, tid = 18301,count=1},
+	   				{qid = 9415, tid = 18301,count=1},
+	   				{qid = 9452, tid = 18301,count=1},
+	   				{qid = 9453, tid = 18301,count=1},
+	   				{qid = 9454, tid = 18301,count=1},
+	   				{qid = 9455, tid = 18301,count=1},
+	   				{qid = 9496, tid = 18301,count=1},
+	   				{qid = 9497, tid = 18301,count=1},
+	   				{qid = 9498, tid = 18301,count=1},
+	   				{qid = 9499, tid = 18301,count=1},
+	   				{qid = 9540, tid = 18301,count=1},
+	   				{qid = 9541, tid = 18301,count=1},
+	   				{qid = 9542, tid = 18301,count=1},
+	   				{qid = 9543, tid = 18301,count=1},
+	   				{qid = 9584, tid = 18301,count=1},
+	   				{qid = 9585, tid = 18301,count=1},
+	   				{qid = 9586, tid = 18301,count=1},
+	   				{qid = 9587, tid = 18301,count=1},
+	   				{qid = 9628, tid = 18301,count=1},
+	   				{qid = 9629, tid = 18301,count=1},
+	   				{qid = 9630, tid = 18301,count=1},
+	   				{qid = 9631, tid = 18301,count=1},
+	   			},  --炼魂枪
+	   [18200] = {
+	   				{qid = 9344, tid = 18200,count=1}, 
+	   				{qid = 9345, tid = 18200,count=1}, 
+	   				{qid = 9346, tid = 18200,count=1},  
+	   				{qid = 9347, tid = 18200,count=1}, 
+	   				{qid = 9380, tid = 18200,count=1}, 
+	   				{qid = 9381, tid = 18200,count=1}, 
+	   				{qid = 9382, tid = 18200,count=1}, 
+	   				{qid = 9383, tid = 18200,count=1}, 
+	   				{qid = 9416, tid = 18200,count=1},
+	   				{qid = 9417, tid = 18200,count=1},
+	   				{qid = 9418, tid = 18200,count=1},
+	   				{qid = 9419, tid = 18200,count=1},
+	   				{qid = 9456, tid = 18200,count=1},
+	   				{qid = 9457, tid = 18200,count=1},
+	   				{qid = 9458, tid = 18200,count=1},
+	   				{qid = 9459, tid = 18200,count=1},
+	   				{qid = 9500, tid = 18200,count=1},
+	   				{qid = 9501, tid = 18200,count=1},
+	   				{qid = 9502, tid = 18200,count=1},
+	   				{qid = 9503, tid = 18200,count=1},
+	   				{qid = 9544, tid = 18200,count=1},
+	   				{qid = 9545, tid = 18200,count=1},
+	   				{qid = 9546, tid = 18200,count=1},
+	   				{qid = 9547, tid = 18200,count=1},
+	   				{qid = 9588, tid = 18200,count=1},
+	   				{qid = 9589, tid = 18200,count=1},
+	   				{qid = 9590, tid = 18200,count=1},
+	   				{qid = 9591, tid = 18200,count=1},
+	   				{qid = 9632, tid = 18200,count=1},
+	   				{qid = 9633, tid = 18200,count=1},
+	   				{qid = 9634, tid = 18200,count=1},
+	   				{qid = 9635, tid = 18200,count=1},
+	   			}, --瞬影符
+	   [28211] = {
+	   				{qid = 9348, tid = 28211,count=1},
+	   				{qid = 9349, tid = 28211,count=1},
+	   				{qid = 9350, tid = 28211,count=1}, 
+	   				{qid = 9351, tid = 28211,count=1}, 
+	   				{qid = 9384, tid = 28211,count=1}, 
+	   				{qid = 9385, tid = 28211,count=1},
+	   				{qid = 9386, tid = 28211,count=1},
+	   				{qid = 9387, tid = 28211,count=1},
+	   				{qid = 9388, tid = 28211,count=1},
+	   				{qid = 9420, tid = 28211,count=1},
+	   				{qid = 9421, tid = 28211,count=1},
+	   				{qid = 9422, tid = 28211,count=1},
+	   				{qid = 9423, tid = 28211,count=1},
+	   				{qid = 9460, tid = 28211,count=1},
+	   				{qid = 9461, tid = 28211,count=1},
+	   				{qid = 9462, tid = 28211,count=1},
+	   				{qid = 9463, tid = 28211,count=1},
+	   				{qid = 9504, tid = 28211,count=1},
+	   				{qid = 9505, tid = 28211,count=1},
+	   				{qid = 9506, tid = 28211,count=1},
+	   				{qid = 9507, tid = 28211,count=1},
+	   				{qid = 9548, tid = 28211,count=1},
+	   				{qid = 9549, tid = 28211,count=1},
+	   				{qid = 9550, tid = 28211,count=1},
+	   				{qid = 9551, tid = 28211,count=1},
+	   				{qid = 9592, tid = 28211,count=1},
+	   				{qid = 9593, tid = 28211,count=1},
+	   				{qid = 9594, tid = 28211,count=1},
+	   				{qid = 9595, tid = 28211,count=1},
+	   				{qid = 9636, tid = 28211,count=1},
+	   				{qid = 9637, tid = 28211,count=1},
+	   				{qid = 9638, tid = 28211,count=1},
+	   				{qid = 9639, tid = 28211,count=1},
+	   			},  --初级伙伴口粮
+	}
+
+	NPCTradeImplement.FinishQuest = function ( sysarg, itemid, count )
+		if not count then
+			count = 1
+		end
+		-- 购买物品任务触发
+    	LActor.OnQuestEvent(qtShopping, itemid, count, true, sysarg) -- 购买指定
+    	LActor.OnQuestEvent(qtGouMaiShangPin, itemid, count, true, sysarg) -- 购买任意
+
+		local qData = NPCTradeImplement.StoreQuestData[itemid]
+		if qData then
+			for i=1,#qData do
+				LActor.setQuestValue(sysarg, qData[i].qid, qData[i].tid, qData[i].count)			
+			end
+		end
+	end
+
+	--购买
+	NPCTradeImplement.NPCTradeBuy = function ( sysarg, args )
+		local buyitemid = args[1]  --购买的物品ID
+		local amount = args[2] --物品的数目 
+		local npdId =  args[3] --npcID
+
+		-- 数量不对
+		if amount <= 0 then
+			print("-----NPCTradeImplement.NPCTradeBuy-----wrong amount")
+			return
+		end
+
+		-- 根据npc查找对应的配置
+		local conf
+		for i=1,#NPCStore do
+			if NPCStore[i].npcid == npdId then
+				conf = NPCStore[i]
+				break
+			end
+		end
+		if conf == nil then
+			print("-----NPCTradeImplement.NPCTradeBuy-----wrong npc id")
+			return
+		end
+
+		-- 找到商品配置
+		local item_conf
+		if npdId == 2 then
+			-- 如果是装备，这要分职业
+			for i,v in ipairs(conf) do
+				for j=1,#v.items do
+					if v.items[j].id == buyitemid then
+						item_conf = v.items[j]
+						break
+					end
+				end
+				-- 已找到，跳出
+				if item_conf then
+					break
+				end
+			end
+		else
+			for i=1,#conf[1].items do
+				if conf[1].items[i].id == buyitemid then
+					item_conf = conf[1].items[i]
+					break
+				end
+			end
+		end
+		if item_conf == nil then
+			print("-----NPCTradeImplement.NPCTradeBuy-----wrong item id")
+			return
+		end
+
+		if ( LActor.canAddItem( sysarg, buyitemid, amount ) == false ) then
+		  	-- LActor.sendTipmsg( sysarg,Lang.ScriptTips.n00006,ttMessage )
+		  	LActor.SendGeneralTips(sysarg, 7, 0, 0)
+			return
+		end
+		local dprice = item_conf.price
+
+		local totalCount = dprice * amount 
+
+		local dtype = item_conf.type
+		local itemname = Item.getItemName(buyitemid)
+		local itemIdStr = string.format("%d", buyitemid)
+	   	if (LActor.changeMoney( sysarg, dtype, -totalCount, amount, true, "npc_store", "buy_item", "", itemIdStr ) == false) then
+	    	--LActor.sendTipmsg( sysarg, Lang.ScriptTips.n00007, ttMessage )
+	    	LActor.SendGeneralTips(sysarg, 1, dtype, 0)
+			return
+	  	end
+
+	  	-- 用贝币购买的物品为绑定
+	  	local bind = 0
+	  	if dtype == mtBindCoin then
+	  		bind = 1
+	  	end
+
+	  	if amount > 0 then
+			LActor.addItem(sysarg, buyitemid, 0, 0, amount ,bind, itemname, 7)
+	  	end
+
+	   	-- 播放特效
+	   	local effects = {}
+		local effect = {}
+		effect.type = 1  -- 1为物品,暂时只支持发物品所以写死
+	    effect.id = buyitemid
+	    effect.count = amount
+	    effects[#effects+1] = effect
+  		if #effects > 0 then
+    		MiscFunc.PlayItemEffect(sysarg, 11, effects)
+    	end
+
+	   	NPCTradeImplement.FinishQuest(sysarg, buyitemid, amount)
+	end
+	
+-------------------------------------------------------------------------------------------------
+	--售卖
+	NPCTradeImplement.NPCTradeSell = function ( sysarg, args )
+		local sellitemptr = Item.getBagItemPtrByGuid( sysarg, args[1] )
+		if(sellitemptr ==nil) then return end   --找不到这件物品 
+
+		local pid = LActor.getIntProperty( sysarg, PROP_ENTITY_ID )
+		local itemid =Item.getItemProperty( sysarg, sellitemptr, Item.ipItemID, 0 )
+		if ( Item.getItemPropertyById( itemid, Item.ipItemDenySell ) == 1 ) then
+			LActor.sendTipmsg( sysarg, Lang.ScriptTips.n00016,ttMessage )
+		  	return
+		end
+
+		local dprice = Item.getItemPropertyById( itemid, Item.ipItemDealMoneyCount )
+		local dtype = Item.getItemPropertyById( itemid, Item.ipItemDealMoneyType )
+		local amount = Item.getItemProperty( sysarg, sellitemptr, Item.ipItemCount, 0 )
+
+		--卖出
+		local removeresult = Item.removeItem( sysarg, sellitemptr, amount, "Npc sell.", 8, false )
+
+		local itemname = Item.getItemName(itemid)
+		local gainresult = LActor.changeMoney( sysarg, dtype, dprice*amount, 1, true, "npc_store", "sell_item" )
+
+		if removeresult then
+			local sellresult = Item.addSellItem(sysarg,sellitemptr,amount)
+		end
+
+		--发一个数据包告诉客户端成功卖出一件物品 
+		local npack = DataPack.allocPacket(sysarg,133,4)  --申请一个数据包
+		if (npack ~= nil) then
+		  	DataPack.writeUint64(npack,args[1])
+			DataPack.flush(npack)
+		end
+	end
+
+  ---------------------------------------------------------------------------------
+	--购回
+	NPCTradeImplement.NPCTradeRepurchase = function ( sysarg, args )
+		local ritemguid = args[1] --购回的物品GUID
+		local npdId  = args[2]    --回购的NPCid 
+		local pid = LActor.getIntProperty( sysarg, PROP_ENTITY_ID )
+
+		--购回的物品指针
+		local ritemptr = Item.getSellItem(sysarg,ritemguid)
+
+		if ritemptr == nil then return end
+
+		local ritemid = Item.getItemProperty( sysarg, ritemptr, Item.ipItemID, 0 )
+		local dprice = Item.getItemProperty( sysarg, ritemptr, Item.ipItemDealMoneyCount, 0 )
+		--print("dprice:"..dprice)
+		local amount = Item.getItemProperty(sysarg,ritemptr,Item.ipItemCount,0)
+		--print("amount:"..amount)
+		local dtype = Item.getItemProperty( sysarg, ritemptr, Item.ipItemDealMoneyType, 0 )
+		--print("dtype:"..dtype)
+
+		if ( LActor.canAddItem( sysarg, ritemid, amount ) == false ) then
+			--print("---NPC repurchase add item failed.")
+			-- LActor.sendTipmsg( sysarg, Lang.ScriptTips.n00006,ttMessage )
+			LActor.SendGeneralTips(sysarg, 7, 0, 0)
+			return
+		end
+
+		local bagCount = Item.getBagEmptyGridCount(sysarg)
+		if bagCount < 1 then
+			LActor.sendTipmsg( sysarg, Lang.ScriptTips.n00006,ttMessage )
+			return
+		end
+
+		local totalCount = dprice * amount
+		local itemname = Item.getItemName(ritemid) 
+
+		if (LActor.changeMoney(sysarg, dtype, -totalCount, 1, true, "npc_store", "buy_back") == false)  then
+			-- if dtype == 0 then
+			-- 	LActor.sendTipmsg( sysarg, Lang.ScriptTips.gz006,ttMessage )
+			-- elseif dtype == 3 then
+			-- 	LActor.sendTipmsg( sysarg, Lang.ScriptTips.gz005,ttMessage )
+			-- end
+			LActor.SendGeneralTips(sysarg, 1, dtype, totalCount-LActor.getMoneyCount(sysarg,dtype))
+			-- TODO: 其它类型
+			return false
+		end
+
+		local addresult = Item.addItem(sysarg,ritemptr,"back buy",7,amount)
+		if addresult then 
+			Item.delSellItem(sysarg,ritemptr)
+			-- 播放特效
+		   	--[[local effects = {}
+			local effect = {}
+			effect.type = 1  -- 1为物品,暂时只支持发物品所以写死
+		    effect.id = ritemid
+		    effect.count = amount
+		    print("NPCTradeBuy effect.id:"..effect.id.."count:"..effect.count)
+		    effects[#effects+1] = effect
+			if #effects > 0 then
+    			MiscFunc.PlayItemEffect(sysarg, 11, effects)
+    		end]]
+		end
+
+		local npack = DataPack.allocPacket(sysarg,133,5)  --申请一个数据包
+
+		if (npack == nil) then return end
+
+		DataPack.writeUint64(npack,ritemguid)
+		DataPack.flush(npack)
+	end
+	
+---------------------------------------------------------------------------------
+	--购买历练的物品 
+	NPCTradeImplement.NPCTradeRenownchase = function ( sysarg, args )
+    	local itemID = args[1] --购回的物品GUID
+	  	local itemCount=  args[2]
+	  	local itemQuality =  args[3]
+		local itemStrong =  args[4]
+		local GroupId = args[5]
+		local sellconfig = nil
+
+		if GroupId < 1 or GroupId > 2 then
+			print("GroupId Error")
+			return 1
+		end
+
+		--背包不够
+	    local nGridCount= Item.getBagEmptyGridCount(sysarg)
+	    local nNeedGrid = Item.getAddItemNeedGridCount(sysarg,itemID,itemCount,itemQuality, itemStrong, 1)
+	    if(nNeedGrid > nGridCount) then
+	        -- local tipmsg = string.format(Lang.ScriptTips.x00074,nNeedGrid) --通知用户，需要空出多少个空格
+	        -- LActor.sendTipmsg( sysarg, tipmsg,ttMessage )
+	        LActor.SendGeneralTips(sysarg, 7, 0, 0)
+	        return
+	    end
+    
+		--3层遍历，找到那个物品 
+		local classCount = table.getn(RenwnShopConfig)
+
+		for i = 1 , classCount do
+			if(sellconfig ~= nil) then break end
+
+			if RenwnShopConfig[i].id == GroupId then
+				local config = RenwnShopConfig[i].secClasses
+				local subClassCount = table.getn(config)
+				for j = 1, subClassCount do
+					if(sellconfig ~= nil)  then break end
+
+					local items =  config[j].items
+					local itemCount = table.getn(items) 
+					for k = 1, itemCount do
+						if(items[k].itemID == itemID and items[k].strong == itemStrong) then
+							sellconfig = items[k]
+							break
+						end
+					end
+				end
+			end
+		end
+
+		if(sellconfig == nil ) then
+		  	return 1
+		end 
+   
+		local level = LActor.getIntProperty( sysarg, PROP_LEVEL )
+		if (level < sellconfig.buyLevel) then return 2 end  --如果等级不够的话，就不能购买
+
+		local priceCount = table.getn( sellconfig.price) --获取价格列表 
+		local spidName = System.getSystemDef("SPID") --获取配置 
+		local isBind = 0
+
+    	for i = 1, priceCount do
+      		if(sellconfig.price[i].spid == "*" or sellconfig.price[i].spid == spidName ) then
+	        	if(sellconfig.price[i].bind) then
+	            	isBind =1
+	        	end
+
+		        local  dtype = sellconfig.price[i].type --货币的类型 
+		        local  nTotal = sellconfig.price[i].price * itemCount 
+		        local nCurrent = LActor.getIntProperty( sysarg, moneyTypeMap[dtype] )
+        		if( nCurrent < nTotal ) then return 3 end
+
+		        local nItemId = sellconfig.price[i].id
+		        local nCount = sellconfig.price[i].count
+		        if nItemId ~= nil and nItemId > 0 then
+					if LActor.getItemCount(sysarg, nItemId, -1, -1, -1) < nCount then
+						LActor.sendTipmsg( sysarg, string.format(Lang.ScriptTips.x00130,Item.getItemName(nItemId)),ttMessage )
+						return 4
+					end
+        		end
+
+		        if(dtype>=0 and dtype <=3 ) then
+		            LActor.changeMoney(sysarg,dtype,nTotal, 1, true, "npc_store", "renown_chase") 
+		        else
+		       	    LActor.giveAward(sysarg,12,-1* nTotal,601,0, Item.getItemName(itemID) )
+		        end
+
+				local removeFlag =true
+				if nItemId ~= nil and nItemId > 0 then
+					if LActor.removeItem(sysarg, nItemId, nCount, -1, -1, -1, "renown buy item", 63) < nCount then
+						return 5
+					end	
+				end
+
+				LActor.addItem(sysarg, itemID, itemQuality, itemStrong, itemCount, isBind, "renown buy item", 63)
+
+				-- 播放特效
+			   	local effects = {}
+				local effect = {}
+				effect.type = 1  -- 1为物品,暂时只支持发物品所以写死
+			    effect.id = itemID
+			    effect.count = itemCount
+			    effects[#effects+1] = effect
+				if #effects > 0 then
+	    			MiscFunc.PlayItemEffect(sysarg, 10, effects)
+	    		end
+
+				NPCTradeImplement.FinishQuest(sysarg, itemID, itemCount)
+	      	end
+    	end
+	end
+
+		--购买荣誉值的物品 
+	NPCTradeImplement.NPCTradeHonorchase = function ( sysarg, args )
+    	local itemID = args[1] --购回的物品GUID
+	  	local itemCount=  args[2]
+	  	local itemQuality =  args[3]
+		local itemStrong =  args[4]
+		local GroupId = args[5]
+		local sellconfig = nil
+
+		if GroupId ~= 3 then
+			print("GroupId Error")
+			return 3
+		end
+
+		--背包不够
+	    local nGridCount= Item.getBagEmptyGridCount(sysarg)
+	    local nNeedGrid = Item.getAddItemNeedGridCount(sysarg,itemID,itemCount,itemQuality, itemStrong, 1)
+	    if(nNeedGrid > nGridCount) then
+	        -- local tipmsg = string.format(Lang.ScriptTips.x00074,nNeedGrid) --通知用户，需要空出多少个空格
+	        -- LActor.sendTipmsg( sysarg, tipmsg,ttMessage )
+	        LActor.SendGeneralTips(sysarg, 7, 0, 0)
+	        return
+	    end
+    
+		--3层遍历，找到那个物品 
+		local classCount = table.getn(RenwnShopConfig)
+
+		for i = 1 , classCount do
+			if(sellconfig ~= nil) then break end
+
+			if RenwnShopConfig[i].id == GroupId then
+				local config = RenwnShopConfig[i].secClasses
+				local subClassCount = table.getn(config)
+				for j = 1, subClassCount do
+					if(sellconfig ~= nil)  then break end
+
+					local items =  config[j].items
+					local itemCount = table.getn(items) 
+					for k = 1, itemCount do
+						if(items[k].itemID == itemID and items[k].strong == itemStrong) then
+							sellconfig = items[k]
+							break
+						end
+					end
+				end
+			end
+		end
+   
+		local level = LActor.getIntProperty( sysarg, PROP_LEVEL )
+		if (level < sellconfig.buyLevel) then return 2 end  --如果等级不够的话，就不能购买
+
+		local priceCount = table.getn( sellconfig.price) --获取价格列表 
+		local spidName = System.getSystemDef("SPID") --获取配置 
+		local isBind = 0
+
+    	for i = 1, priceCount do
+      		if(sellconfig.price[i].spid == "*" or sellconfig.price[i].spid == spidName ) then
+	        	if(sellconfig.price[i].bind) then
+	            	isBind =1
+	        	end
+
+		        local  dtype = sellconfig.price[i].type --货币的类型 
+		        local  nTotal = sellconfig.price[i].price * itemCount 
+		        local nCurrent = LActor.getIntProperty( sysarg, moneyTypeMap[dtype] )
+        		if( nCurrent < nTotal ) then return 3 end
+
+		        local nItemId = sellconfig.price[i].id
+		        local nCount = sellconfig.price[i].count
+		        if nItemId ~= nil and nItemId > 0 then
+					if LActor.getItemCount(sysarg, nItemId, -1, -1, -1) < nCount then
+						LActor.sendTipmsg( sysarg, string.format(Lang.ScriptTips.x00130,Item.getItemName(nItemId)),ttMessage )
+						return 4
+					end
+        		end
+
+		        if(dtype>=0 and dtype <=3 ) then
+		            LActor.changeMoney(sysarg,dtype,nTotal, 1, true, "npc_store", "honor_chase") 
+		        else
+		       	    LActor.giveAward(sysarg,16,-1* nTotal,606,0, Item.getItemName(itemID) )
+		        end
+
+				local removeFlag =true
+				if nItemId ~= nil and nItemId > 0 then
+					if LActor.removeItem(sysarg, nItemId, nCount, -1, -1, -1, "honor buy item", 90) < nCount then
+						return 5
+					end	
+				end
+
+				LActor.addItem(sysarg, itemID, itemQuality, itemStrong, itemCount, isBind, "honor buy item", 90)
+
+				-- 播放特效
+			   	local effects = {}
+				local effect = {}
+				effect.type = 1  -- 1为物品,暂时只支持发物品所以写死
+			    effect.id = itemID
+			    effect.count = itemCount
+			    effects[#effects+1] = effect
+				if #effects > 0 then
+	    			MiscFunc.PlayItemEffect(sysarg, 10, effects)
+	    		end
+				--NPCTradeImplement.FinishQuest(sysarg, itemID)
+	      	end
+    	end
+	end
+
+		--购买组队副本的物品 
+	NPCTradeImplement.NPCTradeTeamchase = function ( sysarg, args )
+    	local itemID = args[1] --购回的物品GUID
+	  	local itemCount=  args[2]
+	  	local itemQuality =  args[3]
+		local itemStrong =  args[4]
+		local GroupId = args[5]
+		local sellconfig = nil
+
+		--背包不够
+	    local nGridCount= Item.getBagEmptyGridCount(sysarg)
+	    local nNeedGrid = Item.getAddItemNeedGridCount(sysarg,itemID,itemCount,itemQuality, itemStrong, 1)
+	    if(nNeedGrid > nGridCount) then
+	        -- local tipmsg = string.format(Lang.ScriptTips.x00074,nNeedGrid) --通知用户，需要空出多少个空格
+	        -- LActor.sendTipmsg( sysarg, tipmsg,ttMessage )
+	        LActor.SendGeneralTips(sysarg, 7, 0, 0)
+	        return
+	    end
+    
+		--3层遍历，找到那个物品 
+		local classCount = table.getn(TeamPointShopConfig)
+
+		for i = 1 , classCount do
+			if(sellconfig ~= nil) then break end
+
+			if TeamPointShopConfig[i].id == GroupId then
+				local config = TeamPointShopConfig[i].secClasses
+				local subClassCount = table.getn(config)
+				for j = 1, subClassCount do
+					if(sellconfig ~= nil)  then break end
+
+					local items =  config[j].items
+					local itemCount = table.getn(items) 
+					for k = 1, itemCount do
+						if(items[k].itemID == itemID and items[k].strong == itemStrong) then
+							sellconfig = items[k]
+							break
+						end
+					end
+				end
+			end
+		end
+
+		if(sellconfig == nil ) then
+		  	return 1
+		end 
+   
+		local level = LActor.getIntProperty( sysarg, PROP_LEVEL )
+		if (level < sellconfig.buyLevel) then return 2 end  --如果等级不够的话，就不能购买
+
+		local priceCount = table.getn( sellconfig.price) --获取价格列表 
+		local spidName = System.getSystemDef("SPID") --获取配置 
+		local isBind = 0
+
+    	for i = 1, priceCount do
+      		if(sellconfig.price[i].spid == "*" or sellconfig.price[i].spid == spidName ) then
+	        	if(sellconfig.price[i].bind) then
+	            	isBind =1
+	        	end
+
+		        local  dtype = sellconfig.price[i].type --货币的类型 
+		        local  nTotal = sellconfig.price[i].price * itemCount
+		        print("dtype=================:"..dtype)
+		        local idx = TokenType[dtype]
+		        if idx == nil then
+		        	return 3
+		        end
+		        local nCurrent = LActor.getTeamToken( sysarg, idx )
+        		if( nCurrent < nTotal ) then return 3 end
+
+		        local nItemId = sellconfig.price[i].id
+		        local nCount = sellconfig.price[i].count
+		        if nItemId ~= nil and nItemId > 0 then
+					if LActor.getItemCount(sysarg, nItemId, -1, -1, -1) < nCount then
+						LActor.sendTipmsg( sysarg, string.format(Lang.ScriptTips.x00130,Item.getItemName(nItemId)),ttMessage )
+						return 4
+					end
+        		end
+
+		        if(dtype>=0 and dtype <=3 ) then
+		            LActor.changeMoney(sysarg,dtype,nTotal, 1, true, "npc_store", "team_chase") 
+		        else
+		       	    -- LActor.giveAward(sysarg,16,-1* nTotal,606,0, Item.getItemName(itemID) )
+		       	    LActor.changeTeamToken(sysarg, GroupId-1, -nTotal)
+		        end
+
+				local removeFlag =true
+				if nItemId ~= nil and nItemId > 0 then
+					if LActor.removeItem(sysarg, nItemId, nCount, -1, -1, -1, "team buy item", 99) < nCount then
+						return 5
+					end	
+				end
+
+				LActor.addItem(sysarg, itemID, itemQuality, itemStrong, itemCount, isBind, "team buy item", 99)
+
+				--NPCTradeImplement.FinishQuest(sysarg, itemID)
+	      	end
+    	end
+	end
+
+--处理NPC交易
+NPCTradeImplement.main = function ( sysarg, sysitemid, msgid, arg ) 
+	--从商店购买东西
+	if(msgid ==1) then  
+		local buyitemid = DataPack.readWord(arg)  --购买的物品ID
+		local amount = DataPack.readWord(arg)      --物品的数量 
+		local npcId =  DataPack.readWord(arg)      --NPC的ID，0表示是背包商店 
+		NPCTradeImplement.NPCTradeBuy( sysarg, {buyitemid, amount,npcId} )
+		return
+	end
+
+	--购买历练的物品
+	if (msgid ==2) then  
+		local buyitemid = DataPack.readWord(arg)  --购买的物品ID
+		local amount = DataPack.readWord(arg)     --购买的物品的数量
+		local nQuality =   DataPack.readByte(arg)     --购买的物品的数量
+		local nStrong =   DataPack.readByte(arg)     --购买的物品的数量
+		local nGroupId = DataPack.readByte(arg)		--购买的物品组ID
+		local ret = NPCTradeImplement.NPCTradeRenownchase( sysarg, {buyitemid, amount,nQuality, nStrong, nGroupId} )
+		if (ret ~= nil) then
+			print("NPCTradeImplement.NPCTradeRenownchase:"..ret)
+		end
+		return
+	end
+
+	--请求背包商店购买的物品的列表
+	if (msgid == 3) then
+		NPCTradeInfoToClient( sysarg, 0 )
+		return
+	end
+
+	--出售物品给商店 
+	if (msgid == 4) then
+		local sellitemguid = DataPack.readUint64(arg)  --出售的的物品GUID
+		NPCTradeImplement.NPCTradeSell( sysarg, {sellitemguid} ) --出售给商店 
+		return
+	end
+
+	--从商店回购 
+	if(msgid ==5) then
+		local ritemguid = DataPack.readUint64(arg)  --回购的的物品GUID
+		local npcId = DataPack.readWord(arg)     --购买的物品的数量
+
+		NPCTradeImplement.NPCTradeRepurchase( sysarg, {ritemguid,npcId} )
+		return 
+	end
+
+		--购买荣誉值的物品
+	if (msgid ==6) then  
+		local buyitemid = DataPack.readWord(arg)  --购买的物品ID
+		local amount = DataPack.readWord(arg)     --购买的物品的数量
+		local nQuality =   DataPack.readByte(arg)     --购买的物品的数量
+		local nStrong =   DataPack.readByte(arg)     --购买的物品的数量
+		local nGroupId = DataPack.readByte(arg)		--购买的物品组ID
+		local ret = NPCTradeImplement.NPCTradeHonorchase( sysarg, {buyitemid, amount,nQuality, nStrong, nGroupId} )
+		if (ret ~= nil) then
+			print("NPCTradeImplement.NPCTradeHonorchase:"..ret)
+		end
+		return
+	end
+
+	--购买组队副本物品的物品
+	if (msgid ==7) then  
+		local buyitemid = DataPack.readWord(arg)  --购买的物品ID
+		local amount = DataPack.readWord(arg)     --购买的物品的数量
+		local nQuality =   DataPack.readByte(arg)     --购买的物品的数量
+		local nStrong =   DataPack.readByte(arg)     --购买的物品的数量
+		local nGroupId = DataPack.readByte(arg)		--购买的物品组ID
+		local ret = NPCTradeImplement.NPCTradeTeamchase( sysarg, {buyitemid, amount,nQuality, nStrong, nGroupId} )
+		if (ret ~= nil) then
+			print("NPCTradeImplement.NPCTradeTeamchase:"..ret)
+		end
+		return
+	end
+end 
+
+SystemHandlerDispatcher.registerSystemHander(BaseTypes.SystemId.npcTradeSystem, NPCTradeImplement.main)

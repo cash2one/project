@@ -1,0 +1,55 @@
+﻿{
+	comp = {
+		type = 1,
+		scene = Lang.SceneName.s5,
+		npc = Lang.EntityName.n526,
+	},
+	prom = {
+		type = 1,
+		scene = Lang.SceneName.s6,
+		npc = Lang.EntityName.n605,
+	},
+	timelimit = 0,
+	conds = {
+		{
+			id = 0,
+			type = 0,
+			count = 80,
+		},
+	},
+	target = {
+		{
+			id = 0,
+			type = 2,
+			count = 1,
+		},
+	},
+	excludetree = true,
+	type = 6,
+	awards = {
+		{
+			id = 0,
+			type = 5,
+			count = 240,
+		},
+		{
+			id = 0,
+			type = 1,
+			count = 70000,
+		},
+		{
+			id = 0,
+			type = 4,
+			count = 200000,
+		},
+	},
+	finishNext = false,
+	maxcount = 0,
+	timeoutcleardata = 0,
+	name = Lang.Quest.n25001,
+	parentid = -1,
+	cangiveup = true,
+	id = 25006,
+	content = Lang.Quest.d25001,
+	interval = 0,
+},

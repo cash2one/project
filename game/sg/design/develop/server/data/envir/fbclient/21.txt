@@ -1,0 +1,22 @@
+    {
+	--五灵玄天阵
+          fbid = 21 ,fbname = Lang.FubenName.fname0021,fbDesc = Lang.FubenName.fdesc0021,minLevel = 50,minPlayCount = 1,maxPlayCount = 5,type = 0,fbTime=3600,
+	  awards=
+	  {
+		{type=0,id=746,count=2,bind=0,strong=0,quality=0},  --2级外攻宝石*2
+		{type=0,id=756,count=2,bind=0,strong=0,quality=0},  --2级内攻宝石*2
+		{type=0,id=766,count=2,bind=0,strong=0,quality=0},  --2级外防宝石*2
+		{type=0,id=776,count=2,bind=0,strong=0,quality=0},  --2级内防宝石*2
+		{type=0,id=786,count=2,bind=0,strong=0,quality=0},  --2级生命宝石*2
+		{type=0,id=796,count=2,bind=0,strong=0,quality=0},  --2级内力宝石*2
+		{type=0,id=806,count=2,bind=0,strong=0,quality=0},  --2级命中宝石*2
+		{type=0,id=816,count=2,bind=0,strong=0,quality=0},  --2级闪避宝石*2
+		{type=0,id=826,count=2,bind=0,strong=0,quality=0},  --2级暴击宝石*2
+	  },
+	  npc=
+         {
+ 	    --洛阳 白凌
+            {sceneId=49,name=Lang.EntityName.n00484,conds={}},
+	  },
+	
+  },

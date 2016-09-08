@@ -1,0 +1,400 @@
+--#include "chessfunc.txt" once
+--#include "data\config\task\chessconfig.txt" once
+
+ChessFunc.DistroyAll = function ( hfb)
+	local fbPtr = Fuben.getFubenPtr(hfb)
+	local var = Fuben.getDyanmicVar(fbPtr)
+	if var.Monster == nil then
+		print("ChessFunc.DistroyAll Monster ============== nil")
+		return 
+	end
+	if var.KillChess == nil then
+		var.KillChess = 0
+	end	
+	for i=1,Row do
+		for j=1,Col do
+			if var.Monster[i][j] ~= 0 then
+				--删除怪物
+				local actors = LuaHelp.getFbActorList(fbPtr)
+				if actors ~= nil then 
+					for t = 1,#actors do
+						local actor = actors[t]
+						LActor.addSceneEffectByPix(actor, ChessConfig.chesseffect.id, ChessConfig.chesseffect.type, ChessConfig.chesseffect.time, 0, ChessConfig.pos[i][j].pixx, ChessConfig.pos[i][j].pixy)
+					end
+				end
+				Fuben.clearMonster(var.Monster[i][j])
+				var.Monster[i][j] = 0
+			end
+		end
+	end
+	--ChessFunc.InitMonster(hfb)
+end
+
+ChessFunc.DisAppearAll = function (hfb )
+	local fbPtr = Fuben.getFubenPtr(hfb)
+	local var = Fuben.getDyanmicVar(fbPtr)
+	if var.Appear == nil then
+		print("ChessFunc.DisAppearAll Appear ============== nil")
+		return 
+	end
+	local num = 0
+	for i=1,Row do
+		for j=1,Col do
+			if var.Appear[i][j] ~= 0 then
+				--删除怪物
+				local actors = LuaHelp.getFbActorList(fbPtr)
+				if actors ~= nil then 
+					for t = 1,#actors do
+						local actor = actors[t]
+						LActor.addSceneEffectByPix(actor, ChessConfig.chesseffect.id, ChessConfig.chesseffect.type, ChessConfig.chesseffect.time, 0, ChessConfig.pos[i][j].pixx, ChessConfig.pos[i][j].pixy)
+					end
+				end
+				Fuben.clearMonster(var.Monster[i][j])
+				var.Monster[i][j] = 0
+				var.Board[i][j] = 0
+				num = num + 1
+			end
+		end
+	end
+	if num <= 0 then
+		return
+	end
+	var.KillChess = var.KillChess + num
+	local actors = LuaHelp.getFbActorList(fbPtr)
+	if actors == nil then return end
+	for i = 1,#actors do
+		local actor = actors[i]
+		LActor.SendAndChangeCaleValue(actor,caleOther2,num,true)	--现有积分
+	end
+end
+
+ChessFunc.AppearAll = function (hfb )
+	local fbPtr = Fuben.getFubenPtr(hfb)
+	local var = Fuben.getDyanmicVar(fbPtr)
+	if var.Appear == nil then
+		print("ChessFunc.AppearAll Appear ============== nil")
+		return 
+	end
+	if var.Board == nil then
+		print("ChessFunc.AppearAll Board ============== nil")
+		return 
+	end
+	if var.Monster == nil then
+		print("ChessFunc.AppearAll Monster ============== nil")
+		return 
+	end
+	if var.Temp == nil then
+		print("ChessFunc.AppearAll Temp ============== nil")
+		return 
+	end
+	local  hScene = Fuben.getSceneHandleById( ChessConfig.sceneid, hfb)
+	for i=1,Row do
+		for j=1,Col do
+			if var.Appear[i][j] ~= 0 and var.Board[i][j] == 0 then
+				local id = ChessFunc.AppearOneChess(hfb,i, j)
+				var.Temp[i][j] = id
+				--创建怪物
+				local mon = 0
+				if id == 1 then
+					mon = ChessConfig.black
+				elseif id == 2 then
+					mon = ChessConfig.white
+				elseif id == 3 then
+					mon = ChessConfig.red
+				end
+				local monster = Fuben.createMonsterPix( hScene, mon, ChessConfig.pos[i][j].posx, ChessConfig.pos[i][j].posy,
+				 ChessConfig.pos[i][j].pixx, ChessConfig.pos[i][j].pixy, 3600)
+				if monster ~= nil then
+					var.Monster[i][j] = LActor.getHandle(monster)
+				else
+					var.Monster[i][j] = 0
+					print("AppearAll create monster error")
+				end
+			end
+		end
+	end
+	ChessFunc.InitAppear(hfb)
+	for i=1,Row do
+		for j=1,Col do
+			if var.Temp[i][j] ~= 0 then
+				ChessFunc.Match(hfb,i, j, var.Temp[i][j])
+			end
+		end
+	end
+	ChessFunc.InitTemp(hfb)
+end
+
+ChessFunc.ReviveAll = function (hfb)
+	local fbPtr = Fuben.getFubenPtr(hfb)
+	local var = Fuben.getDyanmicVar(fbPtr)
+	if var.Kill == nil then
+		print("ChessFunc.ReviveAll Kill ============== nil")
+		return 
+	end
+	if var.Board == nil then
+		print("ChessFunc.ReviveAll Board ============== nil")
+		return 
+	end
+	if var.Monster == nil then
+		print("ChessFunc.ReviveAll Monster ============== nil")
+		return 
+	end
+	local  hScene = Fuben.getSceneHandleById( ChessConfig.sceneid, hfb)
+	for i=1,Row do
+		for j=1,Col do
+			if var.Kill[i][j] ~= 0 and var.Board[i][j] == 0 then
+				--随机生成新的怪物
+				local old = var.Kill[i][j]
+				local new = 0
+				local ratio = System.getRandomNumber(100)
+				if ratio < ChessConfig.redratio then
+					new = 3
+				else
+					if old == 1 then
+						new = 2
+					elseif old == 2 then
+						new = 1
+					elseif old == 3 then
+						ratio = System.getRandomNumber(100)
+						if ratio < 50 then
+							new = 1
+						else
+							new = 2
+						end
+					end
+				end
+				var.Board[i][j] = new
+				local mon = 0
+				if new == 1 then
+					mon = ChessConfig.black
+				elseif new == 2 then
+					mon = ChessConfig.white
+				elseif new == 3 then
+					mon = ChessConfig.red
+				end
+				ChessFunc.Match(hfb,i, j, new)
+				local monster = Fuben.createMonsterPix( hScene, mon, ChessConfig.pos[i][j].posx, ChessConfig.pos[i][j].posy,
+				 ChessConfig.pos[i][j].pixx, ChessConfig.pos[i][j].pixy, 3600)
+				if monster ~= nil then
+					var.Monster[i][j] = LActor.getHandle(monster)
+				else
+					var.Monster[i][j] = 0
+					print("ReviveAll create monster error")
+				end
+			end
+		end
+	end
+	ChessFunc.InitKill(hfb)
+end
+
+ChessFunc.ChessChange = function (msgid, pscene)
+	local fbptr = Fuben.getSceneFuben(pscene)
+	if fbptr == nil then return end
+	local hfb = Fuben.getFubenHandle(fbptr)
+	ChessFunc.DisAppearAll(hfb)
+	ChessFunc.AppearAll(hfb)
+	ChessFunc.ReviveAll (hfb)
+	ChessFunc.TongGuan(hfb)
+end
+
+ChessFunc.CreateMonster = function ( hfb )
+	local fbPtr = Fuben.getFubenPtr(hfb)
+	local var = Fuben.getDyanmicVar(fbPtr)
+	if var.Board == nil then
+		print("ChessFunc.CreateMonster Board ============== nil")
+		return 
+	end
+	if var.Monster == nil then
+		print("ChessFunc.CreateMonster Monster ============== nil")
+		return 
+	end
+	local  hScene = Fuben.getSceneHandleById( ChessConfig.sceneid, hfb)
+	for i=1,Row do
+		for j=1,Col do
+			local id = var.Board[i][j]
+			local mon = 0
+			if id == 1 then
+				mon = ChessConfig.black
+			elseif id == 2 then
+				mon = ChessConfig.white
+			elseif id == 3 then
+				mon = ChessConfig.red
+			end
+			print("mon==============:"..mon)
+			print("ChessConfig.pos[i][j].posx=========:"..ChessConfig.pos[i][j].posx)
+			print("ChessConfig.pos[i][j].posy========:"..ChessConfig.pos[i][j].posy)
+			print("ChessConfig.pos[i][j].pixx========:"..ChessConfig.pos[i][j].pixx)
+			print("ChessConfig.pos[i][j].pixy=========:"..ChessConfig.pos[i][j].pixy)
+			local monster = Fuben.createMonsterPix( hScene, mon, ChessConfig.pos[i][j].posx, ChessConfig.pos[i][j].posy,
+			 ChessConfig.pos[i][j].pixx, ChessConfig.pos[i][j].pixy, 3600)
+			if monster ~= nil then
+				var.Monster[i][j] = LActor.getHandle(monster)
+			else
+				var.Monster[i][j] = 0
+				print("CreateMonster create monster error")
+			end
+		end
+	end
+end
+
+ChessFunc.InitAll = function ( hfb )
+	ChessFunc.Init(hfb)
+	ChessFunc.CreateBoard(hfb)
+	ChessFunc.CreateMonster(hfb)
+	Fuben.SetFubenGameTime(hfb,ChessConfig.roundtime)
+	local  hScene = Fuben.getSceneHandleById( ChessConfig.sceneid, hfb)
+	Fuben.postSceneTimeCall(hScene, TimerMsg.ChessChange, ChessConfig.interval, -1)
+end
+
+ChessFunc.TongGuan = function ( hfb )
+	local fbPtr = Fuben.getFubenPtr(hfb)
+	local var = Fuben.getDyanmicVar(fbPtr)
+	if var.KillChess == nil then
+		var.KillChess = 0
+	end	
+	if var.chessround == nil then
+		var.chessround = 0
+	end
+
+	local round  = var.chessround + 1
+	--修正越界的BUG
+	if round >= ChessConfig.round then
+		round = ChessConfig.round
+	end
+
+	if var.KillChess < ChessConfig.score[round] then
+		return
+	end
+
+	local hScene = Fuben.getSceneHandleById( ChessConfig.sceneid, hfb)
+	Fuben.clearSceneTimeCall(hScene)
+
+	var.KillChess = 0
+	--修正越界的BUG
+	if var.chessround >= ChessConfig.round then
+		var.chessround = ChessConfig.round
+	else
+		var.chessround = var.chessround + 1
+	end
+	
+	if var.chessround >= ChessConfig.round then
+		local actors = LuaHelp.getFbActorList(fbPtr)
+		if actors == nil then return end
+		for i = 1,#actors do
+			local actor = actors[i]
+			LActor.SendAndChangeCaleValue(actor,caleOther1,ChessConfig.tokenround[var.chessround],true)	--代币数量
+			LActor.changeTeamToken(actor, ChessConfig.tokentype, ChessConfig.tokenround[var.chessround])
+			LActor.playCenterEffect(actor, ChessConfig.passEffect.id, ChessConfig.passEffect.time)
+		end
+		ChessFunc.DistroyAll(hfb)
+		ChessFunc.KickAllActor(fbPtr)
+		Fuben.SetFubenTime(hfb, 1)
+		return
+	end
+
+	Fuben.SetFubenGameTime(hfb,ChessConfig.roundtime)
+	ChessFunc.DistroyAll(hfb)
+	ChessFunc.Init(hfb)
+	ChessFunc.CreateBoard(hfb)
+	ChessFunc.CreateMonster(hfb)
+	Fuben.postSceneTimeCall(hScene, TimerMsg.ChessChange, ChessConfig.interval, -1)
+	local actors = LuaHelp.getFbActorList(fbPtr)
+	if actors == nil then return end
+	for i = 1,#actors do
+		local actor = actors[i]
+		LActor.changeTeamToken(actor, ChessConfig.tokentype, ChessConfig.tokenround[var.chessround])
+		LActor.SendAndChangeCaleValue(actor,caleOther3,var.chessround+1,false)	--第几波
+		LActor.SendAndChangeCaleValue(actor,caleOther2,var.KillChess,false)	--现有积分
+		LActor.SendAndChangeCaleValue(actor,caleOther1,ChessConfig.tokenround[var.chessround],true)	--代币数量
+		LActor.SendAndChangeCaleValue(actor,caleOther4,ChessConfig.score[var.chessround+1],false)	--通关积分
+		LActor.SendAndChangeCaleValue(actor,caleGameTime,Fuben.GetFubenGameTime(fbPtr),false)	--剩余时间
+		LActor.playCenterEffect(actor, ChessConfig.winEffect.id, ChessConfig.winEffect.time)
+	end
+end
+
+ChessFunc.KickAllActor = function (pfb)
+	local actors = LuaHelp.getFbActorList(pfb)
+	if actors == nil then return end
+	for i = 1,#actors do
+		local actor = actors[i]
+		LActor.exitFubenToScene(actor,ChessConfig.returnmapid,ChessConfig.returnmapx,ChessConfig.returnmapy)
+	end
+end
+
+
+ChessFunc.OnGameOver = function ( pfb )
+	if pfb == nil then return end
+
+	local hfb = Fuben.getFubenHandle(pfb)
+	local hScene = Fuben.getSceneHandleById( ChessConfig.sceneid, hfb)
+	Fuben.clearSceneTimeCall(hScene)
+
+	local var = Fuben.getDyanmicVar(pfb)
+	if var.chessround == nil then
+		var.chessround = 0
+	end
+	if var.KillChess == nil then
+		var.KillChess = 0
+	end	
+
+	--修正越界的BUG
+	if var.chessround >= ChessConfig.round then
+		var.chessround = ChessConfig.round
+	else
+		var.chessround  = var.chessround + 1
+	end
+
+	if var.KillChess >= ChessConfig.score[var.chessround] then
+		var.KillChess = 0
+		Fuben.SetFubenGameTime(hfb,ChessConfig.roundtime)
+		ChessFunc.DistroyAll(hfb)
+		ChessFunc.Init(hfb)
+		ChessFunc.CreateBoard(hfb)
+		ChessFunc.CreateMonster(hfb)
+		Fuben.postSceneTimeCall(hScene, TimerMsg.ChessChange, ChessConfig.interval, -1)
+		local actors = LuaHelp.getFbActorList(pfb)
+		if actors == nil then return end
+		for i = 1,#actors do
+			local actor = actors[i]
+			LActor.changeTeamToken(actor, ChessConfig.tokentype, ChessConfig.tokenround[var.chessround])
+			LActor.SendAndChangeCaleValue(actor,caleOther3,var.chessround+1,false)	--第几波
+			LActor.SendAndChangeCaleValue(actor,caleOther2,var.KillChess,false)	--现有积分
+			LActor.SendAndChangeCaleValue(actor,caleOther1,ChessConfig.tokenround[var.chessround],true)	--代币数量
+			LActor.SendAndChangeCaleValue(actor,caleOther4,ChessConfig.score[var.chessround+1],false)	--通关积分
+			LActor.SendAndChangeCaleValue(actor,caleGameTime,Fuben.GetFubenGameTime(pfb),false)	--剩余时间
+			LActor.playCenterEffect(actor, ChessConfig.winEffect.id, ChessConfig.winEffect.time)
+		end
+	else
+		local actors = LuaHelp.getFbActorList(pfb)
+		if actors == nil then return end
+		for i = 1,#actors do
+			local actor = actors[i]
+			LActor.playCenterEffect(actor, ChessConfig.failEffect.id, ChessConfig.failEffect.time)
+		end
+		ChessFunc.KickAllActor(pfb)
+		Fuben.SetFubenTime(hfb, 1)
+	end
+end
+
+ChessFunc.ChessFubenEnter = function (sysarg, hfb, way)
+	local fbPtr = Fuben.getFubenPtr(hfb)
+	local var = Fuben.getDyanmicVar(fbPtr)
+	if var.KillChess == nil then
+		var.KillChess = 0
+	end	
+	if var.chessround == nil then
+		var.chessround = 0
+	end
+
+	LActor.SendAndChangeCaleValue(sysarg,caleOther3,var.chessround+1,false)	--第几波
+	LActor.SendAndChangeCaleValue(sysarg,caleOther2,var.KillChess,false)	--现有积分
+	LActor.SendAndChangeCaleValue(sysarg,caleOther4,ChessConfig.score[var.chessround+1],false)	--通关积分
+	LActor.SendAndChangeCaleValue(sysarg,caleOther5,ChessConfig.tokentotal,false)	--通关代币数量
+	LActor.SendAndChangeCaleValue(sysarg,caleGameTime,Fuben.GetFubenGameTime(fbPtr),false)	--剩余时间
+end
+
+TimerMsgFunc.register(TimerMsg.ChessChange, ChessFunc.ChessChange)
+
+EventCallDispatcher.registerFubenInit(ChessConfig.fubenid, ChessFunc.InitAll )
+EventCallDispatcher.registerFubenGameOver(ChessConfig.fubenid,  ChessFunc.OnGameOver)
+EventCallDispatcher.registerFubenEnter(ChessConfig.fubenid, ChessFunc.ChessFubenEnter)

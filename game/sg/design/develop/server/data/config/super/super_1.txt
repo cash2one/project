@@ -1,0 +1,20 @@
+﻿{
+	id = 1,
+	name = Lang.Super.s1Name,
+	desc = Lang.Super.s1Desc,
+
+	maxzl = Lang.Super.maxzl1,
+	motto = Lang.Super.motto1,
+	--模型id
+	modelid=10003,
+	--技能列表,这个要手动升级的技能,被动技能一定要填在第一个
+	skillid = 287,
+	--激活所需碎片数量
+	pieceNum = 30,
+	--技能所加战斗力
+	skillfightvalue = 100,
+	--激活属性,{血,攻击,法防,物防,暴击,防爆,命中,闪避}
+	attrs = {1300,190,125,125,50,50,50,50},
+	getway=Lang.Super.getway1,
+	itemid = 61004,
+},

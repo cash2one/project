@@ -1,0 +1,19 @@
+-- 国庆副本函数
+
+GuoQingPublic = {}
+
+-- 通关处理
+GuoQingPublic.OnTongGuan = function(sysarg, layer, sconf)
+	-- 创建传送门
+	local teleportConf = sconf.teleport
+	if teleportConf ~= nil then
+		-- print("create transter:"..layer)
+		local comfirm
+		if teleportConf.comfirm == nil then
+			comfirm = 0
+		else
+			comfirm = teleportConf.comfirm
+		end
+		LActor.createTranster(sysarg, teleportConf.modelid, teleportConf.posx, teleportConf.posy, teleportConf.toPosx, teleportConf.toPosy, teleportConf.toSceneid, teleportConf.name, comfirm)
+	end
+end

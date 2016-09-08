@@ -1,0 +1,267 @@
+-- 密宗佛塔怪物脚本处理
+--#include "data\functions\globaldefine.txt" once
+--#include "data\config\task\cymkconf.txt"
+--#include "data\functions\tasks\teamfuben\cymkfunc.txt" once
+
+CymkMon = {}	-- 密宗佛塔怪物函数处理
+
+-- 杀死怪物处理
+CymkMon.OnKillMonster = function(monster,sysarg,mid)
+	if sysarg == nil then return end
+	if LActor.getFubenId(sysarg) ~= CymkConf.fbid then return end
+
+	local pfb = LActor.getFubenPrt(sysarg)
+	if pfb == nil then return end
+
+	local layer = Fuben.getFubenProgress(pfb) -- 第几层
+
+	local sconf = CymkConf.scenes[layer]
+	if sconf == nil then
+		print("cymk scene id error")
+		return
+	end
+
+	-- local exp = 0
+	-- if CymkConf.awardSet ~= nil then
+	-- 	if CymkConf.awardSet[mid] ~= nil then
+	-- 		exp  = CymkConf.awardSet[mid]
+	-- 	end
+	-- end
+	
+	-- --print("OnKillMonster: exp::::: "..exp.."minid: "..mid)
+	-- local actors = LuaHelp.getFbActorList(pfb)
+	-- if actors == nil then return end
+	-- for i = 1,#actors do
+	-- 	local actor = actors[i]
+	-- 	--print("exp::::: "..exp.."minid: "..mid)
+	-- 	LActor.addExp(actor, exp, 202, 0)
+	-- 	LActor.SendAllCaleValue(actor)
+	-- end
+
+	-- 通关处理
+	if sconf.conds.type ~= nil and sconf.conds.type == 2 and sconf.conds.mid == mid then -- 打死boss,通关
+		CymkPublic.OnTongGuan(pfb, layer, sconf)
+	end
+end
+
+-- 蓝晶，紫晶，橙晶
+-- 杀死结晶怪物的处理
+CymkMon.OnKillJieJing = function(mon, sysarg, mid)
+	if mon == nil or mid == nil then return end
+	if LActor.getFubenId(mon) ~= CymkConf.fbid then return end
+
+	local hscene = LActor.getSceneHandle(mon)
+
+	-- 删除玄武结界的一个buff
+	local xwMon = Fuben.getMonsterPtrById(hscene, CymkConf.xuanwuMon)
+	if xwMon ~= nil then
+		local idx = 1
+		for i=1,#CymkConf.jieJingMon do
+			if mid == CymkConf.jieJingMon[i] then
+				idx = i
+				break
+			end
+		end
+		local buffs = CymkConf.jieJingBuff[idx]
+		for i=1,#buffs do
+			local buff = buffs[i]
+			LActor.delBuff(xwMon, buff.type, buff.group)
+			--print("delBuff1")
+		end
+	end
+
+	-- 两个结晶死了，删除橙晶的一个buff
+	local mons = CymkConf.jieJingMon
+	if mid ~= mons[3] then -- 不是橙晶
+		local otherid
+		if mid == mons[1] then
+			otherid = mons[2]
+		else
+			otherid = mons[1]
+		end
+		if Fuben.getMonsterPtrById(hscene, otherid) == nil then
+			local cj = Fuben.getMonsterPtrById(hscene, mons[3])
+			if cj ~= nil then
+				LActor.delBuff(cj, CymkConf.killbuff.type, CymkConf.killbuff.group)
+				--print("delBuff2")
+			end
+		end
+	end
+
+	-- local exp = 0
+	-- if CymkConf.awardSet ~= nil then
+	-- 	if CymkConf.awardSet[mid] ~= nil then
+	-- 		exp  = CymkConf.awardSet[mid]
+	-- 	end
+	-- end
+	
+	-- --print("11111exp::::: "..exp.."minid: "..mid)
+	-- local fbPtr = LActor.getFubenPrt(sysarg)
+	-- local actors = LuaHelp.getFbActorList(fbPtr)
+	-- if actors == nil then return end
+	-- for i = 1,#actors do
+	-- 	local actor = actors[i]
+	-- 	--print("exp::::: "..exp.."minid: "..mid)
+	-- 	LActor.addExp(actor, exp, 202, 0)
+	-- 	LActor.SendAllCaleValue(actor)
+	-- end
+end
+
+-- 加Buff的怪物刷出来了
+CymkMon.OnBuffMonRefresh = function(mon, mid)
+	if mon == nil or mid == nil then return end
+	if LActor.getFubenId(mon) ~= CymkConf.fbid then return end
+
+	local pfb = LActor.getFubenPrt(mon)
+
+	if pfb == nil then return end
+	local layer = Fuben.getFubenProgress(pfb) -- 第几层
+
+	local sconf = CymkConf.scenes[layer]
+	if sconf == nil or sconf.buffs == nil then
+		print("cymk scene id error:"..layer)
+		return
+	end
+
+	local buffs = sconf.buffs[mid]
+	if buffs ~= nil then
+		for j=1,#buffs do
+			local buff = buffs[j]
+			LActor.addBuff( mon, buff.bufftype, buff.group, buff.value, buff.times, buff.interval, buff.name, buff.timeOverlay)
+		end
+	end
+end
+
+-- 给玄武结晶加buff
+CymkMon.OnXuanWuMonMob = function(mon, mid)
+	if mid ~= CymkConf.xuanwuMon then return end
+
+	local buffs = CymkConf.jieJingBuff
+	for i=1,#buffs do
+		local buff = buffs[i]
+		for j=1,#buff do
+			local pbuff = buff[j]
+			LActor.addBuff(mon, pbuff.type, pbuff.group, pbuff.value, 3600, 1000, "")
+			-- print("addbuff")
+		end
+	end
+end
+
+-- 采集玄冰结晶
+CymkMon.OnGatherXbjj = function (monster,sysarg,mid)
+	local hscene = LActor.getSceneHandle(monster)
+	local mon = Fuben.getMonsterPtrById(hscene, CymkConf.xlmsMon)
+	if mon == nil then return end
+
+	LActor.setEntityTarget(monster, mon)
+	local sconf = CymkConf.xbjjSkill
+	--print("Skill_101_1 ")
+	LActor.useSkill(monster, sconf.id, 0, 0, false, sconf.level)
+
+	local buff = CymkConf.xbjjBuff
+	LActor.addBuff(mon, buff.type, buff.group, buff.value, buff.times, buff.interval, buff.name)
+
+	local effs = CymkConf.xbjjEffs
+	print("采集玄冰结晶effs:"..#effs)
+	for i=1,#effs do
+		local eff = effs[i]
+		print("eff.id:"..eff.id)
+		print("eff.type:"..eff.type)
+		print("eff.time:"..eff.time)
+		print("eff.delay:"..eff.delay)
+		LActor.addEffect(mon, eff.id, eff.type, eff.time, eff.delay)
+	end
+	
+end
+
+-- 采集玄冰结晶
+--[[CymkMon.OnGatherXbjj = function (monster,sysarg,mid)
+	print("采集玄冰结晶")
+	local hscene = LActor.getSceneHandle(monster)
+	local mon = Fuben.getMonsterPtrById(hscene, CymkConf.xlmsMon)
+	if mon == nil then return end
+
+	-- local buff = CymkConf.xbjjBuff
+	-- LActor.addBuff(mon, buff.type, buff.group, buff.value, buff.times, buff.interval, buff.name)
+	LActor.setEntityTarget(monster, mon)
+	local sconf = CymkConf.xbjjSkill
+	print("Skill_101_1 ")
+	LActor.useSkill(monster, sconf.id, 0, 0, false, sconf.level)
+end]]
+
+
+-- 召唤死亡炽翼分身
+MonsterActionFunc["callSwcyFenShen"] = function(monster, mid, param, item)
+	local px = LActor.getIntProperty(monster, PROP_ENTITY_POSX)
+	local py = LActor.getIntProperty(monster, PROP_ENTITY_POSY)
+	local newMon = LActor.createMonster(monster, CymkConf.swcyNewId, px, py, 0)
+	if newMon == nil then return end
+
+	LActor.changeHp(newMon, LActor.getIntProperty(monster, PROP_MAXHP) * 0.15) -- 设置血量
+	local buffs = CymkConf.swcyNewBuff -- buff
+	for i=1,#buffs do
+		local buff = buffs[i]
+		LActor.addBuff(newMon, buff.type, buff.group, buff.value, buff.times, buff.interval, buff.name)
+	end
+end
+
+
+-- 副本初始化
+for i=1, #CymkConf.scenes do
+	local sconf = CymkConf.scenes[i]
+
+	-- 怪物配置
+	if sconf.monster ~= nil then
+		local ids = sconf.monster.ids
+		for j=1,#ids do
+			MonDieDispatcher.register( ids[j], CymkMon.OnKillMonster )
+		end
+	end
+
+	if sconf.buffs ~= nil then
+		for k, v in pairs( sconf.buffs ) do
+			MonMobDispatcher.register(k, CymkMon.OnBuffMonRefresh)
+		end
+	end
+end
+
+CymkMon.MonDieDeal = function ( mon, sysarg, mid )
+	do
+		return
+	end
+	-- body
+	local exp = 0
+	if CymkConf.awardSet ~= nil then
+		if CymkConf.awardSet[mid] ~= nil then
+			exp  = CymkConf.awardSet[mid]
+		end
+	end
+	
+	local pfb = LActor.getFubenPrt(sysarg)
+	local actors = LuaHelp.getFbActorList(pfb)
+	if actors == nil then return end
+	for i = 1,#actors do
+		local actor = actors[i]
+		LActor.addExp(actor, exp, 202, 0)
+		LActor.SendAllCaleValue(actor)
+	end
+
+end
+
+-- 杀死结晶怪物的处理
+for i=1,#CymkConf.jieJingMon do
+	MonDieDispatcher.register(CymkConf.jieJingMon[i], CymkMon.OnKillJieJing)
+end
+
+
+if CymkConf.refreshMonster ~= nil and type(CymkConf.refreshMonster) == "table" then
+	for i,v in ipairs(CymkConf.refreshMonster) do
+		MonDieDispatcher.register(v, CymkMon.MonDieDeal)
+	end
+end
+
+MonMobDispatcher.register(CymkConf.xuanwuMon, CymkMon.OnXuanWuMonMob)
+
+GatherFinishDispatcher.register(CymkConf.xbjjMon, CymkMon.OnGatherXbjj)
+
+-- MonDieDispatcher.register( CymkConf.layer21.ttid, CymkMon.OnKillTuTeng ) -- 杀死图腾怪物处理

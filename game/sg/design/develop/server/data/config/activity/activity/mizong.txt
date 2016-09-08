@@ -1,0 +1,64 @@
+ --19：00 ~ 19：30迷踪洞
+   {
+       --活动的名字
+       name =Lang.ActivityName.name00004,
+       --活动的描述
+       desc=Lang.ActivityName.desc00004,	   
+       --时间的描述,如果是11:00~12:00这样的就不需要记录到语言包，如果是"全天"就需要记录到语言包
+       timeDesc = "19:00-19:29",	   
+       level =30, --活动的等级
+       icon =7,	   
+       --活动的开启时间
+       openTimes=
+       {
+            {
+                 
+                 --时间的配置，如果按星期配置，月份和日期不用配置
+                 months={},  --月份，如果是所有的月份都开启就填0，否则填写开启的月份,比如1，3,5开启{1,3,5}；如果不启用月份(使用星期)就使用一个空表
+                 days ={},   --一个月里的哪天开启的时间，比如1,3,5日开启就用{1,3,5}，如果每天都开启就用{0}；如果不启用月份(使用星期)就使用一个空表
+
+                 weeks={0}, --表示一个星期的星期几开启，如果不启用星期，就不填，如果每天都开启使用{0},否则使用星期几，1-7有效
+
+                 minutes=  --时和分，使用起始和结束的时间格式,这个一定要填，	全天开放使用00:00-33:59
+                 {
+                    "19:00-19:59",
+                  }
+             },
+        },
+       
+        --[[
+        qatEquipment=0,//0、装备，道具
+		qatXiuwei = 1,	//1、修为
+		qatExp = 2,	//2、角色经验值
+		qatGuildContribution = 3,	//3、帮派贡献值
+		qatZYContribution = 4,//4、阵营贡献
+		qatBindMoney = 5,	//5、绑定银两
+		qatMoney = 6,	//6、银两
+		qatLiJin = 7,	//7、礼金
+		qatTitle = 8,	//8、称谓
+		qatSkill = 9,	//9奖励技能
+		qatZhanhun = 10,	//10奖励战魂
+          127：自定义奖励，id必须为nil，count必须为nil，data为奖励描述字符串，用于客户端显示。自定义奖励的给予是通过脚本完成的；
+        ]]
+        --活动的奖励，奖励的类型上面的类型,id，如果是物品或者称号的话就id,否则填0，数量表示数量，其他的bind,strong,quality都是物品用的
+       awards=
+       {
+            {type=2,id=0,count=120000,bind=0,strong=0,quality=1}, -- 奖励120000经验值
+            {type=12,id=0,count=200,bind=0,strong=0,quality=0}, -- 奖励200声望
+            {type=0,id=1629,count=1,bind=1,strong=0,quality=0}, -- 奖励迷踪黄金礼盒1个 
+            {type=0,id=1630,count=1,bind=1,strong=0,quality=0}, -- 奖励迷踪白银礼盒1个 
+            {type=0,id=1631,count=1,bind=1,strong=0,quality=0}, -- 奖励迷踪青铜礼盒1个   
+            {type=0,id=1632,count=1,bind=1,strong=0,quality=0}, -- 奖励迷踪智者礼盒1个   
+       },
+     
+       npc= 
+       {
+           {
+               sceneId=49,
+               name=Lang.EntityName.n00070, --洛阳 云风
+               conds=
+	       {
+               },
+	    },
+       },
+   },  

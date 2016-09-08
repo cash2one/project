@@ -1,0 +1,13 @@
+﻿--#include "data\functions\Tasks\Nirvana\NirvanaSet.txt" once
+function OnNirvanaTimeOut(fbPtr)
+	--print("nirvanatimeout")
+	local var = Fuben.getDyanmicVar(fbPtr)
+	if var.NirvanaStep ~= NirvanaSet.StepCount then
+		--输了给提示
+		local hfb = Fuben.getFubenHandle(fbPtr)
+		local sysarg = Fuben.getFbActorPtr(hfb)
+		LActor.sendTipmsg(sysarg,Lang.TaskTalk.Nv0001,ttScreenCenter)
+	end
+end
+
+-- EventCallDispatcher.registerFubenTimeout(NirvanaSet.FBid,OnNirvanaTimeOut)

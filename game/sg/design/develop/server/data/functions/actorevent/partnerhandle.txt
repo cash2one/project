@@ -1,0 +1,1355 @@
+--lua script
+-- 伙伴系统消息处理逻辑模块
+
+-- 语言包
+--#include "..\..\language\LangCode.txt" once
+--#include "data\config\partner\partnerconfig.txt" once
+--#include "..\tabledump.txt" once
+--#include "data\config\vip\vip.txt" once
+
+-- 主要handle函数
+PartnerOpFuncList = {}
+
+local sysPartnerId = 50 -- 伙伴系统id
+
+local serverCheckSkillSlot = 201 -- 服务端检测伙伴是否满足开启新槽位
+local serverCalNorPartnerAttr = 202 -- 服务端重新计算出战伙伴属性
+local serverResetCal = 203 -- 服务端重新计算伙伴给人物的属性加成
+local serverAutoActiveSkill = 204 -- 服务端在获取新伙伴时自动检测是否能激活某些技能
+local serverAddPartnerExp = 205 -- 出战的伙伴获取经验
+local serverAddPartnerMastery = 206 -- 增加加成伙伴的熟练度
+
+local configInit = 0 -- 默认的配置文件初始化
+local cUpgradeTalent = 6 -- 请求伙伴资质提升
+local sUpgradeTalent = 6 -- 响应请求伙伴资质提升
+local cUpgradeSkill = 11 -- 请求伙伴技能升级提升
+local sUpgradeSkill = 11 -- 响应请求伙伴技能升级提升
+local cDoFusion = 12 -- 请求伙伴融合
+local sDoFusion = 12 -- 响应请求伙伴融合
+local cGetBatPartnerInfo = 14 -- 请求助战伙伴信息
+local sGetBatPartnerInfo = 14 -- 响应请求助战伙伴信息
+local cGivenMasteryItem = 15 -- 请求使用道具增加熟练度
+local sGivenMasteryItem = 15 -- 响应请求使用道具增加熟练度
+local cUpgradeMasteryLevel = 16 -- 请求升级熟练度等级
+local sUpgradeMasteryLevel = 16 -- 响应请求升级熟练度等级
+local cActiveSkill = 19 -- 激活技能
+local sActiveSkill = 19 -- 响应激活技能
+local cSplitSpartner = 24 -- 分解已经使用的伙伴
+local sSplitSpartner = 24 -- 分解已经使用的伙伴结果
+
+-- 战斗力权值
+local fight_val = {
+    fvAtk = 3, -- 攻击权值
+    fvCrit = 1, -- 暴击权值
+    fvHit = 1, -- 命中权值
+    fvCritHit = 1.5, -- 会心权值
+}
+
+--[[
+SendGeneralTips
+
+1 钱 id：0贝币 2绑定天珠 3天珠
+2 物品 id：物品id
+3 宗门贡献
+4 宗门财产
+5 威望
+6 荣誉
+7 背包不足
+--]]
+
+--[[
+enum PartnerItemAttr
+{
+    enMid = 0, // 伙伴的mid
+    enModelId = 1, // 伙伴模型id
+    enLevel = 2, // 等级
+    enAtk = 3, // 攻击
+    enHit = 4, // 命中
+    enCrit = 5, // 暴击
+    enCritHit = 6, // 会心
+    enAtkType = 7, // 攻击类型
+    enFightScore = 8, // 战斗力
+    enNormalAttackSid = 9, // 普通攻击技能ID
+    enAttrMax // 不超过 4 * 8 - 1个
+};
+]]
+-- 伙伴自身属性type类型
+local partner_attr_type = {
+    enMid = 0,
+    enModelId = 1,
+    enLevel = 2,
+    enAtk = 3,
+    enHit = 4,
+    enCrit = 5,
+    enCritHit = 6,
+    enAtkType = 7,
+    enFightScore = 8,
+    enNormalAttackSid = 9,
+}
+
+-- 定义一些限定常量
+local const_var = {
+    max_name_len = 12, -- 最大名字长度
+}
+
+-- 消耗金钱类型
+local coinType = {
+    mtBindCoin = 0, -- 绑定货币
+    mtYuanbao = 3,  -- 天珠
+}
+
+-- 技能的激活状态
+local skillActive = {
+    notActive = 0,
+    hasActive = 1,
+}
+
+-- 技能的激活类型
+local skillActiveType = {
+    tItem = 1, -- 道具激活
+    tPartner = 2, -- 伙伴是否获得激活
+}
+
+-- 非助战伙伴的状态
+local norPartnerState = {
+    noFighting = 0,
+    onFighting = 1,
+    isLosing = 2,
+}
+
+-- 助战伙伴的状态
+local batPartnerState = {
+    enBatNotActive = 0, -- 未激活
+    enBatHasActive = 1, -- 已激活
+}
+
+-- 最大技能槽位数量
+local max_skill_mask_num = 8
+
+-- 伙伴系统涉及到发红包的配置
+local partner_add_will_give_hongbao = { -- system_param_def.h
+    -- [19] = 6, -- 赤羽
+    -- [20] = 7, -- 苏茉
+    -- [18] = 8, -- 青龙玄女
+    -- [17] = 9, -- 心月狐
+}
+
+-- @param sysarg 伙伴系统对象
+-- @param args[1] cmd 指令
+-- @param args[2] DataPacketReader包
+EventCallDispatcher.HandlerPartnerOp = function (sysarg, args)
+  if not sysarg or args[1] == nil then return end
+  local func = PartnerOpFuncList[args[1]]
+  if func ~= nil and type(func) == "function" then
+    func(sysarg, args[2], args[3])
+  end
+end
+
+-- 专门转换商城道具id
+function PartnerOpFuncList.getShangChengItemId(itemId)
+    for n, m in pairs(GameStore) do
+        local store_items = m.items
+        for k, v in pairs(store_items) do
+            if v.item == itemId then
+                return v.id
+            end
+        end
+    end
+    return -1
+end
+
+-- 根据非助战伙伴mid获取对应的配置信息
+function PartnerOpFuncList.getNorPartnerConfigById(mid)
+    local propertys = PartnerConfig.BaseProperty
+    for k, v in ipairs(propertys) do
+        if v.mid == mid then
+            return PartnerOpFuncList.tableCopy(v)
+        end
+    end
+    return nil
+end
+
+-- 根据助战伙伴mid获取对应的助战配置信息
+function PartnerOpFuncList.getBatPartnerConfigByMid(mid)
+    local battlePropertys = PartnerConfig.BattleProperty
+    for k, v in ipairs(battlePropertys) do
+        if v.mid == mid then
+            return PartnerOpFuncList.tableCopy(v)
+        end
+    end
+end
+
+-- 根据技能id获取对应等级的配置文件
+function PartnerOpFuncList.getSkillConfigById(skillId, level)
+    local skills = PartnerConfig.Skills
+    for k, v in ipairs(skills.advs) do
+        if v.skillId == skillId then
+            if not level then
+                return v
+            else
+                return v.upgrades[level]
+            end
+        end
+    end
+    for k, v in ipairs(skills.nors) do
+        if v.skillId == skillId then
+            if not level then
+                return v
+            else
+                return v.upgrades[level]
+            end
+        end
+    end
+    return nil
+end
+
+-- 判断最大值
+function PartnerOpFuncList.getMax(left, right)
+    if type(left) ~= "number" or type(right) ~= "number" then
+        return left
+    end
+    if left > right then
+        return left
+    else
+        return right
+    end
+end
+
+-- table的拷贝
+function PartnerOpFuncList.tableCopy(srcTab)
+    local retTab = nil
+    if srcTab and type(srcTab) == "table" then
+        retTab = {}
+        for k, v in pairs(srcTab) do
+            if type(v) ~= "table" then
+                retTab[k] = v
+            else
+                retTab[k] = PartnerOpFuncList.tableCopy(v)
+            end
+        end
+    end
+    return retTab
+end
+
+--[[
+local costTab = {
+    cond = 1, -- 1:取其一 其他:同时使用
+    sendTip = 1, -- 1:需要在材料或金钱不足时弹出提示 -1 不需要
+    needPay = true, -- 需要支付 还是仅仅统计
+    forWhat = "", -- 为了干啥
+    items = {
+        {
+            itemId = 24101,
+            itemNum = 1,
+            coinNum = 1000,
+            funcParam = 1, -- 函数参数
+        },
+        {
+            itemId = 24102,
+            itemNum = 1,
+            coinNum = 1000,
+            funcParam = 1,
+        },
+    },
+}
+
+local sucRule = {
+    realSuc = realSuc, -- 成功率
+    isSucBreak = true, -- 是否成功一次就break跳出
+}
+
+输入值:
+    obj:            玩家对象
+    costTab:        消耗规则表(见上述)
+    realSuc:        概率性问题的规则(见上述)
+    upgradeFunc:    消耗成功执行的函数
+    auto:           是否自动购买
+    oneKey:         是否一键消耗所有
+    rollfunc:       循环体每次执行成功调用一次的函数
+    onceDoSucFunc:  成功执行一次的函数
+
+返回值:
+    param1:是否操作成功
+    param2:概率性问题的返回结果
+    param3:操作次数
+    param4:物品消耗表
+    param5:金钱消耗表
+--]]
+function PartnerOpFuncList.onkeyUpgrade(obj, costTab, sucRule, upgradeFunc, auto, oneKey, rollfunc, onceDoSucFunc)
+    -- debug_print(string.format("============> costTab = %s", dump(costTab)))
+    -- 参数检查
+    if sucRule == nil then
+        sucRule = {}
+        sucRule.realSuc = 10000
+        sucRule.isSucBreak = false
+    end
+
+    if sucRule.realSuc > 10000 then
+        sucRule.realSuc = 10000
+    end
+
+    local GenTips = {
+        gen_type = 0,
+        gen_id = 0,
+        gen_count = 0,
+    }
+
+    local result = true -- 检查操作结果
+    local realSucResult = true -- 概率性问题的返回结果
+    local loopNum = 0
+    local oneKeyItemTable = {}
+    local oneKeyMoneyTable = {}
+
+    oneKeyMoneyTable[coinType.mtBindCoin] = oneKeyMoneyTable[coinType.mtBindCoin] or 0
+    oneKeyMoneyTable[coinType.mtYuanbao] = oneKeyMoneyTable[coinType.mtYuanbao] or 0
+
+    while true do
+        local funcParam = 0
+        local tempCoinNum = 0
+        local tempYuanbaoNum = 0
+        local tempItemTable = {}
+
+        for k, v in ipairs(costTab.items) do
+            if v.itemId ~= nil then
+                tempItemTable[v.itemId] = tempItemTable[v.itemId] or 0
+
+                local myItemNum = LActor.getItemCount(obj, v.itemId) - tempItemTable[v.itemId] - (oneKeyItemTable[v.itemId] or 0)
+                local myCoinNum = LActor.getMoneyCount(obj, coinType.mtBindCoin) - tempCoinNum - oneKeyMoneyTable[coinType.mtBindCoin]
+                local myYuanBaoNum = LActor.getMoneyCount(obj, coinType.mtYuanbao) - tempYuanbaoNum - oneKeyMoneyTable[coinType.mtYuanbao]
+
+                if myItemNum >= v.itemNum and myCoinNum >= v.coinNum then
+                    if costTab.cond == 1 then
+                        result = true
+                        GenTips.gen_type = 0
+                        GenTips.gen_id = 0
+                        GenTips.gen_count = 0
+                    end
+                    tempItemTable[v.itemId] = tempItemTable[v.itemId] + v.itemNum
+                    tempCoinNum = tempCoinNum + v.coinNum
+                    funcParam = funcParam + (tonumber(v.funcParam) or 0)
+                    if costTab.cond == 1 then
+                        break
+                    end
+                else
+                    if myCoinNum < v.coinNum or (costTab.cond ~= 1 and auto ~= 1) then -- 并非取其一 且非自动购买
+                        result = false
+                        if myCoinNum < v.coinNum then
+                            GenTips.gen_type = 1
+                            GenTips.gen_id = coinType.mtBindCoin
+                            GenTips.gen_count = v.coinNum - myCoinNum
+                        elseif myItemNum < v.itemNum then
+                            GenTips.gen_type = 2
+                            GenTips.gen_id = v.itemId
+                            GenTips.gen_count = v.itemNum - myItemNum
+                        else
+                            debug_print("进入了奇怪的一键判断位置")
+                        end
+                        break
+                    end
+                    if auto == 1 then -- 自动购买
+                        local price = Item.getItemPrice(PartnerOpFuncList.getShangChengItemId(v.itemId))
+                        if price <= 0 then
+                            if costTab.cond ~= 1 then
+                                result = false
+                                GenTips.gen_type = 2
+                                GenTips.gen_id = v.itemId
+                                GenTips.gen_count = v.itemNum - myItemNum
+                                break
+                            end
+                        else
+                            local buyNum = v.itemNum - myItemNum
+                            price = price * buyNum
+                            if myYuanBaoNum >= price then
+                                tempItemTable[v.itemId] = tempItemTable[v.itemId] + myItemNum
+                                tempCoinNum = tempCoinNum + v.coinNum
+                                tempYuanbaoNum = tempYuanbaoNum + price
+                                funcParam = funcParam + (tonumber(v.funcParam) or 0)
+                                if costTab.cond == 1 then
+                                    break
+                                end
+                            else
+                                result = false
+                                GenTips.gen_type = 1
+                                GenTips.gen_id = coinType.mtYuanbao
+                                GenTips.gen_count = price - myYuanBaoNum
+                            end
+                        end
+                    else
+                        result = false
+                        GenTips.gen_type = 2
+                        GenTips.gen_id = v.itemId
+                        GenTips.gen_count = v.itemNum - myItemNum
+                    end
+                end
+            end
+        end
+        if GenTips.gen_type > 0 and costTab.sendTip ~= -1 then
+            LActor.SendGeneralTips(obj, GenTips.gen_type, GenTips.gen_id, GenTips.gen_count)
+        end
+        if result == true then
+            -- 累计次数
+            loopNum = loopNum + 1
+            -- 累计消耗
+            for k, v in pairs(tempItemTable) do
+                if tempItemTable[k] > 0 then
+                    if oneKeyItemTable[k] == nil then
+                        oneKeyItemTable[k] = 0
+                    end
+                    oneKeyItemTable[k] = oneKeyItemTable[k] + v
+                end
+            end
+            oneKeyMoneyTable[coinType.mtBindCoin] = oneKeyMoneyTable[coinType.mtBindCoin] + tempCoinNum
+            oneKeyMoneyTable[coinType.mtYuanbao] = oneKeyMoneyTable[coinType.mtYuanbao] + tempYuanbaoNum
+
+            -- 需要支付才会调用函数
+            if costTab.needPay == true then
+                 -- 循环调用函数
+                if rollfunc and type(rollfunc) == "function" then
+                    rollfunc()
+                end
+                local rate = System.getRandomNumber(10000)
+                if rate < sucRule.realSuc then -- 成功
+                    if upgradeFunc and type(upgradeFunc) == "function" then
+                        if upgradeFunc(funcParam) == false then
+                            break
+                        else
+                            if sucRule.isSucBreak == true then
+                                break
+                            end
+                        end
+                    end
+                else
+                    if oneKey ~= 1 then -- 一键操作不需要结果
+                        realSucResult = false
+                    end
+                end
+            end
+        else
+            -- debug_print("========= 退出")
+            break
+        end
+        if oneKey ~= 1 then
+            break
+        end
+    end
+
+    if costTab.needPay == true then
+        -- 扣钱
+        for k, v in pairs(oneKeyMoneyTable) do
+            local mType = tonumber(k) or -1
+            local mCount = tonumber(v) or 0
+            if mType >= coinType.mtBindCoin and mType <= coinType.mtYuanbao and mCount > 0 then
+                LActor.changeMoney(obj, mType, -mCount, 1, true, "partnerhandle", costTab.forWhat or "partnerhandle_onkeyupgrade")
+            end
+        end
+        -- 扣道具
+        for k, v in pairs(oneKeyItemTable) do
+            local mId = tonumber(k) or -1
+            local mCount = tonumber(v) or 0
+            if mId > 0 and mCount > 0 then
+                LActor.removeItem(obj, mId, mCount, -1, -1, -1, costTab.forWhat or "partnerhandle_onkeyupgrade")
+            end
+        end
+        if onceDoSucFunc and type(onceDoSucFunc) == "function" then
+            onceDoSucFunc()
+        end
+    end
+    -- debug_print(string.format("=============================> onkeyUpgrade2 loopNum = %d, oneKeyMoneyTable = %s, oneKeyItemTable = %s", loopNum, dump(oneKeyMoneyTable, true), dump(oneKeyItemTable, true)))
+    return result, realSucResult, loopNum, oneKeyItemTable, oneKeyMoneyTable
+end
+
+-- 根据qualityType品质随机潜力值 isLow 是否只给对应品质最垃圾的
+function PartnerOpFuncList.getQualityPotential(qualityType, isLow)
+    if isLow == true then
+        return 1 + 20 * (qualityType - 1)
+    end
+    return System.getRandomNumber(20) + 1 + 20 * (qualityType - 1)
+end
+
+-- 计算非助战伙伴自身的属性
+function PartnerOpFuncList.calNorPartnerAttrs(obj, cId)
+    -- 获取信息
+    local ret, info = LActor.getNorPartnerInfoById(obj, cId)
+    if not ret then
+        return
+    end
+
+    local modelId = 0
+    local raceType = 0
+    local atk_n = 0
+    local hit_n = 0
+    local crit_n = 0
+    local crit_hit_n = 0
+    local fight_score = 0
+    local norAtkSid = 0
+
+    modelId, raceType, atk_n, crit_n, hit_n, crit_hit_n, fight_score, norAtkSid = calPartnerAttributeByRealInfo(info.mid, info.level, info.potential, info.potLevel)
+
+    LActor.calNorPartnerAttribute(obj, cId, partner_attr_type.enMid, cId, false)
+    LActor.calNorPartnerAttribute(obj, cId, partner_attr_type.enModelId, modelId, false)
+    LActor.calNorPartnerAttribute(obj, cId, partner_attr_type.enLevel, info.level, false)
+    LActor.calNorPartnerAttribute(obj, cId, partner_attr_type.enAtk, atk_n, false)
+    LActor.calNorPartnerAttribute(obj, cId, partner_attr_type.enHit, hit_n, false)
+    LActor.calNorPartnerAttribute(obj, cId, partner_attr_type.enCrit, crit_n, false)
+    LActor.calNorPartnerAttribute(obj, cId, partner_attr_type.enCritHit, crit_hit_n, false)
+    LActor.calNorPartnerAttribute(obj, cId, partner_attr_type.enAtkType, raceType, false)
+    LActor.calNorPartnerAttribute(obj, cId, partner_attr_type.enNormalAttackSid, norAtkSid, false)
+    LActor.calNorPartnerAttribute(obj, cId, partner_attr_type.enFightScore, fight_score, true)
+
+    -- print(string.format("=============> atk[%d], hit[%d], crit[%d], crit_hit[%d]", atk_n, hit_n, crit_n, crit_hit_n), info.level, info.potential, info.potLevel)
+end
+
+-- 纯粹的计算伙伴信息所能带来的属性提升
+function calPartnerAttributeByRealInfo(mid, level, potential, potLevel)
+    local info = {}
+    info.mid = mid or 0
+    info.level = level or 0
+    info.potential = potential or 0
+    info.potLevel = potLevel or 1
+
+    -- 取得配置文件信息
+    local norPartnerConfig = PartnerOpFuncList.getNorPartnerConfigById(info.mid)
+
+    if not norPartnerConfig then
+        return 0, 0, 0, 0, 0, 0, 0, 0
+    end
+
+    local talentsConfig = PartnerConfig.Talents
+    local talentsExtConfig = PartnerConfig.TalentsExt
+    local growsConfig = PartnerConfig.Grows
+    local growsExtConfig = PartnerConfig.GrowsExt
+    if info.potLevel > #talentsConfig then
+        return 0, 0, 0, 0, 0, 0, 0, 0
+    end
+    -- 伙伴属性 = INT（（伙伴当前等级*资质等级对应属性的资质系数*max（1，潜力^潜力系数/100））/100） （潜力系数=1.5）
+    local potMi = (info.potential ^ 1.5) / 100
+    local maxMi = PartnerOpFuncList.getMax(1, potMi) * info.level
+    -- 计算各属性 攻击 命中 暴击 会心 (21, 39, 35, 63)
+
+    -- 获取对应属性类型的值
+    local function getAttrByType(tab, aType)
+        for k, v in ipairs(tab) do
+            if v.type == aType then
+                return v.value
+            end
+        end
+        return 0
+    end
+
+    local atk_n = 0
+    local hit_n = 0
+    local crit_n = 0
+    local crit_hit_n = 0
+    local fight_score = 0
+
+    
+
+    atk_n = getAttrByType(talentsConfig[info.potLevel].attrs, 21) * maxMi / 100
+    hit_n = getAttrByType(talentsConfig[info.potLevel].attrs, 39) * maxMi / 100
+    crit_n = getAttrByType(talentsConfig[info.potLevel].attrs, 35) * maxMi / 100
+    crit_hit_n = getAttrByType(talentsConfig[info.potLevel].attrs, 63) * maxMi / 100
+
+    atk_n = atk_n + getAttrByType(norPartnerConfig.attrs, 21)
+    hit_n = hit_n + getAttrByType(norPartnerConfig.attrs, 39)
+    crit_n = crit_n + getAttrByType(norPartnerConfig.attrs, 35)
+    crit_hit_n = crit_hit_n + getAttrByType(norPartnerConfig.attrs, 63)
+
+    -- 战斗力计算
+    local atk = math.floor(atk_n)
+    local crit = math.floor(crit_n)
+    local hit = math.floor(hit_n)
+    local crithit = math.floor(crit_hit_n)
+    fight_score = math.floor(atk * fight_val.fvAtk + crit * fight_val.fvCrit + hit * fight_val.fvHit + crithit * fight_val.fvCritHit)
+    
+    return norPartnerConfig.modelId, norPartnerConfig.raceType, atk, crit, hit, crithit, fight_score, (norPartnerConfig.norAtkSid or 0)
+end
+
+-- 获取技能槽位限制配置文件
+function PartnerOpFuncList.getSkillSlotLimitConfig(index)
+    for k, v in pairs(PartnerConfig.SkillSlotLimit) do
+        if v.index == index then
+            return PartnerOpFuncList.tableCopy(v)
+        end
+    end
+    return nil
+end
+
+-- 专门负责检测伙伴是否达到了开启技能槽
+function PartnerOpFuncList.checkSkillMasks(obj, cId)
+    -- 获取伙伴数据
+    local ret, info = LActor.getNorPartnerInfoById(obj, cId)
+    if not ret then
+        return
+    end
+    -- 遍历查询
+    for idx = 1, max_skill_mask_num do
+        local slotConfig = PartnerOpFuncList.getSkillSlotLimitConfig(idx)
+        if slotConfig then
+            local ret = true
+            if slotConfig.needLimit then -- 需要限制条件
+                if slotConfig.needPotLevel > info.potLevel then
+                    ret = false
+                else
+                    ret = true
+                end
+            end
+            if ret == true then -- 满足条件 就解锁
+                LActor.unLockSkillSlotById(obj, cId, idx)
+            end
+        end
+    end
+end
+
+-- 获取该mid的熟练度等级属性配置表 masteryLevel 从0开始
+function PartnerOpFuncList.getMasteryLevelConfigByMidAndMasteryLevel(mid, masteryLevel)
+    local battleConfig = PartnerOpFuncList.getBatPartnerConfigByMid(mid)
+    if battleConfig then
+        return PartnerOpFuncList.tableCopy(battleConfig.aboutMastery.masteryLevels[masteryLevel + 1])
+    end
+    return nil
+end
+
+-- 获取对应伙伴是否能激活技能的配置文件
+function PartnerOpFuncList.getSkillActiveConfigByMid(mid)
+    local t = {}
+    for k, v in ipairs(PartnerConfig.Skills.advs) do -- 检查天赋技能
+        if v.active.activeType == skillActiveType.tPartner and v.active.activeId == mid then -- 需要伙伴激活
+            t[v.skillId] = PartnerOpFuncList.tableCopy(v)
+        end
+    end
+    for k, v in ipairs(PartnerConfig.Skills.nors) do -- 检查通用技能
+        if v.active.activeType == skillActiveType.tPartner and v.active.activeId == mid then -- 需要伙伴激活
+            t[v.skillId] = PartnerOpFuncList.tableCopy(v)
+        end
+    end
+    return t
+end
+
+----------------------------------------------------------------------------------
+--------------------------------- 业务处理分割线 ---------------------------------
+----------------------------------------------------------------------------------
+
+-- 注册伙伴道具使用的方法回调
+function partnerItemInit ()
+    for k, v in ipairs(PartnerConfig.BaseProperty) do -- 注册下使用道具添加伙伴的
+        if v.getFromItemId ~= nil then
+            GlobalItemFn[v.getFromItemId] = { func = PartnerOpFuncList.useItemForAddPartner, params = v.mid } -- 参数是需要添加的伙伴ID
+        end
+        if v.lowFromItemId ~= nil then
+            GlobalItemFn[v.lowFromItemId] = { func = PartnerOpFuncList.useItemForAddPartner, params = v.mid } -- 垃圾获取伙伴 参数是需要添加的伙伴ID
+        end
+    end
+end
+table.insert(InitFnTable, partnerItemInit)
+
+-- 添加伙伴 参数是需要添加的伙伴ID
+PartnerOpFuncList.useItemForAddPartner = function (obj, itemId, itemObj, params, useCnt, param)
+    if type(params) ~= "number" then
+        return
+    end
+    local config = PartnerOpFuncList.getNorPartnerConfigById(params)
+    if config then
+        local potential = 1
+        if config.lowFromItemId == itemId then
+            potential = PartnerOpFuncList.getQualityPotential(config.qualityType, true) -- 带参true 表示获得最垃圾资质
+        else
+            potential = PartnerOpFuncList.getQualityPotential(config.qualityType)
+        end
+        local name = config.name
+        local ret = LActor.addPartner(obj, config.mid, name, potential) -- ret 1:成功 0数量达到上限 -1系统未开启
+        if ret == 1 then -- 需要删掉物品
+            LActor.removeItemByPtr(obj, itemObj, 1, true,"partner_item", 814) -- 814对应gameworld里面的log_def.h定义
+            --增加伙伴完成之后打印log
+            System.logCounter(LActor.getActorId(obj), LActor.getAccountName(obj), tostring(LActor.getLevel(obj)), "partner_potential", tostring(potential), extra, "addpartner", name, "1", "", "")
+            LActor.sendTipmsg(obj, Lang.Partner.t033, ttMessage)
+            -- 发红包
+            for k, v in pairs(partner_add_will_give_hongbao) do
+                if tonumber(k) == config.mid then
+                    qianghongbao.SystemHB(obj, tonumber(v), 2)
+                end
+            end
+        elseif ret == 0 then
+            LActor.sendTipmsg(obj, Lang.Partner.t039, ttMessage)
+            return
+        elseif ret == -1 then
+            LActor.sendTipmsg(obj, Lang.Partner.t040, ttMessage)
+            return
+        else
+            LActor.sendTipmsg(obj, Lang.Partner.t032, ttMessage)
+            return
+        end
+    end
+end
+
+PartnerOpFuncList.actorLevelChange = function (actorobj)
+    local actorLevel = LActor.getLevel(actorobj)
+    local actorVar = LActor.getStaticVar(actorobj)
+    if actorVar ~= nil then
+        if actorVar.partner_handle_var == nil then
+            actorVar.partner_handle_var = {}
+            actorVar.partner_handle_var.has_give_first_partner = 0 -- 是否已经给过玩家第一个伙伴了
+        end
+        local needLevel = LevelOpenPartnerSys.openLevel or 17 -- 默认17级
+        if actorLevel >= needLevel and actorVar.partner_handle_var.has_give_first_partner == 0 then
+            actorVar.partner_handle_var.has_give_first_partner = 1
+            LActor.openActorSystem(actorobj, siPartner) -- 开启伙伴系统
+
+            local giveMid = LevelOpenPartnerSys.openGiveFirstMid or 0
+
+            if giveMid > 0 then
+                local config = PartnerOpFuncList.getNorPartnerConfigById(giveMid)
+                if config ~= nil then
+                    local ret = LActor.addPartner(actorobj, config.mid, config.name, PartnerOpFuncList.getQualityPotential(config.qualityType)) -- ret 1:成功 0数量达到上限 -1系统未开启
+                    if ret == 1 then
+                        debug_print("==========> 添加第一个伙伴成功")
+                    end
+                end
+            end
+        end
+    end
+    LActor.calPartnerGiveActorProp(actorobj)
+end
+
+PartnerOpFuncList[serverCheckSkillSlot] = function (obj, cId)
+    PartnerOpFuncList.checkSkillMasks(obj, cId)
+end
+
+PartnerOpFuncList[serverCalNorPartnerAttr] = function (obj, cId)
+    PartnerOpFuncList.calNorPartnerAttrs(obj, cId)
+end
+
+PartnerOpFuncList[serverResetCal] = function (obj)
+    local actorLevel = LActor.getLevel(obj) or 0
+    if actorLevel < LevelOpenPlaySys.hb_jc_lvl then
+        debug_print("============> 等级未到开放加成属性")
+        return
+    end
+    -- 获取对应属性类型的值
+    local function getAttrByType(tab, aType)
+        for k, v in ipairs(tab) do
+            if v.type == aType then
+                return v.value
+            end
+        end
+        return 0
+    end
+    -- 获得已上阵的助战伙伴mid(对应配置文件的mid)
+    local battleIds = LActor.getAllBattlePartner(obj)
+    --[[
+    local battleIds = {
+        [1] = 1, [2] = 2
+    }
+    ]]
+    local tongji = {}
+    local attrTypes = { -- 生命   攻击  物防  道防  命中  闪避  暴击  抗暴  伤害加成    物理免伤    道法免伤
+        [17] = "生命", [21] = "攻击", [23] = "物防", [33] = "道防", [39] = "命中", [37] = "闪避", [35] = "暴击", [25] = "抗爆", [41] = "伤害加成", [49] = "物理免伤", [51] = "道法免伤"
+    }
+    if battleIds and #battleIds > 0 then
+        for k, v in ipairs(battleIds) do
+            local ret, info = LActor.getBatPartnerInfoByMid(obj, v)
+            if ret == true and info.activeState == batPartnerState.enBatHasActive then
+                -- 获得亲密度的属性加成表
+                local masteryLevelConfig = PartnerOpFuncList.getMasteryLevelConfigByMidAndMasteryLevel(v, info.masteryLevel)
+                if masteryLevelConfig ~= nil then
+                    for n, m in pairs(masteryLevelConfig.attrs) do
+                        if not tongji[m.type] then
+                            tongji[m.type] = 0
+                        end
+                        tongji[m.type] = tongji[m.type] + m.value
+                        if m.value > 0 then
+                            -- debug_print(string.format("伙伴亲密度基本加成属性=============> [%s]=[%d]", attrTypes[m.type], m.value))
+                            LActor.setAttrChange(obj, m.type, m.value, false, false)
+                        end
+                    end
+                end
+            end
+        end
+    end
+    for k, v in pairs(tongji) do
+        debug_print(string.format("=============> [%s]=[%d]", attrTypes[k], v))
+    end
+    -- 最后这部做属性采集
+    LActor.setAttrChange(obj, -1, 0, false, true)
+end
+
+-- 初始化助战伙伴列表
+PartnerOpFuncList[configInit] = function (obj)
+    for k, v in ipairs(PartnerConfig.BattleProperty) do
+        LActor.addNullBatPartner(obj, v.mid)
+    end
+    -- 初始化技能
+    for k, v in ipairs(PartnerConfig.Skills.advs) do
+        LActor.addNullNorPartnerSkill(obj, v.skillId, v.active.activeType)
+    end
+    for k, v in ipairs(PartnerConfig.Skills.nors) do
+        LActor.addNullNorPartnerSkill(obj, v.skillId, v.active.activeType)
+    end
+end
+
+PartnerOpFuncList[cUpgradeTalent] = function (obj, packet)
+    local cId = DataPack.readUInt(packet)
+    local oneKey = DataPack.readUInt(packet)
+    local auto = DataPack.readUInt(packet)
+
+    -- 获取信息
+    local ret, info = LActor.getNorPartnerInfoById(obj, cId)
+    if ret ~= true then
+        LActor.sendTipmsg(obj, Lang.Partner.t001, ttMessage)
+        return
+    end
+    -- 检查资质等级是否超过潜力上限
+    if info.potLevel >= (info.potential * 2) or info.potLevel > #PartnerConfig.Talents then
+        LActor.sendTipmsg(obj, Lang.Partner.t002, ttMessage)
+        return
+    end
+    local talentConfig = PartnerConfig.Talents
+    -- 获取需要的材料及数量
+    local needItemId = talentConfig[info.potLevel].itemId
+    local needItemNum = talentConfig[info.potLevel].itemNum
+    local needCoinNum = talentConfig[info.potLevel].coinNum
+    local realSuc = talentConfig[info.potLevel].succRate -- 成功率
+
+    -- 成功后的操作函数
+    local function upgradeTalent()
+        return LActor.talentUpById(obj, cId)
+    end
+
+    local achievenum = 0
+    local activationnum = 0
+    local function talentAchieve()
+        achievenum = achievenum + 1
+        activationnum = activationnum + 1
+    end
+
+    local function sucEventFunc()
+        LActor.OnQuestEvent(qtPartnerTalent, 0, 1, true, obj)
+    end
+
+    local costTab = {
+        cond = 1,
+        sendTip = 1,
+        needPay = true,
+        forWhat = "cUpgradeTalent",
+        items = {
+            {
+                itemId = needItemId,
+                itemNum = needItemNum,
+                coinNum = needCoinNum,
+            },
+        },
+    }
+
+    local sucRule = {
+        realSuc = realSuc,
+        isSucBreak = true,
+    }
+
+    local result = false
+    local realSucResult = false
+    result, realSucResult = PartnerOpFuncList.onkeyUpgrade(obj, costTab, sucRule, upgradeTalent, auto, oneKey, talentAchieve, sucEventFunc)
+    if result == true then
+        if realSucResult == false then
+            LActor.sendTipmsg(obj, Lang.Partner.t006, ttMessage)
+        else
+            LActor.sendTipmsg(obj, Lang.Partner.t007, ttMessage)
+        end
+    end
+    -- 再次检查槽位开启情况
+    PartnerOpFuncList.checkSkillMasks(obj, cId)
+
+    LActor.SetAchieveProcessByType(obj, 93, 1, achievenum); -- aAchieveEventPetZiZhi
+    -- 活跃度
+    ActivationTrigger(obj, 9, activationnum)
+end
+
+PartnerOpFuncList[cUpgradeSkill] = function (obj, packet)
+    local skillId = DataPack.readUInt(packet)
+    local oneKey = DataPack.readUInt(packet)
+    local auto = DataPack.readUInt(packet)
+
+    local ret, info = LActor.getNorPartnerSkillById(obj, skillId)
+    if not ret then
+        LActor.sendTipmsg(obj, Lang.Partner.t011, ttMessage)
+        return
+    end
+    if info.active ~= skillActive.hasActive then
+        LActor.sendTipmsg(obj, Lang.Partner.t013, ttMessage)
+        return
+    end
+    -- 取配置文件 技能等级从1开始
+    local skillConfig = PartnerOpFuncList.getSkillConfigById(info.skillId, info.level)
+    if not skillConfig then
+        LActor.sendTipmsg(obj, Lang.Partner.t012, ttMessage)
+        return
+    end
+
+    -- 记录原本的等级
+    local ore_level = info.level
+    local now_level = info.level
+    local ore_progress = info.progress
+
+    -- 取需要消耗的物品数据
+    local needBookItemId = skillConfig.itemId
+    local needBookItemNum = skillConfig.itemNum or 0
+    local addBookProgress = skillConfig.itemProgress or 1
+    local needMediItemId =  skillConfig.mediId
+    local needMediItemNum = skillConfig.mediNum or 0
+    local needCoinNum = skillConfig.coinNum
+    local addMediProgress = skillConfig.mediProgress or 1
+
+    local needProgress = skillConfig.needProgress
+
+    local function upgradeSkillProgress(progress)
+        -- 给技能增加进度值c++层做
+        local ret = false
+        ret, now_level = LActor.addPartnerSkillProgress(obj, skillId, progress, needProgress)
+        if ret == true and now_level > ore_level then
+            return false
+        end
+        return ret
+    end
+
+    local costTab = {
+        cond = 1,
+        sendTip = 1,
+        needPay = true,
+        forWhat = "cUpgradeSkill",
+        items = {
+            {
+                itemId = needBookItemId,
+                itemNum = needBookItemNum,
+                coinNum = needCoinNum,
+                funcParam = addBookProgress,
+            },
+            {
+                itemId = needMediItemId,
+                itemNum = needMediItemNum,
+                coinNum = needCoinNum,
+                funcParam = addMediProgress,
+            },
+        },
+    }
+
+    PartnerOpFuncList.onkeyUpgrade(obj, costTab, nil, upgradeSkillProgress, auto, oneKey)
+
+    -- 重新查询技能数据
+    local ret, new_info = LActor.getNorPartnerSkillById(obj, skillId)
+    local pack = DataPack.allocPacket(obj, sysPartnerId, sUpgradeSkill)
+    DataPack.writeUInt(pack, skillId)
+    DataPack.writeUInt(pack, new_info.level)
+    DataPack.writeUInt(pack, new_info.progress)
+    DataPack.writeUInt(pack, new_info.active)
+    DataPack.flush(pack)
+end
+
+PartnerOpFuncList[cDoFusion] = function (obj, packet)
+    local primaryId = DataPack.readUInt(packet)
+    local deputyId = DataPack.readUInt(packet)
+
+    if primaryId == deputyId then
+        LActor.sendTipmsg(obj, Lang.Partner.t034, ttMessage)
+        return
+    end
+
+    local ret, primaryInfo = LActor.getNorPartnerInfoById(obj, primaryId)
+    if not ret then
+        LActor.sendTipmsg(obj, Lang.Partner.t015, ttMessage)
+        return
+    end
+
+    local ret, deputyInfo = LActor.getNorPartnerInfoById(obj, deputyId)
+    if not ret then
+        LActor.sendTipmsg(obj, Lang.Partner.t016, ttMessage)
+        return
+    end
+
+    -- local primaryConfig = PartnerOpFuncList.getNorPartnerConfigById(primaryInfo.mid)
+    -- local deputyConfig = PartnerOpFuncList.getNorPartnerConfigById(deputyInfo.mid)
+    -- 判断品质
+    -- if primaryConfig.qualityType < deputyConfig.qualityType then
+    --     LActor.sendTipmsg(obj, Lang.Partner.t017, ttMessage)
+    --     return
+    -- end
+
+    if deputyInfo.state == norPartnerState.onFighting then
+        LActor.sendTipmsg(obj, Lang.Partner.t020, ttMessage)
+        return
+    end
+
+    -- 判断最高值
+    if primaryInfo.level < deputyInfo.level then
+        primaryInfo.level = deputyInfo.level
+        primaryInfo.exp = deputyInfo.exp
+    elseif primaryInfo.level == deputyInfo.level then
+        primaryInfo.exp = PartnerOpFuncList.getMax(primaryInfo.exp, deputyInfo.exp)
+    end
+    primaryInfo.potential = PartnerOpFuncList.getMax(primaryInfo.potential, deputyInfo.potential)
+    primaryInfo.potLevel = PartnerOpFuncList.getMax(primaryInfo.potLevel, deputyInfo.potLevel)
+
+    local ret = LActor.setNorPartnerInfoById(obj, primaryInfo.id, primaryInfo.level, primaryInfo.exp, primaryInfo.potential, primaryInfo.potLevel)
+    if ret then
+        local ret, afterInfo = LActor.getNorPartnerInfoById(obj, primaryInfo.id)
+        -- 销毁副伙伴
+        LActor.setPartnerState(obj, deputyInfo.id, norPartnerState.isLosing)
+        local pack = DataPack.allocPacket(obj, sysPartnerId, sDoFusion)
+        DataPack.writeUInt(pack, primaryInfo.id)
+        DataPack.writeUInt(pack, primaryInfo.mid)
+        DataPack.writeUInt(pack, primaryInfo.level)
+        DataPack.writeUInt(pack, primaryInfo.potential)
+        DataPack.writeUInt(pack, primaryInfo.potLevel)
+        DataPack.writeUInt(pack, afterInfo.exp)
+        DataPack.writeUInt(pack, afterInfo.fightScore)
+        DataPack.writeUInt(pack, deputyId)
+        DataPack.flush(pack)
+        -- 重新计算伙伴槽位开启情况
+        PartnerOpFuncList.checkSkillMasks(obj, primaryInfo.id)
+        LActor.sendTipmsg(obj, string.format(Lang.Partner.t021, deputyInfo.name), ttMessage)
+    end
+end
+
+PartnerOpFuncList[cGetBatPartnerInfo] = function (obj, packet)
+    local cMid = DataPack.readUInt(packet)
+    local needFate = DataPack.readUInt(packet)
+
+    -- 保留任务系统调用部分 该部分需要先主管查询任务完成状态后再进行下一步
+
+    -- 获取信息
+    local ret, info = LActor.getBatPartnerInfoByMid(obj, cMid)
+    if not ret then
+        LActor.sendTipmsg(obj, Lang.Partner.t018, ttMessage)
+        return
+    end
+
+    local pack = DataPack.allocPacket(obj, sysPartnerId, sGetBatPartnerInfo)
+    DataPack.writeUInt(pack, info.partnerId)
+    DataPack.writeUInt(pack, info.activeState)
+    DataPack.writeUInt(pack, info.mastery)
+    DataPack.writeUInt(pack, info.masteryLevel)
+    DataPack.flush(pack)
+end
+
+PartnerOpFuncList[cGivenMasteryItem] = function (obj, packet)
+    -- 暂时不需要这个功能了
+    -- local cMid = DataPack.readUInt(packet)
+    -- local ret, info = LActor.getBatPartnerInfoByMid(obj, cMid)
+    -- if not ret then
+    --     LActor.sendTipmsg(obj, Lang.Partner.t018, ttMessage)
+    --     return
+    -- end
+    -- if info.activeState == batPartnerState.enBatNotActive then
+    --     LActor.sendTipmsg(obj, Lang.Partner.t035, ttMessage)
+    --     return
+    -- end
+    -- -- 检查道具数量
+    -- local itemId = PartnerConfig.addMasteryItemId
+    -- local itemNum = LActor.getItemCount(obj, itemId)
+    -- local addMastery = PartnerConfig.addMasteryNum
+
+    -- if addMastery <= 0 then
+    --     debug_print("==========配置配的什么鬼 居然增加熟练度不大于0!")
+    --     return
+    -- end
+    -- if itemNum < 1 then
+    --     LActor.SendGeneralTips(obj, 2, itemId, 1)
+    --     return
+    -- end
+    -- -- 扣道具
+    -- LActor.removeItem(obj, itemId, 1, -1, -1, -1, "PartnerSystem_GivenMasteryItem")
+    -- info.mastery = info.mastery + addMastery
+    -- -- c++层存储数据
+    -- local ret = LActor.setBatPartnerInfo(obj, info.partnerId, info.activeState, info.mastery, info.masteryLevel)
+    -- if ret then
+    --     local pack = DataPack.allocPacket(obj, sysPartnerId, sGivenMasteryItem)
+    --     DataPack.writeUInt(pack, info.partnerId)
+    --     DataPack.writeUInt(pack, info.mastery)
+    --     DataPack.flush(pack)
+    --     -- 更新属性
+    --     LActor.calPartnerGiveActorProp(obj)
+
+    --     -- -- 成就事件
+    --     -- LActor.SetAchieveProcessByType(obj, 96, 1, batConfig.givenItemNum); -- aAchieveEventFriendGift
+    -- end
+end
+
+PartnerOpFuncList[cUpgradeMasteryLevel] = function (obj, packet)
+    local cMid = DataPack.readUInt(packet)
+    local auto = DataPack.readUInt(packet)
+    local oneKey = DataPack.readUInt(packet)
+
+    local ret, info = LActor.getBatPartnerInfoByMid(obj, cMid)
+    if not ret then
+        LActor.sendTipmsg(obj, Lang.Partner.t018, ttMessage)
+        return
+    end
+    if info.activeState ~= batPartnerState.enBatHasActive then
+        LActor.sendTipmsg(obj, Lang.Partner.t035, ttMessage)
+        return
+    end
+
+    -- 点击了就算触发
+    LActor.OnQuestEvent(qtPetJiacheng, 0, 1, true, obj)
+
+    local oriMasteryLevel = info.masteryLevel
+
+    local masteryLevelConfig = PartnerOpFuncList.getMasteryLevelConfigByMidAndMasteryLevel(info.partnerId, info.masteryLevel)
+    local nextMasteryLevelConfig = PartnerOpFuncList.getMasteryLevelConfigByMidAndMasteryLevel(info.partnerId, info.masteryLevel + 1)
+
+    if masteryLevelConfig == nil or nextMasteryLevelConfig == nil then
+        LActor.sendTipmsg(obj, Lang.Partner.t023, ttMessage)
+        return
+    end
+
+    local needFirstItemId = masteryLevelConfig.costItems.firstItemId
+    local needFirstItemNum = masteryLevelConfig.costItems.firstItemNum
+    local needSecondItemId = masteryLevelConfig.costItems.secondItemId
+    local needSecondItemNum = masteryLevelConfig.costItems.secondItemNum
+    local needMoneyCoin = masteryLevelConfig.costItems.moneyCoin
+
+    local function upgradeMasteryLevel()
+        if PartnerOpFuncList.getMasteryLevelConfigByMidAndMasteryLevel(info.partnerId, info.masteryLevel + 1) == nil then
+            return false
+        end
+        info.masteryLevel = info.masteryLevel + 1
+        return true
+    end
+
+    local costTab = {
+        cond = 2,
+        sendTip = 1,
+        needPay = true,
+        forWhat = "cUpgradeMasteryLevel",
+        items = {
+            {
+                itemId = needFirstItemId,
+                itemNum = needFirstItemNum,
+                coinNum = needMoneyCoin,
+            },
+            {
+                itemId = needSecondItemId,
+                itemNum = needSecondItemNum,
+                coinNum = 0,
+            },
+        },
+    }
+
+    PartnerOpFuncList.onkeyUpgrade(obj, costTab, nil, upgradeMasteryLevel, auto)
+
+    if oriMasteryLevel < info.masteryLevel then
+        local ret = LActor.setBatPartnerInfo(obj, info.partnerId, info.activeState, info.mastery, info.masteryLevel)
+        if ret then
+            LActor.sendTipmsg(obj, Lang.Partner.t022, ttMessage)
+            local pack = DataPack.allocPacket(obj, sysPartnerId, sUpgradeMasteryLevel)
+            DataPack.writeUInt(pack, info.partnerId)
+            DataPack.writeUInt(pack, info.mastery)
+            DataPack.writeUInt(pack, info.masteryLevel)
+            DataPack.flush(pack)
+        end
+
+        -- 触发任务事件
+        LActor.OnQuestEvent(qtHuoBanQinMiDu, 0, 1, true, obj, false)
+    end
+end
+
+PartnerOpFuncList[cActiveSkill] = function (obj, packet)
+    local skillId = DataPack.readUInt(packet)
+
+    local ret, info = LActor.getNorPartnerSkillById(obj, skillId)
+    if ret and info.active == skillActive.hasActive then
+        LActor.sendTipmsg(obj, Lang.Partner.t025, ttMessage)
+        return
+    end
+    -- 取得激活道具
+    local skillConfig = PartnerOpFuncList.getSkillConfigById(skillId)
+    if not skillConfig then
+        LActor.sendTipmsg(obj, Lang.Partner.t011, ttMessage)
+        return
+    end
+    local activeConfig = skillConfig.active
+    local needItemId = activeConfig.activeId -- 激活道具(或伙伴id)
+    local needItemNum = activeConfig.activeNum -- 激活道具数量
+    local needCoinNum = activeConfig.coinNum -- 激活贝比
+    local needActiveType = activeConfig.activeType -- 激活类型 1 道具 2 伙伴
+    local skillType = skillConfig.skillType -- 激活的技能类型（天赋技能 通用技能区别）
+
+    if needActiveType == skillActiveType.tItem then
+        local itemNum = LActor.getItemCount(obj, needItemId)
+        if itemNum < needItemNum then
+            LActor.SendGeneralTips(obj, 2, needItemId, needItemNum-itemNum)
+            return
+        end
+        -- 扣材料
+        LActor.removeItem(obj, needItemId, needItemNum, -1, -1, -1, "activePartnerSystemSkill")
+    elseif needActiveType == skillActiveType.tPartner then
+        local ret = LActor.findNorPartnerByMid(obj, needItemId)
+        if not ret then -- 伙伴不存在激活不了
+            LActor.sendTipmsg(obj, Lang.Partner.t028, ttMessage)
+            return
+        end
+    else -- 类型不对 直接返回
+            LActor.sendTipmsg(obj, Lang.Partner.t013, ttMessage)
+        return
+    end
+    -- 激活逻辑直接交给C++
+    local ret = LActor.activeNorPartnerSkill(obj, skillId, skillType)
+    if ret then
+        local ret, info = LActor.getNorPartnerSkillById(obj, skillId)
+        local pack = DataPack.allocPacket(obj, sysPartnerId, sActiveSkill)
+        DataPack.writeUInt(pack, skillId)
+        DataPack.writeUInt(pack, info.active)
+        DataPack.writeUInt(pack, info.level)
+        DataPack.writeUInt(pack, info.progress)
+        DataPack.flush(pack)
+        LActor.sendTipmsg(obj, Lang.Partner.t029, ttMessage)
+    end
+end
+
+PartnerOpFuncList[serverAutoActiveSkill] = function (obj, cMid)
+    local configs = PartnerOpFuncList. getSkillActiveConfigByMid(cMid)
+    for k, v in pairs(configs) do
+        local skillId = k
+        local needItemId = v.active.activeId -- 激活道具(或伙伴id)
+        local skillType = v.skillType -- 激活的技能类型（天赋技能 通用技能区别）
+
+        local ret = LActor.findNorPartnerByMid(obj, needItemId)
+        if not ret then -- 伙伴不存在激活不了
+            return
+        end
+        -- 激活逻辑直接交给C++
+        LActor.activeNorPartnerSkill(obj, skillId, skillType)
+    end
+end
+
+-- 伙伴获得经验
+PartnerOpFuncList[serverAddPartnerExp] = function (obj, id, add)
+    if not obj then
+        return
+    end
+    -- 自动计算玩家升级 返回升级后的等级和经验
+    local function partnerLevelUp (actorLevel, level, nowExp, addExp)
+        if level - actorLevel > 5 then
+            return level, nowExp
+        end
+        local needExp = PartnerConfig.PartnerExps[level]
+        if not needExp then -- 满级
+            return level, nowExp
+        end
+        local totalExp = nowExp + addExp
+        if totalExp >= needExp then
+            if level - actorLevel < 5 then
+                local nextLevelExp = PartnerConfig.PartnerExps[level + 1]
+                if not nextLevelExp then -- 已经满级
+                    nowExp = needExp
+                else
+                    level = level + 1
+                    addExp = totalExp - needExp
+                    nowExp = 0
+                    return partnerLevelUp(actorLevel, level, nowExp, addExp)
+                end
+            else
+                nowExp = needExp
+                addExp = 0
+            end
+        else
+            nowExp = totalExp
+            addExp = 0
+        end
+        return level, nowExp
+    end
+    -- 获取玩家自身的等级
+    local actorLevel = LActor.getLevel(obj)
+    if actorLevel > 0 then        
+        -- 获取伙伴的信息
+        local ret, info = LActor.getNorPartnerInfoById(obj, id)
+        if not ret then
+            return
+        end
+        local lvl, exp = partnerLevelUp(actorLevel, info.level, info.exp, add)
+        debug_print(string.format("==========>伙伴系当前等级[%d],增加经验[%d] --> 增加经验后等级[%d], 增加经验后经验[%d]", info.level, info.exp, lvl, exp))
+        info.level = lvl
+        info.exp = exp
+        LActor.setNorPartnerInfoById(obj, info.id, info.level, info.exp, info.potential, info.potLevel)
+    end
+end
+
+PartnerOpFuncList[serverAddPartnerMastery] = function (obj, mid)
+    -- 暂停自动加熟练度功能
+    -- local ret, info = LActor.getBatPartnerInfoByMid(obj, mid)
+    -- if ret == true and info.activeState == batPartnerState.enBatHasActive then
+    --     local masteryConfig = PartnerOpFuncList.getBatPartnerConfigByMid(mid)
+    --     if masteryConfig == nil then
+    --         return
+    --     end
+    --     local addNum = masteryConfig.aboutMastery.timeGiveMastery
+    --     if addNum == nil or addNum <= 0 then
+    --         return
+    --     end
+    --     LActor.addMasteryToPartner(obj, mid, addNum)
+    -- end
+end
+
+PartnerOpFuncList[cSplitSpartner] = function (obj, packet)
+    local result = 0
+    local id = tonumber(DataPack.readUInt(packet)) or 0
+    if id > 0 then
+        -- 开始分解
+        local ret, info = LActor.getNorPartnerInfoById(obj, id)
+        if ret == true then
+            if info.state == norPartnerState.onFighting then
+                LActor.sendTipmsg(obj, Lang.Partner.t019, ttMessage)
+                return
+            end
+            local potLevel = info.potLevel
+            local talentConfig = PartnerConfig.Talents[potLevel]
+            local baseConfig = PartnerOpFuncList.getNorPartnerConfigById(info.mid)
+            if talentConfig ~= nil and baseConfig ~= nil then
+                local giveItemTable = {}
+                for k, v in pairs(talentConfig.splitItems) do
+                    table.insert(giveItemTable, v)
+                end
+                for k, v in pairs(baseConfig.splitItems) do
+                    table.insert(giveItemTable, v)
+                end
+
+                -- 开始分解
+                if LActor.setPartnerState(obj, id, norPartnerState.isLosing) == true then
+                    LActor.sendTipmsg(obj, string.format(Lang.Partner.t041, baseConfig.name), ttMessage)
+                    for k, v in pairs(giveItemTable) do
+                        local more = LActor.addItem(obj, v.itemId, 0, 0, v.itemNum, 0, "partner_split")
+                        local needSendMailNum = v.itemNum - more
+                        if needSendMailNum > 0 then -- 需要发邮箱
+                            System.sendGmMailOffLine(LActor.getActorId(obj), Lang.ScriptTips.partner004, 1, v.itemId, needSendMailNum, 0, Lang.ScriptTips.partner003)
+                        end
+                    end
+                    result = 1
+                end
+            end
+        end
+    end
+    local npack = DataPack.allocPacket(obj, sysPartnerId, sSplitSpartner)
+    DataPack.writeUInt(npack, result)
+    DataPack.flush(npack)
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aePartner, EventCallDispatcher.HandlerPartnerOp)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeLevel, PartnerOpFuncList.actorLevelChange)
+
+GmEventFuncList.register( "levelprt", function (actorobj, args)
+    if args.n < 2 or tonumber(args[2]) <= 0 then
+        LActor.sendTipmsg(actorobj, "请输入非助战伙伴id, level", ttMessage)
+        return
+    end
+    local id = tonumber(args[1])
+    local lvl = tonumber(args[2])
+    local ret, info = LActor.getNorPartnerInfoById(actorobj, id)
+    if not ret then
+        LActor.sendTipmsg(actorobj, "然并卵 你的id错了", ttMessage)
+        return
+    end
+    debug_print(dump(info))
+    ret = LActor.setNorPartnerInfoById(actorobj, info.id, lvl, info.exp, info.potential, info.potLevel)
+    if ret == 0 then
+        LActor.sendTipmsg(actorobj, "然并卵 服务端出错了", ttMessage)
+    else
+        LActor.sendTipmsg(actorobj, "修改伙伴等级成功", ttMessage)
+    end
+end, 1)

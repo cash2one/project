@@ -1,0 +1,970 @@
+﻿--活动时间控制配置
+--#include "..\..\language\LangCode.txt"
+ActivityControl =
+{
+  --[[
+      @id
+      id要跟具体的活动配置中的activityId相对应，如id = 1要跟ForeverActivity_conf配置文件中的activityId=1相对应
+      @cancontrol
+      cancontrol = false 表示不接受后台控制
+      cancontrol = true  表示接受后台控制
+      @timetype,@starttime,@endtime
+      timetype = 1,则starttime和endtime的格式如："2013-7-24 18:00:00"
+      timetype = 2,则starttime和endtime分别表示开服第几天到第几天，如开服1天到7天则starttime = 1,endtime = 8,一共7天
+      timetype = 3,则表示如果该活动没有后台控制，则该活动永远关闭,starttime和endtime无效
+      timetype = 4,则starttime和endtime分表表示开服几天几时几分开启和结束活动，如starttime = {2,8,30}表示开服第2天8点30分开启活动
+      timetype = 5,则表示如果该活动没有后台控制，则该活动永远开启,starttime和endtime无效
+      timetype = 6,则表示如果玩家创角的天数如果小于等于endtime,表示活动开启，否则活动结束
+      timetype = 7,则starttime 和endtime 分别表示开启关闭活动的具体时间
+      @minlv
+      minlv表示可以参加该活动的最小等级
+      @pflimit
+      pflimit表示平台限制，如pflimit = {"qq","37wan-37wan"}表示只有qq平台和37wan平台的玩家才可以参加该活动，无pflimit配置或者pflimit={}表示任何平台的玩家都可以参加该活动
+  --]]
+  [1] = {
+    ---永久活动 ForeverActivity_conf
+    id = 1,
+    cancontrol = true,
+    timetype = 5,
+    starttime = "2013-7-24 18:00:00",
+    endtime = "2013-8-5 18:00:00",
+    minlv = 1,
+  },
+  [2] = {
+    --开服后活动 newserver7_conf
+    id = 2,
+    cancontrol = true,--开服第一天就填1， 结束时候需要减去1 例如6 就是1-5天
+    timetype = 2,
+    starttime = 1,
+    endtime = 8,
+    minlv = 1,
+  },
+  
+  [3] = {
+  --开服十天 newweekactivity
+    id = 3,
+    cancontrol = false,
+    timetype = 1,
+    starttime = "2016-09-04 00:00:00", 
+    endtime = "2016-09-07 23:59:59", 
+    minlv = 1,
+  },
+  
+  [4]={
+    --开服后活动 newserver5_conf
+    id = 4,
+    cancontrol = false,
+    timetype = 3,
+    starttime = 1, 
+    endtime = 6,
+    minlv = 1,
+    --pflimit = {"qq","37wan-37wan"},
+  },
+  [5]={
+    --开服后活动 createactor_conf
+    id = 5,
+    cancontrol = true,
+    timetype = 6, -- 相对于玩家创角的时间的 活动
+    starttime = 1, 
+    endtime = 7,
+    minlv = 1,
+  },
+  [6]={
+    --答题活动 answerquestionconfig
+    id = 6,
+    cancontrol = true,
+    timetype = 5, 
+    starttime = 1, 
+    endtime = 8,
+    minlv = 1,
+  },
+  [7]={
+    --X元夺宝 newserver 
+    id = 7,
+    cancontrol = true,
+    timetype = 7, 
+    --starttime只能是零点的！！！！
+    starttime = { "2016-7-30 0:00:00", "2016-7-30 0:00:00", "2016-7-30 0:00:00", "2016-7-30 0:00:00"},
+    endtime =  { "2016-8-1 0:00:01", "2016-7-30 0:00:01", "2016-7-30 0:00:00", "2016-7-30 0:00:00"},
+    minlv = 1,
+  },
+  [8]={
+    --开服后3天活动 answerquestionconfig
+    id = 8,
+    cancontrol = true,
+    timetype = 2, 
+    starttime = 1, 
+    endtime = 8,
+    minlv = 1,
+  },
+  [9]={
+    --创角色3天活动 createactor_conf3
+    id = 9,
+    cancontrol = true,
+    timetype = 6, 
+    starttime = 1, 
+    endtime = 3,
+    minlv = 1,
+  },
+
+  [10]={
+    --战力排行活动（占位置用的，活动时间在fightrankconfig.txt或后台开启）
+    id = 10,
+    cancontrol = true,
+    timetype = 6, 
+    starttime = 1, 
+    endtime = 3,
+    minlv = 1,
+  },
+
+  [11]={
+    --等级排行活动（占位置用的，活动时间在levelrankactivityconfig.txt或后台开启）
+    id = 11,
+    cancontrol = true,
+    timetype = 6, 
+    starttime = 1, 
+    endtime = 3,
+    minlv = 1,
+  },
+
+  [12]={
+    --专题活动 世界boss改变外形
+    id = 12,
+    cancontrol = true,
+    timetype = 1, 
+    starttime = "2016-07-27 00:00:00", 
+    endtime = "2016-08-23 23:59:59", 
+    minlv = 1,
+  },
+  [13]={
+    --集纸鸢定情谊
+    id = 13,
+    cancontrol = true,
+    timetype = 1, 
+    starttime = "2016-08-9 00:00:00", 
+    endtime = "2016-08-13 23:59:59", 
+    minlv = 1,
+  },
+  [14]={
+   --纸鸢再叙深情
+    id = 14,
+    cancontrol = true,
+    timetype = 1, 
+    starttime = "2016-08-17 00:00:00", 
+    endtime = "2016-08-21 23:59:59", 
+    minlv = 1,
+  },
+  [15]={
+    --观剧齐成长，双倍奖励（占位置用的，活动时间后台开启）
+    id = 15,
+    cancontrol = true,
+    timetype = 6, 
+    starttime = 1, 
+    endtime = 3,
+    minlv = 1,
+  },
+  [16]={
+    --最强王者（演武场排行活动，占位置用的，具体的时间在rankactivityconfig.txt）
+    id = 16,
+    cancontrol = true,
+    timetype = 1, 
+    starttime = "2016-07-27 00:00:00", 
+    endtime = "2016-07-31 23:59:59", 
+    minlv = 1,
+  },
+  [17]={
+    --一般的双倍奖励（占位置用的，活动时间后台开启）
+    id = 17,
+    cancontrol = true,
+    timetype = 6, 
+    starttime = 1, 
+    endtime = 3,
+    minlv = 1,
+  },
+  [18]={
+    --累计登录
+    id = 18,
+    cancontrol = true,
+    timetype = 6, 
+    starttime = 1, 
+    endtime = 7,
+    minlv = 1,
+  },
+  [19]={
+    --红包返利
+    id = 19,
+    cancontrol = true,
+    timetype = 1, 
+    starttime = "2016-07-31 00:00:00",  
+    endtime   = "2016-07-31 23:59:59", 
+    minlv = 1,
+  },
+   [20]={
+    --七夕兑换活动
+    id = 20,
+    cancontrol = true,
+    timetype = 1,   --绝对时间控制
+    starttime = "2016-9-1 00:00:00",  
+    endtime   = "2016-9-14 23:59:59", 
+    minlv = 1,
+  },
+  [21]={
+    --限时日充
+    id = 21,--活动id
+    cancontrol = true, --表示接受后台调控
+    timetype = 1,   --绝对时间控制
+    starttime = "2016-09-07 00:00:00",  
+    endtime   = "2016-09-08 23:59:59", 
+    minlv = 1,
+  },
+  [22] = {
+    --限量购买
+    id = 22,--活动id
+    cancontrol = true, --表示接受后台调控
+    timetype = 1,   --绝对时间控制
+    starttime = "2016-09-13 00:00:00",  
+    endtime   = "2016-09-16 23:59:59", 
+    minlv = 1,
+  },
+   [23]={
+    --限时抢购
+    id = 23,--活动id
+    cancontrol = true, --表示接受后台调控
+    timetype = 1,   --绝对时间控制
+    starttime = "2016-09-8 00:00:00",  
+    endtime   = "2016-09-15 23:59:59", 
+    minlv = 1,
+  },
+  [24]={
+    --七夕充值返利
+    id = 24,--活动id
+    cancontrol = true, --表示接受后台调控
+    timetype = 1,   --绝对时间控制
+    starttime = "2016-9-8 00:00:00",  
+    endtime   = "2016-9-10 23:59:59", 
+    minlv = 1,
+  },
+     [25]={
+    --限量购买
+    id = 25,--活动id
+    cancontrol = true, --表示接受后台调控
+    timetype = 1,   --绝对时间控制
+    starttime = "2016-09-06 00:00:00",  
+    endtime   = "2016-09-09 23:59:59", 
+    minlv = 1,
+  },
+     [26]={
+    --限量购买
+    id = 26,--活动id
+    cancontrol = true, --表示接受后台调控
+    timetype = 1,   --绝对时间控制
+    starttime = "2016-07-26 00:00:00",  
+    endtime   = "2016-08-01 23:59:59", 
+    minlv = 1,
+  },
+     [27]={
+    --限时抢购
+    id = 27,--活动id
+    cancontrol = true, --表示接受后台调控
+    timetype = 1,   --绝对时间控制
+    starttime = "2016-09-07 00:00:00",  
+    endtime   = "2016-09-09 23:59:59", 
+    minlv = 1,
+  },
+  [28]={
+    --限时抢购
+    id = 28,--活动id
+    cancontrol = true, --表示接受后台调控
+    timetype = 1,   --绝对时间控制
+    starttime = "2016-08-28 00:00:00",  
+    endtime   = "2016-08-31 23:59:59", 
+    minlv = 1,
+  },
+  [29]={
+    --七夕连续登录
+    id = 29,--活动id
+    cancontrol = true, --表示接受后台调控
+    timetype = 1,   --绝对时间控制
+    starttime = "2016-9-8 00:00:00",  
+    endtime   = "2016-9-14 23:59:59", 
+    minlv = 1,
+  },
+    [30] = {
+    --开服后活动 newserver7_conf
+    id = 30,
+    cancontrol = true,--开服第一天就填1， 结束时候需要减去1 例如6 就是1-5天
+    timetype = 1,   --绝对时间控制
+    starttime = "2016-08-3 00:00:00",  
+    endtime   = "2016-08-3 23:59:59", 
+    minlv = 1,
+  },
+  [31] = {
+     id = 31,--活动id
+    cancontrol = true, --表示接受后台调控
+    timetype = 1,   --绝对时间控制
+    starttime = "2016-09-10 00:00:00",  
+    endtime   = "2016-09-10 23:59:59", 
+    minlv = 1,
+  },
+    [32] = {
+     id = 32,--活动id
+    cancontrol = true, --表示接受后台调控
+    timetype = 1,   --绝对时间控制
+    starttime = "2016-08-20 00:00:00",  
+    endtime   = "2016-08-31 23:59:59", 
+    minlv = 1,
+  },
+   [54]={
+    --寻宝助秀成霸业
+    id = 54,--活动id
+    cancontrol = true, --表示接受后台调控
+    timetype = 1,   --绝对时间控制
+    starttime = "2016-07-10 00:00:00",  
+    endtime   = "2016-07-12 23:59:59", 
+    minlv = 1,
+
+  },
+
+  [55]={
+    --有粮领豪礼
+    id = 55,--活动id
+    cancontrol = true, --表示接受后台调控
+    timetype = 1,   --绝对时间控制
+    starttime = "2016-07-13 00:00:00",  
+    endtime   = "2016-07-16 23:59:59", 
+    minlv = 1,
+
+  },
+  [56]={
+    --富甲四方
+    id = 56,--活动id
+    cancontrol = true, --表示接受后台调控
+    timetype = 1,   --绝对时间控制
+    starttime = "2016-07-17 00:00:00",  
+    endtime   = "2016-07-20 23:59:59", 
+    minlv = 1,
+
+  },
+   [57]={
+    --我们结婚啦
+    id = 57,--活动id
+    cancontrol = true, --表示接受后台调控
+    timetype = 1,   --绝对时间控制
+    starttime = "2016-07-31 00:00:00",  
+    endtime   = "2016-07-31 23:59:59", 
+    minlv = 1,
+
+  },
+   [58]={
+    --累计消费
+    id = 58,--活动id
+    cancontrol = true, --表示接受后台调控
+    timetype = 1,   --绝对时间控制
+    starttime = "2016-09-05 0:0:00",  
+    endtime   = "2016-09-08 23:59:59", 
+    minlv = 1,
+
+  },
+  [59]={
+    --七夕boss
+    id = 59,--活动id
+    cancontrol = true, --表示接受后台调控
+    timetype = 1,   --绝对时间控制
+    starttime = "2016-08-09 00:00:00",  
+    endtime   = "2016-08-14 23:59:59", 
+    minlv = 1,
+  },
+  [60]={
+    --七夕称号
+    id = 60,--活动id
+    cancontrol = true, --表示接受后台调控
+    timetype = 1,   --绝对时间控制
+    starttime = "2016-08-09 00:00:00",  
+    endtime   = "2016-08-14 23:59:59", 
+    minlv = 1,
+  },
+
+  [1001]={
+    --充值欢乐送
+    id = 1001,
+    cancontrol = true,
+    timetype = 1, 
+    starttime = "2016-08-02 0:0:00", 
+    endtime = "2016-08-27 23:59:59",
+    minlv = 1,
+  },
+  [1002]={
+    --充值欢乐送
+    id = 1002,
+    cancontrol = true,
+    timetype = 1, 
+    starttime = "2016-08-28 00:00:00", 
+    endtime = "2016-09-01 23:59:59",
+    minlv = 1,
+  },
+  [1003]={
+    --充值欢乐送
+    id = 1003,
+    cancontrol = true,
+    timetype = 1, 
+    starttime = "2016-08-06 00:00:00", 
+    endtime = "2016-08-10 23:59:59",
+    minlv = 1,
+  },
+  [1004]={
+    --充值欢乐送
+    id = 1004,
+    cancontrol = true,
+    timetype = 1, 
+    starttime = "2016-09-02 00:00:00", 
+    endtime = "2016-09-06 23:59:59",
+    minlv = 1,
+  },
+  [1005]={
+    --充值欢乐送
+    id = 1005,
+    cancontrol = true,
+    timetype = 1, 
+    starttime = "2016-09-07 00:00:00", 
+    endtime = "2016-09-11 23:59:59",
+    minlv = 1,
+  },
+  [2001]={
+    --每日累计消费循环
+    id = 2001,
+    cancontrol = true,
+    timetype = 1, 
+    starttime = "2016-09-02 00:00:00", 
+    endtime = "2016-09-04 23:59:59",
+    minlv = 1,
+  },
+  [2002]={
+    --每日累计消费循环
+    id = 2002,
+    cancontrol = true,
+    timetype = 1, 
+    starttime = "2016-09-08 00:00:00", 
+    endtime = "2016-09-10 23:59:59",
+    minlv = 1, 
+  },
+  [2003]={
+    --每日累计消费循环
+    id = 2003,
+    cancontrol = true,
+    timetype = 1, 
+    starttime = "2016-09-16 00:00:00", 
+    endtime = "2016-09-18 23:59:59",
+    minlv = 1,
+  },
+  [2004]={
+    --每日累计消费循环
+    id = 2004,
+    cancontrol = true,
+    timetype = 1, 
+    starttime = "2016-08-27 00:00:00", 
+    endtime = "2016-08-29 23:59:59",
+    minlv = 1,
+  },
+  [2005]={
+    --每日累计消费循环
+    id = 2005,
+    cancontrol = true,
+    timetype = 1, 
+    starttime = "2016-07-18 00:00:00", 
+    endtime = "2016-07-18 00:00:00",
+    minlv = 1,
+  },
+  [2006]={
+    --每日累计消费循环
+    id = 2006,
+    cancontrol = true,
+    timetype = 1, 
+    starttime = "2016-07-18 00:00:00", 
+    endtime = "2016-07-18 00:00:00",
+    minlv = 1,
+  },
+  
+  [2007]={
+    --每日累计消费循环
+    id = 2007,
+    cancontrol = true,
+    timetype = 1, 
+    starttime = "2016-07-18 00:00:00", 
+    endtime = "2016-07-18 00:00:00",
+    minlv = 1,
+  },
+  [2008]={
+    --每日累计消费循环
+    id = 2008,
+    cancontrol = true,
+    timetype = 1, 
+    starttime = "2016-07-18 00:00:00", 
+    endtime = "2016-07-18 00:00:00",
+    minlv = 1,
+  },
+  [2009]={
+    --每日累计消费循环
+    id = 2009,
+    cancontrol = true,
+    timetype = 1, 
+    starttime = "2016-07-18 00:00:00", 
+    endtime = "2016-07-18 00:00:00",
+    minlv = 1,
+  },
+  [3001]={
+    --每日充值返利活动循环
+    id = 3001,
+    cancontrol = true,
+    timetype = 1, 
+    starttime = "2016-09-01 00:00:00", 
+    endtime = "2016-09-03 23:59:59",
+    minlv = 1,
+  },
+   [3002]={
+    --每日充值返利活动循环
+    id = 3002,
+    cancontrol = true,
+    timetype = 1, 
+    starttime = "2016-09-09 00:00:00", 
+    endtime = "2016-09-12 23:59:59",
+    minlv = 1,
+  },
+   [3003]={
+    --每日充值返利活动循环
+    id = 3003,
+    cancontrol = true,
+    timetype = 1, 
+    starttime = "2016-09-15 00:00:00", 
+    endtime = "2016-08-17 23:59:59",
+    minlv = 1,
+  },
+   [3004]={
+    --每日充值返利活动循环
+    id = 3004,
+    cancontrol = true,
+    timetype = 1, 
+    starttime = "2016-08-24 00:00:00", 
+    endtime = "2016-08-26 23:59:59",
+    minlv = 1,
+  },
+  [3005]= {
+    --每日充值返利活动循环
+    id = 3005,
+    cancontrol = true,
+    timetype = 1, 
+    starttime = "2016-07-18 00:00:00", 
+    endtime = "2016-07-18 00:00:00",
+    minlv = 1,
+  },
+   [4001]= {
+    --单笔充值活动循环
+    id = 4001,
+    cancontrol = true,
+    timetype = 1, 
+    starttime = "2016-08-29 00:00:00", 
+    endtime = "2016-08-31 23:59:59",
+    minlv = 1,
+  },
+   [4002]= {
+    --单笔充值活动循环
+    id = 4002,
+    cancontrol = true,
+    timetype = 1, 
+    starttime = "2016-09-01 00:00:00", 
+    endtime = "2016-09-05 23:59:59",
+    minlv = 1,
+  },
+   [4003]= {
+    --单笔充值活动循环
+    id = 4003,
+    cancontrol = true,
+    timetype = 1, 
+    starttime = "2016-09-07 00:00:00", 
+    endtime = "2016-09-09 23:59:59",
+    minlv = 1,
+  },
+   [4004]= {
+    --单笔充值活动循环
+    id = 4004,
+    cancontrol = true,
+    timetype = 1, 
+    starttime = "2016-09-10 0:0:00", 
+    endtime = "2016-09-14 23:59:59",
+    minlv = 1,
+  },
+   [4005]= {
+    --单笔充值活动循环
+    id = 4005,
+    cancontrol = true,
+    timetype = 1, 
+    starttime = "2016-08-26 00:00:00", 
+    endtime = "2016-08-28 23:59:59",
+    minlv = 1,
+  },
+  --[[
+  {
+    --登陆送天珠
+    id = 2,
+    cancontrol = false,
+    timetype = 5,
+    minlv = 1,
+  },
+  {
+    --挖矿活动
+    id = 3,--活动id,
+    cancontrol = true, --表示接受后台调控
+    timetype = 3,--无时间控制类型
+    minlv = 1, --最低参与等级
+    ifnormal = false,
+  },
+
+  {
+    --幸运转盘活动
+    id = 4,--活动id,
+    cancontrol = true, --表示接受后台调控
+    timetype = 3,--无时间控制类型
+    minlv = 30, --最低参与等级
+    ifnormal = false,
+  },
+
+  {
+    --充值送天珠活动
+    id = 6,--活动id
+    cancontrol = true, --表示接受后台调控
+    timetype = 3,   --无时间控制类型
+    --timetype = 1,   --绝对时间控制类型
+    --starttime = "2015-2-5 10:00:00", --""表示无开始时间
+    --endtime = "2015-2-10 23:59:00", --""表示无结束时间
+    minlv = 1,
+    ifnormal = false
+  },
+  {
+    --情人节活动
+    id = 8,--活动id
+    cancontrol = true, --表示接受后台调控
+    timetype = 3,   --无时间控制类型
+    --timetype = 1,   --绝对时间控制类型
+    --starttime = "2015-2-13 00:01:00", --""表示无开始时间
+    --endtime = "2015-2-16 23:59:00", --""表示无结束时间
+    minlv = 1,
+    ifnormal = true
+  },
+  {
+    --春节
+    id = 9,--活动id
+    cancontrol = true, --表示接受后台调控
+    timetype = 3,   --无时间控制类型
+    --timetype = 1,   --绝对时间控制类型
+    --starttime = "2015-2-18 00:01:00", --""表示无开始时间
+    --endtime = "2015-2-25 23:59:00", --""表示无结束时间
+    minlv = 1,
+    ifnormal = true
+  },
+  {
+    --元宵节活动
+    id = 10,--活动id
+    cancontrol = true, --表示接受后台调控
+    timetype = 3,   --无时间控制类型
+    minlv = 1,
+    ifnormal = true
+  },
+  {
+    --妇女节活动
+    id = 11,--活动id
+    cancontrol = true, --表示接受后台调控
+    timetype = 3,   --无时间控制类型
+    minlv = 1,
+    ifnormal = true
+  },
+  {
+    --白色情人节活动
+    id = 12,--活动id
+    cancontrol = true, --表示接受后台调控
+    timetype = 3,   --无时间控制类型
+    minlv = 1,
+    ifnormal = true
+  },
+  {
+    --每日充值
+    id = 13,--活动id
+    cancontrol = true, --表示接受后台调控
+    timetype = 3,   --无时间控制类型
+    minlv = 1,
+    ifnormal = true
+  },
+   {
+    --连续充值活动
+    id = 14,
+    cancontrol = true, --表示接受后台调控
+    timetype = 3,   --时间控制类型
+    minlv = 1,
+    ifnormal = false,
+  },
+  {
+    --神龙密塔
+    id = 15,
+    cancontrol = true, --表示接受后台调控
+    timetype = 3,   --时间控制类型
+    minlv = 1,
+    ifnormal = false,
+  },
+   {
+    --昆仑神树
+    id = 16,
+    cancontrol = true, --表示接受后台调控
+    timetype = 3,   --时间控制类型
+    minlv = 1,
+    ifnormal = false,
+  },
+  {
+    --清明節活動
+    id = 17,
+    cancontrol = true, --表示接受后台调控
+    timetype = 3,   --时间控制类型
+    minlv = 1,
+    ifnormal = true,
+  },
+  {
+    --美人抽卡
+    id = 18,
+    cancontrol = true, --表示接受后台调控
+    timetype = 3,   --时间控制类型
+    minlv = 50,
+    ifnormal = true,
+  },
+  {
+    --清凉一夏
+    id = 19,
+    cancontrol = true, --表示接受后台调控
+    timetype = 3,   --时间控制类型
+    minlv = 1,
+    ifnormal = true,
+  },
+  {
+    --劳动节活动
+    id = 20,
+    cancontrol = true, --表示接受后台调控
+    timetype = 3,   --时间控制类型
+    minlv = 1,
+    ifnormal = true,
+  },
+  {
+    --周年庆典活动
+    id = 21,
+    cancontrol = true, --表示接受后台调控
+    timetype = 3,   --时间控制类型
+    minlv = 1,
+    ifnormal = true,
+  },
+  {
+    --乾坤兑换
+    id = 22,
+    cancontrol = true, --表示接受后台调控
+    timetype = 3,   --时间控制类型
+    minlv = 1,
+    ifnormal = true,
+  },
+  {
+    --淘宝树
+    id = 23,
+    cancontrol = true, --表示接受后台调控
+    timetype = 1,   --绝对时间控制类型
+    starttime = "2015-6-19 00:00:00", --""表示无开始时间
+    endtime = "2015-6-21 23:59:00", --""表示无结束时间
+    minlv = 1,
+    ifnormal = false,
+  },
+  {
+    --每日消费
+    id = 24,
+    cancontrol = true, --表示接受后台调控
+    timetype = 3,   --时间控制类型
+    minlv = 30,
+    ifnormal = true,
+  },
+  {
+    --每日充值
+    id = 25,
+    cancontrol = true, --表示接受后台调控
+    timetype = 3,   --时间控制类型
+    minlv = 1,
+    ifnormal = true,
+  },
+  {
+    --六一活动
+    id = 26,
+    cancontrol = true, --表示接受后台调控
+    timetype = 1,   --绝对时间控制类型
+    starttime = "2015-6-1 00:00:00", --""表示无开始时间
+    endtime = "2015-6-7 10:00:00", --""表示无结束时间
+    minlv = 1,
+    ifnormal = true,
+  },
+  {
+    --合服活动
+    id = 28,--活动id
+    cancontrol = true, --表示接受后台调控
+    timetype = 3,   --无时间控制类型
+    minlv = 30,
+    ifnormal = false,
+  },
+  {
+    --限时商店活动
+    id = 29,--活动id
+    cancontrol = true, --表示接受后台调控
+    timetype = 3,   --无时间控制类型
+    minlv = 1,
+    ifnormal = false,
+  },
+  {
+    --限购活动1
+    id = 30,--活动id
+    cancontrol = true, --表示接受后台调控
+    timetype = 3,   --无时间控制类型
+    minlv = 1,
+    ifnormal = false,
+  },
+  {
+    --限购活动2
+    id = 31,--活动id
+    cancontrol = true, --表示接受后台调控
+    timetype = 3,   --无时间控制类型
+    minlv = 1,
+    ifnormal = false,
+  },
+  {
+    --限购活动3
+    id = 32,--活动id
+    cancontrol = true, --表示接受后台调控
+    timetype = 3,   --无时间控制类型
+    minlv = 1,
+    ifnormal = false,
+  },
+  {
+    --限购活动4
+    id = 33,--活动id
+    cancontrol = true, --表示接受后台调控
+    timetype = 3,   --无时间控制类型
+    minlv = 1,
+    ifnormal = false,
+  },
+  {
+    --大富翁
+    id = 34,--活动id
+    cancontrol = true, --表示接受后台调控
+    timetype = 3,   --无时间控制类型
+    minlv = 30,
+    ifnormal = false,
+  },
+  {
+    --端午节活动
+    id = 35,--活动id
+    cancontrol = true, --表示接受后台调控
+    timetype = 3,   --无时间控制类型
+    minlv = 30,
+    ifnormal = true,
+  },
+ {
+    --修补城墙活动
+    id = 39,
+    cancontrol = true, --表示接受后台调控
+    timetype = 3,   --时间控制类型
+    minlv = 30,
+    ifnormal = false,
+  },
+  {
+    --累积消费
+    id = 43,
+    cancontrol = true, --表示接受后台调控
+    timetype = 3,   --时间控制类型
+    minlv = 30,
+    ifnormal = true,
+  },
+   --强化特惠
+  {
+    id = 51,--活动id
+    cancontrol = true, --表示接受后台调控
+    timetype = 3,   --无时间控制类型
+    minlv = 30, --最低参与等级
+    ifnormal = false,
+  },
+  --装备特惠
+  {
+    id = 52,--活动id
+    cancontrol = true, --表示接受后台调控
+    timetype = 3,   --无时间控制类型
+    minlv = 30, --最低参与等级
+    ifnormal = false,
+  },
+  {
+    --累积充值
+    id = 53,--活动id,
+    cancontrol = true, --表示接受后台调控
+    timetype = 3,   --无时间控制类型
+    --timetype = 1,
+    --starttime = "2015-1-7 00:00:01",
+    --endtime = "2015-1-31 23:59:00",
+    minlv = 30, --最低参与等级
+    ifnormal = true,
+  },
+  --法宝特惠
+  {
+    id = 54,--活动id
+    cancontrol = true, --表示接受后台调控
+    timetype = 3,   --无时间控制类型
+    minlv = 30, --最低参与等级
+    ifnormal = false,
+  },
+    --团购活动1
+  {
+    id = 81,--活动id,
+    cancontrol = true, --表示接受后台调控
+    timetype = 3,   --无时间控制类型
+    minlv = 1, --最低参与等级
+    ifnormal = false,
+  },
+    --团购活动2--
+  {
+    id = 82,--活动id,
+    cancontrol = true, --表示接受后台调控
+    timetype = 3,   --无时间控制类型
+    minlv = 1, --最低参与等级
+    ifnormal = false,
+  },
+    --团购活动3--
+  {
+    id = 83,--活动id,
+    cancontrol = true, --表示接受后台调控
+    timetype = 3,   --无时间控制类型
+    minlv = 1, --最低参与等级
+    ifnormal = false,
+  },
+    --团购活动4--
+  {
+    id = 84,--活动id,
+    cancontrol = true, --表示接受后台调控
+    timetype = 3,   --无时间控制类型
+    minlv = 1, --最低参与等级
+    ifnormal = false,
+  },
+    --团购活动5--
+  {
+    id = 85,--活动id,
+    cancontrol = true, --表示接受后台调控
+    timetype = 3,   --无时间控制类型
+    minlv = 1, --最低参与等级
+    ifnormal = false,
+  },]]
+  --[[
+   {
+    --送花排行
+    id = 99,--活动id
+    cancontrol = false, --表示接受后台调控
+    timetype = 1,   --绝对时间控制类型
+    starttime = "2015-1-30 00:01:00", --""表示无开始时间
+    endtime = "2015-2-5 23:59:00", --""表示无结束时间
+    ifnormal = false,
+    minlv = 1,
+  },
+  --]]
+}

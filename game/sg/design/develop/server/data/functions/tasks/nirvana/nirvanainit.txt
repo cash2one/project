@@ -1,0 +1,68 @@
+﻿--#include "data\functions\Tasks\Nirvana\NirvanaSet.txt" once
+  --#include "data\functions\MonsterFunction.txt" once--怪物行为
+  --[[
+function Nirvanaenter(sysarg)
+    LActor.exitTeam(sysarg)
+	MoveToNirvana(sysarg)
+end
+function NirvanaCancel(sysarg)
+end
+
+function MoveToNirvana(sysarg)
+	print("MoveToNirvana...")
+	local level = LActor.getIntProperty(sysarg,PROP_LEVEL)
+
+	if level < NirvanaSet.limitLevel then
+		return string.format(Lang.TaskTalk.ShJin001, NirvanaSet.limitLevel)
+	end
+		local teamid = LActor.getTeamId(sysarg)
+		if teamid > 0 then
+			LActor.messageBox(sysarg,LActor.getNpc(sysarg),0,Lang.TaskTalk.ShJin002,Lang.TaskTalk.ShJin003.."/Nirvanaenter",Lang.TaskTalk.ShJin004.."/NirvanaCancel",nil)
+		end
+		local Hfuben = Fuben.createFuBen(NirvanaSet.FBid)
+		Fuben.SetFubenTime(Hfuben,NirvanaSet.LimitTime[1]+60)
+		if Hfuben ~= 0 then
+			local hScene = Fuben.getSceneHandleById(NirvanaSet.Scene, Hfuben)
+			if NirvanaMonster ~= nil then
+				local reward=NirvanaMonster
+				for i=1, #reward do
+					if reward[i].bossstep == 1 then
+					
+					local npcPtr = Fuben.getNpcPtr(hScene) 
+						Fuben.postDelayCreateMonsters(npcPtr,reward[i].delaytime*1000,reward[i].monsterId,reward[i].posX1, reward[i].posX2, reward[i].posY1,reward[i].posY2,reward[i].nCount,0)
+					end
+				end
+				local fbPtr = Fuben.getFubenPtr(Hfuben)
+				local var = Fuben.getDyanmicVar(fbPtr)
+				var.NirvanaStep = 1 --波数
+				local MonsterCount = 0--怪物的总数
+				var.KillMonCount = 0--已经杀怪的数量
+				for i=1,#NirvanaMonster do
+					if NirvanaMonster[i].bossstep == var.NirvanaStep then
+					MonsterCount = MonsterCount + NirvanaMonster[i].nCount
+					end
+				end
+			--Fuben.createMonsters(hScene, reward[1].monsterId, reward[1].posX1, reward[1].posX2, reward[1].posY, reward[1].nCount,0)
+				local y,m,d = System.getDate(0,0,0)
+				local h,b,s = System.getTime(0,0,0)
+	--local timestr = string.format(Lang.ScriptTips.x00042,y,m,d,h,b+5,s)
+				local timestr = string.format("%d-%d-%d %d:%d:%d",y,m,d,h,b,s)
+			
+			--这种注册是重复的
+			--LActor.regScriptCallback(sysarg,thisNPC,NirvanaSet.LimitTime[1]*1000,NirvanaSet.LimitTime[1]*1000,-1,"CheckNirvanaWin",var.NirvanaStep)
+				
+				LActor.enterFuBen(sysarg,Hfuben,NirvanaSet.Scene,NirvanaSet.nx,NirvanaSet.ny)
+				LActor.ChangeCaleValue(sysarg,caleOther1,var.NirvanaStep)
+				LActor.ChangeCaleValue(sysarg,caleOther2,MonsterCount)
+				LActor.ChangeCaleValue(sysarg,caleOther3,var.KillMonCount)
+				LActor.SendAllCaleValue(sysarg)
+             --local npcPtr = Fuben.getNpcPtrByName(hScene,NirvanaSet.MobNpc)   --获取该场景的副本接引人NPC的指针
+			 --System.registerTimeCall(npcPtr,"CheckNirvanaWin",timestr, NirvanaSet.LimitTime[1]*1000, true,var.NirvanaStep)
+			 --LActor.regScriptCallback(sysarg,thisNPC,NirvanaSet.LimitTime[1]*1000,NirvanaSet.LimitTime[1]*1000,-1,"CheckNirvanaWin",var.NirvanaStep)
+				LActor.registerKillAllMonster( sysarg, true, 1 )	
+			end
+
+		end
+end
+]]--
+

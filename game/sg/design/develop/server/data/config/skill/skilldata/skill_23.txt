@@ -1,0 +1,42 @@
+{
+	id = 23,
+	name = Lang.Skill.s23Name,
+	desc = Lang.Skill.s23Desc,
+	vocation = 3,
+	skillType = 3,
+	skillSpellType = 0,
+	skillClass = 1,
+	commonCd = 0,
+	canbeDefault = false,
+	specialBuffCond = 0,
+	notAutoUse = false,
+	trainCondAddtions=
+{
+	{addtionsid=1,cond=1,value=12,consume=false},
+	{addtionsid=2,cond=1,value=21,consume=false},
+},
+	
+	trainCondAdddesc=
+{
+	{addtionid=1,iconid=306,name=Lang.Skill.s23_21Name,desc=Lang.Skill.s23_21Desc},
+	{addtionid=2,iconid=307,name=Lang.Skill.s23_22Name,desc=Lang.Skill.s23_22Desc},
+},
+ 	actions=
+{
+
+	{act=2,effect=1601,type=2},
+		
+},
+	skillSubLevel = { 
+--#include "Skill_23_1.txt"
+--#include "Skill_23_2.txt"
+--#include "Skill_23_3.txt"
+--#include "Skill_23_4.txt"
+--#include "Skill_23_5.txt"
+--#include "Skill_23_6.txt"
+--#include "Skill_23_7.txt"
+--#include "Skill_23_8.txt"
+--#include "Skill_23_9.txt"
+--#include "Skill_23_10.txt" 
+	},
+},

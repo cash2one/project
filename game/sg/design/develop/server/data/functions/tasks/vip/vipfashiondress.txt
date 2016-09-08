@@ -1,0 +1,60 @@
+﻿--lua script
+--说明：VIP时装兑换
+--NPC:
+--   
+--#include "VIPConstDef.txt" once
+--#include "data\language\LangCode.txt" once   --语言包
+
+function GetVIPFashionDressMain(sysarg)
+	return Lang.ScriptTips.c000100
+end
+
+--[[
+    函数名称：GetVIPFashionDress
+    函数描述：VIP黄钻领取时装NPC交互处理
+    参数 sysarg 的描述：
+]]
+function GetVIPFashionDressImpl(sysarg)
+  --[[ --先注释,isVIPByType接口已经去掉
+  local isYellowVIP = LActor.isVIPByType(sysarg, enVIPYellowDiamond)
+  if (not isYellowVIP) then
+  	return Lang.ScriptTips.c000101
+  end
+  ]]
+  
+  -- 本周领取次数
+  local svar = LActor.getStaticVar(sysarg)
+  local lastGetTime = svar.lastGetFashionDressTime
+  local curTime = System.getCurrMiniTime()
+  
+  -- 检测本周已经领取过
+  if (lastGetTime ~= nil) then
+  	if (System.isSameWeek_new(lastGetTime, curTime)) then
+  		return Lang.ScriptTips.c000102
+  	end
+  end
+  
+  -- 检测玩家背包是否有空槽位
+  if (Item.getBagEmptyGridCount(sysarg) < 1) then
+		return Lang.ScriptTips.c00007		
+	end
+  
+  -- 保存当前的领取时间
+  svar.lastGetFashionDressTime = curTime
+  
+  -- 给时装
+  local occu = LActor.getIntProperty(sysarg, PROP_VOCATION)
+  local cfg = VIPConstDef.FashionDressTbl[occu]
+  if (cfg == nil) then
+  	print("config error, can't find fashion dress [occu=" .. occu .. "]")
+  	return
+  end
+  local sex = LActor.getIntProperty(sysarg, PROP_SEX)  
+  local itemId = cfg[sex+1]
+  local newItem = Item.createItem(itemId, 1, 0, 0, 1);
+	Item.addItem(sysarg, newItem, "VIP FashionDress", 66)
+  
+  LActor.closeNPCDialog(sysarg)  
+end
+
+table.insert(MainFnTable, GetVIPFashionDressMain)

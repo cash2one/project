@@ -1,0 +1,72 @@
+-- 定时器消息处理
+
+TimerMsgFunc = {}
+
+function OnTimerMsg( msgId, et, param1, param2, param3, param4, param5 )
+  local func = TimerMsgFunc[msgId]
+  if func == nil then return end
+
+  func(msgId, et, param1, param2, param3, param4, param5)
+end
+
+TimerMsgFunc.register = function( msgId, func )
+  if TimerMsgFunc[msgId] ~= nil then
+    print( "timer msg exist:"..msgId )
+    return 
+  end
+  TimerMsgFunc[msgId] = func
+end
+
+
+-- 消息定义
+TimerMsg = {
+	TianMoTaSkill = 1,
+	TianMoTaCheckSuper = 2,
+  TianMoTaEffect = 3, -- 密宗佛塔副本播放特效
+  XuanTianSkill = 4, -- 玄天副本特效
+  ShangJinRefresh = 5, --
+  ShangJinKick = 6, --赏金副本踢人
+  BaGuaRefreshBox = 7, --秦皇地宫刷新宝箱
+  MoraUpdate = 8, --划拳结算
+  ZbsPkBetDelay = 9, --争霸赛PK下注公告
+  ZbsPkRefreshFeast = 10, --争霸赛PK刷新盛宴
+  FudiWarnning  = 11,   -- 领地之战剩余时间警告
+  FudiEffect    = 12,   -- 领地之战场景特效
+  CymkSkill = 13, -- 炽翼秘窟副本定时释放技能
+  CymkEffect = 14, -- 炽翼秘窟副本定时释放特效
+  CymkSpeak = 15, -- 炽翼秘窟副本定时说话
+  CymkSwcySkill = 16, -- 死亡炽翼释放技能
+  ChessChange = 17,  --五星连珠
+  ChessRefresh = 18, --刷新五星连珠
+  CymkBuff = 19, -- 炽翼秘窟添加BUFF
+  FbJieSuan = 20, --副本进入结算
+  TongTianTaPanelDelay = 21, --过关斩将延迟弹框
+  MonsterTianHuoEffectTimer = 22, --怪物天火(掉后生成的火墙)
+  MonsterTianHuoBuffTimer = 23, --怪物天火(火墙产生的效果)
+  MonsterTianHuoTimer = 24, --怪物天火开始
+  MonsterResurrectTimer = 25, --怪物重生的时间器
+  SHXNMosterRefresh = 26, --守护玄女 刷怪时间 
+  LCBDMosterRefresh = 27, --灵宠宝岛 延迟刷怪
+  XYMJMosterRefresh = 28, --仙羽秘境 延迟刷怪
+  DLDBuffRefresh = 29, --大乱斗 刷新buff
+  PlayFubenRefresh = 30,  --剧情副本 刷怪时间
+  TongTSLTips = 31, --自动到下一层
+  TongTSLCM = 32, --创建怪物
+  ZDTTBuffRefresh = 33, --战队天梯 刷新buff
+  ZDTTActivityAward = 34, --组队天梯 活动结束后5分钟才发放奖励
+  GuildBossEnd = 35, --宗门boss
+  JuQingFubenTimeMsg = 36, -- 剧情副本定时器消息
+  JianShiYunTaiTimeMsg = 37, -- 剑试云台定时器消息
+  LongMaiZhenBao = 38, -- 龙脉珍宝副本
+  LCBDcheck = 39, --灵宠宝岛 检查
+  LieqiZhanchang = 40,  --猎奇战场（坐骑副本）创怪
+}
+
+--用于定时重生
+TimerMsgFunc.register(TimerMsg.MonsterResurrectTimer, MonsterActionFunc.MonsterActionTimerCallBack);
+--用于天火掉后的火墙
+TimerMsgFunc.register(TimerMsg.MonsterTianHuoEffectTimer, MonsterActionFunc.MonsterTianhuoEffectTimerFunc);
+--用于火墙产生效果
+TimerMsgFunc.register(TimerMsg.MonsterTianHuoBuffTimer, MonsterActionFunc.MonsterTianhuoBuffTimerFunc );
+--用于天火开始
+TimerMsgFunc.register(TimerMsg.MonsterTianHuoTimer, MonsterActionFunc.OnTianHuoTimer);

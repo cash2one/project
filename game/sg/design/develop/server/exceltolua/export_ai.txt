@@ -1,0 +1,255 @@
+--[[
+Ai的导入导出
+]]--
+
+local LOAD_OPEN = false
+
+if LOAD_OPEN then
+---#include "data\config\ai\aiconfig.txt"
+end
+
+local AI = {}
+local TITLE = {
+	{"ID","aiId"},
+	{"AI类型","aiType"},
+	{"技能列表","skills"},
+	{"巡逻方向","patrolDir"},
+	{"运动半径","patrolRadius"},
+	{"追击范围","pursuitDistance"},
+	{"可视范围","watchDistance"},
+	{"离开巢位的最大的距离","leftHomeMaxDistance"},
+	{"怪物回归的时候","returnHomeRenewRate"},
+	{"怪物停留的最小时间","stopMinTime"},
+	{"怪物停留的最大时间","stopMaxTime"},
+	{"主动怪战斗中检测敌人间隔时间","checkenemyInterval"},
+	{"针对一些特殊的ai使用key","optionals"},
+	{"从不回归","neverReturn"},
+	{"是否攻击最近的目标","priorityDist"},
+	{"是否使用怪物自身的技能","selfSkill"},
+	{"CD时间(秒)","attackCD"},
+	{"伙伴离开主人的距离","petTransferDis"},
+	{"只攻击怪物","attackMonster"},
+	{"伙伴离开主人超过这个距离","petBattleFollowDis"},
+	{"巡游的路线的点","movePoint"},
+	{"多久触发脚本","scriptTime"},
+	{"强制寻路的x坐标","goPiontX"},
+	{"强制寻路的y坐标","goPiontY"},
+}
+
+--工具函数
+local function sz_T2S(_t)
+   local szRet = "{"
+    function doT2S(_i, _v)
+        if "number" == type(_i) then
+            --szRet = szRet .. "[" .. _i .. "] = "
+            if "number" == type(_v) then
+                szRet = szRet .. _v .. ","
+            elseif "string" == type(_v) then
+                szRet = szRet .. '"' .. _v .. '"' .. ","
+            elseif "table" == type(_v) then
+                szRet = szRet .. sz_T2S(_v) .. ","
+            else
+                szRet = szRet .. "nil,"
+            end
+        elseif "string" == type(_i) then
+            szRet = szRet .. _i..' = '
+            if "number" == type(_v) then
+                szRet = szRet .. _v .. ","
+            elseif "string" == type(_v) then
+                szRet = szRet .. '"' .. _v .. '"' .. ","
+            elseif "table" == type(_v) then
+                szRet = szRet .. sz_T2S(_v) .. ","
+            else
+                szRet = szRet .. "nil,"
+            end
+        end
+    end
+    table.foreach(_t, doT2S,0)
+    szRet = szRet .. "}"
+    return szRet
+end
+
+function string.split(str, delimiter)
+	if str==nil or str=='' or delimiter==nil then
+		return nil
+	end
+	
+    local result = {}
+    for match in (str..delimiter):gmatch("(.-)"..delimiter) do
+        table.insert(result, match)
+    end
+    return result
+end
+
+--从LUA导出到Excel
+function AI.LoadFromLuaToExcel(fileName)
+	--写入excel
+	local objexcel = CExcelWriter:new()
+	if not objexcel then
+		print("CExcelWriter objexcel is null")
+		return
+	end
+
+	objexcel:Init_App()
+	objexcel:OpenWrite()
+	if not objexcel:LoadSheetByIndex(1) then
+		print("LoadSheetByIndex failed!")
+		return
+	end
+
+	for x, y in pairs(TITLE) do
+		objexcel:WriteCellAsString(1, x, tostring(y[1]))		
+	end
+
+	for k,v in pairs(AiConfig) do
+		print(string.format("==================:: %d",k))
+		for k1,v1 in pairs(TITLE) do
+			if k <= 1 then break end
+			if k1 == 1 then
+				objexcel:WriteCellAsString(k, k1, tostring(k-1))
+			else
+				if v[v1[2]] ~= nil then
+					if v1[2] == "skills" then
+						local skillsStr = ""
+						for k2,v2 in pairs(v[v1[2]]) do
+							local id = v2.id or 0
+							local level = v2.level or 0
+							local event = v2.event or 0
+							local cd = v2.cd or 0
+							local firstDelay = v2.firstDelay or 0
+							skillsStr = skillsStr .. string.format("%d,%d,%d,%d,%d;",id,level,event,cd,firstDelay)
+						end
+						objexcel:WriteCellAsString(k, k1, tostring(skillsStr))
+					elseif v1[2] == "movePoint" then
+						local movePoint = ""
+						for i=1 , #v[v1[2]] do
+							if i % 2 == 0 then
+								movePoint = movePoint .. string.format("%d,%d;",v[v1[2]][i-1],v[v1[2]][i])
+							end
+						end
+						if #v[v1[2]] > 0 then
+							objexcel:WriteCellAsString(k, k1, tostring(movePoint))
+						end
+					elseif v1[2] == "optionals" then
+						local optionals = ""
+						--这里进行解析
+						for k,v in pairs(v[v1[2]]) do
+							optionals = optionals .. string.format("%s,%d;",k,v)
+						end
+						if #v[v1[2]] > 0 then
+							objexcel:WriteCellAsString(k, k1, tostring(movePoint))
+						end
+					else
+						if type(v[v1[2]]) == "table" then
+							objexcel:WriteCellAsString(k, k1, tostring(sz_T2S(v[v1[2]])))
+						else
+							objexcel:WriteCellAsString(k, k1, tostring(v[v1[2]]))
+						end
+					end
+				end
+			end
+		end
+	end
+
+	objexcel:Close()
+	objexcel:Quit_App()
+	objexcel:delete()
+end
+
+if LOAD_OPEN then
+	AI.LoadFromLuaToExcel("test")
+end
+
+--从Excele导入到LUA
+function AI.LoadFromExcelToLua(fileName)
+	--读取Excel
+	local objexcel = CExcelReader:new()
+    if not objexcel then
+        print("objexcel is null")
+        return
+    end
+
+    objexcel:Init_App()
+    objexcel:OpenRead()
+
+    local obj = objexcel:LoadSheetByIndex(1)
+	if not obj then
+		print("LoadSheetByIndex失败!")
+		objexcel:Close()
+		objexcel:Quit_App()
+		return
+	end
+	
+    --从第二行开始
+    local mCount = objexcel:GetCurrentSheetRowCount()
+    print(string.format("====:: %d",mCount))
+    local aiConfig = "AiConfig = \n{\n"
+    aiConfig = aiConfig .. "--#include \"aiconfig\\aiSample.txt\"\n"
+    for i=2,mCount do
+    	local aiFileName = string.format("ai%d.txt",i-1)
+    	local content = "{\n"
+    	for k,v in pairs(TITLE) do
+			local strValue = ""
+    		strValue = objexcel:ReadCellAsString(i, k)
+    		if strValue ~= nil and strValue ~= "" and strValue ~= " " then
+	    		if v[2] == "skills"  then
+    				local skillTable = string.split(strValue,";")
+	    			local skillsStr = ""
+	    			for k,v in pairs(skillTable) do
+	    				if v ~= nil then
+	    					local skill = string.split(v,",")
+		    				if skill ~= nil then
+			    				if #skill == 5 then
+			    					skillsStr = skillsStr .. string.format("\t\t{id=%s,level=%s,event=%s,cd=%s,firstDelay=%s},\n",skill[1],skill[2],skill[3],skill[4],skill[5])
+			    				end
+		    				end
+	    				end
+	    			end
+	    			content = content .. string.format("\tskills = \n\t{\n%s\t},\n",skillsStr)
+	    		elseif v[2] == "optionals" then
+	    			local optionalsTabel = string.split(strValue,";")
+	    			local optionalsStr = ""
+	    			for k,v in pairs(optionalsTabel) do
+	    				if v ~= nil then
+	    					local optional = string.split(v,",")
+		    				if optional ~= nil then
+			    				if #optional == 2 then
+			    					optionalsStr = optionalsStr .. string.format("\t\t%s=%s,\n",optional[1],optional[2])
+			    				end
+		    				end
+	    				end
+	    			end
+	    			content = content .. string.format("\toptionals = \n\t{\n%s\t},\n",optionalsStr)
+	    		elseif v[2] == "movePoint" then
+	    			local movePointTable = string.split(strValue,";")
+	    			local movePointStr = ""
+	    			for k,v in pairs(movePointTable) do
+	    				if v ~= nil then
+	    					local movePoint = string.split(v,",")
+		    				if movePoint ~= nil then
+			    				if #movePoint == 2 then
+			    					movePointStr = movePointStr .. string.format("\t\t%s,%s,\n",movePoint[1],movePoint[2])
+			    				end
+		    				end
+	    				end
+	    			end
+	    			content = content .. string.format("\tmovePoint = \n\t{\n%s\t},\n",movePointStr)
+	    		else
+		    		content = content .. string.format("\t%s = %s ,\n",v[2],strValue)
+	    		end
+			end
+    	end
+    	content = content .. "},"
+    	objexcel:WriteFile(string.format("ai/aiconfig/%s",aiFileName), content)
+    	aiConfig = aiConfig .. string.format("--#include \"aiconfig\\%s\"\n",aiFileName)
+    	--print(content)
+    end
+    aiConfig = aiConfig .. "}"
+    objexcel:WriteFile("ai/aiconfig.txt",aiConfig)
+
+    objexcel:Close()
+	objexcel:Quit_App()
+	objexcel:delete()
+end
+
+--AI.LoadFromExcelToLua("TEST")

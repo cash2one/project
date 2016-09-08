@@ -1,0 +1,461 @@
+﻿--#include "data\config\misc\miyou.txt" once
+
+ONLINEREWARD.MiYouImplement = 
+{
+	EndTime = 0, -- 活动结束时间
+	StartTime = 0, -- 活动开始时间
+	-- 初始化
+	OnInit = function()
+		if MiYouConf.sysFlag == nil then return end -- 不开启系统
+
+		local close_t = MiYouConf.closeTime
+		if System.getOpenServerTime() >= System.timeEncode(close_t[1], close_t[2], close_t[3], 0, 0, 0) then -- 战斗服不处理密友系统
+			MiYouConf.sysFlag = nil
+			-- print("miyou system is close")
+			return
+		end
+
+		local var_sys = System.getStaticVar()
+		local flag = ONLINEREWARD.MiYouImplement.OpenFlag
+		if var_sys.miyouopen == nil or var_sys.miyouflag == nil or var_sys.miyouflag ~= MiYouConf.sysFlag then -- 密友系统开启时间
+			var_sys.miyouopen = System.getCurrMiniTime() -- 重新保存系统开启时间
+		end
+		var_sys.miyouflag = MiYouConf.sysFlag
+		ONLINEREWARD.MiYouImplement.StartTime = var_sys.miyouopen
+
+		local year, month, day, hour, minute, sec = 0, 0, 0, 0, 0, 0
+		year, month, day, hour, minute, sec = System.timeDecode(var_sys.miyouopen, year, month, day, hour, minute, sec)
+
+		ONLINEREWARD.MiYouImplement.EndTime = System.timeEncode(year, month, day, 23, 59, 59) + (MiYouConf.days - 1) * 3600 * 24
+
+		print("miyou system open days:"..(System.getDayDiff(System.getCurrMiniTime(), var_sys.miyouopen) + 1)) -- 活动开始多少天
+	end,
+
+	-- 玩家数据初始化，用来清空系统未开放时玩家保存的数据
+	InitVar = function(var)
+		-- 取消这个功能，合服会有问题，如果要重开就根据serverid判断
+		--[[
+		if System.getServerId() == 4 then return end -- 1服(外网serverid是4)不清数据
+
+		if var.miyoutime ~= nil and var.miyoutime == ONLINEREWARD.MiYouImplement.StartTime then return end -- 已经初始化过
+
+		var.miyoulogintime = nil
+		var.miyougives = nil
+		var.miyougets = nil
+		var.miyouothergives = nil
+
+		-- print("1231")
+
+		var.miyoutime = ONLINEREWARD.MiYouImplement.StartTime
+
+		]]
+	end,
+
+	-- 发送赠送结果
+	SendGiveResult = function(sysarg, idx, ret)
+		local npack = DataPack.allocPacket(sysarg,138,39)
+		if npack == nil then return end
+		DataPack.writeInt(npack, idx)
+		DataPack.writeInt(npack, ret)
+		DataPack.flush(npack)
+	end,
+
+	-- 发送领取结果
+	SendGetResult = function(sysarg, idx, ret)
+		local npack = DataPack.allocPacket(sysarg,138,40)
+		if npack == nil then return end
+		DataPack.writeInt(npack, idx)
+		DataPack.writeInt(npack, ret)
+		DataPack.flush(npack)
+	end,
+
+	-- 通知打开图标
+	SendOpen = function(sysarg, ndiff, hasReward)
+		local npack = DataPack.allocPacket(sysarg,138,42)
+
+		DataPack.writeInt(npack, ndiff) -- 开服第几天
+		DataPack.writeInt(npack, ONLINEREWARD.MiYouImplement.EndTime - System.getCurrMiniTime()) -- 剩余活动时间
+		DataPack.writeByte(npack, hasReward) -- 是否还有未领或未赠送的奖励
+
+		DataPack.flush(npack)
+	end,
+
+	-- 获取奖励信息
+	OnGetInfo = function(sysarg, packet)
+		if not MiYouConf.sysFlag then return end
+
+		local var = LActor.getStaticVar(sysarg)
+		if var == nil then return end
+
+		local nday = var.miyoulogintime
+		if nday == nil then
+			print("miyoulogintime error")
+			return 
+		end
+
+		local gives = var.miyougives
+		local gets = var.miyougets
+
+		local npack = DataPack.allocPacket(sysarg,138,38)
+		if npack == nil then return end
+		DataPack.writeInt(npack, nday)
+
+		-- 赠送
+		local confs
+		confs = MiYouConf.gives
+		DataPack.writeInt(npack, #MiYouConf.gives)
+		for i=1, #MiYouConf.gives do
+			-- 奖励信息
+			DataPack.writeInt(npack, confs[i].item)
+			DataPack.writeInt(npack, confs[i].count)
+
+			-- 领取状态
+			local status = gives[i]
+			if status == nil then status = 0 end -- 为空则是不可领取状态
+			DataPack.writeByte(npack, status)
+		end
+		
+		-- 领取
+		confs = MiYouConf.gets
+		DataPack.writeInt(npack, #MiYouConf.gets)
+		for i=1, #MiYouConf.gets do
+			-- 奖励信息
+			DataPack.writeInt(npack, confs[i].item)
+			DataPack.writeInt(npack, confs[i].count)
+
+			-- 领取状态
+			local status = gets[i]
+			if status == nil then status = 0 end -- 为空则是不可领取状态
+			DataPack.writeByte(npack, status)
+		end
+
+		DataPack.flush(npack)
+
+	end,
+
+	-- 赠送
+	OnGiveItem = function(sysarg, dp)
+		if not MiYouConf.sysFlag then return end
+
+		local idx = DataPack.readInt(dp)
+		local miyouid = DataPack.readInt(dp)
+
+		if idx == nil or miyouid == nil then return end
+
+		local var = LActor.getStaticVar(sysarg)
+		if var == nil or var.miyougives == nil then
+			print("miyougives is nil")
+			return 
+		end
+
+		local reward = MiYouConf.gives[idx]
+
+		if reward == nil then
+			print("miyou gives idx error")
+			return 
+		end
+
+		local status = var.miyougives[idx]
+		if status == nil or status == 0 then -- 不可领取
+			ONLINEREWARD.MiYouImplement.SendGiveResult(sysarg, idx, -1)
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.my001, ttMessage)
+			return 
+		elseif status == 2 then -- 已经领取
+			ONLINEREWARD.MiYouImplement.SendGiveResult(sysarg, idx, -2)
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.my002, ttMessage)
+			return
+		end
+
+		local actor = LActor.getActorById(miyouid)
+		if actor == nil then
+			ONLINEREWARD.MiYouImplement.SendGiveResult(sysarg, idx, -3)
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.my005, ttMessage)
+			return 
+		end
+
+		if actor == sysarg then -- 不能给自己发
+			ONLINEREWARD.MiYouImplement.SendGiveResult(sysarg, idx, -4)
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.my010, ttMessage)
+			return 
+		end
+
+		local actor_var = LActor.getStaticVar(actor) -- 获取被赠送次数信息
+		if actor_var.miyouothergives == nil then
+			actor_var.miyouothergives = {}
+		end
+		if actor_var.miyouothergives[idx] == nil then
+			actor_var.miyouothergives[idx] = 0
+		end
+
+		local recvLimit
+		if System.getServerId() <= 136 then -- 以前的服务器还是10个
+			recvLimit = 10
+		else
+			recvLimit = MiYouConf.receiveLimit
+		end
+
+		if actor_var.miyouothergives[idx] >= recvLimit then
+			ONLINEREWARD.MiYouImplement.SendGiveResult(sysarg, idx, -5)
+			local tips = string.format(Lang.ScriptTips.my006, recvLimit)
+			LActor.sendTipmsg(sysarg, tips, ttMessage)
+			return 
+		end
+
+		local context = string.format(Lang.ScriptTips.my009, LActor.getName(sysarg), Item.getItemName(reward.item))
+
+		System.sendGmMailOffLine(miyouid, context, 1, reward.item, reward.count, 1)
+
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.my007, ttMessage)
+
+		actor_var.miyouothergives[idx] = actor_var.miyouothergives[idx] + 1 -- 累计被赠送次数
+
+		-- print(name..":"..actor_var.miyouothergives[idx])
+
+		var.miyougives[idx] = 2
+
+		ONLINEREWARD.MiYouImplement.SendGiveResult(sysarg, idx, 0)
+	end,
+
+	-- 领取
+	OnGetItem = function(sysarg, dp)
+		if not MiYouConf.sysFlag then return end
+
+		local idx = DataPack.readInt(dp)
+
+		if idx == nil then return end
+
+		local var = LActor.getStaticVar(sysarg)
+		if var == nil or var.miyougets == nil then
+			print("miyougets is nil")
+			return 
+		end
+
+		local reward = MiYouConf.gets[idx]
+
+		if reward == nil then
+			print("miyou gives idx error")
+			return 
+		end
+
+		local status = var.miyougets[idx]
+		if status == nil or status == 0 then -- 不可领取
+			ONLINEREWARD.MiYouImplement.SendGetResult(sysarg, idx, -1)
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.my003, ttMessage)
+			return 
+		elseif status == 2 then -- 已经领取
+			ONLINEREWARD.MiYouImplement.SendGetResult(sysarg, idx, -2)
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.my004, ttMessage)
+			return
+		end
+
+		if LActor.addItem(sysarg,reward.item,0,0, reward.count,1,"miyouitem") <= 0 then
+			ONLINEREWARD.MiYouImplement.SendGetResult(sysarg, idx, -3)
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.my008, ttMessage)
+			return 
+		end
+
+		var.miyougets[idx] = 2
+
+		ONLINEREWARD.MiYouImplement.SendGetResult(sysarg, idx, 0)
+	end,
+}
+
+
+-- 用户登录
+EventCallDispatcher.OnMiYouLogin = function(sysarg)
+	--if System.isBattleSrv() then return end
+	if not MiYouConf.sysFlag then return end
+
+	local var = LActor.getStaticVar(sysarg)
+
+	ONLINEREWARD.MiYouImplement.InitVar(var)
+
+	if var.miyougives == nil then
+		var.miyougives = {}
+	end
+
+	if var.miyougets == nil then
+		var.miyougets = {}
+	end
+
+	local firstUse = false
+	if var.miyoulogintime == nil then -- 系统刚开启
+		var.miyoulogintime = 1
+		firstUse = true
+	end
+
+	local ndays = #MiYouConf.gives -- 连续登录总天数
+
+	local ndiff = System.getDayDiff(System.getCurrMiniTime(), ONLINEREWARD.MiYouImplement.StartTime) + 1 -- 活动开始多少天
+
+	-- print("ndiff:"..ndiff)
+
+	local open = false -- 活动是否开启
+	if ndiff <= MiYouConf.days then -- 活动时间内才处理
+		open = true
+
+		if firstUse == true then -- 第一次登录
+			var.miyougives[1] = 1
+			var.miyougets[1] = 1
+		else
+			local nLast = LActor.getLastLogoutTime(sysarg)	--上次下线的时间
+
+			if nLast > 0 and System.getYesterday() < nLast and nLast < System.getToday() then -- 最后一次是昨天登录,增加连续登录次数
+				var.miyoulogintime = var.miyoulogintime + 1
+				if var.miyoulogintime < #MiYouConf.gives then -- 超过8天就不处理
+					var.miyougives[var.miyoulogintime] = 1
+					var.miyougets[var.miyoulogintime] = 1
+				end
+			elseif nLast < System.getToday() then -- 没有连续登录
+				var.miyoulogintime = 1
+				var.miyougives = {}
+				var.miyougets = {}
+				var.miyougives[1] = 1
+				var.miyougets[1] = 1
+			end
+		end
+
+		if ndiff == MiYouConf.days then -- 活动开始最后一天
+			if var.miyougives[ndays] == nil then
+				var.miyougives[ndays] = 1
+			end
+			if var.miyougets[ndays] == nil then
+				var.miyougets[ndays] = 1
+			end
+		end
+	end
+
+	-- 判断能否打开图标
+	local hasReward = 0
+	for i=1,ndays do
+		if var.miyougives[i] ~= nil and var.miyougives[i] == 1 then
+			hasReward = 1
+			break
+		end
+		if var.miyougets[i] ~= nil and var.miyougets[i] == 1 then
+			hasReward = 1
+			break
+		end
+	end
+
+	if open or hasReward == 1 then
+		ONLINEREWARD.MiYouImplement.SendOpen(sysarg, ndiff, hasReward)
+	end
+end
+
+-- 新的一天
+EventCallDispatcher.OnMiYouNewDay = function(sysarg, arg)
+	if not MiYouConf.sysFlag then return end
+
+	if arg[1] ~= nil and arg[1] == 1 then return end -- 登录的情况在上面已经处理
+
+	local var = LActor.getStaticVar(sysarg)
+
+	if var.miyougives == nil or var.miyougets == nil then return end -- 
+
+	if var.miyoulogintime == nil then
+		var.miyoulogintime = 1
+	end
+
+	local ndays = #MiYouConf.gives -- 连续登录总天数
+
+	local hasReward = nil
+	local ndiff = System.getDayDiff(System.getCurrMiniTime(), ONLINEREWARD.MiYouImplement.StartTime) + 1 -- 活动开始多少天
+	if ndiff > MiYouConf.days then -- 活动时间已过
+		if ndiff == (MiYouConf.days + 1) then -- 第十六天，判断如果没有可领取和赠送的奖励就发送关闭图标消息
+			for i=1,ndays do
+				if var.miyougives[i] ~= nil and var.miyougives[i] == 1 then
+					hasReward = 1
+					break
+				end
+				if var.miyougets[i] ~= nil and var.miyougets[i] == 1 then
+					hasReward = 1
+					break
+				end
+			end
+			if hasReward == nil then -- 没有奖励，通知关闭
+				hasReward = 0
+			end
+		end
+	else
+		hasReward = 0
+		var.miyoulogintime = var.miyoulogintime + 1
+  
+		if var.miyoulogintime < #MiYouConf.gives then -- 8天以内
+			var.miyougives[var.miyoulogintime] = 1
+			var.miyougets[var.miyoulogintime] = 1
+			hasReward = 1
+		end
+
+		if ndiff == MiYouConf.days then -- 活动最后一天
+			if var.miyougives[ndays] == nil then
+				var.miyougives[ndays] = 1
+				var.miyougets[ndays] = 1
+				hasReward = 1
+			end
+		end
+	end
+
+	if hasReward ~= nil then
+		ONLINEREWARD.MiYouImplement.SendOpen(sysarg, ndiff, hasReward)
+	end
+end
+
+GmEventFuncList.SetMyInfo = function(sysarg, args)
+	local var = LActor.getStaticVar(sysarg)
+
+	local idx = args[1]
+	local state = args[2]
+
+	var.miyougives[idx] = state
+	var.miyougets[idx] = state
+
+	ONLINEREWARD.MiYouImplement.OnGetInfo(sysarg)
+end
+
+GmEventFuncList.ClearOtherGives = function(sysarg, args)
+	local var = LActor.getStaticVar(sysarg)
+
+	var.miyouothergives = nil
+
+	ONLINEREWARD.MiYouImplement.OnGetInfo(sysarg)
+end
+
+GmEventFuncList.ClearMyTime = function(sysarg, args)
+	local var_sys = System.getStaticVar()
+	var_sys.miyouopen = System.getCurrMiniTime()
+
+	ONLINEREWARD.MiYouImplement.OnInit()
+
+	ONLINEREWARD.MiYouImplement.OnGetInfo(sysarg)
+end
+
+GmEventFuncList.ClearMyInfo = function(sysarg, args)
+	local var = LActor.getStaticVar(sysarg)
+	
+	var.miyoulogintime = nil
+	var.miyougives = nil
+	var.miyougets = nil
+	var.miyouothergives = nil
+end
+
+-- 开启密友系统
+GmEventFuncList.OpenMiyouSys = function(sysarg, args)
+	if MiYouConf.sysFlag == nil then
+		MiYouConf.sysFlag = 0
+	end
+	MiYouConf.sysFlag = MiYouConf.sysFlag + 1
+	ONLINEREWARD.MiYouImplement.OnInit()
+end
+
+table.insert(InitFnTable,ONLINEREWARD.MiYouImplement.OnInit) 
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, EventCallDispatcher.OnMiYouLogin)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, EventCallDispatcher.OnMiYouNewDay)
+
+-- GM命令
+GmEventFuncList.register( "setmyinfo", GmEventFuncList.SetMyInfo, 1)
+GmEventFuncList.register( "clsmytime", GmEventFuncList.ClearMyTime, 1)
+GmEventFuncList.register( "clsothergives", GmEventFuncList.ClearOtherGives, 1)
+GmEventFuncList.register( "clsmyinfo", GmEventFuncList.ClearMyInfo, 1)
+GmEventFuncList.register( "openmiyou", GmEventFuncList.OpenMiyouSys, 1)

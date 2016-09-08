@@ -1,0 +1,281 @@
+-- 修炼真气逻辑处理文件
+--#include "rootconfig.txt" once
+
+--[[
+RootSystem = {}
+
+RootSystem.protocol = {
+	DATA = 1,
+	PRACTICE = 2,
+	TRANSLATE = 3,
+	ICON = 4,
+}
+RootSystem.iconID = {
+	ZHUAN = 1,
+	XIU = 2 ,
+}
+
+-- 发送图标
+RootSystem.sendIcon = function(sysarg,iconId)
+	-- 发送数据
+	local pPack = DataPack.allocPacket(sysarg, BaseTypes.SystemId.rootSystem, RootSystem.protocol.ICON)
+	--print("====proto:  %d  %d",BaseTypes.SystemId.rootSystem,RootSystem.protocol.ICON)
+	DataPack.writeInt(pPack, iconId)		-- ICON id
+	DataPack.flush(pPack)
+end
+
+-- 登陆处理
+RootSystem.OnLogin = function (sysarg)
+	local root, level = LActor.getRootData(sysarg)
+	if level == nil then return end
+	if root < 1 then return end
+
+	local curTime = System.getCurrMiniTime()
+	local var = LActor.getStaticVar(sysarg)
+
+	var.fulltime = var.fulltime or curTime
+	var.fullresttime = var.fullresttime or RootConfig.FullTime
+	var.rootpracticestat = var.rootpracticestat or 0
+
+	local addTime,restTime = RootSystem.addTime(sysarg,curTime)
+	local costTime = curTime - var.fulltime + addTime
+	var.fullresttime = var.fullresttime - costTime
+	if var.fullresttime < 0 then var.fullresttime = 0 end
+
+	-- 满修炼剩余时间
+	local fullRestTime = var.fullresttime
+
+	var.fulltime = curTime 			-- 设置时间点
+	var.practicestarttime = curTime
+
+	if fullRestTime == 0 then 
+		RootSystem.sendIcon(sysarg,RootSystem.iconID.ZHUAN)
+		return
+	end
+
+	if restTime == 0 then 
+		RootSystem.sendIcon(sysarg,RootSystem.iconID.XIU)
+		return
+	end
+end
+
+-- 定时处理函数(一分钟定时器)
+RootSystem.OnTimer = function (sysarg)
+	local root, level = LActor.getRootData(sysarg)
+	--print(string.format("root: %d,  level:  %d",root,level))
+	if level == nil then return end
+	if root < 1 then return end
+
+	local curTime = System.getCurrMiniTime()
+	local var = LActor.getStaticVar(sysarg)
+
+	var.fulltime = var.fulltime or curTime
+	var.fullresttime = var.fullresttime or RootConfig.FullTime
+	var.rootpracticestat = var.rootpracticestat or 0
+
+	local addTime,restTime = RootSystem.addTime(sysarg,curTime)
+	local costTime = curTime - var.fulltime + addTime
+	var.fullresttime = var.fullresttime - costTime
+	if var.fullresttime < 0 then var.fullresttime = 0 end
+
+	-- 满修炼剩余时间
+	local fullRestTime = var.fullresttime
+
+	var.fulltime = curTime 			-- 设置时间点
+	var.practicestarttime = curTime
+
+	if fullRestTime == 0 then 
+		if not System.bitOPMask(var.rootpracticestat, 1) then
+			RootSystem.sendIcon(sysarg,RootSystem.iconID.ZHUAN)
+			var.rootpracticestat = System.bitOpSetMask(var.rootpracticestat, 1, true)
+			return
+		end
+	end
+
+	if restTime == 0 then 
+		if not System.bitOPMask(var.rootpracticestat, 2) then
+			RootSystem.sendIcon(sysarg,RootSystem.iconID.XIU)
+			var.rootpracticestat = System.bitOpSetMask(var.rootpracticestat, 2, true)
+			return
+		end
+	end
+
+	--print("=====RootSystem.OnTimer===over")
+end
+
+-- 剩余加速时间的计算，同时返回当前时间点相对于基准时间点加速的时间和剩余加速时间点
+RootSystem.addTime = function(sysarg,curTime)
+	-- 加速时间计算
+	local var = LActor.getStaticVar(sysarg)
+	var.practicestarttime = var.practicestarttime or 0
+	var.practiceresttime = var.practiceresttime or 0
+	var.practiceendtime = var.practiceendtime or 0
+
+	--print(string.format("start: %d, end: %d",var.practicestarttime,var.practiceendtime))
+
+	local addTime = 0
+	if var.practicestarttime ~= 0 and var.practiceendtime~=0 and var.practicestarttime <  var.practiceendtime then
+		if curTime <  var.practiceendtime then
+			addTime = curTime - var.practicestarttime
+		else
+			addTime = var.practiceendtime - var.practicestarttime
+		end
+	end
+	if addTime < 0 then addTime = 0 end
+
+	local restTime = var.practiceendtime - curTime
+	if restTime < 0 then restTime = 0 end
+
+	return addTime,restTime
+end
+
+-- 获取真气修炼数据
+RootSystem.GetRootData = function (sysarg)
+	-- 初始化记录数据
+	local curTime = System.getCurrMiniTime()
+	local var = LActor.getStaticVar(sysarg)
+	var.fulltime = var.fulltime or curTime
+	var.fullresttime = var.fullresttime or RootConfig.FullTime
+	
+	-- 加速时间计算
+	local addTime,restTime = RootSystem.addTime(sysarg,curTime)
+
+	-- 消耗时间 = 普通消耗时间 + 加速消耗的时间
+	local costTime = curTime - var.fulltime + addTime
+	--print(string.format("curTime:  %d,  costTime:  %d, fulltime:  %d,  addTime:  %d",curTime,costTime,var.fulltime,addTime))
+	var.fullresttime = var.fullresttime - costTime
+	if var.fullresttime < 0 then var.fullresttime = 0 end
+
+	-- 满修炼剩余时间
+	local fullRestTime = var.fullresttime
+
+	-- 发送数据
+	local pPack = DataPack.allocPacket(sysarg, BaseTypes.SystemId.rootSystem, RootSystem.protocol.DATA)
+	DataPack.writeInt(pPack, fullRestTime)		-- 满修炼剩余时间
+	DataPack.writeInt(pPack, restTime)			-- 潜心剩余时间
+	DataPack.flush(pPack)
+
+	--print("==============root========start=====")
+	--print(string.format("fullresttime:  %d",fullRestTime))
+	--print(string.format("addtime: %d",addTime))
+	--print(string.format("resttime:  %d",restTime))
+	--print("==============root========end=====")
+end
+
+-- 潜心修炼
+RootSystem.Practice = function(sysarg)
+	-- 初始化
+	local curTime = System.getCurrMiniTime()
+	local var = LActor.getStaticVar(sysarg)
+	var.rootpracticestat = var.rootpracticestat or 0
+
+	-- 判断能不能潜心修炼
+	local addTime,restTime = RootSystem.addTime(sysarg,curTime)
+	if restTime > 0 then	-- 正在潜心修炼，不能重叠潜心修炼 
+		--提示正在潜修
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.xlzq001, ttMessage)
+		return false
+	else	--潜心修炼
+		local cost = RootConfig.PracticeCost
+		if LActor.getMoneyCount( sysarg, mtCoin ) < cost then
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.xlzq006, ttMessage)
+			return false
+		end
+		LActor.changeMoney(sysarg,mtCoin,-cost)	-- 扣除金钱
+		local msg = string.format(Lang.ScriptTips.xlzq005,cost)
+		LActor.sendTipmsg(sysarg, msg, ttMessage)
+
+		var.practicestarttime = curTime
+		var.practiceendtime = curTime + RootConfig.PracticeTime
+
+		-- 发送潜修成功
+		local pPack = DataPack.allocPacket(sysarg, BaseTypes.SystemId.rootSystem, RootSystem.protocol.PRACTICE)
+		DataPack.writeChar(pPack, 1)		-- 潜修成功
+		DataPack.flush(pPack)
+	end
+
+	var.rootpracticestat = System.bitOpSetMask(var.rootpracticestat, 1, false)
+	
+
+	-- 发送修炼数据
+	RootSystem.GetRootData(sysarg)
+end
+
+-- 转化
+RootSystem.Translate = function(sysarg)
+	local curTime = System.getCurrMiniTime()
+	local var = LActor.getStaticVar(sysarg) 
+	var.rootpracticestat = var.rootpracticestat or 0
+	-- 获取剩余时间
+
+	-- 加速时间计算
+	local addTime,restTime = RootSystem.addTime(sysarg,curTime)
+
+	-- 消耗时间 = 普通消耗时间 + 加速消耗的时间
+	local costTime = curTime - var.fulltime + addTime
+	var.fullresttime = var.fullresttime - costTime
+	if var.fullresttime < 0 then var.fullresttime = 0 end
+
+	-- 计算百分比
+	local percent = (RootConfig.FullTime - var.fullresttime)/RootConfig.FullTime * 100
+	-- 下发奖励
+	local reward = 0 
+	local cost = 0
+	for i=1,#RootConfig.PercentCost do
+		if percent >= RootConfig.PercentCost[i][1] then
+			reward = RootConfig.PercentCost[i][3]
+			cost = RootConfig.PercentCost[i][2]
+			break
+		end
+	end
+
+	if reward == 0 then
+		-- 提示没有奖励可领取
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.xlzq002, ttMessage)
+		return false
+	else 
+		if LActor.getMoneyCount( sysarg, mtCoin ) < cost then
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.xlzq003, ttMessage)
+			return false
+		end
+		LActor.changeMoney(sysarg,mtCoin,-cost)	-- 扣除金钱
+		LActor.addRootExp(sysarg, reward, 0)		-- 发放奖励
+		local msg = string.format(Lang.ScriptTips.xlzq004,cost,reward)
+		LActor.sendTipmsg(sysarg, msg, ttMessage)
+
+		-- 重置修炼数据
+		var.fulltime = curTime
+		var.fullresttime = RootConfig.FullTime
+		var.practicestarttime =  0
+		var.practiceendtime =  0
+
+		-- 发送转化成功
+		local pPack = DataPack.allocPacket(sysarg, BaseTypes.SystemId.rootSystem, RootSystem.protocol.TRANSLATE)
+		DataPack.writeChar(pPack, 1)		-- 转化成功
+		DataPack.flush(pPack)
+	end
+
+	var.rootpracticestat = System.bitOpSetMask(var.rootpracticestat, 2, false)
+	var.rootpracticestat = System.bitOpSetMask(var.rootpracticestat, 1, false)
+
+	-- 发送修炼数据
+	RootSystem.GetRootData(sysarg)
+end
+
+-- 网络处理函数
+RootSystem.HandlerNetMsg = function (sysarg, systemid, msgid, packet)
+	if msgid == 1 then 			--获取真气修炼数据
+		print("RootSystem:1")
+		RootSystem.GetRootData(sysarg)
+	elseif msgid == 2 then 		--潜心修炼
+		print("RootSystem:2")
+		RootSystem.Practice(sysarg)
+	elseif msgid == 3 then 		--转化
+		print("RootSystem:3")
+		RootSystem.Translate(sysarg)
+	end
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, RootSystem.OnLogin)
+
+--]]

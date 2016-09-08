@@ -1,0 +1,16 @@
+﻿
+EventCallDispatcher.ActorFinishAchieveFunc = function (sysarg,arg)
+	if arg == nil then return end                                           
+	local Achieveid = arg[1]
+
+	local st = LActor.getStaticVar(sysarg)
+	if st.pf ~= "qqgame" then return end
+
+	if Achieveid == 79 then	-- 等级达到30级
+		LActor.txSetFeed(sysarg, 3, tx_set_feed_url)
+	elseif Achieveid == 43 then	--战力值达到5000
+		LActor.txSetFeed(sysarg, 2, tx_set_feed_url)
+  	end
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeActorFinishAchieve, EventCallDispatcher.ActorFinishAchieveFunc)

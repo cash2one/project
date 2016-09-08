@@ -1,0 +1,23 @@
+﻿
+
+EventCallDispatcher.ClientOpenDial = function ( sysarg, arg )
+	local diaId = arg[1]
+	-- 策划配置这个表，表示打开某个窗口就完成一些任务，如下：5是帮派窗口的id，各个窗口id的定义找程序
+	--
+	local QestData = {
+		[5] = {
+	   				{qid = 902, tid = 20201,count=1},  
+					{qid = 275, tid = 20202,count=1},  
+					{qid = 903, tid = 20203,count=1}, 
+					{qid = 904, tid = 20204,count=1}, 
+	   			},
+	}
+	local qData = QestData[diaId]
+	if qData then
+		for i=1,#qData do
+			LActor.setQuestValue(sysarg, qData[i].qid, qData[i].tid, qData[i].count)			
+		end
+	end
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeClientOpenDialog, EventCallDispatcher.ClientOpenDial)

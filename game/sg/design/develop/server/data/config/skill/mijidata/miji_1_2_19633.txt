@@ -1,0 +1,1205 @@
+{
+	id = 19633,
+	basics = 
+	{
+		{    --LV1
+			score = 75,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=100,value=400}},
+			},
+		},
+		{    --LV2
+			score = 150,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=110,value=528}},
+			},
+		},
+		{    --LV3
+			score = 225,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=120,value=640}},
+			},
+		},
+		{    --LV4
+			score = 300,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=130,value=744}},
+			},
+		},
+		{    --LV5
+			score = 375,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=140,value=840}},
+			},
+		},
+		{    --LV6
+			score = 450,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=150,value=934}},
+			},
+		},
+		{    --LV7
+			score = 525,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=160,value=1024}},
+			},
+		},
+		{    --LV8
+			score = 600,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=170,value=1114}},
+			},
+		},
+		{    --LV9
+			score = 675,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=180,value=1200}},
+			},
+		},
+		{    --LV10
+			score = 750,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=190,value=1287}},
+			},
+		},
+		{    --LV11
+			score = 825,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=205,value=1407}},
+			},
+		},
+		{    --LV12
+			score = 900,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=220,value=1526}},
+			},
+		},
+		{    --LV13
+			score = 975,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=235,value=1646}},
+			},
+		},
+		{    --LV14
+			score = 1050,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=250,value=1766}},
+			},
+		},
+		{    --LV15
+			score = 1125,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=265,value=1886}},
+			},
+		},
+		{    --LV16
+			score = 1200,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=280,value=2006}},
+			},
+		},
+		{    --LV17
+			score = 1275,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=295,value=2124}},
+			},
+		},
+		{    --LV18
+			score = 1350,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=310,value=2244}},
+			},
+		},
+		{    --LV19
+			score = 1425,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=325,value=2364}},
+			},
+		},
+		{    --LV20
+			score = 1500,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=340,value=2484}},
+			},
+		},
+		{    --LV21
+			score = 1575,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=360,value=2640}},
+			},
+		},
+		{    --LV22
+			score = 1650,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=380,value=2798}},
+			},
+		},
+		{    --LV23
+			score = 1725,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=400,value=2955}},
+			},
+		},
+		{    --LV24
+			score = 1800,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=420,value=3112}},
+			},
+		},
+		{    --LV25
+			score = 1875,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=440,value=3270}},
+			},
+		},
+		{    --LV26
+			score = 1950,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=460,value=3427}},
+			},
+		},
+		{    --LV27
+			score = 2025,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=480,value=3584}},
+			},
+		},
+		{    --LV28
+			score = 2100,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=500,value=3743}},
+			},
+		},
+		{    --LV29
+			score = 2175,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=520,value=3900}},
+			},
+		},
+		{    --LV30
+			score = 2250,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=540,value=4059}},
+			},
+		},
+		{    --LV31
+			score = 2325,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=570,value=4292}},
+			},
+		},
+		{    --LV32
+			score = 2400,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=600,value=4527}},
+			},
+		},
+		{    --LV33
+			score = 2475,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=630,value=4760}},
+			},
+		},
+		{    --LV34
+			score = 2550,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=660,value=4995}},
+			},
+		},
+		{    --LV35
+			score = 2625,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=690,value=5231}},
+			},
+		},
+		{    --LV36
+			score = 2700,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=720.000000000001,value=5466}},
+			},
+		},
+		{    --LV37
+			score = 2775,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=750.000000000001,value=5700}},
+			},
+		},
+		{    --LV38
+			score = 2850,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=780.000000000001,value=5936}},
+			},
+		},
+		{    --LV39
+			score = 2925,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=810.000000000001,value=6172}},
+			},
+		},
+		{    --LV40
+			score = 3000,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=840.000000000001,value=6408}},
+			},
+		},
+		{    --LV41
+			score = 3075,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=880.000000000001,value=6720}},
+			},
+		},
+		{    --LV42
+			score = 3150,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=920.000000000001,value=7034}},
+			},
+		},
+		{    --LV43
+			score = 3225,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=960.000000000001,value=7347}},
+			},
+		},
+		{    --LV44
+			score = 3300,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=1000,value=7660}},
+			},
+		},
+		{    --LV45
+			score = 3375,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=1040,value=7974}},
+			},
+		},
+		{    --LV46
+			score = 3450,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=1080,value=8288}},
+			},
+		},
+		{    --LV47
+			score = 3525,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=1120,value=8603}},
+			},
+		},
+		{    --LV48
+			score = 3600,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=1160,value=8918}},
+			},
+		},
+		{    --LV49
+			score = 3675,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=1200,value=9232}},
+			},
+		},
+		{    --LV50
+			score = 3750,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=1240,value=9547}},
+			},
+		},
+		{    --LV51
+			score = 3825,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=1290,value=9939}},
+			},
+		},
+		{    --LV52
+			score = 3900,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=1340,value=10331}},
+			},
+		},
+		{    --LV53
+			score = 3975,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=1390,value=10724}},
+			},
+		},
+		{    --LV54
+			score = 4050,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=1440,value=11116}},
+			},
+		},
+		{    --LV55
+			score = 4125,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=1490,value=11510}},
+			},
+		},
+		{    --LV56
+			score = 4200,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=1540,value=11903}},
+			},
+		},
+		{    --LV57
+			score = 4275,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=1590,value=12296}},
+			},
+		},
+		{    --LV58
+			score = 4350,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=1640,value=12691}},
+			},
+		},
+		{    --LV59
+			score = 4425,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=1690,value=13084}},
+			},
+		},
+		{    --LV60
+			score = 4500,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=1740,value=13479}},
+			},
+		},
+		{    --LV61
+			score = 4575,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=1800,value=13951}},
+			},
+		},
+		{    --LV62
+			score = 4650,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=1860,value=14423}},
+			},
+		},
+		{    --LV63
+			score = 4725,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=1920,value=14895}},
+			},
+		},
+		{    --LV64
+			score = 4800,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=1980,value=15368}},
+			},
+		},
+		{    --LV65
+			score = 4875,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=2040,value=15840}},
+			},
+		},
+		{    --LV66
+			score = 4950,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=2100,value=16314}},
+			},
+		},
+		{    --LV67
+			score = 5025,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=2160,value=16787}},
+			},
+		},
+		{    --LV68
+			score = 5100,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=2220,value=17260}},
+			},
+		},
+		{    --LV69
+			score = 5175,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=2280,value=17734}},
+			},
+		},
+		{    --LV70
+			score = 5250,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=2340,value=18208}},
+			},
+		},
+		{    --LV71
+			score = 5325,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=2415,value=18799}},
+			},
+		},
+		{    --LV72
+			score = 5400,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=2490,value=19390}},
+			},
+		},
+		{    --LV73
+			score = 5475,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=2565,value=19980}},
+			},
+		},
+		{    --LV74
+			score = 5550,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=2640,value=20572}},
+			},
+		},
+		{    --LV75
+			score = 5625,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=2715,value=21164}},
+			},
+		},
+		{    --LV76
+			score = 5700,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=2790,value=21756}},
+			},
+		},
+		{    --LV77
+			score = 5775,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=2865,value=22348}},
+			},
+		},
+		{    --LV78
+			score = 5850,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=2940,value=22940}},
+			},
+		},
+		{    --LV79
+			score = 5925,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=3015,value=23532}},
+			},
+		},
+		{    --LV80
+			score = 6000,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=3090,value=24126}},
+			},
+		},
+		{    --LV81
+			score = 6075,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=3185,value=24874}},
+			},
+		},
+		{    --LV82
+			score = 6150,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=3280,value=25623}},
+			},
+		},
+		{    --LV83
+			score = 6225,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=3375,value=26374}},
+			},
+		},
+		{    --LV84
+			score = 6300,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=3470,value=27123}},
+			},
+		},
+		{    --LV85
+			score = 6375,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=3565,value=27872}},
+			},
+		},
+		{    --LV86
+			score = 6450,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=3660,value=28623}},
+			},
+		},
+		{    --LV87
+			score = 6525,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=3755,value=29374}},
+			},
+		},
+		{    --LV88
+			score = 6600,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=3850,value=30124}},
+			},
+		},
+		{    --LV89
+			score = 6675,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=3945,value=30875}},
+			},
+		},
+		{    --LV90
+			score = 6750,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=4040,value=31626}},
+			},
+		},
+		{    --LV91
+			score = 6825,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=4151,value=32503}},
+			},
+		},
+		{    --LV92
+			score = 6900,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=4262,value=33379}},
+			},
+		},
+		{    --LV93
+			score = 6975,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=4373,value=34256}},
+			},
+		},
+		{    --LV94
+			score = 7050,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=4484,value=35134}},
+			},
+		},
+		{    --LV95
+			score = 7125,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=4595,value=36011}},
+			},
+		},
+		{    --LV96
+			score = 7200,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=4706,value=36888}},
+			},
+		},
+		{    --LV97
+			score = 7275,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=4817,value=37766}},
+			},
+		},
+		{    --LV98
+			score = 7350,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=4928,value=38644}},
+			},
+		},
+		{    --LV99
+			score = 7425,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=5039,value=39523}},
+			},
+		},
+		{    --LV100
+			score = 7500,
+			attrs = 
+			{
+				{skillid=0,target = 1, actionType= 0, timeParam=1,type=4,delay=0,value={rate=5150,value=40400}},
+			},
+		},
+	},
+	extras = 
+	{
+		{    --重数1--层数1
+			score = 2400,
+			attrs = 
+			{
+				{ attrtype = 21, attrvalue = 480},
+			},
+			actions = 
+			{
+				{ event = 7, tp = 2, target = 5, attrtype = 28, attrvalue = 0.0075, attrgroup = 0, times = 1, interval = 5, effect = 1, buffname = Lang.Item.n19633 },
+			},
+		},
+		{    --重数2--层数1
+			score = 3600,
+			attrs = 
+			{
+				{ attrtype = 21, attrvalue = 720},
+			},
+			actions = 
+			{
+				{ event = 7, tp = 2, target = 5, attrtype = 28, attrvalue = 0.015, attrgroup = 0, times = 1, interval = 5, effect = 1, buffname = Lang.Item.n19633 },
+			},
+		},
+		{    --重数2--层数2
+			score = 3600,
+			attrs = 
+			{
+				{ attrtype = 21, attrvalue = 960},
+			},
+			actions = 
+			{
+				{ event = 7, tp = 2, target = 5, attrtype = 28, attrvalue = 0.015, attrgroup = 0, times = 1, interval = 5, effect = 1, buffname = Lang.Item.n19633 },
+			},
+		},
+		{    --重数3--层数1
+			score = 4800,
+			attrs = 
+			{
+				{ attrtype = 21, attrvalue = 1200},
+			},
+			actions = 
+			{
+				{ event = 7, tp = 2, target = 5, attrtype = 28, attrvalue = 0.02625, attrgroup = 0, times = 1, interval = 5, effect = 1, buffname = Lang.Item.n19633 },
+			},
+		},
+		{    --重数3--层数2
+			score = 4800,
+			attrs = 
+			{
+				{ attrtype = 21, attrvalue = 1440},
+			},
+			actions = 
+			{
+				{ event = 7, tp = 2, target = 5, attrtype = 28, attrvalue = 0.02625, attrgroup = 0, times = 1, interval = 5, effect = 1, buffname = Lang.Item.n19633 },
+			},
+		},
+		{    --重数3--层数3
+			score = 4800,
+			attrs = 
+			{
+				{ attrtype = 21, attrvalue = 1680},
+			},
+			actions = 
+			{
+				{ event = 7, tp = 2, target = 5, attrtype = 28, attrvalue = 0.02625, attrgroup = 0, times = 1, interval = 5, effect = 1, buffname = Lang.Item.n19633 },
+			},
+		},
+		{    --重数4--层数1
+			score = 6000,
+			attrs = 
+			{
+				{ attrtype = 21, attrvalue = 1920},
+			},
+			actions = 
+			{
+				{ event = 7, tp = 2, target = 5, attrtype = 28, attrvalue = 0.0375, attrgroup = 0, times = 1, interval = 5, effect = 1, buffname = Lang.Item.n19633 },
+			},
+		},
+		{    --重数4--层数2
+			score = 6000,
+			attrs = 
+			{
+				{ attrtype = 21, attrvalue = 2160},
+			},
+			actions = 
+			{
+				{ event = 7, tp = 2, target = 5, attrtype = 28, attrvalue = 0.0375, attrgroup = 0, times = 1, interval = 5, effect = 1, buffname = Lang.Item.n19633 },
+			},
+		},
+		{    --重数4--层数3
+			score = 6000,
+			attrs = 
+			{
+				{ attrtype = 21, attrvalue = 2400},
+			},
+			actions = 
+			{
+				{ event = 7, tp = 2, target = 5, attrtype = 28, attrvalue = 0.0375, attrgroup = 0, times = 1, interval = 5, effect = 1, buffname = Lang.Item.n19633 },
+			},
+		},
+		{    --重数4--层数4
+			score = 6000,
+			attrs = 
+			{
+				{ attrtype = 21, attrvalue = 2640},
+			},
+			actions = 
+			{
+				{ event = 7, tp = 2, target = 5, attrtype = 28, attrvalue = 0.0375, attrgroup = 0, times = 1, interval = 5, effect = 1, buffname = Lang.Item.n19633 },
+			},
+		},
+		{    --重数5--层数1
+			score = 7200,
+			attrs = 
+			{
+				{ attrtype = 21, attrvalue = 2880},
+			},
+			actions = 
+			{
+				{ event = 7, tp = 2, target = 5, attrtype = 28, attrvalue = 0.0525, attrgroup = 0, times = 1, interval = 5, effect = 1, buffname = Lang.Item.n19633 },
+			},
+		},
+		{    --重数5--层数2
+			score = 7200,
+			attrs = 
+			{
+				{ attrtype = 21, attrvalue = 3120},
+			},
+			actions = 
+			{
+				{ event = 7, tp = 2, target = 5, attrtype = 28, attrvalue = 0.0525, attrgroup = 0, times = 1, interval = 5, effect = 1, buffname = Lang.Item.n19633 },
+			},
+		},
+		{    --重数5--层数3
+			score = 7200,
+			attrs = 
+			{
+				{ attrtype = 21, attrvalue = 3360},
+			},
+			actions = 
+			{
+				{ event = 7, tp = 2, target = 5, attrtype = 28, attrvalue = 0.0525, attrgroup = 0, times = 1, interval = 5, effect = 1, buffname = Lang.Item.n19633 },
+			},
+		},
+		{    --重数5--层数4
+			score = 7200,
+			attrs = 
+			{
+				{ attrtype = 21, attrvalue = 3600},
+			},
+			actions = 
+			{
+				{ event = 7, tp = 2, target = 5, attrtype = 28, attrvalue = 0.0525, attrgroup = 0, times = 1, interval = 5, effect = 1, buffname = Lang.Item.n19633 },
+			},
+		},
+		{    --重数5--层数5
+			score = 7200,
+			attrs = 
+			{
+				{ attrtype = 21, attrvalue = 3840},
+			},
+			actions = 
+			{
+				{ event = 7, tp = 2, target = 5, attrtype = 28, attrvalue = 0.0525, attrgroup = 0, times = 1, interval = 5, effect = 1, buffname = Lang.Item.n19633 },
+			},
+		},
+		{    --重数6--层数1
+			score = 8400,
+			attrs = 
+			{
+				{ attrtype = 21, attrvalue = 4080},
+			},
+			actions = 
+			{
+				{ event = 7, tp = 2, target = 5, attrtype = 28, attrvalue = 0.075, attrgroup = 0, times = 1, interval = 5, effect = 1, buffname = Lang.Item.n19633 },
+			},
+		},
+		{    --重数6--层数2
+			score = 8400,
+			attrs = 
+			{
+				{ attrtype = 21, attrvalue = 4320},
+			},
+			actions = 
+			{
+				{ event = 7, tp = 2, target = 5, attrtype = 28, attrvalue = 0.075, attrgroup = 0, times = 1, interval = 5, effect = 1, buffname = Lang.Item.n19633 },
+			},
+		},
+		{    --重数6--层数3
+			score = 8400,
+			attrs = 
+			{
+				{ attrtype = 21, attrvalue = 4560},
+			},
+			actions = 
+			{
+				{ event = 7, tp = 2, target = 5, attrtype = 28, attrvalue = 0.075, attrgroup = 0, times = 1, interval = 5, effect = 1, buffname = Lang.Item.n19633 },
+			},
+		},
+		{    --重数6--层数4
+			score = 8400,
+			attrs = 
+			{
+				{ attrtype = 21, attrvalue = 4800},
+			},
+			actions = 
+			{
+				{ event = 7, tp = 2, target = 5, attrtype = 28, attrvalue = 0.075, attrgroup = 0, times = 1, interval = 5, effect = 1, buffname = Lang.Item.n19633 },
+			},
+		},
+		{    --重数6--层数5
+			score = 8400,
+			attrs = 
+			{
+				{ attrtype = 21, attrvalue = 5040},
+			},
+			actions = 
+			{
+				{ event = 7, tp = 2, target = 5, attrtype = 28, attrvalue = 0.075, attrgroup = 0, times = 1, interval = 5, effect = 1, buffname = Lang.Item.n19633 },
+			},
+		},
+		{    --重数6--层数6
+			score = 8400,
+			attrs = 
+			{
+				{ attrtype = 21, attrvalue = 5280},
+			},
+			actions = 
+			{
+				{ event = 7, tp = 2, target = 5, attrtype = 28, attrvalue = 0.075, attrgroup = 0, times = 1, interval = 5, effect = 1, buffname = Lang.Item.n19633 },
+			},
+		},
+		{    --重数7--层数1
+			score = 9600,
+			attrs = 
+			{
+				{ attrtype = 21, attrvalue = 5520},
+			},
+			actions = 
+			{
+				{ event = 7, tp = 2, target = 5, attrtype = 28, attrvalue = 0.0975, attrgroup = 0, times = 1, interval = 5, effect = 1, buffname = Lang.Item.n19633 },
+			},
+		},
+		{    --重数7--层数2
+			score = 9600,
+			attrs = 
+			{
+				{ attrtype = 21, attrvalue = 5760},
+			},
+			actions = 
+			{
+				{ event = 7, tp = 2, target = 5, attrtype = 28, attrvalue = 0.0975, attrgroup = 0, times = 1, interval = 5, effect = 1, buffname = Lang.Item.n19633 },
+			},
+		},
+		{    --重数7--层数3
+			score = 9600,
+			attrs = 
+			{
+				{ attrtype = 21, attrvalue = 6000},
+			},
+			actions = 
+			{
+				{ event = 7, tp = 2, target = 5, attrtype = 28, attrvalue = 0.0975, attrgroup = 0, times = 1, interval = 5, effect = 1, buffname = Lang.Item.n19633 },
+			},
+		},
+		{    --重数7--层数4
+			score = 9600,
+			attrs = 
+			{
+				{ attrtype = 21, attrvalue = 6240},
+			},
+			actions = 
+			{
+				{ event = 7, tp = 2, target = 5, attrtype = 28, attrvalue = 0.0975, attrgroup = 0, times = 1, interval = 5, effect = 1, buffname = Lang.Item.n19633 },
+			},
+		},
+		{    --重数7--层数5
+			score = 9600,
+			attrs = 
+			{
+				{ attrtype = 21, attrvalue = 6480},
+			},
+			actions = 
+			{
+				{ event = 7, tp = 2, target = 5, attrtype = 28, attrvalue = 0.0975, attrgroup = 0, times = 1, interval = 5, effect = 1, buffname = Lang.Item.n19633 },
+			},
+		},
+		{    --重数7--层数6
+			score = 9600,
+			attrs = 
+			{
+				{ attrtype = 21, attrvalue = 6720},
+			},
+			actions = 
+			{
+				{ event = 7, tp = 2, target = 5, attrtype = 28, attrvalue = 0.0975, attrgroup = 0, times = 1, interval = 5, effect = 1, buffname = Lang.Item.n19633 },
+			},
+		},
+		{    --重数7--层数7
+			score = 9600,
+			attrs = 
+			{
+				{ attrtype = 21, attrvalue = 6960},
+			},
+			actions = 
+			{
+				{ event = 7, tp = 2, target = 5, attrtype = 28, attrvalue = 0.0975, attrgroup = 0, times = 1, interval = 5, effect = 1, buffname = Lang.Item.n19633 },
+			},
+		},
+		{    --重数8--层数1
+			score = 10800,
+			attrs = 
+			{
+				{ attrtype = 21, attrvalue = 7200},
+			},
+			actions = 
+			{
+				{ event = 7, tp = 2, target = 5, attrtype = 28, attrvalue = 0.12, attrgroup = 0, times = 1, interval = 5, effect = 1, buffname = Lang.Item.n19633 },
+			},
+		},
+		{    --重数8--层数2
+			score = 10800,
+			attrs = 
+			{
+				{ attrtype = 21, attrvalue = 7440},
+			},
+			actions = 
+			{
+				{ event = 7, tp = 2, target = 5, attrtype = 28, attrvalue = 0.12, attrgroup = 0, times = 1, interval = 5, effect = 1, buffname = Lang.Item.n19633 },
+			},
+		},
+		{    --重数8--层数3
+			score = 10800,
+			attrs = 
+			{
+				{ attrtype = 21, attrvalue = 7680},
+			},
+			actions = 
+			{
+				{ event = 7, tp = 2, target = 5, attrtype = 28, attrvalue = 0.12, attrgroup = 0, times = 1, interval = 5, effect = 1, buffname = Lang.Item.n19633 },
+			},
+		},
+		{    --重数8--层数4
+			score = 10800,
+			attrs = 
+			{
+				{ attrtype = 21, attrvalue = 7920},
+			},
+			actions = 
+			{
+				{ event = 7, tp = 2, target = 5, attrtype = 28, attrvalue = 0.12, attrgroup = 0, times = 1, interval = 5, effect = 1, buffname = Lang.Item.n19633 },
+			},
+		},
+		{    --重数8--层数5
+			score = 10800,
+			attrs = 
+			{
+				{ attrtype = 21, attrvalue = 8160},
+			},
+			actions = 
+			{
+				{ event = 7, tp = 2, target = 5, attrtype = 28, attrvalue = 0.12, attrgroup = 0, times = 1, interval = 5, effect = 1, buffname = Lang.Item.n19633 },
+			},
+		},
+		{    --重数8--层数6
+			score = 10800,
+			attrs = 
+			{
+				{ attrtype = 21, attrvalue = 8400},
+			},
+			actions = 
+			{
+				{ event = 7, tp = 2, target = 5, attrtype = 28, attrvalue = 0.12, attrgroup = 0, times = 1, interval = 5, effect = 1, buffname = Lang.Item.n19633 },
+			},
+		},
+		{    --重数8--层数7
+			score = 10800,
+			attrs = 
+			{
+				{ attrtype = 21, attrvalue = 8640},
+			},
+			actions = 
+			{
+				{ event = 7, tp = 2, target = 5, attrtype = 28, attrvalue = 0.12, attrgroup = 0, times = 1, interval = 5, effect = 1, buffname = Lang.Item.n19633 },
+			},
+		},
+		{    --重数8--层数8
+			score = 10800,
+			attrs = 
+			{
+				{ attrtype = 21, attrvalue = 8880},
+			},
+			actions = 
+			{
+				{ event = 7, tp = 2, target = 5, attrtype = 28, attrvalue = 0.12, attrgroup = 0, times = 1, interval = 5, effect = 1, buffname = Lang.Item.n19633 },
+			},
+		},
+		{    --重数9--层数1
+			score = 12000,
+			attrs = 
+			{
+				{ attrtype = 21, attrvalue = 9120},
+			},
+			actions = 
+			{
+				{ event = 7, tp = 2, target = 5, attrtype = 28, attrvalue = 0.15, attrgroup = 0, times = 1, interval = 5, effect = 1, buffname = Lang.Item.n19633 },
+			},
+		},
+		{    --重数9--层数2
+			score = 12000,
+			attrs = 
+			{
+				{ attrtype = 21, attrvalue = 9360},
+			},
+			actions = 
+			{
+				{ event = 7, tp = 2, target = 5, attrtype = 28, attrvalue = 0.15, attrgroup = 0, times = 1, interval = 5, effect = 1, buffname = Lang.Item.n19633 },
+			},
+		},
+		{    --重数9--层数3
+			score = 12000,
+			attrs = 
+			{
+				{ attrtype = 21, attrvalue = 9600},
+			},
+			actions = 
+			{
+				{ event = 7, tp = 2, target = 5, attrtype = 28, attrvalue = 0.15, attrgroup = 0, times = 1, interval = 5, effect = 1, buffname = Lang.Item.n19633 },
+			},
+		},
+		{    --重数9--层数4
+			score = 12000,
+			attrs = 
+			{
+				{ attrtype = 21, attrvalue = 9840},
+			},
+			actions = 
+			{
+				{ event = 7, tp = 2, target = 5, attrtype = 28, attrvalue = 0.15, attrgroup = 0, times = 1, interval = 5, effect = 1, buffname = Lang.Item.n19633 },
+			},
+		},
+		{    --重数9--层数5
+			score = 12000,
+			attrs = 
+			{
+				{ attrtype = 21, attrvalue = 10080},
+			},
+			actions = 
+			{
+				{ event = 7, tp = 2, target = 5, attrtype = 28, attrvalue = 0.15, attrgroup = 0, times = 1, interval = 5, effect = 1, buffname = Lang.Item.n19633 },
+			},
+		},
+		{    --重数9--层数6
+			score = 12000,
+			attrs = 
+			{
+				{ attrtype = 21, attrvalue = 10320},
+			},
+			actions = 
+			{
+				{ event = 7, tp = 2, target = 5, attrtype = 28, attrvalue = 0.15, attrgroup = 0, times = 1, interval = 5, effect = 1, buffname = Lang.Item.n19633 },
+			},
+		},
+		{    --重数9--层数7
+			score = 12000,
+			attrs = 
+			{
+				{ attrtype = 21, attrvalue = 10560},
+			},
+			actions = 
+			{
+				{ event = 7, tp = 2, target = 5, attrtype = 28, attrvalue = 0.15, attrgroup = 0, times = 1, interval = 5, effect = 1, buffname = Lang.Item.n19633 },
+			},
+		},
+		{    --重数9--层数8
+			score = 12000,
+			attrs = 
+			{
+				{ attrtype = 21, attrvalue = 10800},
+			},
+			actions = 
+			{
+				{ event = 7, tp = 2, target = 5, attrtype = 28, attrvalue = 0.15, attrgroup = 0, times = 1, interval = 5, effect = 1, buffname = Lang.Item.n19633 },
+			},
+		},
+		{    --重数9--层数9
+			score = 12000,
+			attrs = 
+			{
+				{ attrtype = 21, attrvalue = 11040},
+			},
+			actions = 
+			{
+				{ event = 7, tp = 2, target = 5, attrtype = 28, attrvalue = 0.15, attrgroup = 0, times = 1, interval = 5, effect = 1, buffname = Lang.Item.n19633 },
+			},
+		},
+	},
+},
+

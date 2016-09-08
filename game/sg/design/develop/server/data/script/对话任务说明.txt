@@ -1,0 +1,64 @@
+
+--[[此NPC中标准任务过程表]]
+PassMs =
+{
+  --键入ma+分号，根据模板生成过程任务脚本模板
+--#include "data\config\quest\quests\8228.txt" once
+	--注意：--#这一行必须要居左置顶
+}
+
+--对话任务寻找的npc如果是副本入口的 
+function main(sysarg)
+	local str,f = commonQuestNpcMain[或者 commonQuestNpcWithStarMain]( sysarg,1 )
+  if f then
+    return str
+  end
+  if LActor.hasQuest(sysarg,8230) then
+  str = str.."\\"..Lang.Talk.t10155.."/@talkWithNPC,8230,20018"
+  end
+  return str
+end
+
+
+--对话任务寻找的NPC如果是无功能的
+function main(sysarg)
+	local talks = ""
+
+	if LActor.hasQuest(sysarg,8212) then
+	talks = talks.."\\"..Lang.Talk.t10145.."/@talkWithNPC,8212,20008"
+	end
+	local func = nil
+	if talks ~= "" then
+		func = 1
+	end
+
+	if talks ~= "" then
+		talks = talks..talks
+	end
+
+	return talks
+end
+
+--对话任务寻找的NPC如果是发其他任务的
+function main(sysarg)
+	local talks = ""
+
+	if LActor.hasQuest(sysarg,8212) then
+	talks = talks.."\\"..Lang.Talk.t10145.."/@talkWithNPC,8212,20008"
+	end
+	local func = nil
+	if talks ~= "" then
+		func = 1
+	end
+
+	local str,f = commonQuestNpcMain( sysarg, func )
+	if f then
+		return talks
+	end
+
+	if talks ~= "" then
+		talks = talks..talks
+	end
+
+	return talks
+end

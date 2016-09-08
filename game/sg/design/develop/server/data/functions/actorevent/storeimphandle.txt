@@ -1,0 +1,543 @@
+﻿--lua script
+--处理商城相关的操作
+
+--#include "data\config\store\groupstore.txt" once --团购的配置
+--#include "data\config\store\RefreshStore.txt" once --商城限购配置
+StoreImpFuncList = {}
+StoreImpFuncList.broadcastFlag = nil
+StoreImpFuncList.ifgetNumFromTxApi = true
+
+EventCallDispatcher.HandlerStoreImp = function (sysarg, args)
+	--print("EventCallDispatcher.HandlerStoreImp")
+	if args[1] == nil then return end   --
+	local func = StoreImpFuncList[args[1]]
+	if func ~= nil then
+		func(sysarg, args[2]) 
+	end
+end
+
+--定时器
+StoreImpFuncList.OnTime = function (sysarg)
+	
+	local actors = LuaHelp.getAllActorList()
+    if actors ~= nil then
+       for i=1,#actors do
+          local actor = actors[i]
+          --StoreImpFuncList.cheekRefresh(actor,2)
+          local refresh_time,free_refresh,yb_refresh,itemid1,itemid2 = LActor.GetMallLimitInfo(actor)
+		  local cur_time = System.getCurrMiniTime()
+		  if cur_time >= refresh_time then
+			local rtime = RefreshStore.refreshTime
+			local pass_time = math.mod(cur_time - refresh_time,rtime)
+			refresh_time = cur_time + rtime - pass_time
+			local item = StoreImpFuncList.refreshItem()
+			if item then
+				itemid1 = item[1]
+				itemid2 = item[2]
+				LActor.SetMallLimitInfo(actor,refresh_time,free_refresh,yb_refresh,itemid1,itemid2,1)
+			end
+		 end
+       end
+    end   
+end
+
+--一分钟定时器
+table.insert(TimeFnTable, StoreImpFuncList.OnTime)
+
+--刷新物品
+StoreImpFuncList.refreshItem = function (  )
+	local sum = 0
+	local itemid = {}
+	local rateBase = RefreshStore.rateBase
+	local r = System.getRandomNumber(rateBase)
+	local index = 0
+
+	--第一件物品
+
+	for i=1,#RefreshStore.rate do
+		sum = sum + RefreshStore.rate[i].rate
+		if r < sum then
+			itemid[1] = RefreshStore.rate[i].id
+			rateBase = rateBase - RefreshStore.rate[i].rate
+			index = i
+			break
+		end
+	end
+	--第二件物品
+	if index ~= 0 then
+		sum = 0
+		r = System.getRandomNumber(rateBase)
+		for i=1,#RefreshStore.rate do
+			if i ~= index then
+				sum = sum + RefreshStore.rate[i].rate
+			end
+			if r < sum then
+				itemid[2] = RefreshStore.rate[i].id
+				return itemid
+			end
+		end
+	end
+
+	return nil
+end
+
+--新的一天
+StoreImpFuncList.newDayforStore = function (sysarg)
+	local var = LActor.getStaticVar(sysarg)	
+	if var == nil then return end
+	if var.groupstore == nil then return end
+	var.groupstore.limit = nil
+
+	--重置特价商品刷新信息
+	local refresh_time,free_refresh,yb_refresh,itemid1,itemid2 = LActor.GetMallLimitInfo(sysarg)
+	free_refresh = RefreshStore.refreshCount
+	yb_refresh = 0
+	LActor.SetMallLimitInfo(sysarg,refresh_time,free_refresh,yb_refresh,itemid1,itemid2,0)
+end
+
+--登陆
+StoreImpFuncList.StoreLogin = function (sysarg, arg)
+
+	--检查限购更新
+	local refresh_time,free_refresh,yb_refresh,itemid1,itemid2 = LActor.GetMallLimitInfo(sysarg)
+	local cur_time = System.getCurrMiniTime()
+	local refresh_type = 0
+	if cur_time >= refresh_time then
+		local rtime = RefreshStore.refreshTime
+		local pass_time = math.mod(cur_time - refresh_time,rtime)
+		refresh_time = cur_time + rtime - pass_time
+		local item = StoreImpFuncList.refreshItem()
+		if item then
+			itemid1 = item[1]
+			itemid2 = item[2]
+			refresh_type = 1
+		end
+	end
+	LActor.SetMallLimitInfo(sysarg,refresh_time,free_refresh,yb_refresh,itemid1,itemid2,refresh_type)
+
+
+	-- local var = LActor.getStaticVar(sysarg)	
+	-- if var == nil then return end
+	-- local sys_var = System.getStaticVar()
+	-- if sys_var.groupstore == nil or sys_var.groupstore.backYBlist == nil then return end
+	-- local actorid = LActor.getActorId(sysarg)
+	-- if sys_var.groupstore.backYBlist[actorid] ~= nil then
+	-- 	if var.groupstore == nil then 
+	-- 		var.groupstore = {}
+	-- 		--var.groupstore.backYB = 0
+	-- 		var.groupstore.totalBackYB = 0
+	-- 	end
+	-- 	var.groupstore.totalBackYB = var.groupstore.totalBackYB + sys_var.groupstore.backYBlist[actorid]
+	-- 	sys_var.groupstore.backYBlist[actorid] = nil
+	-- end
+
+end
+
+--获取特价商品
+-- StoreImpFuncList[7] = function (sysarg, dp)
+--    -- local refresh_time,free_refresh,yb_refresh,itemid1,itemid2 = LActor.GetMallLimitInfo(sysarg)
+--     --LActor.SetMallLimitInfo(sysarg,refresh_time,free_refresh,yb_refresh,itemid1,itemid2,0)
+-- end
+
+--刷新限购商品
+StoreImpFuncList[11] = function ( sysarg )
+	local refresh_time,free_refresh,yb_refresh,itemid1,itemid2 = LActor.GetMallLimitInfo(sysarg)
+	
+	--免费刷新
+	if free_refresh < RefreshStore.refreshCount then
+		free_refresh = free_refresh + 1
+		local item = StoreImpFuncList.refreshItem()
+		if item then
+			LActor.SetMallLimitInfo(sysarg,refresh_time,free_refresh,yb_refresh,item[1],item[2],1)
+		end
+		return
+	end
+
+	local needYuanbao = (yb_refresh+1)*RefreshStore.refreshCost
+		--判断天珠
+	if needYuanbao > 0 then
+		if LActor.getMoneyCount(sysarg, mtYuanbao) < needYuanbao then
+			LActor.sendTipmsg(sysarg, Lang.Mount.t21, ttMessage)	-- 天珠不足
+			return
+		end
+	end
+
+	--处理消耗
+	if needYuanbao > 0 then
+		LActor.changeMoney(sysarg, mtYuanbao, -needYuanbao, 1, true, "store", "refresh")
+	end
+	yb_refresh = yb_refresh + 1
+	local item = StoreImpFuncList.refreshItem()
+	if item then
+		LActor.SetMallLimitInfo(sysarg,refresh_time,free_refresh,yb_refresh,item[1],item[2],1)
+	end
+end
+
+
+-- StoreImpFuncList[8] = function (sysarg, dp)
+-- 	local type = DataPack.readInt(dp)
+-- 	--local type = 2
+-- 	if type == nil then return end
+-- 	StoreImpFuncList.sendGroupStore(sysarg, type)
+-- end
+
+-- --拉取团购界面
+-- StoreImpFuncList.sendGroupStore = function(sysarg, type)
+-- 	local var = LActor.getStaticVar(sysarg)	
+-- 	local sys_var = System.getStaticVar()
+-- 	if var == nil or sys_var == nil then return end
+
+-- 	--如果活动还没开始
+-- 	local state = ONLINEREWARD.GetActivityState(groupStore.activityId)
+-- 	if state == 0 then return end
+
+-- 	--返还信息
+-- 	if type == 1 then
+-- 		--local backYB = 0
+-- 		local totalBackYB = 0
+-- 		if var.groupstore ~= nil then
+-- 			--backYB = var.groupstore.backYB
+-- 			totalBackYB = var.groupstore.totalBackYB
+-- 		end
+-- 		local npack = DataPack.allocPacket(sysarg, 12, 8)
+-- 		--DataPack.writeInt(npack, backYB)
+-- 		DataPack.writeInt(npack, totalBackYB)
+-- 		--print("StoreImpFuncList.sendGroupStore totalBackYB:"..totalBackYB)
+-- 		DataPack.flush(npack)
+-- 	--团购信息
+-- 	elseif type == 2 then
+-- 		local npack = DataPack.allocPacket(sysarg, 12, 9)
+-- 		DataPack.writeInt(npack, groupStore.shownum)
+-- 		for i=1,groupStore.shownum do
+-- 			if sys_var.groupstore ~= nil then
+-- 				local id = sys_var.groupstore[i].id
+-- 				DataPack.writeInt(npack, id)
+-- 				DataPack.writeInt(npack, sys_var.groupstore[i].totalnum)
+-- 				local canbuynum = groupStore.itemList[i][id].singleBuyLimit
+-- 				--print("StoreImpFuncList.sendGroupStore canbuynum:"..canbuynum)
+-- 				if var.groupstore ~= nil and var.groupstore.limit ~= nil and var.groupstore.limit[i] ~= nil then
+-- 					canbuynum = canbuynum - var.groupstore.limit[i]
+-- 					--print("StoreImpFuncList.sendGroupStore i:"..i..",limit:"..var.groupstore.limit[i])
+-- 				end
+-- 				if canbuynum < 0 then canbuynum = 0 end
+-- 				DataPack.writeInt(npack, canbuynum)
+-- 				--print("StoreImpFuncList.sendGroupStore id:"..id..",num:"..sys_var.groupstore[i].totalnum..",canbuynum:"..canbuynum)
+-- 			else
+-- 				DataPack.writeInt(npack, 0)
+-- 				DataPack.writeInt(npack, 0)
+-- 				DataPack.writeInt(npack, 0)
+-- 			end
+-- 		end
+-- 		DataPack.flush(npack)
+-- 	else
+-- 		return
+-- 	end
+-- end
+
+-- --购买物品
+-- StoreImpFuncList[9] = function (sysarg, dp)
+-- 	--如果活动还没开始
+-- 	local state = ONLINEREWARD.GetActivityState(groupStore.activityId)
+-- 	if state == 0 then return end
+
+-- 	local sys_var = System.getStaticVar()
+-- 	if sys_var.groupstore ~= nil and sys_var.groupstore.resetflag ~= nil and sys_var.groupstore.resetflag == 1 then 
+-- 		LActor.sendTipmsg(sysarg, Lang.ScriptTips.tg002, ttMessage)
+-- 		return
+-- 	end
+	
+-- 	local itemIndex = DataPack.readInt(dp)
+-- 	if itemIndex == nil or itemIndex < 1 or itemIndex > groupStore.shownum then return end
+-- 	local var = LActor.getStaticVar(sysarg)	
+-- 	if var == nil then return end
+-- 	local actorid = LActor.getActorId(sysarg)
+
+-- 	if sys_var.groupstore == nil then return end
+-- 	if var.groupstore == nil then 
+-- 		var.groupstore = {}
+-- 		--var.groupstore.backYB = 0
+-- 		var.groupstore.totalBackYB = 0
+-- 	end
+-- 	if var.groupstore.limit == nil then	
+-- 		var.groupstore.limit = {}
+-- 		for i=1,groupStore.shownum do
+-- 			var.groupstore.limit[i] = 0
+-- 		end
+-- 	end
+
+-- 	--查找索引
+-- 	local id = sys_var.groupstore[itemIndex].id
+
+-- 	--print("StoreImpFuncList.sendGroupStore itemIndex:"..itemIndex)
+
+
+-- 	--超出限购？
+-- 	if var.groupstore.limit[itemIndex] >= groupStore.itemList[itemIndex][id].singleBuyLimit then
+-- 		LActor.sendTipmsg(sysarg, Lang.ScriptTips.tg001, ttMessage)
+-- 		return
+-- 	end
+
+-- 	--扣天珠
+-- 	local buyitemid = groupStore.itemList[itemIndex][id].item
+-- 	local amount = 1 
+-- 	local price = groupStore.itemList[itemIndex][id].price
+-- 	if ( LActor.canAddItem( sysarg, buyitemid, amount ) == false ) then
+-- 	  	LActor.sendTipmsg( sysarg,Lang.ScriptTips.n00006,ttTipmsgWindow )
+-- 		return
+-- 	end
+-- 	local itemname = Item.getItemName(buyitemid)
+-- 	local itemIdStr = string.format("%d", buyitemid)
+--    	if (LActor.changeMoney( sysarg, mtYuanbao, -price, 23, true, "group_store", "buy_item", "", itemIdStr ) == false) then
+--     	LActor.sendTipmsg( sysarg, Lang.ScriptTips.n00007, ttMessage )
+-- 		return
+--   	end
+
+--   	--给道具
+--    	LActor.addItem(sysarg, buyitemid, 0, 0, amount , 1, "group_store", 23)
+
+--    	-- 播放特效
+--    	local effects = {}
+-- 	local effect = {}
+-- 	effect.type = 1  -- 1为物品,暂时只支持发物品所以写死
+--     effect.id = buyitemid
+--     effect.count = amount
+--     effects[#effects+1] = effect
+-- 		if #effects > 0 then
+-- 		MiscFunc.PlayItemEffect(sysarg, 11, effects)
+-- 	end
+
+-- 	--购买后的处理
+-- 	var.groupstore.limit[itemIndex] = var.groupstore.limit[itemIndex] + 1
+-- 	sys_var.groupstore[itemIndex].num = sys_var.groupstore[itemIndex].num + 1
+-- 	sys_var.groupstore[itemIndex].totalnum = sys_var.groupstore[itemIndex].totalnum + 1
+
+-- 	for k=1,#groupStore.broadcast.num do
+-- 		if sys_var.groupstore[itemIndex].totalnum < groupStore.broadcast.num[k] then
+-- 			break
+-- 		elseif StoreImpFuncList.broadcastFlag[itemIndex] < groupStore.broadcast.num[k] then
+-- 			--广播
+-- 			StoreImpFuncList.broadcastFlag[itemIndex] = sys_var.groupstore[itemIndex].totalnum
+-- 			local itemname = Item.getColorName(buyitemid)
+-- 			local broadmsg = string.format(groupStore.broadcast.msg, itemname, groupStore.broadcast.num[k])
+--    			System.broadcastTipmsg(broadmsg, ttHearsay)
+-- 		end
+-- 	end
+
+-- 	sys_var.groupstore[itemIndex].rolelist[sys_var.groupstore[itemIndex].num] = actorid
+
+-- 	--print("StoreImpFuncList.buy id:"..buyitemid..",num:"..sys_var.groupstore[itemIndex].num)
+
+-- 	StoreImpFuncList.sendGroupStore(sysarg, 2)
+
+--    	StoreImpFuncList.updateNumToTxApi(buyitemid, sys_var.groupstore[itemIndex].num)
+-- end
+
+
+--[[领取返还天珠
+StoreImpFuncList[10] = function (sysarg, dp)
+	print("StoreImpFuncList getbackYB")
+	local var = LActor.getStaticVar(sysarg)	
+	if var == nil then return end
+	if var.groupstore == nil then return end
+	if var.groupstore.backYB == nil or  var.groupstore.backYB == 0 then return end
+	LActor.changeMoney( sysarg, mtYuanbao, var.groupstore.backYB, 23, true, "group_store", "back_yb")
+	print("StoreImpFuncList getbackYB:"..var.groupstore.backYB)
+	var.groupstore.totalBackYB = var.groupstore.totalBackYB + var.groupstore.backYB
+	var.groupstore.backYB = 0
+	StoreImpFuncList.sendGroupStore(sysarg, 1)
+end]]
+
+
+
+-- --更新团购数量
+-- StoreImpFuncList.updateNumToTxApi = function (itemid, num)
+-- 	--print("StoreImpFuncList.updateNumToTxApi itemid:"..itemid..",num:"..num)
+-- 	local sys_var = System.getStaticVar()
+-- 	if sys_var.groupstore == nil or sys_var.groupstore == nil or sys_var.groupstore.cacltime == nil then return end
+-- 	local  pfstr = "/ms/itemsum.jsp"
+-- 	LActor.txSendScriptUrl("", pfstr, "&type=1&serverId="..System.getServerId().."&itemId="..itemid.."&count="..num.."&logdate="..sys_var.groupstore.cacltime, 4, false)
+-- 	StoreImpFuncList.getNumFromTxApi()
+-- 	StoreImpFuncList.ifgetNumFromTxApi = false
+-- end
+
+-- --拉取团购数量
+-- StoreImpFuncList.getNumFromTxApi = function ()
+-- 	--print("StoreImpFuncList.getNumFromTxApi")
+-- 	local sys_var = System.getStaticVar()
+-- 	if sys_var.groupstore == nil or sys_var.groupstore == nil or sys_var.groupstore.cacltime == nil then return end
+-- 	local  pfstr = "/ms/itemsum.jsp"
+-- 	LActor.txSendScriptUrl("", pfstr, "&type=2&serverId="..System.getServerId().."&logdate="..sys_var.groupstore.cacltime, 4, true)
+-- end
+
+-- -- 拉取团购数量
+-- StoreImpFuncList.OnTxApiCallback =  function (sysarg, arg)
+-- 	--print("StoreImpFuncList.OnTxApiCallback")
+-- 	local openid = arg[1]
+-- 	local ret = arg[2]	-- 0未使用 1已使用 2不存在
+-- 	local tt = arg[3]
+-- 	if tt == nil or tt ~= 4 then return end
+-- 	--print("StoreImpFuncList.OnTxApiCallback ret:"..ret)
+-- 	local itemtable = {}
+-- 	local startpos = 1
+-- 	for i=1,100 do
+-- 		local pos, len = string.find(ret, "+", startpos)
+-- 		if pos ~= nil then
+-- 			itemtable[i] = {}
+-- 			itemtable[i].id = tonumber(string.sub(ret, startpos, len - 1))
+-- 			local findpos
+-- 			findpos, len = string.find(ret, ";", pos + 1)
+-- 			if findpos ~= nil then
+-- 				itemtable[i].num = tonumber(string.sub(ret, pos + 1, len - 1))
+-- 				startpos = findpos + 1
+-- 			else
+-- 				itemtable[i].num = 0
+-- 				break
+-- 			end
+-- 		else
+-- 			break
+-- 		end
+-- 	end
+-- 	local sys_var = System.getStaticVar()
+-- 	--给itemtable赋值
+-- 	for i,v in ipairs(itemtable) do
+-- 		--print("StoreImpFuncList.OnTxApiCallback itemindex:"..i..",id:"..v.id..",num:"..v.num)
+-- 		for j=1,groupStore.shownum do
+-- 			local id = groupStore.itemList[j][sys_var.groupstore[j].id].item
+-- 			--print("StoreImpFuncList.OnTxApiCallback checkid:"..id)
+-- 			if id == v.id then
+-- 				--print("StoreImpFuncList.OnTxApiCallback getid:"..id)
+-- 				sys_var.groupstore[j].totalnum = v.num + sys_var.groupstore[j].num
+-- 				--print("StoreImpFuncList.OnTxApiCallback totalnum:"..sys_var.groupstore[j].totalnum)
+-- 				--是否广播
+-- 				for k=1,#groupStore.broadcast.num do
+-- 					if sys_var.groupstore[j].totalnum < groupStore.broadcast.num[k] then
+-- 						break
+-- 					elseif StoreImpFuncList.broadcastFlag[j] < groupStore.broadcast.num[k] then
+-- 						--广播
+-- 						StoreImpFuncList.broadcastFlag[j] = sys_var.groupstore[j].totalnum
+-- 						local itemname = Item.getColorName(id)
+-- 						local broadmsg = string.format(groupStore.broadcast.msg, itemname, groupStore.broadcast.num[k])
+--                			System.broadcastTipmsg(broadmsg, ttHearsay)
+-- 					end
+-- 				end
+-- 				break
+-- 			end
+-- 		end
+-- 	end
+-- 	local sys_var = System.getStaticVar()
+-- 	if sys_var.groupstore ~= nil and sys_var.groupstore.resetflag ~= nil and sys_var.groupstore.resetflag == 1 then 
+-- 		StoreImpFuncList.caclGroupstoreReward()
+-- 	end
+-- end
+
+--奖励结算
+-- StoreImpFuncList.caclGroupstoreReward = function ()
+-- 	--print("StoreImpFuncList.caclGroupstoreReward")
+-- 	local sys_var = System.getStaticVar()
+-- 	if sys_var == nil then return end
+-- 	if sys_var.groupstore == nil or sys_var.groupstore.resetflag == nil or sys_var.groupstore.resetflag ~= 1 then return end
+-- 	--结算日期
+-- 	sys_var.groupstore.cacltime = System.getToday()
+-- 	--计算返还天珠
+-- 	for i=1,groupStore.shownum do
+-- 		local id = sys_var.groupstore[i].id
+-- 		local iteminfo = groupStore.itemList[i][id].groupprice
+-- 		local giveBackYB = 0
+-- 		--print("randidlist id:"..id..",num:"..sys_var.groupstore[i].totalnum)
+-- 		for m=1,#iteminfo do
+-- 			if iteminfo[m][1] > sys_var.groupstore[i].totalnum then
+-- 				break
+-- 			end
+-- 			giveBackYB = iteminfo[m][2]
+-- 		end
+-- 		if giveBackYB > 0 then
+-- 			local itemname = Item.getColorName(groupStore.itemList[i][id].item)
+-- 			--print("randidlist giveBackYB:"..giveBackYB)
+-- 			for j=1,sys_var.groupstore[i].num do
+-- 				local actorid = sys_var.groupstore[i].rolelist[j]
+-- 				local actorPtr = LActor.getActorById(actorid)
+-- 				if actorPtr then
+-- 					--print("randidlist actorPtr")
+-- 					--角色在线，返还天珠直接加在角色身上
+-- 					local actorvar = LActor.getStaticVar(actorPtr)
+-- 					if actorvar ~= nil then
+-- 						if actorvar.groupstore == nil then
+-- 							actorvar.groupstore = {}
+-- 							--actorvar.groupstore.backYB = 0
+-- 							actorvar.groupstore.totalBackYB = 0
+-- 						end
+-- 						actorvar.groupstore.totalBackYB = actorvar.groupstore.totalBackYB + giveBackYB
+-- 						--print("randidlist giveBackYB:"..giveBackYB..",totalBackYB:"..actorvar.groupstore.totalBackYB)
+-- 					end
+-- 				else
+-- 					--print("randidlist actorid:"..actorid)
+-- 					--角色不在线，先记录到系统上
+-- 					if sys_var.groupstore.backYBlist == nil then sys_var.groupstore.backYBlist = {} end
+-- 					if sys_var.groupstore.backYBlist[actorid] == nil then sys_var.groupstore.backYBlist[actorid] = 0 end
+-- 					sys_var.groupstore.backYBlist[actorid] = sys_var.groupstore.backYBlist[actorid] + giveBackYB 
+-- 				end
+-- 				--无论在不在线，把天珠通过邮件发给玩家
+-- 				local content = string.format(Lang.ActivityMail.groupstoremail, itemname, sys_var.groupstore[i].totalnum, giveBackYB)
+-- 				System.sendGmMailOffLine(actorid, content, 2, mtYuanbao, giveBackYB, 0)
+-- 			end
+-- 		end
+
+-- 		--重置
+-- 		sys_var.groupstore[i].num = 0
+-- 		sys_var.groupstore[i].totalnum = 0
+-- 		sys_var.groupstore[i].rolelist = nil
+-- 		sys_var.groupstore[i].rolelist = {}
+
+-- 		--计算出所售道具
+-- 		local itemnum = #groupStore.itemList[i]
+-- 		--防止除0
+-- 		if itemnum == 0 then 
+-- 			--print("groupstoreRefresh error itemnum 0,index:"..i)
+-- 			itemnum = 1
+-- 		end
+-- 		--计算差异天数
+-- 		local starttime = System.toMiniTime(groupStore.itemList[i].startdate)
+-- 		local daydiff = System.getDayDiff(System.getCurrMiniTime(), starttime)
+-- 		local index = daydiff%itemnum + 1
+-- 		sys_var.groupstore[i].id = groupStore.itemList[i][index].id
+-- 	end
+
+-- 	sys_var.groupstore.resetflag = 0
+-- end
+
+-- StoreImpFuncList.OnTime = function ()
+-- 	local sys_var = System.getStaticVar()
+-- 	if sys_var.groupstore == nil or sys_var.groupstore.resetflag == nil or sys_var.groupstore.resetflag ~= 1 then return end
+-- 	StoreImpFuncList.getNumFromTxApi()
+-- end
+
+-- StoreImpFuncList.OnMinTime = function ()
+-- 	if StoreImpFuncList.ifgetNumFromTxApi then
+-- 		StoreImpFuncList.getNumFromTxApi()
+-- 	else
+-- 		StoreImpFuncList.ifgetNumFromTxApi = true
+-- 	end
+-- end
+
+-- StoreImpFuncList.Oninit = function ()
+-- 	local sys_var = System.getStaticVar()
+-- 	if sys_var == nil or sys_var.groupstore == nil then return end
+-- 	if StoreImpFuncList.broadcastFlag == nil then
+-- 		StoreImpFuncList.broadcastFlag = {}
+-- 		for i=1,groupStore.shownum do
+-- 			StoreImpFuncList.broadcastFlag[i] = sys_var.groupstore[i].totalnum
+-- 		end
+-- 	end
+-- end
+
+--table.insert(PrecisionTimeFnTable, StoreImpFuncList.OnTime)
+--table.insert(TimeFnTable, StoreImpFuncList.OnMinTime)
+
+--table.insert(InitFnTable, StoreImpFuncList.Oninit)
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeStoreImp, EventCallDispatcher.HandlerStoreImp)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, StoreImpFuncList.newDayforStore)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, StoreImpFuncList.StoreLogin)
+--腾讯回调触发事件
+--EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeTxApiUrlBack, StoreImpFuncList.OnTxApiCallback)
+

@@ -1,0 +1,648 @@
+--运营后台活动管理脚本
+--#include "data/config/activity/activitycontrol.txt" once 
+--#include "data/functions/actorevent/looptaskhandler.txt" once 
+--#include "data\config\vip\vip.txt" once
+--#include "data\config\activity\newserveraward.txt" once
+--#include "data\config\activity\groupconf.txt" once
+--#include "data\config\activity\groupconf2.txt" once
+--#include "data\config\activity\groupconf3.txt" once
+--#include "data\config\activity\groupconf4.txt" once
+--#include "data\config\activity\groupconf5.txt" once
+--#include "data\functions\systems\timereward\magictreeconf.txt" once
+
+
+local oneDaySecond = 24 * 60 * 60
+
+ONLINEREWARD.getCreateActorDay = function( sysarg )
+	-- body
+	if sysarg == nil or type(sysarg) ~= 'userdata' then
+		return 999999999
+	end
+	local nCreateActorTime = LActor.GetActorCreateTime(sysarg)
+	local nCurTime = System.getCurrMiniTime() 
+	local nCreateTime_ = nCreateActorTime - math.fmod(nCreateActorTime , oneDaySecond)
+	local nMyCreateActorDay = nCurTime -  math.fmod(nCurTime , oneDaySecond) + oneDaySecond
+
+	local losttime = nMyCreateActorDay - nCreateTime_
+	local nDay_fff = math.floor( losttime / oneDaySecond)
+	--log_print("==============day===",nDay_fff)
+	return nDay_fff
+end
+
+
+--设置时间
+ONLINEREWARD.SetActivityTime = function(id, startTime, endTime, flag, pflimit, ctype)
+	print("--ONLINEREWARD.SetActivityTime id:"..id..",flag:"..flag)
+	if ctype == nil then ctype = 1 end
+
+	local activityContrConf = ActivityControl[id]
+	-- for i=1,#ActivityControl do
+	-- 	if ActivityControl[i] ~= nil and ActivityControl[i].id == id then
+	-- 		activityContrConf = ActivityControl[i]
+	-- 	end
+	-- end
+	if activityContrConf == nil then return end
+	local sysvar = System.getStaticVar()
+	if not activityContrConf.cancontrol then
+		print("ONLINEREWARD.SetActivityTime not set")
+		return
+	end
+
+	if sysvar.activityControl == nil then 
+		sysvar.activityControl = {}
+	end
+	
+	if sysvar.activityControl[id] == nil then sysvar.activityControl[id] = {} end
+
+	if sysvar.activityControl[id].flag == nil then sysvar.activityControl[id].flag = 0 end
+
+	sysvar.activityControl[id].starttime = System.toMiniTime(startTime)
+	sysvar.activityControl[id].endtime = System.toMiniTime(endTime)
+
+	if flag == 1 then sysvar.activityControl[id].flag = sysvar.activityControl[id].starttime end
+
+	if ctype then sysvar.activityControl[id].type = ctype end
+	ONLINEREWARD.getPlatformInfo(id, pflimit)
+	-- 重置团购排行榜
+	if (id == groupActivityID1 or id == groupActivityID2 or id == groupActivityID3 or id == groupActivityID4 or id == groupActivityID5) then
+		sysvar.grouphandler_activityid = id
+		Grouphandler.clearRankInfo() 
+	end
+
+	if id == MagicTreeConf.activityId then
+		MagicTreeFunc.init()
+	end
+
+	print("--ONLINEREWARD.SetActivityTime id:"..id..",time:"..startTime.."+"..endTime..",flag:"..sysvar.activityControl[id].flag)
+end
+
+-- 获取平台信息
+ONLINEREWARD.getPlatformInfo = function(id, pflimit)
+	print("---getPlatformInfo--")
+	local sysvar = System.getStaticVar()
+	if sysvar.activityControl == nil then 
+		sysvar.activityControl = {}
+	end
+
+	if sysvar.activityControl[id] == nil then sysvar.activityControl[id] = {} end
+	-- -- 重置平台信息
+	-- if sysvar.activityControl[id].platform then
+	-- 	for i=1,#sysvar.activityControl[id].platform do
+	-- 		sysvar.activityControl[id].platform[i] = nil
+	-- 	end
+	-- end
+	--sysvar.activityControl[id].platform = nil
+
+	if sysvar.activityControl[id].platform == nil then sysvar.activityControl[id].platform = {} end
+	
+	-- 无平台限制
+	if not pflimit then
+		return
+	end
+	print("pflimit == " .. pflimit)
+	local strLen = string.len(pflimit)
+	if 0 == strLen then
+		return
+	end
+
+	local platform = sysvar.activityControl[id].platform
+	-- 解释平台信息
+	local strTable = {}
+	local start = 1
+	local endch = 0
+	local str = ""
+	-- 平台信息格式 'UC,37wan,kugou,MI'，或者 'UC,37wan,kugou,MI,'
+	for i=1, strLen do
+	    endch = string.find(pflimit, ",", endch+1) 
+	    if endch == nil then break end
+		str = string.sub(pflimit,start,endch - 1)
+		if str ~= "" then
+	    	table.insert(strTable, str)
+	    end
+		start = endch + 1
+	end
+	-- 最后一条
+	if start <  strLen then
+		str = string.sub(pflimit,start,strLen)
+		table.insert(strTable, str)
+	end
+--[[
+	for i = 1, #strTable do
+
+		platform[#platform+1] = strTable[i]
+	end
+	]]
+
+	 local pf
+	for i = 1, #strTable do
+
+		--platform[#platform+1] = strTable[i]
+	   pf=strTable[i]
+	   local isHad=false
+	   local index 
+	   for j= 1,#platform do
+           if pf == platform[j] then
+                 isHad=true
+                 index=j
+                 break
+           end
+       end
+       if not isHad then 
+       		platform[#platform+1] =strTable[i]
+       end
+
+	end
+ 
+
+end
+
+--拉取活动界面
+ONLINEREWARD.GetActivityList = function(sysarg, packet)
+	print("----------------------------------ONLINEREWARD.GetActivityList ")
+    local packdata = {}
+
+    local activityNum = 0
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	--for i=1,#ActivityControl do
+	for i,v in pairs(ActivityControl) do
+	
+		if ActivityControl[i] ~= nil then
+			local ifshow = true
+			--[[if ActivityControl[i].id == 34 then
+				if var.download_from == nil or var.download_from ~= "UC" then ifshow = false end 
+			end]]
+			if ActivityControl[i].id == 45 then 
+				local ifreward = ONLINEREWARD.CheckNormalActRewardInfo(sysarg, ActivityControl[i].id, false)
+				if ifreward == 0 then
+					ifshow = false
+				end
+			end 
+			if ifshow then
+				local state,starttime,endtime = ONLINEREWARD.GetActivityState(ActivityControl[i].id, var.download_from)
+				--print("ONLINEREWARD.GetActivityList id:"..ActivityControl[i].id)
+				
+
+				local ifreward = 0
+				if state == 0 then
+					if ActivityControl[i].ifnormal ~= nil and ActivityControl[i].ifnormal then
+						--print("ONLINEREWARD.GetActivityList normal")
+						ifreward = ONLINEREWARD.CheckNormalActRewardInfo(sysarg, ActivityControl[i].id)
+					elseif ONLINEREWARD.CheckActivityRewardInfo[ActivityControl[i].id] ~= nil then
+						--print("ONLINEREWARD.GetActivityList not normal")
+						ifreward = ONLINEREWARD.CheckActivityRewardInfo[ActivityControl[i].id](sysarg)
+					end
+				--else
+					--print("ONLINEREWARD.GetActivityList in state")
+				end
+
+				local level = LActor.getIntProperty(sysarg, PROP_LEVEL)
+				if (state == 1 or ifreward == 1) and level >= ActivityControl[i].minlv then 
+					activityNum = activityNum + 1
+					packdata[activityNum] = {}
+					packdata[activityNum].id = ActivityControl[i].id
+					packdata[activityNum].starttime = starttime
+					packdata[activityNum].endtime = endtime
+				end
+			end
+		end
+	end
+
+	local npack = DataPack.allocPacket(sysarg,138,52)
+    if npack == nil then return end
+	DataPack.writeInt(npack, activityNum)
+
+	--print("ONLINEREWARD.GetActivityList num:"..activityNum)
+
+	for i=1,activityNum do
+	    DataPack.writeInt(npack, packdata[i].id)
+	    --print("packdata[i].id:"..packdata[i].id)
+	    DataPack.writeInt(npack, packdata[i].starttime)
+	    DataPack.writeInt(npack, packdata[i].endtime)
+	    print("=======:"..packdata[i].id.." starttime:"..packdata[i].starttime.." endtime"..packdata[i].endtime)
+	end
+
+	DataPack.flush(npack)
+end
+
+
+
+
+ONLINEREWARD.GetActivityState = function(id, pf , sysarg)
+	local activityContrConf = ActivityControl[id]
+	-- for i=1,#ActivityControl do
+	-- 	if ActivityControl[i] ~= nil and ActivityControl[i].id == id then
+	-- 		activityContrConf = ActivityControl[i]
+	-- 	end
+	-- end
+
+	if activityContrConf == nil then return 0,0,0 end
+
+	--检测平台限制,不同平台,直接返回不是活动时间
+	local check_pf = 0
+	local sysvar = System.getStaticVar()	
+	if sysvar.activityControl == nil then 
+		sysvar.activityControl = {}
+	end
+	local pflimit = nil
+	--如果后台有控制，则以后台控制优先
+	if sysvar.activityControl[id] and sysvar.activityControl[id].platform then
+		pflimit = sysvar.activityControl[id].platform
+	elseif activityContrConf.pflimit ~= nil and activityContrConf.pflimit[1] ~= nil then
+		pflimit = activityContrConf.pflimit 
+	end
+	if pflimit == nil or pflimit[1] == nil then
+		check_pf = 1
+	-- 有平台限制，但是玩家平台不存在
+	elseif pf == nil then
+		check_pf = 1
+	-- 有平台限制，且玩家平台不为空
+	else
+		-- print("ONLINEREWARD.GetActivityState pf:"..pf)
+		for i = 1,#pflimit do
+			if pf == pflimit[i] then
+				check_pf = 2 
+				break
+			end
+		end
+	end
+
+	-- if activityContrConf.pflimit == nil or activityContrConf.pflimit[1] == nil then 
+	-- 	check_pf = 1
+	-- elseif pf == nil then
+	-- 	check_pf = 0
+	-- else
+	-- 	--print("ONLINEREWARD.GetActivityState pf:"..pf)
+	-- 	for i,v in ipairs(activityContrConf.pflimit) do
+	-- 		--print("ONLINEREWARD.GetActivityState i:"..i..",v:"..v)
+	-- 		if pf == v then 
+	-- 			check_pf = 2 
+	-- 			break
+	-- 		end
+	-- 	end
+	-- end
+	--rint(" ---id:"..id.."---check_pf:"..check_pf)
+
+	if check_pf == 0 then 
+		return 0,0,0 
+	end
+
+	--local sysvar = System.getStaticVar()
+
+	local cursec = System.getCurrMiniTime()
+	local state = 1
+	local starttime = 0
+	local endtime = 0
+	local confstarttime = 0
+	local confendtime = 0
+	--timetype=1 
+	if activityContrConf.timetype == 1 then
+		if activityContrConf.starttime ~= "" then
+			confstarttime = System.toMiniTime(activityContrConf.starttime)
+		end
+		if activityContrConf.endtime ~= "" then
+			confendtime = System.toMiniTime(activityContrConf.endtime)
+		end
+	elseif activityContrConf.timetype == 2 then
+		if activityContrConf.starttime > 0 then
+			confstarttime = System.getOpenServerStartDateTime() + (activityContrConf.starttime - 1) * 86400
+		end
+		if activityContrConf.endtime > 0 then
+			confendtime = System.getOpenServerStartDateTime() + (activityContrConf.endtime - 1) * 86400
+		end
+	elseif activityContrConf.timetype == 4 then
+		if activityContrConf.starttime[1] > 0 then
+			confstarttime = System.getOpenServerStartDateTime() + (activityContrConf.starttime[1] - 1) * 86400 + activityContrConf.starttime[2] * 3600 + activityContrConf.starttime[3] * 60
+		end
+		if activityContrConf.endtime[1] > 0 then
+			confendtime = System.getOpenServerStartDateTime() + (activityContrConf.endtime[1] - 1) * 86400 + activityContrConf.endtime[2] * 3600 + activityContrConf.endtime[3] * 60
+		end
+	elseif activityContrConf.timetype == 6 then
+		local createday = ONLINEREWARD.getCreateActorDay( sysarg )
+		--print("======createday======",id,createday , activityContrConf.endtime)
+		if createday <= activityContrConf.endtime then
+			return 1 , activityContrConf.starttime , activityContrConf.endtime
+		end
+		return 0 ,0 ,0
+	elseif activityContrConf.timetype == 7 then
+		for i, startTimeString in ipairs(activityContrConf.starttime) do
+			local tmp1 = System.toMiniTime(startTimeString)
+			if not activityContrConf.endtime[i] then
+				print("error config activityContrConf, id = "..id)
+				return
+			end
+
+			local tmp2 = System.toMiniTime(activityContrConf.endtime[i])
+			if cursec >= tmp1 and cursec < tmp2 then
+				confstarttime = tmp1
+				confendtime = tmp2
+				break
+			elseif cursec < tmp1 then
+				break
+			end
+		end
+		if confstarttime == 0 then state = 0 end
+	elseif sysvar.activityControl == nil or sysvar.activityControl[id] == nil then
+		if activityContrConf.timetype == 3 then return 0,0,0 end
+		if activityContrConf.timetype == 5 then return 1,0,0 end
+	end
+
+	--print("ONLINEREWARD.GetActivityState time:"..confstarttime.."+"..confendtime)
+	
+	if not activityContrConf.cancontrol then
+		starttime = confstarttime
+		endtime = confendtime
+	else
+		if sysvar.activityControl == nil then 
+			sysvar.activityControl = {}
+		end
+
+		if sysvar.activityControl[id] ~= nil then
+			--print("ONLINEREWARD.GetActivityState use settime:")
+			starttime = sysvar.activityControl[id].starttime
+			endtime = sysvar.activityControl[id].endtime
+		else
+			starttime = confstarttime
+			endtime = confendtime
+		end
+	end
+
+	--print("ONLINEREWARD.GetActivityState compare time:"..starttime.."+"..endtime.."+"..cursec)
+
+	if ( cursec > endtime and endtime ~= 0) or cursec < starttime then state = 0 end
+
+	--print("ONLINEREWARD.GetActivityState compare id:"..id..",state"..state)
+
+	return state,starttime,endtime
+
+end
+
+--取活动当前是开始的第几天, 永久开启的活动会返回-1, 没开启会返回0, 大于0表示开启的第几天
+ONLINEREWARD.GetActivityRunDays = function(id, pf)
+	local state,starttime,endtime = ONLINEREWARD.GetActivityState(id, pf)
+	if state == 0 then 
+		return 0 
+	else
+		if starttime == 0 and endtime == 0 then return -1 end
+		local cursec = System.getCurrMiniTime()
+		local diff = System.getDayDiff(cursec, starttime)
+		if diff < 0 then return 0 end
+		return (diff + 1)
+	end
+end
+
+--检测是否符合参加活动的等级
+ONLINEREWARD.ActivityCheckLevel = function(sysarg, id)
+	local activityContrConf = ActivityControl[id]
+	-- for i=1,#ActivityControl do
+	-- 	if ActivityControl[i] ~= nil and ActivityControl[i].id == id then
+	-- 		activityContrConf = ActivityControl[i]
+	-- 	end
+	-- end
+	if activityContrConf == nil then return false end
+
+	local level = LActor.getIntProperty(sysarg, PROP_LEVEL)
+	if level < activityContrConf.minlv then return false end
+	return true
+end
+
+ONLINEREWARD.CheckActivityRewardInfo = {}
+ONLINEREWARD.ResetActivityInfo = {}
+
+--检测活动是否还有奖励没有领取
+--检测跑环任务是否要下发图标
+ONLINEREWARD.CheckActivityRewardInfo[10] = function(sysarg)
+	-- return LoopTaskFunc.checkLoopTaskState(sysarg)
+end
+--[[
+--检测投资返利是否要下发图标
+ONLINEREWARD.CheckActivityRewardInfo[19] = function(sysarg)
+	local flag = InvestmentFundFunc.OnLoginTrigger(sysarg)
+	if flag ~= 0 then
+		return 1
+	end
+	return 0
+	]]
+--[[
+	local var = LActor.getStaticVar( sysarg )
+	if var == nil then return 0 end
+	if var.InvestmentFund == nil then return 1 end
+	if var.InvestmentFund.AwardStatus == nil then return 1 end
+	if var.InvestmentFund.BuyTime == nil then return 1 end
+
+	--计算是否有可拿的，用于显示图标状态
+	local nowtime = System.getCurrMiniTime()
+	local days = System.getDayDiff(nowtime, var.InvestmentFund.BuyTime)
+	days = days + 1
+
+	local conf = InvestmentFundConf
+
+	for i=1, #conf.awards do
+		if not System.bitOPMask(var.InvestmentFund.AwardStatus, i) then
+			return 1
+		end
+	end
+	return 0
+]]
+--end
+
+--检测开服活动是否要下发图标
+ONLINEREWARD.CheckActivityRewardInfo[1] = function(sysarg)
+	local var = LActor.getStaticVar( sysarg )
+	if var == nil then return 0 end
+
+	--充值反馈
+	if var.sclb == nil then
+		var.sclb = 0
+	end
+	if var.maxsclb == nil then var.maxsclb = 0 end
+	if var.maxsclb > 1 then
+		for i=2,var.maxsclb do
+			if not System.bitOPMask(var.sclb, i - 1) then return 1 end
+		end
+	end
+
+	--修仙初成
+	if var.juniorEffort ~= nil then
+		local count = #NewServerAwardConfig.JuniorEffort
+		for i=1,count do
+			if var.juniorEffort[i] ~= nil and var.juniorEffort[i] == 1 then return 1 end
+		end
+	end
+	
+	--排行榜活动
+	var.rankactivityHasAward = nil
+	DbRankActivityFunc.getActorHasAward(sysarg)
+	if var.rankactivityGetAward == nil then var.rankactivityGetAward = 0 end
+	if var.rankactivityHasAward ~= 0 and var.rankactivityHasAward ~= var.rankactivityGetAward then return 1 end
+
+	--最强仙盟
+	if var.GuildActivitycanReward == nil or (var.GuildActivitycanRewardRecheck == nil and var.GuildActivitycanReward == 0) then
+		var.GuildActivitycanReward = 0
+		var.GuildActivityrewardInfo = 0
+		var.GuildActivitycanRewardRecheck = 1
+		local guildId = LActor.getGuildId(sysarg)
+		if guildId ~= 0 then 
+			local sysVar = System.getStaticVar()
+			if sysVar.guildActivity ~= nil and sysVar.guildActivity[guildId] ~= nil then 
+				var.GuildActivitycanReward = System.bitOpSetMask(var.GuildActivitycanReward, 0, true) --普通奖励
+				if LActor.getGuildPos(sysarg) == 4 then --宗主
+					var.GuildActivitycanReward = System.bitOpSetMask(var.GuildActivitycanReward, 1, true) --额外奖励
+				end
+				var.GuildActivityrewardInfo = sysVar.guildActivity[guildId]
+			end
+
+		end
+	end
+	
+	if var.GuildActivityrewardInfo ~= 0 then
+		if not System.bitOPMask(var.GuildActivitycanReward, 2) then return 1 end
+		if System.bitOPMask(var.GuildActivitycanReward, 1) and (not System.bitOPMask(var.GuildActivitycanReward, 3)) then return 1 end
+	end
+
+	--套装收集
+	if var.suitActiveRecord == nil then var.suitActiveRecord = 0 end
+	if var.suitActivitySub ~= nil  and var.suitActivitySub ~= 0 and var.suitActivitySub ~= var.suitActiveRecord then return 1 end
+
+	--境界奖励
+	if var.corssActivityRecord == nil then var.corssActivityRecord = 0 end
+	if var.corssActivitySub ~= nil  and var.corssActivitySub ~= 0 and var.corssActivitySub ~= var.corssActivityRecord then return 1 end
+
+	return 0
+end
+
+--检测开服活动是否要下发图标
+ONLINEREWARD.CheckActivityRewardInfo[2] = function(sysarg)
+	local var = LActor.getStaticVar( sysarg )
+	local open = var.DengLuSongYuanbao.open or 0
+	local day1 = var.DengLuSongYuanbao.day[1] or -1
+
+	if open == 1 and day1 ~= -1 then
+		return 1
+	end
+
+	return 0
+end
+--[[
+--检测首冲是否要下发图标
+ONLINEREWARD.CheckActivityRewardInfo[21] = function(sysarg)
+	local var = LActor.getStaticVar( sysarg )
+	if var == nil then return 0 end
+	if var.sclb == nil then
+		var.sclb = 0
+	end
+	if var.maxsclb == nil or var.maxsclb == 0 then return 1 end
+	if not System.bitOPMask(var.sclb, 0) then return 1 end
+	return 0
+end
+]]
+
+
+
+--后台调控,活动重开后,清理数据,团购活动
+ONLINEREWARD.ResetActivityInfo[81] = function(sysarg)
+	local st = LActor.getStaticVar(sysarg)
+	if not st then return end
+
+	if st.mypoint then st.mypoint = nil end
+	if st.itematimes then st.itematimes = nil end
+	if st.itembtimes then st.itembtimes = nil end
+	if st.getreward then st.getreward = nil end
+	if st.guildrewardstate then st.guildrewardstate = nil end
+end
+
+ONLINEREWARD.ResetActivityInfo[82] = function(sysarg)
+	local st = LActor.getStaticVar(sysarg)
+	if not st then return end
+
+	if st.mypoint then st.mypoint = nil end
+	if st.itematimes then st.itematimes = nil end
+	if st.itembtimes then st.itembtimes = nil end
+	if st.getreward then st.getreward = nil end
+	if st.guildrewardstate then st.guildrewardstate = nil end
+end
+
+ONLINEREWARD.ResetActivityInfo[83] = function(sysarg)
+	local st = LActor.getStaticVar(sysarg)
+	if not st then return end
+
+	if st.mypoint then st.mypoint = nil end
+	if st.itematimes then st.itematimes = nil end
+	if st.itembtimes then st.itembtimes = nil end
+	if st.getreward then st.getreward = nil end
+	if st.guildrewardstate then st.guildrewardstate = nil end
+end
+
+ONLINEREWARD.ResetActivityInfo[84] = function(sysarg)
+	local st = LActor.getStaticVar(sysarg)
+	if not st then return end
+
+	if st.mypoint then st.mypoint = nil end
+	if st.itematimes then st.itematimes = nil end
+	if st.itembtimes then st.itembtimes = nil end
+	if st.getreward then st.getreward = nil end
+	if st.guildrewardstate then st.guildrewardstate = nil end
+end
+
+ONLINEREWARD.ResetActivityInfo[85] = function(sysarg)
+	local st = LActor.getStaticVar(sysarg)
+	if not st then return end
+
+	if st.mypoint then st.mypoint = nil end
+	if st.itematimes then st.itematimes = nil end
+	if st.itembtimes then st.itembtimes = nil end
+	if st.getreward then st.getreward = nil end
+	if st.guildrewardstate then st.guildrewardstate = nil end
+end
+
+--后台调控,活动重开后,清理数据,幸运转盘活动
+ONLINEREWARD.ResetActivityInfo[4] = function(sysarg)
+	--print("后台调控,活动重开后,清理数据,幸运转盘活动")
+	local st = LActor.getStaticVar(sysarg)
+	if not st then return end
+	if st.RechargeRotaryLotteryMyLog ~= nil then st.RechargeRotaryLotteryMyLog = nil end
+	if st.LotteryFreeUseCount ~= nil then st.LotteryFreeUseCount = nil end
+end
+
+
+
+--检测财神是否要下发图标
+ONLINEREWARD.CheckActivityRewardInfo[103] = function(sysarg)
+	local flag = extravagantlyFunc.OnLoginTrigger(sysarg)
+	if flag ~= 0 then
+		return 1
+	end
+	return 0
+end 
+
+
+--后台调控,活动重开后,清理数据
+ONLINEREWARD.CheckResetActivityInfo = function(sysarg, id)
+	--print("后台调控,活动重开后,清理数据")
+	local activityContrConf = ActivityControl[id]
+	-- for i=1,#ActivityControl do
+	-- 	if ActivityControl[i] ~= nil and ActivityControl[i].id == id then
+	-- 		activityContrConf = ActivityControl[i]
+	-- 	end
+	-- end
+	if activityContrConf == nil then return false end
+	if not activityContrConf.cancontrol then return false end
+
+	local var = LActor.getStaticVar(sysarg)
+	if var.ActivityControl == nil then var.ActivityControl = {} end
+	if var.ActivityControl[id] == nil then var.ActivityControl[id] = 0 end
+	local sysvar = System.getStaticVar()
+	if sysvar.activityControl == nil or sysvar.activityControl[id] == nil or sysvar.activityControl[id].flag == nil or var.ActivityControl[id] == sysvar.activityControl[id].flag then return false end
+	var.ActivityControl[id] = sysvar.activityControl[id].flag
+	if activityContrConf.ifnormal ~= nil and activityContrConf.ifnormal then
+		--print("activityContrConf.ifnormal:is true")
+		--print("ONLINEREWARD.CheckResetActivityInfo activityid:"..id)
+		ONLINEREWARD.ResetNormalActivityInfo(sysarg, id)
+	else
+		--print("activityContrConf.ifnormal:is false")
+		if ONLINEREWARD.ResetActivityInfo[id] ~= nil then
+			ONLINEREWARD.ResetActivityInfo[id](sysarg)
+		end
+	end
+	return true
+end

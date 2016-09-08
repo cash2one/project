@@ -1,0 +1,33 @@
+﻿{
+	id = 29623,
+	name = Lang.Item.n29623,
+	desc = Lang.Item.i29623,
+	type = 96,
+	sellType = 31,
+	icon = 10020,
+	shape = {0,0,0,0,0,0,0,0},
+	color = 4,
+	dura = 0,
+	dup = 0,
+	colGroup = 0,
+	dealType = 0,
+	dealPrice = 0,
+	time = 0,
+	suitId = 0,
+	maxStage = true,
+	staitcAttrs = {  
+	},
+	strongAttrs = {  
+	},
+	qualityAttrs = {  
+	},
+	flags = { 
+		recordLog = true,
+		denyDeal = true,
+		denySell = true,
+		 
+	},
+	conds = { 
+		{ cond = 3, value = 4, }, 
+	},
+},

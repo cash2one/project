@@ -1,0 +1,21 @@
+﻿--特价礼包配置
+
+--#include "..\..\..\language\LangCode.txt" once
+
+NewServer5_conf = 
+{
+	activityId = 4,
+	activities = 
+	{
+	   
+		
+		-- [9] = {
+		-- 	-- 活动id,每日充值,多礼包
+		-- 	id = 9,
+		-- 	-- 充值奖励额度及奖励id列表  {充值额度,奖励礼包id}
+		-- 	rechargerewards = {{1000, 30630}, {2000, 30631}, {5000, 30632}},
+		-- },
+		
+	},
+	
+}	

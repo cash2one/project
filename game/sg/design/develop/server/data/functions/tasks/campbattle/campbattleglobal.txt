@@ -1,0 +1,12 @@
+
+local CampBattleFunc = {}
+
+
+local GetRankNum = function(val)
+	local num = tonumber(val)
+	if num == nil then
+		return 0
+	end
+
+	return num
+end

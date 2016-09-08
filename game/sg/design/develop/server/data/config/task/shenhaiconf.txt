@@ -1,0 +1,110 @@
+﻿--深海之峦配置
+
+--#include "..\..\language\LangCode.txt" once
+
+ShenHaiConf = {
+	fubenId = 12,
+	sceneId = 1055,
+	pos1 = { 13, 92 },	--男玩家进入场景位置(或队长)
+	pos2 = { 50, 93 },	--女玩家进入场景位置(或队员)
+	buff1 = { type = 22, group = 130, value = 0.5, times=900, interval=1, name=Lang.ScriptTips.sh003 },	--异性玩家进入副本的buff配置
+	buff2 = { type = 32, group = 130, value = 0.5, times=900, interval=1, name=Lang.ScriptTips.sh003 },	--异性玩家进入副本的buff配置
+	binhunId = 121,	--boss冰魂的id
+	binhunPos = { 42, 31 },	--boss冰魂的位置
+	bfzxxzId = 122,	--冰封的紫霞仙子
+	bfzxxzPos = { 36, 16 },	--冰封的紫霞仙子的位置
+	zxxzId = 123, --紫霞仙子
+	zxxzPos = { 36, 16 }, --紫霞仙子位置
+	tongxinId = 124,		--同心树Id
+	tongxinPos = { 36, 16  },	--同心树位置
+	tongxinLiveTime = 300,	--同心树存在时间，单位为秒
+	txsArea = 1,	--同心树作用区域的索引
+	txsExpAdd = { 15,22  },	--同心树作用下的经验加  成参数(万分之几)，分别是同性和异性玩家的参数
+
+	fubenlistid = 5,
+
+	refresh1 = {		--第一次刷怪
+		{ -- C位置
+			id=243,	--怪物di
+			mapx1=10,	--地图的坐标
+			mapx2=18,
+			mapy1=75,
+			mapy2=80,
+			count=6,	--个数
+		},
+		--其它怪物按上面配置
+		{ -- D位置
+			id=244,	--怪物di
+			mapx1=48,	--地图的坐标
+			mapx2=56,
+			mapy1=81,
+			mapy2=86,
+			count=6,	--个数
+		},
+	},
+
+	refresh2 = {		--第二次刷怪
+		{ -- F位置
+			id=243,	--怪物di
+			mapx1=16,	--地图的坐标
+			mapx2=24,
+			mapy1=46,
+			mapy2=53,
+			count=8,	--个数
+		},
+
+		{ -- G位置
+			id=244,	--怪物di
+			mapx1=46,	--地图的坐标
+			mapx2=55,
+			mapy1=48,
+			mapy2=54,
+			count=8,	--个数
+		},
+		--其它怪物按上面配置
+	},
+
+	refresh3 = {		--第三次刷怪
+		{ 
+			id=245,	--怪物di
+			mapx1=30,	--地图的坐标
+			mapx2=44,
+			mapy1=11,
+			mapy2=20,
+			count=6,	--个数
+		},
+
+		{ 
+			id=246,	--怪物di
+			mapx1=30,	--地图的坐标
+			mapx2=44,
+			mapy1=11,
+			mapy2=20,
+			count=6,	--个数
+		},
+		--其它怪物按上面配置
+	},
+
+	refresh4 = {		--第四次刷怪
+		{ 
+			id=245,	--怪物di
+			mapx1=30,	--地图的坐标
+			mapx2=44,
+			mapy1=11,
+			mapy2=20,
+			count=8,	--个数
+		},
+
+		{ 
+			id=246,	--怪物di
+			mapx1=30,	--地图的坐标
+			mapx2=44,
+			mapy1=11,
+			mapy2=20,
+			count=6,	--个数
+		},
+		--其它怪物按上面配置
+	},
+
+	teleport = { posx = 81, posy = 14,toSceneid = 3,toPosx = 65, toPosy = 90,modelid = 50000, name = Lang.SceneName.s3 },
+}

@@ -1,0 +1,59 @@
+﻿--#include "data\language\LangCode.txt" once
+--#include "data\functions\Tasks\Nirvana\NirvanaSet.txt" once --赏金
+--#include "data\functions\bifunc.txt" once
+--#include "data\functions\actorevent\hirefriendshandler.txt" once
+
+MiscsImplement.GetDropItem = function (sysarg, msgid, packet)
+	local needspace = 0  --物品所需空格
+	local Lavar = LActor.getDyanmicVar(sysarg)
+	 --print("MiscsImplement.GetDropItem ")
+	if 	Lavar.Nirvanaitem == nil then return end	 
+	local nirvanaitemconf = NirvanaItem[Lavar.NirvanaitemFbstep]
+	 --print("Lavar.NirvanaitemFbstep"..Lavar.NirvanaitemFbstep)
+	if nirvanaitemconf == nil then return end
+
+	--print("nirvanaitemconf ~= nil"..Lavar.Nirvanaitem)
+	local itemconf = nirvanaitemconf[Lavar.Nirvanaitem]
+	if itemconf ~= nil then
+		--print("itemconf ~= nil")
+		local needspace = 0  --物品所需空格
+		for i=1,#itemconf do
+			needspace = needspace + Item.getAddItemNeedGridCount( sysarg, itemconf[i].itemid, itemconf[i].amount )
+		end
+		if ( needspace > Item.getBagEmptyGridCount( sysarg ) ) then
+			--print("needspace > Item.getBagEmptyGridCount")
+			-- local str = string.format(Lang.ScriptTips.f00016,needspace)
+			-- LActor.sendTipmsg( sysarg, str,ttDialog )
+			LActor.SendGeneralTips(sysarg, 7, 0, 0)
+		else
+			for j=1,#itemconf do
+				LActor.addItem(sysarg,itemconf[j].itemid,itemconf[j].quality,itemconf[j].strong, itemconf[j].amount,itemconf[j].bind,"Nirvana ",57)
+				local tips = string.format(Lang.TaskTalk.Nv0005, Item.getItemName(itemconf[j].itemid))
+				LActor.sendTipmsg(sysarg, tips, ttMessage)
+			end
+			--print("addItem"..#itemconf)
+			Lavar.Nirvanaitem = nil
+		end
+	end
+end
+
+
+-- 退出诛仙阵副本
+EventCallDispatcher.OnNirvanaExit = function(sysarg, hfb, way)
+	local fbPtr = Fuben.getFubenPtr(hfb)
+	if fbPtr == nil then return end
+
+	local var = Fuben.getDyanmicVar(fbPtr)
+	if var == nil or var.NirvanaStep == nil then return end
+
+	-- BI统计
+	local step_str = tostring(var.NirvanaStep)
+	if step_str == nil then return end
+
+	BiFunc.LogFubenExit(sysarg, "zhu_xian_exit", step_str)
+
+	--add wupeng 雇用好友
+end
+
+-- MiscsImplement.registerMsgHandler(LogicCmd.miscSys.sub.cGetDropItem, MiscsImplement.GetDropItem)
+-- EventCallDispatcher.registerFubenExit(NirvanaSet.FBid, EventCallDispatcher.OnNirvanaExit)

@@ -1,0 +1,135 @@
+--寻宝系统配置表
+
+--#include "..\..\language\LangCode.txt"
+
+Treasure = {
+
+	--地级配置
+	diji = {
+		--每日免费次数
+		free_count = 5,
+		--cd时间
+		refreshTime = 600, -- 刷新时间(秒)
+		--消耗 类型0（物品，id为物品id） 类型1（货币，id为货币类型） 类型2（好友赠送的钥匙）
+		cost = {type = 2, id = 0, count = 1}, 
+		cost_10 = {type = 2, id = 0, count = 9},
+		--产出
+		FirstItems = {
+		},
+		Items = {
+{id=26101,rate = 3043, israre = 0, islimit = 0},
+{id=26102,rate = 16, israre = 0, islimit = 0},
+{id=26111,rate = 2435, israre = 0, islimit = 0},
+{id=26112,rate = 127, israre = 0, islimit = 0},
+{id=26121,rate = 153, israre = 1, islimit = 0},
+{id=26123,rate = 153, israre = 1, islimit = 0},
+{id=26125,rate = 153, israre = 1, islimit = 0},
+{id=26181,rate = 913, israre = 0, islimit = 0},
+{id=26182,rate = 153, israre = 0, islimit = 0},
+{id=26183,rate = 153, israre = 0, islimit = 0},
+{id=26184,rate = 153, israre = 0, islimit = 0},
+{id=26185,rate = 77, israre = 0, islimit = 0},
+{id=26151,rate = 153, israre = 0, islimit = 0},
+{id=26152,rate = 16, israre = 0, islimit = 0},
+{id=26172,rate = 305, israre = 0, islimit = 0},
+{id=26173,rate = 153, israre = 0, islimit = 0},
+{id=26174,rate = 31, israre = 0, islimit = 0},
+{id=26201,rate = 152, israre = 0, islimit = 0},
+{id=26202,rate = 151, israre = 0, islimit = 0},
+{id=26203,rate = 151, israre = 0, islimit = 0},
+{id=26204,rate = 151, israre = 0, islimit = 0},
+{id=26205,rate = 151, israre = 0, islimit = 0},
+{id=26206,rate = 151, israre = 0, islimit = 0},
+{id=26207,rate = 151, israre = 0, islimit = 0},
+{id=26208,rate = 151, israre = 0, islimit = 0},
+{id=26209,rate = 151, israre = 0, islimit = 0},
+{id=26210,rate = 151, israre = 0, islimit = 0},
+{id=26211,rate = 151, israre = 0, islimit = 0},
+{id=26212,rate = 151, israre = 0, islimit = 0},
+
+		},
+		preview = {
+		26208,26209,26211,26212,26102,26112,26121,26123,26125,
+		},
+	},
+
+	--天级配置
+	tianji = {
+		--每日免费次数
+		free_count = 1,
+		--cd时间
+		refreshTime = 86400, -- 刷新时间(秒)
+		--消耗 类型0（物品，id为物品id） 类型1（货币，id为货币类型）
+		cost = {type = 1, id = 3, count = 100}, 
+		cost_10 = {type = 1, id = 3, count = 900},
+		--产出
+		FirstItems = {
+			{id=26102,rate = 10000, israre = 0, islimit = 0},
+		},
+		SecondItems = {
+		{id=26207, count = 1,rate = 1666, israre = 0, islimit = 0}, 
+		{id=26208, count = 1,rate = 1666, israre = 0, islimit = 0}, 
+		{id=26209, count = 1,rate = 1667, israre = 0, islimit = 0}, 
+		{id=26210, count = 1,rate = 1667, israre = 0, islimit = 0}, 
+		{id=26211, count = 1,rate = 1667, israre = 0, islimit = 0}, 
+		{id=26212, count = 1,rate = 1667, israre = 0, islimit = 0}, 
+
+		},
+		Items = {
+{id=24101, count = 1,rate = 40, israre = 0, islimit = 0}, 
+{id=24102, count = 1,rate = 40, israre = 0, islimit = 0}, 
+{id=24103, count = 1,rate = 40, israre = 0, islimit = 0}, 
+{id=24104, count = 1,rate = 40, israre = 0, islimit = 0}, 
+{id=24105, count = 1,rate = 40, israre = 0, islimit = 0}, 
+{id=24106, count = 1,rate = 40, israre = 0, islimit = 0}, 
+{id=24107, count = 1,rate = 40, israre = 0, islimit = 0}, 
+{id=24108, count = 1,rate = 40, israre = 0, islimit = 0}, 
+{id=24109, count = 1,rate = 40, israre = 0, islimit = 0}, 
+{id=24110, count = 1,rate = 40, israre = 0, islimit = 0}, 
+{id=24201, count = 1,rate = 50, israre = 0, islimit = 0}, 
+{id=24202, count = 1,rate = 50, israre = 0, islimit = 0}, 
+{id=24203, count = 1,rate = 50, israre = 0, islimit = 0}, 
+{id=24204, count = 1,rate = 50, israre = 0, islimit = 0}, 
+{id=24205, count = 1,rate = 50, israre = 0, islimit = 0}, 
+{id=24206, count = 1,rate = 50, israre = 0, islimit = 0}, 
+{id=24207, count = 1,rate = 50, israre = 0, islimit = 0}, 
+{id=24208, count = 1,rate = 50, israre = 0, islimit = 0}, 
+{id=24209, count = 1,rate = 50, israre = 0, islimit = 0}, 
+{id=24210, count = 1,rate = 50, israre = 0, islimit = 0}, 
+{id=25107, count = 1,rate = 50, israre = 0, islimit = 0}, 
+{id=25108, count = 1,rate = 50, israre = 0, islimit = 0}, 
+{id=25109, count = 1,rate = 50, israre = 0, islimit = 0}, 
+{id=25112, count = 1,rate = 50, israre = 0, islimit = 0}, 
+{id=26102, count = 2,rate = 1400, israre = 0, islimit = 0}, 
+{id=26103, count = 1,rate = 200, israre = 0, islimit = 0,broadcast =true,}, 
+{id=26112, count = 2,rate = 1200, israre = 0, islimit = 0}, 
+{id=26113, count = 1,rate = 200, israre = 0, islimit = 0}, 
+{id=26114, count = 1,rate = 10, israre = 0, islimit = 0}, 
+{id=26121, count = 3,rate = 1200, israre = 0, islimit = 0}, 
+{id=26122, count = 1,rate = 80, israre = 0, islimit = 0}, 
+{id=26123, count = 3,rate = 600, israre = 0, islimit = 0}, 
+{id=26124, count = 1,rate = 40, israre = 0, islimit = 0}, 
+{id=26125, count = 3,rate = 600, israre = 0, islimit = 0}, 
+{id=26126, count = 1,rate = 40, israre = 0, islimit = 0}, 
+{id=26131, count = 1,rate = 510, israre = 0, islimit = 0}, 
+{id=26132, count = 1,rate = 100, israre = 0, islimit = 0,broadcast =true,}, 
+{id=30203, count = 1,rate = 1000, israre = 0, islimit = 0}, 
+{id=30204, count = 1,rate = 500, israre = 0, islimit = 0}, 
+{id=21105, count = 1,rate = 10, israre = 0, islimit = 0,broadcast =true,}, 
+{id=21205, count = 1,rate = 10, israre = 0, islimit = 0,broadcast =true,}, 
+{id=26207, count = 3,rate = 80, israre = 0, islimit = 0}, 
+{id=26208, count = 3,rate = 80, israre = 0, islimit = 0}, 
+{id=26209, count = 3,rate = 80, israre = 0, islimit = 0}, 
+{id=26210, count = 3,rate = 80, israre = 0, islimit = 0}, 
+{id=26212, count = 3,rate = 80, israre = 0, islimit = 0}, 
+{id=26213, count = 2,rate = 300, israre = 1, islimit = 0,broadcast =true,}, 
+{id=26214, count = 2,rate = 200, israre = 1, islimit = 0,broadcast =true,}, 
+{id=26216, count = 2,rate = 300, israre = 1, islimit = 0,broadcast =true,}, 
+
+		},
+		preview = {
+		26103,26114,26122,26124,21105,21205,26214,26213,26212,
+		},
+	},
+
+}

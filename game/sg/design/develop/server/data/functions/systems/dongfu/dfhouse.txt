@@ -1,0 +1,136 @@
+
+DongfuManager.sendDongfuInfo = function(pChar, dfData)
+	local info = dfData.info
+	local lvl = info.level or 1
+	local mlv = DongfuConf.maxLingquanValue[lvl]
+	local dp = DataPack.allocPacket(pChar, 157, 1)
+	DataPack.writeInt(dp, dfData.ownerId)
+	DataPack.writeString(dp, dfData.ownerName)
+	DataPack.writeByte(dp, lvl)
+	DataPack.writeShort(dp, info.lingquanValue or 0)
+	DataPack.writeShort(dp, mlv)
+	DataPack.writeUInt(dp, info.lingquanEnd or 0)
+	DataPack.writeByte(dp, info.summonType or 0)
+	DataPack.writeInt(dp, info.summonEndTime or 0)
+	DataPack.writeInt(dp, 9)
+	local list = info.list or {}
+	for i = 1, 9 do
+		local pInfo = list[i]
+		if pInfo ~= nil and pInfo.plantFlag == 1 then
+			DataPack.writeByte(dp, pInfo.plantType)
+			DataPack.writeByte(dp, pInfo.plantColor)
+			DataPack.writeByte(dp, pInfo.sickFlag)
+			DataPack.writeInt(dp, pInfo.endTime)
+		else
+			DataPack.writeByte(dp, 0)
+			DataPack.writeByte(dp, 0)
+			DataPack.writeByte(dp, 0)
+			DataPack.writeInt(dp, 0)
+		end
+	end
+	DataPack.flush(dp)
+end
+
+DongfuManager.sendFriendsInfo = function(pChar, selfDfData)
+	local tbInfo = {1, 1, 1, 1}
+	local count = 0
+	for id in pairs(selfDfData.friendSet) do
+		local flag = DongfuManager.getStateFlag(pChar, id)
+
+		if flag ~= 0 then
+			-- int
+			table.insert(tbInfo, 4)
+			table.insert(tbInfo, id)
+			-- byte
+			table.insert(tbInfo, 0)
+			table.insert(tbInfo, flag)
+
+			count = count + 1
+		end
+	end
+	local dp = DataPack.allocPacket(pChar, 157, 22)
+	tbInfo[1] = dp
+	tbInfo[2] = (count + 1) * 2
+	tbInfo[3] = 4
+	tbInfo[4] = count
+	DataPack.writeData(unpack(tbInfo))
+	DataPack.flush(dp)
+end
+
+DongfuManager.enter = function(pChar, ownerId)
+	local cId = LActor.getActorId(pChar)
+	local var = LActor.getDyanmicVar(pChar)
+	local inSelf = false
+	if ownerId == 0 or ownerId == cId then
+		ownerId = cId
+		inSelf = true
+	else
+		if not LActor.isFriend(pChar, ownerId) or LActor.getFriendLevel(pChar, ownerId) < DongfuConf.openLevel then return end
+	end
+	if var.dongfu_id == ownerId then return end
+
+	local dfData = DongfuManager.getDongfuData(ownerId)
+	if dfData == nil then
+		local name = inSelf and LActor.getName(pChar) or LActor.getFriendName(pChar, ownerId)
+		dfData = DongfuManager.createDongfu(ownerId, name)
+	end
+	dfData.playerSet[cId] = 1
+
+	if inSelf and var.dongfu_id == nil then
+		if dfData.friendSet == nil then
+			DongfuManager.initFriendSet(ownerId, dfData)
+		else
+			DongfuManager.registerOlFriendAll(ownerId, dfData)
+		end
+		-- 需要发送好友洞府状态信息
+		DongfuManager.sendFriendsInfo(pChar, dfData)
+		-- 发送自己洞府信息
+		DongfuManager.notiInfoToSelf(dfData)
+	end
+
+	if var.dongfu_id ~= nil then
+		DongfuManager.exit(pChar, true)
+	end	
+	var.dongfu_id = ownerId
+	DongfuManager.sendDongfuInfo(pChar, dfData)
+end
+
+DongfuManager.exit = function(pChar, isInternal)
+	local var = LActor.getDyanmicVar(pChar)
+	if var.dongfu_id == nil then return end
+
+	local cId = LActor.getActorId(pChar)
+	local dfData = DongfuManager.getDongfuData(var.dongfu_id)
+	if dfData ~= nil then
+		dfData.playerSet[cId] = nil
+	end
+	var.dongfu_id = nil
+
+	if not isInternal then
+		DongfuManager.onExitDongfu(cId)
+	end
+end
+
+DongfuManager.upgrade = function(pChar, moneytype)
+	local atHome, ownerId = DongfuManager.isAtHome(pChar)
+	if not atHome then return end
+	local dfData = DongfuManager.getDongfuData(ownerId)
+	local info = dfData.info
+	local lvl = info.level or 1
+	local yb = DongfuConf.upgradeYuanbao[lvl]
+	if yb == nil then return end
+	if not LActor.CheckMoneyEnough(pChar, moneytype, yb) then
+		return
+	end
+	LActor.changeMoney(pChar, moneytype, -yb, 1, true, "dongfu", "upgrade")
+
+	info.level = lvl + 1
+	DongfuManager.onChanged(ownerId)
+	
+	local upgradeNoti = function(pChar)
+		local dp = DataPack.allocPacket(pChar, 157, 3)
+		DataPack.writeByte(dp, info.level)
+		DataPack.flush(dp)
+	end
+	DongfuManager.broadcast(dfData.playerSet, upgradeNoti)
+end

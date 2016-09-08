@@ -1,0 +1,51 @@
+﻿{
+  maxLevel = 40,
+  
+  --引导装备
+  trigger = 
+  { 
+    type = 1,
+    value = 7,
+  },
+
+  --引导中锁定的窗口ID
+  lockUI = 
+  {
+    110,
+  },
+
+  --引导的步骤 
+  steps = 
+  {
+    {
+      cond = { type = 1, helpId = 53, data = 0 },
+
+      action = { type = 5, helpId = 7, data = Lang.GuideLang.npc46, desc = Lang.GuideLang.desc131, showType = 1 },
+
+      hideCond = { type = 2, helpId = 53, data = 0 },
+    },
+
+    {
+      cond = { type = 30, helpId = 0, data = 7 },
+
+      action = { type = 5, helpId = 7, data = Lang.GuideLang.npc47, desc = Lang.GuideLang.desc132, showType = 1 },
+	  
+	  hideCond = { type = 2, helpId = 53, data = 0 },
+    },
+	
+	--第1步 引导点击提示装备界面的立即装备
+    {
+      cond = { type = 1,  helpId = 111, data = 0 },
+
+      action = { type = 0, helpId = 0, data = 0, desc = "" },
+    },
+
+	--第2步 点击后引导结束
+    {
+      cond = { type = 2, helpId = 111, data = 0 },
+
+      action = { type = 16, helpId = 0, data = Lang.GuideLang.func5, desc = "" },
+    },
+
+  } 
+}

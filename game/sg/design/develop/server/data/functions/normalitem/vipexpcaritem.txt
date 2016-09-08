@@ -1,0 +1,52 @@
+--#include "data\config\vip\vip.txt" once
+
+function vipExpCardItemFunc(sysarg, itemIdx, itemPtr, conf)
+	--print("itemIdx"..itemIdx)
+	--print("itemPtr", itemPtr)
+	--print("conf"..Json.Encode(conf))
+	-- if true then
+	-- 	return
+	-- end
+
+	if itemIdx == nil or itemPtr == nil then return end
+	if itemIdx ~= conf.item_id then return end
+
+	local itemid = itemIdx
+	local itemViplvl = conf.vipLevel
+	local vipybs = VIPConfig.yuanbaos
+
+	--获取当前vip等级
+	local viplvl = LActor.getVIPLevel(sysarg)
+	if viplvl >= itemViplvl then
+		--回收道具
+		LActor.removeItemByPtr(sysarg, itemPtr, 1, true, "DeleteVipCarExpItem", 86)
+		local str = string.format(Lang.ScriptTips.vip007, itemViplvl)
+		LActor.sendTipmsg(sysarg,str, ttMessage)
+		return
+	end
+
+	--获取当前已有的元宝数量
+	local rechageCount = LActor.getRecharge(sysarg)
+	local addYbNum = vipybs[itemViplvl] - rechageCount
+
+	--print("addYbNum"..addYbNum)
+
+	if addYbNum > 0 then
+		--删除道具
+		LActor.removeItemByPtr(sysarg, itemPtr, 1, true, "useVipCarExpItem", 86)
+		--加vip经验
+		LActor.recharge(sysarg, addYbNum, 1) --只增加vip经验，不触及累计充值
+
+		local strmsg = string.format(Lang.ScriptTips.vip008, itemViplvl)
+		LActor.sendTipmsg(sysarg, strmsg, ttMessage)
+	end
+end
+
+function vipExpCardItemsInit(sysarg)
+	for i = 1, table.getn(VIPCardExpItem) do 
+		local itemInfo = VIPCardExpItem[i]
+		GlobalItemFn[itemInfo.item_id] = { func = vipExpCardItemFunc, params = itemInfo }
+	end
+end
+
+table.insert(InitFnTable, vipExpCardItemsInit)

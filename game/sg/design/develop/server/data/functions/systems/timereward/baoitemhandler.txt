@@ -1,0 +1,51 @@
+--#include "data\functions\systems\timereward\baoitemconf.txt" once
+
+BaohandleFun = {}
+
+--打开宝箱处理
+BaohandleFun.getreward = function (sysarg,tplist)
+	
+	local actorid = LActor.getActorId(sysarg)
+
+	local index = System.getRandomNumber(3) + 1
+	for h = 1, #BaoItemList do
+
+		local itemCount = table.getn(BaoItemList[h].itemList)
+		local temp = BaoItemList[h].itemList
+
+		local r = System.getRandomNumber(10000)
+		local total = 0
+		for j = 1, itemCount do
+			local itemConf = temp[j]
+			total = total + itemConf.present
+			if r < total then
+				if tplist[h] == nil then 
+					tplist[h] = {}
+				end
+				tplist[h].itemid = itemConf.itemid
+				tplist[h].count = itemConf.count
+				break
+			end
+		end
+	end
+
+	--打怪掉落宝箱
+	for m = 1,#tplist do
+		if m == index then
+			local grid = Item.getBagEmptyGridCount(sysarg)
+			if grid <  Item.getAddItemNeedGridCount(sysarg, tplist[m].itemid, tplist[m].count)  then
+				System.sendGmMailOffLine(actorid, "打怪掉落宝箱", 1, tplist[m].itemid, tplist[m].count, 1)
+			else
+				LActor.addItem(sysarg, tplist[m].itemid, 0, 0, tplist[m].count, 1, "Reward", 1)
+			end
+			break
+		end
+	end
+
+	return index
+
+end
+
+
+
+

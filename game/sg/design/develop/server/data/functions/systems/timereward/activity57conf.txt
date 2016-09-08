@@ -1,0 +1,16 @@
+--#include "..\..\..\language\LangCode.txt"
+activity57Conf = {
+	activityId = 57,
+
+	activities =
+	{
+		
+		[81] = 
+		{
+			--我们结婚啦
+			id = 81,
+			--礼包id,礼包数量
+			target = {39000, 1},
+		},
+	},
+}

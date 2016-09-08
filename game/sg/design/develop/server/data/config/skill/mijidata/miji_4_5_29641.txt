@@ -1,0 +1,706 @@
+{
+	id = 29641,
+	basics = 
+	{
+		{    --LV1
+			score = 33,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=2010, interval=0, vt=0 }},
+			},
+		},
+		{    --LV2
+			score = 66,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=4020, interval=0, vt=0 }},
+			},
+		},
+		{    --LV3
+			score = 99,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=6030, interval=0, vt=0 }},
+			},
+		},
+		{    --LV4
+			score = 132,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=8040, interval=0, vt=0 }},
+			},
+		},
+		{    --LV5
+			score = 165,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=10050, interval=0, vt=0 }},
+			},
+		},
+		{    --LV6
+			score = 198,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=12060, interval=0, vt=0 }},
+			},
+		},
+		{    --LV7
+			score = 231,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=14080, interval=0, vt=0 }},
+			},
+		},
+		{    --LV8
+			score = 264,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=16090, interval=0, vt=0 }},
+			},
+		},
+		{    --LV9
+			score = 297,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=18100, interval=0, vt=0 }},
+			},
+		},
+		{    --LV10
+			score = 330,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=20100, interval=0, vt=0 }},
+			},
+		},
+		{    --LV11
+			score = 363,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=22110, interval=0, vt=0 }},
+			},
+		},
+		{    --LV12
+			score = 396,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=24130, interval=0, vt=0 }},
+			},
+		},
+		{    --LV13
+			score = 429,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=26140, interval=0, vt=0 }},
+			},
+		},
+		{    --LV14
+			score = 462,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=28150, interval=0, vt=0 }},
+			},
+		},
+		{    --LV15
+			score = 495,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=30160, interval=0, vt=0 }},
+			},
+		},
+		{    --LV16
+			score = 528,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=32170, interval=0, vt=0 }},
+			},
+		},
+		{    --LV17
+			score = 561,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=34180, interval=0, vt=0 }},
+			},
+		},
+		{    --LV18
+			score = 594,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=36190, interval=0, vt=0 }},
+			},
+		},
+		{    --LV19
+			score = 627,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=38200, interval=0, vt=0 }},
+			},
+		},
+		{    --LV20
+			score = 660,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=40210, interval=0, vt=0 }},
+			},
+		},
+		{    --LV21
+			score = 693,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=42220, interval=0, vt=0 }},
+			},
+		},
+		{    --LV22
+			score = 726,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=44230, interval=0, vt=0 }},
+			},
+		},
+		{    --LV23
+			score = 759,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=46240, interval=0, vt=0 }},
+			},
+		},
+		{    --LV24
+			score = 792,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=48250, interval=0, vt=0 }},
+			},
+		},
+		{    --LV25
+			score = 825,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=50270, interval=0, vt=0 }},
+			},
+		},
+		{    --LV26
+			score = 858,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=52280, interval=0, vt=0 }},
+			},
+		},
+		{    --LV27
+			score = 891,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=54290, interval=0, vt=0 }},
+			},
+		},
+		{    --LV28
+			score = 924,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=56300, interval=0, vt=0 }},
+			},
+		},
+		{    --LV29
+			score = 957,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=58300, interval=0, vt=0 }},
+			},
+		},
+		{    --LV30
+			score = 990,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=60320, interval=0, vt=0 }},
+			},
+		},
+		{    --LV31
+			score = 1023,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=62330, interval=0, vt=0 }},
+			},
+		},
+		{    --LV32
+			score = 1056,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=64340, interval=0, vt=0 }},
+			},
+		},
+		{    --LV33
+			score = 1089,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=66350, interval=0, vt=0 }},
+			},
+		},
+		{    --LV34
+			score = 1122,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=68360, interval=0, vt=0 }},
+			},
+		},
+		{    --LV35
+			score = 1155,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=70370, interval=0, vt=0 }},
+			},
+		},
+		{    --LV36
+			score = 1188,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=72380, interval=0, vt=0 }},
+			},
+		},
+		{    --LV37
+			score = 1221,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=74390, interval=0, vt=0 }},
+			},
+		},
+		{    --LV38
+			score = 1254,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=76400, interval=0, vt=0 }},
+			},
+		},
+		{    --LV39
+			score = 1287,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=78410, interval=0, vt=0 }},
+			},
+		},
+		{    --LV40
+			score = 1320,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=80420, interval=0, vt=0 }},
+			},
+		},
+		{    --LV41
+			score = 1353,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=82430, interval=0, vt=0 }},
+			},
+		},
+		{    --LV42
+			score = 1386,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=84440, interval=0, vt=0 }},
+			},
+		},
+		{    --LV43
+			score = 1419,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=86460, interval=0, vt=0 }},
+			},
+		},
+		{    --LV44
+			score = 1452,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=88470, interval=0, vt=0 }},
+			},
+		},
+		{    --LV45
+			score = 1485,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=90480, interval=0, vt=0 }},
+			},
+		},
+		{    --LV46
+			score = 1518,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=92490, interval=0, vt=0 }},
+			},
+		},
+		{    --LV47
+			score = 1551,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=94500, interval=0, vt=0 }},
+			},
+		},
+		{    --LV48
+			score = 1584,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=96510, interval=0, vt=0 }},
+			},
+		},
+		{    --LV49
+			score = 1617,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=98520, interval=0, vt=0 }},
+			},
+		},
+		{    --LV50
+			score = 1650,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=100530, interval=0, vt=0 }},
+			},
+		},
+		{    --LV51
+			score = 1683,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=102540, interval=0, vt=0 }},
+			},
+		},
+		{    --LV52
+			score = 1716,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=104550, interval=0, vt=0 }},
+			},
+		},
+		{    --LV53
+			score = 1749,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=106560, interval=0, vt=0 }},
+			},
+		},
+		{    --LV54
+			score = 1782,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=108570, interval=0, vt=0 }},
+			},
+		},
+		{    --LV55
+			score = 1815,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=110580, interval=0, vt=0 }},
+			},
+		},
+		{    --LV56
+			score = 1848,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=112590, interval=0, vt=0 }},
+			},
+		},
+		{    --LV57
+			score = 1881,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=114600, interval=0, vt=0 }},
+			},
+		},
+		{    --LV58
+			score = 1914,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=116610, interval=0, vt=0 }},
+			},
+		},
+		{    --LV59
+			score = 1947,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=118620, interval=0, vt=0 }},
+			},
+		},
+		{    --LV60
+			score = 1980,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=120630, interval=0, vt=0 }},
+			},
+		},
+		{    --LV61
+			score = 2013,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=122650, interval=0, vt=0 }},
+			},
+		},
+		{    --LV62
+			score = 2046,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=124660, interval=0, vt=0 }},
+			},
+		},
+		{    --LV63
+			score = 2079,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=126670, interval=0, vt=0 }},
+			},
+		},
+		{    --LV64
+			score = 2112,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=128680, interval=0, vt=0 }},
+			},
+		},
+		{    --LV65
+			score = 2145,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=130690, interval=0, vt=0 }},
+			},
+		},
+		{    --LV66
+			score = 2178,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=132700, interval=0, vt=0 }},
+			},
+		},
+		{    --LV67
+			score = 2211,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=134710, interval=0, vt=0 }},
+			},
+		},
+		{    --LV68
+			score = 2244,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=136720, interval=0, vt=0 }},
+			},
+		},
+		{    --LV69
+			score = 2277,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=138730, interval=0, vt=0 }},
+			},
+		},
+		{    --LV70
+			score = 2310,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=140740, interval=0, vt=0 }},
+			},
+		},
+		{    --LV71
+			score = 2343,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=142750, interval=0, vt=0 }},
+			},
+		},
+		{    --LV72
+			score = 2376,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=144760, interval=0, vt=0 }},
+			},
+		},
+		{    --LV73
+			score = 2409,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=146770, interval=0, vt=0 }},
+			},
+		},
+		{    --LV74
+			score = 2442,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=148780, interval=0, vt=0 }},
+			},
+		},
+		{    --LV75
+			score = 2475,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=150800, interval=0, vt=0 }},
+			},
+		},
+		{    --LV76
+			score = 2508,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=152800, interval=0, vt=0 }},
+			},
+		},
+		{    --LV77
+			score = 2541,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=154810, interval=0, vt=0 }},
+			},
+		},
+		{    --LV78
+			score = 2574,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=156820, interval=0, vt=0 }},
+			},
+		},
+		{    --LV79
+			score = 2607,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=158840, interval=0, vt=0 }},
+			},
+		},
+		{    --LV80
+			score = 2640,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=160850, interval=0, vt=0 }},
+			},
+		},
+		{    --LV81
+			score = 2673,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=162860, interval=0, vt=0 }},
+			},
+		},
+		{    --LV82
+			score = 2706,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=164870, interval=0, vt=0 }},
+			},
+		},
+		{    --LV83
+			score = 2739,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=166880, interval=0, vt=0 }},
+			},
+		},
+		{    --LV84
+			score = 2772,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=168890, interval=0, vt=0 }},
+			},
+		},
+		{    --LV85
+			score = 2805,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=170900, interval=0, vt=0 }},
+			},
+		},
+		{    --LV86
+			score = 2838,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=172910, interval=0, vt=0 }},
+			},
+		},
+		{    --LV87
+			score = 2871,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=174920, interval=0, vt=0 }},
+			},
+		},
+		{    --LV88
+			score = 2904,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=176930, interval=0, vt=0 }},
+			},
+		},
+		{    --LV89
+			score = 2937,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=178940, interval=0, vt=0 }},
+			},
+		},
+		{    --LV90
+			score = 2970,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=180950, interval=0, vt=0 }},
+			},
+		},
+		{    --LV91
+			score = 3003,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=182960, interval=0, vt=0 }},
+			},
+		},
+		{    --LV92
+			score = 3036,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=184970, interval=0, vt=0 }},
+			},
+		},
+		{    --LV93
+			score = 3069,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=186990, interval=0, vt=0 }},
+			},
+		},
+		{    --LV94
+			score = 3102,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=189000, interval=0, vt=0 }},
+			},
+		},
+		{    --LV95
+			score = 3135,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=191000, interval=0, vt=0 }},
+			},
+		},
+		{    --LV96
+			score = 3168,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=193010, interval=0, vt=0 }},
+			},
+		},
+		{    --LV97
+			score = 3201,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=195030, interval=0, vt=0 }},
+			},
+		},
+		{    --LV98
+			score = 3234,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=197040, interval=0, vt=0 }},
+			},
+		},
+		{    --LV99
+			score = 3267,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=199050, interval=0, vt=0 }},
+			},
+		},
+		{    --LV100
+			score = 3300,
+			attrs = 
+			{
+				{skillid=0,target = 0, actionType= 0, timeParam=0,type=1,delay=0,value={type=53,id=80,rate=0,value=100530, interval=0, vt=0 }},
+			},
+		},
+	},
+},

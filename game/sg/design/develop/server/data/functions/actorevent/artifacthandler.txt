@@ -1,0 +1,854 @@
+﻿--奇兵系统(神器)
+
+--#include "data\config\artifact\actifacts.txt" once
+
+ArtifactHandler = {}
+
+ArtifactHandler.InitActorData = function ( sysarg )
+	local st = LActor.getStaticVar(sysarg)
+	if st == nil then return end
+	st.artifact = {}
+	st.artifact.artifacts = {}
+	for i = 1, 4 do
+		st.artifact.artifacts[i] = {}
+		local artifact = st.artifact.artifacts[i]
+		artifact.level = 0
+		artifact.bless = 0
+		artifact.blessTimeout = 0
+		artifact.reincarnation = 0
+		artifact.reinStar = 0
+		artifact.skill = {}
+		for j = 1, 2 do
+			artifact.skill[j] = {}
+			local skill = artifact.skill[j]
+			skill.level = 0
+			skill.exp = 0
+		end
+	end
+
+	st.artifact.ling = 0
+	st.artifact.freeMiling = Artifact.maxMiLing
+	st.artifact.freeYinLing = Artifact.maxYinLing
+	st.artifact.ntylCnt = 0
+	st.artifact.miling = nil
+	st.artifact.memoryIdx = 0
+	st.artifact.memoryType = nil
+	st.artifact.perfectMemory = 0
+	st.artifact.memorys = nil
+	st.artifact.shengyu = 3
+end
+
+-- 请求神器信息
+ArtifactHandler[1] = function ( sysarg, dp )
+	local actorid = DataPack.readInt(dp)
+	local actor = sysarg
+	if actorid ~= 0 then
+		actor = LActor.getActorById(actorid)
+	end
+	if actor == nil then 
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.arti002, ttMessage)
+		return 
+	end
+	ArtifactHandler.SendArtifactInfo(sysarg, actor)
+end
+
+-- 下发神器信息
+ArtifactHandler.SendArtifactInfo = function ( sysarg, actor )
+	if sysarg == nil or actor == nil then return end
+	--if not LActor.isActorSystemOpen(actor, siArtifact) then
+	if LActor.getLevel(sysarg) < Artifact.level then
+		if actor ~= sysarg then
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.arti001, ttMessage)
+		end
+		return
+	end
+
+	local st = LActor.getStaticVar(actor)
+	if st == nil then return end
+
+	if st.artifact == nil then
+		ArtifactHandler.InitActorData(actor)
+	end
+
+	ArtifactHandler.SendOneArtifactInfo(sysarg, actor, 0)	
+
+end
+
+ArtifactHandler.SendOneArtifactInfo = function ( sysarg, actor, idx )
+	if sysarg == nil or actor == nil then return end
+
+	local st = LActor.getStaticVar(actor)
+	if st == nil then return end
+
+	if st.artifact == nil then
+		ArtifactHandler.InitActorData(actor)
+	end
+
+	local cur_t = System.getCurrMiniTime()
+	--print("下发那个神器的信息:"..idx)
+	if idx == 0 then
+		local dp = DataPack.allocPacket(sysarg, 44, 1)
+		if dp == nil then return end
+		DataPack.writeInt(dp, LActor.getActorId(actor))
+		DataPack.writeInt(dp, LActor.getArtifactScore(actor))
+		DataPack.writeByte(dp, #st.artifact.artifacts)
+		for i = 1, #st.artifact.artifacts do
+			local artifact = st.artifact.artifacts[i]
+			DataPack.writeByte(dp, i)
+			DataPack.writeByte(dp, artifact.level)
+			DataPack.writeInt(dp, artifact.bless)
+			DataPack.writeUInt(dp, math.max(0, artifact.blessTimeout - cur_t))
+			DataPack.writeByte(dp, artifact.reincarnation)
+			DataPack.writeByte(dp, artifact.reinStar)
+			for j = 1, #artifact.skill do
+				local skill = artifact.skill[j]
+				DataPack.writeByte(dp, skill.level)
+				DataPack.writeInt(dp, skill.exp)
+			end			
+		end
+		DataPack.flush(dp)
+	else
+		local artifact = st.artifact.artifacts[idx]
+		local dp = DataPack.allocPacket(sysarg, 44, 1)
+		if dp == nil then return end
+		DataPack.writeInt(dp, LActor.getActorId(actor))		
+		DataPack.writeInt(dp, LActor.getArtifactScore(actor))
+		DataPack.writeByte(dp, 1)
+		DataPack.writeByte(dp, idx)
+		DataPack.writeByte(dp, artifact.level)
+		DataPack.writeInt(dp, artifact.bless)
+		DataPack.writeUInt(dp, math.max(0, artifact.blessTimeout - cur_t))
+		DataPack.writeByte(dp, artifact.reincarnation)
+		DataPack.writeByte(dp, artifact.reinStar)
+		for j = 1, #artifact.skill do
+			local skill = artifact.skill[j]
+			DataPack.writeByte(dp, skill.level)
+			DataPack.writeInt(dp, skill.exp)
+		end
+		DataPack.flush(dp)		
+	end
+
+
+end
+
+-- 修炼神器
+ArtifactHandler[2] = function ( sysarg, dp )
+	--if not LActor.isActorSystemOpen(sysarg, siArtifact) then return end
+	if LActor.getLevel(sysarg) < Artifact.level then return end
+	
+	local st = LActor.getStaticVar(sysarg)
+	if st == nil then return end
+
+	if st.artifact == nil then
+		ArtifactHandler.InitActorData(sysarg)
+	end
+
+	local idx = DataPack.readByte(dp)
+	local autoBuy = DataPack.readByte(dp)
+	
+	local artifact = st.artifact.artifacts[idx]
+	
+	local need = 0
+	for i = 1, #Artifact.practiceItemCnt do
+		local conf = Artifact.practiceItemCnt[i]
+		if artifact.level >= conf.startLevel and artifact.level <= conf.endLevel then
+			need = conf.cnt
+			break
+		end
+	end
+
+	local needBless = 0
+	for i = 1, #Artifact.practiceBless do
+		local conf = Artifact.practiceBless[i]
+		if artifact.level >= conf.startLevel and artifact.level <= conf.endLevel then
+			needBless = conf.bless
+			break
+		end
+	end
+
+	if need == 0 or needBless == 0 then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.arti003, ttMessage)
+		return
+	end
+
+	local has = 0
+	for i = 1, #Artifact.practiceItemId do
+		local itemid = Artifact.practiceItemId[i]
+		has = has + LActor.getItemCount(sysarg, itemid)
+	end
+	if has < need then
+		if autoBuy == 0 then
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.arti004, ttMessage)
+			return
+		else
+			local price = Item.getItemPrice(tonumber(70017)) * (need - has)
+			if LActor.getMoneyCount(sysarg, mtYuanbao) < price then
+				LActor.sendTipmsg(sysarg, Lang.ScriptTips.arti005, ttMessage)
+				return
+			end			
+			LActor.changeMoney(sysarg, mtYuanbao, -price, 1, true, "artifact", "pratice")
+			-- 增加神器修炼返礼
+			-- TishengFunc.getYuanBaoArtifactExercise(sysarg, price)
+			-- TishengAFunc.getYuanBaoArtifactExercise(sysarg, price)
+			-- TishengBFunc.getYuanBaoArtifactExercise(sysarg, price)
+			-- TishengCFunc.getYuanBaoArtifactExercise(sysarg, price)
+		end
+	end
+
+	if has > 0 then
+		for i = #Artifact.practiceItemId, 1, -1 do
+			local itemid = Artifact.practiceItemId[i]		
+			local cnt = LActor.removeItem(sysarg, itemid, math.min(need, has), -1, -1, -1, "artifact_practice")
+			need = need - cnt
+			if need <= 0 then
+				break
+			end
+		end
+	end
+
+	local succeed = false
+	if artifact.bless >= needBless then
+		succeed = true
+	else
+		local rate = 0
+		for i = 1, #Artifact.practiceRate[artifact.level + 1] do
+			local conf = Artifact.practiceRate[artifact.level + 1][i]
+			if artifact.bless >= conf.startLevel and artifact.bless <= conf.endLevel then
+				rate = conf.rate
+				break
+			end
+		end
+		succeed = System.getRandomNumber(100) < rate
+	end
+
+	if not succeed then
+		local range = Artifact.practiceRange[artifact.level+1]
+		artifact.bless = artifact.bless + range[1] + System.getRandomNumber(range[2] - range[1])
+		artifact.blessTimeout = System.getCurrMiniTime() + 24*3600
+		if artifact.bless >= needBless then
+			succeed = true
+		end
+	end
+
+	if succeed then
+		artifact.level = artifact.level + 1
+		artifact.bless = 0
+		artifact.blessTimeout = 0
+		LActor.setArtifactLevel(sysarg, idx - 1, artifact.level)
+	end
+
+	ArtifactHandler.SendOneArtifactInfo(sysarg, sysarg, idx) 
+
+end
+
+-- 神器转生
+ArtifactHandler[3] = function ( sysarg, dp )
+	--if not LActor.isActorSystemOpen(sysarg, siArtifact) then return end
+	if LActor.getLevel(sysarg) < Artifact.level then return end
+	local st = LActor.getStaticVar(sysarg)
+	if st == nil then return end
+
+	if st.artifact == nil then
+		ArtifactHandler.InitActorData(sysarg)
+	end
+
+	local idx = DataPack.readByte(dp)
+	local artifact = st.artifact.artifacts[idx]
+
+	if artifact.reincarnation == #Artifact.reincarnationItemCnt - 1 and artifact.reinStar == Artifact.reinStarEachLevel then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.arti006, ttMessage)
+		return
+	end
+
+	local need = 0
+	for i = 1, #Artifact.reincarnationItemCnt do
+		local conf = Artifact.reincarnationItemCnt[i]
+		if artifact.reincarnation >= conf.startLevel and artifact.reincarnation <= conf.endLevel then
+			need = conf.cnt
+			break
+		end
+	end
+
+	if need == 0 then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.arti006, ttMessage)
+		return
+	end
+
+	if st.artifact.ling < need then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.arti010, ttMessage)
+		return
+	end
+
+	st.artifact.ling = st.artifact.ling - need
+
+	artifact.reinStar = artifact.reinStar + 1
+
+	if artifact.reinStar > Artifact.reinStarEachLevel then
+		artifact.reincarnation = artifact.reincarnation + 1
+		artifact.reinStar = 1
+		for i = 1, #Artifact.skill[idx] do
+			local conf = Artifact.skill[idx][i]
+			if conf.levels[1] == artifact.reincarnation then
+				LActor.learnSkill(sysarg, conf.skillid, 1)
+				local skill = artifact.skill[i]
+				skill.level = 1
+				skill.exp = 0
+			end
+		end
+	end
+
+	LActor.setArtifactReinLevel(sysarg, idx - 1, artifact.reincarnation)
+	LActor.setArtifactReinStar(sysarg, idx - 1, artifact.reinStar)
+
+	ArtifactHandler.SendOneArtifactInfo(sysarg, sysarg, idx)
+	ArtifactHandler.SendMilingInfo(sysarg)
+
+end
+
+-- 请求觅灵信息
+ArtifactHandler[4] = function ( sysarg, dp )
+	ArtifactHandler.SendMilingInfo(sysarg)
+end
+
+-- 下发觅灵信息
+ArtifactHandler.SendMilingInfo = function ( sysarg, dp )
+	--if not LActor.isActorSystemOpen(sysarg, siArtifact) then return end
+	if LActor.getLevel(sysarg) < Artifact.level then return end
+	
+	local st = LActor.getStaticVar(sysarg)
+	if st == nil then return end	
+
+	if st.artifact == nil then
+		ArtifactHandler.InitActorData(sysarg)
+	end
+
+	local dp = DataPack.allocPacket(sysarg, 44, 4)
+	if dp == nil then return end
+	DataPack.writeInt(dp, st.artifact.ling)
+	DataPack.writeByte(dp, st.artifact.freeMiling)
+	DataPack.writeByte(dp, st.artifact.freeYinLing)
+	DataPack.writeByte(dp, st.artifact.ntylCnt)
+	if st.artifact.miling == nil then
+		DataPack.writeByte(dp, 0)
+	else
+		DataPack.writeByte(dp, 1)
+		for i = 1, #st.artifact.miling do
+			DataPack.writeByte(dp, st.artifact.miling[i])
+		end
+	end
+	DataPack.writeInt(dp, st.artifact.shengyu)
+	DataPack.flush(dp)
+end
+
+-- 觅灵
+ArtifactHandler[10]  = function ( sysarg, dp )
+	--if not LActor.isActorSystemOpen(sysarg, siArtifact) then return end
+	if LActor.getLevel(sysarg) < Artifact.level then return end
+	
+	local st = LActor.getStaticVar(sysarg)
+	if st == nil then return end
+
+	if st.artifact == nil then
+		ArtifactHandler.InitActorData(sysarg)
+	end
+
+	if st.artifact.freeMiling <= 0 then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.arti007, ttMessage)
+		return
+	end
+
+	st.artifact.freeMiling = st.artifact.freeMiling - 1
+	st.artifact.ntylCnt = 0
+
+	st.artifact.miling = {}
+
+	for i = 1, Artifact.maxLing do
+		if System.getRandomNumber(10000) < Artifact.lingRate then
+			st.artifact.miling[i] = 1
+		else
+			st.artifact.miling[i] = 0
+		end
+	end
+
+	ArtifactHandler.SendMilingInfo(sysarg)
+end
+
+-- 引灵
+ArtifactHandler[5] = function ( sysarg, dp )
+	--if not LActor.isActorSystemOpen(sysarg, siArtifact) then return end
+	if LActor.getLevel(sysarg) < Artifact.level then return end
+	
+	local st = LActor.getStaticVar(sysarg)
+	if st == nil then return end
+
+	if st.artifact == nil then
+		ArtifactHandler.InitActorData(sysarg)
+	end
+
+	if st.artifact.miling == nil then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.arti008, ttMessage)
+		return
+	end
+
+	local all = true
+	for i = 1, #st.artifact.miling do
+		if st.artifact.miling[i] == 0 then
+			all = false
+			break
+		end
+	end
+
+	if all then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.arti009, ttMessage)
+		return
+	end
+
+	if st.artifact.freeYinLing > 0 then
+		st.artifact.freeYinLing = st.artifact.freeYinLing - 1
+	else
+		st.artifact.ntylCnt = st.artifact.ntylCnt + 1
+		local needYb = Artifact.ntylYb[st.artifact.ntylCnt]
+		if needYb == nil then
+			needYb = Artifact.ntylYb[#Artifact.ntylYb]
+		end
+		if LActor.getMoneyCount(sysarg, mtYuanbao) < needYb then
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.arti005, ttMessage)
+			st.artifact.ntylCnt = st.artifact.ntylCnt - 1
+			return
+		end
+		LActor.changeMoney(sysarg, mtYuanbao, -needYb, 1, true, "artifact", "yinling")
+		-- 神器引灵消费返礼
+		-- TishengFunc.getYuanBaoArtifactAnima(sysarg, needYb)
+		-- TishengAFunc.getYuanBaoArtifactAnima(sysarg, needYb)
+		-- TishengBFunc.getYuanBaoArtifactAnima(sysarg, needYb)
+		-- TishengCFunc.getYuanBaoArtifactAnima(sysarg, needYb)
+	end
+
+	for i = 1, #st.artifact.miling do
+		if st.artifact.miling[i] == 0 then
+			if System.getRandomNumber(10000) < Artifact.lingRate then
+				st.artifact.miling[i] = 1
+			end
+		end
+	end
+
+	ArtifactHandler.SendMilingInfo(sysarg)
+end
+
+-- 领取灵符
+ArtifactHandler[6] = function ( sysarg, dp )
+	--if not LActor.isActorSystemOpen(sysarg, siArtifact) then return end
+	local isShengYu = (DataPack.readByte(dp) == 1) --是否圣浴
+	if LActor.getLevel(sysarg) < Artifact.level then return end
+
+	local st = LActor.getStaticVar(sysarg)
+	if st == nil then return end
+	if st.artifact.shengyu == nil then st.artifact.shengyu = 0 end
+
+	if isShengYu == 1 and st.artifact.shengyu < 1 then
+		--圣浴翻倍次数不够
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.arti017, ttMessage)
+		return
+	end
+
+	if st.artifact == nil then
+		ArtifactHandler.InitActorData(sysarg)
+	end
+
+	if st.artifact.miling == nil then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.arti008, ttMessage)
+		return
+	end	
+
+	local lingCnt = 1
+	for i = 1, #st.artifact.miling do
+		if st.artifact.miling[i] == 1 then
+			lingCnt = lingCnt + 1
+		end
+	end
+
+	st.artifact.miling = nil
+	--add wupeng 圣浴翻倍
+	local lfCounts = Artifact.lfCounts[lingCnt]
+	if isShengYu  and st.artifact.shengyu > 0 then
+		st.artifact.shengyu = st.artifact.shengyu - 1
+		st.artifact.ling = st.artifact.ling + Artifact.lfCounts[lingCnt] * 2
+		lfCounts = Artifact.lfCounts[lingCnt] * 2		
+	else
+        st.artifact.ling = st.artifact.ling + Artifact.lfCounts[lingCnt]
+	end	
+	LActor.sendTipmsg(sysarg, string.format(Lang.ScriptTips.arti012, lfCounts), ttMessage)
+
+	if lingCnt >= #Artifact.lfCounts then
+		local zy = LActor.getIntProperty(sysarg, PROP_CAMP)
+		local tipmsg = string.format(Lang.ScriptTips.arti016, CampColor[LActor.getCampId(sysarg)], CampShortName[zy], LActor.getName(sysarg), Artifact.lfCounts[lingCnt])
+		--System.broadcastTipmsg(tipmsg, ttHearsay)
+	end
+
+	ArtifactHandler.SendMilingInfo(sysarg)
+
+	local dp = DataPack.allocPacket(sysarg, 44, 6)
+	if dp == nil then return end
+	DataPack.writeInt(npack, 0)
+    DataPack.writeInt(npack, st.artifact.ling)
+	DataPack.writeByte(dp, st.artifact.shengyu)
+	DataPack.flush(dp)    
+	--HefuImproveHandler.OnMingLing(sysarg, lingCnt - 1)
+
+end
+
+-- 请求技能回忆信息
+ArtifactHandler[7] = function ( sysarg, dp )
+	ArtifactHandler.SendMemoryInfo(sysarg)
+end
+
+-- 返回当前回忆信息
+ArtifactHandler.SendMemoryInfo = function ( sysarg, dp )
+	--if not LActor.isActorSystemOpen(sysarg, siArtifact) then return end
+	if LActor.getLevel(sysarg) < Artifact.level then return end
+
+	local st = LActor.getStaticVar(sysarg)
+	if st == nil then return end
+
+	if st.artifact == nil then
+		ArtifactHandler.InitActorData(sysarg)
+	end
+
+	if st.artifact == 0 then return end
+
+	local dp = DataPack.allocPacket(sysarg, 44, 7)
+	if dp == nil then return end
+	DataPack.writeByte(dp, st.artifact.perfectMemory)
+	DataPack.flush(dp)
+
+end
+
+ArtifactHandler.GetRandomSkill = function ( artifact )
+	local randSkillIdx = {}
+	for i = 1, #artifact.artifacts do
+		local arti = artifact.artifacts[i]
+		for j = 1, #arti.skill do
+			if arti.skill[j].level > 0 then
+				table.insert(randSkillIdx, (i-1)*2+j)
+			end
+		end
+	end
+	local idx = System.getRandomNumber(#randSkillIdx) + 1
+	return randSkillIdx[idx]
+end
+
+ArtifactHandler.GetOpenSkillCnt = function ( artifact )
+	local cnt = 0
+	for i = 1, #artifact.artifacts do
+		local arti = artifact.artifacts[i]
+		for j = 1, #arti.skill do
+			if arti.skill[j].level > 0 then
+				cnt = cnt + 1
+			end
+		end
+	end
+	return cnt
+end
+
+-- 请求回忆
+ArtifactHandler[8] = function ( sysarg, dp )
+	--if not LActor.isActorSystemOpen(sysarg, siArtifact) then return end
+	if LActor.getLevel(sysarg) < Artifact.level then return end
+
+	local st = LActor.getStaticVar(sysarg)
+	if st == nil then return end
+
+	if st.artifact == nil then
+		ArtifactHandler.InitActorData(sysarg)
+	end
+
+	if ArtifactHandler.GetOpenSkillCnt(st.artifact) < Artifact.openMemory then 
+		LActor.sendTipmsg(sysarg, string.format(Lang.ScriptTips.arti013, Artifact.openMemory), ttMessage)
+		return 
+	end
+
+	local memoryType = DataPack.readByte(dp)
+	local autoType = DataPack.readByte(dp)
+
+	local times = 1
+	if autoType == 2 then 
+		times = 10
+		autoType = 1 
+	end
+
+	if memoryType == 1 then
+		if LActor.getItemCount(sysarg, Artifact.skillMemoryItemID) < times then
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.arti004, ttMessage)
+			return
+		end
+		st.artifact.perfectMemory = 0
+		LActor.removeItem(sysarg, Artifact.skillMemoryItemID, times, -1, -1, -1, "artifact_memory")
+	else
+		local itemCnt = LActor.getItemCount(sysarg, Artifact.skillPerfectMemoryItemId)
+		if itemCnt >= times then
+			LActor.removeItem(sysarg, Artifact.skillPerfectMemoryItemId, times, -1, -1, -1, "artifact_memory")
+		else
+			local needYb = Artifact.skillMemoryYB * (times - itemCnt)
+			if LActor.getMoneyCount(sysarg, mtYuanbao) < needYb then
+				LActor.sendTipmsg(sysarg, Lang.ScriptTips.arti005, ttMessage)
+				return
+			end
+			if itemCnt > 0 then
+				LActor.removeItem(sysarg, Artifact.skillPerfectMemoryItemId, itemCnt, -1, -1, -1, "artifact_memory")
+			end			
+			st.artifact.perfectMemory = 1
+			LActor.changeMoney(sysarg, mtYuanbao, -needYb, 1, true, "artifact", "memory")
+			-- 神器回忆消费返礼
+			-- TishengFunc.getYuanBaoArtifactRecollect(sysarg, needYb)
+			-- TishengAFunc.getYuanBaoArtifactRecollect(sysarg, needYb)
+			-- TishengBFunc.getYuanBaoArtifactRecollect(sysarg, needYb)
+			-- TishengCFunc.getYuanBaoArtifactRecollect(sysarg, needYb)
+		end
+	end
+
+	local memoryConf = Artifact.normalMemory
+	if memoryType == 2 then
+		memoryConf = Artifact.perfectMemory
+	end
+
+	for i = 1, times do
+		st.artifact.memoryIdx = ArtifactHandler.GetRandomSkill(st.artifact)
+		st.artifact.memoryType = memoryType
+		st.artifact.memorys = {}
+		local base = memoryConf[1][1] -- 保底值
+		local fluc = memoryConf[1][2] - memoryConf[1][1] + 1 -- 波动值最大范围
+		for i = 1, 6 do
+			local randMemory = System.getRandomNumber(fluc) + base
+			st.artifact.memorys[i] = randMemory
+		end
+		
+		-- 高品质回忆概率
+		local randNum = System.getRandomNumber(100)
+		local rate = 0
+		local special = 1
+		for idx, val in ipairs(Artifact.skillMemoryRate) do
+			rate = rate + val
+			if rate > randNum then
+				special = idx
+				break
+			end
+		end
+		-- 判断是否高级回忆
+		if special == 3 and autoType == 0 then
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.arti011, ttWarmTip)
+		end
+		if special ~= 1 then
+			local index = System.getRandomNumber(6) + 1
+			st.artifact.memorys[index] = memoryConf[special]
+		end
+		if autoType == 1 then
+			local idx = System.getRandomNumber(6) + 1
+			ArtifactHandler.SelectMemory(sysarg, st.artifact, idx, autoType)
+		end
+	end
+
+	if autoType == 0 then
+		ArtifactHandler.SendMemoryInfo(sysarg)
+	else
+		ArtifactHandler.SendOneArtifactInfo(sysarg, sysarg, 0)
+	end
+end
+
+-- 玩家选择回忆
+ArtifactHandler[9] = function ( sysarg, dp )
+	local idx = DataPack.readByte(dp)
+	if idx <= 0 or idx > 6 then return end
+
+	local st = LActor.getStaticVar(sysarg)
+	if st == nil or st.artifact == nil or st.artifact.memorys == nil then return end
+	
+	ArtifactHandler.SelectMemory(sysarg, st.artifact, idx, 0)
+
+	ArtifactHandler.SendOneArtifactInfo(sysarg, sysarg, 0)	
+
+end
+
+ArtifactHandler.SelectMemory = function ( sysarg, artifact, idx, isAuto )
+	local memorys = artifact.memorys
+	if memorys == nil then return end
+
+	if artifact.memoryIdx == 0 then return end
+
+	local addExp = memorys[idx]
+	local artidx = (artifact.memoryIdx + artifact.memoryIdx % 2) / 2
+	local skillidx = (artifact.memoryIdx % 2) == 1 and 1 or 2
+
+	local skillConf = Artifact.skill[artidx][skillidx]
+	local arti = artifact.artifacts[artidx]
+	local skill = arti.skill[skillidx]
+
+	if skill.level < #Artifact.skill[1][1].levels then
+		skill.exp = skill.exp + addExp
+	else
+		local compensation = Artifact.normalCompensation
+		if artifact.perfectMemory == 1 then
+			compensation = Artifact.perfectCompensation
+		end
+		LActor.changeMoney(sysarg, compensation.type, compensation.value, 1, true, "artifact", "compensation")
+		LActor.sendTipmsg(sysarg, string.format(Lang.ScriptTips.arti014, compensation.value, MoneyName[compensation.type+1]), ttMessage)
+	end
+
+	if Artifact.skillExp[skill.level] ~= nil and skill.exp >= Artifact.skillExp[skill.level] then
+		if skillConf.levels[skill.level + 1] ~= nil and skillConf.levels[skill.level + 1] > arti.reincarnation then
+			skill.exp = Artifact.skillExp[skill.level]
+			if skill.level >= #Artifact.skill[1][1].levels then
+				LActor.sendTipmsg(sysarg, Lang.ScriptTips.arti014, ttMessage)
+			else
+				LActor.sendTipmsg(sysarg, Lang.ScriptTips.arti015, ttMessage)
+			end
+		else
+			skill.exp = skill.exp - Artifact.skillExp[skill.level]
+			skill.level = skill.level + 1
+			if skill.level >= #Artifact.skillExp + 1 then
+				skill.exp = 0
+			end
+			LActor.learnSkill(sysarg, skillConf.skillid, skill.level)
+		end
+	end
+
+	local dp = DataPack.allocPacket(sysarg, 44, 9)
+	if dp == nil then return end
+	DataPack.writeByte(dp, artidx)
+	DataPack.writeByte(dp, skillidx)
+	DataPack.writeByte(dp, idx)
+	for i = 1, #memorys do
+		DataPack.writeInt(dp, memorys[i])
+	end
+	DataPack.writeByte(dp, isAuto)
+	DataPack.writeByte(dp, artifact.perfectMemory)
+	DataPack.flush(dp)
+
+	artifact.memoryIdx = 0
+	artifact.memorys = nil
+end
+
+
+-- 网络数据包分发
+ArtifactHandler.HandlerOp = function (sysarg, args)
+	if args[1] == nil then return end
+  	local func = ArtifactHandler[args[1]]
+  	if func ~= nil then
+    	func(sysarg, args[2]) 
+  	end
+end
+
+-- 新的一天到来，需要重置免费次数
+ArtifactHandler.OnNewDayArrive = function ( sysarg )	
+	--if not LActor.isActorSystemOpen(sysarg, siArtifact) then return end
+	if LActor.getLevel(sysarg) < Artifact.level then return end
+
+	local st = LActor.getStaticVar(sysarg)
+	if st == nil then return end
+
+	if st.artifact == nil then
+		ArtifactHandler.InitActorData(sysarg)
+	end
+
+	st.artifact.freeMiling = Artifact.maxMiLing
+	st.artifact.freeYinLing = Artifact.maxYinLing
+	st.artifact.ntylCnt = 0
+	st.artifact.shengyu = Artifact.nshengyu	
+end
+
+-- 玩家登陆，需要通过C++接口设置值，计算战斗力，通过各个子函数设置值
+ArtifactHandler.OnLogin = function ( sysarg )
+	--if not LActor.isActorSystemOpen(sysarg, siArtifact) then return end
+	if LActor.getLevel(sysarg) < Artifact.level then return end
+
+	--如果系统没有开启,则开启
+	if not LActor.isActorSystemOpen(sysarg, siArtifact) then
+		LActor.openActorSystem(sysarg, siArtifact)
+	end
+
+	local st = LActor.getStaticVar(sysarg)
+	if st == nil then return end
+
+	if st.artifact == nil then
+		ArtifactHandler.InitActorData(sysarg)
+	end
+
+	for i = 1, #st.artifact.artifacts do
+		local artifact = st.artifact.artifacts[i]
+		LActor.setArtifactLevel(sysarg, i - 1, artifact.level)
+		LActor.setArtifactReinLevel(sysarg, i - 1, artifact.reincarnation)
+		LActor.setArtifactReinStar(sysarg, i - 1, artifact.reinStar)
+	end
+
+	ArtifactHandler.CheckBless(sysarg, true)
+end
+
+ArtifactHandler.OnActorLevelUp = function ( sysarg )
+	if LActor.getLevel(sysarg) < Artifact.level then return end
+
+	--升级时触发,如果系统没有开启,则开启
+	if not LActor.isActorSystemOpen(sysarg, siArtifact) then
+		LActor.openActorSystem(sysarg, siArtifact)
+	end
+end
+
+ArtifactHandler.ClearActorData = function ( sysarg )
+	local st = LActor.getStaticVar(sysarg)
+	st.artifact = nil
+end
+
+ArtifactHandler.CheckBless = function ( sysarg, isLogin )
+	--if not LActor.isActorSystemOpen(sysarg, siArtifact) then return end
+	if LActor.getLevel(sysarg) < Artifact.level then return end
+
+	local st = LActor.getStaticVar(sysarg)
+	if st == nil or st.artifact == nil then return end
+
+	local cur_t = System.getCurrMiniTime()    
+	for i = 1, #st.artifact.artifacts do
+		local artifact = st.artifact.artifacts[i]	
+		if artifact.blessTimeout ~= 0 and cur_t >= artifact.blessTimeout then
+			artifact.bless = 0
+			artifact.blessTimeout = 0
+			if not isLogin then
+				ArtifactHandler.SendOneArtifactInfo(sysarg, sysarg, i)
+			end
+		end
+	end
+end
+
+ArtifactHandler.OneTime = function (  )
+	local actors = LuaHelp.getAllActorList()
+    if actors ~= nil then
+       for i=1,#actors do
+          local actor = actors[i]
+          ArtifactHandler.CheckBless(actor)          
+       end
+    end
+end
+
+table.insert(TimeFnTable, ArtifactHandler.OneTime)
+
+ArtifactHandler.AddLingye = function ( sysarg, args )
+	local num = tonumber(args[1])
+	--if not LActor.isActorSystemOpen(sysarg, siArtifact) then return end
+	if LActor.getLevel(sysarg) < Artifact.level then return end
+
+	local st = LActor.getStaticVar(sysarg)
+	if st == nil then return end
+
+	if st.artifact == nil then
+		ArtifactHandler.InitActorData(sysarg)
+	end
+
+	st.artifact.ling = st.artifact.ling + num
+	ArtifactHandler.SendMilingInfo(sysarg)
+	LActor.sendTipmsg(sysarg, string.format("获得%d灵液", num), ttMessage)
+end
+
+GmEventFuncList.register("clearactifact", ArtifactHandler.ClearActorData, 1)
+GmEventFuncList.register("addlingye", ArtifactHandler.AddLingye, 1)
+
+--EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeArtifact, ArtifactHandler.HandlerOp)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, ArtifactHandler.OnNewDayArrive)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, ArtifactHandler.OnLogin)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeLevel, ArtifactHandler.OnActorLevelUp)

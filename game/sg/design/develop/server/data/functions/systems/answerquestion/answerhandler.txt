@@ -1,0 +1,480 @@
+--lua script
+-- 答题处理
+--#include "data\language\LangCode.txt" once
+--#include "data\config\activity\answerquestions.txt" once
+--#include "data\functions\GlobalDefine.txt" once
+
+--提交题目的答案
+ANSWERSYSTEM.answerQuestion = function (sysarg, packet)
+	--print("ANSWERSYSTEM.answerQuestion") 
+	local var = LActor.getStaticVar(sysarg)
+	local sysvar = System.getStaticVar()
+	if sysvar.answerData == nil then return end
+	if var.answerData == nil or var.answerData.serial ~= sysvar.answerData.serial then return end
+	if sysvar.answerData.state == nil or sysvar.answerData.state == 0 then return end
+	if sysvar.answerData.state == 2 then
+		LActor.sendTipmsg(sysarg, Lang.TaskTalk.aq002, ttMessage)
+		return
+	end
+	local myAnswer = tonumber(DataPack.readChar(packet))
+	if myAnswer <= 0 or myAnswer > 4 then return end
+	if var.answerData == nil then return end
+	if var.answerData.answer > 0 then
+		LActor.sendTipmsg(sysarg, Lang.TaskTalk.aq012, ttMessage)
+		return
+	end
+	--不管对错,先算你一个答案
+	if myAnswer > 0 and myAnswer <= 4 then
+		sysvar.answerData.answer[myAnswer] = sysvar.answerData.answer[myAnswer] + 1
+	end
+	var.answerData.answer = myAnswer
+
+	--print("ANSWERSYSTEM.answerQuestion myAnswer:"..myAnswer)
+
+	if var.answerData.attrackFlag == 0 then
+		var.answerData.attendNum = var.answerData.attendNum + 1
+		var.answerData.attrackFlag = 1
+	end
+
+	local questionId = sysvar.answerData.questions[sysvar.answerData.index]
+	local rightAnswer = answerConfig.rightAnswer[questionId]
+	
+	if myAnswer == rightAnswer then --答对了,各种处理
+		--print("ANSWERSYSTEM.answerQuestion right")
+		--时间
+		local nowtime = System.getCurrMiniTime()
+		local usetime = nowtime - sysvar.answerData.startTime
+		--按时间算计积分
+		local addScore
+		if usetime <= 2 then addScore = 4 end
+		if usetime > 2 and usetime <= 5 then addScore = 3 end
+		if usetime > 5 and usetime <= 10 then addScore = 2 end
+		if usetime > 10 then addScore = 1 end
+		--答对积分+连对积分
+		addScore = var.answerData.count + addScore
+		var.answerData.score = var.answerData.score + addScore
+		var.answerData.rightnum = var.answerData.rightnum + 1
+		ANSWERSYSTEM.updateAnswerRank (LActor.getName(sysarg), var.answerData.score)
+		if var.answerData.count < 10 then
+			var.answerData.count = var.answerData.count + 1
+		end
+		--print("ANSWERSYSTEM.answerQuestion rightcount:"..var.answerData.count)
+		--print("ANSWERSYSTEM.answerQuestion score:"..var.answerData.score..",rightnum:"..var.answerData.rightnum)
+	else --答错了
+		--print("ANSWERSYSTEM.answerQuestion wrong")
+		var.answerData.count = 0
+	end
+	local npack = DataPack.allocPacket(sysarg, 141, 2)
+	--DataPack.writeInt(npack, rightAnswer)
+	DataPack.flush(npack)
+end
+
+--使用求助
+ANSWERSYSTEM.answerUseHelp = function (sysarg, packet, ifin)
+	--print("ANSWERSYSTEM.answerUseHelp")
+	local help
+	if ifin ~= nil then 
+	 	help = ifin
+	else
+		help = tonumber(DataPack.readChar(packet))
+	end
+	if help ~= 1 and help ~= 2 and help ~= 3 then return end
+	local var = LActor.getStaticVar(sysarg)
+	if var.answerData == nil then return end
+	local sysvar = System.getStaticVar()
+	if sysvar.answerData == nil then return end
+	if var.answerData.serial ~= sysvar.answerData.serial then return end
+	if sysvar.answerData.state == nil or sysvar.answerData.state == 0 then return end
+	if sysvar.answerData.state == 2 then
+		LActor.sendTipmsg(sysarg, Lang.TaskTalk.aq001, ttMessage)
+		return
+	end
+	if var.answerData.answer > 0 then
+		LActor.sendTipmsg(sysarg, Lang.TaskTalk.aq012, ttMessage)
+		return
+	end
+	if var.answerData.help == nil then var.answerData.help = {} end
+	if var.answerData.help[help] == nil then var.answerData.help[help] = 0 end
+	if var.answerData.help[help] >= answerConfig.maxHelpNum then return end
+	if ifin == nil then
+		var.answerData.usedHelp = help
+		var.answerData.help[help] = var.answerData.help[help] + 1
+	end
+	local myAnswer = 1
+	local npack = DataPack.allocPacket(sysarg, 141, 3)
+	DataPack.writeChar(npack, help)
+	if help == 1 then
+		local answernum = sysvar.answerData.answer[1]
+		for i=2,4 do
+			if answernum < sysvar.answerData.answer[i] then
+				myAnswer = i
+				answernum = sysvar.answerData.answer[i]
+			end
+		end
+		DataPack.writeInt(npack, myAnswer)
+		DataPack.writeInt(npack, 0)
+		--print("ANSWERSYSTEM.answerUseHelp help:"..help)
+	end
+	if help == 2 then
+		local questionId = sysvar.answerData.questions[sysvar.answerData.index]
+		local rightAnswer = answerConfig.rightAnswer[questionId]
+		if rightAnswer == 1 or rightAnswer == 2 then
+			myAnswer = 3 
+		else
+			myAnswer = 1
+		end 
+		DataPack.writeInt(npack, myAnswer)
+		DataPack.writeInt(npack, myAnswer + 1)
+		--print("ANSWERSYSTEM.answerUseHelp help:"..help)
+	end
+	if help == 3 then
+		local questionId = sysvar.answerData.questions[sysvar.answerData.index]
+		local rightAnswer = answerConfig.rightAnswer[questionId]
+		DataPack.writeInt(npack, rightAnswer)
+		DataPack.writeInt(npack, 0)
+		--print("ANSWERSYSTEM.answerUseHelp help:"..help)
+	end
+
+	if var.answerData.attrackFlag == 0 then
+		var.answerData.attendNum = var.answerData.attendNum + 1
+		var.answerData.attrackFlag = 1
+	end
+	--print("ANSWERSYSTEM.answerUseHelp myAnswer:"..myAnswer)
+	DataPack.flush(npack)
+end
+
+--关闭答题面板
+ANSWERSYSTEM.CloseAnswer = function (sysarg, packet)
+	--print("ANSWERSYSTEM.CloseAnswer")
+	local var = LActor.getStaticVar(sysarg)
+	if var.answerData == nil then return end
+	var.answerData.IfOpen = 0
+end
+
+--剩余的活动参加次数
+ANSWERSYSTEM.RemainAnswerNum = function (sysarg, packet)
+	--print("ANSWERSYSTEM.RemainAnswerNum")
+	local npack = DataPack.allocPacket(sysarg, 141, 5)
+	local remainNum = answerConfig.maxAttendNum
+	local var = LActor.getStaticVar(sysarg)
+	if var.answerData == nil or var.answerData.attendNum == nil or var.answerData.attendNum == 0 then
+		DataPack.writeInt(npack, remainNum)
+		DataPack.flush(npack)
+		return
+	end
+
+	sysvar = System.getStaticVar()
+	if var.answerData.serial == nil or sysvar.answerData == nil or sysvar.answerData.state == nil or sysvar.answerData.state == 0 or sysvar.answerData.serial == nil or var.answerData.serial ~= sysvar.answerData.serial then
+		remainNum = answerConfig.maxAttendNum - var.answerData.attendNum
+	else
+		remainNum = answerConfig.maxAttendNum - var.answerData.attendNum + 1
+	end
+
+	if remainNum < 0 then remainNum = 0 end
+
+	DataPack.writeInt(npack, remainNum)
+	DataPack.flush(npack)
+end
+
+--更新排行榜
+ANSWERSYSTEM.updateAnswerRank = function (actorname, score)
+	--print("........updateAnswerRank")
+	local sysvar = System.getStaticVar()
+	if sysvar.answerData == nil then return end
+	--print("........updateAnswerRank ranknum:"..sysvar.answerData.ranknum)
+	if sysvar.answerData.ranknum == 0 then
+		sysvar.answerData.rank[1] = {}
+		sysvar.answerData.rank[1].actorName = actorname
+		sysvar.answerData.rank[1].score = score
+		sysvar.answerData.rank[1].flag = 0
+		sysvar.answerData.ranknum = 1
+		return
+	end
+	for i=1,sysvar.answerData.ranknum do
+		--print("........updateAnswerRank get index:"..i)
+		if sysvar.answerData.rank[i].actorName == actorname then
+			sysvar.answerData.rank[i].score = score
+			--print("........updateAnswerRank get index2:"..i)
+			if i >= 2 then ANSWERSYSTEM.upAnswerRank(i) end
+			return
+		end
+	end
+	if score <= sysvar.answerData.rank[sysvar.answerData.ranknum].score and sysvar.answerData.ranknum < answerConfig.maxRankNum then
+		--print("........updateAnswerRank get index11")
+		sysvar.answerData.ranknum = sysvar.answerData.ranknum + 1
+		sysvar.answerData.rank[sysvar.answerData.ranknum] = {}
+		sysvar.answerData.rank[sysvar.answerData.ranknum].actorName = actorname
+		sysvar.answerData.rank[sysvar.answerData.ranknum].score = score
+		sysvar.answerData.rank[sysvar.answerData.ranknum].flag = 0
+		return
+	end
+	if sysvar.answerData.ranknum >= answerConfig.maxRankNum then
+		if score <= sysvar.answerData.rank[sysvar.answerData.ranknum].score then return end
+		--print("........updateAnswerRank get index22")
+		sysvar.answerData.rank[sysvar.answerData.ranknum] = {}
+		sysvar.answerData.rank[sysvar.answerData.ranknum].actorName = actorname
+		sysvar.answerData.rank[sysvar.answerData.ranknum].score = score
+		sysvar.answerData.rank[sysvar.answerData.ranknum].flag = 0
+		ANSWERSYSTEM.upAnswerRank(sysvar.answerData.ranknum)
+		return
+	else
+		--print("........updateAnswerRank get index33")
+		sysvar.answerData.ranknum = sysvar.answerData.ranknum + 1
+		sysvar.answerData.rank[sysvar.answerData.ranknum] = {}
+		sysvar.answerData.rank[sysvar.answerData.ranknum].actorName = actorname
+		sysvar.answerData.rank[sysvar.answerData.ranknum].score = score
+		sysvar.answerData.rank[sysvar.answerData.ranknum].flag = 0
+		--print("........updateAnswerRank get ranknum:"..sysvar.answerData.ranknum)
+		--print("........updateAnswerRank get actorName:"..sysvar.answerData.rank[sysvar.answerData.ranknum].actorName)
+		ANSWERSYSTEM.upAnswerRank(sysvar.answerData.ranknum)
+		return
+	end
+
+end
+
+--更新排行榜
+ANSWERSYSTEM.upAnswerRank = function(index)
+	--print("........upAnswerRank index:"..index)
+	local sysvar = System.getStaticVar()
+	if sysvar.answerData == nil then return end
+	for i=index,2,-1 do
+		if sysvar.answerData.rank[i].score > sysvar.answerData.rank[i - 1].score then
+			--print("........upAnswerRank index:"..i)
+			local tmpRankData1 = {}
+			tmpRankData1.score = sysvar.answerData.rank[i - 1].score
+			tmpRankData1.actorName = sysvar.answerData.rank[i - 1].actorName
+			local tmpRankData2 = {}
+			tmpRankData2.score = sysvar.answerData.rank[i].score
+			tmpRankData2.actorName = sysvar.answerData.rank[i].actorName
+			sysvar.answerData.rank[i] = {}
+			sysvar.answerData.rank[i].score = tmpRankData1.score
+			sysvar.answerData.rank[i].actorName = tmpRankData1.actorName
+			sysvar.answerData.rank[i].flag = 0
+			sysvar.answerData.rank[i - 1] = {}
+			sysvar.answerData.rank[i - 1].score = tmpRankData2.score
+			sysvar.answerData.rank[i - 1].actorName = tmpRankData2.actorName
+			sysvar.answerData.rank[i - 1].flag = 0
+			--print("........upAnswerRank index score:"..sysvar.answerData.rank[i].score..sysvar.answerData.rank[i].actorName)
+			--print("........upAnswerRank index-1 score:"..sysvar.answerData.rank[i - 1].score..sysvar.answerData.rank[i - 1].actorName)
+		else
+			break
+		end
+	end
+end
+
+
+
+--下发答题面板
+ANSWERSYSTEM.sendAnswerInfo = function (sysarg, packet)
+	--print("ANSWERSYSTEM.sendAnswerInfo")
+	local var = LActor.getStaticVar(sysarg)
+
+	--是否在副本中
+	if LActor.isInFuben(sysarg) then
+		LActor.sendTipmsg(sysarg, Lang.TaskTalk.aq007, ttMessage)
+		return
+	end
+
+	--等级
+	local lv = LActor.getLevel(sysarg)
+	if lv < answerConfig.minLevel then return end
+
+	--各种初始化
+	local sysvar = System.getStaticVar()
+	if sysvar.answerData == nil then return end
+	if sysvar.answerData.state == nil or sysvar.answerData.state == 0 then return end
+	if var.answerData == nil then var.answerData = {} end
+	--参加次数限制
+	if var.answerData.attendNum == nil then var.answerData.attendNum = 0 end
+	if var.answerData.score == nil then var.answerData.score  = 0 end
+	if var.answerData.serial == nil or var.answerData.serial ~= sysvar.answerData.serial then
+		if var.answerData.attendNum >= answerConfig.maxAttendNum then
+			LActor.sendTipmsg(sysarg, Lang.TaskTalk.aq006, ttMessage)
+			return
+		end
+		--如果和当前的答题活动的流水号不一致,即不是同一次活动
+		var.answerData.serial = sysvar.answerData.serial
+		var.answerData.attrackFlag = 0
+		var.answerData.help  = {}
+		var.answerData.help[1] = 0
+		var.answerData.help[2] = 0
+		var.answerData.help[3] = 0
+		var.answerData.count = 0
+		var.answerData.answer = 0
+		var.answerData.rightnum  = 0
+		var.answerData.score = 0
+		var.answerData.usedHelp = 0
+	end
+	var.answerData.IfOpen = 1
+	if var.answerData.count == nil then var.answerData.count  = 0 end
+	if var.answerData.answer == nil then var.answerData.answer  = 0 end
+	if var.answerData.index == nil then var.answerData.index  = 0 end
+	if var.answerData.index ~= sysvar.answerData.index then
+		var.answerData.answer = 0
+		var.answerData.count = 0
+		var.answerData.index = sysvar.answerData.index
+		var.answerData.usedHelp = 0
+	end
+	if var.answerData.rightnum == nil then var.answerData.rightnum  = 0 end
+	if var.answerData.help == nil then
+		var.answerData.help  = {}
+		var.answerData.help[1] = 0
+		var.answerData.help[2] = 0
+		var.answerData.help[3] = 0
+	end
+	if var.answerData.attrackFlag == nil then
+		var.answerData.attrackFlag = 0
+	end
+	if var.answerData.usedHelp == nil then
+		var.answerData.usedHelp = 0
+	end
+
+	--构造回包
+	--print("ANSWERSYSTEM.sendAnswerInfo index::"..sysvar.answerData.index)
+	local questionId = sysvar.answerData.questions[sysvar.answerData.index]
+	local addScore = var.answerData.count
+	local remainTime = System.getCurrMiniTime() - sysvar.answerData.startTime
+	if remainTime < 0 then remainTime = 0 end
+	if sysvar.answerData.state == 2 then
+		remainTime = 0
+	else 
+		remainTime = answerConfig.answerTime - answerConfig.nextTime - remainTime
+	end
+	if remainTime < 0 then remainTime = 0 end
+	local remainQuestionNum = answerConfig.questionTotalNum - sysvar.answerData.index
+
+	local npack = DataPack.allocPacket(sysarg, 141, 1)
+
+	DataPack.writeInt(npack, questionId)
+	DataPack.writeInt(npack, remainTime)
+	DataPack.writeByte(npack, remainQuestionNum)
+	DataPack.writeInt(npack, answerConfig.maxHelpNum - var.answerData.help[1])
+	DataPack.writeInt(npack, answerConfig.maxHelpNum - var.answerData.help[2])
+	DataPack.writeInt(npack, answerConfig.maxHelpNum - var.answerData.help[3])
+	local ranknum = sysvar.answerData.ranknum
+	if ranknum > 5 then
+		ranknum = 5
+	end
+	DataPack.writeByte(npack, ranknum)
+	--print("ANSWERSYSTEM.sendAnswerInfo ranknum::"..sysvar.answerData.ranknum)
+	for i = 1,ranknum do
+		--print("ANSWERSYSTEM.sendAnswerInfo rank index:"..i..",actorName:"..sysvar.answerData.rank[i].actorName..",score:"..sysvar.answerData.rank[i].score)
+		DataPack.writeString(npack, sysvar.answerData.rank[i].actorName)
+		DataPack.writeInt(npack, sysvar.answerData.rank[i].score)
+	end
+	--print("ANSWERSYSTEM.sendAnswerInfo score::"..var.answerData.score)
+	DataPack.writeInt(npack, var.answerData.score)
+	local myrank = 0
+	local myname = LActor.getName(sysarg)
+	if sysvar.answerData.ranknum ~= 0 then
+		for i = 1,sysvar.answerData.ranknum do
+			if sysvar.answerData.rank[i].actorName == myname then
+				myrank = i
+				break
+			end
+		end
+	end
+	--print("ANSWERSYSTEM.sendAnswerInfo myrank::"..myrank..",rightnum:"..var.answerData.rightnum)
+	DataPack.writeByte(npack, myrank)
+	DataPack.writeByte(npack, var.answerData.rightnum)
+	local wrongNum
+	if sysvar.answerData.index > var.answerData.rightnum then 
+		wrongNum = sysvar.answerData.index - var.answerData.rightnum
+		if var.answerData.answer == 0 then wrongNum = wrongNum - 1 end
+	else
+		wrongNum = 0
+	end
+	DataPack.writeByte(npack, wrongNum)
+	DataPack.writeChar(npack, var.answerData.answer)
+	DataPack.flush(npack)
+
+	--如果当前是换题目的倒计时时间,则要多一个包,下发正确答案
+	if sysvar.answerData.state == 2 then
+		local npack1 = DataPack.allocPacket(sysarg, 141, 4)
+		remainTime = System.getCurrMiniTime() - sysvar.answerData.startTime
+		if remainTime < 0 then remainTime = 0 end
+		remainTime = answerConfig.nextTime - remainTime
+		if remainTime < 0 then remainTime = 0 end
+		DataPack.writeInt(npack1, remainTime)
+		local rightAnswer = answerConfig.rightAnswer[questionId]
+		DataPack.writeInt(npack1, rightAnswer)
+		DataPack.flush(npack1)
+	else 
+		if var.answerData.usedHelp == 2 then
+			ANSWERSYSTEM.answerUseHelp(sysarg, nil, var.answerData.usedHelp)
+			--print("ANSWERSYSTEM.sendAnswerInfo usedHelp:"..var.answerData.usedHelp)
+		end
+	end
+
+
+end
+
+function loginDealAnswer(sysarg,arg)
+	--print("loginDealAnswer")
+	local actorVar = LActor.getStaticVar(sysarg)
+	if actorVar.answerData ~= nil then actorVar.answerData.IfOpen = 0 end
+	if actorVar.answerData == nil or actorVar.answerData.score == nil or actorVar.answerData.score == 0 then return end
+
+	if actorVar.answerData.serial == nil or actorVar.answerData.serial == 0 then return end
+
+	local sysvar = System.getStaticVar()
+	if sysvar.answerData == nil then return end
+	if sysvar.answerData.serial == nil then return end
+
+	local var_sys_d = System.getDyanmicVar()
+
+	if actorVar.answerData.serial == sysvar.answerData.serial and sysvar.answerData.state ~= 0 then return end
+
+	local coin = answerConfig.awardNumList[1]*actorVar.answerData.score
+	local yl = answerConfig.awardNumList[2]*actorVar.answerData.score
+	if var_sys_d.AnswerQuestionDouble ~= nil and var_sys_d.AnswerQuestionDouble == 1 then		
+		coin = coin * 2
+		yl = yl * 2
+	end
+	--给奖励
+	LActor.changeMoney(sysarg, mtBindCoin, coin, 1, true, "answerqustions", "answerreward")
+	LActor.changeMoney(sysarg, mtCoin, yl, 1, true, "answerqustions", "answerreward")
+
+	actorVar.answerData.score = 0
+	--通知
+	local msg = string.format(Lang.TaskTalk.aq004, actorVar.answerData.rightnum, coin, yl)
+	LActor.sendTipmsg(sysarg, msg, ttMessage)
+
+	if sysvar.answerData.serial ~= sysvar.answerData.serial then
+		return
+	end
+
+	local actorName = LActor.getName(sysarg)
+
+	--排行榜奖励
+	local rankdata = sysvar.answerData.rank
+	if sysvar.answerData.ranknum == 0 then return end
+	for i=1,sysvar.answerData.ranknum do
+		if rankdata[i].actorName == actorName and rankdata[i].flag == 0 then
+			--给排名奖励
+			local rankAwardIndex = 1
+			for j=1,#answerConfig.rankAwardList do
+				if i <= answerConfig.rankAwardList[j][1] then 
+					rankAwardIndex = j
+					break
+				end
+			end
+			local addexp = answerConfig.rankAwardList[rankAwardIndex][2]
+			local addroot = answerConfig.rankAwardList[rankAwardIndex][3]
+			if var_sys_d.AnswerQuestionDouble ~= nil and var_sys_d.AnswerQuestionDouble == 1 then
+				addexp = addexp * 2
+				addroot = addroot * 2
+			end
+			LActor.addExp(sysarg, addexp, 0, 0)
+			LActor.playExpEffect(sysarg, addexp) -- 播放获取经验特效
+			LActor.addRootExp(sysarg, addroot, -1) -- 不能算真气丹的加成效果
+			--通知
+			local msg = string.format(Lang.TaskTalk.aq010, i, addexp, addroot)
+			LActor.sendTipmsg(sysarg, msg, ttMessage)
+
+			sysvar.answerData.rank[i].flag = 1
+		end
+	end
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, loginDealAnswer)

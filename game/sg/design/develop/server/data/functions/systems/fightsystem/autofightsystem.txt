@@ -1,0 +1,71 @@
+﻿-- 系统设置相关数据的也放在这里
+
+-- 初始化挂机数据
+function InitActorFightData(obj)
+    local var = LActor.getStaticVar(obj)
+    if var == nil or var.hook ~= nil then return end
+    var.hook = {}
+    var.hook[1] = 0 -- 默认不作任何初始化
+end
+
+--读取玩家挂机数据 
+function loadActorFightData(obj,msgid)
+    InitActorFightData(obj)
+
+    local var = LActor.getStaticVar(obj)
+    local hook = var.hook
+    if hook == nil or #hook == 0 then
+        print("hook is nil")
+        return 
+    end
+
+    local npack = DataPack.allocPacket(obj, 129, 1)  --申请一个数据包
+    if npack == nil then return end
+    local ncount = hook[1]
+    if ncount > 100 then ncount = 100 end
+    DataPack.writeInt(npack,ncount)
+    for i = 1 ,ncount * 2 do
+        if hook[i + 1] ~= nil then 
+            DataPack.writeInt(npack,hook[i + 1])
+        else
+            DataPack.writeInt(npack, 0)
+        end
+    end
+    DataPack.flush(npack)
+end
+
+--保存挂机数据 
+function saveActorFightData(obj,msgid,pack)
+    local var = LActor.getStaticVar(obj)
+    local hook = var.hook
+    if hook == nil then
+        var.hook = {}
+        hook = var.hook
+    end
+    if pack == nil then 
+        print("pack is nil !!")
+    end
+    local nCount = DataPack.readInt(pack)
+    if nCount > 100 then nCount = 100 end
+
+    hook[1] = nCount
+    for i = 1, nCount * 2 do
+        hook[i + 1] = DataPack.readInt(pack)
+    end
+end
+
+function FightDataSystem(obj, systemid, msgid, packet)
+    if msgid == 1 then
+        loadActorFightData(obj, msgid)
+    elseif msgid == 2 then
+        saveActorFightData(obj, msgid, packet)
+    end
+end
+
+-- 登录时初始化挂机数据
+EventCallDispatcher.OnLoginAutoFight = function(obj, args)
+    InitActorFightData(obj)
+end
+
+SystemHandlerDispatcher.registerSystemHander(BaseTypes.SystemId.autoFightSystem, FightDataSystem)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, EventCallDispatcher.OnLoginAutoFight)

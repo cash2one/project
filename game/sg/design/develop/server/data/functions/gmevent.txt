@@ -1,0 +1,2109 @@
+--#include "data\functions\actorevent\slavehandler.txt" once
+--#include "data\functions\systems\miscs\tongtiantahandle.txt" once
+--#include "data\config\quest\stdquests.txt" once
+
+
+-- GM命令
+
+GmEventFuncList = {}
+local GmEventQuestFuncList = {}
+
+--[[
+返回值:
+-1 : 没有该命令
+-2 : 等级不够
+-3 : 执行错误
+]]
+
+function OnGmEvent( sysarg, cmd, level,... )
+  if cmd == nil or type(cmd) ~= "string" then return -1 end
+
+  local cmd = string.lower( cmd )
+
+  local gmset = GmEventFuncList[cmd]
+  if gmset == nil then
+    return -1
+  end
+  --判断GM等级
+  if level < gmset.level then
+    return -2
+  end
+  if gmset.func( sysarg, arg ) == false then
+    return -3
+  end
+  return 0
+end
+
+GmEventFuncList.register = function( cmd, func, level )
+  if GmEventFuncList[cmd] ~= nil then
+    print( "gm cmd name exist:"..cmd )
+    return false
+  end
+  GmEventFuncList[cmd] = {}
+  GmEventFuncList[cmd].level = level
+  GmEventFuncList[cmd].func = func
+  return true
+end
+
+-- 通过qid查找任务配置
+GmEventQuestFuncList.findQuestConfByQid = function (qid)
+  for k, v in pairs(StdQuest) do
+    if v.id == qid then
+      return v
+    end
+  end
+end
+
+-- 设置灵器属性
+-- args : state, level, exp
+GmEventFuncList.SetGemInfo = function( sysarg, args )
+  LActor.setGemInfo( sysarg, args[1], args[2], args[3] )
+end
+
+--开启系统
+GmEventFuncList.OpenSys = function( sysarg, args )
+  LActor.openActorSystem( sysarg, tonumber(args[1] ))
+  return true
+end
+
+--触发活跃目标
+GmEventFuncList.TriggerTarget = function( sysarg, args )
+  LActor.triggerTarget( sysarg, args[1] )
+end
+
+
+GmEventFuncList.GmAddBagMiji = function(sysarg, args)
+  local itemId = args[1]
+  local count = args[2] or 1
+  local tuple = args[3] or 1
+  local level = args[4] or 1
+  if itemId == nil or count == nil then return end
+  itemId = tonumber(itemId)
+  count = tonumber(count)
+  tuple = tonumber(tuple) - 1
+  level = tonumber(level) - 1
+  local guid = 0
+  local count,guid = LActor.addItemRetGuid(sysarg, itemId, 0, level, count, 0, guid)
+  local pItem = Item.getBagItemPtrByGuid(sysarg, guid)
+  if pItem == nil then
+
+    print(" pItem == nil ")
+    return
+  end
+
+  Item.setItemProperty(sysarg, pItem, Item.ipItemTuple, tuple)
+
+end
+
+
+GmEventFuncList.AchieveEvent = function( sysarg, args )
+  if not args[1] then args[1] = 0 end
+  if not args[2] then args[2] = 0 end
+  LActor.SetAchieveProcessByType( sysarg, tonumber(args[1]), 2, tonumber(args[2]) )
+  return true
+end
+
+GmEventFuncList.Recharge = function( sysarg, args )
+  if args[1] == nil then return false end
+
+  -- 一个参数，给自己加
+  if args[2] == nil then
+    local addVal = tonumber( args[1] )
+    if addVal == nil then
+      print("recharge parameter error")
+      return false
+    end
+    LActor.recharge( sysarg, addVal )
+    return true
+  end
+
+  local name = args[1]
+  local addVal = tonumber( args[2] )
+ 
+  if name == nil or addVal == nil then
+    print("recharge parameter error")
+    return false
+  end
+
+  -- 给别人加
+  local actor = LActor.getActorByName(name)
+  if actor == nil then
+    LActor.sendTipmsg(sysarg, "user not exist or offline", ttTipmsgWindow)
+    return false
+  end
+
+  LActor.recharge( actor, addVal )
+
+  return true
+end
+
+--添加任务
+GmEventFuncList.AddQuest = function( sysarg, args )
+  if args[1] == nil then
+    return false
+  end
+  local questId = tonumber( args[1] )
+  return LActor.addQuest( sysarg, questId )
+end
+
+-- 设置今天进入副本次数
+GmEventFuncList.SetFubenCount = function(sysarg, args)
+  local fid = args[1]
+  local count = args[2]
+  local name = args[3]
+  if fid == nil or count == nil then return false end
+
+  fid = tonumber(fid)
+  count = tonumber(count)
+
+  --自己
+  if name == nil then
+    Fuben.setEnterCount(sysarg, fid, count)
+    return true
+  end
+
+  --其他人
+  local actor = LActor.getActorByName(name)
+  if actor == nil then
+    LActor.sendTipmsg(sysarg, "user not exist")
+    return false
+  end
+
+  Fuben.setEnterCount(actor, fid, count)
+
+  return true
+end
+
+-- 显示ID
+GmEventFuncList.ShowActorId = function(sysarg, args)
+  local tips = string.format("actor id : %d", LActor.getActorId(sysarg))
+  LActor.sendTipmsg(sysarg, tips, ttTipmsgWindow)
+
+  return true
+end
+
+GmEventFuncList.GmTongTianTa = function(sysarg, args)
+  if args[1] == "clear" then
+    local sysVar = System.getStaticVar()
+    sysVar.tongtianta = nil
+
+    local var_d = LActor.getDyanmicVar(sysarg)
+    var_d.tongtianta.layer = 0
+    var_d.tongtianta.timeleft = 0
+
+    local var = LActor.getStaticVar(sysarg)
+    var.tongtianta.maxlayer = 0
+  elseif args[1] == "print" then
+    local sysVar = System.getStaticVar()
+    for i=1,50 do
+      if sysVar.tongtianta == nil or sysVar.tongtianta[i] == nil then break end
+      print( string.format("TongTianTa : %d %d %d", i, sysVar.tongtianta[i].aid, sysVar.tongtianta[i].timeleft) )
+    end
+  elseif args[1] == "layer" then
+    local var_d = LActor.getDyanmicVar(sysarg)
+    print(string.format("layer : %d %d", var_d.tongtianta.layer, var_d.tongtianta.timeleft))
+  elseif args[1] == "layerset" then
+    local var = LActor.getStaticVar(sysarg)
+    var.tongtianta.maxlayer = tonumber(args[2])
+  elseif args[1] == "enter" then
+    TongTianTaFunc.OnEnterFuBen(sysarg, tonumber(args[2]))
+  else
+    print("error param")
+  end
+end
+
+-- 系统是否开启
+GmEventFuncList.IsSysOpen = function(sysarg, args)
+  if args[1] == nil then return false end
+
+  local sid = tonumber(args[1])
+  local tips
+  if LActor.isActorSystemOpen(sysarg, sid) then
+    tips = "true"
+  else
+    tips = "false"
+  end
+  LActor.sendTipmsg(sysarg, tips, ttTipmsgWindow)
+
+  return true
+end
+
+-- 增加真气
+GmEventFuncList.AddRootExp = function(sysarg, args)
+  if args[1] == nil then return false end
+
+  local val = tonumber(args[1])
+  
+  LActor.addRootExp(sysarg, val)
+
+  return true
+end
+
+-- 使用技能
+GmEventFuncList.UseSkill = function(sysarg, args)
+  if args[1] == nil then return false end
+
+  local val = tonumber(args[1])
+  local level = 1
+  if args[2] ~= nil then
+    level = tonumber(args[2])
+  end
+  
+  LActor.useSkill(sysarg, val, 0, 0, false, level)
+
+  return true
+end
+
+-- 添加场景特效
+GmEventFuncList.addSceneEffect = function(sysarg, args)
+  if args[1] == nil then return false end
+  if args[2] == nil then return false end
+  if args[3] == nil then return false end
+
+  local id = tonumber(args[1])
+  local etype = tonumber(args[2])
+  local ti = tonumber(args[3])
+  
+  LActor.addSceneEffect(sysarg, id, etype, ti)
+
+  return true
+end
+
+-- 获取蟠桃采集信息
+GmEventFuncList.GetPTInfo = function(sysarg, args)
+  if args[1] == nil or type(args[1]) ~= "string" then return false end
+
+  local name = args[1]
+
+  local actor = LActor.getActorByName(name)
+  if actor == nil then
+    LActor.sendTipmsg(sysarg, "user not exist")
+    return false
+  end
+
+  local var = LActor.getStaticVar(actor)
+  if var == nil then return false end
+  
+  local count = var.getherpeachcount
+  if count == nil then
+    count = "nil"
+  end
+  local max_count = var.getherpeachMaxcount
+  if max_count == nil then
+    max_count = "nil"
+  end
+  LActor.sendTipmsg(sysarg, "count:"..count..",".."max:"..max_count, ttTipmsgWindow)
+
+  return true
+end
+
+-- 重置蟠桃采集信息
+GmEventFuncList.ResetPTInfo = function(sysarg, args)
+  if args[1] == nil or type(args[1]) ~= "string" then return false end
+
+  local name = args[1]
+
+  local actor = LActor.getActorByName(name)
+  if actor == nil then 
+    LActor.sendTipmsg(sysarg, "user not exist")
+    return false
+  end
+
+  local var = LActor.getStaticVar(actor)
+  if var == nil then return false end
+  
+  var.getherpeachcount = nil
+  var.getherpeachMaxcount = nil
+
+  return true
+end
+
+-- 获取属性
+GmEventFuncList.GetIntPro = function(sysarg, args)
+  if args[1] == nil then return false end
+
+  local val = tonumber(args[1])
+  
+  local tips = string.format("prop val:%d", LActor.getIntProperty(sysarg, val))
+
+  LActor.sendTipmsg(sysarg, tips, ttTipmsgWindow)
+
+  return true
+end
+
+-- 删除状态
+GmEventFuncList.RemoveState = function(sysarg, args)
+  if args[1] == nil then return false end
+
+  LActor.removeState(sysarg, args[1])
+
+  return true
+end
+
+-- 放弃任务
+GmEventFuncList.GiveupQuest = function(sysarg, args)
+  if args[1] == nil then return false end
+
+  LActor.GiveUpQuest(sysarg, args[1])
+
+  return true
+end
+
+-- 随机攻击
+GmEventFuncList.RandomAttack = function(sysarg, args)
+  LActor.randomAttack(sysarg)
+
+  return true
+end
+
+-- 魅力值
+GmEventFuncList.ChangeCharm = function(sysarg, args)
+  if args[1] == nil then return false end
+
+  LActor.changeCharm(sysarg, args[1])
+
+  return true
+end
+
+-- 清空副本次数
+GmEventFuncList.ClearFubenCount = function(sysarg, args)
+  local name = args[1]
+
+  if name == nil then
+    -- 清空自己
+    local var = LActor.getStaticVar(sysarg)
+    LActor.clearFubenCount(sysarg)
+    if var.fubenlistprocess ~= nil then
+      for i=0,30 do
+        if var.fubenlistprocess[i] ~= nil then
+          if var.fubenlistprocess[i].process ~= nil then var.fubenlistprocess[i].process = nil end
+          if var.fubenlistprocess[i].enterCount ~= nil then var.fubenlistprocess[i].enterCount = nil end
+          if var.fubenlistprocess[i].ifcant ~= nil then var.fubenlistprocess[i].ifcant = nil end
+        end
+      end
+    end
+  else
+    -- 清空别人
+    local actor = LActor.getActorByName(name)
+    if actor == nil then
+      LActor.sendTipmsg(sysarg, "user not exist",ttMessage)
+      return false
+    end
+    LActor.clearFubenCount(actor)
+    local var = LActor.getStaticVar(actor)
+    var.fubenlistprocess = nil
+  end
+  return true
+end
+
+-- 充值
+GmEventFuncList.ChargeFee = function(sysarg, args)
+  local item = args[1]
+  local num = args[2]
+
+  if item == nil or num == nil then
+    return false
+  end
+
+  LActor.chargeFee(sysarg, item, num)
+  
+  return true
+end
+
+-- 复活
+GmEventFuncList.Relive = function(sysarg, args)
+
+  LActor.relive(sysarg)
+  
+  return true
+end
+
+GmEventFuncList.AgReload = function (sysarg, args)
+  System.actorMgrReloadScript()
+end
+
+GmEventFuncList.AgFilter = function (sysarg, args)
+  System.actorMgrLoadFilterNames()
+end
+
+
+-- 给别人家奖励
+GmEventFuncList.GiveAward = function(sysarg, args)
+  local name = args[1]
+  local itype = args[2]
+  local ival = args[3]
+
+  if name == nil or itype == nil or ival == nil then
+    LActor.sendTipmsg(sysarg, "need 3 parameter")
+    return false
+  end
+
+  local actor = LActor.getActorByName(name)
+  if actor == nil then 
+    LActor.sendTipmsg(sysarg, "user not exist")
+    return false
+  end
+
+  LActor.giveAward(actor, itype, ival)
+  
+  return true
+end
+
+-- 通知自己或别人完成tx任务
+GmEventFuncList.InformCompletion = function(sysarg, args)
+  if args[1] == nil then return false end
+
+  -- 一个参数，给自己加
+  if args[2] == nil then
+    LActor.informCompletion(sysarg, args[1])
+    return true
+  end
+
+  local name = args[1]
+  local cid = args[2]
+ 
+  if name == nil or cid == nil then
+    print("InformCompletion parameter error")
+    return false
+  end
+
+  -- 给别人加
+  local actor = LActor.getActorByName(name)
+  if actor == nil then
+    LActor.sendTipmsg(sysarg, "user not exist or offline", ttTipmsgWindow)
+    return false
+  end
+
+  LActor.informCompletion(actor, cid)
+end
+
+-- 设置装备洗练属性
+-- 参数：玩家名，装备有效位置索引从1开始，第几条洗练属性，属性类型，属性值
+-- 武器位置,衣服,头盔,护腕,裤子,戒指,项链,饰品,腰带,鞋子,坐骑,黄钻伙伴,Mp源泉,翅膀,魂器,时装的位置,经验罐子
+GmEventFuncList.SetEquipXiLian = function(sysarg, args)
+  if args[1] == nil or args[2] == nil or args[3] == nil or args[4] == nil then
+    return 
+  end
+
+  local actor
+  local sortid
+  local idx
+  local tp
+  local val
+
+  -- 给自己设置
+  if args[5] == nil then
+    actor = sysarg
+    sortid = tonumber(args[1])
+    idx = tonumber(args[2])
+    tp = tonumber(args[3])
+    val = tonumber(args[4])
+  else
+    actor = LActor.getActorByName(args[1])
+    if actor == nil then
+      LActor.sendTipmsg(sysarg, "user not exist or offline", ttTipmsgWindow)
+      return false
+    end
+    sortid = tonumber(args[2])
+    idx = tonumber(args[3])
+    tp = tonumber(args[4])
+    val = tonumber(args[5])
+  end
+
+  local pitem = Item.getEquipBySortID(actor, sortid)
+  if pitem == nil then
+    LActor.sendTipmsg(sysarg, "item no exist", ttTipmsgWindow)
+    return false
+  end
+  Item.setBaptizeProperty(actor, pitem, idx, tp, val)
+  return true
+end
+
+-- 设置开服时间
+GmEventFuncList.SetOpenTime = function(sysarg, args)
+  if args[1] == nil or args[2] == nil or args[3] == nil then
+    LActor.sendTipmsg(sysarg, "params error", ttTipmsgWindow)
+    return false
+  end
+
+  local h = args[4]
+  local m = args[5]
+  -- local s = args[6]
+
+  if h == nil then h = 0 end
+  if m == nil then m = 0 end
+  -- if s == nil then s = 0 end
+
+  System.setOpenServerTime(args[1], args[2], args[3], h, m)
+
+  return true
+end
+
+-- 设置限购物品的剩余数量
+GmEventFuncList.SetLimitCount = function(sysarg, args)
+  if args[1] == nil or args[2] == nil then
+    LActor.sendTipmsg(sysarg, "params error", ttTipmsgWindow)
+  end
+
+  System.setLimitItem(args[1], args[2])
+  return true
+end
+
+-- 重新加载chargeList
+GmEventFuncList.ReloadChargeList = function(sysarg, args)
+  System.reloadChargeList()
+  return true
+end
+
+-- 重新加载globeconfig
+GmEventFuncList.ReloadGlobeConfig = function(sysarg, args)
+  System.reloadGlobeConfig()
+  return true
+end
+
+-- 添加活跃度
+GmEventFuncList.addActivity = function(sysarg, args)
+  local point = tonumber(args[1])
+  LActor.addActivity(sysarg, point)
+  return true
+end
+
+
+-- 开启消费礼包活动(8个礼包)
+GmEventFuncList.ComsumeboxStart = function(sysarg, args)
+    print("comsumeboxstart ======================== ")
+    local lastDay = args[1]
+    local sysVar = System.getStaticVar()
+
+    if System.getOpenServerDay() <= 7 then
+      sysVar.comsumeBoxStartTime = System.getOpenServerStartDateTime() + 7 * 86400 
+      sysVar.comsumeBoxEndTime = System.getOpenServerStartDateTime() + 7 * 86400 + lastDay * 86400
+    else
+      sysVar.comsumeBoxStartTime = System.getToday()
+      sysVar.comsumeBoxEndTime = System.getToday() + lastDay * 86400
+    end
+
+    local year, month, day, hour, minute, sec = 0, 0, 0, 0, 0, 0
+    year, month, day, hour, minute, sec = System.timeDecode(sysVar.comsumeBoxStartTime, year, month, day, hour, minute, sec)
+    local comsumeBoxStartTime = string.format("%d-%d-%d %d:%d:%d", year, month, day, hour, minute, sec)
+    print("comsumeBoxStartTime sysVar.comsumeBoxStartTime = ".. sysVar.comsumeBoxStartTime .. " ("..comsumeBoxStartTime ..")")
+    year, month, day, hour, minute, sec = System.timeDecode(sysVar.comsumeBoxEndTime, year, month, day, hour, minute, sec)
+    local comsumeBoxEndTime = string.format("%d-%d-%d %d:%d:%d", year, month, day, hour, minute, sec)
+    print("ComsumptionBox sysVar.comsumeBoxEndTime = ".. sysVar.comsumeBoxEndTime .. " ("..comsumeBoxEndTime ..")")
+
+    local actors = LuaHelp.getAllActorList()
+    if actors ~= nil then
+      for i=1,#actors do
+        local actor = actors[i]
+        LoginCheckFunc.ComsumptionBoxAward(actor)
+      end
+    end
+end
+
+-- 设置限制物品自动补齐是否开启
+GmEventFuncList.setLimitOpen = function(sysarg, args)
+    local flag = args[1]
+    if flag == 1 then
+      System.setLimitOpen(true)
+    else
+      System.setLimitOpen(false)
+    end
+end
+
+-- 设置限制物品自动补齐参数
+GmEventFuncList.setLimitPara = function(sysarg, args)
+    local low = args[1]
+    local add = args[2]
+    System.setLimitPara(low, add)
+end
+
+-- 设置限制物品自动补齐的开服天数
+GmEventFuncList.setLimitOpenDays = function(sysarg, args)
+    local days = args[1]
+    System.setLimitOpenDays(days)
+end
+
+GmEventFuncList.AddHonor = function (sysarg, args)
+  local name = tostring(args[1])
+  local amount = tonumber(args[2])
+  local actor = LActor.getActorByName(name)
+  if actor == nil then
+    LActor.sendTipmsg(actor, "actor offline", ttTipmsgWindow)
+    return
+  end
+  LActor.giveAward(actor,16,amount)
+end
+
+GmEventFuncList.AddShengWang = function (sysarg, args)
+  local amount = tonumber(args[1])
+  LActor.giveAward(sysarg, qatShengWang, amount)
+end
+
+-- 设置军团领地之战次数
+GmEventFuncList.GuildFdCount = function(sysarg, args)
+  local name = args[1]
+  local count = args[2]
+
+  if name == nil or count == nil then
+    LActor.sendTipmsg(sysarg, "param error", ttMessage)
+    return
+  end
+
+  count = tonumber(count)
+
+  if count < 0 then
+    LActor.sendTipmsg(sysarg, "param error", ttMessage)
+    return
+  end
+
+  local pGuild = LGuild.getGuildByName(name)
+  if pGuild == nil then
+    LActor.sendTipmsg(sysarg, "guild is not exist", ttMessage)
+    return
+  end
+
+  local var_guild = LGuild.getStaticVar(pGuild, true)
+  var_guild.fudi_count = count
+end
+
+-- 设置玩家领地之战次数
+GmEventFuncList.FudiCount = function(sysarg, args)
+  local name = args[1]
+  local count = args[2]
+
+  if name == nil or count == nil then
+    LActor.sendTipmsg(sysarg, "param error", ttMessage)
+    return
+  end
+
+  count = tonumber(count)
+
+  if count < 0 then
+    LActor.sendTipmsg(sysarg, "param error", ttMessage)
+    return
+  end
+
+  local actor = LActor.getActorByName(name)
+  if actor == nil then
+    LActor.sendTipmsg(sysarg, "actor is not exist", ttMessage)
+    return
+  end
+
+  local var = LActor.getStaticVar(actor)
+  var.fudi_count = count
+end
+
+GmEventFuncList.resetFudiCount = function(sysarg, args)
+  local var = LActor.getStaticVar(sysarg)
+  var.fudi_count = nil
+
+  local pGuild = LActor.getGuildPtr(sysarg)
+  if pGuild == nil then return end
+  var = LGuild.getStaticVar(pGuild, true)
+  var.fudi_count = nil
+end
+
+--增加组队副本天令，地令，玄令
+GmEventFuncList.AddToken = function (sysarg, args)
+  local idx = args[1]
+  local cnt = args[2]
+
+  if idx == nil or cnt == nil then
+    LActor.sendTipmsg(sysarg, "param error", ttTipmsgWindow)
+    return 
+  end
+
+  LActor.changeTeamToken(sysarg, tonumber(idx), tonumber(cnt))
+end
+
+
+--add yefeng 周年翻牌
+--[[GmEventFuncList.znfp = function ( sysarg, args )
+  local flag = tonumber(args[1])
+  if flag == 1 then
+      local count = tonumber(args[2])
+      ZNFP_RefreshDrawNum( sysarg, count )
+  elseif flag == 2 then
+      local startTime = 0
+      local times = args[2]      
+      ZNFP_Open(tonumber(startTime),tonumber(times))
+  elseif flag == 3 then
+      local Point = tonumber(args[2])
+      ZNFP_Point(sysarg, Point)
+  end
+end]]
+
+GmEventFuncList.AddStone = function (sysarg, args)
+  local type = tonumber(args[1])
+  local amount = tonumber(args[2])
+  EnhanceTable.changeStoneMaterialNum(sysarg, type, amount)
+end
+
+GmEventFuncList.AddSuperPiece = function (sysarg, args)
+  local superid = tonumber(args[1])
+  local amount = tonumber(args[2])
+  LActor.ChangeSuperPiece(sysarg, superid, amount)
+end
+
+GmEventFuncList.AddSuperMj = function (sysarg, args)
+  local mjid = tonumber(args[1])
+  LActor.addSuperMj(sysarg, mjid)
+end
+
+GmEventFuncList.Telport = function (sysarg, args)
+  local senceid = tonumber(args[1])
+  local x= tonumber(args[2])
+  local y= tonumber(args[3])
+  System.telportScene(sysarg, senceid, x, y, 1)
+end
+
+GmEventFuncList.GmEnterFuben = function (sysarg, args)
+  local fubenid = tonumber(args[1])
+  OnEnterFubenFunc(sysarg, fubenid)
+end
+
+GmEventFuncList.SetLoginDay = function (sysarg, args)
+  local var = LActor.getStaticVar(sysarg)
+  if var.dailyloginreward == nil then
+    var.dailyloginreward = {}
+    var.dailyloginreward.num = 1
+    var.dailyloginreward.reward = 0
+    var.dailyloginreward.index = 1
+  end
+  local loginnum = tonumber(args[1])
+  local index = args[2]
+  var.dailyloginreward.num = loginnum
+  if index ~= nil then var.dailyloginreward.index = tonumber(index) end
+end
+
+GmEventFuncList.testfinishentrust = function (sysarg, args)
+  local fblistid = args[1]
+  if fblistid == nil then
+    LActor.sendTipmsg(sysarg, "请输入fubenlistid", ttTipmsgWindow)
+    return 
+  end
+  fblistid = tonumber(fblistid)
+  local npack = DataPack.allocPacket(sysarg,42,7)
+  if npack == nil then return end
+  DataPack.writeInt( npack, fblistid)
+  DataPack.flush(npack)
+end
+GmEventFuncList.AddBuff = function (sysarg, args)
+  print("------------->>-----------")
+  --{type=16,id=80,rate=0,value=-5000,interval=20,vt=1,buffRate=10000, name="加速"},
+
+  LActor.addBuff(sysarg, 16,80, -5000, 20, 1, "法术防御倍率增加",true,sysarg)
+  --LActor.addBuff(sysarg, buff.type, ArenaConf.buffGroup, buff.value, buff.times, buff.interval, Lang.ScriptTips.jjc032)
+end
+GmEventFuncList.createMonster = function ( sysarg,args )
+  local x =0
+  local y =0
+  local z =0
+  local a 
+  a,x ,y = LActor.getPositionByDir(sysarg,z,x,y)
+  if a == nil or a == false then
+    print("get position error")
+  end
+  local monsterid = tonumber(args[1] )
+  LActor.createMonster(sysarg,monsterid,x,y,0)
+  LActor.followActor(nPartner , actorobj )
+end
+
+GmEventFuncList.LearnSkill = function ( sysarg,args )
+  LActor.learnMountSkill(sysarg,293,1,3)
+end
+
+GmEventFuncList.NewEnterCopy = function ( sysarg,args )
+  print("-------GM NewEnterCopy--------",args[1],args[2])
+  EnterCopy(sysarg,args[1],args[2])
+end
+
+GmEventFuncList.NewStreng = function ( sysarg,args )
+  -- body
+  EnhanceTable[3](sysarg,args)
+end
+
+
+GmEventFuncList.TestVar = function  ( sysarg,args )
+
+  local var = LActor.getStaticVar(sysarg)
+
+  if var == nil then
+    print("-----getStaticVar is nil-------")
+  else
+      print("-----getStaticVar is not nil-------")
+  end
+  if var.abc ~= nil then
+    print("-----getStaticVar is var.abc-------",var.abc)
+  else
+    print("-----var.abc is nil-------")
+  end
+  var.abc = 2
+end
+
+GmEventFuncList.ShowFubenData = function ( sysarg,args )
+  -- body
+  fubenjiesuan.showCurData(sysarg)
+end
+
+GmEventFuncList.LQZCTest = function ( sysarg,args )
+  -- body
+  local nIndex = args[1]
+  print("-----cmd----",nIndex)
+  lieqifuben.HandleNetworkData(sysarg,nIndex)
+end
+
+GmEventFuncList.qianghongbao = function ( sysarg )
+  -- body
+  --local nIndex = args[1]
+  --print("-----cmd----",nIndex)
+  qianghongbao.Gift(sysarg)
+end
+
+GmEventFuncList.qianghongbaorizhi = function (sysarg)
+  qianghongbao.ScrambleLog(sysarg,"谁的",6000)
+end
+
+GmEventFuncList.qianghongbaoqhb = function (sysarg,args)
+  local index = args[2]
+  local Channel = args[1]
+  print("=======红包位置",index)
+  QiangHongBao.oneSceamble(sysarg,Channel,index)
+end
+GmEventFuncList.inithongbao = function (sysarg)
+  QiangHongBao.init(sysarg)
+end
+
+GmEventFuncList.inithongbao1 = function (sysarg)
+  QiangHongBao.init1(sysarg)
+end
+
+
+GmEventFuncList.inithongbao2 = function (sysarg)
+  QiangHongBao.init2(sysarg)
+end
+
+GmEventFuncList.inithongbao3 = function (sysarg)
+  QiangHongBao.init3(sysarg)
+end
+
+GmEventFuncList.inithongbao4 = function (sysarg)
+  QiangHongBao.init4(sysarg)
+end
+
+GmEventFuncList.initrizhi1 = function (sysarg)
+  QiangHongBao.initrz(sysarg)
+end
+
+GmEventFuncList.initrizhi2 = function (sysarg)
+  QiangHongBao.initrz2(sysarg)
+end
+
+GmEventFuncList.hblist = function (sysarg)
+  QiangHongBao.hblist(sysarg)
+end
+
+
+GmEventFuncList.clearhbcount = function (sysarg)
+    QiangHongBao.clearhbcount(sysarg)
+end
+
+
+
+function yaoshizhi(sysarg,arg)
+    print("=========钥匙值增加",arg[1])
+    LActor.giveAward(sysarg, qatPassKey,arg[1])
+end
+
+GmEventFuncList.SetSkillCD= function ( sysarg,args )
+
+  local bcdstate = tonumber(args[1])
+  if bcdstate == 1 then 
+    bcdstate = true
+  else
+    bcdstate = false
+  end
+  LActor.SetUseSkillNoCD(sysarg,bcdstate)
+  print(string.format("=========设置CD %d %d",args[1],bcdstate))
+end
+
+
+GmEventFuncList.MyTest = function (sysarg, args)
+  --local wing_id ,level,stage,level_exp,stage_exp = LActor.getWingInfo(sysarg)
+  --print(wing_id ,level,stage,level_exp,stage_exp)
+  --[[
+  local score = LActor.getWingFightCapacity(sysarg)
+  print("score:"..tostring(score))
+  LActor.wingLevelUp(sysarg, 1 , 1 , 1)
+  local wing_id ,level,stage,level_exp,stage_exp = LActor.getWingInfo(sysarg)
+  print(wing_id ,level,stage,level_exp,stage_exp)
+  --]]
+
+  --[[
+  local f = WingOpFuncList.GetSpecialModelAttribute(101)
+  for i , v in pairs(f) do
+    print(v)
+  end
+  local f = WingOpFuncList.GetSpecialModelAttribute(1)
+  for i , v in pairs(f) do
+    print(v)
+  end
+  --]]
+
+  --[[
+ LActor.setWingAttr(1 , 2 , 3 , 4 , 5 , 6 , 7)
+ LActor.wingLevelUp(sysarg, 1 , 10 , 100)
+  LActor.wingStageUp(sysarg , 100 , 200)
+  --]]
+  --LActor.wingLevelUp(sysarg, 1 , 10 , 100)
+
+  --翅膀升级测试
+  --[[
+  LActor.wingStageUp(sysarg , 1 , 0)  
+  LActor.wingLevelUp(sysarg, 1 , 1 , 0)
+  WingOpFuncList[1]()
+  WingOpFuncList[2](sysarg,dp)
+  --]]
+
+  --[[
+  LActor.getMoneyCount(sysarg,mtBindCoin)
+  LActor.changeMoney(sysarg, mtYuanbao, -needYuanbao, 1,  true, "wing", "level")
+  LActor.changeMoney(sysarg, mtBindCoin, -needMoney, 1, true, "wing" ,"level")
+  LActor.changeMoney(sysarg, mtYuanbao, -needYuanbao, 1,  true, "wing", "level")
+  --]]
+
+  --翅膀升级测试
+  --[[
+  LActor.wingStageUp(sysarg , 1 , 0)  
+  LActor.wingLevelUp(sysarg, 1 , 1 , 0)
+--18712
+  local n = LActor.getItemCount(sysarg,18712) 
+  LActor.changeMoney(sysarg, mtBindCoin, 1000000, 1, true, "wing" ,"level")
+  LActor.changeMoney(sysarg, mtYuanbao, 1000000, 1, true, "wing" ,"level")
+  LActor.removeItem(sysarg, 18712, n)
+  WingOpFuncList[2](sysarg,dp)
+  --]]
+
+  --翅膀进阶测试
+  --[[
+  LActor.wingStageUp(sysarg , 1 , 0)  
+  LActor.wingLevelUp(sysarg, 1 , 10 , 0)
+  local n = LActor.getMoneyCount(sysarg,mtBindCoin)
+  LActor.changeMoney(sysarg, mtYuanbao, 1000000, 1, true, "wing" ,"level")
+  LActor.changeMoney(sysarg, mtBindCoin, 100000, 1, true, "wing" ,"level")
+  local n = LActor.getItemCount(sysarg,18712) 
+  LActor.removeItem(sysarg, 18712, n)
+  WingOpFuncList[3](sysarg,dp)
+  --]]
+
+  --翅膀化形测试
+  --[[
+  LActor.wingStageUp(sysarg , 3 , 0)
+  WingOpFuncList[4](sysarg,dp)
+  --]]
+
+
+  --WingOpFuncList[5](sysarg,dp)
+
+  --[[
+  print("ggggggggggggggggggg")
+  local wing_id ,level,stage,level_exp,stage_exp = LActor.getWingInfo(sysarg)
+  print("wing_id:"..tostring(wing_id))
+  local hd = LActor.getWingSpecialModel(sysarg)
+  print("num(hd):"..(#hd))
+  for i , v in pairs(hd) do
+    print("mem:"..v)
+  end
+  --]]
+
+  --[[
+  local var = LActor.getStaticVar(sysarg)
+  if var == nil then
+      print("getStaticVar = nil ")
+      return
+   end
+   local WingInfo = var.WingInfo
+   if nil == WingInfo then
+      print("getStaticVar WingInfo = nil ")
+      return
+   end
+   print("type:WingInfo:"..type())
+   for i , v in pairs(WingInfo) do
+      if type(v) ~= "table" then
+        print(tostring(i)..":"..tostring(v))
+      end
+   end
+   --]]
+   --[[
+  LActor.changeMoney(sysarg, mtBindCoin, 1000000, 1, true, "wing" ,"level")
+  LActor.changeMoney(sysarg, mtYuanbao, 1000000, 1, true, "wing" ,"level")
+  local var = LActor.getStaticVar(sysarg)
+  if var == nil then
+      --print("getStaticVar = nil ")
+      return
+   end
+   local WingInfo = var.WingInfo
+   if nil == WingInfo then
+      return
+   end
+  WingInfo.SpecialModel = {}
+  WingInfo.SpecialModel.num = nil
+  WingInfo.SpecialModel[1] = nil
+  WingInfo.SpecialModel[2] = nil
+  WingInfo.score_union.special_score = 0
+  WingOpFuncList[11](sysarg, dp)
+  print("1WingInfo.score:"..tostring(WingInfo.score))
+  print("1WingInfo.score_union.normal_score:"..tostring(WingInfo.score_union.normal_score))
+  print("1WingInfo.score_union.normal_score:"..tostring(WingInfo.score_union.special_score))
+
+  WingOpFuncList[5](sysarg, dp)
+   print("2WingInfo.score:"..tostring(WingInfo.score))
+   print("2WingInfo.score_union.normal_score:"..tostring(WingInfo.score_union.normal_score))
+   print("2WingInfo.score_union.special_score:"..tostring(WingInfo.score_union.special_score))
+
+   --]]
+
+  --local n = LActor.getMoneyCount(sysarg,mtBindCoin)
+  --print("pre:"..tostring(n))
+  --print("mtBindCoin:"..tostring(mtBindCoin))
+  --LActor.changeMoney(sysarg, mtBindCoin, 100000000, 1, true, "wing" ,"level")
+  --n = LActor.getMoneyCount(sysarg,mtBindCoin)
+  --print("later:"..tostring(n))
+ --LActor.changeMoney(sysarg, mtYuanbao, 100000000, 1, true, "wing" ,"level")
+ --WingOpFuncList[5](sysarg, dp)
+  --WingOpFuncList[5](sysarg, dp)
+
+  --WingOpFuncList.GetWingAttribute(1 , 10)
+  --LActor.setWingEffect(sysarg, 1)
+  --LActor.refreshActor(sysarg)
+
+  --local fbid = LActor.getFubenId(sysarg)
+  --print("fbid:"..tostring(fbid))
+
+  --local fvar = Fuben.getDyanmicVar(pfb)
+  --local pfb = LActor.getFubenPrt(sysarg)
+  --local renEmemyNum = Fuben.getKillMonsterCount(pfb)    --获取杀死了多少只怪
+  --print("renEmemyNum:"..renEmemyNum)
+
+  --local remainTime = Fuben.getFbTime(pfb)               --获取副本剩余时间
+  --print("remainTime:"..tostring(remainTime))
+
+  
+  --Fuben.SetFubenTime(pfb, 10)   --设置副本剩余时间  
+  --local remainTime = Fuben.getFbTime(pfb)               --获取副本剩余时间
+ -- print("remainTime:"..tostring(remainTime))
+
+
+  --Fuben.setReserveTime(pfb, 100) ---设置副本没人后保留多久
+  --Fuben.SetFubenTime(pfb, 800)   --设置副本剩余时间     
+
+  --for i = 1 , 100 do
+    --LActor.addItem(sysarg, 26101, 0, 0, 99, 1, "GlobalNPC ")
+  --end
+ -- local sceneid = LActor.getSceneId(sysarg)
+  --print("sceneid:"..tostring(sceneid))
+
+  --CiyingOpFuncList.SuccessCopy(sysarg , 120 , 50)
+  --local rootnum = LActor.getIntProperty(sysarg, PROP_ROOT_EXP)
+  --print("rootnum:"..tostring(rootnum))
+  --LActor.setIntProperty(sysarg, PROP_ROOT_EXP , rootnum + 500)
+  --rootnum = LActor.getIntProperty(sysarg, PROP_ROOT_EXP)
+  --print("rootnum:"..tostring(rootnum))
+
+  --print("args[1]:"..tostring(args[1]))
+  --print("args[2]:"..tostring(args[2]))
+  --CiyingOpFuncList.SuccessCopy(sysarg , tonumber(args[1]) , 1)
+  --[[
+  local var = LActor.getStaticVar(sysarg)
+  local CiyingInfo = var.CiyingInfo
+  for i = 1 , CiyingInfo.currId do
+    print("i:"..i)
+    print("num:"..tostring(CiyingInfo.fuben_play[i]))
+    print("score:"..tostring(CiyingInfo.fuben_score[i]))
+  end
+  --]]
+  --local rootnum = LActor.getIntProperty(sysarg, PROP_ROOT_EXP) or 0
+  --print("ttttttttttttttt rootnum:"..tostring(rootnum))
+  --CiyingOpFuncList.SuccessCopy(sysarg , 1 , 1)
+  --rootnum = LActor.getIntProperty(sysarg, PROP_ROOT_EXP) or 0
+   --print("ppppppppppppppppp rootnum:"..tostring(rootnum))
+   --LActor.setIntProperty(sysarg, PROP_ROOT_EXP , LActor.getIntProperty(sysarg, PROP_ROOT_EXP) + 500)
+
+
+
+
+   --[[
+   local var_d = Fuben.getDyanmicVar(sysarg)
+   if var_d == nil then return end
+   var_d.area_ani = nil
+   print("clear area_ani")
+
+   local Hfuben = Fuben.createFuBen(120)
+   local flag = LActor.enterFuBen(sysarg,Hfuben,1058,10,10)
+  --]]
+  if args[1] then
+      if args[1] == 0 then
+        local fubenId = 102
+        local Hfuben = Fuben.createFuBen(fubenId)
+        local flag = LActor.enterFuBen(sysarg,Hfuben,fubenId,124,97)
+        print("fubenId:"..tostring(fubenId))
+        return
+      end
+
+      print("wxjt ________________")
+      local fubenId = args[1] + 100
+      local Hfuben = Fuben.createFuBen(fubenId)
+      local flag = LActor.enterFuBen(sysarg,Hfuben,fubenId,46,50)
+      local pScene = LActor.getScenePtr(sysarg)
+      local hScene = LActor.getSceneHandle(sysarg)
+      Fuben.initDyanmicObstacleData(hScene)
+
+      --Fuben.SetFubenTime(Hfuben, 30)
+
+      --Fuben.SetSceneAllBroadCast(hScene , true)
+
+    print("enter       ___________________________________________________")
+  else
+    CiyingOpFuncList.EnterCopy(sysarg)
+  end
+   
+   --print("PROP_ROOT_EXP:"..tostring(PROP_ROOT_EXP))
+   --print("PROP_ROOT_STAR:"..tostring(PROP_ROOT_STAR))
+end
+
+GmEventFuncList.Test = function()
+  print("test")
+  print("test")
+  print("test")
+  print("test")
+  print("test")
+  print("test")
+  print("test")
+  print("test")
+  print("test")
+  print("test")
+end
+
+--设置剧情副本播放
+GmEventFuncList.GmSetPlayFuben = function(sysarg,args)
+  print("test play")
+  local nType = tonumber(args[1])
+  if nType == 1 then --停止心跳
+    local nrun = tonumber(args[2])
+    local isrun = false
+    if nrun == 1 then isrun = true end
+    playFubenMon.OnSetSceneAllMonsterISStop(sysarg,isrun)
+  elseif nType == 2 then --强制位移
+    playFubenMon.OnSetSceneMonsterPos(sysarg,tonumber(args[2]),tonumber(args[3]),tonumber(args[4]))
+  elseif nType == 3 then
+    playFubenMon.OnCreateMonster(sysarg,tonumber(args[2]))
+  elseif nType == 4 then
+    playFubenMon.OnClearMonster(sysarg,tonumber(args[2]))
+  elseif nType == 5 then
+     print("move 1")
+     playFubenMon.OnSetSceneMonsterPos(sysarg,129,21,19)
+     playFubenMon.OnSetSceneAllMonsterISStop(sysarg,true)
+     print("move 2")
+  elseif nType == 6 then
+      playFubenMon.OnSetSceneMonsterPos(sysarg,LActor.getActorId(sysarg),21,19)
+     print("move 3")
+  elseif nType == 7 then
+      --[[
+      local Fhandle = LActor.getFubenHandle(sysarg)
+      local hscene = Fuben.getSceneHandleById(LActor.getSceneId(sysarg), Fhandle)
+      local attackMon = Fuben.getMonsterPtrById(hscene, 129)
+      if attackMon and target then
+        LActor.setMonsterFinalTarget(attackMon, sysarg)
+      end
+      --]]
+      --local actorX, actorY = LActor.getEntityPosition(sysarg, 0, 0)
+      --print("actorX:"..tostring(actorX).." actorY:"..tostring(actorY))
+      --MonHpChangedDispatcher.register(129, GmEventFuncList.Test)
+
+      --[[
+      local Fhandle = LActor.getFubenHandle(sysarg)
+      local hscene = Fuben.getSceneHandleById(LActor.getSceneId(sysarg), Fhandle)
+      local attackMon = Fuben.getMonsterPtrById(hscene, 129)
+
+      local defMon = Fuben.getMonsterPtrById(hscene, 126)
+      local posX, posY = LActor.getEntityPosition(defMon, 0, 0)
+
+      LActor.useSkill( attackMon, 40, posX, posY, false , 1)
+      print("")
+      --]]
+
+        --[[
+        local Fhandle = LActor.getFubenHandle(sysarg)
+        local hscene = Fuben.getSceneHandleById(LActor.getSceneId(sysarg), Fhandle)
+        local attackMon = Fuben.getMonsterPtrById(hscene, 129)
+        local target = nil
+        target = Fuben.getMonsterPtrById(hscene, 126)
+        LActor.setMonsterFinalTarget(hscene,129, target)
+        --]]
+
+        --[[
+        local Fhandle = LActor.getFubenHandle(sysarg)
+        local hscene = Fuben.getSceneHandleById(LActor.getSceneId(sysarg), Fhandle)
+        local attackMon = Fuben.getMonsterPtrById(hscene, 129)
+
+        LActor.setDenyBeAttack(attackMon, true)          --不能被攻击
+
+        LActor.clearHatre(attackMon)
+
+        print("Fhandle:",Fhandle)
+        print("hscene:",hscene)
+        --]]
+
+        --[[
+        local monId = args[2]
+        local posX = args[3]
+        local posY = args[4]
+
+
+        local Fhandle = LActor.getFubenHandle(sysarg)
+        local hscene = Fuben.getSceneHandleById(LActor.getSceneId(sysarg), Fhandle)
+        print("hscene:"..tostring(hscene))
+        Fuben.createMonsters(hscene, 200, 27, 23, 28, 23, 1, 0)
+        local pMonster1 = Fuben.getMonsterPtrById(hscene, 200)
+
+        local pMonster2 = LActor.createMonster(pMonster1, 205,28,24,0)
+
+        LActor.createMonster(sysarg, 126,29,24,0)
+        LActor.createMonster(sysarg, 128,29,24,0)
+        --]]
+
+        --[[
+        local function test()
+          print("_____________________test______________________________")
+        end
+
+        LActor.createMonster(sysarg, 129,29,24,0)
+        MonHpChangedDispatcher.register(129, test)
+        --]]
+
+        --[[
+        local pScene = LActor.getScenePtr(sysarg)
+        local pActor = Fuben.getActorListbySceneInPlayFuben(pScene)
+        if pActor == sysarg then
+          print("equal")
+        else
+          print("not equal")
+        end
+        print("sysarg:",sysarg)
+        print("pActor:",pActor)
+        --]]
+        --[[
+        LActor.createMonster(sysarg, 129,29,24,0)
+        MonDamageDispatcher.register(129, playFubenMon.SendBreak)
+        print("刷怪测试")
+        --]]
+
+      --local za = {{45,10},{46,11},{47,11},{47,12},{48,12},{48,13},{49,13},{50,13},{50,14},{51,14},{52,14},{53,15}}
+      --[[
+      local pScene = LActor.getScenePtr(sysarg)
+      local hScene = LActor.getSceneHandle(sysarg)
+
+      if pScene then
+        --Fuben.initDyanmicObstacleData(hScene)
+        --Fuben.setDyanmicObstacleDataByPos(pScene, -1, za)
+        local za = {{9,18,24,28},{11,14,23,23},{8,8,25,28},{19,19,25,27},{9,16,29,29},{11,13,30,30},}
+        Fuben.setDyanmicObstacleDataBySquare(pScene , -1, za)
+      end 
+      --local Fhandle = LActor.getFubenHandle(sysarg)
+      --local hscene = Fuben.getSceneHandleById(LActor.getSceneId(sysarg), Fhandle)
+      --local pMonster1 = LActor.createMonster(sysarg, 146,32,19,0)
+     -- local pMonster2 = LActor.createMonster(sysarg, 146,33,19,0)
+      --LActor.setMonsterFinalTarget(hscene,146, pMonster2)
+      --]]
+
+      local Fhandle = LActor.getFubenHandle(sysarg)
+      local hscene = Fuben.getSceneHandleById(LActor.getSceneId(sysarg), Fhandle)
+      local pMonster = Fuben.getMonsterPtrById(hscene, 1)
+      local dir = tonumber(args[2]) or 0
+
+      if dir < 0 or dir > 7 then
+        dir = 0
+      end
+      LActor.ChangeDir(pMonster, dir)
+
+
+  elseif nType == 8 then
+      --[[
+      print("BaseTypes.SystemId.playFubenSystem:"..tostring(BaseTypes.SystemId.playFubenSystem))
+      local var_d = Fuben.getDyanmicVar(sysarg)
+      if var_d == nil then return end
+      var_d.area_ani = nil
+      print("clear area_ani")
+      --]]
+
+      --local Fhandle = LActor.getFubenHandle(sysarg)
+      --local hscene = Fuben.getSceneHandleById(LActor.getSceneId(sysarg), Fhandle)
+      --LActor.setMonsterFinalTarget(hscene,125, sysarg)
+      --OnMonsterAttacked(defMon , nMonid , val , attMon)
+      --PlayFubenArrive(sysarg ,val1,val2,val3,val4)
+
+      --[[
+      local Fhandle = LActor.getFubenHandle(sysarg)
+      local flag = tonumber(args[3]) or -1
+      local hScene = LActor.getSceneHandle(sysarg)
+      local pScene = Fuben.getSceneList(Fuben.getFubenPtr(Hfuben))[1]
+      --]]
+      
+
+      local pMonster2 = LActor.createMonster(sysarg, 1,40,116,0)
+
+      
+  elseif nType == 9 then
+      --发送无附件的邮件
+      --for i = 1 , 50 do
+        --System.sendGmMailOffLine(LActor.getActorId(sysarg), "wxj_test" , 2,2,2,0 , true , "hello world")
+      --end
+      --print("999999999999999999999999999")
+      --print("aid:"..tostring(LActor.getActorId(sysarg)))
+      --local pname = "4888"
+
+      --for i = 1 , 50 do
+          --print("LActor.getName(sysarg):"..tostring(LActor.getName(sysarg)))
+          --System.sendGmMailOffLine(LActor.getName(sysarg), "wxj_test1" , 2,2,2,0 , "hello test")
+          --System.sendGmMailOffLine("AbcdEf", "wxj_test" , 2,2,2,0 , true)
+      --end
+      --[[
+      --发送有附件的邮件
+      for i = 1 , 50 do
+        System.sendGmMailOffLine(LActor.getActorId(sysarg), "wxj_test" , 1, 1, 1000, 1)
+      end
+      --]]
+      --for i = 1 , 50 do
+        --System.sendGmMailOffLineByAccount('87526138', "wxj_test" , 2,2,2,0)
+      --end
+
+      --playFubenMon.CreateDropBag(sysarg , 1000 , 0 , 23101 , 1000 , 5)
+      --[[
+      local Fhandle = LActor.getFubenHandle(sysarg)
+      local hscene = Fuben.getSceneHandleById(LActor.getSceneId(sysarg), Fhandle)
+      --]]
+      --local pMonster1 = LActor.createMonster(sysarg, 175,32,19,0)
+      --LActor.addEffect(sysarg,24,6,40000)
+
+      --local pScene = LActor.getScenePtr(sysarg)
+
+      --[[
+      local Fhandle = LActor.getFubenHandle(sysarg)
+      local hscene = Fuben.getSceneHandleById(LActor.getSceneId(sysarg), Fhandle)
+      Fuben.createMonsters(hscene, 200, 79, 79, 57, 58, 3, 0)
+      local pMonster2 = LActor.createMonster(sysarg, 126,71,53,0)
+      local pMonster3 = LActor.createMonster(sysarg, 130,81,58,0)
+      LActor.someMonstersetHatred(hscene, 200, pMonster2, 20000)
+      LActor.someMonstersetHatred(hscene, 200, pMonster3, 10000)
+      --]]
+
+      --[[
+      local Fhandle = LActor.getFubenHandle(sysarg)
+      local hscene = Fuben.getSceneHandleById(LActor.getSceneId(sysarg), Fhandle)
+      local pMonster1 = Fuben.createMonsters(hscene, 126, 79, 79, 57, 58, 3, 0)
+      --local pMonster1 = LActor.createMonster(sysarg, 126, 76, 54, 0)
+      local pMonster2 = LActor.createMonster(sysarg, 130, 79, 56, 0)
+
+
+
+      --Fuben.setReserveTime(Fhandle, 0)
+      --LActor.someMonsterChangeTarget(hscene,200, pMonster2)
+      --LActor.someMonsterChangeTarget(hscene,126, pMonster2)
+      LActor.setMonsterFinalTarget(hscene,126, pMonster2)
+      --]]
+
+
+      --LActor.setDenyAttackActor(pMonster2, true)   --不能攻击玩家
+      --LActor.SetSuperMan(pMonster2, true)
+      --local pMonster3 = LActor.createMonster(sysarg, 175, 81, 58, 0)
+
+      --local pMonster3 = LActor.createMonster(sysarg, 185,39,14,0)
+      --local pMonster4 = LActor.createMonster(sysarg, 190,39,14,0)
+
+      --print("pMonster1 is "..type(pMonster1),pMonster1)
+      --print("pMonster2 is "..type(pMonster2),pMonster2)
+      --LActor.SetHatred(pMonster1,{ pMonster3,pMonster2 ,})
+
+      --[[
+      function here_test()
+          print("----------------采集here------------------------------")
+          return false
+      end
+
+      function here_check()
+        print("----------------check采集here------------------------------")
+        return false
+    end
+
+      local pMonster1 = LActor.createMonster(sysarg, 1102, 80, 58, 0)
+
+      GatherCheckDispatcher.register(1102,here_check)
+
+      GatherFinishDispatcher.register(1102,here_test)
+      --]]
+      --MonDieDispatcher.register(1026,  GmEventFuncList.test)
+
+      --LActor.addEffect(sysarg, 10102, 6, -1)
+
+      local Fhandle = LActor.getFubenHandle(sysarg)
+      local hscene = Fuben.getSceneHandleById(LActor.getSceneId(sysarg), Fhandle)
+      local pMonster3 = LActor.createMonster(sysarg, 2001,35,107,0)
+
+      local target = Fuben.getMonsterPtrById(hscene, 2004)
+      LActor.setMonsterFinalTarget(hscene,2001, target)
+
+      --LActor.addBuff( pMonster3, 73, 0, 1 , 2 , 60 , "")
+      --[[
+      
+      --LActor.setMonsterFinalTarget(hscene,126, sysarg)
+      local pMonster2 = LActor.createMonster(sysarg, 130,11,19,0,true,false)
+      --LActor.setMonsterFinalTarget(hscene,126, sysarg)
+
+      local target = Fuben.getMonsterPtrById(hscene, 126)
+      LActor.setMonsterFinalTarget(hscene,130, target)
+      --]]
+  elseif nType == 10 then
+
+      --[[
+      local Fhandle = LActor.getFubenHandle(sysarg)
+      local hscene = Fuben.getSceneHandleById(LActor.getSceneId(sysarg), Fhandle)
+      local pMonster1 = Fuben.getMonsterPtrById(hscene, 175)
+      LActor.setDenyMove(pMonster1, true)
+      --]]
+      --local nRemainMonsterNum = LActor.getLiveMonsterCount(sysarg, 200)
+      --print("nRemainMonsterNum:"..tostring(nRemainMonsterNum))
+
+      --print("模型id:"..tostring(LActor.getIntProperty(sysarg, PROP_ENTITY_MODELID )))
+      --LActor.setIntProperty(sysarg, PROP_ENTITY_MODELID , 2100 )
+      
+       -- LActor.addBuff( sysarg, 79, 0, 1, 20, 1, Lang.Actions.b002 )
+      --LActor.addBuff( sysarg, 79, 0, 1 , 0 , 1 , Lang.Actions.b002)
+      --LActor.refreshFeature(sysarg)
+      
+
+      --[[
+      local pScene = LActor.getScenePtr(sysarg)
+      local Fhandle = LActor.getFubenHandle(sysarg)
+      local hscene = Fuben.getSceneHandleById(LActor.getSceneId(sysarg), Fhandle)
+      local pMonster1 = Fuben.getMonsterPtrById(hscene, 126)
+      LActor.SetSuperMan(pMonster1, false)
+      --]]
+
+      --[[
+      local Fhandle = LActor.getFubenHandle(sysarg)
+      local hscene = Fuben.getSceneHandleById(LActor.getSceneId(sysarg), Fhandle)
+      local pMonster = Fuben.getMonsterPtrById(hscene, 126)
+      local monHandle = LActor.getHandle(pMonster)
+      playFubenMon.SaveMonster(sysarg , monHandle)
+      --]]
+
+      --[[
+      local Fhandle = LActor.getFubenHandle(sysarg)
+      local hscene = Fuben.getSceneHandleById(LActor.getSceneId(sysarg), Fhandle)
+      Fuben.postSceneTimeCall(hscene, TimerMsg.PlayFubenRefresh, 10, 1)
+      --]]
+
+      --[[
+      local pScene = LActor.getScenePtr(sysarg)
+
+      local Fhandle = LActor.getFubenHandle(sysarg)
+      local hscene = Fuben.getSceneHandleById(LActor.getSceneId(sysarg), Fhandle)
+      --LActor.setMonsterFinalTarget(hscene,126, sysarg)
+
+      local pMonster1 = Fuben.getMonsterPtrById(hscene, 126)
+      local pMonster2 = Fuben.getMonsterPtrById(hscene, 130)
+
+      --LActor.setEntityCanAttackMonster(pMonster2 , true) --设置为不可攻击
+     LActor.someMonsterChangeTarget(hscene,126, sysarg)
+     --]]
+
+      --LActor.setSomeMonsterDenyAttackActor(hscene, 200, true)
+      --LActor.setSomeMonsterDenyAttackByActor(hscene, 200, true)
+      --[[
+      print("LActor.getSceneId(sysarg):"..tostring(LActor.getSceneId(sysarg)))
+      print("LActor.getFubenId(sysarg):"..tostring(LActor.getFubenId(sysarg)))
+      --]]
+      --[[
+      local Fhandle = LActor.getFubenHandle(sysarg)
+      local hscene = Fuben.getSceneHandleById(LActor.getSceneId(sysarg), Fhandle)
+      local target = Fuben.getMonsterPtrById(hscene, 130)
+      LActor.setMonsterFinalTarget(hscene,126, target)
+      --LActor.setMonsterFinalTarget(hscene,126, sysarg)
+      --]]
+      --print("modelid:"..tostring(LActor.getIntProperty(sysarg, PROP_ENTITY_MODELID)))
+
+      --local monsterid = tonumber(args[2]) or 0
+      --local nRemainMonsterNum = LActor.getLiveMonsterCount(sysarg, monsterid)
+      --print(monsterid..":剩余数量:"..tostring(nRemainMonsterNum))
+
+      --[[
+      local Fhandle = LActor.getFubenHandle(sysarg)
+      local hscene = Fuben.getSceneHandleById(LActor.getSceneId(sysarg), Fhandle)
+      local pMonster1 = Fuben.getMonsterPtrById(hscene, 1)
+      LActor.catchTargetToXY(pMonster1, 110, 92 )
+      --]]
+      local Fhandle = LActor.getFubenHandle(sysarg)
+      local hscene = Fuben.getSceneHandleById(LActor.getSceneId(sysarg), Fhandle)
+      local target = Fuben.getMonsterPtrById(hscene, 2004)
+
+      LActor.setSomeMonsterDenyAttackByActor(hscene, 2004, true)
+ elseif nType == 11 then
+        --[[
+        local modelid = tonumber(args[2]) or 1400
+        print("modelid:"..tostring(modelid))
+        LActor.setIntProperty(sysarg, PROP_ENTITY_MODELID , modelid )
+        --]]
+
+
+        --System.sendGmMailOffLine(LActor.getActorId(sysarg), "wxj_test" , 2, 3, 1000, 1)
+
+        --LActor.addBuff( sysarg, 79, 0, 1 , 0 , 1 , "")
+        --[[
+       local npack = DataPack.allocPacket(sysarg,0,7)  --申请一个数据包
+        if npack == nil then return end
+        DataPack.writeByte(npack, 1)
+        DataPack.writeByte(npack, PROP_ENTITY_MODELID)
+        DataPack.writeInt(npack, modelid)
+        DataPack.flush(npack)
+        --]]
+      --[[
+      local Fhandle = LActor.getFubenHandle(sysarg)
+      local hscene = Fuben.getSceneHandleById(LActor.getSceneId(sysarg), Fhandle)
+      local target = Fuben.getMonsterPtrById(hscene, 188)
+      LActor.ChangeDir(target, tonumber(args[2] or 0));
+      --]]
+
+     --playFubenMon.RefreshLightLine(sysarg,136,1)
+
+      
+      local Fhandle = LActor.getFubenHandle(sysarg)
+      local hscene = Fuben.getSceneHandleById(LActor.getSceneId(sysarg), Fhandle)
+      local target = Fuben.getMonsterPtrById(hscene, 2004)
+
+      LActor.setDenyBeAttack(target, true)
+
+      --[[
+      local posX1, posY1 = LActor.getEntityPosition(target, 0, 0)
+      print("posX1:"..tostring(posX1))
+      print("posX2:"..tostring(posY1))
+      --]]
+      --LActor.delBuff( target, 73, 0 ) --先删除禁止刷新外观buff，删除这个buff后会自动刷新外观
+
+  elseif nType == 12 then
+        --LActor.delBuff( sysarg, 79, 0 ) --先删除禁止刷新外观buff，删除这个buff后会自动刷新外观
+
+        --System.sendGmMailOffLine(LActor.getActorId(sysarg), "wxj_test" , 10, 0, 100000, 2 , "GM" , 16, 0, 100000, 2 , 17, 0, 100000, 2)
+
+        --System.sendGmMailOffLine(LActor.getActorId(sysarg), "wxj_test" , 2, 0, 1000, 2 ,"gm",  2,2,1001,1,  2,3,1002,1,  2,4,1003,1, 2,0,1004,1)
+        --System.sendGmMailOffLineByAccount(LActor.getAccountName(sysarg), "wxj_test", 2, 0, 1000, 1,"gm",  2,2,1001,1,  2,3,1002,1,  2,4,1003,1,2,0,1004,1)
+        --System.sendGmMailOffLine(LActor.getActorId(sysarg), "wxj_test" , 2, 0, 1000, 2System.sendGmMailOffLine(LActor.getActorId(sysarg), "wxj_test" , 2, 0, 1000, 1,"gm",  2,2,1001,1,  2,3,1002,1,  2,4,1003,1, 2,0,1004,1)
+
+
+        --local posX, posY = LActor.getEntityPosition(sysarg, 0, 0)
+        --print("pos:"..tostring(posX).."  "..tostring(posY))
+
+      --local pMonster3 = LActor.createMonster(sysarg, 188,31,27,0,true,false)
+
+      --playFubenMon.InitMirror(sysarg,136)
+
+      --playFubenMon.OnCreateMonster(sysarg,3,0)
+
+      --print("Lang.ScriptTips.zxjl001:"..tostring(Lang.ScriptTips.zxjl001))
+      --print("Lang.ScriptTips.ljdl002:"..tostring(Lang.ScriptTips.ljdl002))
+
+      --WingOpFuncList.SendAllInfo(sysarg,LActor.getActorId(sysarg))
+
+      --CiyingOpFuncList.PushCopy(sysarg)
+
+      --playFubenMon.OnSetSceneMonsterPos(sysarg,2029,27,30)
+
+      --[[
+      local Fhandle = LActor.getFubenHandle(sysarg)
+      local hscene = Fuben.getSceneHandleById(LActor.getSceneId(sysarg), Fhandle)
+      local pMonster = LActor.createMonster(sysarg, 1,42,11,0)
+
+      LActor.addBuff( pMonster, 73, 0, 1 , 2 , 60 , "")
+      --]]
+
+      --local pScene = LActor.getScenePtr(sysarg)
+      --Fuben.getMytest(pScene)
+
+
+      --LActor.setDenyAttackActor(pMonster, true)    --不能攻击玩家
+      --LActor.setMonsterFinalTarget(hscene,1,sysarg)
+      
+      --local pMonster2 = LActor.createMonster(sysarg, 3,40,18,0)
+      --LActor.setMonsterFinalTarget(hscene,1,sysarg)
+     
+      --LActor.setMonsterFinalTarget(pMonster, sysarg)
+
+      print("测试了-----------------------------")
+      local Fhandle = LActor.getFubenHandle(sysarg)
+      local hscene = Fuben.getSceneHandleById(LActor.getSceneId(sysarg), Fhandle)
+      local pMonster = LActor.createMonster(sysarg, 828,33,111,0)
+      --[[
+      LActor.SetSuperMan(pMonster, true)
+      local mesHp = 1
+      LActor.SetDropHpNotHurt(pMonster, math.floor(mesHp))
+      --]]
+
+
+    --[[
+     local wing_id = 6
+     local tname = Wings.stage[wing_id].name
+     print("type(Lang.Wing):"..tostring(type(Lang.Wing)))
+     print("type(Lang.Wing.sw001):"..tostring(type(Lang.Wing.sw001)))
+     --print("str:",(Lang.Wing.sw001))
+     
+      local tname = Wings.upLevel[wing_id].name
+      local str = string.format(Lang.Wing.sw001, LActor.getName(sysarg),wing_id, tname)
+      System.broadcastTipmsg(str, ttScreenCenter)
+      --System.broadcastTipmsg(str, ttHearsay)
+      --]]
+     
+      --print(Lang.Wing.sw001)
+      --print(Lang.Mount.gg6)
+
+      --local hScene = LActor.getSceneHandle(sysarg)
+      --Fuben.myTest(hScene)
+
+      --LActor.setWingScore(sysarg, 999)
+
+      --[[
+      local Fhandle = LActor.getFubenHandle(sysarg)
+      local hscene = Fuben.getSceneHandleById(LActor.getSceneId(sysarg), Fhandle)
+      local pMonster = Fuben.getMonsterPtrById(hscene, 2129)
+      print("pMonster:",pMonster)
+      if pMonster then
+        LActor.setIntProperty(pMonster,PROP_HP,0)
+      end
+      --]]
+      
+  end
+end
+
+
+function var_dump(data, max_level, prefix)
+    if type(prefix) ~= "string" then
+        prefix = ""
+    end
+    if type(data) ~= "table" then
+        print(prefix .. tostring(data))
+    else
+        print(data)
+        if max_level ~= 0 then
+            local prefix_next = prefix .. "    "
+            print(prefix .. "{")
+            for k,v in pairs(data) do
+                io.stdout:write(prefix_next .. k .. " = ")
+                if type(v) ~= "table" or (type(max_level) == "number" and max_level <= 1) then
+                    print(v)
+                else
+                    if max_level == nil then
+                        var_dump(v, nil, prefix_next)
+                    else
+                        var_dump(v, max_level - 1, prefix_next)
+                    end
+                end
+            end
+            print(prefix .. "}")
+        end
+    end
+    return prefix
+end
+
+
+
+GmEventFuncList.test = function ()
+      print("----------------caiji------------------------------")
+end
+
+
+
+--通关所有赤影传说的副本并将次数重置（但不获得星星）
+GmEventFuncList.CiyingAllCross = function (sysarg, args)
+    LActor.openActorSystem(sysarg, 21)
+    if ThePlotHandleFuncs.initStaticVarData(sysarg) == true then
+      local sVar = LActor.getStaticVar(sysarg)
+      for n = 1, 2 do
+          local dataVar = sVar.theplot_var[n]
+          if dataVar ~= nil then
+              for i = 1 , #(ThePlotConfig.Story) do
+                 -- dataVar.total_cross_count[i] = 1
+                 LActor.setQuestFinishFlag(sysarg, ThePlotConfig.Story[i].taskId, true)
+                 dataVar.today_cross_count[i] = 0
+                 dataVar.process = #(ThePlotConfig.Story) + 1
+              end
+          end
+      end
+      
+    end
+    debug_print("cross all Ciying")
+end
+
+GmEventFuncList.CiyingAllOpen = function (sysarg, args)
+    LActor.openActorSystem(sysarg, 21)
+    if ThePlotHandleFuncs.initStaticVarData(sysarg) == true then
+      for i = 1 , #(ThePlotConfig.Story) do
+      	local qid = tonumber(ThePlotConfig.Story[i].taskId)
+        debug_print("===============> 开始检查:" .. tostring(qid))
+        if LActor.hasQuest(sysarg, qid) ~= true then
+        	debug_print("===============> 开始查找任务:" .. tostring(qid))
+	        local conf = GmEventQuestFuncList.findQuestConfByQid(qid)
+	        if conf ~= nil then
+	        	debug_print("===============> 开始添加任务:" .. tostring(qid))
+	          if conf.parentid > 0 then
+	            LActor.setQuestFinishFlag(sysarg, conf.parentid, true)
+	          end
+	          LActor.setQuestFinishFlag(sysarg, qid, false)
+	          local actorLevel = LActor.getLevel(sysarg)
+	          for k, v in pairs(conf.conds) do
+	            if v.type == 0 then -- 等级需求
+	              if actorLevel < v.count then
+	                LActor.setIntProperty(sysarg, PROP_LEVEL, v.count)
+	              end
+	            end
+	          end
+	        	LActor.addQuest(sysarg, qid, true)
+	        end
+	      end
+      end
+    end
+    debug_print("Ciying All Open")
+end
+
+GmEventFuncList.CiYingInit = function (actorobj, args)
+  LActor.openActorSystem(actorobj, 21)
+  if ThePlotHandleFuncs.initStaticVarData(actorobj) == true then
+    local sVar = LActor.getStaticVar(actorobj)
+    for i = 1, 2 do
+      sVar.theplot_var[i] = nil
+    end
+    debug_print("CiYing Init OK!")
+  end
+end
+
+GmEventFuncList.CiyingClear = function (sysarg, args)
+    local difficul = tonumber(args[1]) or 0
+    local enterId = tonumber(args[2]) or 0
+    local needClearTotal = tonumber(args[3]) or 0
+    if ThePlotHandleFuncs.initStaticVarData(sysarg) == true then
+        local sVar = LActor.getStaticVar(sysarg)
+        if needClearTotal ~= 0 then
+            sVar.theplot_var.everyday_count = 0
+            sVar.theplot_var.everyday_quick_count = 0
+        end
+        local dataVar = nil
+        if difficul == 0 then
+            for n = 1, 2 do
+                dataVar = sVar.theplot_var[n]
+                if dataVar ~= nil then
+                    for i = 1 , #(ThePlotConfig.Story) do
+                        dataVar.today_cross_count[i] = 0
+                    end
+                end
+            end
+            LActor.sendTipmsg(sysarg, "清除剧情副本所有难度下的每日副本进入次数", ttMessage)
+            return
+        else
+            if difficul ~= 1 and difficul ~= 2 then
+                LActor.sendTipmsg(sysarg, "无效的第二参数<困难难度>", ttMessage)
+                return
+            end
+        end
+        dataVar = sVar.theplot_var[difficul]
+        if enterId ~= 0 and dataVar.today_cross_count[enterId] ~= nil then
+            dataVar.today_cross_count[enterId] = 0
+            if difficul == 1 then
+                LActor.sendTipmsg(sysarg, "清除剧情副本普通难度下enterId=" .. tostring(enterId) .. "的每日副本进入次数", ttMessage)
+            else
+                LActor.sendTipmsg(sysarg, "清除剧情副本困难难度下enterId=" .. tostring(enterId) .. "的每日副本进入次数", ttMessage)
+            end
+            return
+        end
+        for i = 1 , #(ThePlotConfig.Story) do
+            dataVar.today_cross_count[i] = 0
+        end
+        if difficul == 1 then
+            LActor.sendTipmsg(sysarg, "清除剧情副本普通难度下所有每日副本进入次数", ttMessage)
+        else
+            LActor.sendTipmsg(sysarg, "清除剧情副本困难难度下所有每日副本进入次数", ttMessage)
+        end
+    end
+end
+
+GmEventFuncList.ShowType = function(sysarg)
+  local nType =  LActor.getEntityType(sysarg)
+  print("nType:"..tostring(nType))
+end
+
+GmEventFuncList.CrossCurrPlayFuben = function(sysarg)
+    local hfb = LActor.getFubenHandle(sysarg)
+    local pfb = Fuben.getFubenPtr(hfb)
+    local fbVar = Fuben.getDyanmicVar(pfb)
+
+    if fbVar.theplot_var == nil or fbVar.theplot_var.difficul == nil then
+      debug_print("非剧情副本场景无法生效")
+      return
+    end
+    local difficul = fbVar.theplot_var.difficul
+    debug_print("GM命令 通关当前剧情副本")
+
+    local fubenId = LActor.getFubenId(sysarg)
+    if ThePlotChapterConfig[fubenId] == nil then
+      debug_print("没有当前剧情副本的剧情配置:",fubenId)
+    end
+    local currConfig = nil
+    if difficul == ThePlotHandleFuncs.difficulType.normal_type then
+      currConfig = ThePlotChapterConfig[fubenId].monsterList.normal
+    elseif difficul == ThePlotHandleFuncs.difficulType.advance_type then
+      currConfig = ThePlotChapterConfig[fubenId].monsterList.advance
+    else
+      debug_print("没有当前剧情副本的剧情配置:",fubenId)
+      return
+    end
+    
+    if nil == currConfig then
+      debug_print("没有当前剧情副本的剧情配置:",fubenId)
+      return
+    end
+
+    local playFubenId = 0
+    for i , v in pairs(ThePlotConfig.Story) do
+        if v.fid == fubenId then
+          playFubenId = i
+          break
+        end
+    end
+    if 0 == playFubenId then
+        print("非剧情副本调用了剧情副本的结算:"..tostring(fubenId))
+        return
+    end
+    local currFubenConfig = ThePlotConfig.Story[playFubenId]
+    if nil == currFubenConfig then
+      return
+    end
+
+    ThePlotHandleFuncs.successCrossFuben(sysarg, fubenId)
+end
+
+GmEventFuncList.openallsystem = function ( sysarg ,  args)
+  -- body
+  for i = 1 , 100 do
+    LActor.openActorSystem( sysarg, i)
+  end
+
+end
+
+GmEventFuncList.AddItemAndUsed = function (sysarg, args)
+  if not sysarg then return end
+
+  local itemid = tonumber(args[1]) or 0
+  print("itemid: "..itemid)
+
+  LActor.addItemAddUse(sysarg, itemid, 0, 0, 1, 0, "GmAddItemAndUsed", 92)
+end
+
+
+GmEventFuncList.setNeedFenLiu = function ( sysarg, args)
+  local need = tonumber(args[1]) or 0
+  if need ~= 0 then
+    System.setGameNeedFenLiu(true)
+    LActor.sendTipmsg(sysarg, Lang.ScriptTips.systip001, ttMessage)
+  else
+    System.setGameNeedFenLiu(false)
+    LActor.sendTipmsg(sysarg, Lang.ScriptTips.systip002, ttMessage)
+  end
+end
+
+GmEventFuncList.setNeedFastAI = function (actorobj, args)
+  local need = tonumber(args[1] or 1)
+  if need ~= 0 then
+    System.setGameNeedFastAI(true)
+    LActor.sendTipmsg(actorobj, Lang.ScriptTips.systip003, ttMessage)
+  else
+    System.setGameNeedFastAI(false)
+    LActor.sendTipmsg(actorobj, Lang.ScriptTips.systip004, ttMessage)
+  end
+end
+
+GmEventFuncList.normalAcceptQuest = function ( actorobj , arg )
+  if actorobj == nil or arg == nil then
+    print("---------接任务错误--------------")
+    return
+  end
+
+  local qid = tonumber(arg[1]) or 0
+
+  if qid <= 0 then
+    debug_print("----------- 无效atx_qid --------------")
+    return
+  end
+
+  if tonumber(arg[2]) == 1 then
+    local conf = GmEventQuestFuncList.findQuestConfByQid(tonumber(arg[1]))
+    if conf == nil then
+      return
+    end
+
+    if conf.parentid > 0 then
+      LActor.setQuestFinishFlag(actorobj, conf.parentid, true)
+    end
+
+    LActor.setQuestFinishFlag(actorobj, conf.id, false)
+
+    local actorLevel = LActor.getLevel(actorobj)
+    for k, v in pairs(conf.conds) do
+      if v.type == 0 then -- 等级需求
+        if actorLevel < v.count then
+          LActor.setIntProperty(actorobj, PROP_LEVEL, v.count)
+        end
+      end
+    end
+  end
+
+  LActor.addQuest( actorobj , qid)
+end
+
+GmEventFuncList.normalFinishQuest = function ( actorobj , arg )
+  if actorobj == nil or arg == nil then
+    print("---------接任务错误--------------")
+    return
+  end
+  if arg[2] ~= nil then
+    local quick = false
+    if tonumber(arg[2]) == 1 then
+      quick = true
+    end
+    LActor.finishQuest( actorobj , tonumber(arg[1]), -1, quick)
+  else
+    LActor.finishQuest( actorobj , tonumber(arg[1]))
+  end
+end
+
+GmEventFuncList.finishQuestEnd = function (actorobj, args)
+  local endQid = tonumber(args[1]) or 0
+  if endQid <= 0 and endQid > 10000 then
+    return
+  end
+  for i = 1, endQid do
+    LActor.setQuestFinishFlag(actorobj, i, true)
+  end
+end
+
+GmEventFuncList.MonsterAllKill = function (actorobj, args)
+  local monsterId = tonumber(args[1]) or 0
+  if LActor.isKillAllMonster(actorobj, monsterId) == true then
+    LActor.sendTipmsg(actorobj, "monster is all kill in scene!", ttMessage)
+  else
+    LActor.sendTipmsg(actorobj, "monster is not all kill in scene!", ttMessage)
+  end
+end
+
+GmEventFuncList.ResetDayPlot = function (actorobj, args)
+  DayPlotFuncs.onNewDayArrive(actorobj)
+end
+
+GmEventFuncList.GetBornSceneId = function (actorobj, args)
+  LActor.sendTipmsg(actorobj, string.format("玩家出生场景是:%d, 当前场景id是:%d", LActor.getActorBornSceneId(actorobj), LActor.getSceneId(actorobj)), ttMessage)
+end
+
+--字符串用小写
+GmEventFuncList.register( "setgeminfo", GmEventFuncList.SetGemInfo, 1 )
+GmEventFuncList.register( "opensys", GmEventFuncList.OpenSys, 1 )
+GmEventFuncList.register( "triggertarget", GmEventFuncList.TriggerTarget, 1 )
+GmEventFuncList.register( "achieve", GmEventFuncList.AchieveEvent, 1 )
+GmEventFuncList.register( "recharge", GmEventFuncList.Recharge, 1 )
+GmEventFuncList.register( "addquest", GmEventFuncList.AddQuest, 1 )
+GmEventFuncList.register( "setfbcount", GmEventFuncList.SetFubenCount, 1 )
+GmEventFuncList.register( "showid", GmEventFuncList.ShowActorId, 1 )
+GmEventFuncList.register( "sysopen", GmEventFuncList.IsSysOpen, 1 )
+GmEventFuncList.register( "addrootexp", GmEventFuncList.AddRootExp, 1 )
+GmEventFuncList.register( "useskill", GmEventFuncList.UseSkill, 1 )
+GmEventFuncList.register( "addsceneeffect", GmEventFuncList.addSceneEffect, 1 )
+GmEventFuncList.register( "getptinfo", GmEventFuncList.GetPTInfo, 1 )
+GmEventFuncList.register( "resetptinfo", GmEventFuncList.ResetPTInfo, 1 )
+GmEventFuncList.register( "getintpro", GmEventFuncList.GetIntPro, 1 )
+GmEventFuncList.register( "removestate", GmEventFuncList.RemoveState, 1 )
+GmEventFuncList.register( "giveupquest", GmEventFuncList.GiveupQuest, 1 )
+GmEventFuncList.register( "randomattack", GmEventFuncList.RandomAttack, 1 )
+GmEventFuncList.register( "changecharm", GmEventFuncList.ChangeCharm, 1 )
+GmEventFuncList.register( "clearfbcount", GmEventFuncList.ClearFubenCount, 1 )
+GmEventFuncList.register( "chargefee", GmEventFuncList.ChargeFee, 1 )
+GmEventFuncList.register( "relive", GmEventFuncList.Relive, 1 )
+GmEventFuncList.register( "agreload", GmEventFuncList.AgReload, 1)
+GmEventFuncList.register( "agfilter", GmEventFuncList.AgFilter, 1)
+GmEventFuncList.register( "slave", SlaveOpFuncList.slave, 1)
+GmEventFuncList.register( "giveaward", GmEventFuncList.GiveAward, 1)
+GmEventFuncList.register( "txinform", GmEventFuncList.InformCompletion, 1)
+GmEventFuncList.register( "eqxilian", GmEventFuncList.SetEquipXiLian, 1)
+GmEventFuncList.register( "setopentime", GmEventFuncList.SetOpenTime, 1)
+GmEventFuncList.register( "setlimitcnt", GmEventFuncList.SetLimitCount, 1)
+GmEventFuncList.register( "reloadcharge", GmEventFuncList.ReloadChargeList, 1)
+GmEventFuncList.register( "reloadglobeconfig", GmEventFuncList.ReloadGlobeConfig, 1)
+GmEventFuncList.register( "addactivity", GmEventFuncList.addActivity, 1)
+GmEventFuncList.register( "comsumeboxstart", GmEventFuncList.ComsumeboxStart, 1)
+GmEventFuncList.register( "setlimitopen", GmEventFuncList.setLimitOpen, 1)
+GmEventFuncList.register( "setlimitpara", GmEventFuncList.setLimitPara, 1)
+GmEventFuncList.register( "setlimitopendays", GmEventFuncList.setLimitOpenDays, 1)
+GmEventFuncList.register( "addhonor", GmEventFuncList.AddHonor, 1)
+GmEventFuncList.register( "addshengwang", GmEventFuncList.AddShengWang, 1)
+GmEventFuncList.register( "resetfudicount", GmEventFuncList.resetFudiCount, 1)
+GmEventFuncList.register( "fdcount", GmEventFuncList.FudiCount, 1)
+GmEventFuncList.register( "guildfdcount", GmEventFuncList.GuildFdCount, 1)
+GmEventFuncList.register( "addtoken", GmEventFuncList.AddToken, 1)
+--GmEventFuncList.register( "zhounianfanpai", GmEventFuncList.znfp, 1)
+GmEventFuncList.register( "addstone", GmEventFuncList.AddStone, 1)
+GmEventFuncList.register( "addsuperpiece", GmEventFuncList.AddSuperPiece, 1)
+GmEventFuncList.register( "addsupermj", GmEventFuncList.AddSuperMj, 1)
+GmEventFuncList.register( "telport", GmEventFuncList.Telport, 1)
+GmEventFuncList.register( "enterfuben", GmEventFuncList.GmEnterFuben, 1)
+GmEventFuncList.register( "setloginday", GmEventFuncList.SetLoginDay, 1)
+GmEventFuncList.register( "testwt", GmEventFuncList.testfinishentrust, 1)
+GmEventFuncList.register( "addmiji", GmEventFuncList.GmAddBagMiji, 1)
+GmEventFuncList.register( "tongtianta", GmEventFuncList.GmTongTianTa, 1)
+GmEventFuncList.register( "nad",GmEventFuncList.AddBuff,1)
+GmEventFuncList.register( "ncm",GmEventFuncList.createMonster,1)
+GmEventFuncList.register( "lnskill",GmEventFuncList.LearnSkill,1)
+GmEventFuncList.register( "nec",GmEventFuncList.NewEnterCopy,1)
+GmEventFuncList.register( "gm",GmEventFuncList.NewStreng,1)
+GmEventFuncList.register( "tsg",GmEventFuncList.TestVar,1)
+GmEventFuncList.register( "sfd",GmEventFuncList.ShowFubenData,1)
+GmEventFuncList.register( "lqzctest",GmEventFuncList.LQZCTest,1)
+GmEventFuncList.register( "qhb",GmEventFuncList.qianghongbao,1)
+GmEventFuncList.register( "hbrz",GmEventFuncList.qianghongbaorizhi,1)
+GmEventFuncList.register("qiang",GmEventFuncList.qianghongbaoqhb,1)
+GmEventFuncList.register("inithb",GmEventFuncList.inithongbao,1)
+GmEventFuncList.register("inithb1",GmEventFuncList.inithongbao1,1)
+GmEventFuncList.register("inithb2",GmEventFuncList.inithongbao2,1)
+GmEventFuncList.register("inithb3",GmEventFuncList.inithongbao3,1)
+GmEventFuncList.register("inithb4",GmEventFuncList.inithongbao4,1)
+GmEventFuncList.register("initrz1",GmEventFuncList.initrizhi1,1)
+GmEventFuncList.register("initrz2",GmEventFuncList.initrizhi2,1)
+GmEventFuncList.register("hongbao",GmEventFuncList.hblist,1)
+GmEventFuncList.register("addpasskey",yaoshizhi,1)       --好友赠送钥匙
+GmEventFuncList.register("setskillcd",GmEventFuncList.SetSkillCD,1)
+GmEventFuncList.register( "ts", GmEventFuncList.MyTest, 1)
+GmEventFuncList.register( "st", GmEventFuncList.GmSetPlayFuben, 1)
+GmEventFuncList.register( "ciall", GmEventFuncList.CiyingAllCross, 1)
+GmEventFuncList.register( "ciopen", GmEventFuncList.CiyingAllOpen, 1)
+GmEventFuncList.register( "ciinit", GmEventFuncList.CiYingInit, 1)
+GmEventFuncList.register( "jqclr", GmEventFuncList.CiyingClear, 1)
+GmEventFuncList.register( "crossplay", GmEventFuncList.CrossCurrPlayFuben, 1)
+GmEventFuncList.register( "oas", GmEventFuncList.openallsystem, 1)
+GmEventFuncList.register( "additemandused", GmEventFuncList.AddItemAndUsed, 1)
+
+GmEventFuncList.register( "cmt", function (actorobj, args)
+  Fuben.createMonsters(LActor.getSceneHandle(actorobj), tonumber(args[1]), tonumber(args[2]), tonumber(args[3]), tonumber(args[4]), tonumber(args[5]), tonumber(args[6]), 0)
+end, 1)
+
+GmEventFuncList.register( "systemhb", GmEventFuncList.SystemHBGM, 1)
+GmEventFuncList.register( "clearhbcount", GmEventFuncList.clearhbcount, 1)
+GmEventFuncList.register( "setfenliu", GmEventFuncList.setNeedFenLiu, 1)
+GmEventFuncList.register( "setfastai", GmEventFuncList.setNeedFastAI, 1)
+GmEventFuncList.register( "atx", GmEventFuncList.normalAcceptQuest, 1)
+GmEventFuncList.register( "afx", GmEventFuncList.normalFinishQuest, 1)
+GmEventFuncList.register( "fns", GmEventFuncList.finishQuestEnd, 1)
+GmEventFuncList.register( "mallk", GmEventFuncList.MonsterAllKill, 1)
+GmEventFuncList.register( "rsdpl", GmEventFuncList.ResetDayPlot, 1)
+GmEventFuncList.register( "gbsid", GmEventFuncList.GetBornSceneId, 1)

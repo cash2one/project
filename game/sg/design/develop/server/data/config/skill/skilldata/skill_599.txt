@@ -1,0 +1,22 @@
+{
+	id = 599,
+	name = Lang.Skill.s600Name,
+	desc = Lang.Skill.s600Desc,
+	vocation = 0,
+	skillType = 8,
+	skillSpellType = 0,
+	skillClass = 4,
+	commonCd = 0,
+	canbeDefault = false,
+	specialBuffCond = 0,
+	notAutoUse = false,
+ 	actions=
+{
+
+	{act=2,effect=1601,type=2},
+		
+},
+	skillSubLevel = { 
+--#include "Skill_599_1.txt"
+	},
+},

@@ -1,0 +1,156 @@
+--军团开服活动脚本
+--#include "guildactiverewardconf.txt" once 
+
+--军团升级
+ONLINEREWARD.ServerActivityEvent[1] = function(sysarg, level, guildId)
+	local day7_t = System.getRestTimeFromOpenServer(7)
+	day7_t = day7_t - 7200	-- 计算距离开服7天22时的时间
+	if day7_t <= 0 then return end  --结束了，不再关注
+
+	if LocalDT.GuildActivityRewardCfg.CanRewardLevel[level] == nil then return end --不符合配置条件
+
+	local var = System.getStaticVar()
+	if var.guildActivity == nil then 
+		var.guildActivity = {}
+	end
+
+	var.guildActivity[guildId] = level
+
+	--print("ServerActivityEvent:"..var.guildActivity[guildId])
+end
+
+ONLINEREWARD.getGuildRewardInfo = function(sysarg)
+	local var = LActor.getStaticVar(sysarg)
+	if var.GuildActivitycanReward ~= nil then
+		--print("getGuildRewardInfo GuildActivitycanReward not none")
+		--保存值，只计算一次,是在结算时间以后调用的
+		return
+	end
+	var.GuildActivitycanReward = 0
+	var.GuildActivityrewardInfo = 0
+	local guildId = LActor.getGuildId(sysarg)
+	if guildId == 0 then 
+		--print("getGuildRewardInfo guildId none")
+		return
+	end
+	
+	local sysVar = System.getStaticVar()
+	if sysVar.guildActivity == nil or sysVar.guildActivity[guildId] == nil then 
+		--print("getGuildRewardInfo guildActivity none")
+		return
+	end
+	local ret = 0
+	ret = System.bitOpSetMask(ret, 0, true) --普通奖励
+	if LActor.getGuildPos(sysarg) == 4 then --宗主
+		ret = System.bitOpSetMask(ret, 1, true) --额外奖励
+	end
+	var.GuildActivitycanReward = ret
+	var.GuildActivityrewardInfo = sysVar.guildActivity[guildId]  --军团等级，对应奖励内容char
+end
+
+function geveGuildActivityItem(sysarg, level, getType)
+	if level > 4 then level = 4 end
+  	local conf = LocalDT.GuildActivityRewardCfg.CanRewardLevel[level]
+  	if conf == nil then return false end
+
+  	local rewardType = nil
+  	if getType == 1 then 
+   		rewardType = conf.LeaderRewardItem
+   	else    
+   		--成员奖
+   		rewardType = conf.MemberRewardItem
+   	end
+
+   	local items = rewardType.item
+
+	local bagGrid =Item.getBagEmptyGridCount(sysarg)      --玩家身上有多少个格子
+  	local needGrid =0
+ 	for i=1, table.getn(items) do
+        needGrid= needGrid + Item.getAddItemNeedGridCount(sysarg,items[i].id,items[i].count,items[i].quality,items[i].strong,items[i].bind)
+  	end
+  	--提示玩家留出x个格子
+  	if(needGrid > bagGrid) then
+    	-- local tipMsg = string.format(Lang.ScriptTips.x00074,needGrid)
+    	-- LActor.sendTipmsg( sysarg,tipMsg,ttMessage )
+    	LActor.SendGeneralTips(sysarg, 7, 0, 0)
+    	return false
+  	end
+
+  	--给物品
+  	for i=1,table.getn(items)  do
+		LActor.addItem(sysarg,items[i].id,items[i].quality,items[i].strong,items[i].count,items[i].bind,"compensate",1)
+	end
+
+	local addMoney = rewardType.money
+	for i=1,table.getn(addMoney) do
+		--给钱
+		LActor.changeMoney( sysarg, addMoney[i].type, addMoney[i].num, 1, true, "guild_activity")
+	end
+
+	return true
+end
+
+ONLINEREWARD.getGuildReward = function(sysarg, packet)
+	local getType = DataPack.readInt(packet)
+	local var = LActor.getStaticVar(sysarg)
+	--print("getGuildReward getType:"..getType)
+	if var.GuildActivitycanReward == nil or var.GuildActivityrewardInfo == nil then return end 
+	if var.GuildActivitycanReward == 0 then return end
+
+	local ret = var.GuildActivitycanReward
+
+	if getType == 0 then --普通成员奖励
+		if not System.bitOPMask(ret, 0) then
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.osa0004, ttMessage)
+			return
+		end
+
+		if System.bitOPMask(ret, 2) then --第3位为1表示已经领取过了
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.osa0002, ttMessage)
+			return
+		end
+		
+		local guildId = LActor.getGuildId(sysarg)
+		if guildId == 0 then   --没有军团
+			var.GuildActivitycanReward = 0
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.osa0001, ttMessage)
+			return
+		end
+
+		--给奖励
+		if geveGuildActivityItem(sysarg, var.GuildActivityrewardInfo, getType) then
+			--置位
+			ret = System.bitOpSetMask(ret, 2, true) --标记已领过
+			var.GuildActivitycanReward = ret
+		end
+	elseif getType == 1 then --宗主奖励
+		if not System.bitOPMask(ret, 1) then
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.osa0004, ttMessage)
+			return
+		end
+
+		if System.bitOPMask(ret, 3) then --第4位为1表示已经领取过了
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.osa0002, ttMessage)
+			return
+		end
+
+		if LActor.getGuildPos(sysarg) ~= 4 then
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.osa0003, ttMessage)
+			return
+		end
+
+		--给奖励
+		if geveGuildActivityItem(sysarg, var.GuildActivityrewardInfo, getType) then
+			--置位
+			ret = System.bitOpSetMask(ret, 3, true) --标记已领过
+			var.GuildActivitycanReward = ret
+		end
+	end
+
+	local npack = DataPack.allocPacket(sysarg, 138, 22)
+	if npack == nil then return end
+	DataPack.writeInt(npack, var.GuildActivitycanReward)
+	DataPack.writeByte(npack, var.GuildActivityrewardInfo)
+	DataPack.flush(npack)
+	--print(string.format("****  %d,%d",var.GuildActivitycanReward,var.GuildActivityrewardInfo))
+end

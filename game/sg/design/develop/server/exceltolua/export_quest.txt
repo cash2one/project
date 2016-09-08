@@ -1,0 +1,697 @@
+local QuestFuncs = {}
+
+QuestFuncs.QuestLang = nil
+QuestFuncs.ClientSearch = nil
+QuestFuncs.TalkModel = nil
+QuestFuncs.get_task_dialog = {} -- 前端接任务对白
+QuestFuncs.finish_task_dialog = {} -- 前端交任务对白
+QuestFuncs.unfinished_task_dialog = {} -- 前端接了任务但没完成的对白
+
+QuestFuncs.sceneLangWord = "Lang.SceneName.s%d"
+QuestFuncs.entityLangWord = "Lang.EntityName.n%d"
+QuestFuncs.monsterLangWord = "Lang.MonsterName.m%d"
+QuestFuncs.questNameLangWord = "Lang.Quest.n%d"
+QuestFuncs.questDescLangWord = "Lang.Quest.d%d"
+
+QuestFuncs.awardTypes = {
+    item = 0,
+    beibi = 1,
+    btianzhu = 2, 
+    ntianzhu = 3,
+    exp = 4,
+    zongmen = 5,
+    shengwang = 6,
+    rongyu = 7,
+    yaoshi = 8
+}
+
+QuestFuncs.condTypes = {
+    level = 0,
+}
+
+-- ================= 公共函数 =========================
+-- 裁切函数 sep裁切依据
+function QuestFuncs.Split(str, sep)
+    local sep, fields = sep or "\t", {}
+    local pattern = string.format("([^%s]+)", sep)
+    str:gsub(pattern, function(c)
+        if tonumber(c) ~= nil then
+            c = tonumber(c)
+        end
+        fields[#fields + 1] = c
+    end)
+    return fields
+end
+
+function QuestFuncs.splitTalkContent(content, qid, forwhat)
+    qid = qid or 0
+    forwhat = forwhat or "无所事事"
+    local talkTables = {}
+    --[[
+    {
+        { face = 1, name = "xxx", dir = -1, talk = "xxxx" }
+        { face = 0, name = "player", dir = -1, talk = "xxxx" }
+    }
+    --]]
+    if not content or type(content) ~= "string" then
+        return nil
+    end
+    local rowStr = QuestFuncs.Split(content, ";")
+    for k, v in ipairs(rowStr) do
+        local talks = QuestFuncs.Split(v, ":")
+        if #talks == 2 then
+            if talks[1] == "player" then
+                local tab = {}
+                tab.face = 0
+                tab.name = talks[1]
+                tab.dir = 1
+                tab.talk = talks[2]
+                table.insert(talkTables, tab)
+            else
+                local t = QuestFuncs.TalkModel[talks[1]]
+                if t ~= nil then
+                    local tab = {}
+                    tab.face = t.face
+                    tab.name = t.name
+                    tab.dir = t.dir
+                    tab.talk = talks[2]
+                    table.insert(talkTables, tab)
+                else
+                    print(string.format("= WARNNING => 警告 任务编号[%d]执行[%s]中对应<NPC配置>中无此NPC名", qid, forwhat), talks[1])
+                end
+            end
+        else
+            print(string.format("[%s] -> 无效的冒号[:]解析 任务编号[%d]", forwhat, qid))
+        end
+    end
+    return talkTables
+end
+
+function QuestFuncs.splitUnfinishTalkContent(content, qid, npcid)
+    qid = tonumber(qid) or 0
+    npcid = tonumber(npcid) or 0
+    forwhat = forwhat or "解析未完成任务对白"
+    local talkTables = {}
+    talkTables[npcid] = {}
+    --[[
+    {
+        { face = 1, name = "xxx", dir = -1, talk = "xxxx" }
+        { face = 0, name = "player", dir = -1, talk = "xxxx" }
+    }
+    --]]
+    if not content or type(content) ~= "string" then
+        return nil
+    end
+    local rowStr = QuestFuncs.Split(content, ";")
+    for k, v in ipairs(rowStr) do
+        local talks = QuestFuncs.Split(v, ":")
+        if #talks == 2 then
+            if talks[1] == "player" then
+                local tab = {}
+                tab.face = 0
+                tab.name = talks[1]
+                tab.dir = 1
+                tab.talk = talks[2]
+                table.insert(talkTables[npcid], tab)
+            else
+                local t = QuestFuncs.TalkModel[talks[1]]
+                if t ~= nil then
+                    local tab = {}
+                    tab.face = t.face
+                    tab.name = t.name
+                    tab.dir = t.dir
+                    tab.talk = talks[2]
+                    table.insert(talkTables[npcid], tab)
+                else
+                    print(string.format("= WARNNING => 警告 任务编号[%d]执行[%s]中对应<NPC配置>中无此NPC名", qid, forwhat), talks[1])
+                end
+            end
+        else
+            print(string.format("[%s] -> 无效的冒号[:]解析 任务编号[%d]", forwhat, qid))
+        end
+    end
+    return talkTables
+end
+
+-- ====================================================
+
+-- 任务语言包
+function QuestFuncs.readQuestLang(objexcel)
+    local QuestLang = {}
+    if not objexcel then
+        return QuestLang
+    end
+
+    local cCount = objexcel:GetCurrentSheetColCount()
+    local rCount = objexcel:GetCurrentSheetRowCount()
+
+    for i = 2, rCount do
+        local id = tonumber(objexcel:ReadCellAsString(i, 1))
+        if id ~= nil and id > 0 then
+            if QuestLang[id] == nil then
+                local rowTable = {}
+                rowTable[string.format("n%d", id)] = objexcel:ReadCellAsString(i, 2)
+                rowTable[string.format("d%d", id)] = objexcel:ReadCellAsString(i, 3)
+                QuestLang[id] = rowTable
+            else
+                print(string.format("= WARNNING => 警告 配置文件<任务语言包>第%d行出现重复编号[%d]", i, id))
+            end
+        else
+            print(string.format("= WARNNING => 警告 配置文件<任务语言包>第%d行出现空编号", i))
+        end
+    end
+    return QuestLang
+end
+
+-- 任务目标寻路配置
+function QuestFuncs.readClientSearch(objexcel)
+    local ClientSearch = {}
+    if not objexcel then
+        return ClientSearch
+    end
+
+    local cCount = objexcel:GetCurrentSheetColCount()
+    local rCount = objexcel:GetCurrentSheetRowCount()
+
+    for i = 2, rCount do
+        local id = tonumber(objexcel:ReadCellAsString(i, 1))
+        if id ~= nil and id > 0 then
+            if ClientSearch[id] == nil then
+                local rowTable = {}
+                rowTable.id = id
+                rowTable.tType = tonumber(objexcel:ReadCellAsString(i, 2))
+                rowTable.tId = tonumber(objexcel:ReadCellAsString(i, 3))
+                local sceneId = tonumber(objexcel:ReadCellAsString(i, 4))
+                if sceneId > 0 then
+                    -- rowTable.sceneid = string.format(QuestFuncs.sceneLangWord, sceneId)
+                    rowTable.sceneid = sceneId
+                    local searchType = tonumber(objexcel:ReadCellAsString(i, 5))
+                    local entityId = tonumber(objexcel:ReadCellAsString(i, 6))
+                    if searchType == 1 then
+                        rowTable.entityName = string.format(QuestFuncs.entityLangWord, entityId)
+                    elseif searchType == 2 then
+                        rowTable.entityName = string.format(QuestFuncs.monsterLangWord, entityId)
+                    else
+                        rowTable.x = tonumber(objexcel:ReadCellAsString(i, 7))
+                        rowTable.y = tonumber(objexcel:ReadCellAsString(i, 8))
+                    end
+                    local canFly = tonumber(objexcel:ReadCellAsString(i, 9))
+                    if canFly == 1 then
+                        rowTable.hideFastTransfer = true
+                    elseif canFly == 0 then
+                        rowTable.hideFastTransfer = false
+                    else
+                        rowTable.hideFastTransfer = false
+                        print(string.format("= WARNNING => 警告 配置文件<任务目标寻路配置>第%d行出现场[是否可传送]错误", i))
+                    end
+                    local monId = tonumber(objexcel:ReadCellAsString(i, 10)) or 0
+                    if monId > 0 then
+                        rowTable.protectMonId = monId
+                    end
+                    local monsterId = tonumber(objexcel:ReadCellAsString(i, 11)) or 0
+                    if monsterId > 0 then
+                        rowTable.monsterId = entityId
+                    end
+                    local tarTips = objexcel:ReadCellAsString(i, 12)
+                    if tarTips ~= "" then
+                        rowTable.tarTips = tarTips
+                    end
+                    ClientSearch[id] = rowTable
+                else
+                    print(string.format("= WARNNING => 警告 配置文件<任务目标寻路配置>第%d行出现[场景编号]错误", i))
+                end
+            else
+                print(string.format("= WARNNING => 警告 配置文件<任务目标寻路配置>第%d行出现重复编号[%d]", i, id))
+            end
+        else
+            print(string.format("= WARNNING => 警告 配置文件<任务目标寻路配置>第%d行出现空编号", i))
+        end
+    end
+    return ClientSearch
+end
+
+-- NPC编号
+function QuestFuncs.readTalkModel(objexcel)
+    local TalkModel = {}
+    if not objexcel then
+        return TalkModel
+    end
+
+    local cCount = objexcel:GetCurrentSheetColCount()
+    local rCount = objexcel:GetCurrentSheetRowCount()
+
+    for i = 2, rCount do
+        local id = tonumber(objexcel:ReadCellAsString(i, 1))
+        if id ~= nil and id > 0 then
+            local name = objexcel:ReadCellAsString(i, 2)
+            if TalkModel[name] ~= nil then
+                print(string.format("= WARNNING => 警告 配置文件<NPC编号>第%d行出现重名NPC", i))
+            else
+                local face = tonumber(objexcel:ReadCellAsString(i, 3)) or 0
+                local dir = tonumber(objexcel:ReadCellAsString(i, 4)) or 1
+                TalkModel[name] = {}
+                TalkModel[name].name = name
+                TalkModel[name].face = face
+                TalkModel[name].dir = dir
+            end
+        else
+            print(string.format("= WARNNING => 警告 配置文件<NPC编号>第%d行出现空编号", i))
+        end
+    end
+    return TalkModel
+end
+
+-- 等级开启系统
+function QuestFuncs.readLevelOpenSys(objexcel)
+    local LevelOpenSys = {}
+    if not objexcel then
+        return LevelOpenSys
+    end
+
+    local cCount = objexcel:GetCurrentSheetColCount()
+    local rCount = objexcel:GetCurrentSheetRowCount()
+
+    for i = 2, rCount do
+        local level = tonumber(objexcel:ReadCellAsString(i, 1))
+        local sysidstr = objexcel:ReadCellAsString(i, 2)
+        if level ~= nil and level > 0 and sysidstr ~= "" then
+            local rowTable = {}
+            rowTable.level = level
+            rowTable.sysid = QuestFuncs.Split(sysidstr, ",")
+            local check = true
+            for k, v in ipairs(rowTable.sysid) do
+                if type(v) ~= "number" then
+                    check = false
+                    print(string.format("= WARNNING => 错误 配置文件<等级开启系统>中错误的等级[%d]的系统编号配置", level))
+                    break
+                end
+            end
+            if check == true then
+                table.insert(LevelOpenSys, rowTable)
+            end
+        else
+            if sysidstr ~= "" then
+                print(string.format("= WARNNING => 警告 配置文件<等级开启系统>第%d行出现错误等级或错误系统编号", i))
+            end
+        end
+    end
+    return LevelOpenSys
+end
+
+-- 读取任务基本配置
+function QuestFuncs.readQuestBase(objexcel)
+    local QuestBase = {}
+    if not objexcel then
+        return QuestBase
+    end
+
+    local cCount = objexcel:GetCurrentSheetColCount()
+    local rCount = objexcel:GetCurrentSheetRowCount()
+
+    for i = 2, rCount do
+        local id = tonumber(objexcel:ReadCellAsString(i, 1))
+        if id ~= nil and id > 0 then
+            if QuestBase[id] == nil then
+                local rowTable = {}
+                rowTable.id = id
+                rowTable.name = string.format(QuestFuncs.questNameLangWord, tonumber(objexcel:ReadCellAsString(i, 2)))
+                rowTable.content = string.format(QuestFuncs.questDescLangWord, tonumber(objexcel:ReadCellAsString(i, 3)))
+                rowTable.type = tonumber(objexcel:ReadCellAsString(i, 4))                
+                local runStr = objexcel:ReadCellAsString(i, 5) -- 玩法类型
+                if runStr ~= "" then
+                    local func = loadstring(string.format("return %s ",runStr))
+                    if func and type(func) == "function" and func() ~= nil and type(func()) == "table" then
+                        rowTable.playType = func()
+                    else
+                        print(string.format("= WARNNING => 警告 配置文件<任务基本配置>第%d行出现[任务玩法类型]lua语法错误", i))
+                        return
+                    end
+                end
+                rowTable.parentid = tonumber(objexcel:ReadCellAsString(i, 6))
+                local cangiveup = tonumber(objexcel:ReadCellAsString(i, 7))
+                if cangiveup == 1 then
+                    rowTable.cangiveup = true
+                else
+                    rowTable.cangiveup = false
+                end
+                local finishNext = tonumber(objexcel:ReadCellAsString(i, 8))
+                if finishNext == 1 then
+                    rowTable.finishNext = true
+                else
+                    rowTable.finishNext = false
+                end
+                if tonumber(objexcel:ReadCellAsString(i, 9)) == 1 then
+                    local t_type = tonumber(objexcel:ReadCellAsString(i, 10)) or 0
+                    local t_sid = tonumber(objexcel:ReadCellAsString(i, 11)) or 0
+                    local t_npcid = tonumber(objexcel:ReadCellAsString(i, 12)) or 0
+                    if t_type ~= 0 and t_sid ~= 0 and t_npcid ~= 0 then
+                        local t = {}
+                        t.type = t_type
+                        t.scene = string.format(QuestFuncs.sceneLangWord, t_sid)
+                        t.npc = string.format(QuestFuncs.entityLangWord, t_npcid)
+                        local born = tonumber(objexcel:ReadCellAsString(i, 13)) or 0
+                        if born == 1 then
+                            t.born = true
+                        end
+                        rowTable.prom = t
+                    else
+                        print(string.format("任务[%d],无效的从NPC接取方式,请重新检查!", id))
+                    end
+                end
+                if tonumber(objexcel:ReadCellAsString(i, 14)) == 1 then
+                    local t_type = tonumber(objexcel:ReadCellAsString(i, 15)) or 0
+                    local t_sid = tonumber(objexcel:ReadCellAsString(i, 16)) or 0
+                    local t_npcid = tonumber(objexcel:ReadCellAsString(i, 17)) or 0
+                    if t_type ~= 0 and t_sid ~= 0 and t_npcid ~= 0 then
+                        local t = {}
+                        t.type = t_type
+                        t.scene = string.format(QuestFuncs.sceneLangWord, t_sid)
+                        t.npc = string.format(QuestFuncs.entityLangWord, t_npcid)
+                        local born = tonumber(objexcel:ReadCellAsString(i, 18)) or 0
+                        if born == 1 then
+                            t.born = true
+                        end
+                        rowTable.comp = t
+                    else
+                        print(string.format("任务[%d],无效的从NPC提交方式,请重新检查!", id))
+                    end
+                end
+                local runStr = objexcel:ReadCellAsString(i, 19)
+                local func = loadstring(string.format("return %s ",runStr))
+                if func and type(func) == "function" and func() ~= nil and type(func()) == "table" then
+                    rowTable.target = func()
+                    if #rowTable.target == 0 then
+                        rowTable.target = {}
+                    end
+                    local searchIdstr = objexcel:ReadCellAsString(i, 20) or ""
+                    local searchIdTable = QuestFuncs.Split(searchIdstr, ",")
+
+                    for idx, val in pairs(searchIdTable) do
+                        local searchId = tonumber(val) or 0
+                        if searchId > 0 and searchIdTable ~= nil then
+                            local searchTable = QuestFuncs.ClientSearch[searchId]
+                            if searchTable then
+                                for k, v in ipairs(rowTable.target) do
+                                    if v.type == searchTable.tType and v.id == searchTable.tId then -- 找到需要寻路的
+                                        rowTable.target[k].location = {}
+                                        rowTable.target[k].location.sceneid = searchTable.sceneid
+                                        rowTable.target[k].location.entityName = searchTable.entityName
+                                        rowTable.target[k].location.x = searchTable.x or 0
+                                        rowTable.target[k].location.y = searchTable.y or 0
+                                        rowTable.target[k].location.hideFastTransfer = searchTable.hideFastTransfer
+                                        rowTable.target[k].location.protectMonId = searchTable.protectMonId
+                                        rowTable.target[k].location.monsterId = searchTable.monsterId
+                                        if searchTable.tarTips ~= nil then
+                                            rowTable.target[k].tarTips = string.format("Lang.Quest.t%s", searchTable.tarTips)
+                                        end
+                                    else
+                                        print(string.format("任务[%d],目标寻路编号[%d]-->id[%d]或目标type[%d]不对应!", id, searchId, v.id, v.type))
+                                    end
+                                end
+                            else
+                                print(string.format("任务[%d],无效的寻路编号 寻路sheet中未配置该寻路编号!!", id))
+                            end
+                        end
+                    end
+
+                    local runStr = objexcel:ReadCellAsString(i, 23) -- 奖励列表(不包含外部的贝币和经验)
+                    local func = loadstring(string.format("return %s ",runStr))
+                    if func and type(func) == "function" and func() ~= nil and type(func()) == "table" then
+                        rowTable.awards = func()
+                        if #rowTable.awards == 0 then
+                            rowTable.awards = {}
+                        end
+                        local beibi = tonumber(objexcel:ReadCellAsString(i, 21)) or 0
+                        if beibi > 0 then
+                            local t = {}
+                            t.type = QuestFuncs.awardTypes.beibi
+                            t.id = 0
+                            t.count = beibi
+                            table.insert(rowTable.awards, t)
+                        end
+                        local exp = tonumber(objexcel:ReadCellAsString(i, 22)) or 0
+                        if exp > 0 then
+                            local t = {}
+                            t.type = QuestFuncs.awardTypes.exp
+                            t.id = 0
+                            t.count = exp
+                            table.insert(rowTable.awards, t)
+                        end
+                        local runStr = objexcel:ReadCellAsString(i, 25) -- 接任务限制列表(不包含外部的等级限制)
+                        local func = loadstring(string.format("return %s ",runStr))
+                        if func and type(func) == "function" and func() ~= nil and type(func()) == "table" then
+                            rowTable.conds = func()
+                            if #rowTable.conds == 0 then
+                                rowTable.conds = {}
+                            end
+                            local level = tonumber(objexcel:ReadCellAsString(i, 24)) or 0
+                            if level > 0 then
+                                local t = {}
+                                t.type = QuestFuncs.condTypes.level
+                                t.id = 0
+                                t.count = level
+                                table.insert(rowTable.conds, t)
+                            end
+                            rowTable.timelimit = tonumber(objexcel:ReadCellAsString(i, 26))
+                            rowTable.interval = tonumber(objexcel:ReadCellAsString(i, 27))
+                            rowTable.maxcount = tonumber(objexcel:ReadCellAsString(i, 28))
+                            local excludetree = tonumber(objexcel:ReadCellAsString(i, 29))
+                            if excludetree == 1 then
+                                rowTable.excludetree = true
+                            else
+                                rowTable.excludetree = false
+                            end
+                            local timeoutcleardata = tonumber(objexcel:ReadCellAsString(i, 30)) or 0
+                            if timeoutcleardata == 1 then
+                                rowTable.timeoutcleardata = true
+                            else
+                                rowTable.timeoutcleardata = false
+                            end
+
+                            -- 以下是前端NPC对白文字处理
+                            local get_task_content = objexcel:ReadCellAsString(i, 32)
+                            if get_task_content ~= "" then
+                                QuestFuncs.get_task_dialog[id] = QuestFuncs.splitTalkContent(get_task_content, id, "解析接取任务对白")
+                            end
+
+                            local finish_task_dialog = objexcel:ReadCellAsString(i, 33)
+                            if finish_task_dialog ~= "" then
+                                QuestFuncs.finish_task_dialog[id] = QuestFuncs.splitTalkContent(finish_task_dialog, id, "解析提交任务对白")
+                            end
+                            
+                            -- local unfinished_task_dialog = objexcel:ReadCellAsString(i, 32)
+                            -- local unfinish_npcid = tonumber(objexcel:ReadCellAsString(i, 37)) or 0
+                            -- -- if unfinished_task_dialog ~= nil then
+                            -- --     QuestFuncs.unfinished_task_dialog[id] = QuestFuncs.splitTalkContent(unfinished_task_dialog, id, "解析未完成任务对白")
+                            -- -- end
+                            -- if unfinish_npcid > 0 and unfinished_task_dialog ~= "" then
+                            --     QuestFuncs.unfinished_task_dialog[id] = QuestFuncs.splitUnfinishTalkContent(unfinished_task_dialog, id, unfinish_npcid)
+                            -- end
+
+                            local acceptOpenSys = objexcel:ReadCellAsString(i, 35)
+                            if acceptOpenSys ~= "" then
+                                local sysids = QuestFuncs.Split(acceptOpenSys, ",")
+                                local check = true
+                                for k, v in ipairs(sysids) do
+                                    if type(v) ~= "number" then
+                                        check = false
+                                        print(string.format("= WARNNING => 错误 配置文件<任务基本配置>第[%d]行出现错误的接任务触发开启的系统编号配置", i))
+                                        break
+                                    end
+                                end
+                                if check == true then
+                                    rowTable.acceptOpenSys = sysids
+                                end
+                            end
+
+                            local finishOpenSys = objexcel:ReadCellAsString(i, 36)
+                            if finishOpenSys ~= "" then
+                                local sysids = QuestFuncs.Split(finishOpenSys, ",")
+                                local check = true
+                                for k, v in ipairs(sysids) do
+                                    if type(v) ~= "number" then
+                                        check = false
+                                        print(string.format("= WARNNING => 错误 配置文件<任务基本配置>第[%d]行出现错误的完成任务触发开启的系统编号配置", i))
+                                        break
+                                    end
+                                end
+                                if check == true then
+                                    rowTable.finishOpenSys = sysids
+                                end
+                            end
+
+                            local acceptjuqingkey = objexcel:ReadCellAsString(i, 37)
+                            if acceptjuqingkey == "" then
+                                acceptjuqingkey = "none"
+                            end
+                            rowTable.acceptjuqingkey = acceptjuqingkey
+
+                            local commitjuqingkey = objexcel:ReadCellAsString(i, 38)
+                            if commitjuqingkey == "" then
+                                commitjuqingkey = "none"
+                            end
+                            rowTable.commitjuqingkey = commitjuqingkey
+
+                            rowTable.nextacceptqid = tonumber(objexcel:ReadCellAsString(i, 39)) or 0 -- 自动接下一个任务的id
+                            local autofinish = tonumber(objexcel:ReadCellAsString(i, 40)) or 0
+                            if autofinish == 1 then
+                                rowTable.autofinish = true
+                            else
+                                rowTable.autofinish = false
+                            end
+
+                            -- table.insert(QuestBase, rowTable)
+                            QuestBase[id] = rowTable
+
+                        else
+                            print(string.format("= WARNNING => 警告 配置文件<任务基本配置>第%d行出现[接任务限制列表]lua语法错误", i))
+                        end
+                    else
+                        print(string.format("= WARNNING => 警告 配置文件<任务基本配置>第%d行出现[奖励列表]lua语法错误", i))
+                    end
+                else
+                    print(string.format("= WARNNING => 警告 配置文件<任务基本配置>第%d行出现[任务目标]lua语法错误", i))
+                end
+            else
+                print(string.format("= WARNNING => 警告 配置文件<任务基本配置>第%d行出现重复编号[%d]", i, id))
+            end
+        end
+    end
+    return QuestBase
+end
+
+-- 读取任务配置文件
+function ReadQuestConfig()
+    local objexcel = CExcelReader:new()
+    if not objexcel then
+        print("objexcel is null")
+        return
+    end
+
+    objexcel:Init_App()
+    objexcel:OpenRead()
+
+    -- 读取<任务语言包>
+    local obj = objexcel:LoadSheetByIndex(1)
+    if not obj then
+        print("读取<任务语言包>失败!")
+        objexcel:Close()
+        objexcel:Quit_App()
+        objexcel:delete()
+        return
+    end
+    QuestFuncs.QuestLang = QuestFuncs.readQuestLang(objexcel)
+
+    local out = false
+    local quest_lang = {}
+    for k, v in pairs(QuestFuncs.QuestLang) do
+        out = true
+        for n, m in pairs(v) do
+            quest_lang[n] = m
+        end
+    end
+
+    -- if out == true then
+    --     local str = ""
+    --     str = dump(quest_lang)
+    --     str = string.format("Quest = %s\n", str)
+
+    --     objexcel:WriteFile("data\\language\\zh-cn\\quest.txt", str)
+    -- end
+
+    -- 读取<任务目标寻路配置>
+    local obj = objexcel:LoadSheetByIndex(2)
+    if not obj then
+        print("读取<任务目标寻路配置>失败!")
+        objexcel:Close()
+        objexcel:Quit_App()
+        objexcel:delete()
+        return
+    end
+    QuestFuncs.ClientSearch = QuestFuncs.readClientSearch(objexcel)
+
+    -- 读取<NPC编号>
+    local obj = objexcel:LoadSheetByIndex(4)
+    if not obj then
+        print("读取<NPC编号>失败!")
+        objexcel:Close()
+        objexcel:Quit_App()
+        objexcel:delete()
+        return
+    end
+    QuestFuncs.TalkModel = QuestFuncs.readTalkModel(objexcel)
+
+    -- 读取<等级开启系统>
+    local obj = objexcel:LoadSheetByIndex(5)
+    if not obj then
+        print("读取<NPC编号>失败!")
+        objexcel:Close()
+        objexcel:Quit_App()
+        objexcel:delete()
+        return
+    end
+    local LevelOpenSys = QuestFuncs.readLevelOpenSys(objexcel)
+
+    print("=============>>>>>> 等级开启系统文件开始写入...")
+
+    -- 写开启系统的文件
+    local LevelOpenSysStr = string.format("LevelOpenSys = %s", dump(LevelOpenSys))
+    objexcel:WriteFile("data\\config\\levelopensysid.txt", LevelOpenSysStr)
+
+    print("=============>>>>>> 等级开启系统文件完成写入...")
+
+    print("=============>>>>>> 任务基本配置开始读取...")
+
+    -- 读取<任务基本配置>
+    local obj = objexcel:LoadSheetByIndex(3)
+    if not obj then
+        print("读取<任务基本配置>失败!")
+        objexcel:Close()
+        objexcel:Quit_App()
+        objexcel:delete()
+        return
+    end
+    local QuestBase = QuestFuncs.readQuestBase(objexcel)
+
+    print("=============>>>>>> 任务基本配置完成读取...")
+
+
+    print("=============>>>>>> 任务基本配置文件开始写入...")
+
+    -- local stdquestStr = "--lua script\n--#include \"..\\..\\language\\LangCode.txt\"\nStdQuest = \n{\n"
+    for k, v in pairs(QuestBase) do
+        local str = dump(v)
+        str = str .. ","
+        objexcel:WriteFile(string.format("data\\config\\quest\\quests\\%d.txt", tonumber(v.id)), str)
+
+        -- stdquestStr = stdquestStr .. string.format("--#include \"quests\\%d.txt\"\n", tonumber(v.id))
+    end
+    -- 
+    -- stdquestStr = stdquestStr .. "}"
+    -- objexcel:WriteFile("data\\config\\quest\\stdquests.txt", stdquestStr)
+
+    print("=============>>>>>> 任务基本配置文件完成写入...")
+
+    print("=============>>>>>> 前端对白文件开始写入...")
+
+    local get_task_str = dump(QuestFuncs.get_task_dialog, true)
+    get_task_str = "get_task_dialog = \n" .. get_task_str
+    objexcel:WriteFileWithUTF8("get_task_dialog.lua", get_task_str)
+
+    local finish_task_str = dump(QuestFuncs.finish_task_dialog, true)
+    finish_task_str = "finish_task_dialog = \n" .. finish_task_str
+    objexcel:WriteFileWithUTF8("finish_task_dialog.lua", finish_task_str)
+    
+    -- local unfinished_task_str = dump(QuestFuncs.unfinished_task_dialog, true)
+    -- unfinished_task_str = "unfinished_task_dialog = \n" .. unfinished_task_str
+    -- objexcel:WriteFileWithUTF8("unfinished_task_dialog.lua", unfinished_task_str)
+
+    print("=============>>>>>> 前端对白文件完成写入...")
+
+    print("========== 导出任务配置表完成! ==========")
+
+
+    objexcel:Close()
+    objexcel:Quit_App()
+    objexcel:delete()
+end

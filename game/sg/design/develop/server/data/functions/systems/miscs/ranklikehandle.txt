@@ -1,0 +1,97 @@
+--排行榜点赞
+
+RankLikeFunc = {}
+RankLikeFunc.result = {1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024}
+RankLikeFunc.expAward = 0 		--经验奖励
+RankLikeFunc.moneyAward = 500	--铜币奖励
+
+function RankLikeFunc.rankLikeUser(actor, msgid, packet)
+	if not actor or not packet then return end
+
+	local rankId = DataPack.readByte(packet)
+	local actorId = DataPack.readInt(packet)
+
+	-- 初始化当天统计玩家操作数据
+	local nVal = LActor.getStaticVar(actor)
+	if nVal == nil then return end
+	-- 初始化
+	if nVal.RankLikeUserData == nil then nVal.RankLikeUserData = {} end
+	if nVal.RankLikeUserData[rankId] == nil then nVal.RankLikeUserData[rankId] = {} end
+
+	-- 判断玩家ID是否在排行榜前3名
+	local rankIndex = System.getActorRankIndex(rankId, actorId)
+	if rankIndex < 1 or rankIndex > 3 then
+		LActor.sendTipmsg(actor, Lang.ScriptTips.ranklike0002, ttMessage)
+		return
+	end
+
+	local result = 0
+	if nVal.RankLikeUserData[rankId][actorId] == nil then -- 允许点赞
+		-- 执行点赞操作
+		local count = System.giveActorLikeCount(rankId, actorId, 1, 0) -- 点赞一次
+		if count > 0 then
+			if RankLikeFunc.expAward > 0 then
+				LActor.addExp(actor, RankLikeFunc.expAward, 0, 0)
+			end
+			if RankLikeFunc.moneyAward > 0 then
+				LActor.changeMoney(actor, mtBindCoin, RankLikeFunc.moneyAward, 1, true, "ranklike")
+			end
+			nVal.RankLikeUserData[rankId][actorId] = 1 -- 标记操作了一次
+			result = 1
+
+			LActor.sendTipmsg(actor, Lang.ScriptTips.ranklike0003, ttMessage)
+			-- 成就事件
+			LActor.SetAchieveProcessByType(actor, 109, 1, 1); -- aAchieveEventGiveRankLike
+			--活跃度
+			ActivationTrigger(actor, 35)
+		end
+	else -- 不允许再点赞了
+		LActor.sendTipmsg(actor, Lang.ScriptTips.ranklike0001, ttMessage)
+	end
+
+	-- 返回数据给前端
+	local pack = DataPack.allocPacket(actor, 139, 229)
+	DataPack.writeByte(pack, rankId)
+	DataPack.writeInt(pack, actorId)
+	DataPack.writeInt(pack, result)
+
+	DataPack.flush(pack)
+end
+
+function RankLikeFunc.getInfo(actor, msgid, packet)
+	if not actor or not packet then return end
+
+	local rankId = DataPack.readByte(packet)
+	local result = 0
+	local nVal = LActor.getStaticVar(actor)
+	if nVal and nVal.RankLikeUserData and nVal.RankLikeUserData[rankId] then
+		for i = 1, 3 do
+			local actorId = Ranking.getActorIdFromDbRank(rankId, i-1)
+			if actorId == 0 then break end
+
+			if nVal.RankLikeUserData[rankId][actorId] then
+				result = result + RankLikeFunc.result[i]
+			end
+		end
+	end
+
+	local pack = DataPack.allocPacket(actor, 139, 228)
+	DataPack.writeByte(pack, rankId)
+	DataPack.writeInt(pack, result)
+	DataPack.flush(pack)
+end
+
+--点赞，新的一天清玩家已点赞的数据
+function RankLikeFunc.onNewDay(actor)
+	if not actor then return end
+
+	local nVal = LActor.getStaticVar(actor)
+	if not nVal then return end
+
+	nVal.RankLikeUserData = nil
+end
+
+MiscsImplement.registerMsgHandler(228, RankLikeFunc.getInfo)
+MiscsImplement.registerMsgHandler(229, RankLikeFunc.rankLikeUser)
+-- EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, RankLikeFunc.sendInfo)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, RankLikeFunc.onNewDay)

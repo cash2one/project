@@ -1,0 +1,540 @@
+-- 神秘商店处理,几个商店用同一条协议
+
+--#include "data\config\misc\limitshopconf.txt" once
+--#include "data\functions\globaldefine.txt" once
+--#include "data\functions\systems\timereward\activitycontrolhandler.txt" once
+
+--MiscsImplement.LiuDaoBuyItem = nil
+
+-- 神秘商店购买东西
+--[[MiscsImplement.ShopBuyItem = function(sysarg, msgid, packet)
+	local sid = DataPack.readInt(packet) -- 商店ID
+	local id = DataPack.readInt(packet)
+	local num = DataPack.readInt(packet)
+	if sid == nil or id == nil or num == nil or num <= 0 then return end
+
+	if sid == 1 and MiscsImplement.LiuDaoBuyItem ~= nil then -- 六道商店按以前的处理
+		MiscsImplement.LiuDaoBuyItem(sysarg, sid, id, num)
+		return 
+	end	
+end]]
+
+-- GM命令用到，检查商店状态
+--[[function GmCheckShopState()
+	MiscsImplement.CheckShopState()
+end]]
+
+-- 检查限时商店状态
+MiscsImplement.CheckShopState = function()
+	--print("cccccccccccccccccccccccccccccccccccccccc")
+	--print("var_sys_d.limitshoptime"..var_sys_d.limitshoptime)
+	local var_sys_d = System.getDyanmicVar()
+	local var_sys = System.getStaticVar()
+
+	local oldstate = var_sys_d.limitshoptime
+	local newstate
+	local state = ONLINEREWARD.GetActivityState(LimitShop.activityid,nil,true)
+	if state == 0 then return end 
+	local cur_t = System.getCurrMiniTime()
+	if cur_t >= var_sys.limitshopstart and cur_t <= var_sys.limitshopend then
+		newstate = 1
+	else
+		newstate = 0
+	end
+	if oldstate == nil or oldstate ~= newstate then
+		var_sys_d.limitshoptime = newstate
+
+		local dp = LDataPack.allocPacket()
+		if dp == nil then return end
+		LDataPack.writeByte(dp, 139)
+		LDataPack.writeByte(dp, 109)
+		LDataPack.writeInt(dp, newstate)
+		System.broadcastData(dp)
+	end
+	-- print("shopstate:"..newstate)
+end
+
+-- 限时商店初始化
+MiscsImplement.OnLimitShopInit = function()
+	local state,starttime,endtime = ONLINEREWARD.GetActivityState(LimitShop.activityid,nil,true)
+	local var_sys = System.getStaticVar()
+	--[[if var_sys_d.limitshoptime == nil or var_sys_d.limitshoptime ~= 1 then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.hf016, ttMessage)
+		return
+	end]]
+	if state == 0 then 
+	--local var_sys = System.getStaticVar()
+
+	--local tconf = LimitShop.times[System.getServerId()]
+	--local tconf = LimitShop.times.sjTime
+	--print("System.getServerId():"..System.getServerId())
+	--if tconf == nil then
+		var_sys.limitshopstart = 0
+		var_sys.limitshopend = 0
+	else
+		--local t = tconf[1]
+		--var_sys.limitshopstart = System.timeEncode(t[1], t[2], t[3], t[4], t[5], t[6])
+		var_sys.limitshopstart = starttime
+		--t = tconf[2]
+		--var_sys.limitshopend = System.timeEncode(t[1], t[2], t[3], t[4], t[5], t[6])
+		var_sys.limitshopend = endtime
+	end
+	MiscsImplement.CheckShopState()
+end
+
+MiscsImplement.OnLimitShopFina = function()
+end
+
+-- 一分钟定时执行
+MiscsImplement.OnLimitShopTime = function()
+	MiscsImplement.CheckShopState()
+end
+
+
+-- 更新刷新时间
+-- refresh : 是否强制刷新
+MiscsImplement.UpdateLimitShopTime = function(info, cur_t, refresh)
+	if refresh or info.last == nil then
+		info.last = cur_t
+		return true
+	end
+
+	local diff = cur_t - (info.last + LimitShop.refreshTime)
+	if diff < 0 then -- 不需要更新
+		return false
+	end
+
+	local power = math.floor(diff/LimitShop.refreshTime) + 1
+
+	info.last = info.last + power * LimitShop.refreshTime
+
+	return true
+end
+
+-- 发送显示商店信息
+-- refresh : 是否强制刷新
+MiscsImplement.SendLimitShopInfo = function(sysarg, refresh)
+	--print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+	local cur_t = System.getCurrMiniTime()
+	local var_sys_d = System.getDyanmicVar()
+	local var_sys = System.getStaticVar()
+	local left_t = var_sys.limitshopend - cur_t -- 活动剩余时间
+	if left_t < 0 then left_t = 0 end
+
+	local var = LActor.getStaticVar(sysarg)
+	if var.limitshop == nil then var.limitshop = {} end
+
+	local info = var.limitshop
+	if MiscsImplement.UpdateLimitShopTime(info, cur_t, refresh) then
+		info.buys = {} -- 购买个数
+		info.items = {} -- 道具ID
+		MiscsImplement.RefreshLimitItems(info.items, LimitShop.xb, 2, 1)
+		MiscsImplement.RefreshLimitItems(info.items, LimitShop.yb, 2, 3)
+	end
+
+	-- 全局的处理
+	if var_sys.limitShopTmp == nil then
+		local sys_var = System.getStaticVar()
+		sys_var.limitshopItemList = {}
+		sys_var.LimitShop_total = 0
+
+	--	print("====================global reset")		
+		var_sys.limitShopTmp = 1
+	end
+
+	-- 个人数据的处理
+	if var.limitShopTmp == nil then
+		info.buys = {} -- 购买个数
+		info.items = {} -- 道具ID
+		MiscsImplement.RefreshLimitItems(info.items, LimitShop.xb, 2, 1)
+		MiscsImplement.RefreshLimitItems(info.items, LimitShop.yb, 2, 3)
+		--print("====================user reset only once")		
+		var.limitShopTmp = 1
+	end
+
+	-- 一些数据的初始化
+	if info.buys == nil then
+		info.buys = {}
+	end
+	if info.items == nil then
+		info.items = {}
+	end
+
+	local refresh_t = info.last + LimitShop.refreshTime - cur_t
+	local items = info.items
+
+	local npack = DataPack.allocPacket(sysarg,139,106)
+    if npack == nil then return end
+    DataPack.writeInt(npack, left_t)
+    DataPack.writeInt(npack, refresh_t)
+    if LimitShop.refreshCount > 0 then
+    	local nrefresh = info.nrefresh
+		if nrefresh == nil then nrefresh = 0 end
+		local temp = LimitShop.refreshCount - nrefresh
+		if temp < 0 then
+			temp = 0
+		end
+    	DataPack.writeInt(npack, temp)
+    else
+    	DataPack.writeInt(npack, -1) -- 不限制次数的发个-1
+    end
+    DataPack.writeInt(npack, #items)
+    for i=1,#items do
+    	local item = items[i]
+    	local iconf
+    	local moneyType
+    	if i < 3 then -- 仙币库的
+    		iconf = LimitShop.xb[item.idx]
+    		moneyType = 0
+    	else
+    		iconf = LimitShop.yb[item.idx]
+    		moneyType = 3
+    	end
+    	local nbuy = info.buys[i] -- 已经购买的数量
+    	if nbuy == nil then
+    		nbuy = 0
+    	end
+    	local temp = iconf.limit - nbuy
+    	--[[if iconf.limit > 1  and  nbuy == 0 then
+    		temp  = 1
+    	elseif iconf.limit > 1  and  nbuy > 0 then
+    		temp = 0
+    	end]]
+
+    	DataPack.writeInt(npack, iconf.itemid) -- 物品ID
+    	DataPack.writeByte(npack, moneyType) -- 货币类型
+    	DataPack.writeInt(npack, iconf.oricost) -- 原价
+    	DataPack.writeInt(npack, iconf.cost) -- 现价
+    	--DataPack.writeInt(npack, iconf.limit - nbuy) -- 剩余数量
+    	DataPack.writeInt(npack, temp) -- 剩余数量
+    end
+    DataPack.flush(npack)
+end
+
+-- 获取限时商店活动信息
+MiscsImplement.GetLimitShopInfo = function(sysarg, msgid, packet)
+	--print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+	MiscsImplement.SendLimitShopInfo(sysarg, false)
+end
+
+-- 刷新限时商店的物品，把索引添加到items
+MiscsImplement.RefreshLimitItems = function(items, conf, count, pos)
+	
+	--[[MiscsImplement.RefreshLimitItems(info.items, LimitShop.xb, 2, 1)
+	MiscsImplement.RefreshLimitItems(info.items, LimitShop.yb, 2, 3)]]
+
+	-- new code 
+	local sys_var = System.getStaticVar()
+	--local var = LActor.getStaticVar(sysarg)
+	local limits = LimitShop.limits
+	if sys_var.LimitShop_total == nil then sys_var.LimitShop_total = 0 end 
+	if sys_var.limitshopItemList == nil then
+        sys_var.limitshopItemList = {}
+    end
+    for i=1,#limits do
+        if sys_var.limitshopItemList[limits[i].itemid] == nil then
+            sys_var.limitshopItemList[limits[i].itemid] = 0
+        end
+        print("sys_var.limitshopItemList[limits[i].itemid]:"..sys_var.limitshopItemList[limits[i].itemid])
+    end
+    local flag = false
+	--new code
+
+	local idxs = {}
+	local total = 100
+	for i=1,#conf do
+		idxs[i] = i
+	end
+	for j=1,count do
+		local iget
+		local iid
+		local randVal = System.getRandomNumber( total - sys_var.LimitShop_total ) + 1 
+		local sum = 0
+		for i=1, #idxs do	
+			local idx = idxs[i]
+
+			-- new code 
+			for k = 1,#limits do
+				if limits[k].itemid  == conf[idx].itemid and sys_var.limitshopItemList[limits[k].itemid] == limits[k].limit then
+					flag = true
+				end
+			end 
+
+			if not flag then
+				sum = sum + conf[idx].rate
+			else
+				flag = false
+			end 
+
+			if randVal <= sum then
+				iget = i
+				iid = conf[idx].itemid
+				total = total - conf[idx].rate
+				break
+			end
+		end
+		items[pos] = {}
+		items[pos].idx = idxs[iget]
+		items[pos].id = iid
+		pos = pos + 1
+		table.remove(idxs, iget)
+	end
+end
+
+-- 刷新道具
+MiscsImplement.RefreshLimitItem = function(sysarg, msgid, packet)
+	local var = LActor.getStaticVar(sysarg)
+	local state = ONLINEREWARD.GetActivityState(LimitShop.activityid,var.download_from)
+	if state == 0 then 
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.hf016, ttMessage)
+		return 
+	end 
+	local auto = DataPack.readByte(packet) -- 是否自动刷新
+
+	if auto == nil then return end
+
+	local cur_t = System.getCurrMiniTime()
+
+	local var = LActor.getStaticVar(sysarg)
+	if var.limitshop == nil then var.limitshop = {} end
+
+	local info = var.limitshop
+	local nrefresh = info.nrefresh
+	if nrefresh == nil then
+		nrefresh = 0
+	end
+
+	-- 判断是否需要扣钱,自动刷新是不需要扣钱的
+	if auto == 1 and info.last ~= nil and cur_t - info.last < LimitShop.refreshTime then
+		-- 自动刷新，但是还没到时间
+		local npack = DataPack.allocPacket(sysarg,139,110)
+	    if npack == nil then return end
+	    DataPack.writeInt(npack, info.last + LimitShop.refreshTime - cur_t)
+	    DataPack.flush(npack)
+		return 
+	end
+
+	if auto == 0 then
+		if LimitShop.refreshCount > 0 and nrefresh > LimitShop.refreshCount then -- 刷新次数
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.hf007, ttMessage)
+			return
+		end
+		if LActor.getMoneyCount( sysarg, mtYuanbao ) < LimitShop.refreshCost then -- 是否有足够的金钱
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.hf010, ttMessage)
+			return 
+		end
+
+		LActor.changeMoney( sysarg, mtYuanbao, -LimitShop.refreshCost, 1, true, "limitshop", "refresh" )
+		--[[local arg = {LimitShop.refreshCost}
+		MayDayFunc.Cost(sysarg, arg)
+		QingMingActivityCost(sysarg, arg)
+		ONLINEREWARD.VipLoginRewardImplement.BlueStatisticalConsumption(sysarg, arg)]]
+		info.nrefresh = nrefresh + 1
+	end
+
+	MiscsImplement.SendLimitShopInfo(sysarg, true)
+end
+
+-- 购买道具
+MiscsImplement.BuyLimitItem = function(sysarg, msgid, packet)
+	local var = LActor.getStaticVar(sysarg)
+	local state = ONLINEREWARD.GetActivityState(LimitShop.activityid,var.download_from)
+	if state == 0 then 
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.hf016, ttMessage)
+		return 
+	end 
+
+	--新添加代码12月6号
+	local limits = LimitShop.limits
+	local sys_var = System.getStaticVar()
+	if sys_var.LimitShop_total == nil then sys_var.LimitShop_total = 0 end
+    if sys_var.limitshopItemList == nil then
+        sys_var.limitshopItemList = {}
+    end
+    for i=1,#limits do
+        if sys_var.limitshopItemList[limits[i].itemid] == nil then
+            sys_var.limitshopItemList[limits[i].itemid] = 0
+        end
+    end
+    --新添加代码12月6号
+
+	local id = DataPack.readInt(packet)
+	local cnt = DataPack.readInt(packet)
+
+	if cnt < 1 then
+		print("buy limit item count error")
+		return 
+	end
+
+	local var = LActor.getStaticVar(sysarg)
+	if var.limitshop == nil then return end
+
+	local cur_t = System.getCurrMiniTime()
+	local info = var.limitshop
+	if MiscsImplement.UpdateLimitShopTime(info, cur_t, false) then -- 需要刷新，提示物品不存在
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.hf012, ttMessage)
+		return
+	end
+
+	local item = info.items
+	if item == nil then return end
+
+	local idx
+	local flag = false
+	local limitcount = 0
+	local rate  = 0
+	for i=1,4 do
+		if item[i].id == id then
+			idx = i
+
+			--new code 
+			for j = 1,#limits do
+				if limits[j].itemid == id then
+					flag = true
+					limitcount = limits[j].limit
+					rate  = limits[j].rate
+				end
+			end
+			--new code
+
+			break
+		end
+	end
+
+	if idx == nil then -- 没找到该物品
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.hf012, ttMessage)
+		return 
+	end
+
+	local moneyType
+	local iconf
+	if idx < 3 then -- 前面两个是用仙币购买，后面两个用天珠购买
+		iconf = LimitShop.xb[item[idx].idx]
+		moneyType = 0
+	else
+		iconf = LimitShop.yb[item[idx].idx]
+		moneyType = 3
+	end
+
+	local nbuy = info.buys[idx]
+
+	if nbuy == nil then
+		nbuy = 0
+	end
+
+	
+	if nbuy + cnt > iconf.limit then -- 超过最大购买次数
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.hf008, ttMessage)
+		return 
+	end
+	if LActor.getMoneyCount( sysarg, moneyType ) < iconf.cost * cnt then -- 是否有足够的金钱
+		if moneyType == 0 then
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.hf009, ttMessage)
+		else
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.hf010, ttMessage)
+		end
+		return
+	end
+
+	-- 背包是否为空
+	if Item.getAddItemNeedGridCount(sysarg, id, cnt) > Item.getBagEmptyGridCount(sysarg) then
+		-- LActor.sendTipmsg(sysarg, Lang.ScriptTips.hf013, ttMessage)
+		LActor.SendGeneralTips(sysarg, 7, 0, 0)
+		return 
+	end
+
+	--new code
+	if flag and sys_var.limitshopItemList[id] < limitcount then
+		sys_var.limitshopItemList[id] = sys_var.limitshopItemList[id] + cnt
+	end
+
+	if limitcount == sys_var.limitshopItemList[id] then
+		sys_var.LimitShop_total = sys_var.LimitShop_total + rate
+	end
+	--new code
+
+	LActor.changeMoney( sysarg, moneyType, -(iconf.cost * cnt), 1, true, "limitshop", "buy" )
+	--[[if moneyType == 3 then
+		local arg = {iconf.cost * cnt}
+		MayDayFunc.Cost(sysarg, arg)
+		QingMingActivityCost(sysarg, arg)
+		ONLINEREWARD.VipLoginRewardImplement.BlueStatisticalConsumption(sysarg, arg)
+	end]]
+	LActor.addItem(sysarg, id, 0,0,cnt,1, "limitshop_buy", 710)
+	info.buys[idx] = nbuy + cnt
+
+	-- 播放特效
+	local effects = {}
+	local effect = {}
+	effect.type = 1  -- 1为物品,暂时只支持发物品所以写死
+	effect.id = id
+	effect.count = 1
+	effects[#effects+1] = effect
+	if #effects > 0 then
+		MiscFunc.PlayItemEffect(sysarg, 11, effects)
+	end
+
+	if iconf.broadcast then
+		local zy = LActor.getCampId(sysarg)
+		local str = string.format(Lang.ScriptTips.hf014, CampColor[zy], CampShortName[zy], LActor.getName(sysarg), iconf.cost, MoneyName[moneyType+1], Item.getColorName(id))
+		--System.broadcastTipmsg(str, ttGmTip)
+		str = str..Lang.ScriptTips.hf015
+
+		System.broadcastTipmsg(str, ttChatWindow)
+		--print("广播内容:"..str)
+	end
+
+	MiscsImplement.SendLimitShopInfo(sysarg)
+end
+
+-- 登陆时显示商店的处理
+MiscsImplement.OnLimitShotLogin = function(sysarg, arg)
+	local var_sys = System.getStaticVar()
+	local cur_t = System.getCurrMiniTime()
+
+	if cur_t < var_sys.limitshopstart or cur_t > var_sys.limitshopend then
+		return 
+	end
+
+	-- 显示图标
+	local npack = DataPack.allocPacket(sysarg,139,109)
+    if npack == nil then return end
+    DataPack.writeByte(npack, 1)
+    DataPack.flush(npack)
+end
+
+-- 新的一天,清空刷新次数
+MiscsImplement.OnShopNewDay = function(sysarg, arg)
+	local var = LActor.getStaticVar(sysarg)
+
+	if var.limitshop ~= nil and var.limitshop.nrefresh ~= nil then
+		var.limitshop.nrefresh = 0
+	end
+end
+
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, MiscsImplement.OnShopNewDay)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, MiscsImplement.OnLimitShotLogin)
+--MiscsImplement.registerMsgHandler(LogicCmd.miscSys.sub.cLiuDaoBuyItem, MiscsImplement.ShopBuyItem)
+MiscsImplement.registerMsgHandler(106, MiscsImplement.GetLimitShopInfo)
+MiscsImplement.registerMsgHandler(107, MiscsImplement.RefreshLimitItem)
+MiscsImplement.registerMsgHandler(108, MiscsImplement.BuyLimitItem)
+table.insert(InitFnTable,MiscsImplement.OnLimitShopInit)
+table.insert(FinaFnTable,MiscsImplement.OnLimitShopFina)
+table.insert(TimeFnTable,MiscsImplement.OnLimitShopTime)
+
+--[[function testbuy(sysarg)
+	-- MiscsImplement.BuyLimitItem(sysarg)
+
+	local dp = LDataPack.allocPacket()
+	if dp == nil then return end
+	LDataPack.writeByte(dp, 139)
+	LDataPack.writeByte(dp, 109)
+	LDataPack.writeInt(dp, 1)
+
+	System.broadcastData(dp)
+end
+
+function shoprefresh(sysarg)
+	MiscsImplement.GetLimitShopInfo(sysarg)
+end]]

@@ -1,0 +1,49 @@
+﻿--#include "data\config\activity\GuildActivity.txt" once   --采集蟠桃相关的常量定义--
+MonDieDispatcher.MonGatherPeachDie = function (monster,sysarg,monId)
+	local sVal = System.getDyanmicVar()
+	
+	--if sVal.GatherPeachActing ~= 1 then return end										  --杀了怪增加采集上限 暂时屏蔽
+	local var = LActor.getStaticVar(sysarg)
+	if var.getherpeachcount == nil then
+		var.getherpeachcount = 1 --初始化当前采集次数
+	end
+	if var.getherpeachMaxcount == nil then
+		var.getherpeachMaxcount = 10
+		var.getherpeachMaxcount=var.getherpeachMaxcount+1
+		LActor.SendAndChangeCaleValue(sysarg,caleOther1,var.getherpeachMaxcount - var.getherpeachcount,false)
+	else
+		if var.subyuanbaoaddmax == nil then
+			var.subyuanbaoaddmax = 0
+		end
+		var.getherpeachMaxcount=var.getherpeachMaxcount+1
+		LActor.SendAndChangeCaleValue(sysarg,caleOther1,var.getherpeachMaxcount - var.getherpeachcount,false)
+	end
+	local str = string.format(Lang.TaskTalk.t00668,LActor.getName(sysarg))
+	LActor.sendGuildMsg(sysarg,smGuildCommon,str,ttChatWindow+ttScreenCenter)	--发帮派广播
+	
+	--print("杀怪采集次数"..var.getherpeachcount.."杀怪最大值"..var.getherpeachMaxcount)
+end 
+
+-- 判断能否采集蟠桃
+GatherCheckDispatcher.PeachGatherCheck = function(monster, sysarg, monId)
+	local var = LActor.getStaticVar(sysarg)
+	if var.getherpeachMaxcount == nil then
+		var.getherpeachMaxcount = 10
+	end
+
+	if var.getherpeachcount == nil or var.getherpeachcount < var.getherpeachMaxcount then -- 没采集过或小于最大采集次数
+		return true
+	end
+
+	LActor.sendTipmsg(sysarg,Lang.TaskTalk.t00669,ttMessage)
+
+	return false
+end
+
+--MonDieDispatcher.register(2,MonDieDispatcher.Mon6Die)
+-- for i=1,#GuildActivity.Activitymonster do
+-- 	if GuildActivity.Activitymonster[i].bRandom == true then
+-- 		MonDieDispatcher.register(GuildActivity.Activitymonster[i].id,MonDieDispatcher.MonGatherPeachDie)
+-- 	end
+-- 	GatherCheckDispatcher.register(GuildActivity.Activitymonster[i].id,GatherCheckDispatcher.PeachGatherCheck) -- 注册判断能否采集蟠桃函数
+-- end

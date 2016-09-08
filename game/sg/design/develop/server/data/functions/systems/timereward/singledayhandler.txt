@@ -1,0 +1,265 @@
+﻿--singledayhandler 光棍节活动 送花排行
+--#include "data\config\activity\singledayconf.txt" once
+
+SingledayHandler = {}
+
+SingleDayConfig = 
+{
+	 --{ activityID = 8, config = Singledayconf1 },
+	 { activityID = 12, config = Singledayconf2 },
+}
+
+--获得配置，分服配置
+SingledayHandler.getFlowerConfig = function()
+	--print("=========getFlowerConfig")
+	local serverId = System.getServerId()
+	for i = 1, #SingleDayConfig do 
+		local activityID = SingleDayConfig[i].activityID
+		local activityControlConf = ActivityControl[activityID]
+		-- for j=1,#ActivityControl do
+		-- 	if ActivityControl[j] ~= nil and ActivityControl[j].id == activityID then
+		-- 		activityControlConf = ActivityControl[j]
+		-- 	end
+		-- end
+		if activityControlConf then  
+			--print("__________________activityID = "..activityID..", state = "..state)
+			local openServer = false
+			if activityControlConf.serveropen then
+				for j=1,#activityControlConf.serveropen do
+					if serverId >= activityControlConf.serveropen[j][1] and serverId <= activityControlConf.serveropen[j][2] then
+						openServer = true
+						break
+					end 
+				end
+			else
+				openServer = true
+			end
+			if openServer then 
+				return SingleDayConfig[i].config
+			end
+		end
+	end
+end
+
+--插入鲜花排行榜
+SingledayHandler.flowerrank = function(sysarg, count)
+	local Singledayconf = SingledayHandler.getFlowerConfig()
+	if not Singledayconf then return end
+	--print("====================11111")
+	local state = ONLINEREWARD.GetActivityState(Singledayconf.activityID)
+	if state == 0 then return end
+	ONLINEREWARD.CheckResetActivityInfo(sysarg, Singledayconf.activityID)
+	local rank = Ranking.getRanking(Singledayconf.CharmRankName)
+	--没有排行，初始化一个
+	if not rank then
+		 rank = MiscFunc.InitRank(Singledayconf.CharmRankName, Singledayconf.CharmRankName, Singledayconf.charmcount*10, {"aname", "get"})
+	end
+	local actorid = LActor.getActorId(sysarg)
+	local idx = Ranking.getItemIndexFromId(rank, actorid)
+	--有第一名的情况下才会被顶掉发世界通告
+	local isTrue = false
+	local rankItem = Ranking.getItemFromIndex(rank, 0)
+	if rankItem and idx ~= 0 then isTrue = true end
+	--是否有排名信息，有则更新，没有则添加
+	--print("_______________idx"..idx)
+	if idx == -1 then
+		local name = LActor.getName(sysarg)
+		local item = Ranking.addItem(rank, actorid, count) 
+		Ranking.setSub(item, 0, name)
+	else
+		Ranking.updateItem(rank, actorid, count)
+	end
+	--print("_______________"..activityID.."  = " ..count)
+	Ranking.save(rank, Singledayconf.CharmRankName)
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	--统计送花数量
+	if var.myflowercount == nil then var.myflowercount = 0 end
+	local idx = Ranking.getItemIndexFromId(rank, actorid)
+	rankItems = Ranking.getItemFromIndex(rank, idx)
+	var.myflowercount = rankItems and Ranking.getPoint(rankItems) or count
+	--SingledayHandler.getFlowerRank(sysarg)
+	--超越第一名需要世界公告
+	local idx = Ranking.getItemIndexFromId(rank, actorid)
+	--print("_______________idx = "..idx)
+	if isTrue and idx == 0 then
+		--拿到被挤掉第一名(即第二名)的名字
+		local rankItem = Ranking.getItemFromIndex(rank, 1)
+		local aname = Ranking.getSub(rankItem, 0)
+		local str = string.format(Lang.ScriptTips.ggj002,LActor.getName(sysarg), aname)
+		System.broadcastLevelTipmsg(str, 31, ttScreenCenter)
+		str1 = string.format(Lang.ScriptTips.ggj003, Singledayconf.textbuttonID)
+		-- System.broadcastLevelTipmsg(str..str1, 31, ttHearsay)
+	end
+	--累计送花奖励状态
+	if not var.flowerstate then 
+		var.flowerstate = {}
+		for i = 1, #Singledayconf.flowerRewards do
+			var.flowerstate[i] = 0
+		end
+	end
+	for i = 1, #Singledayconf.flowerRewards do
+		if var.myflowercount >= Singledayconf.flowerRewards[i].count and var.flowerstate[i] == 0 then
+			var.flowerstate[i] = 1
+			SingledayHandler.getFlowerReward(sysarg, i)
+		end
+	end
+end
+
+--获取消费排行
+SingledayHandler.getFlowerRank = function(sysarg)
+	if not sysarg then return end
+	local Singledayconf = SingledayHandler.getFlowerConfig()
+	if not Singledayconf then return end
+	local rank = Ranking.getRanking(Singledayconf.CharmRankName)
+	--没有排行，初始化一个
+	if not rank then
+		 rank = MiscFunc.InitRank(Singledayconf.CharmRankName, Singledayconf.CharmRankName, Singledayconf.charmcount*10, {"aname", "get"})
+	end
+	ONLINEREWARD.CheckResetActivityInfo(sysarg, Singledayconf.activityID)
+	local Column = Singledayconf.charmcount
+	local count = Ranking.getRankItemCount(rank)
+	if Column > count then Column = count end
+	--下面是发协议
+	local npack = DataPack.allocPacket(sysarg, 138, 223)
+	if npack == nil then return end 
+	--我的排名信息
+	local actorid = LActor.getActorId(sysarg)
+	local idx = Ranking.getItemIndexFromId(rank, actorid)+1
+	if idx == -1 then idx = 0 end
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	--统计送花数量
+	if var.myflowercount == nil then var.myflowercount = 0 end
+	local idx = Ranking.getItemIndexFromId(rank, actorid)
+	rankItems = Ranking.getItemFromIndex(rank, idx)
+	var.myflowercount = rankItems and Ranking.getPoint(rankItems) or 0
+	DataPack.writeByte(npack, idx+1) -- 我的排行
+	DataPack.writeInt(npack, var.myflowercount)  --我的送花数量
+	--print("__________我的排行="..idx..", myflowercount = "..var.myflowercount)
+	--多少个排名
+	DataPack.writeByte(npack, Column)
+	for i = 1, Column do
+		local rankItem = Ranking.getItemFromIndex(rank, i-1)
+		local aname = Ranking.getSub(rankItem, 0)
+		DataPack.writeString(npack, aname) -- 玩家名
+		local flowerCount = Ranking.getPoint(rankItem)
+		DataPack.writeInt(npack, flowerCount)  --送花数量	
+		--print("______idx = "..i.." name ="..aname.." flowerCount="..flowerCount)
+	end
+	--累计送花奖励状态
+	if not var.flowerstate then 
+		var.flowerstate = {}
+		for i = 1, #Singledayconf.flowerRewards do
+			var.flowerstate[i] = 0
+		end
+	end
+	--发送状态数据
+	DataPack.writeByte(npack, #Singledayconf.flowerRewards)
+	--print("__________count = "..#Singledayconf.flowerRewards)
+	for i = 1, #Singledayconf.flowerRewards do
+		DataPack.writeByte(npack, var.flowerstate[i])
+		--print("__________state = "..var.flowerstate[i])
+	end
+	DataPack.writeInt(npack, Singledayconf.activityID)  --活动ID
+	DataPack.flush(npack)
+end
+
+--自动下发累计送花奖励
+SingledayHandler.getFlowerReward = function(sysarg, index)
+	local Singledayconf = SingledayHandler.getFlowerConfig()
+	if not Singledayconf then return end
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	--0: 不能领取，1：可领取，2：已领取
+	if var.flowerstate[index] == 1 then
+		local itemID = Singledayconf.flowerRewards[index].rewardID
+		local count = Singledayconf.flowerRewards[index].rewardCount
+		--给礼包
+		local actorid = LActor.getActorId(sysarg)
+		local context = string.format(Lang.ScriptTips.ggj006, Singledayconf.flowerRewards[index].count)
+		System.sendGmMailOffLine(actorid,  context, 1, itemID, count, 1)
+		--设置已领取状态
+		var.flowerstate[index] = 2
+	end
+end
+
+--结束完发排名奖励
+SingledayHandler.OnTime = function()
+	local Singledayconf = SingledayHandler.getFlowerConfig()
+	if not Singledayconf then return end
+	local state,starttime,endtime = ONLINEREWARD.GetActivityState(Singledayconf.activityID)
+	if state == 0 then
+		--发奖励
+		local rank = Ranking.getRanking(Singledayconf.CharmRankName)
+		if rank then
+			local Column = Singledayconf.charmcount
+			local count = Ranking.getRankItemCount(rank)
+			if count == 0 then return end
+			if Column > count then Column = count end
+			for i = 1, Column do
+				local rankItem = Ranking.getItemFromIndex(rank, i-1)
+				local aname = Ranking.getSub(rankItem, 0)	
+				local rewardID = Singledayconf.awards[i].awardid
+				local count = Singledayconf.awards[i].awardcount
+				if rewardID and count then
+					local isCan = true
+					--开关，是否要拿完累计鲜花礼包后才能拿排行礼包
+					if Singledayconf.isTrue then
+						local flowerCount = Ranking.getPoint(rankItem)
+						if flowerCount < Singledayconf.flowerRewards[#Singledayconf.flowerRewards].count then
+							isCan = false
+						end
+					end
+					if isCan then
+						--发邮件置状态
+						local context = string.format(Lang.ScriptTips.ggj001, i)		
+						--print("____________________邮件奖励 ="..context..", rewardID = "..rewardID..", count = "..count)
+						System.sendGmMailOffLine(Ranking.getId(rankItem), context, 1, rewardID, count, 1)	
+					end
+				end
+			end
+			--print("____________清除排行榜")
+			Ranking.clearRanking(rank)
+			Ranking.save(rank, Singledayconf.CharmRankName)
+		end
+	else
+		--活动时间内剩余10分钟每5分钟世界公告一次, 即剩余10,5分钟，
+		local nowtime = System.getCurrMiniTime()
+		local lastMin = math.floor((endtime - nowtime)/60+0.5)
+		if lastMin == 10 or lastMin == 5 then
+			local str = string.format(Lang.ScriptTips.ggj004, lastMin)
+			System.broadcastLevelTipmsg(str, 31, ttScreenCenter)
+			str1 = string.format(Lang.ScriptTips.ggj003, Singledayconf.textbuttonID)
+			-- System.broadcastLevelTipmsg(str..str1, 31, ttHearsay)
+		end
+	end
+end
+
+--活动结束后发邮件
+SingledayHandler.onNewDayArrive = function(sysarg)
+	local Singledayconf = SingledayHandler.getFlowerConfig()
+	if not Singledayconf then return end
+	local state = ONLINEREWARD.GetActivityState(Singledayconf.activityID)
+	if state == 0 then
+		local var = LActor.getStaticVar(sysarg)
+		if not var then return end
+		if var.flowerstate then
+			for i = 1, #Singledayconf.flowerRewards do
+				--已完成累计目标，未领取则补发邮件
+				if var.flowerstate[i] == 1 then
+					local itemID = Singledayconf.flowerRewards[i].rewardID
+					local count = Singledayconf.flowerRewards[i].rewardCount
+					--print("___________itemID"..itemID..", i = "..i)
+					local actorid = LActor.getActorId(sysarg)
+					System.sendGmMailOffLine(actorid,  Lang.ScriptTips.ggj005, 1, itemID, count, 1)
+				end
+			end
+			var.flowerstate = nil
+		end
+	end
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, SingledayHandler.onNewDayArrive)
+
+table.insert(TimeFnTable, SingledayHandler.OnTime)

@@ -1,0 +1,13 @@
+--[[
+副本相关配置
+]]--
+
+--#include "fubentestfunc.txt"
+
+local FubenConfig = {
+	[4] = FubenTestConfig,
+}
+
+local FubenFunc = {
+	[4] = FubenTestFunc,
+}

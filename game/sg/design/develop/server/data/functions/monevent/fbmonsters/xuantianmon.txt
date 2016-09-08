@@ -1,0 +1,85 @@
+-- 密宗佛塔怪物脚本处理
+--#include "data\config\misc\xuantianConf.txt"
+--#include "data\functions\systems\miscs\xuantianfunc.txt" once
+
+XuanTianMon = {}	-- 密宗佛塔怪物函数处理
+
+-- 场景所有怪物死亡事件
+XuanTianMon.OnMonsterAllDie = function(sceneId, scenePtr, flag, sysarg)
+	if sysarg == nil then return end
+	if LActor.getFubenId(sysarg) ~= XuanTianConf.fbid then return end
+
+	local pfb = LActor.getFubenPrt(sysarg)
+	if pfb == nil then return end
+
+	local layer = Fuben.getFubenProgress(pfb) -- 第几层
+
+	local sconf = XuanTianConf.scenes[layer]
+	if sconf == nil then
+		print("xuantian scene id error:"..layer)
+		return
+	end
+
+	if sconf.conds.type ~= nil and sconf.conds.type == 1 then -- 通关
+		local players = LuaHelp.getSceneActorList( sysarg )
+		if players ~= nil then
+			for i=1,#players do
+				XuanTianPublic.OnTongGuan(players[i], layer, sconf)
+			end
+		end
+	end
+end
+
+-- 杀死怪物处理
+XuanTianMon.OnKillMonster = function(monster,sysarg,mid)
+	if sysarg == nil then return end
+	if LActor.getFubenId(sysarg) ~= XuanTianConf.fbid then return end
+
+	local pfb = LActor.getFubenPrt(sysarg)
+	if pfb == nil then return end
+
+	local layer = Fuben.getFubenProgress(pfb) -- 第几层
+	--print("---------::  "..layer)
+
+	local sconf = XuanTianConf.scenes[layer]
+	if sconf == nil then
+		print("xuantian scene id error")
+		return
+	end
+
+	-- 统计用
+	local var = Fuben.getDyanmicVar(pfb)
+	if var ~= nil and var.fbRestMonster ~= nil then
+		var.fbRestMonster = var.fbRestMonster - 1 
+		LActor.SendAndChangeCaleValue(sysarg, caleRemainMonster, var.fbRestMonster, false)
+	end
+
+	-- 通关处理
+	if sconf.conds.type ~= nil and sconf.conds.type == 2 and sconf.conds.mid == mid then -- 打死boss,通关
+		XuanTianPublic.OnTongGuan(sysarg, layer, sconf)
+	end
+end
+
+
+-- 副本初始化
+for i=1, #XuanTianConf.scenes do
+	local scene = XuanTianConf.scenes[i]
+
+	-- 怪物配置
+	if scene.monster ~= nil then
+		local ids = scene.monster.ids
+		for j=1,#ids do
+			MonDieDispatcher.register( ids[j], XuanTianMon.OnKillMonster )
+		end
+	end
+
+	-- 注册杀死所有怪就通关的场景
+	local conds = scene.conds
+	if conds.type ~= nil then 
+		if conds.type == 1 then -- 杀死所有怪物
+			MonAllKilledDispatcher.register( scene.sceneid, XuanTianMon.OnMonsterAllDie )
+		elseif conds.type == 2 then -- 杀死某只怪物
+			MonDieDispatcher.register( conds.mid, XuanTianMon.OnKillMonster )
+		end
+	end
+end

@@ -1,0 +1,409 @@
+﻿--五灵玄天阵 副本ID：21
+		{			--特等奖励
+			[0] ={		--这个是单人模式的奖励
+				fixAward = 	--这里是固定奖励的列表,可任意多项
+				{			
+					--可参考任务奖励的定义，是一样的。type 0 物品 ；2 经验；3 帮派贡献值；4 阵营贡献； 5 绑定银两；6 银两； 7 礼金；1 修为；10 战魂值 有需要其他的奖励类型可以再添加 
+
+					{ type = 0, count = 1, itemid = 746, quality=0, strong=0, bind=1,present=100,},   --2级外攻宝石
+					{ type = 0, count = 1, itemid = 756, quality=0, strong=0, bind=1,present=100,},   --2级内攻宝石
+					{ type = 0, count = 1, itemid = 766, quality=0, strong=0, bind=1,present=100,},   --2级外防宝石
+					{ type = 0, count = 1, itemid = 776, quality=0, strong=0, bind=1,present=100,},   --2级内防宝石
+					{ type = 0, count = 1, itemid = 786, quality=0, strong=0, bind=1,present=100,},   --2级生命宝石
+					{ type = 0, count = 1, itemid = 796, quality=0, strong=0, bind=1,present=100,},   --2级内力宝石
+					{ type = 0, count = 1, itemid = 806, quality=0, strong=0, bind=1,present=100,},   --2级命中宝石
+					{ type = 0, count = 1, itemid = 816, quality=0, strong=0, bind=1,present=100,},   --2级闪避宝石
+					{ type = 0, count = 1, itemid = 826, quality=0, strong=0, bind=1,present=100,},   --2级暴击宝石
+				},
+				randAward = --随机的奖励
+				{
+
+				},
+				addValue = --增值奖励，有金钥匙才能拿
+				{
+					{ type = 0, count = 1, itemid = 747, quality=0, strong=0, bind=1,present=100,},   --3级外攻宝石
+					{ type = 0, count = 1, itemid = 757, quality=0, strong=0, bind=1,present=100,},   --3级内攻宝石
+					{ type = 0, count = 1, itemid = 767, quality=0, strong=0, bind=1,present=100,},   --3级外防宝石
+					{ type = 0, count = 1, itemid = 777, quality=0, strong=0, bind=1,present=100,},   --3级内防宝石
+					{ type = 0, count = 1, itemid = 787, quality=0, strong=0, bind=1,present=100,},   --3级生命宝石
+					{ type = 0, count = 1, itemid = 797, quality=0, strong=0, bind=1,present=100,},   --3级内力宝石
+					{ type = 0, count = 1, itemid = 807, quality=0, strong=0, bind=1,present=100,},   --3级命中宝石
+					{ type = 0, count = 1, itemid = 817, quality=0, strong=0, bind=1,present=100,},   --3级闪避宝石
+					{ type = 0, count = 1, itemid = 827, quality=0, strong=0, bind=1,present=100,},   --3级暴击宝石
+				},
+			},
+----------------------******************************************************下方为队伍奖励******************************************************************************
+			[1] ={			--这个是队伍模式的特等奖励
+				fixAward = 	--这里是固定奖励的列表,可任意多项
+				{			
+					--可参考任务奖励的定义，是一样的。type 0 物品 ；2 经验；3 帮派贡献值；4 阵营贡献； 5 绑定银两；6 银两； 7 礼金；1 修为；10 战魂值 有需要其他的奖励类型可以再添加 
+					{ type = 0, count = 1, itemid = 746, quality=0, strong=0, bind=1,present=100,},   --2级外攻宝石
+					{ type = 0, count = 1, itemid = 756, quality=0, strong=0, bind=1,present=100,},   --2级内攻宝石
+					{ type = 0, count = 1, itemid = 766, quality=0, strong=0, bind=1,present=100,},   --2级外防宝石
+					{ type = 0, count = 1, itemid = 776, quality=0, strong=0, bind=1,present=100,},   --2级内防宝石
+					{ type = 0, count = 1, itemid = 786, quality=0, strong=0, bind=1,present=100,},   --2级生命宝石
+					{ type = 0, count = 1, itemid = 796, quality=0, strong=0, bind=1,present=100,},   --2级内力宝石
+					{ type = 0, count = 1, itemid = 806, quality=0, strong=0, bind=1,present=100,},   --2级命中宝石
+					{ type = 0, count = 1, itemid = 816, quality=0, strong=0, bind=1,present=100,},   --2级闪避宝石
+					{ type = 0, count = 1, itemid = 826, quality=0, strong=0, bind=1,present=100,},   --2级暴击宝石
+				},
+				randAward = --装备奖励
+				{
+
+
+				},
+				addValue = --增值奖励，有金钥匙才能拿
+				{
+					{ type = 0, count = 1, itemid = 747, quality=0, strong=0, bind=1,present=100,},   --3级外攻宝石
+					{ type = 0, count = 1, itemid = 757, quality=0, strong=0, bind=1,present=100,},   --3级内攻宝石
+					{ type = 0, count = 1, itemid = 767, quality=0, strong=0, bind=1,present=100,},   --3级外防宝石
+					{ type = 0, count = 1, itemid = 777, quality=0, strong=0, bind=1,present=100,},   --3级内防宝石
+					{ type = 0, count = 1, itemid = 787, quality=0, strong=0, bind=1,present=100,},   --3级生命宝石
+					{ type = 0, count = 1, itemid = 797, quality=0, strong=0, bind=1,present=100,},   --3级内力宝石
+					{ type = 0, count = 1, itemid = 807, quality=0, strong=0, bind=1,present=100,},   --3级命中宝石
+					{ type = 0, count = 1, itemid = 817, quality=0, strong=0, bind=1,present=100,},   --3级闪避宝石
+					{ type = 0, count = 1, itemid = 827, quality=0, strong=0, bind=1,present=100,},   --3级暴击宝石
+
+				},
+			},
+		},
+		
+--一等--------------------------------------------------------------------------------------------------------------------------------------------------------------
+		{			-- 一等的奖励
+			[0] ={		-- 这个是单人模式的奖励
+				fixAward = 	--这里是固定奖励的列表,可任意多项
+				{			
+					--可参考任务奖励的定义，是一样的。type 0 物品 ；2 经验；3 帮派贡献值；4 阵营贡献； 5 绑定银两；6 银两； 7 礼金；1 修为；10 战魂值 有需要其他的奖励类型可以再添加 
+					{ type = 0, count = 1, itemid = 745, quality=0, strong=0, bind=1,present=100,},   --1级外攻宝石
+					{ type = 0, count = 1, itemid = 755, quality=0, strong=0, bind=1,present=100,},   --1级内攻宝石
+					{ type = 0, count = 1, itemid = 765, quality=0, strong=0, bind=1,present=100,},   --1级外防宝石
+					{ type = 0, count = 1, itemid = 775, quality=0, strong=0, bind=1,present=100,},   --1级内防宝石
+					{ type = 0, count = 1, itemid = 785, quality=0, strong=0, bind=1,present=100,},   --1级生命宝石
+					{ type = 0, count = 1, itemid = 795, quality=0, strong=0, bind=1,present=100,},   --1级内力宝石
+					{ type = 0, count = 1, itemid = 805, quality=0, strong=0, bind=1,present=100,},   --1级命中宝石
+					{ type = 0, count = 1, itemid = 815, quality=0, strong=0, bind=1,present=100,},   --1级闪避宝石
+					{ type = 0, count = 1, itemid = 825, quality=0, strong=0, bind=1,present=100,},   --1级暴击宝石
+				},
+				randAward = --随机的奖励
+				{
+
+				},
+				addValue = --增值奖励，有金钥匙才能拿
+				{
+					{ type = 0, count = 1, itemid = 746, quality=0, strong=0, bind=1,present=100,},   --2级外攻宝石
+					{ type = 0, count = 1, itemid = 756, quality=0, strong=0, bind=1,present=100,},   --2级内攻宝石
+					{ type = 0, count = 1, itemid = 766, quality=0, strong=0, bind=1,present=100,},   --2级外防宝石
+					{ type = 0, count = 1, itemid = 776, quality=0, strong=0, bind=1,present=100,},   --2级内防宝石
+					{ type = 0, count = 1, itemid = 786, quality=0, strong=0, bind=1,present=100,},   --2级生命宝石
+					{ type = 0, count = 1, itemid = 796, quality=0, strong=0, bind=1,present=100,},   --2级内力宝石
+					{ type = 0, count = 1, itemid = 806, quality=0, strong=0, bind=1,present=100,},   --2级命中宝石
+					{ type = 0, count = 1, itemid = 816, quality=0, strong=0, bind=1,present=100,},   --2级闪避宝石
+					{ type = 0, count = 1, itemid = 826, quality=0, strong=0, bind=1,present=100,},   --2级暴击宝石
+				},
+			},
+----------------------******************************************************下方为队伍奖励******************************************************************************
+			[1] ={		--这个是队伍模式一等的奖励
+				fixAward = 	--这里是固定奖励的列表,可任意多项
+				{			
+					--可参考任务奖励的定义，是一样的。type 0 物品 ；2 经验；3 帮派贡献值；4 阵营贡献； 5 绑定银两；6 银两； 7 礼金；1 修为；10 战魂值 有需要其他的奖励类型可以再添加 
+					{ type = 0, count = 1, itemid = 745, quality=0, strong=0, bind=1,present=100,},   --1级外攻宝石
+					{ type = 0, count = 1, itemid = 755, quality=0, strong=0, bind=1,present=100,},   --1级内攻宝石
+					{ type = 0, count = 1, itemid = 765, quality=0, strong=0, bind=1,present=100,},   --1级外防宝石
+					{ type = 0, count = 1, itemid = 775, quality=0, strong=0, bind=1,present=100,},   --1级内防宝石
+					{ type = 0, count = 1, itemid = 785, quality=0, strong=0, bind=1,present=100,},   --1级生命宝石
+					{ type = 0, count = 1, itemid = 795, quality=0, strong=0, bind=1,present=100,},   --1级内力宝石
+					{ type = 0, count = 1, itemid = 805, quality=0, strong=0, bind=1,present=100,},   --1级命中宝石
+					{ type = 0, count = 1, itemid = 815, quality=0, strong=0, bind=1,present=100,},   --1级闪避宝石
+					{ type = 0, count = 1, itemid = 825, quality=0, strong=0, bind=1,present=100,},   --1级暴击宝石
+				},
+				randAward = --装备奖励
+				{
+ 
+
+				},
+				addValue = --增值奖励，有金钥匙才能拿
+				{
+					{ type = 0, count = 1, itemid = 746, quality=0, strong=0, bind=1,present=100,},   --2级外攻宝石
+					{ type = 0, count = 1, itemid = 756, quality=0, strong=0, bind=1,present=100,},   --2级内攻宝石
+					{ type = 0, count = 1, itemid = 766, quality=0, strong=0, bind=1,present=100,},   --2级外防宝石
+					{ type = 0, count = 1, itemid = 776, quality=0, strong=0, bind=1,present=100,},   --2级内防宝石
+					{ type = 0, count = 1, itemid = 786, quality=0, strong=0, bind=1,present=100,},   --2级生命宝石
+					{ type = 0, count = 1, itemid = 796, quality=0, strong=0, bind=1,present=100,},   --2级内力宝石
+					{ type = 0, count = 1, itemid = 806, quality=0, strong=0, bind=1,present=100,},   --2级命中宝石
+					{ type = 0, count = 1, itemid = 816, quality=0, strong=0, bind=1,present=100,},   --2级闪避宝石
+					{ type = 0, count = 1, itemid = 826, quality=0, strong=0, bind=1,present=100,},   --2级暴击宝石
+
+				},
+			},
+		},
+--二等--------------------------------------------------------------------------------------------------------------------------
+		{			-- 二等的奖励
+			[0] ={		-- 这个是单人模式的奖励
+				fixAward = 	--这里是固定奖励的列表,可任意多项
+				{			
+					--可参考任务奖励的定义，是一样的。type 0 物品 ；2 经验；3 帮派贡献值；4 阵营贡献； 5 绑定银两；6 银两； 7 礼金；1 修为；10 战魂值 有需要其他的奖励类型可以再添加 
+					{ type = 0, count = 1, itemid = 745, quality=0, strong=0, bind=1,present=100,},   --1级外攻宝石
+					{ type = 0, count = 1, itemid = 755, quality=0, strong=0, bind=1,present=100,},   --1级内攻宝石
+					{ type = 0, count = 1, itemid = 765, quality=0, strong=0, bind=1,present=100,},   --1级外防宝石
+					{ type = 0, count = 1, itemid = 775, quality=0, strong=0, bind=1,present=100,},   --1级内防宝石
+					{ type = 0, count = 1, itemid = 785, quality=0, strong=0, bind=1,present=100,},   --1级生命宝石
+					{ type = 0, count = 1, itemid = 795, quality=0, strong=0, bind=1,present=100,},   --1级内力宝石
+					{ type = 0, count = 1, itemid = 805, quality=0, strong=0, bind=1,present=100,},   --1级命中宝石
+					{ type = 0, count = 1, itemid = 815, quality=0, strong=0, bind=1,present=100,},   --1级闪避宝石
+					{ type = 0, count = 1, itemid = 825, quality=0, strong=0, bind=1,present=100,},   --1级暴击宝石
+
+				},
+				randAward = --随机的奖励
+				{
+
+				},
+				addValue = --增值奖励，有金钥匙才能拿
+				{
+					{ type = 0, count = 1, itemid = 746, quality=0, strong=0, bind=1,present=100,},   --2级外攻宝石
+					{ type = 0, count = 1, itemid = 756, quality=0, strong=0, bind=1,present=100,},   --2级内攻宝石
+					{ type = 0, count = 1, itemid = 766, quality=0, strong=0, bind=1,present=100,},   --2级外防宝石
+					{ type = 0, count = 1, itemid = 776, quality=0, strong=0, bind=1,present=100,},   --2级内防宝石
+					{ type = 0, count = 1, itemid = 786, quality=0, strong=0, bind=1,present=100,},   --2级生命宝石
+					{ type = 0, count = 1, itemid = 796, quality=0, strong=0, bind=1,present=100,},   --2级内力宝石
+					{ type = 0, count = 1, itemid = 806, quality=0, strong=0, bind=1,present=100,},   --2级命中宝石
+					{ type = 0, count = 1, itemid = 816, quality=0, strong=0, bind=1,present=100,},   --2级闪避宝石
+					{ type = 0, count = 1, itemid = 826, quality=0, strong=0, bind=1,present=100,},   --2级暴击宝石
+				},
+			},
+----------------------******************************************************下方为队伍奖励******************************************************************************
+			[1] ={			--这个是队伍模式二等的奖励
+				fixAward = 	--这里是固定奖励的列表,可任意多项
+				{			
+					--可参考任务奖励的定义，是一样的。type 0 物品 ；2 经验；3 帮派贡献值；4 阵营贡献； 5 绑定银两；6 银两； 7 礼金；1 修为；10 战魂值 有需要其他的奖励类型可以再添加 
+					{ type = 0, count = 1, itemid = 745, quality=0, strong=0, bind=1,present=100,},   --1级外攻宝石
+					{ type = 0, count = 1, itemid = 755, quality=0, strong=0, bind=1,present=100,},   --1级内攻宝石
+					{ type = 0, count = 1, itemid = 765, quality=0, strong=0, bind=1,present=100,},   --1级外防宝石
+					{ type = 0, count = 1, itemid = 775, quality=0, strong=0, bind=1,present=100,},   --1级内防宝石
+					{ type = 0, count = 1, itemid = 785, quality=0, strong=0, bind=1,present=100,},   --1级生命宝石
+					{ type = 0, count = 1, itemid = 795, quality=0, strong=0, bind=1,present=100,},   --1级内力宝石
+					{ type = 0, count = 1, itemid = 805, quality=0, strong=0, bind=1,present=100,},   --1级命中宝石
+					{ type = 0, count = 1, itemid = 815, quality=0, strong=0, bind=1,present=100,},   --1级闪避宝石
+					{ type = 0, count = 1, itemid = 825, quality=0, strong=0, bind=1,present=100,},   --1级暴击宝石
+
+				},
+				randAward = --装备奖励
+				{
+
+				},
+				addValue = --增值奖励，有金钥匙才能拿
+				{
+					{ type = 0, count = 1, itemid = 746, quality=0, strong=0, bind=1,present=100,},   --2级外攻宝石
+					{ type = 0, count = 1, itemid = 756, quality=0, strong=0, bind=1,present=100,},   --2级内攻宝石
+					{ type = 0, count = 1, itemid = 766, quality=0, strong=0, bind=1,present=100,},   --2级外防宝石
+					{ type = 0, count = 1, itemid = 776, quality=0, strong=0, bind=1,present=100,},   --2级内防宝石
+					{ type = 0, count = 1, itemid = 786, quality=0, strong=0, bind=1,present=100,},   --2级生命宝石
+					{ type = 0, count = 1, itemid = 796, quality=0, strong=0, bind=1,present=100,},   --2级内力宝石
+					{ type = 0, count = 1, itemid = 806, quality=0, strong=0, bind=1,present=100,},   --2级命中宝石
+					{ type = 0, count = 1, itemid = 816, quality=0, strong=0, bind=1,present=100,},   --2级闪避宝石
+					{ type = 0, count = 1, itemid = 826, quality=0, strong=0, bind=1,present=100,},   --2级暴击宝石
+
+				},
+			},
+		},
+--三等--------------------------------------------------------------------------------------------------------------------------
+		{			-- 三等的奖励
+			[0] ={		-- 这个是单人模式的奖励
+				fixAward = 	--这里是固定奖励的列表,可任意多项
+				{			
+					--可参考任务奖励的定义，是一样的。type 0 物品 ；2 经验；3 帮派贡献值；4 阵营贡献； 5 绑定银两；6 银两； 7 礼金；1 修为；10 战魂值 有需要其他的奖励类型可以再添加 
+					{ type = 0, count = 1, itemid = 745, quality=0, strong=0, bind=1,present=100,},   --1级外攻宝石
+					{ type = 0, count = 1, itemid = 755, quality=0, strong=0, bind=1,present=100,},   --1级内攻宝石
+					{ type = 0, count = 1, itemid = 765, quality=0, strong=0, bind=1,present=100,},   --1级外防宝石
+					{ type = 0, count = 1, itemid = 775, quality=0, strong=0, bind=1,present=100,},   --1级内防宝石
+					{ type = 0, count = 1, itemid = 785, quality=0, strong=0, bind=1,present=100,},   --1级生命宝石
+					{ type = 0, count = 1, itemid = 795, quality=0, strong=0, bind=1,present=100,},   --1级内力宝石
+					{ type = 0, count = 1, itemid = 805, quality=0, strong=0, bind=1,present=100,},   --1级命中宝石
+					{ type = 0, count = 1, itemid = 815, quality=0, strong=0, bind=1,present=100,},   --1级闪避宝石
+					{ type = 0, count = 1, itemid = 825, quality=0, strong=0, bind=1,present=100,},   --1级暴击宝石
+				},
+				randAward = --随机的奖励
+				{
+
+				},
+				addValue = --增值奖励，有金钥匙才能拿
+				{
+					{ type = 0, count = 1, itemid = 746, quality=0, strong=0, bind=1,present=100,},   --2级外攻宝石
+					{ type = 0, count = 1, itemid = 756, quality=0, strong=0, bind=1,present=100,},   --2级内攻宝石
+					{ type = 0, count = 1, itemid = 766, quality=0, strong=0, bind=1,present=100,},   --2级外防宝石
+					{ type = 0, count = 1, itemid = 776, quality=0, strong=0, bind=1,present=100,},   --2级内防宝石
+					{ type = 0, count = 1, itemid = 786, quality=0, strong=0, bind=1,present=100,},   --2级生命宝石
+					{ type = 0, count = 1, itemid = 796, quality=0, strong=0, bind=1,present=100,},   --2级内力宝石
+					{ type = 0, count = 1, itemid = 806, quality=0, strong=0, bind=1,present=100,},   --2级命中宝石
+					{ type = 0, count = 1, itemid = 816, quality=0, strong=0, bind=1,present=100,},   --2级闪避宝石
+					{ type = 0, count = 1, itemid = 826, quality=0, strong=0, bind=1,present=100,},   --2级暴击宝石
+				},
+			},
+----------------------******************************************************下方为队伍奖励******************************************************************************
+			[1] ={		--这个是队伍模式三等的奖励
+				fixAward = 	--这里是固定奖励的列表,可任意多项
+				{			
+					--可参考任务奖励的定义，是一样的。type 0 物品 ；2 经验；3 帮派贡献值；4 阵营贡献； 5 绑定银两；6 银两； 7 礼金；1 修为；10 战魂值 有需要其他的奖励类型可以再添加 
+					{ type = 0, count = 1, itemid = 745, quality=0, strong=0, bind=1,present=100,},   --1级外攻宝石
+					{ type = 0, count = 1, itemid = 755, quality=0, strong=0, bind=1,present=100,},   --1级内攻宝石
+					{ type = 0, count = 1, itemid = 765, quality=0, strong=0, bind=1,present=100,},   --1级外防宝石
+					{ type = 0, count = 1, itemid = 775, quality=0, strong=0, bind=1,present=100,},   --1级内防宝石
+					{ type = 0, count = 1, itemid = 785, quality=0, strong=0, bind=1,present=100,},   --1级生命宝石
+					{ type = 0, count = 1, itemid = 795, quality=0, strong=0, bind=1,present=100,},   --1级内力宝石
+					{ type = 0, count = 1, itemid = 805, quality=0, strong=0, bind=1,present=100,},   --1级命中宝石
+					{ type = 0, count = 1, itemid = 815, quality=0, strong=0, bind=1,present=100,},   --1级闪避宝石
+					{ type = 0, count = 1, itemid = 825, quality=0, strong=0, bind=1,present=100,},   --1级暴击宝石
+				},
+				randAward = --装备奖励
+				{
+
+				},
+				addValue = --增值奖励，有金钥匙才能拿
+				{
+					{ type = 0, count = 1, itemid = 746, quality=0, strong=0, bind=1,present=100,},   --2级外攻宝石
+					{ type = 0, count = 1, itemid = 756, quality=0, strong=0, bind=1,present=100,},   --2级内攻宝石
+					{ type = 0, count = 1, itemid = 766, quality=0, strong=0, bind=1,present=100,},   --2级外防宝石
+					{ type = 0, count = 1, itemid = 776, quality=0, strong=0, bind=1,present=100,},   --2级内防宝石
+					{ type = 0, count = 1, itemid = 786, quality=0, strong=0, bind=1,present=100,},   --2级生命宝石
+					{ type = 0, count = 1, itemid = 796, quality=0, strong=0, bind=1,present=100,},   --2级内力宝石
+					{ type = 0, count = 1, itemid = 806, quality=0, strong=0, bind=1,present=100,},   --2级命中宝石
+					{ type = 0, count = 1, itemid = 816, quality=0, strong=0, bind=1,present=100,},   --2级闪避宝石
+					{ type = 0, count = 1, itemid = 826, quality=0, strong=0, bind=1,present=100,},   --2级暴击宝石
+
+				},
+			},
+		},
+--四等---------------------------------------------------------------------------------------------------------------------------
+		{			-- 四等的奖励
+			[0] ={		-- 这个是单人模式的奖励
+				fixAward = 	--这里是固定奖励的列表,可任意多项
+				{			
+					--可参考任务奖励的定义，是一样的。type 0 物品 ；2 经验；3 帮派贡献值；4 阵营贡献； 5 绑定银两；6 银两； 7 礼金；1 修为；10 战魂值 有需要其他的奖励类型可以再添加 
+					{ type = 0, count = 1, itemid = 745, quality=0, strong=0, bind=1,present=100,},   --1级外攻宝石
+					{ type = 0, count = 1, itemid = 755, quality=0, strong=0, bind=1,present=100,},   --1级内攻宝石
+					{ type = 0, count = 1, itemid = 765, quality=0, strong=0, bind=1,present=100,},   --1级外防宝石
+					{ type = 0, count = 1, itemid = 775, quality=0, strong=0, bind=1,present=100,},   --1级内防宝石
+					{ type = 0, count = 1, itemid = 785, quality=0, strong=0, bind=1,present=100,},   --1级生命宝石
+					{ type = 0, count = 1, itemid = 795, quality=0, strong=0, bind=1,present=100,},   --1级内力宝石
+					{ type = 0, count = 1, itemid = 805, quality=0, strong=0, bind=1,present=100,},   --1级命中宝石
+					{ type = 0, count = 1, itemid = 815, quality=0, strong=0, bind=1,present=100,},   --1级闪避宝石
+					{ type = 0, count = 1, itemid = 825, quality=0, strong=0, bind=1,present=100,},   --1级暴击宝石
+
+				},
+				randAward = --随机的奖励
+				{
+
+				},
+				addValue = --增值奖励，有金钥匙才能拿
+				{
+					{ type = 0, count = 1, itemid = 746, quality=0, strong=0, bind=1,present=100,},   --2级外攻宝石
+					{ type = 0, count = 1, itemid = 756, quality=0, strong=0, bind=1,present=100,},   --2级内攻宝石
+					{ type = 0, count = 1, itemid = 766, quality=0, strong=0, bind=1,present=100,},   --2级外防宝石
+					{ type = 0, count = 1, itemid = 776, quality=0, strong=0, bind=1,present=100,},   --2级内防宝石
+					{ type = 0, count = 1, itemid = 786, quality=0, strong=0, bind=1,present=100,},   --2级生命宝石
+					{ type = 0, count = 1, itemid = 796, quality=0, strong=0, bind=1,present=100,},   --2级内力宝石
+					{ type = 0, count = 1, itemid = 806, quality=0, strong=0, bind=1,present=100,},   --2级命中宝石
+					{ type = 0, count = 1, itemid = 816, quality=0, strong=0, bind=1,present=100,},   --2级闪避宝石
+					{ type = 0, count = 1, itemid = 826, quality=0, strong=0, bind=1,present=100,},   --2级暴击宝石
+				},
+			},
+----------------------******************************************************下方为队伍奖励******************************************************************************
+			[1] ={			--这个是队伍模式四等的奖励
+				fixAward = 	--这里是固定奖励的列表,可任意多项
+				{			
+					--可参考任务奖励的定义，是一样的。type 0 物品 ；2 经验；3 帮派贡献值；4 阵营贡献； 5 绑定银两；6 银两； 7 礼金；1 修为；10 战魂值 有需要其他的奖励类型可以再添加 
+					{ type = 0, count = 1, itemid = 745, quality=0, strong=0, bind=1,present=100,},   --1级外攻宝石
+					{ type = 0, count = 1, itemid = 755, quality=0, strong=0, bind=1,present=100,},   --1级内攻宝石
+					{ type = 0, count = 1, itemid = 765, quality=0, strong=0, bind=1,present=100,},   --1级外防宝石
+					{ type = 0, count = 1, itemid = 775, quality=0, strong=0, bind=1,present=100,},   --1级内防宝石
+					{ type = 0, count = 1, itemid = 785, quality=0, strong=0, bind=1,present=100,},   --1级生命宝石
+					{ type = 0, count = 1, itemid = 795, quality=0, strong=0, bind=1,present=100,},   --1级内力宝石
+					{ type = 0, count = 1, itemid = 805, quality=0, strong=0, bind=1,present=100,},   --1级命中宝石
+					{ type = 0, count = 1, itemid = 815, quality=0, strong=0, bind=1,present=100,},   --1级闪避宝石
+					{ type = 0, count = 1, itemid = 825, quality=0, strong=0, bind=1,present=100,},   --1级暴击宝石
+				},
+				randAward = --装备奖励
+				{
+
+				},
+				addValue = --增值奖励，有金钥匙才能拿
+				{
+					{ type = 0, count = 1, itemid = 746, quality=0, strong=0, bind=1,present=100,},   --2级外攻宝石
+					{ type = 0, count = 1, itemid = 756, quality=0, strong=0, bind=1,present=100,},   --2级内攻宝石
+					{ type = 0, count = 1, itemid = 766, quality=0, strong=0, bind=1,present=100,},   --2级外防宝石
+					{ type = 0, count = 1, itemid = 776, quality=0, strong=0, bind=1,present=100,},   --2级内防宝石
+					{ type = 0, count = 1, itemid = 786, quality=0, strong=0, bind=1,present=100,},   --2级生命宝石
+					{ type = 0, count = 1, itemid = 796, quality=0, strong=0, bind=1,present=100,},   --2级内力宝石
+					{ type = 0, count = 1, itemid = 806, quality=0, strong=0, bind=1,present=100,},   --2级命中宝石
+					{ type = 0, count = 1, itemid = 816, quality=0, strong=0, bind=1,present=100,},   --2级闪避宝石
+					{ type = 0, count = 1, itemid = 826, quality=0, strong=0, bind=1,present=100,},   --2级暴击宝石
+
+				},
+			},
+		},
+--五等---------------------------------------------------------------------------------------------------------------------------
+		{			-- 五等的奖励
+			[0] ={		-- 这个是单人模式的奖励
+				fixAward = 	--这里是固定奖励的列表,可任意多项
+				{			
+					--可参考任务奖励的定义，是一样的。type 0 物品 ；2 经验；3 帮派贡献值；4 阵营贡献； 5 绑定银两；6 银两； 7 礼金；1 修为；10 战魂值 有需要其他的奖励类型可以再添加 
+					{ type = 0, count = 1, itemid = 745, quality=0, strong=0, bind=1,present=100,},   --1级外攻宝石
+					{ type = 0, count = 1, itemid = 755, quality=0, strong=0, bind=1,present=100,},   --1级内攻宝石
+					{ type = 0, count = 1, itemid = 765, quality=0, strong=0, bind=1,present=100,},   --1级外防宝石
+					{ type = 0, count = 1, itemid = 775, quality=0, strong=0, bind=1,present=100,},   --1级内防宝石
+					{ type = 0, count = 1, itemid = 785, quality=0, strong=0, bind=1,present=100,},   --1级生命宝石
+					{ type = 0, count = 1, itemid = 795, quality=0, strong=0, bind=1,present=100,},   --1级内力宝石
+					{ type = 0, count = 1, itemid = 805, quality=0, strong=0, bind=1,present=100,},   --1级命中宝石
+					{ type = 0, count = 1, itemid = 815, quality=0, strong=0, bind=1,present=100,},   --1级闪避宝石
+					{ type = 0, count = 1, itemid = 825, quality=0, strong=0, bind=1,present=100,},   --1级暴击宝石
+
+				},
+				randAward = --随机的奖励
+				{
+
+				},
+				addValue = --增值奖励，有金钥匙才能拿
+				{
+					{ type = 0, count = 1, itemid = 746, quality=0, strong=0, bind=1,present=100,},   --2级外攻宝石
+					{ type = 0, count = 1, itemid = 756, quality=0, strong=0, bind=1,present=100,},   --2级内攻宝石
+					{ type = 0, count = 1, itemid = 766, quality=0, strong=0, bind=1,present=100,},   --2级外防宝石
+					{ type = 0, count = 1, itemid = 776, quality=0, strong=0, bind=1,present=100,},   --2级内防宝石
+					{ type = 0, count = 1, itemid = 786, quality=0, strong=0, bind=1,present=100,},   --2级生命宝石
+					{ type = 0, count = 1, itemid = 796, quality=0, strong=0, bind=1,present=100,},   --2级内力宝石
+					{ type = 0, count = 1, itemid = 806, quality=0, strong=0, bind=1,present=100,},   --2级命中宝石
+					{ type = 0, count = 1, itemid = 816, quality=0, strong=0, bind=1,present=100,},   --2级闪避宝石
+					{ type = 0, count = 1, itemid = 826, quality=0, strong=0, bind=1,present=100,},   --2级暴击宝石
+				},
+			},
+----------------------******************************************************下方为队伍奖励******************************************************************************
+			[1] ={			--这个是队伍模式五等的奖励
+				fixAward = 	--这里是固定奖励的列表,可任意多项
+				{			
+					--可参考任务奖励的定义，是一样的。type 0 物品 ；2 经验；3 帮派贡献值；4 阵营贡献； 5 绑定银两；6 银两； 7 礼金；1 修为；10 战魂值 有需要其他的奖励类型可以再添加 
+					{ type = 0, count = 1, itemid = 745, quality=0, strong=0, bind=1,present=100,},   --1级外攻宝石
+					{ type = 0, count = 1, itemid = 755, quality=0, strong=0, bind=1,present=100,},   --1级内攻宝石
+					{ type = 0, count = 1, itemid = 765, quality=0, strong=0, bind=1,present=100,},   --1级外防宝石
+					{ type = 0, count = 1, itemid = 775, quality=0, strong=0, bind=1,present=100,},   --1级内防宝石
+					{ type = 0, count = 1, itemid = 785, quality=0, strong=0, bind=1,present=100,},   --1级生命宝石
+					{ type = 0, count = 1, itemid = 795, quality=0, strong=0, bind=1,present=100,},   --1级内力宝石
+					{ type = 0, count = 1, itemid = 805, quality=0, strong=0, bind=1,present=100,},   --1级命中宝石
+					{ type = 0, count = 1, itemid = 815, quality=0, strong=0, bind=1,present=100,},   --1级闪避宝石
+					{ type = 0, count = 1, itemid = 825, quality=0, strong=0, bind=1,present=100,},   --1级暴击宝石
+				},
+				randAward = --装备奖励
+				{
+ 
+				},
+				addValue = --增值奖励，有金钥匙才能拿
+				{
+					{ type = 0, count = 1, itemid = 746, quality=0, strong=0, bind=1,present=100,},   --2级外攻宝石
+					{ type = 0, count = 1, itemid = 756, quality=0, strong=0, bind=1,present=100,},   --2级内攻宝石
+					{ type = 0, count = 1, itemid = 766, quality=0, strong=0, bind=1,present=100,},   --2级外防宝石
+					{ type = 0, count = 1, itemid = 776, quality=0, strong=0, bind=1,present=100,},   --2级内防宝石
+					{ type = 0, count = 1, itemid = 786, quality=0, strong=0, bind=1,present=100,},   --2级生命宝石
+					{ type = 0, count = 1, itemid = 796, quality=0, strong=0, bind=1,present=100,},   --2级内力宝石
+					{ type = 0, count = 1, itemid = 806, quality=0, strong=0, bind=1,present=100,},   --2级命中宝石
+					{ type = 0, count = 1, itemid = 816, quality=0, strong=0, bind=1,present=100,},   --2级闪避宝石
+					{ type = 0, count = 1, itemid = 826, quality=0, strong=0, bind=1,present=100,},   --2级暴击宝石
+				},
+			},
+		},

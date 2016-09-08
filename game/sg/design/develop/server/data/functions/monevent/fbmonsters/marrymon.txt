@@ -1,0 +1,34 @@
+﻿--#include "data\config\misc\marryconf.txt" once
+
+-- 采集怪死亡触发
+GatherFinishDispatcher.MonGatherFinish = function (monster,sysarg,monId)
+	local st = LActor.getStaticVar(sysarg)	
+	if st.marry.gathCountday <= 0 then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.mry47, ttMessage)
+	else
+		st.marry.gathCountday = st.marry.gathCountday - 1
+		for i=1,#marryConf.gathId do
+			if monId == marryConf.gathId[i] then
+				local addexp = LActor.addExpByLevel(sysarg, marryConf.expFactor[i], 0, 0) -- 目前只有一个怪
+				LActor.sendTipmsg(sysarg, string.format(Lang.ScriptTips.mry50, addexp, 
+					st.marry.gathCountday), ttMessage)
+				break
+			end
+		end
+	end
+end
+
+GatherFinishDispatcher.CanGathMarryMon = function (monster, sysarg, monId)
+	local st = LActor.getStaticVar(sysarg)	
+	if st.marry.gathCountday <= 0 then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.mry47, ttMessage)
+		return false
+	else
+		return true
+	end
+end
+
+for i=1,#marryConf.gathId do
+	GatherFinishDispatcher.register(marryConf.gathId[i], GatherFinishDispatcher.MonGatherFinish)
+	GatherCheckDispatcher.register(marryConf.gathId[i],GatherFinishDispatcher.CanGathMarryMon) -- 注册判断能否采集
+end

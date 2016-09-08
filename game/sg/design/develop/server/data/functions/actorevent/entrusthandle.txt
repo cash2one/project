@@ -1,0 +1,487 @@
+﻿-- 副本委托处理
+--#include "data\functions\gmevent.txt" once
+--#include "data\functions\entrustfunc.txt" once
+--#include "data\functions\tasks\fengcereward\fcactivefunc.txt" once
+
+EntrustOpFuncList = {}
+
+
+EntrustFunc.HandlerEntrustOp = function (sysarg, args)
+  if args[1] == nil then return end
+  
+  local func = EntrustOpFuncList[args[1]]
+  if func ~= nil then
+    func(sysarg, args[2]) 
+  end
+end
+
+-- 获取并初始化委托副本相关信息
+EntrustFunc.GetInfo = function(sysarg, fbid)
+	local idx = nil
+	for i=1,#EntrustConf do
+		if EntrustConf[i].fbid == fbid then
+			idx = i
+			break
+		end
+	end
+	if idx == nil then return end
+
+	local conf = EntrustConf[idx]
+
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+
+	if var.entrust == nil then
+		var.entrust = {}
+	end
+	if var.entrust[idx] == nil then
+		var.entrust[idx] = {}
+	end
+
+	local info = var.entrust[idx]
+
+	if info.maxfloor == nil then info.maxfloor = 0 end
+	if info.count == nil then info.count = 0 end
+	if info.state == nil then info.state = 0 end
+	if info.floor == nil then info.floor = 0 end
+	if info.floor > #conf.floors then info.floor = #conf.floors end -- 限制层数，修改配置后可能会变大了
+	if info.endtime == nil then info.endtime = 0 end
+	if info.offline == nil then info.offline = 0 end
+	if info.wtype == nil then info.wtype = 0 end
+
+	return idx, conf, info, var
+end
+
+-- 获取委托到某一层需要的总时间
+EntrustFunc.GetNeedTime = function(sysarg, floor, conf)
+	local floors = conf.floors
+	if #floors == 1 or floor == #floors then -- 返回总时间
+		return conf.time
+	end
+
+	local time = 0
+	for i=1,floor do
+		time = time + floors[i].time
+	end
+	return time
+end
+
+-- 获取委托副本信息
+EntrustOpFuncList[5] = function(sysarg, dp)
+	local fbid = DataPack.readInt( dp )
+	if fbid == nil then return end
+
+	local idx, conf, info = EntrustFunc.GetInfo(sysarg, fbid)
+	if idx == nil then
+		print("can not get entrust info:"..fbid)
+		return 
+	end
+
+	local left_t = info.endtime - System.getCurrMiniTime()
+    if left_t < 0 then left_t = 0 end
+
+	local npack = DataPack.allocPacket(sysarg,42,5)  --申请一个数据包
+    if npack == nil then return end
+
+    local floor = info.maxfloor
+    local maxfloor = #conf.floors
+    if info.maxfloor > maxfloor then
+		info.maxfloor = maxfloor
+	end
+	if info.floor > maxfloor then
+		info.floor = maxfloor
+	end
+    
+    if conf.floor < 1 then -- 不需要通关的取最大层数
+    	floor = maxfloor
+    elseif info.state ~= nil and info.state == 1 or info.state == 2 then -- 委托中或未领奖就用最后的层次
+    	floor = info.floor
+    end
+
+    DataPack.writeInt(npack, fbid)
+    DataPack.writeInt(npack, floor) 		-- 最后委托层数
+    DataPack.writeInt(npack, info.count) 	-- 委托次数
+    DataPack.writeByte(npack, info.state) 	-- 委托状态
+    DataPack.writeByte(npack, info.offline) -- 委托期间是否下线
+    DataPack.writeUInt(npack, left_t) 		-- 剩余时间
+    DataPack.writeByte(npack, info.wtype) 	-- 委托类型
+
+    DataPack.flush(npack)
+end
+
+-- 委托
+EntrustOpFuncList[6] = function(sysarg, dp)
+	local fbid = DataPack.readInt( dp )
+	local wtype = DataPack.readByte( dp )
+	local times = DataPack.readInt( dp )
+
+	if fbid == nil or wtype == nil or times == nil then return end
+
+	if times < 1 then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.wt013, ttMessage)
+		return 
+	end
+
+	if wtype ~= 0 and wtype ~= 1 then
+		print("entrust type error:"..wtype)
+		return
+	end
+
+	local idx, conf, info, var = EntrustFunc.GetInfo(sysarg, fbid)
+	if idx == nil then
+		print("can not get entrust info:"..fbid)
+		return 
+	end
+
+	if info.state == 1 then -- 已经在委托
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.wt012, ttMessage)
+		return 
+	end
+
+	if info.state == 2 then -- 奖励没领取
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.wt011, ttMessage)
+		return
+	end
+
+	-- 等级
+	if LActor.getLevel(sysarg) < conf.level then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.wt002, ttMessage)
+		return
+	end
+
+	-- 次数
+	local enterCount, addCount = Fuben.getEnterFubenInfo(sysarg, fbid)
+	if enterCount == nil or addCount == nil or (enterCount + times > conf.daycount+addCount) then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.wt010, ttMessage)
+		return 
+	end
+
+	-- 通关层数
+	if info.maxfloor < conf.floor then
+		if conf.floor <= 1 then
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.wt004, ttMessage)
+		else
+			local tips = string.format(Lang.ScriptTips.wt005, conf.floor)
+			LActor.sendTipmsg(sysarg, tips, ttMessage)
+		end
+		return
+	end
+
+	-- 先清空昨天的仓库
+	local cur_t = System.getCurrMiniTime()
+	if var.lastEntrust ~= nil and System.isSameDay(var.lastEntrust, cur_t) == false and LActor.getEntrustItemCount(sysarg) > 0 then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.wt001, ttMessage)
+		return 
+	end
+
+	-- 金钱
+	local moneyTyp
+	local moneyCount
+	if wtype == 0 then
+		moneyTyp = 0
+		moneyCount = conf.xb * times
+	else
+		moneyTyp = 3
+		moneyCount = conf.yb * times
+	end
+	if LActor.getMoneyCount(sysarg, moneyTyp) < moneyCount then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.wt003, ttMessage)
+		return 
+	end
+	LActor.changeMoney( sysarg, moneyTyp, -moneyCount, 1, true, "entrust", "weituo")
+
+	-- 开始委托，记录一些状态
+	local total_t = EntrustFunc.GetNeedTime(sysarg, info.maxfloor, conf) * times
+
+	local maxfloor = #conf.floors
+    if info.maxfloor > maxfloor then
+		info.maxfloor = maxfloor
+	end
+	if info.floor > maxfloor then
+		info.floor = maxfloor
+	end
+
+	if conf.floor < 1 then -- 不需要通关的取最高层数
+		info.floor = #conf.floors
+	else
+		info.floor = info.maxfloor
+	end
+	info.state = 1
+	info.endtime = cur_t + total_t -- 结束时间
+	info.count = times
+	info.wtype = wtype -- 委托类型
+	info.offline = 0
+	info.msgFlag = EntrustFunc.msgFlag -- 加个标识
+	EntrustFunc.msgFlag = EntrustFunc.msgFlag + 1
+
+	var.lastEntrust = cur_t-- 记录最后委托时间
+
+	-- 扣副本次数
+	if TjxsEntrustConfig[fbid] ~= nil then
+		for i,tmpfubenid in ipairs(TjxsEntrustConfig[fbid]) do
+			local tmptimes = times
+			local enterCount, addCount = Fuben.getEnterFubenInfo(sysarg, tmpfubenid)
+
+			if enterCount == nil or addCount == nil or (enterCount + times > TjxsEntrustDayCount + addCount) then
+				tmptimes = TjxsEntrustDayCount + addCount - enterCount
+			end
+
+			Fuben.changeEnterCount(sysarg, tmpfubenid, tmptimes)
+		end
+	else
+		Fuben.changeEnterCount(sysarg, fbid, times)
+	end
+	
+
+	LActor.postEntityScriptDelayMsg(sysarg, total_t * 1000, result, 20, fbid, info.msgFlag)
+
+	-- 通知客户端
+	local npack = DataPack.allocPacket(sysarg,42,6)
+    if npack == nil then return end
+
+    DataPack.writeInt( npack, fbid )
+    DataPack.writeInt( npack, 1 )
+
+    DataPack.flush(npack)
+end
+
+-- 立即完成
+EntrustOpFuncList[7] = function(sysarg, dp)
+	local fbid = DataPack.readInt( dp )
+
+	if fbid == nil then return end
+
+	local idx, conf, info, var = EntrustFunc.GetInfo(sysarg, fbid)
+	if idx == nil then
+		print("can not get entrust info:"..fbid)
+		return 
+	end
+
+	if info.state == 0 then -- 没开始
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.wt006, ttMessage)
+		return
+	end
+
+	if info.state == 2 then -- 已完成
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.wt014, ttMessage)
+		return
+	end
+
+	local left_t = info.endtime - System.getCurrMiniTime()
+    if left_t < 0 then left_t = 0 end
+
+	local yuanbaos = conf.ljyb
+	local moneyCount = math.floor(left_t / 360) * conf.ljyb -- 每360秒需要多少天珠
+	if moneyCount <= 0 then
+		moneyCount = 1 -- 小于0天珠要1天珠
+	end
+
+	if LActor.getMoneyCount(sysarg, 3) < moneyCount then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.wt007, ttMessage)
+		return 
+	end
+	LActor.changeMoney( sysarg, 3, -moneyCount, 1, true, "entrust", "lijiwancheng")
+
+	EntrustFunc.OnFinish(sysarg, fbid)
+end
+
+-- 获取奖励
+EntrustOpFuncList[8] = function(sysarg, dp)
+	local fbid = DataPack.readInt( dp )
+
+	if fbid == nil then return end
+
+	local idx, conf, info = EntrustFunc.GetInfo(sysarg, fbid)
+	if idx == nil then
+		print("can not get entrust info:"..fbid)
+		return 
+	end
+
+	if info.state == 0 then -- 未开始
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.wt015, ttMessage)
+		return
+	elseif info.state == 1 then -- 未完成
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.wt008, ttMessage)
+		return
+	end
+
+	-- 获取各层的奖励
+	local ll = 0
+	local exp = 0
+	local xb = 0
+	local yl = 0
+	for i=1,info.count do -- 每次
+		for j=1,info.floor do -- 每层
+			local awards = conf.floors[j].awards -- 历练或经验
+			for k=1,#awards do
+				local award = awards[k]
+				if award.type == 1 then -- 经验
+					exp = exp + award.amount
+				elseif award.type == 2 then -- 历练
+					ll = ll + award.amount
+				elseif award.type == 3 then -- 仙币
+					xb = xb + award.amount
+				elseif award.type == 4 then -- 银两
+					yl = yl + award.amount
+				end
+			end
+		end
+	end
+
+	-- 给经验或历练
+	if ll > 0 then
+		LActor.giveAward(sysarg, qatRenown, ll)
+		local tips = string.format(Lang.ScriptTips.wt016, ll)
+		LActor.sendTipmsg(sysarg, tips, ttMessage)
+	end
+	if exp > 0 then
+		if info.wtype == 1 then -- 天珠委托，经验1.2倍
+			exp = exp * conf.ybExpRate
+		elseif info.wtype == 0 then
+			exp = exp * conf.commonExpRate
+		end
+		local nexp = LActor.addExp(sysarg, exp, 213, 0)
+		LActor.playExpEffect(sysarg, nexp)
+	end
+	if xb > 0 then
+		LActor.changeMoney( sysarg, mtBindCoin, xb, 1, true, "entrust", "getxb")
+		local tips = string.format(Lang.ScriptTips.wt017, xb)
+		LActor.sendTipmsg(sysarg, tips, ttMessage)
+	end
+	if yl > 0 then
+		LActor.changeMoney( sysarg, mtCoin, yl, 1, true, "entrust", "getyl")
+		local tips = string.format(Lang.ScriptTips.wt018, yl)
+		LActor.sendTipmsg(sysarg, tips, ttMessage)
+	end
+
+	info.state = 0
+
+	-- 通知客户端
+	local npack = DataPack.allocPacket(sysarg,42,8)
+    if npack == nil then return end
+    DataPack.writeInt( npack, fbid )
+    DataPack.writeInt( npack, 0)
+    DataPack.flush(npack)
+end
+
+-- 定时器通知委托完成
+EntrustFunc.OnFinishDelayMsg = function(sysarg, arg)
+	local fbid = arg[2]
+	if fbid == nil then return end
+
+	local msgFlag = arg[3]
+
+	EntrustFunc.OnFinish(sysarg, fbid, msgFlag)
+end
+
+-- 委托完成
+EntrustFunc.OnFinish = function(sysarg, fbid, msgFlag)
+	local idx, conf, info = EntrustFunc.GetInfo(sysarg, fbid)
+	if idx == nil then
+		print("can not get entrust info:"..fbid)
+		return 
+	end
+
+	if msgFlag ~= nil and info.msgFlag ~= nil and msgFlag ~= info.msgFlag then return end -- 这条消息已经是过时的了
+
+	if info.state ~= 1 then -- 未开始
+		return 
+	end
+
+	-- 给物品
+	for i=1,info.count do -- 每次
+		for j=1,info.floor do -- 每层
+			local itemconfs = conf.floors[j].items
+			for k=1,#itemconfs do
+				local itemconf = itemconfs[k]
+				local rates = itemconf.rates
+				local rval = System.getRandomNumber(100)
+				local count = 0
+				local total = 0
+				for p=1,#rates do
+					total = total + rates[p]
+					if rval < total then
+						break
+					end
+					count = count + 1
+				end
+				if count > 0 then
+					LActor.addEntrustItem(sysarg, itemconf.id, count, 0, 0, itemconf.bind)
+				end
+			end
+		end
+	end
+
+	info.state = 2
+	info.endtime = 0
+
+	if conf.actid ~= nil then
+		LActor.triggerTarget(sysarg, conf.actid, info.count)
+		FCActivityHandler.ActivityReward (sysarg)
+	end
+
+	-- 通知客户端
+	local npack = DataPack.allocPacket(sysarg,42,7)
+    if npack == nil then return end
+    DataPack.writeInt( npack, fbid )
+    DataPack.writeByte( npack, info.wtype)
+    DataPack.flush(npack)
+end
+
+-- 初始化
+EntrustFunc.OnInit = function()
+	local var_sys = System.getStaticVar()
+	if var_sys == nil then return end
+
+	EntrustFunc.msgFlag = 1 -- 自增的值，用来标识延时消息
+end
+
+-- 玩家登录
+EntrustFunc.OnLoginEntrust = function(sysarg, arg)
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+
+	if var.entrust == nil then return end
+
+	local result = false
+	local cur_t = System.getCurrMiniTime()
+	for i=1,#EntrustConf do
+		local info = var.entrust[i]
+		if info ~= nil then
+			local conf = EntrustConf[i]
+			if info.endtime ~= nil and info.state ~= nil and info.state == 1 then -- 上次未完成的委托
+				info.offline = 1 -- 下先后再上线的
+				local left_t = info.endtime - cur_t
+				if left_t > 0 then
+					LActor.postEntityScriptDelayMsg(sysarg, left_t * 1000, result, 20, conf.fbid, info.msgFlag) -- 未完成，接着计时
+				else
+					EntrustFunc.OnFinish(sysarg, conf.fbid) -- 已经完成
+				end
+			end
+		end
+	end
+end
+
+-- 清除副本委托
+GmEventFuncList.ClearEntrust = function(sysarg, args)
+	local fbid = args[1]
+
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+
+	if fbid == nil then
+		var.entrust = nil
+	else
+		local idx, conf, info = EntrustFunc.GetInfo(sysarg, fbid)
+		if idx ~= nil then
+			info[idx] = nil
+		end
+	end
+end
+
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeEntrust, EntrustFunc.HandlerEntrustOp)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, EntrustFunc.OnLoginEntrust)
+table.insert(InitFnTable,EntrustFunc.OnInit) 
+table.insert(LocalDT.ScriptDelayConfig[20], EntrustFunc.OnFinishDelayMsg)
+GmEventFuncList.register( "clsentrust", GmEventFuncList.ClearEntrust, 1)

@@ -1,0 +1,35 @@
+﻿-- 变身副本处理脚本
+--#include "data\config\misc\superfbconfig.txt" once
+
+EventCallDispatcher.OnEnterSuperFuben = function(sysarg, hfb, way)
+    local var = LActor.getStaticVar(sysarg)
+    if var.fubenxszy == nil then var.fubenxszy = 0 end
+    --print("OnEnterSuperFuben self1.."..var.fubenxszy)
+    --没有指引过,下发通知,要指引
+    if not System.bitOPMask(var.fubenxszy, superFbConf.fbIndex - 1) then
+      local npack = DataPack.allocPacket(sysarg, 20, 8)
+      DataPack.writeInt(npack, superFbConf.fbId)
+      DataPack.flush(npack)
+      var.fubenxszy = System.bitOpSetMask(var.fubenxszy, superFbConf.fbIndex - 1, true)
+      --print("OnEnterSuperFuben self2.."..var.fubenxszy)
+    end
+end
+
+EventCallDispatcher.OnKillSuperFbMonster = function(monster,sysarg,mid)
+  if sysarg == nil then return end
+
+  local teleportConf = superFbConf.teleport
+  if teleportConf ~= nil then
+    -- print("create transter:"..layer)
+    local comfirm
+    if teleportConf.comfirm == nil then
+      comfirm = 0
+    else
+      comfirm = teleportConf.comfirm
+    end
+    LActor.createTranster(sysarg, teleportConf.modelid, teleportConf.posx, teleportConf.posy, teleportConf.toPosx, teleportConf.toPosy, teleportConf.toSceneid, teleportConf.name, comfirm)
+  end
+end
+
+-- EventCallDispatcher.registerFubenEnter(superFbConf.fbId, EventCallDispatcher.OnEnterSuperFuben)
+-- MonDieDispatcher.register( superFbConf.monsterid, EventCallDispatcher.OnKillSuperFbMonster )

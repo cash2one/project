@@ -1,0 +1,77 @@
+﻿--#include "data\language\LangCode.txt" once
+--#include "data\config\task\lgfconf.txt" once
+--#include "data\functions\bifunc.txt" once
+
+local Liangongfang = {}
+
+Liangongfang.OnEnter = function(sysarg, hfb, way)
+	local hScene = LActor.getSceneHandle(sysarg)
+	if way == 1 then
+		LActor.registerKillAllMonster( sysarg, true, 1 )
+		local interval = 1000 * LgfConfig.interval
+
+		for i=1,LgfConfig.maxTime do
+			LActor.regScriptCallback( sysarg, nil, 10000 - interval + i * interval, 0, 1, "LiangongfangTip", i, sysarg )
+		end
+
+		local handle = LActor.getFubenHandle(sysarg)
+		Fuben.SetFubenTime(handle, LgfConfig.restTime)
+
+		LActor.ChangeCaleValue(sysarg, caleFubenTime, LgfConfig.restTime, false)
+		LActor.ChangeCaleValue(sysarg, caleOther1, 0, false)	-- 波数
+		LActor.ChangeCaleValue(sysarg, caleOther2, 0, false)	-- 杀怪数
+		LActor.SendAllCaleValue(sysarg)
+	end
+end
+
+-- 发送提示语
+function LiangongfangTip( monster, idx, sysarg)	
+	-- 必须是在副本才发提示语
+	local fb = LActor.getFubenId(monster)
+	if fb ~= LgfConfig.fubenid[1] and fb ~= LgfConfig.fubenid[2] then return end
+	
+	if idx == -1 then 
+		LActor.exitFuben(sysarg) 
+		return
+	end
+
+	local str = string.format(Lang.TaskTalk.lgf2, idx)
+	LActor.sendTipmsg(sysarg, str, ttScreenCenter)
+
+	local ptr = LActor.getFubenPrt(monster)
+	if ptr ~= LActor.getFubenPrt(sysarg) then return end
+
+	local st = Fuben.getDyanmicVar(ptr)
+
+	st.idx = idx -- 第几波的怪物
+	
+	LActor.SendAndChangeCaleValue(sysarg, caleOther1, idx, false)
+end
+
+-- 退出副本
+Liangongfang.OnExit = function(sysarg, hfb, way)
+ 	if way ~= 2 then
+		Fuben.SetFubenTime(hfb, 1)	-- 马上释放副本，免得再执行回调
+	end
+
+	-- BI统计
+	local fbPtr = Fuben.getFubenPtr(hfb)
+	if fbPtr == nil then return end
+
+	local var = Fuben.getDyanmicVar(fbPtr)
+	if var == nil then return end
+	
+	if var.idx ~= nil then
+		local step_str = tostring(var.idx)
+		if step_str ~= nil then
+			BiFunc.LogFubenExit(sysarg, "lgf_exit", step_str)
+		end
+	end
+
+end
+
+--注释掉没用到
+--EventCallDispatcher.registerFubenEnter(LgfConfig.fubenid[1], Liangongfang.OnEnter)
+--EventCallDispatcher.registerFubenExit(LgfConfig.fubenid[1], Liangongfang.OnExit)
+--EventCallDispatcher.registerFubenEnter(LgfConfig.fubenid[2], Liangongfang.OnEnter)
+--EventCallDispatcher.registerFubenExit(LgfConfig.fubenid[2], Liangongfang.OnExit)

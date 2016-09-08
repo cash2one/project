@@ -1,0 +1,208 @@
+
+---并肩作战
+--#include "data\config\taskgameplayconfig\bingjianzuozhanconfig.txt" once
+bingjianzuozhan = { }
+
+local bingjianzuozhan_pet_id = 4003
+
+function bingjianzuozhan.chectAcceptTast( actorobj , qid )
+	-- body
+	debug_print("--------------接收并肩作战任务并肩之前的检查---------------")
+	if actorobj == nil  or qid == nil then
+ 		return
+ 	end
+	local nVar = LActor.getStaticVar( actorobj )
+	if nVar == nil then
+		return false
+	end
+	if nVar.BingJianZuoZhan_qid == nil then
+		return true
+	end
+	debug_print("------------已经接有并肩作战任务-----------------")
+	return false
+end
+
+--接收任务
+function bingjianzuozhan.AcceptTask( actorobj, qid )
+ 	-- body
+ 	--创建 伙伴
+ 	debug_print("--------------接收并肩作战任务---------------")
+ 	if actorobj == nil  or qid == nil or tonumber(qid) == nil then
+ 		return
+ 	end
+	local nVar = LActor.getStaticVar( actorobj )
+	if nVar == nil then
+		return
+	end
+ 	local conf = BJZZ_Config[tonumber(qid)]
+	if conf ~= nil and LActor.hasQuest(actorobj, qid) == true then
+		nVar.BingJianZuoZhan_qid = tonumber(qid)
+		bingjianzuozhan.CreatePartner( actorobj , bingjianzuozhan_pet_id, conf )
+	end
+end
+
+--提交任务
+function bingjianzuozhan.CommitTask( actorobj, qid )
+	-- body
+	local nVar = LActor.getStaticVar( actorobj )
+ 	local conf = BJZZ_Config[tonumber(qid)]
+	if conf ~= nil then
+		bingjianzuozhan.destroyPartner( actorobj , bingjianzuozhan_pet_id)
+		nVar.BingJianZuoZhan_qid = nil
+ 	end
+end
+
+function bingjianzuozhan.CreatePartner( actorobj , petid, conf )
+	-- body
+	local nVar = LActor.getStaticVar( actorobj )
+	if not nVar then return end
+	
+	if nVar.BingJianZuoZhan_qid == nil or nVar.BingJianZuoZhan_pet_Handle ~= nil or tonumber(petid) == nil or conf == nil then
+		debug_print("====>>>> invaild conditions to create partner!")
+		return
+	end
+
+	local nPartner = LActor.CreateNPCMonster( actorobj , petid )	
+	if nPartner == nil then
+		debug_print("====>>>> create partner failed!")
+		return
+	end
+	local nHandle = LActor.getHandle(nPartner)
+	nVar.BingJianZuoZhan_pet_Handle = nHandle
+
+	LActor.changeMonsterName(nPartner, conf.pet_name) -- 改名
+	LActor.setDenyIgnoreReturnStatus(nPartner, true) -- 无视回归状态
+
+	-- 设置属性
+	for k, v in ipairs(conf.pet_props) do
+		LActor.setIntProperty(nPartner, v.prop_type, v.prop_value)
+	end
+
+	local nZhanDou_Type = LActor.getIntProperty( nPartner , PI_FIGHT_TYPE) -- 战斗方式 （1：防御型 2：主动型 3：跟随型）
+	local npack =  DataPack.allocPacket( actorobj , 171 , 1)
+	DataPack.writeInt64(npack , nHandle)
+	DataPack.writeInt( npack , nZhanDou_Type)
+	DataPack.writeInt( npack , #conf.pet_skills)
+	for k, v in ipairs(conf.pet_skills) do -- 学习技能列表的技能
+		DataPack.writeInt( npack , v.skillId)
+	end
+	DataPack.flush(npack)
+end
+
+function bingjianzuozhan.destroyPartner(actorobj)
+	-- body
+	local nVar = LActor.getStaticVar( actorobj )
+	if nVar.BingJianZuoZhan_qid == nil or nVar.BingJianZuoZhan_pet_Handle == nil then
+		return
+	end
+	Fuben.clearMonster( nVar.BingJianZuoZhan_pet_Handle , false)
+	debug_print("====>>>> destroy partner!")
+	local npack = DataPack.allocPacket( actorobj , 171 , 3)
+	DataPack.writeInt64( npack , nVar.BingJianZuoZhan_pet_Handle)
+	DataPack.flush( npack )
+	nVar.BingJianZuoZhan_pet_Handle = nil
+end
+
+function bingjianzuozhan.EntryScene(sid, actorobj, hdl)
+	-- body
+	if actorobj == nil then
+		return
+	end
+	local nVar = LActor.getStaticVar(actorobj)
+	if not nVar then return end
+
+	local nFubenId = LActor.getFubenId(actorobj)
+	local qid = tonumber(nVar.BingJianZuoZhan_qid)
+	debug_print("EEEEEEEEEEEEE...."..tostring(nFubenId))
+	debug_print("----------jjjjj-------------",nVar.BingJianZuoZhan_pet_Handle , nVar.BingJianZuoZhan_qid)
+	if nFubenId == 0 then
+		if qid == nil then
+			return
+		else
+		 	local conf = BJZZ_Config[qid]
+			if conf ~= nil and LActor.hasQuest(actorobj, qid) == true then
+				bingjianzuozhan.CreatePartner( actorobj , bingjianzuozhan_pet_id, conf )
+			end
+			return
+		end
+	else
+		if nVar.BingJianZuoZhan_pet_Handle == nil then
+			return
+		else
+			bingjianzuozhan.destroyPartner(actorobj)
+			return
+		end
+	end
+end
+
+function bingjianzuozhan.LoginIn( actorobj )
+	-- body
+	debug_print("-------玩家上线---------")
+	local nVar = LActor.getStaticVar(actorobj)
+	if not nVar then return end
+	local qid = tonumber(nVar.BingJianZuoZhan_qid)
+	if qid ~= nil and qid > 0 then
+	 	local conf = BJZZ_Config[qid]
+		if conf ~= nil and LActor.hasQuest(actorobj, qid) == true then
+			bingjianzuozhan.CreatePartner( actorobj , bingjianzuozhan_pet_id, conf )
+		end
+	end
+end
+
+function bingjianzuozhan.LoginOut(actorobj)
+	debug_print("-------玩家下线---------")
+	bingjianzuozhan.destroyPartner(actorobj)
+end
+
+function bingjianzuozhan.useSkill(actorobj, packet)
+	local nVar = LActor.getStaticVar(actorobj)
+	if not nVar then return end
+	if nVar.BingJianZuoZhan_pet_Handle == nil then
+		return
+	end
+	local sHandle = DataPack.readInt64(packet) -- 释放者
+	local tHandle = DataPack.readInt64(packet) -- 被攻击者
+	local skillId = DataPack.readInt(packet) -- 技能id
+	local posx = DataPack.readInt(packet) -- 目标x
+	local posy = DataPack.readInt(packet) -- 目标y
+
+	if sHandle ~= nVar.BingJianZuoZhan_pet_Handle then
+		return
+	end
+
+	local mine = LActor.getEntity(sHandle)
+	local target = LActor.getEntity(tHandle)
+	if not mine or not target then
+		debug_print("====>>>> [bingjianzuozhan] error on entity!")
+		return
+	end
+
+	local conf = BJZZ_Config[qid]
+	local skillLevel = 1
+	if conf then
+		for k, v in ipairs(conf.pet_skills) do
+			if v.skillId == skillId then
+				skillLevel = v.skillLevel
+				break
+			end
+		end
+	end
+
+	LActor.setEntityTarget(mine, target)
+	local errcode = LActor.useSkill(mine, skillId, posx, posy, false, skillLevel)
+
+	local npack = DataPack.allocPacket( actorobj , 171 , 2)
+	DataPack.writeInt64(npack , nVar.BingJianZuoZhan_pet_Handle)
+	DataPack.writeByte(npack, errcode)
+	DataPack.writeInt(npack, skillId)
+	DataPack.flush(npack)
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, bingjianzuozhan.LoginIn) -- 玩家下线
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogout, bingjianzuozhan.LoginOut) -- 玩家下线
+ActorQuestCallDispatcher.registerPlayType(BaseTypes.BaseQuestAction.qaAccept, BaseTypes.BaseQuestPlayType.qptTogather, bingjianzuozhan.AcceptTask) -- 注册接受任务的侦听
+ActorQuestCallDispatcher.registerPlayType(BaseTypes.BaseQuestAction.qaCommit, BaseTypes.BaseQuestPlayType.qptTogather, bingjianzuozhan.CommitTask) -- 注册完成任务的侦听
+ActorQuestCallDispatcher.registerCheck(BaseTypes.BaseQuestAction.qaAccept, BaseTypes.BaseQuestPlayType.qptTogather , bingjianzuozhan.chectAcceptTast)
+
+TaskNPCEntity.register(2, bingjianzuozhan.useSkill)
+

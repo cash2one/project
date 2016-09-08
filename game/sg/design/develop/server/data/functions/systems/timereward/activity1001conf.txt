@@ -1,0 +1,15 @@
+--#include "..\..\..\language\LangCode.txt"
+activity1001Conf = {
+	activityId = 1001,
+
+	activities =
+	{
+		[44]={--每日单笔充值
+			id = 44,
+			target = {{60,40001} , {980,40002} ,},
+			target2 = {{2,40003} , {5,40004}},
+			need_condition = {0,1,2,3,4,5,6},
+			},
+	},
+}
+		

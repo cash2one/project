@@ -1,0 +1,129 @@
+﻿--阵营江湖地位
+--字段含义说明
+-- id: 江湖地位编号。从1开始。按照级别由高到低配置
+-- title: 江湖地位称呼
+-- autoset: 是否自动设置（自动设置是根据阵营贡献值排名来算的）
+-- rank：针对自动设置用。里头配置的是阵营贡献值排行榜的排名。例如rank={1,2}表示排名前1,前2的使用这个地位
+-- minCampCont：针对非自动设置头衔。 要使用指定地位需要的最低阵营贡献值
+-- consumeFame: 针对非自动设置头衔。升级到指定地位需要消耗指定数量的历练
+-- equipitem:	江湖地址对应的装备物品Id
+--#include "..\..\language\LangCode.txt"
+CampJHDW =
+{
+	{	
+		--	无效职位，占位用的
+		id=0,
+		title=Lang.Camp.jhdw0,
+		autoset = 1,
+		rank = { 1, },
+		minCampCont=0,
+		consumeFame=0,	
+		equipitem = 1724,
+		itemquality=0,
+		desc=Lang.Camp.jhdwtip0,
+	},
+	{		
+		id=1,
+		title=Lang.Camp.jhdw1,
+		autoset = 1,
+		rank = { 1, },
+		minCampCont=82200,
+		consumeFame=0,	
+		equipitem = 1724,
+		itemquality=4,
+		desc=Lang.Camp.jhdwtip0,
+	},
+	{
+		id=2,
+		title=Lang.Camp.jhdw2,
+		autoset = 1,
+		rank = { 2, },
+		minCampCont=65800,
+		consumeFame=0,	
+		equipitem = 1725,
+		itemquality=3,
+		desc=Lang.Camp.jhdwtip1,
+	},
+	{
+		id=3,
+		title=Lang.Camp.jhdw3,
+		autoset = 1,
+		rank = { 3, },
+		minCampCont=51500,
+		consumeFame=0,	
+		equipitem = 1726,
+		itemquality=3,
+		desc=Lang.Camp.jhdwtip2,
+	},
+	{
+		id=4,
+		autoset = 0,
+		title=Lang.Camp.jhdw4,	
+		minCampCont=39200,	
+		consumeFame=27000,	
+		equipitem = 1727,
+		itemquality=2,
+		desc=Lang.Camp.jhdwtip3,
+	},
+	{
+		id=5,
+		autoset = 0,
+		title=Lang.Camp.jhdw5,
+		minCampCont=28800,	
+		consumeFame=23000,	
+		equipitem = 1728,
+		itemquality=2,
+		desc=Lang.Camp.jhdwtip4,
+	},
+	{
+		id=6,
+		autoset = 0,
+		title=Lang.Camp.jhdw6,
+		minCampCont=20200,	
+		consumeFame=18000,	
+		equipitem = 1729,
+		itemquality=2,
+		desc=Lang.Camp.jhdwtip5,
+	},
+	{
+		id=7,
+		autoset = 0,
+		title=Lang.Camp.jhdw7,
+		minCampCont=13600,	
+		consumeFame=14000,	
+		equipitem = 1730,
+		itemquality=2,
+		desc=Lang.Camp.jhdwtip6,
+	},
+	{
+		id=8,
+		autoset = 0,
+		title=Lang.Camp.jhdw8,
+		minCampCont=8600,	
+		consumeFame=9000,	
+		equipitem = 1731,
+		itemquality=2,
+		desc=Lang.Camp.jhdwtip7,
+	},
+	{
+		id=9,
+		autoset = 0,
+		title=Lang.Camp.jhdw9,
+		minCampCont=5300,	
+		consumeFame=5000,	
+		equipitem = 1732,
+		itemquality=1,
+		desc=Lang.Camp.jhdwtip8,
+	},
+	
+	{
+		id=10,
+		autoset = 0,
+		title=Lang.Camp.jhdw10,
+		minCampCont=3500,	
+		consumeFame=2000,	
+		equipitem = 1733,
+		itemquality=1,
+		desc=Lang.Camp.jhdwtip9,
+	},	
+}

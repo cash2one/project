@@ -1,0 +1,64 @@
+﻿{
+  maxLevel = 40,
+  
+  --接受任务后（逍遥的第一个任务），引导玩家操作坐骑
+  trigger = 
+  { 
+    type = 1,
+    value = 8,
+  },
+
+  --引导中锁定的窗口ID
+  lockUI = 
+  {
+    30,
+  },
+
+  --引导的步骤 
+  steps = 
+  {
+    {
+      cond = { type = 1, helpId = 53, data = 0 },
+
+      action = { type = 5, helpId = 8, data = Lang.GuideLang.npc49, desc = Lang.GuideLang.desc134, showType = 1 },
+
+      hideCond = { type = 2, helpId = 53, data = 0 },
+    },
+
+    {
+      cond = { type = 30, helpId = 0, data = 8 },
+
+      action = { type = 5, helpId = 8, data = Lang.GuideLang.npc50, desc = Lang.GuideLang.desc135, showType = 1 },
+	  
+	  hideCond = { type = 2, helpId = 53, data = 0 },
+    },
+	
+	--第1步 引导点击坐骑的导航按钮
+    {
+      cond = { type = 1,  helpId = 4, data = 0 },
+
+      action = { type = 1, helpId = 4, data = 0, desc = "" },
+    },
+
+	--第2步 引导点击坐骑界面的升级按钮
+    {
+      cond = { type = 1, helpId = 30, data = 0 },
+
+      action = { type = 1, helpId = 31, data = 0, desc = "" },
+    },
+
+	--第3步 引导点击坐骑界面的关闭按钮
+    {
+      cond = { type = 1, helpId = 32, data = 0 },
+
+      action = { type = 1, helpId = 32, data = 0, desc = "" },
+    },
+
+	--第4步 坐骑界面关闭结束引导
+    {
+      cond = { type = 2, helpId = 30, data = 0 },
+
+      action = { type = 16, helpId = 0, data = Lang.GuideLang.func2, desc = "" },
+    },
+  } 
+}

@@ -1,0 +1,768 @@
+-- 合服活动相关处理
+
+--#include "data\functions\globaldefine.txt" once
+--#include "hefuconf.txt" once
+--#include "data\functions\miscfunc.txt" once
+--#include "activitycontrolhandler.txt" once
+--#include "data\functions\Tasks\TianYuan\TianYuanSet.txt" once
+
+HefuFuncList = {}
+
+--拉取阵营之战排行榜
+HefuFuncList.checkcampstate = function()
+	--print("HefuFuncList.checkcampstate")
+	local state = ONLINEREWARD.GetActivityState(HefuConf.activityid)
+	if state == 0 then
+		return
+	else
+		local rank = Ranking.getRanking(HefuConf.CampRankName) -- 陣營試煉排行榜
+		if rank ~= nil then
+			Ranking.clearRanking(rank)
+			local rankList = Camp.getRanking(0)
+			if rankList ~= nil then
+				local itemCount = Ranking.getRankItemCount(rankList)
+				if itemCount > 10 then itemCount = 10 end
+				--print("HefuFuncList.checkcampstate itemCount:"..itemCount)
+				local items = LuaHelp.getRankingItemList(rankList,itemCount)
+				if items ~= nil then
+					for i=1,itemCount do
+						local item = items[i]
+						local actorId = Ranking.getId( item )
+						local point = Ranking.getPoint( item )
+						local name = Ranking.getSub(item, 0)
+						local tmpitem = Ranking.addItem(rank, actorId, point)	-- 名次越高，分值要相应的高，才可以排到前面
+						--print("HefuFuncList.checkcampstate index:"..i..",name:"..name)
+						Ranking.setSub(tmpitem, 0, name)
+					end
+				end
+			end
+			Ranking.save(rank, HefuConf.CampRankName)
+		end	
+	end
+end
+
+-- 系统初始化
+HefuFuncList.OnInit = function()
+	HefuFuncList.InitState()
+end
+
+HefuFuncList.InitState = function()
+	local state = ONLINEREWARD.GetActivityState(HefuConf.activityid)
+	if state == 0 then return  end
+
+	local var_sys = System.getStaticVar()
+
+	if var_sys.hefusysflag == nil then
+		var_sys.hefusysflag = 0 -- 默认是1
+	end
+
+	local reset = false
+
+	local var_sys_d = System.getDyanmicVar()
+
+	if var_sys.activityControl ~= nil and var_sys.activityControl[HefuConf.activityid] ~= nil and var_sys.activityControl[HefuConf.activityid].flag ~= nil then
+		if var_sys.activityControl[HefuConf.activityid].flag ~= var_sys.hefusysflag then
+			--print("HefuFuncList.InitState reset")
+			var_sys_d.inithefurank = nil
+			reset = true
+		end
+	end
+
+	if var_sys_d.inithefurank == nil then -- 只初始化一次
+		local rank = MiscFunc.InitRank(HefuConf.CampRankName, HefuConf.CampRankName, 10, {"aname", "get"})
+		if rank ~= nil then
+			if reset then
+				--print("HefuFuncList.InitState mail")
+				local count = Ranking.getRankItemCount(rank)
+				local awards = HefuConf.camp.awards
+				for i=1,count do
+					local rankItem = Ranking.getItemFromIndex(rank, i-1)
+					local aname = Ranking.getSub(rankItem, 0)
+					if Ranking.getSubInt(rankItem, 1) ~= 2 then
+						local rankindex = 0
+						for j=1,#awards do
+							if i <= awards[j][1] then 
+								rankindex = j
+								break
+							end
+						end	
+						local content = string.format(Lang.ActivityMail.content, Lang.ActivityMail.activityName[HefuConf.activityid], Lang.ActivityMail.childrenName[103])
+						System.sendGmMailOffLine(aname, content, 1, awards[rankindex][2], 1, 1)
+						Ranking.setSub(rankItem, 1, "2") -- 已领取
+					end
+				end
+				Ranking.clearRanking(rank)
+				Ranking.save(rank, HefuConf.CampRankName) -- 保存一下
+			end
+		else
+			print("init merge camp rank error")
+		end
+
+		local rank1 = MiscFunc.InitRank(HefuConf.TianyuanRankName, HefuConf.TianyuanRankName, 10, {"aname", "get"})
+		if rank1 ~= nil then
+			if reset then
+				Ranking.clearRanking(rank1)
+				Ranking.save(rank, HefuConf.TianyuanRankName) -- 保存一下
+			end
+		else
+			print("init merge camp rank error")
+		end
+
+		if reset then
+			var_sys.hefusysflag = var_sys.activityControl[HefuConf.activityid].flag
+			var_sys.hefutianyuan = nil
+		end
+		
+		var_sys_d.inithefurank = 1
+	end
+
+
+end
+
+HefuFuncList.OnTime = function()
+	HefuFuncList.InitState()
+end
+
+-- 发送登錄大礼包信息
+HefuFuncList.SendGiftInfo = function(sysarg)
+
+	local state = ONLINEREWARD.GetActivityState(HefuConf.activityid)
+	if state ~= 0 then
+		--是否重置
+		ONLINEREWARD.CheckResetActivityInfo(sysarg, HefuConf.activityid)
+	end
+
+	local var = LActor.getStaticVar(sysarg)
+
+	local award = 0 -- 能否领奖
+
+	if var.hefuloginreward == nil then 
+		award = 0
+	else
+		award = var.hefuloginreward
+	end
+
+	local npack = DataPack.allocPacket(sysarg,149,1)
+    if npack == nil then return end
+    DataPack.writeInt(npack, award)
+
+    --print("HefuFuncList.SendGiftInfo award:"..award)
+
+    DataPack.flush(npack)
+end
+
+-- 获取登錄大回馈信息
+HefuFuncList[1] = function(sysarg, dp)
+	HefuFuncList.SendGiftInfo(sysarg)
+end
+
+-- 领取合服登錄大礼包
+HefuFuncList[2] = function(sysarg, dp)
+	--活动是否开始
+	local state = ONLINEREWARD.GetActivityState(HefuConf.activityid)
+	if state ~= 0 then
+		--是否重置
+		ONLINEREWARD.CheckResetActivityInfo(sysarg, HefuConf.activityid)
+	end
+
+	local var = LActor.getStaticVar(sysarg)
+	if var.hefuloginreward == nil or var.hefuloginreward == 0 then return end
+
+	-- 能否领取
+	if var.hefuloginreward == 2 then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.osa0002, ttMessage)
+		return
+	end
+
+	-- 背包
+	if Item.getBagEmptyGridCount(sysarg) < 1 then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.osa0005, ttMessage)
+		return
+	end
+
+	-- 给礼包
+	LActor.addItem(sysarg, HefuConf.giftitemId, 0, 0, 1, 1, "gethefuloginReward", 1)
+
+	-- 播放特效
+	local effects = {}
+	local effect = {}
+	effect.type = 1  -- 1为物品,暂时只支持发物品所以写死
+	effect.id = HefuConf.giftitemId
+	effect.count = 1
+	effects[#effects+1] = effect
+	if #effects > 0 then
+		MiscFunc.PlayItemEffect(sysarg, 11, effects)
+	end
+	
+	var.hefuloginreward = 2  --将领奖的标志置为2
+
+	HefuFuncList.SendGiftInfo(sysarg)
+end
+
+-- 发送阵营之战排行榜信息
+HefuFuncList.SendCampInfo = function(sysarg)
+	
+	local state = ONLINEREWARD.GetActivityState(HefuConf.activityid)
+	if state ~= 0 then
+		--是否重置
+		ONLINEREWARD.CheckResetActivityInfo(sysarg, HefuConf.activityid)
+	end
+	local rank = Ranking.getRanking(HefuConf.CampRankName)
+	if rank == nil then return end
+
+	local count = Ranking.getRankItemCount(rank)
+	if count > 10 then
+		count = 10
+	end
+
+	local name = LActor.getName(sysarg)
+
+	local npack = DataPack.allocPacket(sysarg,149,3)
+    if npack == nil then return end
+    DataPack.writeInt(npack, count)
+
+	for i=1,count do
+		local rankItem = Ranking.getItemFromIndex(rank, i-1)
+		DataPack.writeInt(npack, Ranking.getId(rankItem)) -- ID
+		local aname = Ranking.getSub(rankItem, 0)
+		DataPack.writeString(npack, aname) -- 玩家名
+		--print("HefuFuncList.SendCampInfo index:"..i..",aname:"..aname)
+		local gt = 0
+		if name == aname then
+			if Ranking.getSubInt(rankItem, 1) ~= 2 then
+				gt = 1
+			else
+				gt = 2
+			end
+		end
+		DataPack.writeByte(npack, gt)
+	end
+    DataPack.flush(npack)
+end
+
+-- 获取阵营之战排行榜信息
+HefuFuncList[3] = function(sysarg, dp)
+	HefuFuncList.SendCampInfo(sysarg)
+end
+
+-- 领取阵营之战排行榜奖励
+HefuFuncList[4] = function(sysarg, dp)
+	local state = ONLINEREWARD.GetActivityState(HefuConf.activityid)
+	if state ~= 0 then
+		--是否重置
+		ONLINEREWARD.CheckResetActivityInfo(sysarg, HefuConf.activityid)
+	end
+	local var = LActor.getStaticVar( sysarg )
+
+	local index = DataPack.readInt(dp)
+	if index == nil then return end
+
+	local rank = Ranking.getRanking(HefuConf.CampRankName)
+	if rank == nil then return end
+
+	local rankItem = Ranking.getItemFromIndex(rank, index-1)
+	if rankItem == nil then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.osa0004, ttMessage)
+		return
+	end
+
+	if Ranking.getSub(rankItem, 0) ~= LActor.getName(sysarg) then -- 能否领取
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.osa0004, ttMessage)
+		return
+	end
+
+	if Ranking.getSub(rankItem, 1) == "2" then -- 是否已经领取
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.osa0002, ttMessage)
+		return
+	end
+
+	--print("HefuFuncList.getzhenyinshilian index:"..index)
+
+	local awards = HefuConf.camp.awards
+	local rankindex = 0
+	for i=1,#awards do
+		if index <= awards[i][1] then 
+			rankindex = i
+			break
+		end
+	end			
+	if rankindex == 0 then
+		LActor.sendTipmsg(sysarg, Lang..ScriptTipsosa0004, ttMessage)	--没有这个排名的奖励
+		return
+	end 
+
+	--给奖励
+	local bagGrid = Item.getBagEmptyGridCount(sysarg)      --玩家身上有多少个格子
+	if bagGrid == 0 then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.osa0005, ttMessage)
+		return
+	end
+
+	LActor.addItem(sysarg, awards[rankindex][2], 0, 0, 1, 1, "gethefuActivityReward", 1)
+
+	Ranking.setSub(rankItem, 1, "2") -- 已领取
+	Ranking.save(rank, HefuConf.CampRankName) -- 领取后保存一下
+
+	-- 播放特效
+	local effects = {}
+	local effect = {}
+	effect.type = 1  -- 1为物品,暂时只支持发物品所以写死
+	effect.id = awards[rankindex][2]
+	effect.count = 1
+	effects[#effects+1] = effect
+	if #effects > 0 then
+		MiscFunc.PlayItemEffect(sysarg, 11, effects)
+	end
+
+	HefuFuncList.SendCampInfo(sysarg)
+end
+
+
+-- 发送充值活动信息
+HefuFuncList.SendRechargeInfo = function(sysarg)
+	--print("发送充值活动信息")
+	local state = ONLINEREWARD.GetActivityState(HefuConf.activityid)
+	--print("state:"..state)
+	if state ~= 0 then
+		--是否重置
+		ONLINEREWARD.CheckResetActivityInfo(sysarg, HefuConf.activityid)
+	end
+	local var = LActor.getStaticVar(sysarg)
+	if var.hefuinfo == nil then var.hefuinfo = {} end
+	local val = var.hefuinfo.rechargeval -- 充值数
+	if val == nil then
+		val = 0
+	end
+
+	local conf = HefuConf.recharge
+	local nleft = conf.total - val -- 还需充值多少
+	if nleft < 0 then
+		nleft = 0
+	end
+
+	local nget = var.hefuinfo.recharge -- 领奖情况
+	if nget == nil then
+		nget = 0
+	end
+
+	local npack = DataPack.allocPacket(sysarg,149,5)
+    if npack == nil then return end
+    DataPack.writeInt(npack, val)
+    DataPack.writeInt(npack, nleft)
+    DataPack.writeByte(npack, nget)
+    DataPack.flush(npack)
+end
+
+-- 获取充值送大礼信息
+HefuFuncList[5] = function(sysarg, dp)
+	HefuFuncList.SendRechargeInfo(sysarg)
+end
+
+-- 领取充值礼包
+HefuFuncList[6] = function(sysarg, dp)
+	local state = ONLINEREWARD.GetActivityState(HefuConf.activityid)
+	if state ~= 0 then
+		--是否重置
+		ONLINEREWARD.CheckResetActivityInfo(sysarg, HefuConf.activityid)
+	end
+	local var = LActor.getStaticVar(sysarg)
+	if var.hefuinfo == nil then var.hefuinfo = {} end
+	local nget = var.hefuinfo.recharge -- 领奖情况
+
+	-- 是否达到领奖条件
+	if nget == nil or nget == 0 then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.osa0004, ttMessage)
+		return
+	end
+
+	-- 已经领取
+	if nget == 2 then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.osa0002, ttMessage)
+		return 
+	end
+
+	if Item.getBagEmptyGridCount(sysarg) < 1 then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.osa0005, ttMessage)
+		return
+	end
+
+	LActor.addItem(sysarg, HefuConf.recharge.itemId, 0, 0, 1, 1, "gethefurechargeReward", 1)
+
+	-- 播放特效
+	local effects = {}
+	local effect = {}
+	effect.type = 1  -- 1为物品,暂时只支持发物品所以写死
+	effect.id = HefuConf.recharge.itemId
+	effect.count = 1
+	effects[#effects+1] = effect
+	if #effects > 0 then
+		MiscFunc.PlayItemEffect(sysarg, 11, effects)
+	end
+	
+	var.hefuinfo.recharge = 2
+
+	HefuFuncList.SendRechargeInfo(sysarg)
+end
+
+-- 充值
+HefuFuncList.OnRecharge = function(sysarg, arg)
+	local state = ONLINEREWARD.GetActivityState(HefuConf.activityid)
+	if state == 0 then return  end
+
+	local var = LActor.getStaticVar(sysarg)
+	if var.hefuinfo == nil then var.hefuinfo = {} end
+	
+	if var.hefuinfo.recharge ~= nil and var.hefuinfo.recharge ~= 0 then -- 已经处理过
+		return 
+	end
+
+	if var.hefuinfo.rechargeval == nil then
+		var.hefuinfo.rechargeval = 0
+	end
+	var.hefuinfo.rechargeval = var.hefuinfo.rechargeval + arg[1] -- 累加充值数
+
+	if var.hefuinfo.rechargeval >= HefuConf.recharge.total then -- 可以领奖了
+		var.hefuinfo.recharge = 1
+	end
+end
+
+--拉取天元山之战排行榜信息
+HefuFuncList.checktianyuanstate = function()
+	--print("HefuFuncList.checktianyuanstate")
+	local state = ONLINEREWARD.GetActivityState(HefuConf.activityid)
+	if state == 0 then
+		return
+	else
+		local var_sys = System.getStaticVar()
+		if var_sys.hefutianyuan == nil then 
+			var_sys.hefutianyuan = 1
+		else
+			return
+		end
+		local rank = Ranking.getRanking(HefuConf.TianyuanRankName) -- 王城之战排行榜
+		if rank ~= nil then
+			Ranking.clearRanking(rank)
+			local GuildRankNameList = Ranking.getRanking(TianYuanGuildRankName) --通过排行名称获取排行对象
+			local itemCount = Ranking.getRankItemCount(GuildRankNameList)
+			if itemCount > 10 then itemCount = 10 end
+			local rankTbl = LuaHelp.getRankingItemList(GuildRankNameList,itemCount)
+			if rankTbl then
+				for i=1,itemCount do
+					guildid = Ranking.getId(rankTbl[i]) --获取第一名的帮派ID
+					local point = Ranking.getPoint(rankTbl[i])
+					local guildname = LGuild.getGuildName(guildid)
+					local item = Ranking.addItem(rank, guildid, point)	-- 名次越高，分值要相应的高，才可以排到前面
+					--print("HefuFuncList.checktianyuanstate index:"..i..",guildname:"..guildname)
+					Ranking.setSub(item, 0, guildname)
+				end
+				Ranking.save(rank, HefuConf.TianyuanRankName)
+			end	
+		end
+	end
+end
+
+-- 发送王城之战信息
+HefuFuncList.SendTianYuanInfo = function(sysarg)
+	--活动是否开始
+	local state = ONLINEREWARD.GetActivityState(HefuConf.activityid)
+	if state ~= 0 then
+		--是否重置
+		ONLINEREWARD.CheckResetActivityInfo(sysarg, HefuConf.activityid)
+	end
+	local var = LActor.getStaticVar( sysarg )
+
+	local leaderreward = 0
+	local ptreward = 0
+
+	local rank = Ranking.getRanking(HefuConf.TianyuanRankName)
+	if rank == nil then return end
+
+	local count = Ranking.getRankItemCount(rank)
+	if count > 10 then
+		count = 10
+	end
+
+	local var_sys = System.getStaticVar()
+
+	local guildname = LActor.getGuildName(sysarg)
+
+	--print("HefuFuncList.SendTianYuanInfo count:"..count..",guildname:"..guildname)
+
+	--print("HefuFuncList.SendTianYuanInfo 1:"..var_sys.hefutianyuan..",2:"..var.leaderreward..",3:"..var.ptreward)
+
+	if var_sys.hefutianyuan ~= nil and (var.leaderreward == nil or var.ptreward == nil) then
+		--print("HefuFuncList.SendTianYuanInfo checkrank")
+		var.leaderreward = 0
+		var.ptreward = 0
+		for i=1,count do
+			local rankItem = Ranking.getItemFromIndex(rank, i-1)
+			local aname = Ranking.getSub(rankItem, 0)
+			--print("HefuFuncList.SendTianYuanInfo preindex:"..i..",aname:"..aname)
+			if guildname == aname then
+				--print("HefuFuncList.SendTianYuanInfo getindex:"..i)
+				var.ptreward = System.bitOpSetMask(var.ptreward, i - 1, true)
+				if i == 1 then
+					if LActor.getGuildPos(sysarg) == 4 then --宗主 then
+						var.leaderreward = System.bitOpSetMask(var.leaderreward, 0, true)
+					end
+				end
+			end
+		end
+	end
+
+	if var.leaderreward ~= nil then
+		leaderreward = var.leaderreward
+	end
+
+	if var.ptreward ~= nil then
+		ptreward = var.ptreward
+	end
+
+	--print("HefuFuncList.SendTianYuanInfo leaderreward:"..leaderreward..",ptreward:"..ptreward)
+
+	local npack = DataPack.allocPacket(sysarg,149,7)
+    if npack == nil then return end
+    DataPack.writeInt(npack, leaderreward)
+    DataPack.writeInt(npack, ptreward)
+    DataPack.writeInt(npack, count)
+    for i=1,count do
+		local rankItem = Ranking.getItemFromIndex(rank, i-1)
+		local aname = Ranking.getSub(rankItem, 0)
+		--print("HefuFuncList.SendTianYuanInfo index:"..i..",aname:"..aname)
+		DataPack.writeString(npack, aname) -- 军团名字
+	end
+    DataPack.flush(npack)
+end
+
+-- 获取王城之战活动信息
+HefuFuncList[7] = function(sysarg, dp)
+	HefuFuncList.SendTianYuanInfo(sysarg)
+end
+
+-- 领取王城之战活动奖励
+HefuFuncList[8] = function(sysarg, dp)
+	--活动是否开始
+	local state = ONLINEREWARD.GetActivityState(HefuConf.activityid)
+	if state ~= 0 then
+		--是否重置
+		ONLINEREWARD.CheckResetActivityInfo(sysarg, HefuConf.activityid)
+	end
+	local var = LActor.getStaticVar( sysarg )
+
+	local rewardtype = DataPack.readInt(dp)
+	if rewardtype == nil then return end
+	local itemId = nil
+
+	if rewardtype == 1 then 
+		if var.leaderreward == nil then return end
+		if not System.bitOPMask(var.leaderreward, 0)  then
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.osa0004, ttMessage)	--没有这个排名的奖励
+			return
+		end
+		if System.bitOPMask(var.leaderreward, 1)  then
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.osa0002, ttMessage)	--没有这个排名的奖励
+			return
+		end
+		itemId = HefuConf.tianyuan.itemId
+	else
+		local index = DataPack.readInt(dp)
+		if index == nil then return end
+		--print("HefuFuncList[8] index:"..index)
+		if var.ptreward == nil then return end 
+		if not System.bitOPMask(var.ptreward, index-1)  then
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.osa0004, ttMessage)	--没有这个排名的奖励
+			return
+		end
+		if System.bitOPMask(var.ptreward, 10)  then
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.osa0002, ttMessage)	--没有这个排名的奖励
+			return
+		end
+		local awards = HefuConf.tianyuan.awards
+		local rankindex = 0
+		for i=1,#awards do
+			if index <= awards[i][1] then 
+				rankindex = i
+				break
+			end
+		end			
+		if rankindex == 0 then
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.osa0004, ttMessage)	--没有这个排名的奖励
+			return
+		end 
+
+		itemId = awards[rankindex][2]
+
+	end
+
+	--给奖励
+	local bagGrid = Item.getBagEmptyGridCount(sysarg)      --玩家身上有多少个格子
+	if bagGrid == 0 then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.osa0005, ttMessage)
+		return
+	end
+
+	LActor.addItem(sysarg, itemId, 0, 0, 1, 1, "getHefuTianyuanReward", 1)
+
+	-- 播放特效
+	local effects = {}
+	local effect = {}
+	effect.type = 1  -- 1为物品,暂时只支持发物品所以写死
+	effect.id = itemId
+	effect.count = 1
+	effects[#effects+1] = effect
+	if #effects > 0 then
+		MiscFunc.PlayItemEffect(sysarg, 11, effects)
+	end
+
+	--设置已领取
+	if rewardtype == 1 then 
+		var.leaderreward = System.bitOpSetMask(var.leaderreward, 1, true)
+	else
+		var.ptreward = System.bitOpSetMask(var.ptreward, 10, true)
+	end
+
+	HefuFuncList.SendTianYuanInfo(sysarg)
+end
+
+--玩家登陆
+HefuFuncList.OnLogin = function(sysarg, arg)
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil or var.hefuloginreward ~= nil then return end
+	local state = ONLINEREWARD.GetActivityState(HefuConf.activityid)
+
+	--print("HefuFuncList.OnLogin state:"..state)
+
+	if state == 0 then
+		return
+	end
+
+	local level = LActor.getLevel(sysarg)
+
+	if level >= HefuConf.limitlevel then
+		var.hefuloginreward = 1 --可领取
+		HefuFuncList.SendGiftInfo(sysarg)
+	else
+		var.hefuloginreward = 0 --不可领取
+	end
+
+	--print("HefuFuncList.OnLogin var.hefuloginreward:"..var.hefuloginreward)
+end
+
+--检查是否还有没有领取的礼包
+ONLINEREWARD.CheckActivityRewardInfo[HefuConf.activityid] = function(sysarg)
+	--print("ONLINEREWARD.CheckActivityRewardInfo[28]")
+	-- local var = LActor.getStaticVar(sysarg)
+	
+	-- local state = ONLINEREWARD.CheckNormalActRewardInfo(sysarg, 28)
+
+	-- if state == 1 then return 1 end
+
+	-- --其他额外的检查
+	-- --if var.hefuloginreward ~= nil and var.hefuloginreward == 0 then return 1 end
+
+	-- --合服首冲
+	-- if var.hefuinfo ~= nil and var.hefuinfo ~= nil and var.hefuinfo.recharge == 1 then return 1 end
+
+	-- --玄都争霸活动
+	-- local var_sys = System.getStaticVar()
+	-- local rank = Ranking.getRanking(HefuConf.TianyuanRankName)
+	-- if rank ~= nil and var_sys.hefutianyuan ~= nil and 
+	-- 	(var_sys.activityControl == nil or var_sys.activityControl[HefuConf.activityid] == nil or (var_sys.activityControl[HefuConf.activityid].flag == var_sys.hefutianyuan)) then
+	-- 	local count = Ranking.getRankItemCount(rank)
+	-- 	if var.leaderreward == nil or var.ptreward == nil then
+	-- 		var.leaderreward = 0
+	-- 		var.ptreward = 0
+	-- 		for i=1,count do
+	-- 			local rankItem = Ranking.getItemFromIndex(rank, i-1)
+	-- 			local guildname = LActor.getGuildName(sysarg)
+	-- 			local aname = Ranking.getSub(rankItem, 0)
+	-- 			if guildname == aname then
+	-- 				var.ptreward = System.bitOpSetMask(var.ptreward, i - 1, true)
+	-- 				if i == 1 then
+	-- 					if LActor.getGuildPos(sysarg) == 4 then --宗主 then
+	-- 						var.leaderreward = System.bitOpSetMask(var.leaderreward, 0, true)
+	-- 					end
+	-- 				end
+	-- 			end
+	-- 		end
+	-- 	end
+	-- end
+
+	-- if var.ptreward ~= nil and var.ptreward ~= 0 and not System.bitOPMask(var.ptreward, 10) then return 1 end
+	-- if var.leaderreward ~= nil and var.leaderreward ~= 0 and not System.bitOPMask(var.leaderreward, 1) then return 1 end
+
+	-- --阵营试炼活动
+	-- rank = Ranking.getRanking(HefuConf.CampRankName)
+	-- if rank ~= nil then
+	-- 	local count = Ranking.getRankItemCount(rank)
+	-- 	local name = LActor.getName(sysarg)
+
+	-- 	for i=1,count do
+	-- 		local rankItem = Ranking.getItemFromIndex(rank, i-1)
+	-- 		local aname = Ranking.getSub(rankItem, 0)
+	-- 		local gt = 0
+	-- 		if name == aname then -- 自己的，判断是否能领
+	-- 			gt = Ranking.getSubInt(rankItem, 1)
+	-- 			if gt ~= 2 then -- 未领取，判断自己能否领取
+	-- 				return 1
+	-- 			end
+	-- 		end
+	-- 	end
+	-- end
+end
+
+--后台调控,活动重开后,清理数据,合服活动
+ONLINEREWARD.ResetActivityInfo[HefuConf.activityid] = function(sysarg)
+	--print("ONLINEREWARD.ResetActivityInfo[28]")
+	ONLINEREWARD.ResetNormalActivityInfo(sysarg, HefuConf.activityid)
+	--额外的清空
+	local var = LActor.getStaticVar(sysarg)
+	local itemcount = 1
+	
+	--登录大礼
+	if  var.hefuloginreward ~= nil and  var.hefuloginreward == 1 then
+	  	ONLINEREWARD.ResetActivityMail(sysarg, HefuConf.activityid,101,HefuConf.giftitemId,itemcount)
+	end
+
+	--合服首充
+	if var.hefuinfo ~= nil and var.hefuinfo.recharge ~= nil and var.hefuinfo.recharge == 1 then 
+		ONLINEREWARD.ResetActivityMail(sysarg, HefuConf.activityid,102,HefuConf.recharge.itemId,itemcount)
+	end
+	
+	--玄都争霸活动
+	if var.ptreward == nil then var.ptreward = 0 end
+	if var.leaderreward == nil then var.leaderreward = 0 end 
+	local awards = HefuConf.tianyuan.awards
+
+	if var.ptreward ~= nil and var.ptreward ~= 0 and not System.bitOPMask(var.ptreward, 10) then
+		for i =1,10 do 
+			if System.bitOPMask(var.ptreward, i-1) then
+				local rankindex = 0
+				for j=1,#awards do
+					if i <= awards[j][1] then 
+						rankindex = j
+						break
+					end
+				end			
+				ONLINEREWARD.ResetActivityMail(sysarg, HefuConf.activityid,105,awards[rankindex][2],itemcount)
+			end
+		end
+	 	
+	end
+
+	if var.leaderreward ~= nil and var.leaderreward ~= 0 and not System.bitOPMask(var.leaderreward, 1) then
+	   	ONLINEREWARD.ResetActivityMail(sysarg, HefuConf.activityid,105,HefuConf.tianyuan.itemId,itemcount) 
+	end
+
+	var.hefuloginreward = nil
+	var.hefuinfo = nil
+	var.leaderreward = nil
+	var.ptreward = nil
+end
+
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeRecharge, HefuFuncList.OnRecharge)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, HefuFuncList.OnLogin)
+
+table.insert(InitFnTable,HefuFuncList.OnInit)
+table.insert(TimeFnTable,HefuFuncList.OnTime)

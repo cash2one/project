@@ -1,0 +1,298 @@
+--导出时装配置表
+
+
+--格式模板
+--[[
+{
+	id = 11651,
+	name = Lang.Item.n11651,
+	desc = Lang.Item.i11651,
+	type = 16,
+    sellType = 33,	
+	icon = 99999,
+	shape = {21004,21104,22004,22104,23004,23104,24004,24104},
+	color = 4,
+	dura = 0,
+	dup = 0,
+	colGroup = 0,
+	dealType = 0,
+	dealPrice = 0,
+	time = 0,
+	suitId = 0,
+	staitcAttrs = { 
+		{ type = 27, value = 100, }, 	
+		{ type = 23, value = 100, },
+		{ type = 33, value = 100, },
+		{ type = 17, value = 1000, }, 
+	},
+	strongAttrs = {  
+	},
+	flags = { 
+		recordLog = true,
+		autoStartTime = false, 		
+	},
+	conds = { 
+		{ cond = 1, value = 1, },
+		{ cond = 2, value = 2, },
+	},
+},
+--]]
+
+local strLangTemplate = "n%d=\"%s\",i%d=\"%s\","
+
+local strTemplete = [[
+{
+	id = %d,
+	name = Lang.Item.n%d,
+	desc = Lang.Item.i%d,
+	type = %d,
+	sellType = %d,
+	icon = %d,
+	shape = %s,
+	color = %d,
+	dura = %d,
+	dup = %d,
+	colGroup = 0,
+	dealType = 0,
+	dealPrice = %d,
+	time = %d,
+	suitId = %d,
+	staitcAttrs = {%s},
+	strongAttrs = {},
+	flags = {%s},
+	conds = {%s},
+	event = %s,
+},
+]]
+
+function ReadEquiptFashionItem()
+	local objexcel = CExcelReader:new()
+	if not objexcel then
+		print("objexcel is null")
+		return
+	end
+
+	objexcel:Init_App()
+	objexcel:OpenRead()
+
+	local obj = objexcel:LoadSheetByIndex(3) --道具总表.xlsx 第四个sheet
+	if not obj then
+		print("LoadSheetByIndex失败!")
+		objexcel:Close()
+		objexcel:Quit_App()
+		return
+	end
+
+	local nCount = objexcel:GetCurrentSheetColCount()
+	local mCount = objexcel:GetCurrentSheetRowCount()
+
+
+	print("nCount", nCount)
+	print("mCount", mCount)
+
+	local strAllLang = "\n------------------------------------fashion------------------------\n"
+	local strAllStdItem = "\n------------------------------------fashion------------------------\n"
+	
+	for i = 2, mCount do
+		local concent = {} --第一行构造成一个table
+
+		local strValue = objexcel:ReadCellAsString(i, 1)
+		local itemfile = string.format(".\\data\\config\\item\\itemclass\\%d.txt", tonumber(strValue))
+		print(itemfile)
+
+
+		concent.id = tonumber(strValue)
+		
+		strValue = objexcel:ReadCellAsString(i, 2)
+		concent.name = tostring(strValue) or ""
+			
+		concent.staitcAttrs = {}
+		strValue = objexcel:ReadCellAsString(i, 3)--物理攻击
+		if strValue and strValue ~= "" then
+			concent.staitcAttrs[#concent.staitcAttrs+1] = {type = 21, value = tonumber(strValue)}
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 4) --道法攻击
+		if strValue and strValue ~= "" then
+			concent.staitcAttrs[#concent.staitcAttrs+1] = {type = 31, value = tonumber(strValue)}
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 5)--物理防御
+		if strValue and strValue ~= "" then
+			concent.staitcAttrs[#concent.staitcAttrs+1] = {type = 23, value = tonumber(strValue)}
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 6)--法力防御
+		if strValue and strValue ~= "" then
+			concent.staitcAttrs[#concent.staitcAttrs+1] = {type = 33, value = tonumber(strValue)}
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 7)--生命
+		if strValue and strValue ~= "" then
+			concent.staitcAttrs[#concent.staitcAttrs+1] = {type = 17, value = tonumber(strValue)}
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 8)--灵力
+		if strValue and strValue ~= "" then
+			concent.staitcAttrs[#concent.staitcAttrs+1] = {type = 19, value = tonumber(strValue)}
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 9)--命中
+		if strValue and strValue ~= "" then
+			concent.staitcAttrs[#concent.staitcAttrs+1] = {type = 39, value = tonumber(strValue)}
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 10)--闪避
+		if strValue and strValue ~= "" then
+			concent.staitcAttrs[#concent.staitcAttrs+1] = {type = 37, value = tonumber(strValue)}
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 11)--暴击
+		if strValue and strValue ~= "" then
+			concent.staitcAttrs[#concent.staitcAttrs+1] = {type = 35, value = tonumber(strValue)}
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 12)--抗暴击
+		if strValue and strValue ~= "" then
+			concent.staitcAttrs[#concent.staitcAttrs+1] = {type = 25, value = tonumber(strValue)}
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 13)--会心
+		if strValue and strValue ~= "" then
+			concent.staitcAttrs[#concent.staitcAttrs+1] = {type = 63, value = tonumber(strValue)}
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 14) --描述
+		concent.desc = tostring(strValue) or ""
+			
+		strValue = objexcel:ReadCellAsString(i, 15) --物品类型
+		concent.type = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 16) 
+		concent.dura = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 17) --叠加数量
+		concent.dup = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 18)
+		concent.sellType = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 19)
+		concent.icon = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 20)
+		concent.shape = "{0,0,0,0,0,0,0,0}"
+			
+		strValue = objexcel:ReadCellAsString(i, 21)
+		concent.color = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 22)
+		concent.dealType = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 23)
+		concent.dealPrice = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 24)
+		concent.time = tonumber(strValue) or 0
+		
+		strValue = objexcel:ReadCellAsString(i, 25) --套装的ID(宝石的等级)
+		concent.suitId = tonumber(strValue) or 0
+			
+
+		--等级限制	 性别限制	职业限制	婚姻限制
+		concent.conds = {}
+		strValue = objexcel:ReadCellAsString(i, 26)
+		if strValue and strValue ~= "" then
+			concent.conds[#concent.conds+1] = {cond = 1, value = tonumber(strValue)}
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 27)
+		if strValue and strValue ~= "" then
+			concent.conds[#concent.conds+1] = {cond = 2, value = tonumber(strValue)}
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 28)
+		if strValue and strValue ~= "" then
+			concent.conds[#concent.conds+1] = {cond = 3, value = tonumber(strValue)}
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 29)
+		if strValue and strValue ~= "" then
+			concent.conds[#concent.conds+1] = {cond = 4, value = tonumber(strValue)}
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 30)
+		if strValue and strValue ~= "" then
+			concent.flags = tostring(strValue) or ""
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 31) --事件
+		concent.event = tostring(strValue) or "\"\""
+	
+		if not concent.event or concent.event == "" then
+			concent.event = "\"\""
+		end
+
+		local strStaitcAttrs = ""
+		for k, v in pairs(concent.staitcAttrs) do
+			local strCond = string.format("{type = %d, value = %d},\n", v.type, v.value)
+			strStaitcAttrs = strStaitcAttrs..strCond
+		end
+
+
+		local strConds = ""
+		for k, v in pairs(concent.conds) do
+			local strCond = string.format("{cond = %d, value = %d},\n", v.cond, v.value)
+			strConds = strConds..strCond
+		end
+
+		--local str = format_output(concent)
+		local str = string.format(strTemplete, 
+										concent.id,
+										concent.id,
+										concent.id,
+										concent.type,
+										concent.sellType,
+										concent.icon,
+										concent.shape,
+										concent.color,
+										concent.dura,
+										concent.dup,
+										concent.dealPrice,
+										concent.time,
+										concent.suitId,
+										strStaitcAttrs,
+										concent.flags,
+										strConds,
+										concent.event)
+
+		--写文件
+		--writeConfig(itemfile, str)
+		objexcel:WriteFile(itemfile, str)
+
+
+		--语言包
+		local strLang = string.format(strLangTemplate, concent.id, concent.name, concent.id, concent.desc)
+		strAllLang = strAllLang..strLang.."\n"
+		if mCount == i then
+			objexcel:WriteFile(".\\data\\language\\zh-cn\\item.txt", strAllLang, "a+")
+		end
+
+		--生成include文件名
+		local strStdItem = string.format("--#include \"itemclass\\%d.txt\"", concent.id)
+		strAllStdItem = strAllStdItem..strStdItem.."\n"
+		if mCount == i then
+			objexcel:WriteFile(".\\data\\config\\item\\stditems.txt", strAllStdItem, "a+")
+		end
+
+	end
+
+
+	objexcel:Close()
+	objexcel:Quit_App()
+	objexcel:delete()
+end
+----------------------------------------------------------------------------------------
+
+
+

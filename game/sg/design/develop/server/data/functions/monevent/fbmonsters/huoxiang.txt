@@ -1,0 +1,43 @@
+﻿--lua script
+
+--[[键入'ss'并按分号即可按模板生成脚本]]--
+MonDieDispatcher.Mon235Die = function (monster,sysarg,monId)
+  --print("monId:"..monId)
+  local hscene = LActor.getSceneHandle(sysarg)
+  if Fuben.getLiveMonsterCount(hscene,241) > 0 then
+    local count = Fuben.getLiveMonsterCount(hscene,235)
+    --print("count:"..count)
+    local monPtr = Fuben.getMonsterPtrById(hscene,241)
+    local outAttack = LActor.getIntProperty(monPtr,PROP_CREATURE_OUT_ATTACK)
+    local inAttack = LActor.getIntProperty(monPtr,PROP_CREATURE_INNER_ATTACK)
+    local moveTime = LActor.getIntProperty(monPtr,PROP_MOVETIME)
+    if count == 3 then
+      LActor.addBuff(monPtr,31,1,math.floor(inAttack*0.25),1,3600,Lang.ScriptTips.b00001)
+      LActor.addBuff(monPtr,21,1,math.floor(outAttack*0.25),1,3600,Lang.ScriptTips.b00002)
+    elseif count == 2 then 
+      LActor.addBuff(monPtr,31,1,math.floor(inAttack*0.5),1,3600,Lang.ScriptTips.b00001)
+      LActor.addBuff(monPtr,21,1,math.floor(outAttack*0.5),1,3600,Lang.ScriptTips.b00002)
+    elseif count == 1 then 
+      LActor.addBuff(monPtr,31,1,math.floor(inAttack*0.75),1,3600,Lang.ScriptTips.b00001)
+      LActor.addBuff(monPtr,21,1,math.floor(outAttack*0.75),1,3600,Lang.ScriptTips.b00002)
+    else
+      --print("kill all")
+      local x = LActor.getIntProperty(monPtr,PROP_ENTITY_POSX)
+		  local y = LActor.getIntProperty(monPtr,PROP_ENTITY_POSY)
+		  Fuben.clearMonster(hscene,241)
+		  local ptr = Fuben.createMonster(hscene,241,x,y,0)
+      if ptr == nil then 
+        return 
+      end
+      LActor.addBuff(ptr,21,1,math.floor(outAttack*2.5),1,3600,Lang.ScriptTips.b00001)
+      LActor.addBuff(ptr,31,1,math.floor(inAttack*2.5),1,3600,Lang.ScriptTips.b00002)
+      LActor.addBuff(ptr,15,1,-(moveTime*0.5),1,3600,Lang.ScriptTips.b00003)
+      local fbptr = LActor.getFubenPrt(sysarg)
+      Fuben.setFbValue(fbptr,2,1)
+    end
+  end
+end
+
+
+
+MonDieDispatcher.register(235, MonDieDispatcher.Mon235Die)

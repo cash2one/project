@@ -1,0 +1,121 @@
+
+--配置
+{
+	--场景1
+	--这个id必须每次递增，比如第一个场景id是0，下一个一定是1，类推
+	scenceid = 6,
+	--场景名称
+	scencename = Lang.SceneName.s6,
+	--场景对应的地图,只需要填文件名，不需要写路径和后缀名，比如这个地图文件是map/demo.jxm，只需要写demo
+	mapfilename = "ly",
+	--限制等级,低于这个等级无法进入场景
+	level = 14,
+	needFinishQid = 32, -- 进入的任务限制 填任务id
+    --限制等级,低于这个等级无法进入副本
+	minlevel = 1,
+	--限制物品，这是一个数字列表，代表有这些物品的玩家不能进入
+	forbiddenitem = {},
+	--限制的技能列表，有这些技能的玩家不能进入
+	forbiddenskill = {},
+	--0表示可以pk，1表示不可以，默认是0
+	nopk = 1,
+	progress = 0,
+	music = "yewaiqingxin.mp3", 
+	musicInterval=5,
+        --在世界地图上的坐标x
+        worldmapPosx =0,
+        worldmapPosy =0,
+        --场景的长宽,是指格子数的长宽
+        sceneWidth =191,
+        sceneHeight =137,
+
+    color = {100,100,100}, 
+	poetry = "",
+	area = 
+	{
+		{ name = Lang.SceneName.s6, range = { 0,0,191,0,191,137,0,137}, center = { 176,118},
+		    attri = { 
+            -- {type= 46 ,value = {0}},  		  
+					}
+		},
+		{ inherit = false , name = Lang.SceneName.s6, range = { 0,0,191,0,191,137,0,137}, center = { 176,118},
+		    attri = { 
+            -- {type= 1 ,value = {}},--{默认模式,不可切换的模式}
+		    {type= 46 ,value = {0}},  		  
+					}
+		},
+		{ inherit = false , name = Lang.SceneName.s6, range = { 61,12,88,12,61,23,88,23 }, center = { 67,15 },--对应寻路配置里的x与y 
+            attri = 
+            {
+                {type=68,value = {5127}, fun = "OnZhaoHuanArea"},
+            },
+        },				
+	},
+	--refresh项用来配置这个场景的刷怪点，每个场景可以有多个刷怪点，可以用include包含多个刷怪点
+
+     
+ refresh =
+{
+--#include "refresh6.txt"  
+},
+	--这里配置这个场景出现的NPC，如果有多个NPC，这配置多行，每一项（行）表示一个NPC
+	npc = 
+	{
+		--name表示npc的名称，
+		--posx和posy分别表示出现的位置坐标
+		--script是对应的脚本名字，需要用相对路径
+		--modelid表示外观模型id
+                --camp表示是阵营的id，默认是0表示所有的阵营都能用，1 无忌 2逍遥  3日月，如果是0可以不配置
+{npcid=601, dir=3, name = Lang.EntityName.n601 ,posx = 102, posy = 74, script = "data/script/luoyang/zhenjiqitu.txt",modelid=1,icon = 1,utype = 2},  --箴机奇图
+{npcid=602, dir=2, name = Lang.EntityName.n602 ,posx = 105, posy = 71, script = "data/script/luoyang/zhenyingzhan.txt",modelid=34,icon = 1,utype = 2},  --阵营战
+{npcid=603, dir=6, name = Lang.EntityName.n603 ,posx = 89, posy = 71, script = "data/script/luoyang/zhuluzhongyuan.txt",modelid=5,icon = 1,utype = 2},  --逐鹿中原
+{npcid=604, dir=5, name = Lang.EntityName.n604 ,posx = 92, posy = 74, script = "data/script/luoyang/daluandou.txt",modelid=8,icon = 1,utype = 2},  --大乱斗
+{npcid=605, dir=5, name = Lang.EntityName.n605 ,posx = 176, posy = 33, script = "data/script/luoyang/shangren.txt",modelid=38,icon = 1,utype = 1},  --洛阳商人
+{npcid=606, dir=5, name = Lang.EntityName.n606 ,posx = 70, posy = 13, script = "data/script/luoyang/liuxuan.txt",modelid=24,icon = 1,utype = 1},  --刘玄
+{npcid=607, dir=5, name = Lang.EntityName.n607 ,posx = 73, posy = 15, script = "data/script/luoyang/hanji.txt",modelid=56,icon = 1,utype = 1},  --韩姬
+{npcid=608, dir=3, name = Lang.EntityName.n608 ,posx = 101, posy = 62, script = "data/script/luoyang/yinxing.txt",modelid=20,icon = 1,utype = 1},  --阴兴
+{npcid=609, dir=5, name = Lang.EntityName.n609 ,posx = 106, posy = 60, script = "data/script/luoyang/hupo.txt",modelid=52,icon = 1,utype = 1},  --琥珀
+{npcid=610, dir=3, name = Lang.EntityName.n610 ,posx = 65, posy = 74, script = "data/script/luoyang/zhuyou.txt",modelid=1,icon = 1,utype = 1},  --朱佑
+{npcid=611, dir=3, name = Lang.EntityName.n611 ,posx = 60, posy = 76, script = "data/script/luoyang/liuji.txt",modelid=20,icon = 1,utype = 1},  --刘稷
+{npcid=612, dir=2, name = Lang.EntityName.n612 ,posx = 65, posy = 80, script = "data/script/luoyang/liuxiu.txt",modelid=13,icon = 1,utype = 1},  --刘秀
+{npcid=613, dir=2, name = Lang.EntityName.n613 ,posx = 87, posy = 89, script = "data/script/luoyang/fengyi.txt",modelid=34,icon = 1,utype = 1},  --冯异
+{npcid=614, dir=5, name = Lang.EntityName.n614 ,posx = 112, posy = 96, script = "data/script/luoyang/yinshi.txt",modelid=30,icon = 1,utype = 1},  --阴识
+{npcid=615, dir=5, name = Lang.EntityName.n615 ,posx = 118, posy = 99, script = "data/script/luoyang/lihua.txt",modelid=6,icon = 1,utype = 1},  --丽华
+{npcid=616, dir=5, name = Lang.EntityName.n616 ,posx = 144, posy = 87, script = "data/script/luoyang/cenpeng.txt",modelid=43,icon = 1,utype = 1},  --岑彭
+{npcid=617, dir=3, name = Lang.EntityName.n617 ,posx = 38, posy = 88, script = "data/script/luoyang/liuyin.txt",modelid=14,icon = 1,utype = 1},  --刘縯
+{npcid=618, dir=3, name = Lang.EntityName.n618 ,posx = 11, posy = 29, script = "data/script/luoyang/liuxiu1.txt",modelid=3,icon = 1,utype = 1},  --刘秀1
+{npcid=619, dir=3, name = Lang.EntityName.n619 ,posx = 16, posy = 26, script = "data/script/luoyang/lihua1.txt",modelid=4,icon = 1,utype = 1},  --丽华1
+{npcid=620, dir=3, name = Lang.EntityName.n620 ,posx = 27, posy = 119, script = "data/script/luoyang/liujia.txt",modelid=22,icon = 1,utype = 1},  --刘嘉
+{npcid=621, dir=5, name = Lang.EntityName.n621 ,posx = 54, posy = 9, script = "data/script/luoyang/caojing.txt",modelid=19,icon = 1,utype = 1},  --曹竟
+{npcid=622, dir=5, name = Lang.EntityName.n622 ,posx = 148, posy = 65, script = "data/script/luoyang/liuci.txt",modelid=7,icon = 1,utype = 1},  --刘赐
+{npcid=623, dir=3, name = Lang.EntityName.n623 ,posx = 18, posy = 37, script = "data/script/luoyang/liujiang.txt",modelid=30,icon = 1,utype = 1},  --刘疆
+{npcid=624, dir=3, name = Lang.EntityName.n624 ,posx = 14, posy = 40, script = "data/script/luoyang/liuyang.txt",modelid=44,icon = 1,utype = 1},  --刘阳
+{npcid=625, dir=3, name = Lang.EntityName.n625 ,posx = 80, posy = 97, script = "data/script/luoyang/dengyu.txt",modelid=1,icon = 1,utype = 1},  --邓禹
+{npcid=626, dir=3, name = Lang.EntityName.n626 ,posx = 135, posy = 85, script = "data/script/luoyang/chengshou.txt",modelid=21,icon = 1,utype = 1},  --城守
+{npcid=627, dir=5, name = Lang.EntityName.n627 ,posx = 98, posy = 70, script = "data/script/luoyang/chengzhu.txt",modelid=53,icon = 1,utype = 1},  --城主
+{npcid=628, dir=3, name = Lang.EntityName.n628 ,posx = 121, posy = 61, script = "data/script/luoyang/liaozhanggui.txt",modelid=37,icon = 1,utype = 1},  --廖掌柜
+{npcid=629, dir=5, name = Lang.EntityName.n629 ,posx = 151, posy = 35, script = "data/script/luoyang/luoyanghuoshang.txt",modelid=38,icon = 1,utype = 1},  --洛阳郡守
+{npcid=630, dir=5, name = Lang.EntityName.n630 ,posx = 77, posy = 55, script = "data/script/luoyang/liucihuangbang.txt",modelid=7,icon = 1,utype = 1},  --刘赐
+{npcid=631, dir=5, name = Lang.EntityName.n631 ,posx = 118, posy = 33, script = "data/script/luoyang/guozhu.txt",modelid=11,icon = 1,utype = 1},  --郭主
+{npcid=632, dir=5, name = Lang.EntityName.n632 ,posx = 110, posy = 29, script = "data/script/luoyang/guoshengtong.txt",modelid=36,icon = 1,utype = 1},  --郭圣通
+{npcid=633, dir=3, name = Lang.EntityName.n633 ,posx = 121, posy = 8, script = "data/script/luoyang/yanzhi.txt",modelid=41,icon = 1,utype = 1},  --胭脂
+{npcid=634, dir=5, name = Lang.EntityName.n634 ,posx = 165, posy = 12, script = "data/script/luoyang/lihua2.txt",modelid=6,icon = 1,utype = 1},  --丽华2
+{npcid=635, dir=3, name = Lang.EntityName.n635 ,posx = 25, posy = 62, script = "data/script/luoyang/guokuang.txt",modelid=48,icon = 1,utype = 1},  --郭况
+      
+  },
+
+  
+  teleport = 
+  {  
+{ posx = 184, posy = 126,toSceneid =1,toPosx = 101, toPosy = 83,modelid = 50000,name = Lang.SceneName.s1},  --去南阳
+{ posx = 33, posy = 10,toSceneid =11,toPosx = 18, toPosy = 86,modelid = 50000,name = Lang.SceneName.s11},  --去青州
+{ posx = 3, posy = 78,toSceneid =12,toPosx = 101, toPosy = 90,modelid = 50000,name = Lang.SceneName.s12},  --去幽州
+{ posx = 184, posy = 112,toSceneid =4,toPosx = 92, toPosy = 30,modelid = 50000,name = Lang.SceneName.s4},  --去豫州
+{ posx = 154, posy = 130,toSceneid =5,toPosx = 104, toPosy = 89,modelid = 50000,name = Lang.SceneName.s5},  --去昆阳
+{ posx = 5, posy = 133,toSceneid =9,toPosx = 97, toPosy = 87,modelid = 50000,name = Lang.SceneName.s9},  --去冀州
+{ posx = 4, posy = 60,toSceneid =19,toPosx = 29, toPosy = 27,modelid = 50000,name = Lang.SceneName.s19},  --去刘家
+{ posx = 7, posy = 23,toSceneid =20,toPosx = 33, toPosy = 49,modelid = 50000,name = Lang.SceneName.s20},  --去宫内
+
+
+  },
+},

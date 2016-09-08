@@ -1,0 +1,241 @@
+﻿-- 魅力排行榜
+--#include "charmrankconf.txt" once
+--#include "activitycontrolhandler.txt" once
+
+-- 协议定义
+local CHARMRANK_MACRO = {
+	CHARMPRO = 252,			-- 请求排行
+}
+
+-- 魅力排行榜函数列表
+ONLINEREWARD.charmRankFunc = {}
+
+ONLINEREWARD.charmRankFunc.init = function(sysarg)
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	local state,startTime,endTime = ONLINEREWARD.GetActivityState(charmRankConf.activityId,var.download_from)
+
+	if nil == var.charmRankVar then
+		var.charmRankVar = {}
+	end
+
+	-- 活动期间魅力点
+	if nil == var.charmRankVar.charmPoint then
+		var.charmRankVar.charmPoint = 0
+	end
+
+	-- 是否重置
+	if startTime ~= var.charmRankVar.startTime then
+		ONLINEREWARD.charmRankFunc.ResetActivityInfo(sysarg)
+	end
+
+	var.charmRankVar.startTime = startTime	
+end
+
+-- 重置,活动刚开时，魅力点清零
+ONLINEREWARD.charmRankFunc.ResetActivityInfo = function (sysarg)
+	local var = LActor.getStaticVar(sysarg)
+	if not var then return end
+
+	if not var.charmRankVar then
+		return
+	end
+
+	if nil ~= var.charmRankVar.charmPoint then
+		var.charmRankVar.charmPoint = 0
+	end
+
+	ONLINEREWARD.charmRankFunc.updataCharmRank(sysarg)
+end
+
+ONLINEREWARD.charmRankFunc.actorCharmPoint = function(sysarg, point)
+
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+
+	local state = ONLINEREWARD.GetActivityState(charmRankConf.activityId,var.download_from)
+	if state == 0 then
+		return
+	end
+
+	-- 魅力点
+	local val = point
+	if val == nil or val == 0 then return end
+
+	ONLINEREWARD.charmRankFunc.init(sysarg)
+
+	var.charmRankVar.charmPoint = var.charmRankVar.charmPoint + val	
+	ONLINEREWARD.charmRankFunc.updataCharmRank(sysarg)	
+end
+
+ONLINEREWARD.charmRankFunc.updataCharmRank = function (sysarg)
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	local state = ONLINEREWARD.GetActivityState(charmRankConf.activityId,var.download_from)
+	if state == 0 then
+		return
+	end
+
+	local rank = Ranking.getRanking(charmRankConf.rankName)
+	if rank == nil then
+		local rankInfo = {"aname"}
+	    rank = MiscFunc.InitRank(charmRankConf.rankName, charmRankConf.rankName, charmRankConf.charmcount, rankInfo)
+	    Ranking.setAutoSave(rank, true)
+	end
+
+	local charmPoint = var.charmRankVar.charmPoint
+
+	if not charmPoint then
+		return
+	end
+
+	if charmPoint < charmRankConf.limitCharm then
+		return
+	end
+
+	local actorId = LActor.getActorId(sysarg)
+	local actorName = LActor.getName(sysarg)
+	-- 增加或者更新排行
+	local rankItem = Ranking.addItem(rank, actorId, charmPoint)
+	if rankItem == nil then
+		rankItem = Ranking.getItemPtrFromId(rank, actorId)
+		if nil == rankItem then
+			print("rechargerank error")
+			return
+		end
+		local oldCharmPoint = Ranking.getPoint(rankItem)
+		Ranking.updateItem(rank, actorId, charmPoint-oldCharmPoint)
+	else
+		Ranking.setSub(rankItem, 0, actorName)
+		Ranking.save(rank, charmRankConf.rankName)
+	end		
+end
+
+-- 拉取排行榜
+ONLINEREWARD.charmRankFunc.getRankInfo = function (sysarg)
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+
+	local rank = Ranking.getRanking(charmRankConf.rankName)
+	if rank == nil then
+		local rankInfo = {"aname"}
+	    rank = MiscFunc.InitRank(charmRankConf.rankName, charmRankConf.rankName, charmRankConf.charmcount, rankInfo)
+	    Ranking.setAutoSave(rank, true)
+	end
+	if not rank then
+		return
+	end
+
+	ONLINEREWARD.charmRankFunc.init(sysarg)
+
+	local Column = 0
+	local npack = DataPack.allocPacket(sysarg, BaseTypes.SystemId.timeRewardSystem, CHARMRANK_MACRO.CHARMPRO)
+	if npack == nil then  return end	
+
+	Column = Ranking.getRankItemCount(rank)
+	if Column >= charmRankConf.charmcount then
+       Column = charmRankConf.charmcount
+	end
+
+	DataPack.writeInt(npack, Column)
+    for i=1,Column do
+    	local rankItem = Ranking.getItemFromIndex(rank, i-1)
+		local actorName = Ranking.getSub(rankItem, 0)
+		DataPack.writeString(npack, actorName) -- 角色名
+		local point = Ranking.getPoint(rankItem)
+		DataPack.writeInt(npack, point)  -- 玩家魅力点		
+    end
+
+    local actorId = LActor.getActorId(sysarg)
+    local rankIndex = Ranking.getItemIndexFromId(rank, actorId)
+    rankIndex = rankIndex + 1
+    DataPack.writeInt(npack, rankIndex)
+    local charmPoint = var.charmRankVar.charmPoint
+	DataPack.writeInt(npack, charmPoint)
+
+    DataPack.flush(npack)
+end
+
+ONLINEREWARD.charmRankFunc.getRewardItemId = function (position)
+	-- 奖励索引项
+	local itemId = 0
+
+	-- 排行榜奖励配置
+    rewardconf = charmRankConf.awards
+    for i=1, #rewardconf do
+    	if position <= rewardconf[i][1] then
+    		itemId = rewardconf[i][2]
+    		break
+    	end
+    end
+
+    return itemId
+end
+
+ONLINEREWARD.charmRankFunc.onTime = function()
+
+	local  nows = System.getCurrMiniTime()
+	local _,_,endtime = ONLINEREWARD.GetActivityState(charmRankConf.activityId,nil,true)
+	if nows < endtime then
+	   return
+    end
+
+    local rank = Ranking.getRanking(charmRankConf.rankName)
+    if rank == nil then
+    	return
+    end
+
+    local count = Ranking.getRankItemCount(rank)
+
+    -- 无人上榜
+    if 0 == count then
+    	return
+    end
+    if count > charmRankConf.charmcount then
+		count =  charmRankConf.charmcount
+	end 
+
+	for i=1,count do
+    	local awards = charmRankConf.awards
+    	local rankItem = Ranking.getItemFromIndex(rank, i-1)
+    	local Aid = Ranking.getId(rankItem)
+    	local itemId = ONLINEREWARD.charmRankFunc.getRewardItemId(i)
+    	local content = string.format(Lang.ScriptTips.mlph001, i)
+    	System.sendGmMailOffLine(Aid, content, 1, itemId, 1, 1)
+    end
+
+    Ranking.save(rank, "copycharmrank")
+	Ranking.clearRanking(rank)
+	Ranking.save(rank, charmRankConf.rankName)
+end
+
+ONLINEREWARD.charmRankFunc.userLogin = function(sysarg)
+	
+	local var = LActor.getStaticVar(sysarg)
+	if not var then return end
+
+	if not var.charmRankVar then
+		return
+	end
+
+	ONLINEREWARD.charmRankFunc.init(sysarg)
+	
+	local nowtime = System.getCurrMiniTime()
+	local _,starttime,endtime = ONLINEREWARD.GetActivityState(charmRankConf.activityId,var.download_from)
+
+	-- 活动重开,清理数据
+	if nowtime > endtime then
+		if nil ~= var.charmRankVar.charmPoint then
+			var.charmRankVar.charmPoint = nil
+		end
+
+		if nil ~= var.charmRankVar then
+			var.charmRankVar = nil
+		end
+	end
+end
+
+
+
+table.insert(TimeFnTable, ONLINEREWARD.charmRankFunc.onTime)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, ONLINEREWARD.charmRankFunc.userLogin)

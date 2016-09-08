@@ -1,0 +1,95 @@
+LilianFubenConfig = {}			-- 历炼副本配置
+
+LilianFubenConfig = {
+	fubenId = {},				-- 副本ID
+	sceneId = {1058},			-- 场景ID
+	sceneJieSuan = {1058},
+	fubenToSence = {1058},
+
+	toNextTeleport = {},		-- 传送门
+
+	gameTime = 200,				-- 游戏时间
+
+	playerPos = {10,13},		-- 玩家进入副本的位置
+	monsterCount = 25,			-- 怪物个数
+
+	limitTime = 0,				-- 结算的时间限制
+
+	monsterIdList = {125,126,127,128},
+
+	monsterList = {			-- 奖励			
+		[125] = {				-- [怪物ID]
+			{12,1,65,1},		-- {奖励ID,类型,数量,概率}	(其中类型部分：1表示的角色属性，2表示的是物品)
+			{11,1,44,1},
+
+		},	
+		[126] = {				-- [怪物ID]
+			{12,1,130,1},		-- {奖励ID,类型,数量,概率}	(其中类型部分：1表示的角色属性，2表示的是物品)
+			{11,1,88,1},
+
+		},
+		[127] = {				-- [怪物ID]
+			{12,1,130,1},		-- {奖励ID,类型,数量,概率}	(其中类型部分：1表示的角色属性，2表示的是物品)
+			{11,1,88,1},
+
+		},
+		[128] = {				-- [怪物ID]
+			{12,1,440,1},		-- {奖励ID,类型,数量,概率}	(其中类型部分：1表示的角色属性，2表示的是物品)
+			{11,1,88,1},
+
+		},					
+	},
+	itemList = {			-- 掉落
+
+	},
+
+	gradeType = 1,				-- 评级类型：1表示时间，2表示层数
+	gradeList = {
+		{
+			floor = 1,
+			time = 30,			-- 单位秒
+			value = 30,			-- 百分比
+		},
+		{
+			floor = 9,
+			time = 100,			-- 单位秒
+			value = 20,			-- 百分比
+		},
+        {
+			floor = 15,
+			time = 200,			-- 单位秒	
+			value = 10,			-- 百分比
+		},
+	},
+
+	boxPool = {					-- 结算物品池
+		{ --第一个宝箱
+			itemList = 
+			{
+				-- 配置奖励的物品
+				{count = 1, itemid =	18730	,present= 	4500,},
+				{count = 1, itemid =	18740	,present=	5000,},
+				{count = 1, itemid =	18512	,present=	500	,},
+			},
+	    },
+	    { --第二个宝箱
+			itemList = 
+			{
+				-- 配置奖励的物品
+				{count = 1, itemid =	18730	,present= 	4500,},
+				{count = 1, itemid =	18740	,present=	5000,},
+				{count = 1, itemid =	18512	,present=	500	,},
+			},
+	    },
+	    {--第三个宝箱
+			itemList = 
+			{
+				-- 配置奖励的物品
+				{count = 1, itemid =	18730	,present= 	4500,},
+				{count = 1, itemid =	18740	,present=	5000,},
+				{count = 1, itemid =	18512	,present=	500	,},
+
+			},
+	    },		
+	},		
+}

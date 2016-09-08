@@ -1,0 +1,53 @@
+--新手村
+{
+		count=4,	
+		time=60,	
+		firstTime=1,		
+		mapx1=8,	
+		mapx2=14,
+		mapy1=10,
+		mapy2=10,
+		entityid=7,--bigboss
+		entityLevel=1,
+		progress=0,
+},
+--[[
+{
+		count=1,	
+		time=60,	
+		firstTime=1,		
+		mapx1=8,	
+		mapx2=14,
+		mapy1=10,
+		mapy2=10,
+		entityid=8,--小boss
+		entityLevel=1,
+		progress=0,
+},
+
+{
+		count=1,	
+		time=60,	
+		firstTime=1,		
+		mapx1=8,	
+		mapx2=14,
+		mapy1=10,
+		mapy2=10,
+		entityid=9,--精英
+		entityLevel=1,
+		progress=0,
+},
+
+{
+		count=1,	
+		time=60,	
+		firstTime=1,		
+		mapx1=8,	
+		mapx2=14,
+		mapy1=10,
+		mapy2=10,
+		entityid=10,--普通怪
+		entityLevel=1,
+		progress=0,
+},
+]]--

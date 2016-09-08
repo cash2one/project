@@ -1,0 +1,31 @@
+﻿{
+	id = 18353,
+	name = Lang.Item.n18353,
+	desc = Lang.Item.i18353,
+	type = 83,
+	sellType = 31,
+	icon = 378,
+	shape = {0,0,0,0,0,0,0,0},
+	color = 3,
+	dura = 1500,
+	dup = 99,
+	colGroup = 6,
+	dealType = 0,
+	dealPrice = 0,
+	time = 0,
+	suitId = 0,
+	staitcAttrs = {  
+	{type=17,value =4800},
+	{type=0, value=1 },
+	{type=0, value=600 },
+	{type=0, value=91},	
+	},
+	strongAttrs = {  
+	},
+	flags = { 
+		recordLog = true, 
+	},
+	conds = { 
+		{ cond = 1, value = 50, }, 
+	},
+},

@@ -1,0 +1,383 @@
+﻿--#include "data\functions\GlobalDefine.txt"
+--#include "data\config\quest\MiscQuest.txt" once	--任务相关    
+--#include "data\config\quest\chapter.txt" once --任务章节
+--#include "data\functions\miscfunc.txt" once
+
+--#include "data\functions\tabledump.txt" once
+
+--[[
+    函数名称：continueQuestTalk
+    函数描述：继续与NPC进行任务对话，如果没有任务状态则关闭对话窗口 
+    参数 sysarg 的描述：
+]]
+
+-- npc脚本的打印控制
+local debug_print = function (...)
+	--print(...)
+end
+
+local function continueQuestTalk(sysarg)
+	--如果交任务后还有可继续的任务状态，则返回主界面
+	local newState = LActor.getQuestStateType( sysarg, thisNPC )
+	if newState == 1 or newState == 2 then
+		return main(sysarg)
+	else
+		LActor.closeNPCDialog( sysarg )
+	end
+end
+
+--显示一个任务的内容，ms是任务的配置表，state 0： 可接 1： 可完成 	2： 进行中
+function ShowQuestDetail(ms, state)
+	-- format: qid=1,state=0,func=commonAcceptMissions
+	local func = nil
+	if state == 0 then
+		func = "commonAcceptMissions," .. ms.id
+	elseif state == 1 then
+		func = "CompleteMession," .. ms.id
+	elseif state == 2 then
+		func = "main"
+	end
+	-- npcid,qid,state,func
+	return string.format("%d|%d|%d|%s", LActor.getNpcIdByEntity(thisNPC), ms.id, state, func)
+end
+--------------------------------------------------------------------------------
+
+function commonAcceptMissions(sysarg, mission)
+
+	-- local idx = LActor.getRTIntValue( sysarg, MISSION_RTV_IDX_MISSIONIDX )
+	debug_print("--------commonAcceptMissions---------",tonumber(mission))
+	local mid = tonumber(mission)
+	local ms = nil
+	for i,v in pairs(PromMs) do
+		if v.id == mid then
+			ms = v
+			break
+		end
+	end	
+
+	if ms == nil then
+		return "ms is nil"
+	end
+
+	local ck = true,id  
+	if ms.PromCheck then
+		ck,id = ms.PromCheck(sysarg,mission)
+		if not ck then
+			LActor.sendTipmsg(sysarg,id,ttDialog)
+		end
+	end
+
+	if_get_quest = false
+  
+	if ck then
+		if  LActor.getQuestCount(sysarg) >= 30 then
+			LActor.sendTipmsg(sysarg,Lang.ScriptTips.x00044,ttTipmsgWindow)
+		else
+			if LActor.addQuest( sysarg, mission ) then
+				if_get_quest = true
+				--debug_print("commonAcceptMissions mission:"..mission)
+				if ms.PromCallBack then
+					ms.PromCallBack(sysarg,mission)
+				end
+				if ms.acceptNext == nil then
+					continueQuestTalk( sysarg )
+
+					if if_get_quest and autogetquest[mid] ~= nil then 
+						LActor.addQuest( sysarg, autogetquest[mid] ) 
+						--debug_print("commonAcceptMissions autogetquest:"..autogetquest[mid])
+					end
+
+					return
+				end
+			end
+		end
+	end
+	LActor.closeNPCDialog( sysarg )
+
+	if if_get_quest and autogetquest[mid] ~= nil then 
+		LActor.addQuest( sysarg, autogetquest[mid] ) 
+		--debug_print("commonAcceptMissions autogetquest:"..autogetquest[mid])
+	end
+end
+
+
+
+function CompleteMession(sysarg, mission, ...)
+	-- local idx = LActor.getRTIntValue( sysarg, MISSION_RTV_IDX_MISSIONIDX )
+	debug_print("-------CompleteMession----------",tonumber(mission))
+	local mid = tonumber(mission)
+	local ms = nil
+	for i,v in pairs(CompMs) do
+		if v.id == mid then			
+			ms = v
+			break
+		end
+	end
+	-- if ms == nil then return end
+	
+	local award = -1
+	if arg.n > 0 then 
+		award = arg[1]
+	end
+ 
+	local ck,rt
+	if ms.CompCheck then
+		ck,rt = ms.CompCheck(sysarg,mission)
+		if not ck then
+			return rt
+		end
+	end
+
+	debug_print("============> start complete :", sysarg, mission, arg)
+
+	if LActor.finishQuest( sysarg, mission, award ) then
+		rt = nil
+		if ms.CompCallBack then
+			 --这个函数用于完成任务后的特别处理，比如回收某个物品等
+			rt = ms.CompCallBack(sysarg,mission)
+		end
+		if not rt or type(rt) ~= "string" then
+			if ms.finishNext == nil then
+				return continueQuestTalk( sysarg )
+			end
+		end
+	end
+	LActor.closeNPCDialog( sysarg )
+end
+
+--------------------------------------------------------------------------------
+-- 过程任务暂时为空 
+--------------------------------------------------------------------------------
+
+function getCompMissionIndex(missionid)
+  local i
+  for i = 1, table.getn(CompMs) do
+    if CompMs[i].id == missionid then
+      return i
+    end
+  end
+  return 0
+end
+
+--------------------------------------------------------------------------------
+
+function ShowQuestTalk(sysarg, mission, state)
+	debug_print(string.format("function:[ShowQuestTalk] ==> npcId=[%d], qid=[%d], state=[%d]", LActor.getNpcIdByEntity(thisNPC), mission, state))
+
+	local MyMission = tonumber(mission)
+	local Mystate = tonumber(state)
+	local mslist = nil
+	if Mystate == 0 then
+		mslist = PromMs
+	elseif Mystate == 1 or Mystate == 2 then		
+		mslist = CompMs
+	end
+	
+	for _, v in pairs(mslist) do
+		if v.id == MyMission then
+			return ShowQuestDetail(v, Mystate)
+		end
+	end
+end
+
+--这里执行放弃任务时候的操作
+function GiveUpQuest(sysarg,questid)	
+	local qid = tonumber(questid)
+	local idx = getCompMissionIndex(qid)
+	--有这个任务
+	if idx > 0 then	
+		local ms = CompMs[idx]
+		--执行放弃任务的处理
+		if ms.GiveUpCallBack then		
+    		ms.GiveUpCallBack( sysarg, qid )
+    	end
+	end
+end
+---------------------------------------------------------------------------------------
+-- 过程任务（对话任务）
+function talkWithNPC(sysarg,qid,tid)
+	local tid = tonumber(tid)
+	qid = tonumber(qid)
+	for qidx=1,#PassMs do
+		if PassMs[qidx].id == qid then
+			local q = PassMs[qidx]
+			local index = 0
+			for i = 1,#q.target do
+				if q.target[i].id == tid then	
+					index = i
+					LActor.setQuestValue(sysarg,qid,tid,1)
+					return q.PassMsTip[index]
+				end
+			end 
+		end
+	end
+end
+----------------------------------------------------------------------------------------
+function enterFubenForQuestFunc(sysarg,fbid,Sceneid)
+	local fbid = tonumber(fbid)
+	local Hfuben = Fuben.createFuBen(fbid)
+	LActor.enterFuBen(sysarg,Hfuben,-1,-1,-1)	
+end
+
+function commonQuestNpcMain(sysarg,func)
+	local t_qid = 0
+	local t_cnt = 0
+	local t_state = 0
+	local t_type = 0
+	local t_npcid = LActor.getNpcIdByEntity(thisNPC)
+	t_cnt, t_qid, t_state, t_type = LActor.getProcessQuestState(sysarg, t_qid, t_state, t_type)
+	debug_print(string.format("function:[commonQuestNpcMain]<getProcessQuestState> ==> npcId=[%d], cnt=[%d], qid=[%d], state=[%d], type=[%d]", t_npcid, t_cnt, t_qid, t_state, t_type))
+
+	if t_cnt > 0 then
+		if t_state > 1 then
+			local tarTable = LActor.getQuestAllTargetConf(t_qid)
+			local talkRet = false
+			for k, v in pairs(tarTable) do
+				if v.type == qtTalk then
+					local tmpNpcModel = 0
+					local tarNpcName = LActor.getNpcEntityNameAndMode(v.id, tmpNpcModel)
+					local thisNpcName = LActor.getNpcEntityNameAndMode(t_npcid, tmpNpcModel)
+					if (tarNpcName == thisNpcName and t_npcid < 400) or t_npcid == v.id then -- 新手村的NPCID才纳入 新手村NPCID最多就到399
+						talkRet, t_state = LActor.onTalkQuestEvent(sysarg, t_qid, t_npcid, t_state)
+						if t_npcid < 400 then -- 对话型任务默认发新手村1的npcid
+							local old_npcid = t_npcid
+							local t = 0
+							t = math.modf(t_npcid / 100)
+							t_npcid = 100 + (t_npcid - 100 * t)
+							debug_print(string.format("function:[commonQuestNpcMain]<getProcessQuestState> 纠正npcid<%d -> %d>", old_npcid, t_npcid))
+						end
+						break
+					end
+				end
+			end
+		end
+
+		if t_state == 0 or t_state == 1 then -- 可接/可交
+			debug_print("=======================================> ShowQuestTalk")
+			return ShowQuestTalk( sysarg, t_qid, t_state ), true
+		elseif t_state == 2 then -- 正在进行中
+			local str = string.format("%d", t_npcid)
+			debug_print(string.format("commonQuestNpcMain nothing to do: npcid=[%s]", str))
+			return str
+		elseif t_state == 3 then -- 对话
+			debug_print("=======================================> QuestNpcTalk")
+			local str = string.format("%d|%d|%d|%s", t_npcid, t_qid, t_state, "QuestTalk")
+			return str , true
+		end
+	else -- 没有任务
+		local hasQuest = false
+		local str = ""
+		local dialog_count = 0
+		if NpcDialogue then
+			dialog_count = table.getn(NpcDialogue)
+		end
+		if (dialog_count > 0) then
+			local rand = System.getRandomNumber(dialog_count)	
+			str = string.format("%d|0|4|%s", LActor.getNpcIdByEntity(thisNPC), NpcDialogue[rand +1].say)
+		else
+			str = string.format("%d", LActor.getNpcIdByEntity(thisNPC))
+		end
+		debug_print(string.format("commonQuestNpcMain nothing to do: npcid=[%s]", str))
+		return str, false, hasQuest
+	end
+
+	-- local qc = 0
+	-- local state = 0
+	-- local qid = 0
+	-- local tp = 0	
+	-- local mission,qc,qid,state = LActor.formatQuestState(sysarg, qc, qid, state, tp)        --通过引擎格式化任务状态
+	-- debug_print(string.format("function:[commonQuestNpcMain] ==> npcId=[%d], qid=[%d], state=[%d], type=[%d], msg=[%s]", LActor.getNpcIdByEntity(thisNPC), qid, state, tp, mission))
+
+	-- if qc >= 1 then
+	-- 	if state == 0 or state == 1 then -- 可接/可交
+	-- 		return ShowQuestTalk( sysarg, qid, state ), true
+	-- 	elseif state == 2 then -- 正在进行中
+	-- 		local str = string.format("%d", LActor.getNpcIdByEntity(thisNPC))
+	-- 		debug_print(string.format("commonQuestNpcMain nothing to do: npcid=[%s]", str))
+	-- 		return str
+	-- 	elseif state == 3 then -- 对话
+	-- 		local nstr = string.format("%d|%d|%d|%s", LActor.getNpcIdByEntity(thisNPC), qid, state, "QuestTalk")
+	-- 		return nstr , true
+	-- 	end
+	-- else -- 没有任务
+	-- 	local hasQuest = false
+	-- 	local str = ""
+	-- 	local dialog_count = 0
+	-- 	if NpcDialogue then
+	-- 		dialog_count = table.getn(NpcDialogue)
+	-- 	end
+	-- 	if (dialog_count > 0) then
+	-- 		local rand = System.getRandomNumber(dialog_count)	
+	-- 		str = string.format("%d|0|4|%s", LActor.getNpcIdByEntity(thisNPC), NpcDialogue[rand +1].say)
+	-- 	else
+	-- 		str = string.format("%d", LActor.getNpcIdByEntity(thisNPC))
+	-- 	end
+	-- 	debug_print(string.format("commonQuestNpcMain nothing to do: npcid=[%s]", str))
+	-- 	return str, false, hasQuest
+	-- end
+end
+
+-- 检查护送任务
+function checkProtection(sysarg)
+	for i=1,#CompMs do
+		local qid = CompMs[i].id
+		if LActor.hasQuest(sysarg, qid) then
+			debug_print(qid)
+			local ms = CompMs[i]
+			local target = ms.target
+			if target ~= nil then
+				for i = 1,#target do -- 自动完成任务目标
+					LActor.setQuestValue(sysarg,qid,target[i].id,target[i].count)
+				end 
+			end
+			return ShowQuestDetail(ms, 1) -- 完成状态
+		end
+	end
+end
+
+--完成章节获得奖励
+function finishChapter(sysarg, mission)
+	--debug_print("==================finishChapte "..mission)
+	if not sysarg then return end
+	if not mission then return end
+
+	local pzy = LActor.getIntProperty(sysarg, PROP_CAMP)
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	if var.chapterstate == nil then
+		var.chapterstate = {}
+	end
+
+	local conf
+	for _, v in pairs(QuestChapter) do
+		local taskConf = v.task
+		for _, y in pairs(taskConf) do
+			if y.zy == 0 and y.finishid == mission then
+				conf = v
+			elseif y.zy == pzy and y.finishid == mission then
+				conf = v
+			end
+		end
+	end
+
+	if not conf then return end
+	if not conf.cid then return end
+
+	if var.chapterstate[conf.cid] ~= 0 then return end
+
+	--设置可领取状态
+	var.chapterstate[conf.cid] = 2
+
+	--触发完成成就
+	LActor.triggerAchieveEvent(sysarg, 74, conf.cid)
+
+	--下发章节信息
+	local npack = DataPack.allocPacket(sysarg, 6, 14)
+    if npack == nil then return end
+	for m=1,#QuestChapter do
+		local cid = QuestChapter[m].cid
+		--debug_print("**********  "..cid.."     "..var.chapterstate[cid])
+		DataPack.writeInt(npack, var.chapterstate[cid])
+	end
+    DataPack.flush(npack)
+end

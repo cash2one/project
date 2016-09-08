@@ -1,0 +1,27 @@
+﻿--lua script
+--本文件是用于定义灵根相关的任务
+
+--将XX灵根点到XX级即可完成任务
+RootQuest = 
+{
+	{
+		root = 1, -- 第几条灵根，从1开始
+		level = 3, -- 灵根等级，从1开始
+		quests =  -- 完成的任务
+		{
+			{qid = 305, tid = 20210,count=1},  
+		},
+	}, 
+} 
+
+
+--任务配置中需要添加下面代码
+
+--[[
+PromCallBack = function(sysarg,mission) 
+    local root, level = LActor.getRootData(sysarg) -- 获取灵根和等级
+    if root >= 1 and level >= 2 then -- xx灵根大于或等于1，等级大于或等于2就完成任务
+    	LActor.setQuestValue(sysarg, 274, 20201, 1)
+    end 
+end,
+]] 

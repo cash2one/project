@@ -1,0 +1,24 @@
+
+
+fenfawupin = {}
+
+
+
+function fenfawupin.accepttask ( actorobj , taskid)
+	-- body
+	debug_print("----------接受分发任务------------")
+end
+
+function  fenfawupin.committask( actorobj , taskid)
+	-- body
+	debug_print("----------提胶分发任务------------")
+end
+
+function fenfawupin.abandontask( actorobj , taskid)
+	-- body
+end
+
+
+
+ActorQuestCallDispatcher.registerPlayType(BaseTypes.BaseQuestAction.qaAccept, BaseTypes.BaseQuestPlayType.qptDispatchItem, fenfawupin.accepttask) -- 注册接受任务的侦听
+ActorQuestCallDispatcher.registerPlayType(BaseTypes.BaseQuestAction.qaCommit, BaseTypes.BaseQuestPlayType.qptDispatchItem, fenfawupin.committask) -- 注册完成任务的侦听

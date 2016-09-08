@@ -1,0 +1,104 @@
+﻿-- 信使守护怪物处理
+
+--#include "data\config\task\slshconf.txt" once
+--#include "data\functions\tasks\teamfuben\slshpublic.txt" once
+
+local SlshMonFunc = {}
+
+-- 刷新怪物
+SlshMonFunc.OnRefreshMonster = function(monster, monId)
+	-- 设置攻击目标
+	local target = Fuben.getMonsterPtrById(LActor.getSceneHandle(monster), SlshConf.dxMonster)
+	if target ~= nil then
+		LActor.setMonsterFinalTarget(monster, target)
+	end
+end
+
+-- 杀死怪物
+SlshMonFunc.OnKillMonster = function(monster,sysarg,mid)
+	if sysarg == nil then return end
+	if LActor.getFubenId(sysarg) ~= SlshConf.fbid then return end
+
+	local pfb = LActor.getFubenPrt(sysarg)
+	if pfb == nil then return end
+
+	local rd = Fuben.getFubenProgress(pfb) -- 第几层
+
+	local conf = SlshConf.rounds[rd]
+	if conf == nil then
+		print("slsh round id error")
+		return
+	end
+
+	local exp = 0
+	if SlshConf.awardSet ~= nil then
+		if SlshConf.awardSet[mid] ~= nil then
+			exp  = SlshConf.awardSet[mid]
+		end
+	end
+	-- 统计用
+	local fvar = Fuben.getDyanmicVar(pfb)
+	if fvar ~= nil and fvar.fbRestMonster ~= nil then
+		fvar.fbRestMonster = fvar.fbRestMonster - 1
+
+		-- 给所有人发送剩余怪物数
+		local actors = LuaHelp.getFbActorList(pfb)
+		if actors ~= nil then
+			for i=1,#actors do
+				--print("exp::::: "..exp.."minid: "..mid.."i: "..i)
+				LActor.addExp(actors[i], exp, 202, 0)
+				LActor.SendAndChangeCaleValue(actors[i], caleRemainMonster, fvar.fbRestMonster, false)
+				--LActor.SendAllCaleValue(actors[i])
+			end
+		end
+
+		if fvar.fbRestMonster <= 0 then -- 怪杀光了，通关
+			SlshPublic.OnTongGuan(pfb, rd)
+		end
+	end
+end
+
+-- 圣灵雕像怪物死亡
+MonDieDispatcher.OnSlshDxDie = function(monster, sysarg, monId)
+	-- 挑战失败
+	SlshPublic.OnFailed(LActor.getFubenPrt(monster))
+end
+
+
+SlshMonFunc.MonDieDeal = function ( mon, sysarg, mid )
+	-- body
+	local exp = 0
+	if SlshConf.awardSet ~= nil then
+		if SlshConf.awardSet[mid] ~= nil then
+			exp  = SlshConf.awardSet[mid]
+		end
+	end
+	
+	local pfb = LActor.getFubenPrt(sysarg)
+	local actors = LuaHelp.getFbActorList(pfb)
+	if actors == nil then return end
+	for i = 1,#actors do
+		local actor = actors[i]
+		LActor.addExp(actor, exp, 202, 0)
+		LActor.SendAllCaleValue(actor)
+	end
+
+end
+
+if SlshConf.refreshMonster ~= nil and type(SlshConf.refreshMonster) == "table" then
+	for i,v in ipairs(SlshConf.refreshMonster) do
+		MonDieDispatcher.register(v, SlshMonFunc.MonDieDeal)
+	end
+end
+
+
+MonDieDispatcher.register(SlshConf.dxMonster, MonDieDispatcher.OnSlshDxDie)
+
+for i=1,#SlshConf.rounds do
+	local mons = SlshConf.rounds[i].monsters
+	for j=1,#mons do
+		local mid = mons[j]
+		MonMobDispatcher.register(mid, SlshMonFunc.OnRefreshMonster)
+		MonDieDispatcher.register(mid, SlshMonFunc.OnKillMonster)
+	end
+end

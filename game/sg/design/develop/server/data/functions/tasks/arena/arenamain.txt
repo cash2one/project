@@ -1,0 +1,29 @@
+﻿-- 自由赛报名NPC
+
+--#include "data\language\LangCode.txt" once
+--#include "data\config\misc\arenaconfig.txt" once
+
+MAX_MATCH = 50
+
+function ArenaSignUp_Main(sysarg, str)
+	-- 判断等级条件
+	if LActor.getLevel(sysarg) < ArenaConf.openLevel then
+		return str
+	end
+
+	str = str.."\\"..Lang.TaskTalk.pks001.."/@ArenaSignUp" -- 报名
+	return str
+end
+
+-- 自由赛报名
+function ArenaSignUp(sysarg)
+	local var_sys_d = System.getDyanmicVar()
+	if var_sys_d == nil or var_sys_d.zysstate ~= 1 then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.jjc002, ttMessage)
+		return 
+	end
+	
+	LActor.callFunc(sysarg, "OnArenaSignUp")
+end
+
+table.insert(MainFnTable,ArenaSignUp_Main)

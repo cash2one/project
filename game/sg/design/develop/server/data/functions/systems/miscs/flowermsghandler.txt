@@ -1,0 +1,619 @@
+--鲜花系统的消息号处理 
+--msgid:21
+
+--#include "data\functions\GlobalDefine.txt" once
+--#include "data\functions\Systems\FlowerSystem\config.txt" once
+--#include "data\config\achieve\titles.txt" once
+--#include "data\config\quest\MiscQuest.txt" once
+--#include "data\functions\systems\marry\marryhandle.txt" once
+--#include "data\functions\tasks\fengcereward\fcactivefunc.txt" once
+--#include "data\functions\systems\timereward\singledayhandler.txt" once
+--#include "data\functions\systems\timereward\receiveflowerhandler.txt" once
+--#include "data\functions\systems\timereward\charmrankhandle.txt" once
+--#include "data\config\misc\friendrelevantconfig.txt" once
+
+flowerEff90 = 5     --特效id
+flowerEff501 = 6 
+flowerEff1001 = 1
+
+ 
+
+-------------------------------------------------------------------------
+---------------------------业务逻辑分割线--------------------------------
+-------------------------------------------------------------------------
+
+MiscsImplement.giveFlowerHandler = function (sysarg, msgid, packet)    
+	local id = DataPack.readInt(packet) --鲜花的道具
+	local addexp = 0
+	local flowers = DataPack.readInt(packet)	--朵数
+	--local name = DataPack.readString(packet)
+	local player_id = DataPack.readInt(packet)
+	local itemId = id
+	local fc = 0                         --玩家收到鲜花的朵数
+	local Intimacy = 0
+	if id == friendconfig.flowerId1 then
+		addexp = friendconfig.qinmidu1 * flowers
+		fc = flowers
+	end
+
+	if id == friendconfig.flowerId2 then
+		addexp = friendconfig.qinmidu2
+		fc = 9
+
+	end
+
+	if id == friendconfig.flowerId3 then
+		addexp = friendconfig.qinmidu3
+		fc = 99
+
+	end
+
+	if id == friendconfig.flowerId4 then
+		addexp = friendconfig.qinmidu4
+		fc = 999
+	end
+	-- System.broadcastLevelTipmsg(str, 31, ttGmTip)
+	-- str1 = string.format(Lang.ScriptTips.ggj003, Singledayconf.textbuttonID)
+	-- System.broadcastLevelTipmsg(str1, 31, ttHearsay)
+		
+
+	--local actPtr = LActor.getActorPtrByName(name)
+	local actPtr = LActor.getActorById(player_id)
+	local actorname = LActor.getName(sysarg)
+	--local actorid = LActor.getActorId(sysarg)
+	local flowerId = friendconfig.flowerId
+	local levelexp = friendconfig.levelexp
+
+	if actPtr == nil then
+		LActor.sendTipmsg(sysarg,Lang.Flower.f001,ttWarmTip)	--不在线
+		return
+	end
+	local name = LActor.getName(actPtr)
+    if flowers < 1 then 
+    	LActor.sendTipmsg(sysarg,lang.flower.f008,ttWarmTip)     --至少要送一朵花
+    	return 
+    end
+    
+    if not LActor.isFriend(sysarg, LActor.getActorId(actPtr)) or    --必须要是对方好友才能送花
+		not LActor.isFriend(actPtr, LActor.getActorId(sysarg)) then
+		LActor.sendTipmsg(sysarg, Lang.flower.f009, ttMessage)
+		return
+	end
+     
+    
+    if LActor.getItemCount(sysarg,itemId) < flowers then             --判断花的数量是否够
+         --LActor.sendTipmsg(sysarg,Lang.flower.f003,ttWarmTip)
+         LActor.SendGeneralTips(sysarg, 2, itemId, 0)
+         return
+    end
+    
+    local actoridp = LActor.getActorId(sysarg)
+    local actorid = LActor.getActorId(actPtr)
+    local friendly = LActor.getFriendfriendly(sysarg,actorid,1)  --获取亲密度
+    local friendlylvl = LActor.getFriendfriendlylvl(sysarg,actorid,1)  --获取亲密度等级
+	--count = count + fc 
+    --LActor.setFlowercount(sysarg,actorpr,count)   --设置玩家收花的数量
+    
+    if not friendly or friendly < 0 then 
+        friendly = 0
+    end
+    print("=======亲密度等级",friendlylvl,#levelexp)
+    if friendlylvl >= #levelexp then 
+        LActor.sendTipmsg(sysarg,Lang.flower.f010,ttWarmTip)  --已经达到最高级了
+    end
+    
+  
+	--扣除物品
+	LActor.removeItem(sysarg,itemId,flowers)
+	local now_count = LActor.getItemCount(sysarg,itemId)
+	local  str = LActor.getStaticVar(actPtr)
+	local time = System.getCurrMiniTime()   --记录当前送花时间 
+
+    --插入鲜花的列表
+    --local count = LActor.getfriendcount(sysarg)
+    if str.newFlowersLogList == nil then
+    	str.newFlowersLogList = {}
+    end
+    if str.FlowersLogList ~= nil then
+    	str.FlowersLogList = nil
+    end
+   -- if str.FlowersLogList == nil then str.FlowersLogList = {} end   --赠送记录列表
+   	if str.FlowersRangking == nil then str.FlowersRangking = {} end  --赠送排行列表
+    local sign = true
+    local page = 1
+    --local temp = #(str.FlowersLogList) + 1 
+    local rank = #(str.FlowersRangking) + 1
+	-- str.FlowersLogList[temp] = {}
+	-- str.FlowersLogList[temp][1] = actorname
+	-- str.FlowersLogList[temp][2] = fc
+	-- str.FlowersLogList[temp][3] = actoridp
+	-- str.FlowersLogList[temp][4] = time
+	
+	if #str.newFlowersLogList >= 5 then
+		for i=1,#str.newFlowersLogList do
+			str.newFlowersLogList[i].name = str.newFlowersLogList[i+1].name
+			str.newFlowersLogList[i].fc = str.newFlowersLogList[i+1].fc
+			if i == 4 then
+				break
+			end
+		end
+	end
+
+	if #str.newFlowersLogList >= 5 then
+		str.newFlowersLogList[#str.newFlowersLogList].name= actorname
+		str.newFlowersLogList[#str.newFlowersLogList].fc = fc
+	else
+		local index = #str.newFlowersLogList + 1
+		str.newFlowersLogList[index] = {}
+		str.newFlowersLogList[index].name = actorname
+		str.newFlowersLogList[index].fc = fc
+	end
+	if rank == 1 then
+    	str.FlowersRangking[rank] = {}
+	    str.FlowersRangking[rank][1] = actorname
+	    str.FlowersRangking[rank][2] = fc
+	    str.FlowersRangking[rank][3] = actoridp
+	    sign = false
+    else 
+	    for i=1,#(str.FlowersRangking) do
+            if str.FlowersRangking[i] ~= nil then
+	    	    if str.FlowersRangking[i][3] == actoridp then   
+                    str.FlowersRangking[i][2] = fc + str.FlowersRangking[i][2]
+                    sign = false
+	    	    end
+            end
+		end
+	end
+	if sign == true then
+	    str.FlowersRangking[rank] = {}
+	    str.FlowersRangking[rank][1] = actorname
+	    str.FlowersRangking[rank][2] = fc
+	    str.FlowersRangking[rank][3] = actoridp
+	end
+
+	--log
+	local ownercharm = LActor.getIntProperty(sysarg,PROP_WEEK_CHARM)
+	local targetcharm = LActor.getIntProperty(actPtr,PROP_WEEK_CHARM)
+    
+
+	System.logCounter(LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), "item", now_count .. "_" .. 1, ownercharm .. "_" .. targetcharm, "songhua", Item.getItemName(itemId), actorName, LActor.getName(sysarg), "", lfDB)
+	local page = 1
+	--通知客户端
+
+	--发全服公告
+	if fc == 99 then
+		local msg = nil
+		local giveName = LActor.getName(sysarg)
+		local campGive = LActor.getCampId(sysarg)
+		if nameType == 1 then
+			giveName = LActor.getName(sysarg)
+		end
+		local act_camp = LActor.getCampId(actPtr)
+		-- msg = string.format(Lang.Flower.f011, CampColor[act_camp], CampShortName[act_camp], LActor.getName(actPtr)
+		-- 	, CampColor[campGive], CampShortName[campGive], giveName,fc)
+        msg = string.format(Lang.Flower.f005, giveName, fc, LActor.getName(actPtr))
+		System.broadcastTipmsg(msg, ttGmTip)
+
+		local npack = DataPack.allocPacket(sysarg,139,224)  
+		if npack == nil then return end
+		DataPack.flush(npack)
+
+		local npack1 = DataPack.allocPacket(actPtr,139,224)  
+		if npack1 == nil then return end
+		DataPack.flush(npack1)
+	elseif fc == 999 then
+		local msg = nil
+		local giveName = LActor.getName(sysarg)
+		local campGive = LActor.getCampId(sysarg)
+		if nameType == 1 then
+			giveName = LActor.getName(sysarg)
+		end
+		local act_camp = LActor.getCampId(actPtr)
+		-- msg = string.format(Lang.Flower.f011, CampColor[act_camp], CampShortName[act_camp], LActor.getName(actPtr)
+		-- 	, CampColor[campGive], CampShortName[campGive], giveName,fc)
+		msg = string.format(Lang.Flower.f011,giveName,fc, LActor.getName(actPtr) )
+		System.broadcastTipmsg(msg, ttGmTip)
+
+		local dp = LDataPack.allocPacket()
+		if dp == nil then return end
+
+		LDataPack.writeByte(dp, 139)
+		LDataPack.writeByte(dp, 223)
+
+		System.broadcastData(dp)
+	end
+    
+    --增加亲密度
+
+   	if not str.flowers then 
+   		str.flowers = 0
+   	end
+    
+ 
+   	str.flowers = str.flowers + fc    --收到鲜花总数
+
+    local friendly = friendly + addexp 
+    local isFind = false 
+    local nlevel = #levelexp
+    --print("====送花的数据",friendly,nlevel)
+    while friendlylvl < nlevel do 
+        local lvlexp = levelexp[friendlylvl + 1]
+        --print("====送花的数据",friendly,lvlexp,friendlylvl,nlevel)
+        if lvlexp <= friendly then 
+            --friendly = friendly - lvlexp
+            friendlylvl = friendlylvl + 1
+            --print("---kkkkkkkkkkk",friendlylvl)
+            LActor.friendlyUpLevel(sysarg,actorid,friendly, friendlylvl,0)
+            LActor.friendlyUpLevel(actPtr,actoridp,friendly, friendlylvl,0)
+        else 
+        	isFind = true
+        	break
+        end
+    end
+    if isFind == true then
+    	--print("=======在这里达到了最高级")
+        if friendlylvl >= nlevel then
+        	--print("---yyyyyyyyyyy",lvlexp)
+        	LActor.friendlyUpLevel(sysarg,actorid,friendly, lvlexp,0)
+            LActor.friendlyUpLevel(actPtr,actoridp,friendly, lvlexp,0)
+            LActor.sendTipmsg(sysarg,Lang.flower.f011,ttTipmsgWindow)    --已经达到最高等级
+            return
+        end
+    end
+    page = 0
+    if friendlylvl >= nlevel then 
+       friendlylvl = nlevel
+    end
+    if friendly >= levelexp[nlevel] then
+    	friendly = levelexp[nlevel]
+	end
+    LActor.friendlyUpLevel(sysarg, actorid,friendly, friendlylvl, 0)        --设置亲密度
+    LActor.friendlyUpLevel(actPtr, actoridp,friendly, friendlylvl, 0)
+
+    MiscsImplement.FlowerLog(sysarg,actPtr)								--发送收花记录给好友
+    MiscsImplement.FlowerRingks(sysarg,actPtr)
+    --LActor.flowerscount(sysarg,actorid,count)
+
+    local npack = DataPack.allocPacket(actPtr,LogicCmd.miscSys.sysId,22)
+	if npack == nil then return end
+	DataPack.writeWord(npack,fc)
+	DataPack.writeString(npack,LActor.getName(sysarg))
+	DataPack.writeInt(npack, LActor.getActorId(sysarg))
+	DataPack.writeInt(npack, LActor.getIntProperty(sysarg, PROP_CAMP))
+	DataPack.writeInt(npack, LActor.getIntProperty(sysarg, PROP_VOCATION))
+	DataPack.writeInt(npack, LActor.getIntProperty(sysarg, PROP_LEVEL))
+	DataPack.writeInt(npack, LActor.getIntProperty(sysarg, PROP_SEX))
+	DataPack.writeInt(npack, LActor.getIntProperty(sysarg, PROP_ICON))
+	DataPack.writeInt(npack, friendly)
+	DataPack.writeInt(npack, friendlylvl)
+	DataPack.writeInt(npack, fc)
+	DataPack.flush(npack)
+
+	local npack = DataPack.allocPacket(sysarg,LogicCmd.miscSys.sysId,184)
+	if npack == nil then return end
+	DataPack.writeInt(npack,actorid)
+	DataPack.writeInt(npack,now_count)
+	DataPack.writeInt(npack,page)
+	DataPack.writeInt(npack,friendly)
+	DataPack.writeInt(npack,friendlylvl)
+	DataPack.flush(npack)
+ 
+
+   	local var = LActor.getStaticVar(sysarg)
+   	if not var.Flowers_count then
+   		var.Flowers_count = 0
+   	end 
+ 	
+   	var.Flowers_count = var.Flowers_count + fc
+
+   	local f_count = var.Flowers_count
+   	local R_count = str.flowers
+   	--保存鲜花数据
+   	LActor.SetFlowers(sysarg,LActor.getActorId(sysarg),f_count,time)
+   	LActor.SetReceFlowers(sysarg,LActor.getActorId(actPtr),R_count,time)
+
+   	--鲜花成就
+   	LActor.SetAchieveProcessByType(sysarg,38,1,fc)
+   	LActor.SetAchieveProcessByType(actPtr,39,1,fc)
+
+   	--送花日常
+   	LActor.OnQuestEvent(qtZengSongMeiGui,0,fc,true,sysarg,false)
+
+   	-- 七夕送花
+   	QixiTitleTriggerTarget( sysarg, 2, 1, fc )
+
+   	FlowerRankActivitySendFlower(sysarg, actorid, name, LActor.getActorjob(actPtr), fc)
+
+   	--活动，玫瑰之约
+   	--activityFunc.onSendFlower(sysarg,actPtr,fc)
+------------------------------下面是鲜花相关的
+    if var == nil then return end
+	if var.myflowercount == nil then var.myflowercount = 0 end      --获取鲜花
+
+
+
+	-- --增加魅力值
+	-- LActor.changeCharm(actPtr, fc)
+	-- LActor.changeCharm(sysarg, fc)
+
+	-- -- 周魅力
+	-- local old = LActor.getIntProperty(actPtr,PROP_WEEK_CHARM)
+	-- old = old + fc
+	-- LActor.setUIntProperty(actPtr,PROP_WEEK_CHARM,old)
+
+	-- old = LActor.getIntProperty(sysarg,PROP_WEEK_CHARM)
+	-- old = old + fc
+	-- LActor.setUIntProperty(sysarg,PROP_WEEK_CHARM,old)
+
+
+
+ --    --[[这里是增加结婚的亲密度，先注释
+	-- local st = LActor.getStaticVar(sysarg)
+	-- if st.marry.actorid ~= nil and st.marry.actorid == LActor.getActorId(actPtr) then
+	-- 	st.marry.qm = st.marry.qm + fc * 5
+	-- 	LActor.sendTipmsg(sysarg, string.format(Lang.ScriptTips.mry35, fc * 5), ttTipmsgWindow)
+	-- 	MarryFuncList.SendData(sysarg, st)
+
+	-- 	st = LActor.getStaticVar(actPtr)
+	-- 	st.marry.qm = st.marry.qm + fc * 5
+	-- 	LActor.sendTipmsg(actPtr, string.format(Lang.ScriptTips.mry35, fc * 5), ttTipmsgWindow)
+
+	-- 	MarryFuncList.SendData(actPtr, st)
+	-- end
+ --   ]]
+	-- -- 魅力排行榜活动   chenyoujun
+	-- ONLINEREWARD.charmRankFunc.actorCharmPoint(sysarg,fc)
+	-- ONLINEREWARD.charmRankFunc.actorCharmPoint(actPtr,fc)
+	-- -- 魅力排行榜活动 end   chenyoujun
+
+	-- --播放特效
+	-- if fc >= 90 and fc <= 500 then
+	-- 	--System.playScrEffectCode(flowerEff90 , 12)	--全服
+	-- end
+
+	-- if fc >= 501 and fc <= 1000 then 
+	-- 	--system.playScrEffectCode(flowerEff501,18)
+ --    end
+
+	-- if fc >= 1001 and fc <= 9999 then 
+	-- 	--System.playScrEffectCode(flowerEff1001, 20)	--全服
+	-- end
+	
+	-- for i = 1, #FlowerQuest do
+	-- 	local data = FlowerQuest[i]
+	-- 	LActor.setQuestValue(sysarg,data.qid,data.id,data.count)
+	-- end
+	
+	-- LActor.triggerTarget(sysarg, enATFlower)
+	-- LActor.triggerTarget(actPtr, enATFlower)
+	-- FCActivityHandler.ActivityReward (sysarg)
+
+	-- -- 情人节活动
+	-- local var_sys_d = System.getDyanmicVar()
+	-- if var_sys_d.giftFlowerStatus ~= nil and var_sys_d.giftFlowerStatus == 1 then
+	-- 	LActor.callFunc(sysarg, "OnQrjEvent", 1, itemIdIndex)
+	-- end
+	
+	-- for i = 1, #GetFlowerQuest do
+	-- 	local data = GetFlowerQuest[i]
+	-- 	LActor.setQuestValue(actPtr,data.qid,data.id,data.count)
+	-- end
+	-- LActor.sendTipmsg( sysarg, Lang.Flower.f007, ttWarmTip )
+
+	-- SingledayHandler.flowerrank(sysarg, fc) -- 送花排行
+	-- ReceiveFlowerHandler.flowerrank(actPtr,fc) --收花排行
+end
+
+
+
+--获取送花的列表记录
+MiscsImplement.FlowerLog = function(sysarg,actor)
+
+	local var = LActor.getStaticVar(actor)
+	if var == nil then return end
+	if var.FlowersLogList ~= nil then
+		var.FlowersLogList = nil 
+	end
+	-- if var.FlowersLogList == nil then 
+	-- 	var.FlowersLogList = {}
+ --    end
+	--if #var.FlowersLogList == 0 then return end  --没有记录
+	if var.newFlowersLogList == nil then
+		var.newFlowersLogList = {}
+	end
+ -- 	local ranks = {}
+    
+	-- for i=1,#var.FlowersLogList do
+	-- 	ranks[i] = {}
+	-- 	ranks[i].name = var.FlowersLogList[i][1]
+	-- 	ranks[i].fc = var.FlowersLogList[i][2]
+	-- 	ranks[i].id	= var.FlowersLogList[i][3]
+	-- 	ranks[i].time = var.FlowersLogList[i][4]
+	-- end
+	-- table.sort(ranks, function(a,b) return (a.time > b.time) end) 
+    local npack = DataPack.allocPacket(actor, 139, 21)
+    if npack == nil then return end
+    -- local count = 0
+
+    -- local total = 0
+    -- for i = 1, #var.FlowersLogList do
+    -- 	if var.FlowersLogList[i] ~= nil then
+    -- 		total = total + 1
+    -- 		if total >= 5 then
+    -- 			total = 5
+    -- 		end
+    -- 	end
+    -- end
+
+ 	DataPack.writeInt(npack,var.flowers)
+    DataPack.writeInt(npack, #var.newFlowersLogList)
+    for i = #var.newFlowersLogList,1,-1 do    
+        local char_name = var.newFlowersLogList[i].name
+        local char_count = var.newFlowersLogList[i].fc
+        DataPack.writeString(npack, char_name)
+        DataPack.writeInt(npack,char_count)	   
+    end
+    DataPack.flush(npack)
+end
+
+--获取送花前三的列表记录
+MiscsImplement.FlowerRingks = function(sysarg,actor)
+	local var = LActor.getStaticVar(actor)
+	if var == nil then return end
+	if var.FlowersRangking == nil then 
+		var.FlowersRangking = {}
+    end
+
+	--if #var.FlowersLogList == 0 then return end  --没有记录
+
+ 	local ranks = {}
+
+    
+	for i=1,#var.FlowersRangking do
+		ranks[i] = {}
+		ranks[i].name = var.FlowersRangking[i][1]
+		ranks[i].fc = var.FlowersRangking[i][2]
+		ranks[i].id	= var.FlowersRangking[i][3]
+	end
+	table.sort(ranks, function(a,b) return (a.fc > b.fc) end) 
+    local npack = DataPack.allocPacket(actor, 139, 183)
+    if npack == nil then return end
+
+    local total = #ranks
+    if #ranks >= 3 then
+    	total = 3
+    end
+    -- for i = 1, #var.FlowersLogList do
+    -- 	if var.FlowersLogList[i] ~= nil then
+    -- 		total = total + 1
+    -- 		if total >= 3 then
+    -- 			total = 3
+    -- 		end
+    -- 	end
+    -- end
+    DataPack.writeInt(npack, total)
+    for i = 1,total do
+        local val = ranks[i]
+        if val ~= nil then
+	        local char_name = val.name
+	        local char_count = val.fc
+	        DataPack.writeString(npack, char_name)
+	        DataPack.writeInt(npack,char_count) 
+	    else
+	      	break
+	    end
+    end
+    DataPack.flush(npack)
+end
+
+
+
+
+--玩家登录
+MiscsImplement.onlogin = function(sysarg)
+	
+	local var = LActor.getStaticVar(sysarg)
+ 
+    -- if not var.FlowersLogList then
+    --    var.FlowersLogList = {}
+    -- end
+    if var.FlowersLogList ~= nil then
+    	var.FlowersLogList = nil
+    end
+    if not var.FlowersRangking then
+    	var.FlowersRangking = {}
+    end
+
+    if not rangsking then
+    	rangsking = {}
+    end
+
+    -- if not ranks then
+    --    ranks = {}
+    -- end
+    if var.newFlowersLogList == nil then
+    	var.newFlowersLogList = {}
+    end
+    if not var.flowers then
+    	var.flowers = 0
+    end
+
+    -- for i=1,#var.FlowersLogList do
+    --     ranks[i] = {}
+    --     ranks[i].name = var.FlowersLogList[i][1]
+    --     ranks[i].fc = var.FlowersLogList[i][2]
+    --     ranks[i].id = var.FlowersLogList[i][3]
+    --     ranks[i].time = var.FlowersLogList[i][4]
+    -- end
+
+    --table.sort(ranks, function(a,b) return (a.time > b.time) end) 
+    
+
+    for i=1,#var.FlowersRangking do
+        rangsking[i] = {}
+        rangsking[i].name = var.FlowersRangking[i][1]
+        rangsking[i].fc = var.FlowersRangking[i][2]
+        rangsking[i].id = var.FlowersRangking[i][3]
+    end
+    --table.sort(ranks, function(a,b) return (a.fc > b.fc) end) 
+
+    local total = 0
+    local rank = 0
+
+ 
+     
+    -- for i = 1, #var.FlowersLogList do
+    -- 	if var.FlowersLogList[i] ~= nil then
+    -- 		total = total + 1
+    -- 		if total >= 5 then
+    -- 			total = 5
+    -- 		end
+    -- 	end
+    -- end
+
+    for i = 1, #var.FlowersRangking do
+    	if var.FlowersRangking[i] ~= nil then
+    		rank = rank + 1
+    		if rank >= 3 then
+    			rank = 3
+    		end
+    	end
+    end
+
+    
+    local pack = DataPack.allocPacket(sysarg, 139, 21)
+    if pack == nil then return end
+    DataPack.writeInt(pack,var.flowers)
+    DataPack.writeInt(pack, #var.newFlowersLogList)
+    for i = #var.newFlowersLogList,1,-1 do 
+	    local char_name = var.newFlowersLogList[i].name
+	    local char_count = var.newFlowersLogList[i].fc
+	    DataPack.writeString(pack, char_name)
+	    DataPack.writeInt(pack,char_count)       
+    end
+    DataPack.flush(pack)   
+
+    local npack = DataPack.allocPacket(sysarg, 139, 183)
+    if npack == nil then return end
+    DataPack.writeInt(npack, rank)
+    for i = 1,rank do
+        local val = rangsking[i]
+        if val ~= nil then 
+	        local name = val.name
+	        local count = val.fc
+	        DataPack.writeString(npack, name)
+	        DataPack.writeInt(npack,count)
+	    else
+	      	break
+	    end
+    end
+    DataPack.flush(npack)   
+end
+
+
+
+
+
+MiscsImplement.registerMsgHandler(LogicCmd.miscSys.sub.cFlower, MiscsImplement.giveFlowerHandler)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, MiscsImplement.NewDaygetkey )
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin,MiscsImplement.onlogin)

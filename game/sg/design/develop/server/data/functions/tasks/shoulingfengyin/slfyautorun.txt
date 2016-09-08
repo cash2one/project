@@ -1,0 +1,177 @@
+﻿--lua script
+--仙灵封印 定时执行
+
+--#include "data\config\task\SLFYConf.txt" once --仙灵封印配置
+--#include "data\functions\bifunc.txt" once
+
+LocalDT.SLFYAutoRunFunc ={}
+
+
+-- 仙灵封印活动的持续时间(秒)
+LocalDT.SLFYAutoRunFunc.activityTime = 0
+
+LocalDT.SLFYAutoRunFunc.CheckActivityDayOfWeek = function()
+	local days = SLFYConf.dayOfWeek
+	if not days or #days==0 then return true end
+	local nday = System.getDayOfWeek()
+	for i=1, #days do
+		if nday == days[i] then
+			return true
+		end
+	end
+	return false
+end
+
+--活动预告
+function OnSLFYActivityNotice(sysarg)
+	--print( "slfy notice" )
+	if not LocalDT.SLFYAutoRunFunc.CheckActivityDayOfWeek() then return end		--不满足星期的第几天
+	System.broadcastTipmsg(Lang.ScriptTips.slfy0006,ttScreenCenter)
+	
+	local sNextCall = string.format("%d-%d-%d %d:%d",SLFYConf.startDate[1], SLFYConf.startDate[2], SLFYConf.startDate[3], SLFYConf.startTime[1], SLFYConf.startTime[2])
+	LocalDT.SLFYAutoRunFunc.startTimer = System.registerTimeCall(thisNPC,"OnSLFYActivityStart",sNextCall,SLFYConf.timeCycle,false)
+end
+
+--活动开始
+function OnSLFYActivityStart(sysarg)
+	--print( "slfy start" ) 
+	if not LocalDT.SLFYAutoRunFunc.CheckActivityDayOfWeek() then return end		--不满足星期的第几天
+	System.broadcastTipmsg(Lang.ScriptTips.slfy0003,ttScreenCenter)
+	System.broadcastTipmsg(Lang.ScriptTips.slfy0003..Lang.ScriptTips.slfy0008, ttChatWindow)
+	
+	--设置结束时间
+	local sNextCall = string.format("%d-%d-%d %d:%d",SLFYConf.startDate[1], SLFYConf.startDate[2], SLFYConf.startDate[3], SLFYConf.endTime[1], SLFYConf.endTime[2])
+	LocalDT.SLFYAutoRunFunc.endTimer = System.registerTimeCall(thisNPC,"OnSLFYActivityEnd",sNextCall,SLFYConf.timeCycle,false)
+end
+
+--活动结束
+function OnSLFYActivityEnd(sysarg)
+	--print( "slfy end" )
+	if not LocalDT.SLFYAutoRunFunc.CheckActivityDayOfWeek() then return end		--不满足星期的第几天
+	
+	local sceneid = SLFYConf.sceneId
+	local fblist = LuaHelp.getFbFromId( SLFYConf.fubenId )
+	if not fblist then return end
+	for i=1, #fblist do
+		local fbHandle = fblist[i]
+		if fbHandle ~= 0 then
+			local fbPtr = Fuben.getFubenPtr( fbHandle )
+			local var = Fuben.getDyanmicVar(fbPtr)		--判断是否杀死boss
+			if var ~= nil then
+				local hscene = Fuben.getSceneHandleById(sceneid,fbHandle)
+				-- 怪物未被杀死，发送场景公告
+				if not var.bossIsKilled then
+					Fuben.sendMsgToScene(hscene,Lang.ScriptTips.slfy0002,ttScreenCenter)
+					BiFunc.LogFengYin(var.guildid, var.bossStage, 0) -- 记录到BI
+				end
+				-- 删除怪物
+				if var.monsterId ~= nil then
+					Fuben.clearMonster(hscene, var.monsterId)
+				end
+				-- 删除赤元子分身
+				Fuben.clearMonster(hscene,SLFYConf.callMonsterId)
+				-- 删除被附身玩家的buff
+				local hPlayer = var.randPlayer
+				if hPlayer ~= nil then
+					randPlayer = LActor.getEntity( hPlayer )
+					if randPlayer ~= nil then
+						local buff1 = SLFYConf.addBuffInfo1
+						local buff2 = SLFYConf.addBuffInfo2
+						LActor.delBuff( randPlayer, buff1.type, buff1.group )
+						LActor.delBuff( randPlayer, buff2.type, buff2.group )
+						LActor.delBuff( randPlayer, 79, 0 )	--先删除禁止刷新外观buff，删除这个buff后会自动刷新外观
+						LActor.setExitSceneEvent( randPlayer, false ) -- 退出场景时就不需要触发脚本了
+					end
+				end 
+				-- 清空召唤过boss标志
+				var.hasCallBoss = nil
+			end
+		end
+	end
+	--全服播报
+	System.broadcastTipmsg( Lang.ScriptTips.slfy0007, ttScreenCenter + ttChatWindow )
+end
+
+--比较时间是否小于
+function timeCompare( hour1, minute1, second1, hour2, mimute2, second2 )
+	if hour1 > hour2 then
+		return false
+	elseif hour1 < hour2 then
+		return true
+	end
+	if minute1 > minute1 then
+		return false
+	elseif minute1 < minute1 then
+		return true
+	end
+	return ( second1 < second2 )
+end
+
+LocalDT.SLFYAutoRunFunc.SLFYAutoRun_Init = function (npcobj)
+	-- 初始化活动时间
+	local sTime = SLFYConf.startTime
+	local eTime = SLFYConf.endTime
+	LocalDT.SLFYAutoRunFunc.activityTime = (eTime[1] - sTime[1]) * 3600 + (eTime[2] - sTime[2]) * 60 + (eTime[3] - sTime[3])
+	print("slfy activity time:"..LocalDT.SLFYAutoRunFunc.activityTime)
+
+	--注册预告定时器
+	local sNextCall
+	--= string.format("%d-%d-%d %d:%d",SLFYConf.startDate[1], SLFYConf.startDate[2], SLFYConf.startDate[3], SLFYConf.noticeTime[1], SLFYConf.noticeTime[2])
+	--LocalDT.SLFYAutoRunFunc.noticeTimer = System.registerTimeCall(thisNPC,"OnSLFYActivityNotice",sNextCall,SLFYConf.timeCycle,false)
+	
+	sNextCall = string.format("%d-%d-%d %d:%d",SLFYConf.startDate[1], SLFYConf.startDate[2], SLFYConf.startDate[3], SLFYConf.startTime[1], SLFYConf.startTime[2])
+	LocalDT.SLFYAutoRunFunc.startTimer = System.registerTimeCall(thisNPC,"OnSLFYActivityStart",sNextCall,SLFYConf.timeCycle,false)
+	
+	sNextCall = string.format("%d-%d-%d %d:%d",SLFYConf.startDate[1], SLFYConf.startDate[2], SLFYConf.startDate[3], SLFYConf.endTime[1], SLFYConf.endTime[2])
+	LocalDT.SLFYAutoRunFunc.endTimer = System.registerTimeCall(thisNPC,"OnSLFYActivityEnd",sNextCall,SLFYConf.timeCycle,false)
+end
+
+LocalDT.SLFYAutoRunFunc.SLFYAutoRun_Fina = function (npcobj)
+end
+
+
+--玩家退出场景
+EventCallDispatcher.OnSLFYExitScene = function( sysarg, arg )
+	local sceneId = arg[1]
+	if sceneId == nil then return end
+
+	-- 去掉被附身玩家的buff
+	if sceneId == SLFYConf.sceneId then
+		LActor.delBuff( sysarg, SLFYConf.addBuffInfo1.type, SLFYConf.addBuffInfo1.group )
+		LActor.delBuff( sysarg, SLFYConf.addBuffInfo2.type, SLFYConf.addBuffInfo2.group )
+		--[[ 这个先取消
+		LActor.delBuff( sysarg, 79, 0 )	--先删除禁止刷新外观buff，删除这个buff后会自动刷新外观
+		]]
+	end
+
+	LActor.setExitSceneEvent( sysarg, false )
+end
+
+--玩家退出
+EventCallDispatcher.OnShouLingLogout = function( sysarg, arg )
+	local sceneId = LActor.getSceneId(sysarg)
+	if sceneId == nil then return end
+
+	-- 去掉被附身玩家的buff
+	if sceneId == SLFYConf.sceneId then
+		LActor.delBuff( sysarg, SLFYConf.addBuffInfo1.type, SLFYConf.addBuffInfo1.group )
+		LActor.delBuff( sysarg, SLFYConf.addBuffInfo2.type, SLFYConf.addBuffInfo2.group )
+		-- 这个先取消
+		-- LActor.delBuff( sysarg, 79, 0 )	--先删除禁止刷新外观buff，删除这个buff后会自动刷新外观
+	end
+
+	LActor.setExitSceneEvent( sysarg, false )
+end
+
+--[[屏蔽仙灵封印活动
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeExitScene, EventCallDispatcher.OnSLFYExitScene)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogout, EventCallDispatcher.OnShouLingLogout)
+
+table.insert(InitFnTable,LocalDT.SLFYAutoRunFunc.SLFYAutoRun_Init)
+table.insert(FinaFnTable,LocalDT.SLFYAutoRunFunc.SLFYAutoRun_Fina)
+]]
+
+-- 测试
+testEndSLFY = function (sysarg)
+	OnSLFYActivityEnd(sysarg)
+end

@@ -1,0 +1,28 @@
+{
+	id = 61008,
+	name = Lang.Item.n61008,
+	desc = Lang.Item.i61008,
+	type = 82,
+	sellType = 30,
+	icon =1707 ,
+	shape = {0,0,0,0,0,0,0,0},
+	color = 5,
+	dura = 0,
+	dup = 99,
+	colGroup = 0,
+	dealType = 0,
+	dealPrice = 0,
+	time = 0,
+	suitId = 10008,
+	item=0,
+	staitcAttrs = {  
+	},
+	strongAttrs = {  
+	},
+	flags = { 
+		recordLog = true, 
+	},
+	conds = { 
+		{ cond = 1, value = 1, }, 
+	},
+},

@@ -1,0 +1,28 @@
+﻿{
+	id = 18402,
+	name = Lang.Item.n18402,
+	desc = Lang.Item.i18402,
+	type = 84,
+	sellType = 31,
+	icon = 351,
+	shape = {0,0,0,0,0,0,0,0},
+	color = 3,
+	dura = 180000,
+	dup = 99,
+	colGroup = 7,
+	dealType = 0,
+	dealPrice = 0,
+	time = 0,
+	suitId = 0,
+	staitcAttrs = {  
+	{type=11, value =15000},   	
+	},
+	strongAttrs = {  
+	},
+	flags = { 
+		recordLog = true, 
+	},
+	conds = { 
+		{ cond = 1, value = 20, }, 
+	},
+},

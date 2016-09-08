@@ -1,0 +1,81 @@
+﻿-- 合服相关操作
+
+--#include "data/functions/mergepublic.txt"
+
+MergeFunc = {}
+
+-- 设置已经合服
+MergeFunc.SetMergeFlag = function(flag)
+	local sys_var = System.getStaticVar()
+	if sys_var == nil then return end
+
+	if sys_var.mergeNeed == nil or sys_var.mergeNeed == 0 then return end -- 不需要合服
+
+	if flag == 1 then
+		sys_var.merge_tianyuan = 1
+	elseif flag == 2 then
+		sys_var.merge_camp = 1
+	elseif flag == 3 then
+		sys_var.merge_fight = 1
+	end
+end
+
+-- 合并点将台排名数据
+MergeFunc.MergeFight = function(sys_var, idx)
+	local var = System.getMergeVar(idx - 1)
+	if var == nil then return end
+
+	if var.fightRank == nil then return end
+end
+
+-- 初始化
+MergeFunc.Merge_Init = function(npcobj)
+	local sys_var = System.getStaticVar()
+	if sys_var == nil then return end
+
+	-- 判断是否需要合服
+	if MergeConf.times == nil or MergeConf.times == "" then
+		-- 不需要合服
+		sys_var.mergeNeed = 0
+		print("no need merge")
+		return 
+	end
+	sys_var.mergeNeed = 1
+
+	-- 把源区的数据合并过来
+	local merge_t = System.toMiniTime(MergeConf.times)
+
+	if sys_var.mergeTime == nil or sys_var.mergeTime ~= merge_t then -- 要重新设置
+		print("reset merge info")
+		sys_var.merge_tianyuan = 0 -- 王城之战
+		sys_var.merge_camp = 0 -- 阵营之战
+		sys_var.merge_fight = 0 -- 点将台
+
+		sys_var.mergeTime = merge_t -- 保存合服时间
+	end
+
+	if sys_var.merge_tianyuan == nil then
+		sys_var.merge_tianyuan = 0
+	end
+	if sys_var.merge_fight == nil then
+		sys_var.merge_fight = 0
+	end
+	if sys_var.merge_camp == nil then
+		sys_var.merge_camp = 0
+	end
+
+	print("merge info:"..sys_var.merge_tianyuan..","..sys_var.merge_camp..","..sys_var.merge_fight)
+
+	local areas = MergeConf.srcArea
+	for i=1,#areas do
+		-- MergeFunc.MergeFight(sys_var, i) -- 按索引
+	end
+end
+
+-- 结束
+MergeFunc.Merge_Fina = function(npcobj)
+end
+
+
+table.insert(InitFnTable,MergeFunc.Merge_Init)   
+table.insert(FinaFnTable,MergeFunc.Merge_Fina) 

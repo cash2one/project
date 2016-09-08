@@ -1,0 +1,130 @@
+﻿-- 军团活动相关脚本
+
+--#include "data\language\LangCode.txt" once   --语言包
+--#include "data\config\activity\GuildActivity.txt" once   --采集蟠桃相关的常量定义
+--#include "data\functions\tasks\gatherpeach\peachpublic.txt" once
+MiscsImplement.Compelete = function (sysarg, msgid, packet)
+	if GuildActivity == nil then
+		return
+	end
+	local var = LActor.getStaticVar(sysarg)
+	
+	if var.getherpeachcount == nil then --初始采集数量
+		var.getherpeachcount=0
+	end
+	  
+	if var.getherpeachcount <= var.getherpeachMaxcount then
+		local guildlevel = LActor.getGuildLevel()
+		local level =  LActor.getIntProperty(sysarg,PROP_LEVEL)
+		LActor.addExp(sysarg,GuildActivity.exp,0,0)
+		local old = LActor.getIntProperty(sysarg,PROP_ROOT_EXP)
+		old = old + GuildActivity.roolexp
+		LActor.setUIntProperty(sysarg,PROP_ROOT_EXP,old)
+		local rand = System.getRandomNumber(rate)
+		if rand == 1 then
+           var.getherpeachMaxcount = var.getherpeachMaxcount + 10
+		   local str = string.format(Lang.TaskTalk.t00667,LActor.getName(sysarg))
+
+			LActor.sendGuildMsg(sysarg,smGuildCommon,str,ttChatWindow)	--发帮派广播
+		end		
+		var.getherpeachcount = var.getherpeachcount + 1
+		
+	end 
+	  
+	  
+end
+
+-- 用天珠增加蟠桃采集次数
+MiscsImplement.SubYuanbao = function(sysarg, msgid, packet)
+	if GuildActivity == nil then return end
+	local moneytype = DataPack.readByte(packet)
+	if moneytype == nil or moneytype ~= mtYuanbao and moneytype ~= mtBindYuanbao then return end
+
+	-- 判断是否蟠桃盛宴活动时间
+	if LGuild.getActivityId() ~= 0 then
+		LActor.sendTipmsg(sysarg, Lang.TaskTalk.t00672, ttMessage)
+		return 
+	end
+
+	local var = LActor.getStaticVar(sysarg)
+	local vipLevel = LActor.getVIPLevel( sysarg )
+	
+	if var.getherpeachMaxcount == nil then 
+		var.getherpeachMaxcount = 10 
+	end
+	if var.subyuanbaoaddmax == nil then
+		var.subyuanbaoaddmax = 0
+	end
+	if var.getherpeachcount == nil then
+		var.getherpeachcount = 0
+	end
+
+	if var.subyuanbaoaddmax >= vipLevel  then -- 判断增加次数是否超过该VIP等级的最大次数(跟VIP等级一样)
+		if vipLevel < 10 then
+			LActor.sendTipmsg(sysarg,Lang.TaskTalk.t00670,ttMessage)
+		else
+			LActor.sendTipmsg(sysarg,Lang.TaskTalk.t00671,ttMessage)
+		end
+		return 
+	end
+
+	local yuanbao = GuildActivity.SubYuanbao[var.subyuanbaoaddmax + 1]
+	if yuanbao == nil then return end -- 配置出错
+
+	if LActor.getMoneyCount(sysarg, moneytype) < yuanbao then
+		LActor.sendTipmsg( sysarg,Lang.ScriptTips.rs001,ttDialog )
+		return 
+	end
+
+	LActor.changeMoney(sysarg,moneytype,-yuanbao, 1, true, "activity", "pt_add")
+
+	var.getherpeachMaxcount = var.getherpeachMaxcount + 1
+	var.subyuanbaoaddmax = var.subyuanbaoaddmax + 1
+
+	-- 发送下次增加蟠桃采集次数需要的天珠数
+	local add_count = var.subyuanbaoaddmax
+	local yb = 0
+	if add_count < #GuildActivity.SubYuanbao then
+		yb = GuildActivity.SubYuanbao[add_count + 1]
+	end
+	SendAddPeachCountYB(sysarg, add_count, yb)
+
+	-- print("add peach count:"..add_count..":"..yb)
+
+	-- 修改统计面板,剩余采集次数
+	LActor.SendAndChangeCaleValue(sysarg,caleOther1,var.getherpeachMaxcount-var.getherpeachcount,false)
+end
+
+-- 进入军团领地的处理
+EventCallDispatcher.OnGuildAreaEnter = function(sysarg, hfb, way)
+	local aid = LGuild.getActivityId()
+	if aid == 0 then -- 蟠桃盛宴活动
+		local var = LActor.getStaticVar(sysarg) 
+		if var.getherpeachcount == nil then
+			var.getherpeachcount = 0
+		end
+		if var.getherpeachMaxcount == nil then --初始化采集上限
+			var.getherpeachMaxcount=10
+   		-- 不同的VIP等级每天增加采集次数
+		end
+		LActor.SendAndChangeCaleValue(sysarg,caleOther1,var.getherpeachMaxcount-var.getherpeachcount,false)
+
+		-- 发送下次增加蟠桃采集次数需要的天珠数
+		local add_count = var.subyuanbaoaddmax
+		if add_count == nil then
+			add_count = 0
+		end
+		local yb = 0
+		if add_count < #GuildActivity.SubYuanbao then
+			yb = GuildActivity.SubYuanbao[add_count + 1]
+		end
+		SendAddPeachCountYB(sysarg, add_count, yb)
+	end
+end
+
+
+MiscsImplement.registerMsgHandler(LogicCmd.miscSys.sub.cSubYuanbao, MiscsImplement.SubYuanbao)
+-- EventCallDispatcher.registerFubenEnter(GuildActivity.Fbid, EventCallDispatcher.OnGuildAreaEnter)
+--MiscsImplement.registerMsgHandler(LogicCmd.miscSys.sub.cGatherPeach, MiscsImplement.Compelete)
+--testSubYuanbao = MiscsImplement.SubYuanbao
+testCompelete = MiscsImplement.Compelete

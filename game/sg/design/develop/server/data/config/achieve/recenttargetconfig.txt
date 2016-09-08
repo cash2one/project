@@ -1,0 +1,19 @@
+﻿recentTargetConfig = 
+{
+	SYSTEM_SWITCH = 1, --系统开关 1:开，0:关
+	showMinLv = 2, --从几级开始显示图标（必须与下面列表的最小等级相同）
+	
+	-- 注意：以下列表顺序不能随意变动，且列表只能在末尾增加项目不能删除
+	target = 
+	{
+		-- showLv 多少级显示图标，getLv 多少级可领取, itemList 奖励列表
+		--{showLv=2, getLv=3, itemList={ {amount = 1, itemid = 44499,  quality=0, strong=0, bind=1 }, }},
+		--{showLv=21, getLv=24, itemList={ {amount = 2, itemid = 18612,  quality=0, strong=0, bind=1 }, }},
+		--{showLv=24, getLv=27, itemList={ {amount = 3, itemid = 18710,  quality=0, strong=0, bind=1 }, }},
+        --{showLv=27, getLv=29, itemList={ {amount = 1, itemid = 11400,  quality=0, strong=0, bind=1 }, }},--翅膀
+		--{showLv=29, getLv=31, itemList={ {amount = 2, itemid = 18606,  quality=0, strong=0, bind=1 }, }},
+		--{showLv=31, getLv=35, itemList={ {amount = 6, itemid = 18627,  quality=0, strong=0, bind=1 }, }},
+	--	{showLv=35, getLv=40, itemList={ {amount = 2, itemid = 48261,  quality=0, strong=0, bind=1 }, }},
+	--	{showLv=40, getLv=43, itemList={ {amount = 2, itemid = 18604,  quality=0, strong=0, bind=1 }, }},
+	}
+}

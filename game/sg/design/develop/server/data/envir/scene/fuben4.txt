@@ -1,0 +1,20 @@
+﻿{   --守护玄女
+	--副本id
+  	fbid = 4,
+	--副本的适合等级(推荐等级)，
+	recommandLevel = 11,
+	--副本需要统计那些数据,0为经验,1为绑定天珠
+	monsterDynProp = false,
+	caleType = {9, 11,0}, 
+    caleInfo = {
+                  expType = {202},--杀怪获得经验
+               },
+	--这个副本需要用到的场景列表
+	--副本不动态调整
+	monsterDynProp = false, 
+	
+	scenes =
+	{   
+--#include "scene84.txt"
+	},
+},

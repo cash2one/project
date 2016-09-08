@@ -1,0 +1,391 @@
+local FightSysFuncs = {}
+
+-- 裁切函数 sep裁切依据
+function FightSysFuncs.Split(str, sep)
+    local sep, fields = sep or "\t", {}
+    local pattern = string.format("([^%s]+)", sep)
+    str:gsub(pattern, function(c)
+        if tonumber(c) ~= nil then
+            c = tonumber(c)
+        end
+        fields[#fields + 1] = c
+    end)
+    return fields
+end
+
+-- table的拷贝
+function FightSysFuncs.tableCopy(srcTab)
+    local retTab = {}
+    if srcTab and type(srcTab) == "table" then
+        for k, v in pairs(srcTab) do
+            if type(v) ~= "table" then
+                retTab[k] = v
+            else
+                retTab[k] = PartnerOpFuncList.tableCopy(v)
+            end
+        end
+    end
+    return retTab
+end
+
+function FightSysFuncs.readBaseConf(objexcel)
+    local baseTab = {}
+
+    if not objexcel then return baseTab end
+    local cCount = objexcel:GetCurrentSheetColCount()
+    local rCount = objexcel:GetCurrentSheetRowCount()
+
+    local keys = {
+        "fbId",          -- 副本ID
+        "sceneId",     -- 场景ID
+        "monsterId",    -- PK对手模拟怪物ID
+        "pkTime",       -- 最大PK时间(秒)
+        "pkReady",        -- PK准备时间
+        "level",         -- 资格等级
+        "maxActor",    -- 排行榜最大排名
+        "maxRank",       -- 排行榜最大展示排名
+        "pkCD",         -- PK冷却等待CD(秒)
+        "pkCount",       -- 每天默认挑战次数
+        "addpkCount",       -- 每天默认可购买挑战次数
+    }
+    local awards = {
+        "winExp",     -- 胜利奖励经验
+        "winCoin",    -- 胜利奖励金钱
+        "winReput",      -- 胜利奖励声望
+        "failExp",     -- 失败奖励经验
+        "failCoin",    -- 失败奖励金钱
+        "failReput",      -- 失败奖励声望
+    }
+    if rCount == 2 then
+        -- 读取标准数值格式ceil
+        for k , v in ipairs(keys) do
+            local value = objexcel:ReadCellAsString(rCount, k)
+            baseTab[v] = tonumber(value)
+        end
+        baseTab.pos1 = {}
+        local value = 0
+        value = objexcel:ReadCellAsString(rCount, #keys + 1)
+        table.insert(baseTab.pos1, tonumber(value))
+        value = objexcel:ReadCellAsString(rCount, #keys + 2)
+        table.insert(baseTab.pos1, tonumber(value))
+
+        baseTab.pos2 = {}
+        value = objexcel:ReadCellAsString(rCount, #keys + 3)
+        table.insert(baseTab.pos2, tonumber(value))
+        value = objexcel:ReadCellAsString(rCount, #keys + 4)
+        table.insert(baseTab.pos2, tonumber(value))
+
+        -- value = objexcel:ReadCellAsString(rCount, #keys + 5) -- vips
+        -- baseTab.vipAddBuyCount = FightSysFuncs.Split(value, ",")
+
+        local began = #keys + 4
+        -- 读取标准数值格式ceil
+        for k , v in ipairs(awards) do
+            local value = objexcel:ReadCellAsString(rCount, began + k)
+            baseTab[v] = tonumber(value)
+        end
+        value = objexcel:ReadCellAsString(rCount, began + #awards + 1)
+        baseTab.refreshCost = tonumber(value)
+    end
+    return baseTab
+end
+
+function FightSysFuncs.readAddPKYb(objexcel)
+    local addPKYb = {}
+
+    if not objexcel then return addPKYb end
+    local cCount = objexcel:GetCurrentSheetColCount()
+    local rCount = objexcel:GetCurrentSheetRowCount()
+
+    local keys = {
+        "count", -- 次数
+        "type", -- 0：普通货币 1：可交易货币 2：绑定元宝 3：非绑定元宝
+        "cost", -- 消耗数量
+    }
+    for i = 2, rCount do
+        local t = {}
+        for k , v in ipairs(keys) do
+            local value = objexcel:ReadCellAsString(i, k)
+            t[v] = tonumber(value)
+        end
+        table.insert(addPKYb, t)
+    end
+    return addPKYb
+end
+
+function FightSysFuncs.readWinTargets(objexcel)
+    local winTargets = {}
+
+    if not objexcel then return winTargets end
+    local cCount = objexcel:GetCurrentSheetColCount()
+    local rCount = objexcel:GetCurrentSheetRowCount()
+
+    local function findTarget(tab, wtId)
+        for k, v in pairs(tab) do
+            if v.wtId == wtId then
+                return v
+            end
+        end
+        return nil
+    end
+
+    local keys = {        
+        "itemType", -- 1：道具 2 金钱 id(0：贝币, 1：银两(取消)，2：绑定天珠，3：天珠）6：经验 10：声望
+        "itemId", -- 如果是非道具需要实体ID的都为0
+        "itemNum", -- 数量
+    }
+
+    for i = 2, rCount do
+        local value = objexcel:ReadCellAsString(i, 1)
+        local wtId = tonumber(value)
+        if wtId > 0 then
+            local rowTable = findTarget(winTargets, wtId)
+            if not rowTable then
+                rowTable = {}
+                rowTable.wtId = wtId
+                rowTable.awards = {}
+                table.insert(winTargets, rowTable)
+            end
+            value = objexcel:ReadCellAsString(i, 2)
+            local needWinCount = tonumber(value)
+
+            if rowTable.needWinCount and rowTable.needWinCount ~= needWinCount then
+                print(string.format("======> 读取胜利目标配置出现非法数据在第%d行", i))
+            else
+                rowTable.needWinCount = needWinCount
+                local t = {}
+                for k, v in ipairs(keys) do
+                    local value = objexcel:ReadCellAsString(i, k + 2)
+                    t[v] = tonumber(value)
+                end
+                table.insert(rowTable.awards, t)
+            end
+        end
+    end
+
+    return winTargets
+end
+
+function FightSysFuncs.readRankAwards(objexcel)
+    local rankAwards = {}
+
+    if not objexcel then return rankAwards end
+    local cCount = objexcel:GetCurrentSheetColCount()
+    local rCount = objexcel:GetCurrentSheetRowCount()
+
+    local keys = {
+        "itemType", -- 1：道具 2 金钱 id(0：贝币, 1：银两(取消)，2：绑定天珠，3：天珠）6：经验 10：声望
+        "itemId", -- 如果是非道具需要实体ID的都为0
+        "itemNum", -- 数量
+    }
+
+    local function findRank(tab, rank)
+        return tab[rank]
+    end
+
+    for i = 2, rCount do
+        local value = objexcel:ReadCellAsString(i, 1)
+        local rank = tonumber(value)
+
+        if rank > 0 then
+            local rowTable = findRank(rankAwards, rank)
+            if rowTable ~= nil then
+                print(string.format("======> 读取排名奖励配置出现非法数据在第%d行", i))
+            else
+                rowTable = {}
+                rowTable.rank = rank
+                rowTable.awards = {}
+
+                local t = {}
+
+                value = objexcel:ReadCellAsString(i, 2)
+                t.itemType = 2 -- 天珠
+                t.itemId = 2
+                t.itemNum = tonumber(value) or 0
+                table.insert(rowTable.awards, FightSysFuncs.tableCopy(t))
+
+                value = objexcel:ReadCellAsString(i, 3)
+                t.itemType = 2 -- 贝币
+                t.itemId = 0
+                t.itemNum = tonumber(value) or 0
+                table.insert(rowTable.awards, FightSysFuncs.tableCopy(t))
+
+                value = objexcel:ReadCellAsString(i, 4)
+                t.itemType = 10 -- 声望
+                t.itemId = 0
+                t.itemNum = tonumber(value) or 0
+                table.insert(rowTable.awards, FightSysFuncs.tableCopy(t))
+
+                value = objexcel:ReadCellAsString(i, 5)
+                t.itemType = 1 -- 道具 火砂
+                t.itemId = 26121
+                t.itemNum = tonumber(value) or 0
+                table.insert(rowTable.awards, FightSysFuncs.tableCopy(t))
+
+                table.insert(rankAwards, rowTable)
+            end
+        end
+    end
+    return rankAwards
+end
+
+function FightSysFuncs.readRenownShop(objexcel)
+    local renownShop = {}
+    renownShop.refreshTime = 14400 -- 30s刷新时间
+    renownShop.lists = {}
+
+    if not objexcel then return renownShop end
+    local cCount = objexcel:GetCurrentSheetColCount()
+    local rCount = objexcel:GetCurrentSheetRowCount()
+
+    local keys = {
+        "listId",
+        "itemType", -- 1：道具 2 金钱 id(0：贝币, 1：银两(取消)，2：绑定天珠，3：天珠）6：经验 10：声望
+        "itemId",
+        "itemNum",
+        "costRenown",
+        "dayNum",
+        "randNum",
+    }
+    local value = 0
+    local randNum_t = 0 -- 总机率必须为10000
+    for i = 2, rCount do
+        local t = {}
+        for k, v in ipairs(keys) do
+            value = objexcel:ReadCellAsString(i, k)
+            t[v] = tonumber(value)
+            if v == "randNum" then -- 需要特别检查
+                randNum_t = randNum_t + tonumber(value)
+            end
+        end
+        table.insert(renownShop.lists, t)
+    end
+    if randNum_t ~= 10000 then
+        print("======> excel表格声望商店配置概率配置出错!")
+    end
+    return renownShop
+end
+
+function FightSysFuncs.readSkills(objexcel)
+    local skills = {}
+
+    if not objexcel then return skills end
+    local cCount = objexcel:GetCurrentSheetColCount()
+    local rCount = objexcel:GetCurrentSheetRowCount()
+    for i = 2, rCount do
+        local id = tonumber(objexcel:ReadCellAsString(i, 1)) or 0
+        if id > 0 then
+            local rowTable = {}
+            local job_name = objexcel:ReadCellAsString(i, 2)
+            for j = 1, 4 do
+                local skillId = tonumber(objexcel:ReadCellAsString(i, 2 + j)) or 0
+                if skillId > 0 then
+                    table.insert(rowTable, skillId)
+                else
+                    print(string.format("====> ERROR 第%d行第%d技能出现非法技能ID, 请重新检查后再进行导出!", i, j))
+                    return nil
+                end
+            end
+            table.insert(skills, rowTable)
+        end
+    end
+    return skills
+end
+
+function ReadFightSysConfig()
+
+    local objexcel = CExcelReader:new()
+    if not objexcel then
+        print("objexcel is null")
+        return
+    end
+
+    objexcel:Init_App()
+    objexcel:OpenRead()
+
+    local obj = objexcel:LoadSheetByIndex(1)
+    if not obj then
+        print("LoadSheetByIndex失败!")
+        objexcel:Close()
+        objexcel:Quit_App()
+        return
+    end
+
+    -- 总表
+    local FightConf = FightSysFuncs.readBaseConf(objexcel)
+
+    -- 固定部分
+
+    FightConf.tipRank = 300      -- 发送图标提示玩家的最小排名
+    FightConf.enemyColor = 0xFFC000 -- 敌对玩家（包括伙伴）名字的颜色
+
+
+    -- FightConf.skills =            -- 每个职业对应使用技能的顺序，分别是天雷，蜀山，圆月，云华
+    -- {
+    --     {5, 1, 2, 3, 4},
+    --     {13, 9, 10, 11, 12},
+    --     {21, 17, 18, 19, 20},
+    --     {29, 25, 26, 27, 28},
+    -- }
+
+    FightConf.clearSkills = { 6, 14, 22, 30 }       -- 每个职业解除晕眩的技能ID
+
+    local obj = objexcel:LoadSheetByIndex(2)
+    if not obj then
+        print("LoadSheetByIndex失败!")
+        objexcel:Close()
+        objexcel:Quit_App()
+        return
+    end
+    FightConf.addPKYb = FightSysFuncs.readAddPKYb(objexcel)
+
+    local obj = objexcel:LoadSheetByIndex(3)
+    if not obj then
+        print("LoadSheetByIndex失败!")
+        objexcel:Close()
+        objexcel:Quit_App()
+        return
+    end
+    FightConf.winTargets = FightSysFuncs.readWinTargets(objexcel)    
+
+    local obj = objexcel:LoadSheetByIndex(4)
+    if not obj then
+        print("LoadSheetByIndex失败!")
+        objexcel:Close()
+        objexcel:Quit_App()
+        return
+    end
+    FightConf.rankAwards = FightSysFuncs.readRankAwards(objexcel)
+
+    local obj = objexcel:LoadSheetByIndex(5)
+    if not obj then
+        print("LoadSheetByIndex失败!")
+        objexcel:Close()
+        objexcel:Quit_App()
+        return
+    end
+    FightConf.renownShop = FightSysFuncs.readRenownShop(objexcel)
+
+    -- 导出技能列表
+    local obj = objexcel:LoadSheetByIndex(6)
+    if not obj then
+        print("LoadSheetByIndex失败!")
+        objexcel:Close()
+        objexcel:Quit_App()
+        return
+    end
+    FightConf.skills = FightSysFuncs.readSkills(objexcel)
+
+    local str = ""
+    str = dump(FightConf)
+    -- str = string.sub(str, 1, string.len(str) - 1)
+    str = string.format("--#include \"..\\..\\language\\LangCode.txt\" once\nFightConf = %s\n", str)
+
+    objexcel:WriteFile("data\\config\\fight\\fightconf.txt", str)
+
+    print("========== 导出仙斗会配置表完成! ==========")
+
+    objexcel:Close()
+    objexcel:Quit_App()
+    objexcel:delete()
+end

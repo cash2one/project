@@ -1,0 +1,56 @@
+﻿--#include "..\..\language\LangCode.txt"  琉璃幻境-玩法配置表
+BaGuaConfig = 
+{
+	LEVEL = 27,		--进入等级
+	BOX = 1410,		--宝箱的ID
+	BOXCOUNT = 10,   --宝箱数量
+	FBID = 8,
+	SCENEID = 88,  --战斗场景
+	MAPX = 27,
+	MAPY = 76,--玩家进入副本的坐标
+	CLEARMAPID = {88},  --活动结束清除人物场景ID1 
+	--ACTTIME = 60 * 60 * 12, 		--设置副本剩余时间
+	ACTTIME = 60 * 60, 		--设置副本剩余时间
+	RETURNMAPID = 6, --返回的地图id
+	RETURNMAPX = 103, --返回地图的x坐标
+	RETURNMAPY = 75, --返回地图的y坐标
+	BOSS = {ID =1409 , POSX = 68, POSY =38 }, --BOSS的ID，X坐标，Y坐标
+	CHENFA_TIME = 60, --退出副本惩罚时间
+	TASK_NUM = 6,--每次开启活动刷新多少个任务
+	OPEN_ACTIVE_TIME_CREATE_BOSS = 5 * 60, --活动开启后多久刷出首个boss
+	BOSS_REFRESH_TIME = 5 * 60, -- boss 被杀死后 刷新时间
+	BOX_REFRESH_TIME = 10 * 60, --宝箱 每一波的刷新时间
+	Double_Award ={6 , 0},		-- 0 - 6 对应表示 星期天，星期一 ... 星期六
+	--目标ID(怪物ID)， amount目标完成最大个数，type类型（0 采集目标 1 击杀目标 2击杀玩家 ）， 经验奖励， 物品奖励的ID，物品奖励的个数 
+	--如果type是0类型的话，对应的是采集怪的id,type是1的话要对应怪物或者boss的,如果type是2的话你可以填个id = 0，应该是击杀玩家的，所以不需要有id
+	--AWARDTYPE 0 经验 1 钱 2 物品
+
+	TASK = {
+		{ID = 1401, AMOUNT =20 , TYPE = 1,  AWARD = { ID =0 ,AWARDTYPE = 0 , AMOUNT =110000 } },
+		{ID = 1402, AMOUNT =20 , TYPE = 1,  AWARD = { ID =0 ,AWARDTYPE = 0 , AMOUNT =110000 } },
+		{ID = 1403, AMOUNT =20 , TYPE = 1,  AWARD = { ID =0 ,AWARDTYPE = 0 , AMOUNT =110000 } },
+		{ID = 1404, AMOUNT =20 , TYPE = 1,  AWARD = { ID =0 ,AWARDTYPE = 0 , AMOUNT =110000 } },
+		{ID = 1405, AMOUNT =20 , TYPE = 0,  AWARD = { ID =0 ,AWARDTYPE = 1 , AMOUNT =80000 } },
+		{ID = 1406, AMOUNT =20 , TYPE = 0,  AWARD = { ID =0 ,AWARDTYPE = 0 , AMOUNT =74000 } },
+		{ID = 1407, AMOUNT =20 , TYPE = 0,  AWARD = { ID =0 ,AWARDTYPE = 1 , AMOUNT =80000 } },
+		{ID = 1408, AMOUNT =20 , TYPE = 0,  AWARD = { ID =0 ,AWARDTYPE = 0 , AMOUNT =74000 } },
+		{ID = 1409, AMOUNT =1 , TYPE = 1,  AWARD = { ID =26151 ,AWARDTYPE = 2 , AMOUNT =30 } },
+		{ID = 1410, AMOUNT =2 , TYPE = 0,  AWARD = { ID =26184 ,AWARDTYPE = 2 , AMOUNT =8 } },
+		{ID = 0, AMOUNT =5 , TYPE = 2,  AWARD = { ID =26151 ,AWARDTYPE = 2 , AMOUNT =10 } },
+		{ID = -1, AMOUNT =10 , TYPE = 2,  AWARD = { ID =26151 ,AWARDTYPE = 2 , AMOUNT =20 } },
+	},
+	--经验等级的区间下限，上限，经验系数
+	EXP = 
+	{
+		{30,39,1},
+		{40,49,1.54},
+		{50,59,2.29},
+		{60,69,3.04},
+		{70,79,3.82},
+		{80,89,4.57},
+		{90,100,5.36},
+	},
+
+}
+
+

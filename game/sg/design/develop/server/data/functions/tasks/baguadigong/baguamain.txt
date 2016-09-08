@@ -1,0 +1,174 @@
+--lua script
+--#include "data\config\task\baguadigongconfig.txt" once
+--#include "data\functions\tasks\baguadigong\baguastatistic.txt" once
+--#include "data\functions\miscfunc.txt" once
+
+function BaGua_Init(sysarg)
+  
+end
+
+function BaGua_Final(sysarg)
+  
+end
+
+function BaGua_Main(sysarg, str)
+  --local str = ""
+  local sVal = LActor.getStaticVar(sysarg)
+  if sVal.BaGuaAward == nil then
+    sVal.BaGuaAward = {}
+  end
+  if sVal.BaGuaTaskId == nil then
+    sVal.BaGuaTaskId = {}
+  end 
+  if sVal.BaGuaTaskAmount == nil then
+    sVal.BaGuaTaskAmount = {}
+  end 
+  local cstr = ""
+
+  local var_p = System.getStaticVar()
+  tmp = {}
+  tmp[1] = var_p.BaGuaTaskId[1] 
+  tmp[2] = var_p.BaGuaTaskId[2] 
+  tmp[3] = var_p.BaGuaTaskId[3] 
+  tmp[4] = var_p.BaGuaTaskId[4] 
+  tmp[5] = var_p.BaGuaTaskId[5] 
+  tmp[6] = var_p.BaGuaTaskId[6] 
+  debug_print("======tmp",tmp[1])
+
+  for m,n in pairs(tmp) do
+      debug_print('========mn',n,m)
+      sVal.BaGuaTaskId[m] = n
+      if sVal.BaGuaTaskAmount[m] == nil then
+        sVal.BaGuaTaskAmount[m] = 0
+      end
+      if sVal.BaGuaAward[m] == nil then
+          sVal.BaGuaAward[m] = 0
+      end
+  end
+
+  for k,v in pairs(tmp) do
+    sVal.BaGuaTaskId[i] = v
+    if sVal.BaGuaTaskAmount[i] == nil then
+        sVal.BaGuaTaskAmount[i] = 0
+    end
+  
+    if BaGuaConfig.TASK[i].TYPE == 0 then
+        cstr = cstr.."\\"..string.format(Lang.Talk.t10087,System.getMonsterNameById(sVal.BaGuaTaskId[i]),sVal.BaGuaTaskAmount[i],BaGuaConfig.TASK[i].AMOUNT)
+    else
+        cstr = cstr.."\\"..string.format(Lang.Talk.t10088,System.getMonsterNameById(sVal.BaGuaTaskId[i]),sVal.BaGuaTaskAmount[i],BaGuaConfig.TASK[i].AMOUNT)
+    end
+    
+    if sVal.BaGuaAward[i] == nil then
+          sVal.BaGuaAward[i] = 0
+    end
+    if sVal.BaGuaAward[i] == 0 then
+      cstr= cstr..Lang.Talk.t10091..sVal.BaGuaTaskId[i].."\n"
+    elseif  sVal.BaGuaAward[i] == 1 then
+      cstr= cstr..Lang.Talk.t10090..sVal.BaGuaTaskId[i].."\n"
+    else 
+      cstr= cstr..Lang.Talk.t10089..sVal.BaGuaTaskId[i].."\n"
+    end
+  end
+  str = str..cstr
+  return str
+end
+
+function BaGua_Get_Award(sysarg, id)
+  debug_print("baguadigongjiangli")
+  id = tonumber(id)
+  local var = LActor.getStaticVar(sysarg)
+  if var.BaGuaAward == nil then
+    var.BaGuaAward = {}
+  end
+
+  -- local exp = 0.0
+  --   local level = LActor.getLevel(sysarg)
+  --   for i=1,#BaGuaConfig.EXP do
+  --     if level >= BaGuaConfig.EXP[i][1] and level <= BaGuaConfig.EXP[i][2] then
+  --       exp = BaGuaConfig.EXP[i][3]
+  --       break
+  --    end
+  -- end
+  debug_print("====奖励5")
+
+  local var_p = System.getStaticVar()
+  tmp = {}
+  tmp[1] = var_p.BaGuaTaskId[1] 
+  tmp[2] = var_p.BaGuaTaskId[2] 
+  tmp[3] = var_p.BaGuaTaskId[3] 
+  tmp[4] = var_p.BaGuaTaskId[4] 
+  tmp[5] = var_p.BaGuaTaskId[5] 
+  tmp[6] = var_p.BaGuaTaskId[6] 
+  debug_print("======tmp",tmp[1])
+
+  for m,n in pairs(tmp) do
+      debug_print('========mn',n,m)
+      var.BaGuaTaskId[m] = n
+      if var.BaGuaTaskAmount[m] == nil then
+        var.BaGuaTaskAmount[m] = 0
+      end
+      if var.BaGuaAward[m] == nil then
+          var.BaGuaAward[m] = 0
+      end
+  end
+
+  for i=1,#tmp do
+    if var.BaGuaTaskId[i] == id then
+      if var.BaGuaAward[i] == nil or var.BaGuaAward[i] < 1 then
+        debug_print("====奖励1")
+        var.BaGuaAward[i] = 0
+        LActor.sendTipmsg(sysarg, Lang.ScriptTips.bgdg003, ttMessage)
+        return 
+      end
+      if var.BaGuaAward[i] > 1 then
+        debug_print("====奖励2")
+        LActor.sendTipmsg(sysarg, Lang.ScriptTips.bgdg004, ttMessage)
+        return 
+      end
+      if var.BaGuaTaskAmount[i] < BaGuaConfig.TASK[i].AMOUNT then
+        debug_print("====奖励3")
+        var.BaGuaAward[i] = 0
+        LActor.sendTipmsg(sysarg, Lang.ScriptTips.bgdg003, ttMessage)
+        return 
+      end
+      if LActor.canAddItem(sysarg,BaGuaConfig.TASK[i].AWARD.ID,BaGuaConfig.TASK[i].AWARD.AMOUNT,0,0,true) then
+        debug_print("====奖励4")
+        LActor.addItem(sysarg,BaGuaConfig.TASK[i].AWARD.ID,0,0,BaGuaConfig.TASK[i].AWARD.AMOUNT,1 )
+        -- local addexp = BaGua.GetExpByLevel(sysarg,exp)
+        -- LActor.addExp(sysarg, addexp, 207, 0, false)
+        -- LActor.playExpEffect(sysarg, addexp) -- 播放获取经验特效
+        -- 播放特效
+        local effects = {}
+        local effect = {}
+        effect.type = 1  -- 1为物品,暂时只支持发物品所以写死
+        effect.id = BaGuaConfig.TASK[i].AWARD.ID
+        effect.count = BaGuaConfig.TASK[i].AWARD.AMOUNT
+        --debug_print("BaGua_Get_Award effect.id:"..effect.id.."count:"..effect.count)
+        effects[#effects+1] = effect
+        if #effects > 0 then
+          MiscFunc.PlayItemEffect(sysarg, 11, effects)
+        end
+        var.BaGuaAward[i] = 2
+        BaGua.BaGua_Statistic(sysarg)
+
+        -- 日志
+        System.logCounter(
+          LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), 
+          "", "", "",
+          "bagua", tostring(id), "",
+          "", "", lfBI) 
+      else
+        -- LActor.sendTipmsg(sysarg, Lang.ScriptTips.bgdg005, ttMessage)
+        LActor.SendGeneralTips(sysarg, 7, 0, 0)
+        return 
+      end 
+      break
+    end
+  end
+
+  LActor.npcTalkByName(sysarg,Lang.EntityName.n95)
+end
+
+table.insert(InitFnTable,BaGua_Init)
+table.insert(FinaFnTable,BaGua_Final)
+table.insert(MainFnTable,BaGua_Main)

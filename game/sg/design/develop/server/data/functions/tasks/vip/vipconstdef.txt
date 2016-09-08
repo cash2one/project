@@ -1,0 +1,15 @@
+﻿--lua script
+--说明：VIP脚本逻辑相关的配置数据
+
+local VIPConstDef = 
+{
+	-- VIP黄钻领取时装配置表
+	FashionDressTbl = {
+		[enVocQizong] 	= { 2029, 2030 },		-- 华山
+		[enVocSiming] 	= { 2031, 2032 },		-- 水月
+		[enVocJianshi] 	= { 2027, 2028 },		-- 御神
+		[enVocRenzhe] 	= { 2025, 2026 },		-- 影煞
+	},
+}
+
+

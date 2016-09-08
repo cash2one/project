@@ -1,0 +1,24 @@
+    {
+	--激战少林
+          fbid = 22 ,fbname = Lang.FubenName.fname0022,fbDesc = Lang.FubenName.fdesc0022,minLevel = 40,minPlayCount = 1,maxPlayCount = 5,type = 0,fbTime=3600,
+	  awards=
+	  {
+		{type=0,id=1921,count=1,bind=0,strong=0,quality=0},  --宝物开光符
+		{type=0,id=1916,count=1,bind=0,strong=0,quality=0},  --宝物进阶符
+		{type=0,id=1917,count=1,bind=0,strong=0,quality=0},  --品质保护符
+		{type=0,id=1920,count=1,bind=0,strong=0,quality=0},  --品质精粹符
+		{type=0,id=1918,count=1,bind=0,strong=0,quality=0},  --灵性炼化石
+		{type=0,id=1919,count=1,bind=0,strong=0,quality=0},  --炼化幸运符
+		{type=0,id=1922,count=1,bind=0,strong=0,quality=0},  --启灵之印
+		{type=0,id=2125,count=1,bind=0,strong=0,quality=0},  --宝物提升丹
+		{type=0,id=2093,count=1,bind=0,strong=0,quality=0},  --小型宝物经验丹
+		{type=0,id=2094,count=1,bind=0,strong=0,quality=0},  --中型宝物经验丹
+		{type=0,id=2095,count=1,bind=0,strong=0,quality=0},  --大型宝物经验丹
+	  },
+	  npc=
+         {
+ 	    --测试场景 神秘高手
+            {sceneId=0,name=Lang.EntityName.n00528,conds={}},
+	  },
+	
+  },

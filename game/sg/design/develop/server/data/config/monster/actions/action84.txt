@@ -1,0 +1,18 @@
+--玩法8，A怪物AI   生成B怪
+{
+	id = 84,	--行为ID
+	trigger = 1,	--触发类型，血量为1，时间为2
+
+	infos = 
+	{
+		----血量0%
+		{
+			sequId = 1,
+			param = 0,
+			sequence = 
+			{
+				{ type = 6, duration = 2, mosterId=1157, posX = 0, posY = 0, liveTime = 100000, relative = true, asPartner = true },	--召唤怪物
+			}
+		},
+	},
+},

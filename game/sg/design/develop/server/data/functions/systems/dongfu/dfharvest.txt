@@ -1,0 +1,94 @@
+
+
+DongfuManager.actualHarvest = function(pChar, dfData, landId)
+	local info = dfData.info
+	local lInfo = info.list[landId]
+
+	local pConf = DongfuConf.plantType[lInfo.plantType]
+	local val = 0
+	local aInfo = pConf.awardValue[lInfo.plantColor]
+	local cLevel = LActor.getLevel(pChar)
+	for i = #aInfo - 1, 1, -2 do
+		if cLevel >= aInfo[i] then
+			val = aInfo[i + 1]
+			break
+		end
+	end
+	local lvlAdd = DongfuConf.landAdd[info.level or 1]
+	local curTime = System.getCurrMiniTime()
+	local summonAdd = (info.summonEndTime or 0) >= curTime and DongfuConf.summonLandAdd[info.summonType] or 0
+	val = val * (1 + lvlAdd + summonAdd)
+
+	if pChar ~= nil then
+		-- 在线给奖励
+		local awardType = pConf.awardType
+		LActor.giveAward(pChar, awardType, val)
+		if awardType == 2 then
+			-- 奖励经验，发送经验特效
+			local dp = DataPack.allocPacket(pChar, 139, 68)
+			DataPack.writeInt(dp, val)
+			DataPack.flush(dp)
+
+			LActor.sendTipmsg(pChar, string.format(Lang.ScriptTips.df012, val), ttMessage)
+		end
+	else
+		-- 离线记录奖励
+		if info.awardList == nil then
+			info.awardList = {}
+		end
+		local list = info.awardList
+		local index = #list + 1
+		list[index] = {}
+		local lInfo = list[index]
+		lInfo[1] = pConf.awardType
+		lInfo[2] = val
+	end
+
+	info.list[landId] = nil
+	local ownerId = dfData.ownerId
+	DongfuManager.onChanged(ownerId)
+
+	local harvestNoti = function(pChar)
+		local dp = DataPack.allocPacket(pChar, 157, 15)
+		DataPack.writeInt(dp, ownerId)
+		DataPack.writeByte(dp, landId)
+		DataPack.flush(dp)
+	end
+	DongfuManager.broadcast(dfData.playerSet, harvestNoti)
+
+	DongfuManager.resetLandFlag(dfData)
+end
+
+DongfuManager.harvest = function(pChar, landId)
+	local atHome, ownerId = DongfuManager.isAtHome(pChar)
+	if not atHome then return end
+
+	local dfData = DongfuManager.getDongfuData(ownerId)
+	local info = dfData.info
+
+	local lInfo = info.list[landId]
+	if lInfo == nil or lInfo.plantFlag ~= 1 then return end
+	if lInfo.endTime <= System.getCurrMiniTime() then
+		DongfuManager.actualHarvest(pChar, dfData, landId)
+	end
+end
+
+DongfuManager.batchHarvest = function(pChar)
+	local atHome, ownerId = DongfuManager.isAtHome(pChar)
+	if not atHome then return end
+
+	local dfData = DongfuManager.getDongfuData(ownerId)
+	local info = dfData.info
+	local lvl = info.level or 1
+	if lvl < 3 then return end
+
+	local list = info.list
+	if list == nil then return end
+	local curTime = System.getCurrMiniTime()
+	for landId = 1, 9 do
+		local lInfo = list[landId]
+		if lInfo ~= nil and lInfo.plantFlag == 1 and lInfo.endTime <= curTime then
+			DongfuManager.actualHarvest(pChar, dfData, landId)
+		end
+	end
+end

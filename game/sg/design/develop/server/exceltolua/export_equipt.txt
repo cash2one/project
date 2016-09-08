@@ -1,0 +1,520 @@
+--导出装备、武器衣服时装表
+
+--[[
+21: 物理攻击
+31: 道法攻击
+23: 物理防御
+33: 道法防御
+17: 生命	
+19: 灵力	
+39: 命中	
+37: 闪避	
+35: 暴击	
+25: 抗暴击	
+63: 会心(暴击倍数)
+--]]
+
+
+local strLangTemplate = "n%d=\"%s\",i%d=\"%s\","
+
+local strTemplete = [[
+{
+	id = %d,
+	name = Lang.Item.n%d,
+	desc = Lang.Item.i%d,
+	type = %d,
+	sellType = 0,
+	icon = %d,
+	shape = %s,
+	color = %d,
+	xiLianLevel = %d,
+	dura = %d,
+	dup = 0,
+	colGroup = 0,
+	dealType = 0,
+	dealPrice = %d,
+	time = %d,
+	suitId = %d,
+	staitcAttrs = {%s},
+	strongAttrs = {%s},
+	qualityAttrs = {},
+	flags = { 
+		recordLog = true,
+		hasHole = true,
+	},
+	conds = {%s},
+	event = %s,
+},]]
+
+
+local tStrong = {}
+
+function ReadEquiptStrong()
+	local objexcel = CExcelReader:new()
+	if not objexcel then
+		print("objexcel is null")
+		return
+	end
+
+	objexcel:Init_App()
+	objexcel:OpenRead()
+
+	local obj = objexcel:LoadSheetByIndex(1) --铸造.xls 第一个sheet
+	if not obj then
+		print("LoadSheetByIndex失败!")
+		objexcel:Close()
+		objexcel:Quit_App()
+		return
+	end
+
+	local nCount = objexcel:GetCurrentSheetColCount()
+	local mCount = objexcel:GetCurrentSheetRowCount()
+
+
+	print("nCount", nCount)
+	print("mCount", mCount)
+
+
+	for i = 2, mCount do
+		local strValue = objexcel:ReadCellAsString(i, 1) --强化等级
+		local nLevel = tonumber(strValue) or 0
+		strValue = objexcel:ReadCellAsString(i, 4) --倍数
+		tStrong[nLevel] = tonumber(strValue) or 0
+	end
+
+	objexcel:Close()
+	objexcel:Quit_App()
+	objexcel:delete()
+end
+
+
+function ReadEquiptItem()
+	--先读强化倍数
+	print("===========先读强化倍数，打开 铸造.xls")
+	ReadEquiptStrong()
+
+	print("======================"..tStrong[100])
+
+
+
+
+	local objexcel = CExcelReader:new()
+	if not objexcel then
+		print("objexcel is null")
+		return
+	end
+
+	objexcel:Init_App()
+	objexcel:OpenRead()
+
+	local obj = objexcel:LoadSheetByIndex(2) --道具总表.xlsx 第二个sheet表 装备总表
+	if not obj then
+		print("LoadSheetByIndex失败!")
+		objexcel:Close()
+		objexcel:Quit_App()
+		return
+	end
+
+	local nCount = objexcel:GetCurrentSheetColCount()
+	local mCount = objexcel:GetCurrentSheetRowCount()
+
+
+	print("nCount", nCount)
+	print("mCount", mCount)
+
+	local strAllLang = "Item= \n{\n"
+	local strAllStdItem = "--#include \"..\\..\\language\\LangCode.txt\"\n\nStdItems = {\n"
+
+	for i = 3, mCount do
+		local concent = {} --第一行构造成一个table
+
+		local strValue = objexcel:ReadCellAsString(i, 1) --物品ID
+		local itemfile = string.format(".\\data\\config\\item\\itemclass\\%d.txt", tonumber(strValue))
+		print(itemfile)
+
+		concent.id = tonumber(strValue)
+		
+		strValue = objexcel:ReadCellAsString(i, 2) --道具名称
+		concent.name = tostring(strValue) or ""
+			
+		concent.staitcAttrs = {}
+		strValue = objexcel:ReadCellAsString(i, 3)--物理攻击
+		if strValue and strValue ~= "" and tonumber(strValue) > 0 then
+			concent.staitcAttrs[#concent.staitcAttrs+1] = {type = 21, value = tonumber(strValue)}
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 4)--法力攻击
+		if strValue and strValue ~= "" and tonumber(strValue) > 0 then
+			concent.staitcAttrs[#concent.staitcAttrs+1] = {type = 31, value = tonumber(strValue)}
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 5)--物理防御
+		if strValue and strValue ~= "" and tonumber(strValue) > 0 then
+			concent.staitcAttrs[#concent.staitcAttrs+1] = {type = 23, value = tonumber(strValue)}
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 6)--法力防御
+		if strValue and strValue ~= "" and tonumber(strValue) > 0 then
+			concent.staitcAttrs[#concent.staitcAttrs+1] = {type = 33, value = tonumber(strValue)}
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 7)--生命
+		if strValue and strValue ~= "" and tonumber(strValue) > 0 then
+			concent.staitcAttrs[#concent.staitcAttrs+1] = {type = 17, value = tonumber(strValue)}
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 8)--灵力
+		if strValue and strValue ~= "" and tonumber(strValue) > 0 then
+			concent.staitcAttrs[#concent.staitcAttrs+1] = {type = 19, value = tonumber(strValue)}
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 9)--命中
+		if strValue and strValue ~= "" and tonumber(strValue) > 0 then
+			concent.staitcAttrs[#concent.staitcAttrs+1] = {type = 39, value = tonumber(strValue)}
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 10)--闪避
+		if strValue and strValue ~= "" and tonumber(strValue) > 0 then
+			concent.staitcAttrs[#concent.staitcAttrs+1] = {type = 37, value = tonumber(strValue)}
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 11)--暴击
+		if strValue and strValue ~= "" and tonumber(strValue) > 0 then
+			concent.staitcAttrs[#concent.staitcAttrs+1] = {type = 35, value = tonumber(strValue)}
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 12)--抗暴击
+		if strValue and strValue ~= "" and tonumber(strValue) > 0 then
+			concent.staitcAttrs[#concent.staitcAttrs+1] = {type = 25, value = tonumber(strValue)}
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 13)--会心(暴击倍数)
+		if strValue and strValue ~= "" and tonumber(strValue) > 0 then
+			concent.staitcAttrs[#concent.staitcAttrs+1] = {type = 63, value = tonumber(strValue)}
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 14) --物品颜色
+		concent.color = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 15) --洗练等级
+		concent.xiLianLevel = tonumber(strValue) or 0		
+
+		--等级限制	 职业限制	婚姻限制
+		concent.conds = {}
+		strValue = objexcel:ReadCellAsString(i, 16)
+		if strValue and strValue ~= "" then
+			concent.conds[#concent.conds+1] = {cond = 1, value = tonumber(strValue)}
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 17)
+		if strValue and strValue ~= "" then
+			concent.conds[#concent.conds+1] = {cond = 3, value = tonumber(strValue)}
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 18)
+		if strValue and strValue ~= "" then
+			concent.conds[#concent.conds+1] = {cond = 4, value = tonumber(strValue)}
+		end
+
+
+		strValue = objexcel:ReadCellAsString(i, 19) --描述
+		concent.desc = tostring(strValue) or ""
+
+		strValue = objexcel:ReadCellAsString(i, 20) --图片编号
+		concent.icon = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 21) --装备耐久度
+		concent.dura = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 22) --物品类型
+		concent.type = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 23) --出售的货币类型
+		concent.dealType = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 24) --售出的价格
+		concent.dealPrice = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 25) --使用时限
+		concent.time = tonumber(strValue) or 0
+		
+		strValue = objexcel:ReadCellAsString(i, 26) --套装的ID
+		concent.suitId = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 27) --外观
+		concent.shape = tostring(strValue) or "{0,0,0,0,0,0,0,0}"
+
+		strValue = objexcel:ReadCellAsString(i, 29) --事件
+		concent.event = tostring(strValue) or "\"\""
+
+		if not concent.event or concent.event == "" then
+			concent.event = "\"\""
+		end
+
+		local strStaitcAttrs = ""
+		for k, v in pairs(concent.staitcAttrs) do
+			local strCond = string.format("{type = %d, value = %d},\n", v.type, v.value)
+			strStaitcAttrs = strStaitcAttrs..strCond
+		end
+
+
+		local strConds = ""
+		for k, v in pairs(concent.conds) do
+			local strCond = string.format("{cond = %d, value = %d},\n", v.cond, v.value)
+			strConds = strConds..strCond
+		end
+
+		--根据基础属性按公式计算
+		concent.strongAttrs = {}
+		
+		for k, v in pairs(tStrong) do
+			--一级一个表
+			local tStrongAttr = {}
+			for m, n in pairs(concent.staitcAttrs) do
+				tStrongAttr[#tStrongAttr+1] = {type = n.type, value = (n.value * v)/10000,}
+			end
+			table.insert(concent.strongAttrs, tStrongAttr)
+		end
+
+		--转化为字符串
+		local allStrongAttrs = ""
+		for k, v in pairs(concent.strongAttrs) do
+			allStrongAttrs = allStrongAttrs .. "{"
+			for m, n in pairs(v) do
+				local strStrong = string.format("{type = %d, value = %d},", n.type, n.value)
+				allStrongAttrs = allStrongAttrs..strStrong
+			end
+			allStrongAttrs = allStrongAttrs .. "},\n"
+		end
+
+		local str = string.format(strTemplete,
+										concent.id,
+										concent.id,
+										concent.id,
+										concent.type,
+										concent.icon,
+										concent.shape,
+										concent.color,
+										concent.xiLianLevel,
+										concent.dura,
+										concent.dealPrice,
+										concent.time,
+										concent.suitId,
+										strStaitcAttrs,
+										allStrongAttrs,
+										strConds,
+										concent.event)
+
+
+		--写文件
+		--writeConfig(itemfile, str)
+		objexcel:WriteFile(itemfile, str)
+
+
+		--语言包
+		local strLang = string.format(strLangTemplate, concent.id, concent.name, concent.id, concent.desc)
+		strAllLang = strAllLang..strLang.."\n"
+		if mCount == i then
+			objexcel:WriteFile(".\\data\\language\\zh-cn\\item.txt", strAllLang)
+		end
+
+		--生成include文件名
+		local strStdItem = string.format("--#include \"itemclass\\%d.txt\"", concent.id)
+		strAllStdItem = strAllStdItem..strStdItem.."\n"
+		if mCount == i then
+			objexcel:WriteFile(".\\data\\config\\item\\stditems.txt", strAllStdItem)
+		end
+	end
+
+	objexcel:Close()
+	objexcel:Quit_App()
+	objexcel:delete()
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+local strGiftTemplete = [[
+	{
+		item_id = %d,
+		needMinBagGrid = %d,
+		ifelse = %d,
+		item_count = %s,
+		award = 
+		{
+%s
+		},
+	},
+
+]]
+
+
+--读取礼包配置
+function ReadGiftItem()
+	local objexcel = CExcelReader:new()
+	if not objexcel then
+		print("objexcel is null")
+		return
+	end
+
+	objexcel:Init_App()
+	objexcel:OpenRead()
+
+	local obj = objexcel:LoadSheetByIndex(7) --道具总表.xlsx 第七个sheet表 礼包
+	if not obj then
+		print("LoadSheetByIndex失败!")
+		objexcel:Close()
+		objexcel:Quit_App()
+		return
+	end
+
+	local nCount = objexcel:GetCurrentSheetColCount()
+	local mCount = objexcel:GetCurrentSheetRowCount()
+
+
+	print("nCount", nCount)
+	print("mCount", mCount)
+
+
+	local strComment = objexcel:ReadComment(1)
+	print("============strComment "..strComment)
+
+
+	local allconcent = {}
+
+	for i = 2, mCount do
+		local concent = {} --第一行构造成一个table
+
+		local strValue = objexcel:ReadCellAsString(i, 1) --物品ID
+		local itemfile = string.format(".\\data\\config\\item\\itemclass\\%d.txt", tonumber(strValue))
+		print(itemfile)
+
+		concent.itemfile = itemfile
+
+		concent.id = tonumber(strValue)
+		
+		strValue = objexcel:ReadCellAsString(i, 2) --占用背包格
+		concent.needMinBagGrid = tostring(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 3) --是否使用概率
+		concent.ifelse = tonumber(strValue) or 0
+		
+		strValue = objexcel:ReadCellAsString(i, 4) --需要限制的物品id,以及数量
+		concent.item_count = tostring(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 5)--奖励类型
+		concent.rewardtype = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 6)--子类型
+		concent.type = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 7)--道具ID
+		concent.itemid = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 8)--数量
+		concent.amount = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 9)--概率
+		concent.present = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 10)--组
+		concent.group = tonumber(strValue) or 0
+
+
+		--添加到总表中
+		allconcent[i-1] = concent
+	end
+
+
+
+
+	local temp = {}
+	local straward = ""
+
+	for k, v in pairs(allconcent) do
+		print("k, v ===========", k, v.id)
+		if temp[v.id] == nil then
+			straward = ""
+
+			temp[v.id] = {}
+			temp[v.id].item_id = v.id
+			temp[v.id].needMinBagGrid = v.needMinBagGrid
+			temp[v.id].ifelse = v.ifelse
+			temp[v.id].item_count = v.item_count
+			temp[v.id].itemfile = v.itemfile
+			temp[v.id].award = ""
+
+			local str1 = string.format("\t\t\t{rewardtype=%d, type=%d, amount=%d, itemid=%d, present=%d, group=%d,},\n\t\t\t", 
+				v.rewardtype, v.type, v.amount, v.itemid, v.present, v.group)
+
+			straward = straward .. str1
+
+			temp[v.id].award = straward
+		else
+			local str2 = string.format("{rewardtype=%d, type=%d, amount=%d, itemid=%d, present=%d, group=%d,},\n\t\t\t", 
+					v.rewardtype, v.type, v.amount, v.itemid, v.present, v.group)
+				straward = straward .. str2
+
+				temp[v.id].award = straward
+		end
+	end
+
+
+
+	local allstr = strComment .. "StaticAwardConfig = \n{\n"
+	for m, n in pairs(temp) do
+			--按模板输出
+			local str = string.format(strGiftTemplete,
+									n.item_id,
+									n.needMinBagGrid,
+									n.ifelse,
+									n.item_count,
+									n.award)
+
+			print("=================str  ", str)
+
+			allstr = allstr .. str
+	end
+	allstr = allstr .. "}"
+
+
+	--写文件
+	objexcel:WriteFile(".\\data\\config\\item\\scriptitemconfig\\staticaward.txt", allstr)
+
+
+
+	objexcel:Close()
+	objexcel:Quit_App()
+	objexcel:delete()
+end
+
+
+
+
+
+
+
+
+

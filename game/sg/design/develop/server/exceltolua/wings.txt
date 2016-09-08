@@ -1,0 +1,193 @@
+--此处配置游戏中翅膀系统的参数													
+--#include "..\..\language\langCode.txt" once
+
+Wings = {
+	-- 升级部分
+	upLevel = 
+	{												
+		--第一个翅膀
+		{
+			id =1, --翅膀ID	
+			name = 	Lang.Wing.n1	, -- 翅膀名字								
+			modelId =	1,  	-- 外观ID
+            
+			addExp = 10, -- 每次培养增加的经验
+
+			upCost = {2000,	3000,	4000,	5000,	6000,	7000,	8000,	9000,	10000,	11000,}, -- 每次培养消耗铜币
+			upItemid = {24445, 24445, 24445, 24445, 24445, 24445, 24445, 24445, 24445, 24445}, -- 每次培养的材料ID
+			upItemCount = {10, 10, 10, 10, 10, 10, 10, 10, 10, 10}, -- 每次培养的材料数量
+
+			upgradeExp = {10, 20, 30, 40, 50, 60, 70, 80, 90, 100},--培养升级的经验
+
+			upgradAttr = {
+{{value=2800,type=17,},{value=180,type=27,},{value=100,type=23,},{value=100,type=33,},{value=36,type=39,},{value=36,type=37,},{value=14,type=63,},},
+{{value=3400,type=17,},{value=220,type=27,},{value=121,type=23,},{value=121,type=33,},{value=44,type=39,},{value=44,type=37,},{value=17,type=63,},},
+{{value=4000,type=17,},{value=260,type=27,},{value=142,type=23,},{value=142,type=33,},{value=52,type=39,},{value=52,type=37,},{value=20,type=63,},},
+{{value=4600,type=17,},{value=300,type=27,},{value=163,type=23,},{value=163,type=33,},{value=60,type=39,},{value=60,type=37,},{value=23,type=63,},},
+{{value=5200,type=17,},{value=340,type=27,},{value=184,type=23,},{value=184,type=33,},{value=68,type=39,},{value=68,type=37,},{value=26,type=63,},},
+{{value=5800,type=17,},{value=380,type=27,},{value=205,type=23,},{value=205,type=33,},{value=76,type=39,},{value=76,type=37,},{value=29,type=63,},},
+{{value=6400,type=17,},{value=420,type=27,},{value=226,type=23,},{value=226,type=33,},{value=84,type=39,},{value=84,type=37,},{value=32,type=63,},},
+{{value=7000,type=17,},{value=460,type=27,},{value=247,type=23,},{value=247,type=33,},{value=92,type=39,},{value=92,type=37,},{value=35,type=63,},},
+{{value=7600,type=17,},{value=500,type=27,},{value=268,type=23,},{value=268,type=33,},{value=100,type=39,},{value=100,type=37,},{value=38,type=63,},},
+{{value=8200,type=17,},{value=540,type=27,},{value=289,type=23,},{value=289,type=33,},{value=108,type=39,},{value=108,type=37,},{value=41,type=63,},},			
+			}, --每一级对应的属性加成
+            jinjiebaoji = {3,4,5} , --升级暴击
+            baojilv = {10,10,10},   --升级暴击出现的几率			
+		},	
+
+		--第二个翅膀
+		{
+			id =2, --翅膀ID	
+			name = 	Lang.Wing.n2, -- 翅膀名字								
+			modelId =	2,  	-- 外观ID
+
+			addExp = 10, -- 每次培养增加的经验
+
+			upCost = {2000,	3000,	4000,	5000,	6000,	7000,	8000,	9000,	10000,	11000,}, -- 每次培养消耗铜币
+			upItemid = {24445, 24445, 24445, 24445, 24445, 24445, 24445, 24445, 24445, 24445}, -- 每次培养的材料ID
+			upItemCount = {10, 10, 10, 10, 10, 10, 10, 10, 10, 10}, -- 每次培养的材料数量
+
+			upgradeExp = {10, 20, 30, 40, 50, 60, 70, 80, 90, 100},--培养升级的经验
+
+			upgradAttr = {
+{{value=11200,type=17,},{value=740,type=27,},{value=394,type=23,},{value=394,type=33,},{value=148,type=39,},{value=148,type=37,},{value=56,type=63,},},
+{{value=12000,type=17,},{value=790,type=27,},{value=422,type=23,},{value=422,type=33,},{value=158,type=39,},{value=158,type=37,},{value=60,type=63,},},
+{{value=12800,type=17,},{value=840,type=27,},{value=450,type=23,},{value=450,type=33,},{value=168,type=39,},{value=168,type=37,},{value=64,type=63,},},
+{{value=13600,type=17,},{value=890,type=27,},{value=478,type=23,},{value=478,type=33,},{value=178,type=39,},{value=178,type=37,},{value=68,type=63,},},
+{{value=14400,type=17,},{value=940,type=27,},{value=506,type=23,},{value=506,type=33,},{value=188,type=39,},{value=188,type=37,},{value=72,type=63,},},
+{{value=15200,type=17,},{value=990,type=27,},{value=534,type=23,},{value=534,type=33,},{value=198,type=39,},{value=198,type=37,},{value=76,type=63,},},
+{{value=16000,type=17,},{value=1040,type=27,},{value=562,type=23,},{value=562,type=33,},{value=208,type=39,},{value=208,type=37,},{value=80,type=63,},},
+{{value=16800,type=17,},{value=1090,type=27,},{value=590,type=23,},{value=590,type=33,},{value=218,type=39,},{value=218,type=37,},{value=84,type=63,},},
+{{value=17600,type=17,},{value=1140,type=27,},{value=618,type=23,},{value=618,type=33,},{value=228,type=39,},{value=228,type=37,},{value=88,type=63,},},
+{{value=18400,type=17,},{value=1190,type=27,},{value=646,type=23,},{value=646,type=33,},{value=238,type=39,},{value=238,type=37,},{value=92,type=63,},},			
+			}, --每一级对应的属性加成
+			jinjiebaoji = {3,4,5} , --进阶暴击
+            baojilv = {10,10,10},   --进阶暴击出现的几率
+		},	
+
+		--第三个翅膀
+		{
+			id =3, --翅膀ID	
+			name = 	Lang.Wing.n2	, -- 翅膀名字								
+			modelId =	3,  	-- 外观ID
+
+			addExp = 10, -- 每次培养增加的经验
+
+			upCost = {2000,	3000,	4000,	5000,	6000,	7000,	8000,	9000,	10000,	11000,}, -- 每次培养消耗铜币
+			upItemid = {24445, 24445, 24445, 24445, 24445, 24445, 24445, 24445, 24445, 24445}, -- 每次培养的材料ID
+			upItemCount = {10, 10, 10, 10, 10, 10, 10, 10, 10, 10}, -- 每次培养的材料数量
+
+			upgradeExp = {10, 20, 30, 40, 50, 60, 70, 80, 90, 100},--培养升级的经验
+
+			upgradAttr = {
+{{value=22400,type=17,},{value=1440,type=27,},{value=786,type=23,},{value=786,type=33,},{value=288,type=39,},{value=288,type=37,},{value=112,type=63,},},
+{{value=23400,type=17,},{value=1505,type=27,},{value=822,type=23,},{value=822,type=33,},{value=301,type=39,},{value=301,type=37,},{value=117,type=63,},},
+{{value=24400,type=17,},{value=1570,type=27,},{value=858,type=23,},{value=858,type=33,},{value=314,type=39,},{value=314,type=37,},{value=122,type=63,},},
+{{value=25400,type=17,},{value=1635,type=27,},{value=894,type=23,},{value=894,type=33,},{value=327,type=39,},{value=327,type=37,},{value=127,type=63,},},
+{{value=26400,type=17,},{value=1700,type=27,},{value=930,type=23,},{value=930,type=33,},{value=340,type=39,},{value=340,type=37,},{value=132,type=63,},},
+{{value=27400,type=17,},{value=1765,type=27,},{value=966,type=23,},{value=966,type=33,},{value=353,type=39,},{value=353,type=37,},{value=137,type=63,},},
+{{value=28400,type=17,},{value=1830,type=27,},{value=1002,type=23,},{value=1002,type=33,},{value=366,type=39,},{value=366,type=37,},{value=142,type=63,},},
+{{value=29400,type=17,},{value=1895,type=27,},{value=1038,type=23,},{value=1038,type=33,},{value=379,type=39,},{value=379,type=37,},{value=147,type=63,},},
+{{value=30400,type=17,},{value=1960,type=27,},{value=1074,type=23,},{value=1074,type=33,},{value=392,type=39,},{value=392,type=37,},{value=152,type=63,},},
+{{value=31400,type=17,},{value=2025,type=27,},{value=1110,type=23,},{value=1110,type=33,},{value=405,type=39,},{value=405,type=37,},{value=157,type=63,},},			
+			}, --每一级对应的属性加成
+			jinjiebaoji = {3,4,5} , --进阶暴击
+            baojilv = {10,10,10},   --进阶暴击出现的几率
+		},	
+
+
+
+	},
+	
+
+	-- 进阶部分
+	stage ={
+
+		--第一阶
+		{
+			id =1,    --翅膀ID	
+			modelId =	1,  	-- 外观ID
+			jinjieitemId = 11401 ,  --进阶消耗的材料
+			itemCost = 99999,  -- 消耗物品数量
+		    stageCost = 1000,  --进阶消耗的金钱
+			addStageExp = 10, --每次进阶增加进阶经验
+			maxStageExp = 50, --当前进阶所需的经验
+			addStageAttr = {
+{{value=8800,type=17,},{value=580,type=27,},{value=310,type=23,},{value=310,type=33,},{value=116,type=39,},{value=116,type=37,},{value=44,type=63,},},
+			}, --进阶属性加成
+			jinjiebaoji = {3,4,5} , --进阶暴击
+            baojilv = {10,10,10},   --进阶暴击出现的几率
+			broadcast = false, -- 是否广播			
+		},
+		--第二阶
+		{
+			id =2,    --翅膀ID	
+			modelId =	2,  	-- 外观ID
+			jinjieitemId = 11401 ,  --进阶消耗的材料
+			itemCost = 99999,  -- 消耗物品数量
+			stageCost = 2000,  --进阶消耗的金钱
+			addStageExp = 10, --每次进阶增加进阶经验
+			maxStageExp = 50, --当前进阶所需的经验
+			addStageAttr = {
+{{value=19200,type=17,},{value=1240,type=27,},{value=674,type=23,},{value=674,type=33,},{value=248,type=39,},{value=248,type=37,},{value=96,type=63,},},
+			}, --进阶属性加成
+			jinjiebaoji = {3,4,5} , --进阶暴击
+            baojilv = {10,10,10},   --进阶暴击出现的几率
+			broadcast = false, -- 是否广播			
+		},
+		--第三阶
+		{
+			id =3,    --翅膀ID	
+			modelId =	3,  	-- 外观ID
+			jinjieitemId = 11401 ,  --进阶消耗的材料
+			itemCost = 99999,  -- 消耗物品数量
+			stageCost = 2000,  --进阶消耗的金钱
+			addStageExp = 10, --每次进阶增加进阶经验
+			maxStageExp = 50, --当前进阶所需的经验
+			addStageAttr = {
+{{value=32400,type=17,},{value=2090,type=27,},{value=1146,type=23,},{value=1146,type=33,},{value=418,type=39,},{value=418,type=37,},{value=162,type=63,},},
+			}, --进阶属性加成
+			jinjiebaoji = {3,4,5} , --进阶暴击
+            baojilv = {10,10,10},   --进阶暴击出现的几率
+			broadcast = false, -- 是否广播			
+		},		
+	},
+
+
+	--翅膀化形配置
+	specialWing = {
+		{
+			id = 11,		--特殊翅膀ID
+			itemId = 28220,	--使用化形卡
+			name = 	Lang.Wing.n11	, -- 
+			modelId =	1	,  -- 外观id
+			attrs =	{ 
+				{type=27,value=600,},
+				{type=23,value=600,},
+				{type=33,value=600,},
+				{type=17,value=600,},
+				{type=35,value=600,},
+				{type=36,value=600,},
+				{type=39,value=600,},
+			},	-- 特殊翅膀的基础属性
+		},
+
+		{
+			id = 12,		--特殊翅膀ID
+			itemId = 28221,	--使用化形卡
+			name = 	Lang.Wing.n12	, -- 
+			modelId =	2	,  -- 外观id
+			attrs =	{ 
+				{type=27,value=600,},
+				{type=23,value=600,},
+				{type=33,value=600,},
+				{type=17,value=600,},
+				{type=35,value=600,},
+				{type=36,value=600,},
+				{type=39,value=600,},
+			},	-- 特殊翅膀的基础属性
+		},
+	},
+
+
+}

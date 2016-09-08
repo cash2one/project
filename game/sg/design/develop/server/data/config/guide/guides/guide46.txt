@@ -1,0 +1,51 @@
+﻿{
+  maxLevel = 40,
+  
+  --接受任务引导诛仙阵副本
+  trigger = 
+  { 
+    type = 1,
+    value = 133,
+  },
+
+  --引导中锁定的窗口ID
+  lockUI = 
+  {
+    210,
+  },
+
+  --引导的步骤 
+  steps = 
+
+  {
+
+	--第1步 引导点击诛仙阵
+    {
+      cond = { type = 1, helpId = 210, data = 0 },
+
+      action = { type = 10, helpId = 210, data = Lang.GuideLang.npc6, desc = "" },
+
+      hideCond = { type = 2, helpId = 210, data = 0 },
+    },
+
+	--第2步 引导点击挂机
+    {
+      cond = { type = 27, helpId = 0, data = 1054 },
+
+      action = { type = 16, helpId = 0, data = Lang.GuideLang.func58 },
+    },
+
+    {
+      cond = { type = 2, helpId = 243, data = 0 },
+
+      action = { type = 0, helpId = 0, data = 0, desc = "" },
+    },
+
+	--第4步 退出诛仙阵地图自动寻路
+    {
+      cond = { type = 27, helpId = 0, data = 11 },
+
+      action = { type = 16, helpId = 0, data = Lang.GuideLang.func35, desc = "" },
+    },
+  } 
+}

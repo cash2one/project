@@ -1,0 +1,19 @@
+--使用物品获得武将卡牌
+--#include "data/functions/normalitem/wujiangitemconfig.txt"
+
+
+function WujiangCardItem(actor,itemId,itemPtr,ItemTable)
+	LActor.removeItemByPtr(actor, itemPtr, 1, true, " ", 5)      --删除一个物品
+
+	HeTuLeShuFuncGetCard(actor, ItemTable.cardId)
+end
+
+function WujiangCardsInit(actor)
+	for _, itemInfo in pairs(WujiangCards) do
+		GlobalItemFn[itemInfo.itemId] = { func = WujiangCardItem, params = itemInfo }
+	end
+end
+
+table.insert(InitFnTable,WujiangCardsInit)
+
+

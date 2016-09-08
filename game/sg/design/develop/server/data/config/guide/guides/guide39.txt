@@ -1,0 +1,58 @@
+﻿{
+  maxLevel = 40,
+  
+  --接受任务后引导灵根
+  trigger = 
+  { 
+    type = 1,
+    value = 285,
+  },
+
+  --引导中锁定的窗口ID
+  lockUI = 
+  {
+    60,
+  },
+
+  --引导的步骤 
+  steps = 
+  {
+
+	--第1步 引导点击人物的导航按钮
+    {
+      cond = { type = 17,  helpId = 0, data = 285 },
+
+      action = { type = 1, helpId = 1, data = 0, desc = "" ,showType = 2},
+    },
+
+	--第2步 引导点击人物界面的灵根选项卡
+    {
+      cond = { type = 1, helpId = 60, data = 0 },
+
+      action = { type = 2, helpId = 61, data = 2, desc = "",showType = 2 },
+
+      hideCond = { type = 2, helpId = 60, data = 0 },
+    },
+
+	--第3步 引导点击灵根第一颗星
+    {
+      cond = { type = 1, helpId = 62, data = 0 },
+
+      action = { type = 1, helpId = 62, data = 0, desc = "" },
+    },
+
+	--第4步 引导点击人物界面的关闭按钮
+    {
+      cond = { type = 0, helpId = 0, data = 0 },
+
+      action = { type = 1, helpId = 63, data = 0, desc = "" },
+    },
+
+	--第5步 人物界面关闭结束引导
+    {
+      cond = { type = 2, helpId = 60, data = 0 },
+
+      action = { type = 16, helpId = 0, data = Lang.GuideLang.func35, desc = "" },
+    },
+  } 
+}

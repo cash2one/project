@@ -1,0 +1,625 @@
+﻿-- 世界boss创建和提示的相关函数
+
+--#include "data\config\activity\WorldBoss.txt" once
+
+WorldBossFun = {}
+WorldBossFun.ActivityId = 12
+WorldBossFun.SubActivityId = 73
+
+function OnWorldBossCreate(id1, id2)
+	local id = {tonumber(id1), tonumber(id2)}
+	-- 在不同场景创建2个
+	-- System.broadcastLevelTipmsg(Lang.TaskTalk.wb02, 28, ttGmTip)
+
+	local sys_var_d = System.getDyanmicVar()
+	local sys_var_s = System.getStaticVar()
+	if sys_var_s == nil or sys_var_d == nil then return end
+	if sys_var_s.worldboss_lvl == nil then
+		sys_var_s.worldboss_lvl = {}
+	end
+	if sys_var_d.worldboss_create_t == nil then
+		sys_var_d.worldboss_create_t = {}
+	end
+
+	local statechange = false
+	for i=1,#id do
+		for j=1, #WorldBoss do
+			local conf = WorldBoss[j]
+			if id[i] == conf.id then
+				if sys_var_s.worldboss_lvl[conf.id] == nil then
+					sys_var_s.worldboss_lvl[conf.id] = 1
+				end
+				local hdl = Fuben.getSceneHandleById(conf.sceneId, 0)
+				local ptr = Fuben.createMonster(hdl, conf.monsterId, conf.x, conf.y, conf.liveTime * 60)
+				-- 发送提示语
+				if ptr ~= nil then
+					-- 专题活动 世界boss
+					if conf.type == 2 and ONLINEREWARD.GetActivityState(WorldBossFun.ActivityId) == 1 then
+						-- print("----------____!!!!!")
+						local aconfig = activityConf[WorldBossFun.ActivityId].activities[WorldBossFun.SubActivityId]
+						if aconfig and aconfig.bossid and aconfig.bossid[j] then
+							Fuben.changeMonsterModelAndName(ptr, tonumber(aconfig.bossid[j].modelid), tostring(aconfig.bossid[j].name))
+						end
+					end
+					--------------------
+					-- 创建时间
+					LActor.SetBossState(conf.id, 1)
+					statechange = true
+					sys_var_d.worldboss_create_t[conf.id] = System.getCurrMiniTime()
+					-- 加buff
+					-- print("==========bosslvl=========="..sys_var_s.worldboss_lvl[conf.id])
+					if conf.buff and conf.buff[sys_var_s.worldboss_lvl[conf.id]] then
+						local buffconf = conf.buff[sys_var_s.worldboss_lvl[conf.id]]
+						for k=1,#buffconf do
+							LActor.addBuff(ptr, buffconf[k].type, buffconf[k].group, buffconf[k].value, buffconf[k].times, buffconf[k].interval, buffconf[k].name, buffconf[k].timeoverlay)
+						end
+					end
+
+					local x = 0
+					local y = 0
+					-- 公告
+					-- local str = string.format(Lang.TaskTalk.wb03, LActor.getName(ptr), LActor.getSceneName(ptr, x, y), conf.x, conf.y)
+					-- System.broadcastLevelTipmsg(str, conf.level, ttChatWindow)
+					local str = string.format(Lang.TaskTalk.wb03, LActor.getName(ptr), LActor.getSceneName(ptr, x, y))
+					System.broadcastTipmsg(str, ttGmTip + ttChatWindow)
+					-- 世界boss伤害排行榜
+					Ranking.removeRanking("worldboss"..conf.monsterId)
+					local rank = Ranking.add("worldboss"..conf.monsterId, 20, 0)
+					if rank then
+						Ranking.addColumn(rank, "name")
+						-- sys_var_d.worldboss_data.damage_rank[conf.monsterId] = rank
+					end
+				end
+			end
+		end
+	end
+	if statechange == true then
+		System.BroadcastWorldBossData()
+	end
+end
+
+--到时间全服发准备提示
+function OnReadyWorldBossTips(id1, id2)
+	local id = {tonumber(id1), tonumber(id2)}
+
+	local var = System.getDyanmicVar()
+	if var == nil then return end
+	if var.ReadyWorldBossTipsStatus == nil then
+		var.ReadyWorldBossTipsStatus = 1
+	end
+	var.ReadyWorldBossTipsTime = System.getCurrMiniTime() + 300
+	--26 36
+
+	-- 广播
+	-- local dp = LDataPack.allocPacket()
+	-- if dp == nil then return end
+	-- LDataPack.writeByte(dp, 26)
+	-- LDataPack.writeByte(dp, 36)
+
+	-- LDataPack.writeInt(dp, 1)
+
+	-- LDataPack.writeInt(dp, 11)	--int：活动id
+	-- LDataPack.writeInt(dp, 1)	--int：活动状态
+	-- LDataPack.writeInt(dp, 180)	--int：剩余时间
+
+	-- System.broadcastData(dp)	
+
+	-- 公告
+	for i=1,#id do
+		local idx = id[i]
+		if WorldBoss[idx] and WorldBoss[idx].id == idx and WorldBoss[idx].type == 2 then
+			local m_name = System.getMonsterNameById(WorldBoss[idx].monsterId)
+			-- 专题活动 世界boss
+			if WorldBoss[idx].type == 2 and ONLINEREWARD.GetActivityState(WorldBossFun.ActivityId) == 1 then
+				local aconfig = activityConf[WorldBossFun.ActivityId].activities[WorldBossFun.SubActivityId]
+				if aconfig and aconfig.bossid and aconfig.bossid[idx] then
+					m_name = aconfig.bossid[idx].name
+				end
+			end
+			--------------------
+			local s_name = Fuben.getSceneNameById(WorldBoss[idx].sceneId)
+			System.broadcastTipmsg(string.format(Lang.TaskTalk.wb12, m_name, s_name), ttGmTip)
+		end
+	end
+end
+
+--到时间全服发开始提示
+function OnStartWorldBossTips(id1, id2)
+	local nid1, nid2 = tonumber(id1), tonumber(id2)
+
+	local var = System.getDyanmicVar()
+	if var == nil then return end
+
+	if var.ReadyWorldBossTipsStatus ~= nil then
+		var.ReadyWorldBossTipsStatus = 0
+	end
+
+	if var.StartWorldBossTipsStatus == nil then
+		var.StartWorldBossTipsStatus = 1
+	end
+	if var.currentWorldBossCount == nil then
+		var.currentWorldBossCount = 0
+	end
+	var.StartWorldBossTipsTime = System.getCurrMiniTime() + 1800
+
+	var.currentWorldBossCount = nid2
+	--26 36
+
+	-- 广播
+	-- local dp = LDataPack.allocPacket()
+	-- if dp == nil then return end
+
+	-- --print("广播世界BOSS已出现")
+	-- LDataPack.writeByte(dp, 26)
+	-- LDataPack.writeByte(dp, 36)
+
+	-- LDataPack.writeInt(dp, 1)
+
+	-- LDataPack.writeInt(dp, 11)	--int：活动id
+	-- LDataPack.writeInt(dp, 2)	--int：活动状态
+	-- LDataPack.writeInt(dp, 1800)	--int：剩余时间
+
+	-- System.broadcastData(dp)	
+end
+
+--上线提示
+function OnLoginWorldBossTips(sysarg)
+--[[
+	local var = System.getDyanmicVar()
+	if var == nil then return end
+	if var.ReadyWorldBossTipsStatus == nil then return end
+
+	if var.ReadyWorldBossTipsStatus == 1 then
+		local npack = DataPack.allocPacket(sysarg, 26, 36)
+		if npack == nil then return end
+
+		local temptm = 120
+		if var.ReadyWorldBossTipsTime ~= nil then
+			temptm = var.ReadyWorldBossTipsTime - System.getCurrMiniTime()
+		end
+
+		DataPack.writeInt(npack, 1)
+
+		DataPack.writeInt(npack, 11)	--int：活动id
+		DataPack.writeInt(npack, 1)	--int：活动状态
+		DataPack.writeInt(npack, temptm)	--int：剩余时间
+		DataPack.flush(npack)
+
+	elseif var.StartWorldBossTipsStatus == 1 then 
+		local npack = DataPack.allocPacket(sysarg, 26, 36)
+		if npack == nil then return end
+
+		local temptm = 120
+		if var.StartWorldBossTipsTime ~= nil then
+			temptm = var.StartWorldBossTipsTime - System.getCurrMiniTime()
+		end
+
+		DataPack.writeInt(npack, 1)
+
+		DataPack.writeInt(npack, 11)	--int：活动id
+		DataPack.writeInt(npack, 2)	--int：活动状态
+		DataPack.writeInt(npack, temptm)	--int：剩余时间
+		DataPack.flush(npack)
+	end
+	]]
+end
+
+function OnWorldBossEscTip(id1, id2)
+	local id = {tonumber(id1), tonumber(id2)}
+	for i=1,#id do
+		for j=1, #WorldBoss do
+			local conf = WorldBoss[j]
+			if id[i] == conf.id then
+				--检查下怪物死了没
+				local hdl = Fuben.getSceneHandleById(conf.sceneId, 0)
+				local ret = Fuben.isKillAllMonster(hdl, conf.monsterId)
+				-- 发送提示语
+				if not ret then
+					-- local str = string.format(Lang.TaskTalk.wb04, System.getMonsterNameById(conf.monsterId))
+					-- System.broadcastLevelTipmsg(str, conf.level, ttChatWindow)
+				end
+			end
+		end
+	end
+end
+
+function WorldBossRankAward( idx )
+	if idx <= 0 then return end
+	local mid = WorldBoss[idx].monsterId
+	-- 伤害排行榜
+	local rank = Ranking.getRanking("worldboss"..mid)
+	if rank then
+		local count = Ranking.getRankItemCount(rank)
+		-- for i=1,count do
+		-- 	local item = Ranking.getItemFromIndex(rank, i-1)
+		-- 	local id = Ranking.getId(item)
+		-- 	local point = Ranking.getPoint(item)
+		-- 	local name = Ranking.getSub(item, 0)
+		-- 	print("======WorldBossAward======"..id.." "..point.." "..name)
+		-- end
+		-- 发放排名奖励
+		local conf = WorldBoss[idx].awards
+		for i=1,#conf do
+			if conf[i].rank[2] < conf[i].rank[1] then return end -- 配置错误
+			local from_, to_
+			if count >= conf[i].rank[2] then
+				from_ = conf[i].rank[1]
+				to_ = conf[i].rank[2]
+			elseif count >= conf[i].rank[1] and count < conf[i].rank[2] then
+				from_ = conf[i].rank[1]
+				to_ = count
+			end
+			if from_ and to_ then
+				-- 发放排名from_到to_的奖励
+				for j=from_,to_ do -- j为排名
+					local item = Ranking.getItemFromIndex(rank, j-1)
+					local aid = Ranking.getId(item)
+					if #conf[i].item > 0 and #conf[i].item <= 5 then
+						local award_list = {}
+						for ai=1,5 do
+							if conf[i].item[ai] then
+								award_list[ai] = conf[i].item[ai]
+							else
+								award_list[ai] = {type = 0, id = 0, count = 0, bind = 0}
+							end
+						end
+						local mail_content = string.format(Lang.TaskTalk.wb09, j)
+						System.sendGmMailOffLine(aid, mail_content , award_list[1].type, award_list[1].id, award_list[1].count, award_list[1].bind, Lang.TaskTalk.wb15
+							, award_list[2].type, award_list[2].id, award_list[2].count, award_list[2].bind
+							, award_list[3].type, award_list[3].id, award_list[3].count, award_list[3].bind
+							, award_list[4].type, award_list[4].id, award_list[4].count, award_list[4].bind
+							, award_list[5].type, award_list[5].id, award_list[5].count, award_list[5].bind)
+					else
+						print("-------worldboss award conf error")
+					end
+					-- 下发伤害奖励
+					local point = Ranking.getPoint(item)
+					local award_count = math.modf(point/360) -- 公式
+					System.sendGmMailOffLine(aid, string.format(Lang.TaskTalk.wb17, point), 2, 0, award_count, 0, Lang.TaskTalk.wb15) -- 贝币
+				end
+			end
+		end
+	end
+end
+
+function OnWorldBossGone(id1, id2)
+	local sys_var_d = System.getDyanmicVar()
+	local sys_var_s = System.getStaticVar()
+	if sys_var_s == nil or sys_var_d == nil then return end
+
+	local statechange = false
+	local id = {tonumber(id1), tonumber(id2)}
+	for i=1,#id do
+		for j=1, #WorldBoss do
+			local conf = WorldBoss[j]
+			if id[i] == conf.id then
+				LActor.SetBossState(conf.id, 0)
+				statechange = true
+				--检查下怪物死了没
+				local hdl = Fuben.getSceneHandleById(conf.sceneId, 0)
+				local ret = Fuben.isKillAllMonster(hdl, conf.monsterId)
+				-- 发送提示语
+				if not ret then
+					-- 没有打死boss则boss降级
+					if sys_var_s.worldboss_lvl and sys_var_s.worldboss_lvl[conf.id] then
+						sys_var_s.worldboss_lvl[conf.id] = sys_var_s.worldboss_lvl[conf.id] -1
+						if sys_var_s.worldboss_lvl[conf.id] <= 1 then
+							sys_var_s.worldboss_lvl[conf.id] = 1
+						end
+						if sys_var_s.worldboss_lvl[conf.id] >= #conf.buff then
+							sys_var_s.worldboss_lvl[conf.id] = #conf.buff
+						end
+					end
+					-- 没打死也算伤害排名奖励
+					WorldBossRankAward( j )
+
+					-- 专题活动 世界boss
+					local m_name = System.getMonsterNameById(conf.monsterId)
+					if conf.type == 2 and ONLINEREWARD.GetActivityState(WorldBossFun.ActivityId) == 1 then
+						local aconfig = activityConf[WorldBossFun.ActivityId].activities[WorldBossFun.SubActivityId]
+						if aconfig and aconfig.bossid and aconfig.bossid[idx] then
+							m_name = aconfig.bossid[idx].name
+						end
+					end
+					--------------------
+					local str = string.format(Lang.TaskTalk.wb05, m_name)
+					System.broadcastTipmsg(str, ttGmTip)
+				end
+			end
+		end
+	end
+	if statechange == true then
+		System.BroadcastWorldBossData()
+	end
+
+	-- 广播
+	-- local dp = LDataPack.allocPacket()
+	-- if dp == nil then return end
+
+	-- --print("广播世界BOSS已出现")
+	-- LDataPack.writeByte(dp, 26)
+	-- LDataPack.writeByte(dp, 36)
+
+	-- LDataPack.writeInt(dp, 1)
+
+	-- LDataPack.writeInt(dp, 11)	--int：活动id
+	-- LDataPack.writeInt(dp, 3)	--int：活动状态
+	-- LDataPack.writeInt(dp, 0)	--int：剩余时间
+
+	-- System.broadcastData(dp)	
+
+	local var = System.getDyanmicVar()
+	if var == nil then return end
+
+	var.ReadyWorldBossTipsStatus = nil
+	var.StartWorldBossTipsStatus = nil
+	var.currentWorldBossCount = nil
+
+
+
+end
+
+-- 世界boss受到伤害触发函数
+WorldBossFun.OnWorldBossDamage = function( monster, mid ,val ,sysarg )
+	-- print("------OnWorldBossDamage------")
+	-- local sys_var_d = System.getDyanmicVar()
+	-- if sys_var_d == nil or sys_var_d.worldboss_data == nil or sys_var_d.worldboss_data.damage_rank == nil then return end
+
+	local rank = Ranking.getRanking("worldboss"..mid) -- 获取排行榜
+	if rank == nil then return end
+	local aid = LActor.getActorId(sysarg)
+	if aid == nil or aid == 0 then return end
+	local item = Ranking.getItemPtrFromId(rank, aid)
+	if item then
+		Ranking.updateItem(rank, aid, val)
+	else
+		local item = Ranking.addItem(rank, aid, val)
+		Ranking.setSub(item, 0, LActor.getName(sysarg))
+		-- 触发参与世界boss事件
+		OnTakePartInWorldBoss(sysarg, mid)
+	end
+end
+
+-- 七夕boss受到伤害触发函数
+WorldBossFun.OnQixiBossDamage = function( monster, mid ,val ,sysarg )
+	-- print("------OnWorldBossDamage------")
+	-- local sys_var_d = System.getDyanmicVar()
+	-- if sys_var_d == nil or sys_var_d.worldboss_data == nil or sys_var_d.worldboss_data.damage_rank == nil then return end
+
+	local rank = Ranking.getRanking("worldboss"..mid) -- 获取排行榜
+	if rank == nil then return end
+	local aid = LActor.getActorId(sysarg)
+	if aid == nil or aid == 0 then return end
+	local item = Ranking.getItemPtrFromId(rank, aid)
+	if item then
+		Ranking.updateItem(rank, aid, val)
+	else
+		local item = Ranking.addItem(rank, aid, val)
+		Ranking.setSub(item, 0, LActor.getName(sysarg))
+		-- 触发七夕称号事件
+		QixiTitleTriggerTarget( sysarg, 3, 1, 1 )
+	end
+end
+
+-- 参与世界boss
+OnTakePartInWorldBoss = function ( sysarg, mid )	
+	-- 触发任务事件
+	LActor.OnQuestEvent(qtKillWorldBoss, 0, 1, true, sysarg) -- 参与击杀boss
+	LActor.OnQuestEvent(qtKillWorldBoss, mid, 1, true, sysarg) -- 参与击杀某boss
+	-- 活跃度
+	ActivationTrigger( sysarg, 17 )
+	-- 成就事件
+	LActor.SetAchieveProcessByType(sysarg, 117, 1, 1); -- aAchieveEventPartInBoss
+end
+
+-- 进入普通boss场景
+WorldBossFun.OnEnterJYBossScene = function( sysarg, sid )
+	local var = LActor.getStaticVar(sysarg)
+	if not var then return end
+	local oldmode = LActor.getPkMode(sysarg)
+	var.JYBoss_PKmode = oldmode
+
+	local mode = 2
+	-- 没有公会
+	if LActor.getGuildId(sysarg) <= 0 then
+		mode = 4
+	end
+	LActor.setExitSceneEvent( sysarg, true )
+	LActor.setPkMode(sysarg, mode)
+end
+
+-- 退出普通boss场景
+WorldBossFun.OnExitJYBossScene = function( sysarg )
+	local var = LActor.getStaticVar(sysarg)
+	if not var then return end
+	if var.JYBoss_PKmode and var.JYBoss_PKmode >= 0 and var.JYBoss_PKmode ~= LActor.getPkMode(sysarg) then
+		LActor.setPkMode(sysarg, var.JYBoss_PKmode)
+	end
+end
+
+-- 创建精英boss
+WorldBossFun.OnJYBossCreate = function( mon, mid )
+	local rank = Ranking.getRanking("jyboss"..mid)
+	if not rank then
+		rank = Ranking.add("jyboss"..mid, 20, 0)
+		if rank then
+			Ranking.addColumn(rank, "guildid")
+		end
+	end
+	-- 清除数据
+	if rank then
+		Ranking.clearRanking(rank)
+	end
+end
+
+-- 精英boss收到伤害
+WorldBossFun.OnJYBossDamage = function( monster, mid ,val ,sysarg )
+	local rank = Ranking.getRanking("jyboss"..mid) -- 获取排行榜
+	if rank == nil then return end
+	local aid = LActor.getActorId(sysarg)
+	if aid == nil or aid == 0 then return end
+	local item = Ranking.getItemPtrFromId(rank, aid)
+	if item then
+		-- Ranking.updateItem(rank, aid, val)
+	else
+		local item = Ranking.addItem(rank, aid, 0)
+		Ranking.setSubInt(item, 0, LActor.getGuildId(sysarg))
+		-- 触发参与世界boss事件
+		-- OnTakePartInWorldBoss(sysarg, mid)
+	end
+end
+
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, OnLoginWorldBossTips)
+
+for i=1,#WorldBoss do
+	if WorldBoss[i].type == 2 then -- 2代表世界boss
+		MonsterDamageDispatch.register( WorldBoss[i].monsterId, WorldBossFun.OnWorldBossDamage )
+	elseif WorldBoss[i].type == 1 then -- 1代表普通boss
+		EventCallDispatcher.registerSceneEnter(WorldBoss[i].sceneId, WorldBossFun.OnEnterJYBossScene)
+		EventCallDispatcher.registerSceneExit(WorldBoss[i].sceneId, WorldBossFun.OnExitJYBossScene)
+		MonMobDispatcher.register( WorldBoss[i].monsterId, WorldBossFun.OnJYBossCreate )
+		MonsterDamageDispatch.register( WorldBoss[i].monsterId, WorldBossFun.OnJYBossDamage )
+	elseif WorldBoss[i].type == 3 then -- 3代表七夕boss
+		MonsterDamageDispatch.register( WorldBoss[i].monsterId, WorldBossFun.OnQixiBossDamage )
+	end
+end
+
+function SendWorldBossRank( sysarg, index )
+	-- print("SendWorldBossRank")
+	if WorldBoss[index] == nil then
+		return
+	end
+	-- print("SendWorldBossRank1")
+	local rank = Ranking.getRanking("worldboss"..WorldBoss[index].monsterId) -- 获取排行榜
+	if rank == nil then return end
+	-- print("SendWorldBossRank2")
+	local itemCount = Ranking.getRankItemCount(rank)
+	if itemCount > 20 then
+		itemCount = 20
+	end
+	local aid = LActor.getActorId(sysarg)
+	if aid == nil or aid == 0 then return end
+
+	local myrank = 0
+	local mypoint = 0
+	local myitem = Ranking.getItemPtrFromId(rank, aid)
+	if myitem then
+		myrank = Ranking.getIndexFromPtr(myitem) + 1
+		mypoint = Ranking.getPoint(myitem)
+	end
+
+	local rank20 = {}
+	for i=1,itemCount do
+		local item = Ranking.getItemFromIndex(rank, i-1)
+		local info = {}
+		if item ~= nil then
+			info[1] = Ranking.getSub(item, 0) -- 名称
+			info[2] = Ranking.getPoint(item) -- 积分
+		else
+			info[1] = "" -- 名称
+			info[2] = 0
+		end
+		rank20[i] = info
+	end
+
+	local npack = DataPack.allocPacket(sysarg, 26, 49)
+	if npack == nil then return end
+	-- print("SendWorldBossRank3")
+	DataPack.writeInt(npack, myrank) -- 排名
+	DataPack.writeInt(npack, mypoint) -- 积分
+	DataPack.writeInt(npack, itemCount) -- 个数
+	-- print("------------",myrank,mypoint, itemCount)
+	for j=1,itemCount do
+		local info = rank20[j]
+		DataPack.writeString(npack, info[1])
+		DataPack.writeInt(npack, info[2])
+		-- print("--------++++",info[1],info[2])
+	end
+	DataPack.flush(npack)
+end
+
+function WorldBoss_Fina()
+	for i=1,#WorldBoss do
+		if WorldBoss[i].type == 2 or WorldBoss[i].type == 3 then
+			local mid = WorldBoss[i].monsterId
+			local rank = Ranking.getRanking("worldboss"..mid)
+			if rank then
+				Ranking.save(rank, "worldbossrank"..mid..".txt")
+			end
+		end
+	end
+end
+
+WorldBossFun.sendActivityInfo = function(sysarg)
+	local aconfig = activityConf[WorldBossFun.ActivityId].activities[WorldBossFun.SubActivityId]
+	if not aconfig or not aconfig.bossid then return end
+	local npack = DataPack.allocPacket(sysarg, BaseTypes.SystemId.timeRewardSystem, 120)
+	if npack then
+		DataPack.writeInt(npack, #aconfig.bossid)
+		for i=1,#aconfig.bossid do
+			if aconfig.bossid[i] then
+				DataPack.writeInt(npack, aconfig.bossid[i].modelid or 0)
+				DataPack.writeString(npack, aconfig.bossid[i].name or "")
+				-- print("::::::::::::::::",aconfig.bossid[i].modelid,aconfig.bossid[i].name)
+			else
+				DataPack.writeInt(npack, 0)
+				DataPack.writeString(npack, "")
+			end
+		end
+		DataPack.flush(npack)
+	end
+end
+
+function WorldBoss_Init()
+	for i=1,#WorldBoss do
+		if WorldBoss[i].type == 2 or WorldBoss[i].type == 3 then
+			local mid = WorldBoss[i].monsterId
+			local rank = Ranking.getRanking("worldboss"..mid)
+			if rank then
+				-- Ranking.load(rank, "worldbossrank"..mid..".txt")
+			else
+				local tmprank = Ranking.add("worldboss"..mid, 100, 0)
+				if tmprank then
+					Ranking.addColumn(tmprank, "name")
+					Ranking.load(tmprank, "worldbossrank"..mid..".txt")
+				end
+			end
+		end
+	end
+end
+
+table.insert(InitFnTable,WorldBoss_Init)
+table.insert(FinaFnTable,WorldBoss_Fina)
+
+function testworldboss( sysarg, arg )
+	if not arg[1] then return end
+	local idx = tonumber(arg[1])
+
+	OnWorldBossCreate(idx,99,99)
+end
+
+function worldbossgone( sysarg, arg )
+	if not arg[1] then return end
+	local idx = tonumber(arg[1])
+
+	OnWorldBossGone(idx, 99)
+end
+
+function testworldbossrank( sysarg )
+	if not arg[1] then return end
+	local idx = tonumber(arg[1])
+	
+	SendWorldBossRank( sysarg, idx )
+end
+
+function clearworldbosslvl( sysarg, arg )
+	local sys_var_s = System.getStaticVar()
+	if sys_var_s == nil then return end
+	sys_var_s.worldboss_lvl = nil
+end
+
+GmEventFuncList.register( "tboss", testworldboss, 1)
+GmEventFuncList.register( "tbossrank", testworldbossrank, 1)
+GmEventFuncList.register( "cbosslvl", clearworldbosslvl, 1)
+GmEventFuncList.register( "gboss", worldbossgone, 1)

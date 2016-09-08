@@ -1,0 +1,82 @@
+--#include "..\..\language\LangCode.txt"
+-- 护送任务配置
+
+protectquestconfig = {
+        -- 护送信息
+        info = {
+                -- [任务id] = {},
+                -- [2] = {monsterid = 274, timelimit = 1200, speed = 650},
+        [25001] = {monsterid = 0, timelimit = 1200, speed = 650},
+        [49] = {monsterid = 0, timelimit = 1200, speed = 350},--
+        [133] = {monsterid = 0, timelimit = 1200, speed = 350},--
+        [93] = {monsterid = 0, timelimit = 1200, speed = 350},--
+        [104] = {monsterid = 0, timelimit = 1200, speed = 350},--
+        [141] = {monsterid = 0, timelimit = 1200, speed = 350},--
+        [154] = {monsterid = 0, timelimit = 1200, speed = 350},--
+        [156] = {monsterid = 0, timelimit = 1200, speed = 350},--
+        [168] = {monsterid = 0, timelimit = 1200, speed = 350},--
+        [173] = {monsterid = 0, timelimit = 1200, speed = 350},--
+        [189] = {monsterid = 0, timelimit = 1200, speed = 350},--
+        [190] = {monsterid = 0, timelimit = 1200, speed = 350},--
+        [207] = {monsterid = 0, timelimit = 1200, speed = 350},--
+        [214] = {monsterid = 0, timelimit = 1200, speed = 350},--
+        [226] = {monsterid = 0, timelimit = 1200, speed = 350},--
+        [235] = {monsterid = 0, timelimit = 1200, speed = 350},--
+        [237] = {monsterid = 0, timelimit = 1200, speed = 350},--
+        [249] = {monsterid = 0, timelimit = 1200, speed = 350},--
+        [251] = {monsterid = 0, timelimit = 1200, speed = 350},--
+        [257] = {monsterid = 0, timelimit = 1200, speed = 350},--
+        [261] = {monsterid = 0, timelimit = 1200, speed = 350},--
+        [268] = {monsterid = 0, timelimit = 1200, speed = 350},--
+        [274] = {monsterid = 0, timelimit = 1200, speed = 350},--
+        [279] = {monsterid = 0, timelimit = 1200, speed = 350},--
+        [293] = {monsterid = 0, timelimit = 1200, speed = 350},--
+        [297] = {monsterid = 0, timelimit = 1200, speed = 350},--
+        [298] = {monsterid = 0, timelimit = 1200, speed = 350},--
+[5002] = {monsterid = 0, timelimit = 1200, speed = 350},
+[5005] = {monsterid = 0, timelimit = 1200, speed = 350},
+[5008] = {monsterid = 0, timelimit = 1200, speed = 350},
+[5020] = {monsterid = 0, timelimit = 1200, speed = 350},
+[5022] = {monsterid = 0, timelimit = 1200, speed = 350},
+[5049] = {monsterid = 0, timelimit = 1200, speed = 350},
+[5065] = {monsterid = 0, timelimit = 1200, speed = 350},
+[5077] = {monsterid = 0, timelimit = 1200, speed = 350},
+[5081] = {monsterid = 0, timelimit = 1200, speed = 350},
+[5084] = {monsterid = 0, timelimit = 1200, speed = 350},
+[5098] = {monsterid = 0, timelimit = 1200, speed = 350},
+[5123] = {monsterid = 0, timelimit = 1200, speed = 350},
+[5141] = {monsterid = 0, timelimit = 1200, speed = 350},
+[5153] = {monsterid = 0, timelimit = 1200, speed = 350},
+[5154] = {monsterid = 0, timelimit = 1200, speed = 350},
+[5164] = {monsterid = 0, timelimit = 1200, speed = 350},
+[5183] = {monsterid = 0, timelimit = 1200, speed = 350},
+[4125] = {monsterid = 0, timelimit = 1200, speed = 350},
+
+
+[10020] = {monsterid = 0, timelimit = 1200, speed = 350},
+[10021] = {monsterid = 0, timelimit = 1200, speed = 350},
+[10022] = {monsterid = 0, timelimit = 1200, speed = 350},
+[10023] = {monsterid = 0, timelimit = 1200, speed = 350},
+[10024] = {monsterid = 0, timelimit = 1200, speed = 350},--30
+[10070] = {monsterid = 0, timelimit = 1200, speed = 350},
+[10071] = {monsterid = 0, timelimit = 1200, speed = 350},
+[10072] = {monsterid = 0, timelimit = 1200, speed = 350},
+[10073] = {monsterid = 0, timelimit = 1200, speed = 350},
+[10074] = {monsterid = 0, timelimit = 1200, speed = 350},--40
+[10120] = {monsterid = 0, timelimit = 1200, speed = 350},
+[10121] = {monsterid = 0, timelimit = 1200, speed = 350},
+[10122] = {monsterid = 0, timelimit = 1200, speed = 350},
+[10123] = {monsterid = 0, timelimit = 1200, speed = 350},
+[10124] = {monsterid = 0, timelimit = 1200, speed = 350},--50
+[10170] = {monsterid = 0, timelimit = 1200, speed = 350},
+[10171] = {monsterid = 0, timelimit = 1200, speed = 350},
+[10172] = {monsterid = 0, timelimit = 1200, speed = 350},
+[10173] = {monsterid = 0, timelimit = 1200, speed = 350},
+[10174] = {monsterid = 0, timelimit = 1200, speed = 350},--60
+
+        -- [] = {monsterid = 0, timelimit = 1200, speed = 350},--
+        -- [] = {monsterid = 0, timelimit = 1200, speed = 350},--
+
+        },
+
+}

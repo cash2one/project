@@ -1,0 +1,77 @@
+-- 1元礼包
+OneRmbItem = {}
+OneRmbItem.ActivityId = 0
+OneRmbItem.SubActivityId = 49
+
+-- 获得礼包
+OneRmbItem.GetAward = function(accountName, arg)
+	-- 活动是否开启
+	if OneRmbItem.ActivityId <= 0 then
+		print("-----OneRmbItem.GetAward OneRmbItem.ActivityId = 0-----")
+		return
+	end
+	if ONLINEREWARD.GetActivityState(OneRmbItem.ActivityId) ~= 1 then
+		print("-----OneRmbItem.GetAward GetActivityState ~= 1-----")
+		return
+	end
+	local activeid = OneRmbItem.ActivityId
+	local sysarg = LActor.getActorByAccountName(accountName)
+	if sysarg == nil then return end
+	local var = LActor.getStaticVar(sysarg)
+	if not var then return end
+	if not var.activityList then
+		var.activityList = {}
+	end
+	if not var.activityList[activeid] then
+		var.activityList[activeid] = {}
+	end
+	-- 是否买过
+	if var.activityList[activeid].one_rmb_item ~= 1 then
+		local itemid = 0
+		if activityConf[OneRmbItem.ActivityId] and activityConf[OneRmbItem.ActivityId].activities[OneRmbItem.SubActivityId] then
+			itemid = activityConf[OneRmbItem.ActivityId].activities[OneRmbItem.SubActivityId].itemid
+		end
+		if itemid > 0 then
+			LActor.addItem(sysarg, itemid, 0,0,1,0, "onermbitem")
+			-- 设置
+			var.activityList[activeid].one_rmb_item = 1
+			System.logCounter(
+						LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), 
+					  	"activityreward",tostring(OneRmbItem.ActivityId) , tostring(OneRmbItem.SubActivityId), tostring(1), 
+					 	string.format("%s:%s",itemid,1), tostring(LActor.getName(sysarg)), var.download_from, "", lfDB
+					 )
+		end
+	end
+	-- 发送活动状态
+	activityFunc.getActivityInfo(sysarg, OneRmbItem.ActivityId, OneRmbItem.SubActivityId)
+end
+
+-- 通过OneRmbItem.SubActivityId找OneRmbItem.ActivityId
+OneRmbItem.Init = function()
+	for i,v in pairs(activityConf) do
+		for j,w in pairs(v.activities) do
+			if w and w.id == OneRmbItem.SubActivityId then
+				OneRmbItem.ActivityId = tonumber(v.activityId)
+				return
+			end
+		end
+	end
+end
+
+OneRmbItem.test = function(sysarg)
+	local accountName = LActor.getAccountName(sysarg)
+	OneRmbItem.GetAward(accountName)
+end
+
+OneRmbItem.OfflineMsg = function( sysarg, msgType, dp, num )
+	if msgType ~= omOneRmbItem then return end
+
+	local accountName = LActor.getAccountName(sysarg)
+	OneRmbItem.GetAward(accountName)
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeOneRMBItem, OneRmbItem.GetAward)
+OffLineMsgDispatcher.registerEventCall(omOneRmbItem, OneRmbItem.OfflineMsg)
+table.insert(InitFnTable, OneRmbItem.Init)
+
+GmEventFuncList.register("onermb", OneRmbItem.test, 1)

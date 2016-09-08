@@ -1,0 +1,404 @@
+﻿--lua script
+--[[
+日期：2013年12月17日
+说明：
+ 与装备相关的协议处理
+]]
+
+
+--#include "data\config\item\itemenhance\equipenhanceconfigex.txt" once
+--#include "data\functions\systems\miscs\miscsystems.txt" once
+
+
+EnhanceTableEx = {}
+
+
+EnhanceTableEx.TestPrint = function(items, totalMoney, retItem)
+	print("---------------------------")
+	print("in EnhanceTableEx.TestPrint")
+	for _, oneItem in ipairs(items) do
+		print("oneItem.itemId = "..oneItem.itemId.." bind = "..oneItem.bindCount.." unbindCount = "..oneItem.unbindCount)
+	end
+	print("totalMoney = "..totalMoney)
+	print("retItem.itemId = "..retItem.itemId.." bind = "..retItem.bindCount.." unbindCount = "..retItem.unbindCount)
+
+	print("end EnhanceTableEx.TestPrint")
+	print("---------------------------")
+end
+
+
+--[[
+函数：计算玩家是否有足够的物品合成，是否有足够的金钱。
+参数：
+ mixLevel: 合成级别；
+ mixType: 物品类型，由配置设置。
+ isAll: 全部类型合成时，不进行出错提示。
+返回：
+ 参数1: true/nil；
+]]
+EnhanceTableEx.PreCalc = function(sysarg, mixLevel, mixType, isAll)
+	--print("in EnhanceTableEx.PreCalc")
+	local OneItemConf = OneKeyMixConf[mixType]
+	if not OneItemConf then return end
+
+	local 	prevCount, afterCount, totalMoney = 0, 0, 0
+	local 	prevId, afterId, needCount, needMoney, str
+	for i = 1, mixLevel do
+		if not OneItemConf.before[i] or not OneItemConf.after[i] or
+		   not OneItemConf.money[i] or not OneItemConf.count[i] then
+		   print("EnhanceTableEx.PreCalc: config error")
+			return
+		end
+
+		--合成需要的物品Id，合成后的物品Id，合成需要的物品数量，单次合成需要的金钱
+		prevId, afterId, needCount, needMoney = OneItemConf.before[i], OneItemConf.after[i], OneItemConf.count[i], OneItemConf.money[i]
+		--print("level = "..i)
+		--print("EnhanceTableEx.PreCalc: "..prevId.." "..afterId.." "..needCount.." "..needMoney)
+
+		--prevCount:背包中合成需要的物品的数量，afterCount:上次合成的物品数量
+		prevCount = LActor.getItemCount(sysarg, prevId, -1, -1, -1)
+		prevCount = prevCount + afterCount
+		--print("add = "..afterCount.." have = "..prevCount)
+
+		afterCount = math.floor(prevCount / needCount) 	--合成后的物品的数量
+		--print("mix = "..afterCount)
+
+		if i == mixLevel and afterCount == 0 then 	--不能合成目标级别
+			if i - 1 <= 0 then str = Lang.Enhance.yjhc002
+			else str = string.format(Lang.Enhance.yjhc001, i - 1) end
+			if not isAll then 
+				LActor.sendTipmsg(sysarg, str, ttMessage)
+			end
+			return 
+		end
+
+		prevId = afterId
+		totalMoney = totalMoney + afterCount * needMoney 	--统计金钱
+		--print("ThisLevelMoney = "..afterCount*needMoney)
+	end
+	--print("EnhanceTableEx.PreCalc: result = "..afterId.." "..afterCount.." "..totalMoney)
+
+	--[[
+	 说明物品足够合成到目标级别，可以合成 afterCount 个，共需要 totalMoney 金钱。
+	 查看金钱是否足够合成物品。
+	]]
+	local 	haveMoney = LActor.getMoneyCount(sysarg, OneItemConf.moneyType)
+	if totalMoney > haveMoney then
+		local moneyStr = GetMoneyString(OneItemConf.moneyType)
+		str = string.format(Lang.Enhance.yjhc003, moneyStr, totalMoney, moneyStr, totalMoney - haveMoney, moneyStr)
+		if not isAll then
+			LActor.sendTipmsg(sysarg, str, ttMessage)
+		end
+		return
+	end
+
+	return true
+end
+
+
+--[[
+函数：计算成功合成后的物品信息和使用的玩家背包中的物品信息。
+说明：
+ 合成时优先使用"绑定物品"。
+参数：
+ prevItemInfo: 玩家背包中含有的合成需要的物品信息；
+ itemInfo: 上次合成的用于本次进行合成的物品信息；
+ needCount: 单次合成需要的物品数量；
+ afterId: 本次成功合成后的物品Id。
+返回：
+ 参数1: usedItemInfo；{itemId, bindCount, unbindCount}
+ 参数2: retItemInfo；{itemId, bindCount, unbindCount}
+ 参数3: 成功合成物品的总数量。
+]]
+EnhanceTableEx.CalcUsedItems = function(prevItemInfo, itemInfo, needCount, afterId)
+	local  	prevCopyItem = 
+	 {itemId = prevItemInfo.itemId, bindCount = prevItemInfo.bindCount, unbindCount = prevItemInfo.unbindCount}
+	local 	usedItemInfo = {itemId = 0, bindCount = 0, unbindCount = 0}
+	local   retItemInfo = {itemId = 0, bindCount = 0, unbindCount = 0}
+	local 	thisMixCount = 0
+
+	--统计共有材料
+	prevCopyItem.bindCount = prevCopyItem.bindCount + itemInfo.bindCount
+	prevCopyItem.unbindCount = prevCopyItem.unbindCount + itemInfo.unbindCount
+	usedItemInfo.itemId = prevCopyItem.itemId
+
+	thisMixCount = prevCopyItem.bindCount + prevCopyItem.unbindCount
+	thisMixCount = math.floor(thisMixCount / needCount) 	--合成后的物品的总数量
+
+	--合成后的物品：物品Id，绑定数量、非绑定数量
+	retItemInfo.itemId = afterId
+	retItemInfo.bindCount = math.ceil(prevCopyItem.bindCount / needCount)
+	if retItemInfo.bindCount > thisMixCount then
+		retItemInfo.bindCount = retItemInfo.bindCount - 1
+	end
+	retItemInfo.unbindCount = thisMixCount - retItemInfo.bindCount
+
+	--合成需要的物品：物品Id，绑定数量，非绑定数量
+	local thisTotalCount = thisMixCount * needCount 	--合成需要的物品的总数量
+	if prevCopyItem.bindCount >= thisTotalCount then
+		usedItemInfo.bindCount = thisTotalCount
+		usedItemInfo.unbindCount = 0
+	else
+		usedItemInfo.bindCount = prevCopyItem.bindCount
+		usedItemInfo.unbindCount = thisTotalCount - usedItemInfo.bindCount
+	end
+
+	--去除上次合成增加的物品，如果出现小于0则表示是中合成的物品，需要为玩家添加
+	usedItemInfo.bindCount = usedItemInfo.bindCount - itemInfo.bindCount
+	usedItemInfo.unbindCount = usedItemInfo.unbindCount - itemInfo.unbindCount
+
+	return usedItemInfo, retItemInfo, thisMixCount
+end
+
+
+--[[
+函数：单次从level-1合成level级物品。itemInfo表示上次合成得到的level-1物品。
+参数：
+ level: 目标合成等级；
+ OneItemConf: 配置信息。
+ itemInfo: {itemId, bindCount, unbindCount}，合成增加的物品信息。
+返回：
+ 参数1: usedItemInfo，使用的背包中的物品；
+ 参数2: retItemInfo，合成的level级物品；
+ 参数3: usedMoney，本次合成用到的金钱。
+]]
+EnhanceTableEx.MixItemsOneStep = function(sysarg, level, OneItemConf, itemInfo)
+	if not OneItemConf.before[level] or not OneItemConf.after[level] or
+	   not OneItemConf.money[level] or not OneItemConf.count[level] then 	--无效的level
+	   	print("EnhanceTableEx.MixItemsOneStep: read config error")
+		return 	
+	end
+
+	--合成需要的item，合成后的item，合成一次需要的数量，合成一次需要的金钱
+	local 	afterId, needCount, needMoney
+	local  	prevItemInfo = {itemId = 0, bindCount = 0, unbindCount = 0} --合成需要的item信息
+
+	prevItemInfo.itemId = OneItemConf.before[level]
+	afterId, needCount, needMoney = OneItemConf.after[level], OneItemConf.count[level], OneItemConf.money[level]
+
+	if itemInfo.itemId ~= 0 and itemInfo.itemId ~= prevItemInfo.itemId then
+		print("EnhanceTableEx.MixItemsOneStep: add error")
+		return 	--累加物品出错
+	end
+
+	--背包中绑定的物品数量
+	prevItemInfo.bindCount = LActor.getItemCount(sysarg, prevItemInfo.itemId, -1, -1, 1)
+	--背包中非绑定的物品数量
+	prevItemInfo.unbindCount = LActor.getItemCount(sysarg, prevItemInfo.itemId, -1, -1, 0)
+	
+	local usedItemInfo, retItemInfo, totalCount = EnhanceTableEx.CalcUsedItems(prevItemInfo, itemInfo, needCount, afterId)
+	local usedMoney = totalCount * needMoney
+	
+	return usedItemInfo, retItemInfo, usedMoney
+end
+
+
+--[[
+函数：是否可以给与奖励，进行背包判断。
+说明：2013年12月26日，宝石叠加数量为99。一个格可以存放99个宝石。
+返回：
+ 参数1: true/nil。
+]]
+EnhanceTableEx.CanGiveItems = function(sysarg, totalUsedInfo, retItemInfo)
+	local 	needGrid, itemCount, OVERLAP = 0, 0, 99
+	for _, oneItem in ipairs(totalUsedInfo) do
+		if oneItem.bindCount < 0 then
+			itemCount = -oneItem.bindCount
+			needGrid = needGrid + math.ceil(itemCount/OVERLAP)
+		end
+
+		if oneItem.unbindCount < 0 then
+			itemCount = -oneItem.unbindCount
+			needGrid = needGrid + math.ceil(itemCount/OVERLAP)
+		end
+	end
+
+	if retItemInfo.bindCount > 0 then
+		needGrid = needGrid + math.ceil(retItemInfo.bindCount/OVERLAP)
+	end
+	if retItemInfo.unbindCount > 0 then
+		needGrid = needGrid + math.ceil(retItemInfo.unbindCount/OVERLAP)
+	end
+
+	if needGrid > Item.getBagEmptyGridCount(sysarg) then
+		local 	str = string.format(Lang.Enhance.yjhc004, needGrid)
+		LActor.sendTipmsg(sysarg, str, ttMessage)
+		return
+	end
+
+	return true
+end
+
+
+--[[
+函数：去除需要的金钱和物品。
+返回：
+ 参数1: true/nil。
+]]
+EnhanceTableEx.RemoveNeeds = function(sysarg, totalUsedInfo, totalUsedMoney, moneyType)
+	if totalUsedMoney <= 0 then return end
+
+	local 	haveMoney = LActor.getMoneyCount(sysarg, moneyType)
+	if totalUsedMoney > haveMoney then print("EnhanceTableEx.RemoveNeeds: no money") return end 	--钱不够
+
+	--扣除金钱
+	LActor.changeMoney(sysarg, moneyType, -totalUsedMoney, 1, true, "equip_strong", "yijianhecheng")
+	--扣除物品
+	for _, oneItem in ipairs(totalUsedInfo) do
+		if oneItem.bindCount > 0 then 		--绑定
+			LActor.removeItemEx(sysarg, oneItem.itemId, oneItem.bindCount, -1, -1, 1, "yijianhecheng", 33)
+		elseif oneItem.bindCount < 0 then 	--中间合成的物品
+			LActor.addItemEx(sysarg, oneItem.itemId, 0, 0, -oneItem.bindCount, 1, "yijianhecheng", 53)
+		end
+		
+		if oneItem.unbindCount > 0 then 	--非绑定
+			LActor.removeItemEx(sysarg, oneItem.itemId, oneItem.unbindCount, -1, -1, 0, "yijianhecheng", 33)
+		elseif oneItem.unbindCount < 0 then --中间合成的物品
+			LActor.addItemEx(sysarg, oneItem.itemId, 0, 0, -oneItem.unbindCount, 0, "yijianhecheng", 53)
+		end
+	end
+
+	return true
+end
+
+
+--[[
+函数：给予玩家成功合成后的物品。
+返回：
+ 参数1: true/nil。
+]]
+EnhanceTableEx.GiveItems = function(sysarg, retItemInfo)
+	local 	itemCount = retItemInfo.bindCount + retItemInfo.unbindCount
+	local 	needCount = Item.getAddItemNeedGridCount(sysarg, retItemInfo.itemId, itemCount)
+	
+	local 	str
+	if not LActor.canAddItem(sysarg, retItemInfo.itemId, itemCount)	 then
+		str = string.format(Lang.Enhance.yjhc004, needCount)
+		-- LActor.sendTipmsg(sysarg, str, ttMessage)
+		LActor.SendGeneralTips(sysarg, 7, 0, 0)
+		return
+	end
+
+	--添加合成后的物品
+	LActor.addItemEx(sysarg, retItemInfo.itemId, 0, 0, retItemInfo.bindCount, 1, "yijianhecheng", 53)
+	LActor.addItemEx(sysarg, retItemInfo.itemId, 0, 0, retItemInfo.unbindCount, 0, "yijianhecheng", 53)
+
+	local 	itemPtr = Item.getItemById(sysarg, retItemInfo.itemId, -1)
+	if itemPtr then
+		Item.sendItemProcessResult(sysarg, itemPtr, 4, true)
+	end
+
+	return true
+end
+
+
+--[[
+函数：物品合成。
+参数：
+ mixLevel: 合成级别；
+ mixType: 物品类型，由配置设置。
+]]
+EnhanceTableEx.OneKeyMixFuncIn = function(sysarg, mixLevel, mixType)
+	--print("in EnhanceTableEx.OneKeyMixFuncIn")
+	local OneItemConf = OneKeyMixConf[mixType]
+	if not OneItemConf then return end 	--mixType是无效的类型
+
+	local 	retItemInfo = {itemId = 0, bindCount = 0, unbindCount = 0} 	--最终合成的物品
+	local 	totalUsedInfo = {} 		--共使用的物品
+	local 	totalUsedMoney = 0 		--共需要的金钱数
+	local  	thisUsedInfo, returnMoney
+
+	for i = 1, mixLevel do
+		if not OneItemConf.before[i] or not OneItemConf.after[i] or
+		   not OneItemConf.money[i] or not OneItemConf.count[i] then 	--无效的合成等级
+		   LActor.sendTipmsg(sysarg, Lang.Enhance.yjhc005, ttMessage)
+		   print("EnhanceTableEx.OneKeyMixFuncIn: config error")
+			return
+		end
+
+		thisUsedInfo, retItemInfo, returnMoney = EnhanceTableEx.MixItemsOneStep(sysarg, i, OneItemConf, retItemInfo)
+		if not thisUsedInfo or not retItemInfo or not returnMoney then return end
+
+		totalUsedInfo[#totalUsedInfo + 1] = thisUsedInfo 	--记录背包中使用的物品
+		totalUsedMoney = totalUsedMoney + returnMoney
+	end
+	--打印使用的物品，消耗的金钱，合成的物品。仅仅作为测试。
+	--EnhanceTableEx.TestPrint(totalUsedInfo, totalUsedMoney, retItemInfo)  	--
+
+	--[[
+		判断背包
+	]]
+	if not EnhanceTableEx.CanGiveItems (sysarg, totalUsedInfo, retItemInfo) then
+		print("EnhanceTableEx.CanGiveItems is false")
+		return
+	end
+
+	--扣除金钱，扣除道具
+	if not EnhanceTableEx.RemoveNeeds(sysarg, totalUsedInfo, totalUsedMoney, OneItemConf.moneyType) then return end
+	--添加合成的物品
+	if not EnhanceTableEx.GiveItems(sysarg, retItemInfo) then return end
+end
+
+
+--[[
+函数：(139, 248),c->s, 一键合成物品的入口函数。
+]]
+EnhanceTableEx.OneKeyMixFunc = function(sysarg, msgid, pack)
+	local 	mixLevel = DataPack.readByte(pack) 	--合成的级别
+	local 	mixType = DataPack.readByte(pack) 	--物品的类型
+	--print("EnhanceTableEx.OneKeyMixFunc: level and type ", mixLevel, mixType)
+
+	if mixType == 0 then  		--全部类型合成
+		local 	flag = false
+		for _, one in ipairs(OneKeyMixConf) do
+			if EnhanceTableEx.PreCalc(sysarg, mixLevel, one.type, true) then 
+				EnhanceTableEx.OneKeyMixFuncIn(sysarg, mixLevel, one.type)
+			else
+				flag = true
+			end
+		end
+		if flag then  LActor.sendTipmsg(sysarg, Lang.Enhance.yjhc006, ttMessage) return end
+
+	elseif mixType > 0 then 	--单个类型合成
+		if not EnhanceTableEx.PreCalc(sysarg, mixLevel, mixType) then return end
+		EnhanceTableEx.OneKeyMixFuncIn(sysarg, mixLevel, mixType)
+	end
+end
+
+--[[--统计背包里某种类型宝石每一个级别的数量
+EnhanceTableEx.StatisticsItemCount = function(sysarg, msgid,pack)
+ 	local 	mixType = DataPack.readByte(pack) 	--物品的类型
+
+ 	local j = 1
+ 	for i = 1,#OneKeyMixConf do
+ 		if mixType == OneKeyMixConf[i].type then
+ 			j = i
+ 			break
+ 		end
+ 	end
+
+ 	local npack = DataPack.allocPacket(sysarg,139,137)
+    if npack == nil then return end
+
+    DataPack.writeInt(npack, mixType)
+
+ 	local conf = OneKeyMixConf[j]
+ 	DataPack.writeInt(npack, #conf)
+ 	local after_cnt = 0
+ 	for h = 1,#conf do
+ 		local tmp = conf[h].before
+ 		local tnp = conf[h].count
+ 		before_cnt = LActor.getItemCount(sysarg,tmp[h], -1, -1, -1)
+
+ 		after_cnt = (after_cnt / tnp[h]) + (before_cnt / tnp[h])
+ 		DataPack.writeInt(npack,after_cnt)
+ 	end
+
+ 	DataPack.flush(npack)
+
+end]]
+
+
+
+MiscsImplement.registerMsgHandler(132, EnhanceTableEx.OneKeyMixFunc)
+--MiscsImplement.registerMsgHandler(137, EnhanceTableEx.StatisticsItemCount)

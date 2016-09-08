@@ -1,0 +1,22 @@
+{
+	id = 284,
+	name = Lang.Skill.s284Name,
+	desc = Lang.Skill.s284Desc,
+	vocation = 0,
+	skillType = 10,
+	skillSpellType = 1,
+	skillClass = 10,
+	commonCd = 0,
+	canbeDefault = false,
+	specialBuffCond = 0,
+	notAutoUse = false,
+	 actions=
+    {
+		{ act = 54, effect = 1703 },
+		
+	},
+	skillSubLevel = { 
+--#include "Skill_284_1.txt"
+ 
+	},
+},

@@ -1,0 +1,228 @@
+﻿--#include "data\functions\config\FubenConfig\FubenCountConfig.txt" once
+
+
+--读取系统设置数据返回给客户端 
+function loadSystemInstallDataFunc(sysarg)
+	local var = LActor.getStaticVar( sysarg )
+	local systemInstall = var.systemInstall
+	if systemInstall == nil then
+		var.systemInstall = {}
+		systemInstall = var.systemInstall
+		systemInstall[1] = 0
+		systemInstall[2] = 0xffffffff
+		systemInstall[3] = 100
+		systemInstall[4] = 100
+	end
+
+	if systemInstall[1] ~= nil and systemInstall[2] ~= nil and systemInstall[3] ~= nil and systemInstall[4] ~= nil then 
+		local npack = DataPack.allocPacket(sysarg, 139, 7)  --申请一个数据包
+		if npack == nil then return end
+
+		DataPack.writeUInt(npack, systemInstall[1])
+		DataPack.writeUInt(npack, systemInstall[2])
+		DataPack.writeUInt(npack, systemInstall[3])
+		DataPack.writeUInt(npack, systemInstall[4])
+		DataPack.flush(npack)
+	end 
+end
+
+--初始化每天用副本挑战书的次数
+function loadFubenChallengeBook(sysarg)
+	local var = LActor.getStaticVar( sysarg )
+	local fbBC = var.fbBC
+	if fbBC == nil then 
+	  var.fbBC = {}
+	  fbBC = var.fbBC
+		fbBC[1] = 2 
+		fbBC[2] = 1  
+		fbBC[3] = 1
+  end
+end
+
+local function ResetGuardData(sysarg)	
+	local var = LActor.getStaticVar(sysarg)
+	local guardCnt = var.guardCount
+	if (guardCnt ~= nil) then
+		var.guardCount = 0		
+	end
+end
+
+--保存玩家的PK模式数据
+function savePKModeDataFunc(sysarg,var)
+	local pkmode = var.pkmode
+  	if pkmode == nil then 
+		var.pkmode = {}
+		pkmode = var.pkmode
+	end
+	
+	pkmode[1] = LActor.getPkMode(sysarg)
+end
+
+--载入玩家的PK模式数据
+function loadPKModeDataFunc(sysarg)
+	local var = LActor.getStaticVar( sysarg )
+	pkmode = var.pkmode
+	if pkmode == nil then 
+		var.pkmode = {}
+		if not LActor.hasMapAreaAttri(sysarg, aaForcePkMode) then 
+			pkmode = var.pkmode
+			LActor.setPkMode(sysarg,fpPeaceful)
+		end
+	else	
+		if pkmode[1]== nil then 
+			pkmode[1] = fpPeaceful 
+		end
+		if pkmode[1]~= nil and not LActor.hasMapAreaAttri(sysarg, aaForcePkMode) then 
+			LActor.setPkMode(sysarg,pkmode[1])
+		end
+	end
+		
+end
+
+----------------------------------------------------------------------------------------
+--玩家登陆时读取玩家的.[数据参数：玩家的ActorID；]
+function loadActorData(sysarg) 
+	local var = LActor.getStaticVar( sysarg ) 
+	local nLast = LActor.getLastLogoutTime(sysarg)	--上次下线的时间
+
+	--------------------------------------------------
+	-- 黄钻每日资源的功能，活动结束后这代码就没有用了
+	-- 另外，如果中途需要关闭这个活动，也是屏蔽这段代码
+	local now_t = System.getCurrMiniTime()
+	local sysVar = System.getStaticVar()
+	if var.hzzyweiwintime == nil or not System.isSameDay(var.hzzyweiwintime, now_t) then
+		local npack = DataPack.allocPacket(sysarg, 138, 35)
+		if npack == nil then return end
+		DataPack.flush(npack)
+	end
+	--------------------------------------------------
+
+	if (nLast == 0) then							--新注册玩家
+		LActor.setPkMode(sysarg,fpPeaceful)
+		loadFubenChallengeBook(sysarg)		
+		-- LActor.openDialogs(sysarg,diStartPlay, Lang.EntityName.n1)	--打开开始游戏窗口	
+		LActor.addQuest(sysarg, 1)		
+		if var.actor_born_scene == nil then
+			var.need_start_juqing = nil -- 是否需要开场剧情
+			if var.need_start_juqing ~= nil and System.isNeedFenLiu() == true then
+				var.actor_born_scene = System.getRandomNumber(3) + 1 -- 1/2/3
+				LActor.setActorBornSceneId(sysarg, var.actor_born_scene)
+			else
+				var.actor_born_scene = LActor.getActorBornSceneId(sysarg)
+			end
+		end
+	else		
+		local zy = LActor.getIntProperty( sysarg, PROP_CAMP )
+		local qid = nil
+		if zy == 3 then
+			qid = 61
+		elseif zy == 2 then --天机
+			qid = 31
+		else  --神武
+			qid = 1
+		end
+		
+		if not LActor.isFinishQuest(sysarg, qid) and not LActor.hasQuest(sysarg, qid) then		
+			LActor.openDialogs(sysarg,diStartPlay, Lang.EntityName.n1)
+		end
+
+		if (nLast < System.getToday()) then  	--昨天下线的
+			loadFubenChallengeBook(sysarg)
+			ResetGuardData(sysarg)
+			
+			var.expbox1 = nil
+			var.expbox2 = nil
+			var.xiuweiBoxTime = nil
+			var.isVoteForImpeach = nil
+			-- var.guildWeal = nil
+			-- var.getherpeachcount = nil --第二日登陆需要清空采集蟠桃次数
+			var.getherpeachMaxcount = nil --第二日登陆需要清空采集蟠桃上限次数
+			var.subyuanbaoaddmax = nil
+		end
+	end
+	
+	-- if var.hasPassTongtianJuqing == nil then
+	-- 	LActor.setActorGoJuQing(sysarg, "juqing-ux000")
+	-- end
+	
+	local left = var.guildLeft
+	local isKickout = var.isKickout == 1 and true or false
+	if left == nil  then 
+		if sysVar.guildOffDel ~= nil then
+			local tbDel = sysVar.guildOffDel
+			local cId = LActor.getActorId(sysarg)
+			local offDel = tbDel[cId]
+			if offDel ~= nil then
+				tbDel[cId] = nil
+			end
+			left = offDel
+			isKickout = true
+		end
+
+		if left == nil then
+			left = 0
+		end
+	end
+	local weal = var.guildWeal
+	if  weal == nil then 
+		weal = 0
+	end
+	-- 设置帮派的相关时间
+	LActor.setGuildTime(sysarg, left, weal)
+	LActor.setIsKickoutGuild(sysarg, isKickout)
+
+	loadPKModeDataFunc(sysarg)				--载入玩家的PK模式
+	-- loadSystemInstallDataFunc(sysarg)	-- 没用了
+
+	if var.actor_born_scene ~= nil then
+		LActor.setActorBornSceneId(sysarg, var.actor_born_scene)
+		local npack = DataPack.allocPacket(sysarg, 0, 57)
+		DataPack.writeUInt(npack, var.actor_born_scene)
+		DataPack.flush(npack)
+	end
+
+	return true
+end
+
+function SaveData(sysarg)
+	local var = LActor.getStaticVar( sysarg )
+
+	local left = 0
+	local weal = 0
+	left, weal = LActor.getGuildTime(sysarg, left, weal)
+	if left == 0 then
+		var.guildLeft = nil 
+		var.isKickout = nil
+	else
+		var.guildLeft = left
+		var.isKickout = LActor.isKickoutGuild(sysarg)
+	end
+	if weal == 0 then 
+		var.guildWeal = nil 
+	else
+		var.guildWeal = weal
+	end
+
+	if var.getherpeachMaxcount ~= nil then
+		if var.getherpeachMaxcount == 10 then
+	  		var.getherpeachMaxcount = nil
+		end
+	end
+
+	savePKModeDataFunc(sysarg, var)			--玩家的PK模式数据
+end
+
+function OnDelGuildMember(byactor, guildId, actorId)
+	local actor = LActor.getActorById(actorId)
+	if actor == nil then
+		-- 玩家不在线，记录guildLeft时间到System.getStaticVar
+		local var = System.getStaticVar()
+		if var.guildOffDel == nil then
+			var.guildOffDel = {}
+		end
+		local tbDel = var.guildOffDel
+		tbDel[actorId] = System.getCurrMiniTime() + Guild.kickoutTimeLimit * 3600
+	end
+end
+
+

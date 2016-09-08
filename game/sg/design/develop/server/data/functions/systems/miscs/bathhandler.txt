@@ -1,0 +1,1002 @@
+--仙浴脚本
+--#include "data\config\misc\bathconfig.txt" once
+--#include "data\functions\bifunc.txt" once
+
+-- 猜拳报名榜
+MiscsImplement.SignRankFile = "morasignrank.txt"
+MiscsImplement.SignRankName = "MoraSign"
+MiscsImplement.SignRank = nil
+
+-- 匹配榜
+MiscsImplement.MatchRankFile = "moramatchrank.txt"
+MiscsImplement.MatchRankName = "MoraMatch"
+MiscsImplement.MatchRank = nil
+
+MiscsImplement.getMoraInfo = function ( sysarg)
+	if sysarg == nil then
+		return nil
+	end
+
+	local st = LActor.getStaticVar(sysarg)
+	if st == nil then
+		return nil
+	end
+
+	if st.moral == nil then
+		st.moral = {}
+		st.moral.win = 0
+		st.moral.total = 0
+		st.moral.streak = 0
+	end
+	return st.moral
+end
+
+-- 初始化排行榜
+MiscsImplement.InitRank = function(rankName, rankFile, maxNum, coloumns)
+	local rank = Ranking.getRanking(rankName)
+	if rank == nil then
+		rank = Ranking.add(rankName, maxNum, 0)
+		if rank == nil then
+			print("can not add rank:"..rankName..","..rankFile)
+			return 
+		end
+		if Ranking.load(rank, rankFile) == false then
+			-- 创建排行榜
+			for i=1, #coloumns do
+				Ranking.addColumn( rank, coloumns[i] )
+			end
+		end
+	end
+
+	local col = Ranking.getColumnCount(rank)
+	for i=col+1,#coloumns do
+		Ranking.addColumn(rank, coloumns[i])
+	end
+	Ranking.save(rank, rankFile)
+
+	Ranking.addRef(rank)
+
+	return rank
+end
+
+-- 系统初始化
+OnMoraInit = function()
+	print("Mora Match system init")
+
+	-- 猜拳报名排行
+	MiscsImplement.SignRank = MiscsImplement.InitRank(MiscsImplement.SignRankName, MiscsImplement.SignRankFile, 250, {})
+	if MiscsImplement.SignRank ~= nil then
+		--Ranking.setAutoSave(MiscsImplement.SignRank, false)
+	end
+
+	-- 猜拳报名排行
+	MiscsImplement.MatchRank = MiscsImplement.InitRank(MiscsImplement.MatchRankName, MiscsImplement.MatchRankFile, 250, {"aid","amora","did","dmora","tick"})
+	if MiscsImplement.MatchRank ~= nil then
+		--Ranking.setAutoSave(MiscsImplement.MatchRank, false)
+	end
+end
+
+function OnMoraFina()
+	-- 保存各个排行榜数据
+	print("save mora rank")
+	local ranknames = { MiscsImplement.SignRankName }					 
+	for i=1,#ranknames do
+		local name = ranknames[i]
+		local rank = Ranking.getRanking(name)
+		if rank ~= nil then
+			Ranking.save(rank, nil)
+		end
+	end
+end
+
+MiscsImplement.IsMoraOver = function(sysarg)
+	local actor = LActor.getActorId(sysarg)
+	local rank = MiscsImplement.MatchRank
+	local count = Ranking.getRankItemCount(rank)
+	local aid = 0
+	local did = 0
+	for i=1,count do
+	 	local item = Ranking.getItemFromIndex(rank, i-1)
+	 	if item ~= nil then
+	 		aid = Ranking.getSubInt(item, 0)
+	 		did = Ranking.getSubInt(item, 2)
+	 		if aid == actor or did == actor then
+	 			return false
+	 		end
+	 	end
+	end
+	return true
+end
+
+-- 报名
+function OnMoraSignUp(sysarg, param1, param2)
+	local year = 0 
+	local month = 0 
+	local day = 0
+	year, month, day = System.getDate(year, month, day)
+	local endtime = System.timeEncode(year, month, day, 13, 0 , 0)
+	local nowtime = System.getCurrMiniTime()
+	if endtime - nowtime < 20 then
+		LActor.sendTipmsg(sysarg, Lang.Bath.t27, ttMessage) 
+		return
+	end
+
+	local rank = MiscsImplement.SignRank
+	if rank == nil then return end
+	local var_d = LActor.getDyanmicVar(sysarg)
+	local var = LActor.getStaticVar(sysarg)
+
+	if LActor.getMoneyCount( sysarg, mtCoin ) < BathConfig.matchCoin then
+		LActor.sendTipmsg(sysarg, Lang.Bath.t17, ttMessage) 
+		return 
+	end
+
+	if MiscsImplement.IsMoraOver(sysarg) == false then
+		LActor.sendTipmsg(sysarg, Lang.Bath.t18, ttMessage) 
+		return 
+	end
+
+	if var_d.moramatch ~= nil then
+		LActor.sendTipmsg(sysarg, Lang.Bath.t19, ttMessage) 
+		return 
+	end
+
+	-- 查找合适的玩家
+	local aid = LActor.getActorId(sysarg)
+	local en = nil -- 对手
+	local count = Ranking.getRankItemCount(rank)
+	--print("match count:"..count)
+	for i=1,count do
+	 	local item = Ranking.getItemFromIndex(rank, i-1)
+	 	if item ~= nil then
+			en = Ranking.getId(item) -- 获取玩家ID
+			break
+	 	end
+	end
+
+	if en == nil then -- 没找到，加入到匹配库中
+		Ranking.addItem(rank, aid, 0)
+		var_d.moramatch = 1
+		local result = false
+		LActor.postEntityScriptDelayMsg(sysarg, BathConfig.matchDelay * 1000, result, 21) -- 延时匹配，TODO：应该添加一个标识判断是否同一次
+
+		-- 通知匹配中
+		local npack = DataPack.allocPacket(sysarg,139,95)
+	    if npack == nil then return end
+	    DataPack.flush(npack)
+		return 
+	end
+
+	-- 开始PK
+	MiscsImplement.OnMatch(sysarg, en)
+	var_d.moraactor = en
+end
+
+-- 自由赛延时匹配
+MiscsImplement.OnMoraDelayMatch = function(sysarg, arg)
+	-- 判断是否在匹配
+	if LActor.getSceneId(sysarg) ~= BathConfig.sceneId then return end
+
+	local var_d = LActor.getDyanmicVar(sysarg)
+	if var_d.moramatch == nil or var_d.moramatch ~= 1 then -- 没有在匹配
+		print("not in match")
+		return 
+	end
+
+	local rank = MiscsImplement.SignRank
+	if rank == nil then return end
+
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+
+
+	local aid = LActor.getActorId(sysarg)
+	local en = nil -- 对手
+	local count = Ranking.getRankItemCount(rank)
+	for i=1,count do
+	 	local item = Ranking.getItemFromIndex(rank, i-1)
+	 	if item ~= nil then
+	 		local enid = Ranking.getId(item) -- 获取玩家ID
+	 		if enid ~= aid then -- 不能是自己
+				en = enid
+				break
+		 	end
+	 	end
+	end
+
+	if en == nil then -- 没找到
+		local result = false
+		LActor.postEntityScriptDelayMsg(sysarg, BathConfig.matchDelay * 1000, result, 21)
+		return 
+	end
+
+	-- 匹配了，可以开始
+	MiscsImplement.OnMatch(sysarg, en)
+
+	-- 从匹配库中把自己移除
+	Ranking.removeId(rank, aid)
+	var_d.moramatch = nil
+	var_d.moraactor = en
+end
+
+-- 开始匹配:自己指针，对手ID
+MiscsImplement.OnMatch = function(sysarg, en)
+	-- 找到了,开始拉出去PK
+	local signRank = MiscsImplement.SignRank
+	Ranking.removeId(signRank, en)
+
+	local et = System.getEntityPtrByActorID(en)
+	if et == nil then -- 应该是不会的
+		return 
+	end
+	local aid = LActor.getActorId(sysarg)
+	local envar_d = LActor.getDyanmicVar(et) -- 取消正在匹配标识
+	envar_d.moramatch = nil
+	envar_d.moraactor = aid
+
+	local tick = System.getCurrMiniTime() + BathConfig.moraDelay
+	local moraRank = MiscsImplement.MatchRank
+	local rankItem = Ranking.addItem(moraRank, aid, 0)
+	if rankItem ~= nil then
+		Ranking.setSub(rankItem, 0, tostring(aid))
+		Ranking.setSub(rankItem, 1, "0")
+		Ranking.setSub(rankItem, 2, tostring(en))
+		Ranking.setSub(rankItem, 3, "0")
+		Ranking.setSub(rankItem, 4, tostring(tick))
+	end
+
+	--Ranking.save(moraRank, MiscsImplement.MatchRankFile) -- 保存一下争霸赛排行榜
+
+	LActor.changeMoney( sysarg, 1, -BathConfig.matchCoin, 1, true, "moral", "match")
+	LActor.changeMoney( et, 1, -BathConfig.matchCoin, 1, true, "moral", "match")
+
+	-- 通知pk开始
+	if sysarg == nil or et == nil then
+		return
+	end
+	local selfname = LActor.getName(sysarg)
+	local name = LActor.getName(et)
+	local selfcamp = LActor.getIntProperty( sysarg, PROP_CAMP)
+	local camp = LActor.getIntProperty(et, PROP_CAMP)
+	local selfvocation = LActor.getIntProperty(sysarg,PROP_VOCATION)
+	local sex = LActor.getIntProperty(et,PROP_SEX)
+	local selfsex = LActor.getIntProperty(sysarg,PROP_SEX)
+	local vocation = LActor.getIntProperty( et, PROP_VOCATION)
+	local selfcopper = LActor.getMoneyCount(sysarg, 1)
+	local copper = LActor.getMoneyCount(et, 1)
+	local selfinfo = MiscsImplement.getMoraInfo(sysarg)
+	local info = MiscsImplement.getMoraInfo(et)
+
+	local npack = DataPack.allocPacket(sysarg,139,97)
+    if npack ~= nil then
+    	DataPack.writeString(npack, name)
+    	DataPack.writeInt(npack, vocation)
+    	DataPack.writeInt(npack, camp)
+    	DataPack.writeInt(npack, sex)
+    	DataPack.writeInt(npack, copper)
+  		DataPack.writeInt(npack, info.win)
+    	DataPack.writeInt(npack, info.total)
+    	DataPack.writeInt(npack, info.streak)
+    	DataPack.flush(npack)
+    end
+
+	local npack = DataPack.allocPacket(et,139,97)
+    if npack ~= nil then
+    	DataPack.writeString(npack, selfname)
+     	DataPack.writeInt(npack, selfvocation)
+    	DataPack.writeInt(npack, selfcamp)
+    	DataPack.writeInt(npack, selfsex)
+    	DataPack.writeInt(npack, selfcopper)
+  		DataPack.writeInt(npack, selfinfo.win)
+    	DataPack.writeInt(npack, selfinfo.total)
+    	DataPack.writeInt(npack, selfinfo.streak)
+    	DataPack.flush(npack)
+    end
+end
+
+
+MiscsImplement.OnBathOver = function(pfb)
+	-- 匹配库中的所有人都出来
+	local rank = MiscsImplement.SignRank
+	if rank ~= nil then
+		local count = Ranking.getRankItemCount(rank)
+		for i=1,count do
+		 	local rankItem = Ranking.getItemFromIndex(rank, i-1)
+		 	local id = Ranking.getId(rankItem)
+		 	local et = System.getEntityPtrByActorID(id)
+		 	if et ~= nil then
+		 		local var_d = LActor.getDyanmicVar(et)
+		 		var_d.moramatch = nil -- 清除匹配状态
+		 	end
+		 end
+		 Ranking.clearRanking(rank)
+	end
+
+	local rank = MiscsImplement.MatchRank
+	if rank ~= nil then
+		local count = Ranking.getRankItemCount(rank)
+		for i=1,count do
+		 	local rankItem = Ranking.getItemFromIndex(rank, i-1)
+		 	local id = Ranking.getId(rankItem)
+		 	local et = System.getEntityPtrByActorID(id)
+		 	if et ~= nil then
+		 		local var_d = LActor.getDyanmicVar(et)
+		 		var_d.moraactor = nil -- 清除匹配状态
+		 	end
+		 end
+		 Ranking.clearRanking(rank)
+	end
+
+	local Hfuben = Fuben.getFubenHandle(pfb)
+	local hscene = Fuben.getSceneHandleById(BathConfig.sceneId, Hfuben)
+	Fuben.clearSceneTimeCall(hscene)
+end
+
+MiscsImplement.getMoralInfo = function (sysarg,msgid, packet)
+	if sysarg == nil then
+		return
+	end
+	
+	local selfname = LActor.getName(sysarg)
+	local selfsex = LActor.getIntProperty(sysarg,PROP_SEX)
+	local selfcamp = LActor.getIntProperty( sysarg, PROP_CAMP)
+	local selfvocation = LActor.getIntProperty(sysarg,PROP_VOCATION)
+	local selfcopper = LActor.getMoneyCount(sysarg, 1)
+	local selfinfo = MiscsImplement.getMoraInfo(sysarg)
+
+	local npack = DataPack.allocPacket(sysarg,139,94)
+    if npack ~= nil then
+    	DataPack.writeString(npack, selfname)
+    	DataPack.writeInt(npack, selfvocation)
+    	DataPack.writeInt(npack, selfcamp)
+    	DataPack.writeInt(npack, selfsex)
+    	DataPack.writeInt(npack, selfcopper)
+  		DataPack.writeInt(npack, selfinfo.win)
+    	DataPack.writeInt(npack, selfinfo.total)
+    	DataPack.writeInt(npack, selfinfo.streak)
+    	DataPack.flush(npack)
+    end
+end
+
+MiscsImplement.CancelMatch = function (sysarg,msgid, packet)
+	local var_d = LActor.getDyanmicVar(sysarg)
+
+	if var_d.moramatch == nil then
+		LActor.sendTipmsg(sysarg, Lang.Bath.t20, ttMessage) -- 没有在匹配
+		return 
+	end
+
+	-- 从匹配库中删除
+	local aid = LActor.getActorId(sysarg)
+	local rank = MiscsImplement.SignRank
+	if rank ~= nil then
+		Ranking.removeId(rank, aid)
+	end
+	var_d.moramatch = nil
+end
+
+MiscsImplement.StartMora = function (sysarg,msgid, packet)
+	local mora = DataPack.readInt(packet)
+
+	local var_d = LActor.getDyanmicVar(sysarg)
+	local actorid = LActor.getActorId(sysarg)
+	local rankList = Ranking.getRanking(MiscsImplement.MatchRankName)
+	local rankItem = Ranking.getItemPtrFromId(rankList, actorid)
+	if rankItem == nil then
+		if var_d.moraactor ~= nil then 
+			rankItem = Ranking.getItemPtrFromId(rankList, var_d.moraactor)
+			if rankItem ~= nil then
+				Ranking.setSub(rankItem, 3, tostring(mora))
+			end
+		end
+	else
+		Ranking.setSub(rankItem, 1, tostring(mora))
+	end
+end
+
+MiscsImplement.MoraCheck = function ( amora,  dmora)
+	if amora == 1 then
+		if dmora == 1 then
+			return 0
+		elseif dmora == 2 then
+			return 1
+		else
+			return -1
+		end
+	elseif amora == 2 then
+		if dmora == 1 then
+			return -1
+		elseif dmora == 2 then
+			return 0
+		else
+			return 1
+		end
+	else
+		if dmora == 1 then
+			return 1
+		elseif dmora == 2 then
+			return -1
+		else
+			return 0
+		end
+	end
+end
+
+MiscsImplement.MoraOver = function (aid,  amoral, did, dmoral, result)
+	local aptr = LActor.getActorById(aid)
+	if aptr == nil then
+		if result > 0 then
+			System.sendGmMailOffLine(aid, "", 2, 1, BathConfig.matchCoin*2,0)
+		elseif result == 0 then
+			System.sendGmMailOffLine(aid, "", 2, 1, BathConfig.matchCoin,0)
+		end
+	else
+		local selfinfo = MiscsImplement.getMoraInfo(aptr)
+		if result > 0 then
+			LActor.changeMoney( aptr, 1, BathConfig.matchCoin*2, 1, true, "moral", "match")
+			selfinfo.win = selfinfo.win + 1
+			selfinfo.total = selfinfo.total + 1
+			selfinfo.streak = selfinfo.streak + 1
+			local npack = DataPack.allocPacket(aptr,139,98)
+			if npack ~= nil then
+				DataPack.writeInt(npack, amoral)
+				DataPack.writeInt(npack, dmoral)
+				DataPack.writeInt(npack, result)
+				DataPack.flush(npack)
+			end
+			local dptr = LActor.getActorById(did)
+			if dptr ~= nil then
+				local str = string.format(Lang.Bath.t21, LActor.getName(dptr) )
+				LActor.sendTipmsg(aptr, str, ttMessage)
+			end
+		elseif result == 0 then
+			LActor.changeMoney( aptr, 1, BathConfig.matchCoin, 1, true, "moral", "match")
+			selfinfo.total = selfinfo.total + 1
+			selfinfo.streak = 0
+			local npack = DataPack.allocPacket(aptr,139,98)
+			if npack ~= nil then
+				DataPack.writeInt(npack, amoral)
+				DataPack.writeInt(npack, dmoral)
+				DataPack.writeInt(npack, result)
+				DataPack.flush(npack)
+			end
+			local dptr = LActor.getActorById(did)
+			if dptr ~= nil then
+				local str = string.format(Lang.Bath.t22, LActor.getName(dptr) )
+				LActor.sendTipmsg(aptr, str, ttMessage)
+			end
+		else
+			selfinfo.total = selfinfo.total + 1
+			selfinfo.streak = 0
+			local npack = DataPack.allocPacket(aptr,139,98)
+			if npack ~= nil then
+				DataPack.writeInt(npack, amoral)
+				DataPack.writeInt(npack, dmoral)
+				DataPack.writeInt(npack, result)
+				DataPack.flush(npack)
+			end
+			local dptr = LActor.getActorById(did)
+			if dptr ~= nil then
+				local str = string.format(Lang.Bath.t23, LActor.getName(dptr) )
+				LActor.sendTipmsg(aptr, str, ttMessage)
+			end
+		end
+		if selfinfo.streak == 3 then
+			local str = string.format(Lang.Bath.t24, LActor.getName(aptr) )
+			System.broadcastTipmsg(str, ttScreenCenter)
+		elseif selfinfo.streak == 5 then
+			local str = string.format(Lang.Bath.t25, LActor.getName(aptr) )
+			System.broadcastTipmsg(str, ttScreenCenter)
+		elseif selfinfo.streak == 10 then
+			local str = string.format(Lang.Bath.t26, LActor.getName(aptr) )
+			System.broadcastTipmsg(str, ttScreenCenter)
+		end
+	end
+
+	result = -1 * result
+	local dptr = LActor.getActorById(did)
+	if dptr == nil then
+		if result > 0 then
+			System.sendGmMailOffLine(did, "", 2, 1, BathConfig.matchCoin*2,0)
+		elseif result == 0 then
+			System.sendGmMailOffLine(did, "", 2, 1, BathConfig.matchCoin,0)
+		end
+	else
+		local selfinfo = MiscsImplement.getMoraInfo(dptr)
+		if result > 0 then
+			LActor.changeMoney( dptr, 1, BathConfig.matchCoin*2, 1, true, "moral", "match")
+			selfinfo.win = selfinfo.win + 1
+			selfinfo.total = selfinfo.total + 1
+			selfinfo.streak = selfinfo.streak + 1
+			local npack = DataPack.allocPacket(dptr,139,98)
+			if npack ~= nil then
+				DataPack.writeInt(npack, dmoral)
+				DataPack.writeInt(npack, amoral)
+				DataPack.writeInt(npack, result)
+				DataPack.flush(npack)
+			end
+			local aptr = LActor.getActorById(aid)
+			if aptr ~= nil then
+				local str = string.format(Lang.Bath.t21, LActor.getName(aptr) )
+				LActor.sendTipmsg(dptr, str, ttMessage)
+			end
+		elseif result == 0 then
+			LActor.changeMoney( dptr, 1, BathConfig.matchCoin, 1, true, "moral", "match")
+			selfinfo.total = selfinfo.total + 1
+			selfinfo.streak = 0
+			local npack = DataPack.allocPacket(dptr,139,98)
+			if npack ~= nil then
+				DataPack.writeInt(npack, dmoral)
+				DataPack.writeInt(npack, amoral)
+				DataPack.writeInt(npack, result)
+				DataPack.flush(npack)
+			end
+			local aptr = LActor.getActorById(aid)
+			if aptr ~= nil then
+				local str = string.format(Lang.Bath.t22, LActor.getName(aptr) )
+				LActor.sendTipmsg(dptr, str, ttMessage)
+			end
+		else
+			selfinfo.total = selfinfo.total + 1
+			selfinfo.streak = 0
+			local npack = DataPack.allocPacket(dptr,139,98)
+			if npack ~= nil then
+				DataPack.writeInt(npack, dmoral)
+				DataPack.writeInt(npack, amoral)
+				DataPack.writeInt(npack, result)
+				DataPack.flush(npack)
+			end
+			local aptr = LActor.getActorById(aid)
+			if aptr ~= nil then
+				local str = string.format(Lang.Bath.t23, LActor.getName(aptr) )
+				LActor.sendTipmsg(dptr, str, ttMessage)
+			end
+		end
+		if selfinfo.streak == 3 then
+			local str = string.format(Lang.Bath.t24, LActor.getName(dptr) )
+			System.broadcastTipmsg(str, ttScreenCenter)
+		elseif selfinfo.streak == 5 then
+			local str = string.format(Lang.Bath.t25, LActor.getName(dptr) )
+			System.broadcastTipmsg(str, ttScreenCenter)
+		elseif selfinfo.streak == 10 then
+			local str = string.format(Lang.Bath.t26, LActor.getName(dptr) )
+			System.broadcastTipmsg(str, ttScreenCenter)
+		end
+	end
+end
+
+MiscsImplement.MoraUpdate = function (msgid, pscene)
+	local  deltable = {}
+	local rank = MiscsImplement.MatchRank
+	if rank ~= nil then
+		local count = Ranking.getRankItemCount(rank)
+		for i=1,count do
+		 	local item = Ranking.getItemFromIndex(rank, i-1)
+		 	local tick = Ranking.getSubInt(item, 4)
+		 	local nowtime = System.getCurrMiniTime()
+		 	if nowtime >= tick then
+		 		local aid = Ranking.getSubInt(item, 0)
+		 		local amora = Ranking.getSubInt(item, 1)
+		 		if amora == 0 then
+		 			amora = System.getRandomNumber(3) + 1
+		 		end
+	 			local did = Ranking.getSubInt(item, 2)
+	 			local dmora = Ranking.getSubInt(item, 3)
+	 			if dmora == 0 then
+	 				dmora = System.getRandomNumber(3) + 1
+	 			end
+
+	 			local count = #deltable
+	 			deltable[count+1] = Ranking.getId(item)
+
+	 			if MiscsImplement.MoraCheck (amora, dmora) > 0 then
+	 				MiscsImplement.MoraOver(aid, amora, did, dmora, 1)
+	 			elseif MiscsImplement.MoraCheck (amora, dmora) == 0 then
+	 				MiscsImplement.MoraOver(aid, amora, did, dmora, 0)
+	 			else
+	 				MiscsImplement.MoraOver(aid, amora, did, dmora, -1)
+	 			end
+		 	end
+		 end
+
+		 for i=1,#deltable do
+		 	Ranking.removeId(rank, deltable[i])
+		 end
+	end
+end
+
+TimerMsgFunc.register(TimerMsg.MoraUpdate, MiscsImplement.MoraUpdate)
+
+MiscsImplement.registerMsgHandler(94, MiscsImplement.getMoralInfo)
+MiscsImplement.registerMsgHandler(96, MiscsImplement.CancelMatch)
+MiscsImplement.registerMsgHandler(98, MiscsImplement.StartMora)
+EventCallDispatcher.registerFubenGameOver(BathConfig.fubenId,  MiscsImplement.OnBathOver)
+
+table.insert(InitFnTable,OnMoraInit)
+table.insert(FinaFnTable,OnMoralFina)
+table.insert(LocalDT.ScriptDelayConfig[21], MiscsImplement.OnMoraDelayMatch)
+
+function BathCreateFuBen(pass_time)
+	local fblist = LuaHelp.getFbFromId( BathConfig.fubenId )
+	if fblist == nil then
+		local Hfuben = Fuben.createFuBen(BathConfig.fubenId)
+		Fuben.SetFubenTime(Hfuben, BathConfig.keepTime - pass_time)
+		Fuben.setReserveTime(Hfuben, System.getCurrMiniTime() + BathConfig.keepTime - pass_time) -- 
+
+		local hscene = Fuben.getSceneHandleById(BathConfig.sceneId, Hfuben)
+		Fuben.postSceneTimeCall(hscene, TimerMsg.MoraUpdate, 1)
+
+		return Hfuben
+	end
+end
+
+local function CheckTime()
+	local hour = 0
+	local minute = 0
+	local second = 0
+	hour,minute,second = System.getTime(hour,minute,second)
+	local pass_time = (hour - BathConfig.startTime[1]) * 3600
+	if pass_time >= 0 then
+		pass_time = pass_time + (minute - BathConfig.startTime[2]) * 60
+		if pass_time >= 0 then
+			pass_time = pass_time + (second - BathConfig.startTime[3])
+			if pass_time >= 0 and pass_time < BathConfig.keepTime then
+				return true, pass_time
+			end
+		end
+	end
+	return false, nil		
+end
+
+--返回仙浴泡泡和戏水的次数
+function BathDetailReturn(sysarg)
+	if sysarg == nil then return end
+	local  var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	if var.BathPaopaoTimes == nil then
+		var.BathPaopaoTimes = 0
+	end
+	if var.BathXishuiTimes == nil then
+		var.BathXishuiTimes = 0
+	end
+
+	local npack = DataPack.allocPacket(sysarg,139,60)  --申请一个数据包
+	if npack == nil then return end
+	local res1 = BathConfig.paopaoTimes - var.BathPaopaoTimes
+	if res1 < 0 then
+		var.BathPaopaoTimes = BathConfig.xishuiTimes
+		res1 = 0
+	end
+	local res2 = BathConfig.xishuiTimes - var.BathXishuiTimes
+	if res2 < 0 then
+		var.BathXishuiTimes = BathConfig.xishuiTimes
+		res2 = 0
+	end
+	DataPack.writeUInt(npack, res1)
+   	DataPack.writeUInt(npack, res2)
+	DataPack.flush(npack)
+end
+
+--进入仙浴系统
+MiscsImplement.EnterBathScene = function (sysarg, msgid, packet)
+	if sysarg == nil then return end
+	-- 战斗中无法进入仙浴
+	if LActor.hasState(sysarg, esPkState) then  	
+		LActor.sendTipmsg(sysarg, Lang.Bath.t01, ttMessage)
+		return
+	end
+	-- 护送任务中不能进入仙浴
+	if LActor.hasState(sysarg, esProtection) then  	
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.sx019, ttMessage)
+		return
+	end	
+
+	if LActor.isDeath(sysarg) then return end
+
+	if LActor.getLevel(sysarg) < BathConfig.level then		--需要的人物等级
+		LActor.sendTipmsg(sysarg, Lang.Bath.t03, ttMessage)
+		return
+	end
+	local ret, pass_time = CheckTime()
+	if not ret then
+		LActor.sendTipmsg(sysarg, Lang.Bath.t02, ttMessage)
+		return
+	end
+
+	local sceneID = LActor.getSceneId(sysarg)
+	if sceneID == nil then return end
+	if sceneID == BathConfig.sceneId then return end
+	--在副本中
+	if LActor.isInFuben(sysarg) then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.t16, ttMessage)
+		return
+	end
+
+	local var = LActor.getDyanmicVar(sysarg)
+	if var == nil then return end
+	if LActor.hasState(sysarg, esStateRide) then
+		var.BefEnterBathState = 1
+	else
+		var.BefEnterBathState = 0
+	end
+
+	local fblist = LuaHelp.getFbFromId( BathConfig.fubenId )
+	local voc = LActor.getIntProperty(sysarg, PROP_VOCATION)
+	local nSex = LActor.getIntProperty(sysarg, PROP_SEX)
+	local modleid = BathConfig.modleId[voc][nSex + 1]
+	LActor.setIntProperty(sysarg, PROP_ENTITY_MODELID, modleid) --设置游泳模型
+
+	--要及时通知客户端模型改变，要不会崩溃
+	local npack = DataPack.allocPacket(sysarg,0,7)  --申请一个数据包
+	if npack == nil then return end
+	DataPack.writeByte(npack, 1)
+	DataPack.writeByte(npack, PROP_ENTITY_MODELID)
+	DataPack.writeInt(npack, modleid)
+	DataPack.flush(npack)
+
+	--随机一个进入位置
+	local sub = System.getRandomNumber(#BathConfig.enterPos) + 1
+	if fblist == nil then
+		local Hfuben = BathCreateFuBen(pass_time)
+		LActor.enterFuBen(sysarg, Hfuben, BathConfig.sceneId, BathConfig.enterPos[sub].PosX, BathConfig.enterPos[sub].PosY)
+		local fbPtr = Fuben.getFubenPtr(Hfuben)
+		local restTime = Fuben.getFbTime(fbPtr)
+		LActor.SendAndChangeCaleValue(sysarg, caleFubenTime, restTime, false)
+	else
+		LActor.enterFuBen(sysarg, fblist[1], BathConfig.sceneId, BathConfig.enterPos[sub].PosX, BathConfig.enterPos[sub].PosY)
+		local fbPtr = Fuben.getFubenPtr(fblist[1])
+		local restTime = Fuben.getFbTime(fbPtr)
+		LActor.SendAndChangeCaleValue(sysarg, caleFubenTime, restTime, false)
+		LActor.SendAndChangeCaleValue(sysarg, caleExp, 0, false)
+		LActor.SendAndChangeCaleValue(sysarg, calelingli, 0, false)
+	end
+	--LActor.setIntProperty(sysarg, PROP_MOVETIME, BathConfig.movespeed)	--移动速度
+	
+   	LActor.addState(sysarg, 25)	--游泳状态
+	LActor.addState(sysarg, 24)	--禁止刷新外观
+
+	-----------------------------log
+	System.logCounter(LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), "daily_act", "", "", "lingquan", "", "", "", "", lfBI)
+	-------------------------------
+	
+	BathDetailReturn(sysarg)
+
+  	return
+end
+
+function addExpAndLingqi(sysarg)
+	if sysarg == nil then return nil end
+	local level = LActor.getLevel(sysarg)
+	if level == nil then return nil end
+	local val = BathConfig.addExp / 10000.0
+	local addexp = (400 * level * level + level * 200 + 1000000) * val
+	local oldexp = addexp
+	local var_sys_d = System.getDyanmicVar()
+	if var_sys_d.ZhongqiuDoubleExpFive ~= nil and var_sys_d.ZhongqiuDoubleExpFive == 1 then -- 中秋双倍经验活动期间经验翻倍
+		addexp = addexp + oldexp
+	end
+	LActor.addExp(sysarg, addexp, 670, 0)
+	LActor.addRootExp(sysarg, BathConfig.addRootExp)
+	return addexp
+end
+
+function CheckTarget(sysarg, name)
+	if sysarg == nil then
+		return nil
+	end
+	
+	local ActorPtr = System.getActorPtr(name)
+	if ActorPtr == nil then
+		LActor.sendTipmsg(sysarg, Lang.Bath.t04, ttMessage)
+		return nil
+	end
+
+	if ActorPtr == sysarg then
+		LActor.sendTipmsg(sysarg, Lang.Bath.t05, ttMessage)
+		return nil
+	end
+
+	--是否同屏
+	if not LActor.isInSameScreen(sysarg,ActorPtr) then
+		LActor.sendTipmsg(sysarg, Lang.Bath.t06, ttMessage)
+		return nil
+	end
+
+	return ActorPtr
+end
+
+--打泡泡
+function BathPaoPao(sysarg, name)
+	local ActorPtr = CheckTarget(sysarg, name)
+	if ActorPtr == nil then return -1 end
+
+	local  var = LActor.getStaticVar(sysarg)
+	local  targetVar = LActor.getStaticVar(ActorPtr)
+	if var == nil or targetVar == nil then return -1 end
+	
+	local now_t = System.getCurrMiniTime()
+	if var.LastPaopaoTime ~= nil and now_t - var.LastPaopaoTime < 0 then
+		var.LastPaopaoTime = now_t
+	end
+	if var.LastPaopaoTime ~= nil and now_t - var.LastPaopaoTime <= BathConfig.paopaoCD then
+		LActor.sendTipmsg(sysarg, Lang.Bath.t09, ttMessage)
+		return -1
+	end
+
+	if var.BathPaopaoTimes ~= nil and var.BathPaopaoTimes >= BathConfig.paopaoTimes then	--用了多少次
+		LActor.sendTipmsg(sysarg, Lang.Bath.t07, ttMessage)
+		return -1
+	end
+	--自己加经验
+	local exp = addExpAndLingqi(sysarg)
+	if exp == nil then return -1 end
+	local str = string.format(Lang.Bath.t10, name, exp, BathConfig.addRootExp)
+	LActor.sendTipmsg(sysarg, str, ttMessage)
+	--对方
+	if targetVar.AcceptPaopaoTimes ~= nil and targetVar.AcceptPaopaoTimes >= BathConfig.acceptPaopaoTimes then
+		--接受次数达上限
+		str = string.format(Lang.Bath.t12, BathConfig.acceptPaopaoTimes)
+		LActor.sendTipmsg(ActorPtr, str, ttMessage)
+	else
+		--对方加经验
+		local targeExp = addExpAndLingqi(ActorPtr)
+		str = string.format(Lang.Bath.t11, LActor.getName(sysarg), targeExp, BathConfig.addRootExp)
+		LActor.sendTipmsg(ActorPtr, str, ttMessage)
+		--接受次数加1
+		if targetVar.AcceptPaopaoTimes == nil then
+			targetVar.AcceptPaopaoTimes = 0
+		end 
+		targetVar.AcceptPaopaoTimes = targetVar.AcceptPaopaoTimes + 1
+	end
+
+	var.LastPaopaoTime = now_t
+	var.BathPaopaoTimes = var.BathPaopaoTimes + 1
+
+	-- 触发成就事件
+	LActor.triggerAchieveEvent(sysarg, 33)
+
+	return 0
+end
+
+--戏水
+function BathXishui(sysarg, name)
+	local ActorPtr = CheckTarget(sysarg, name)
+	if ActorPtr == nil then return  -1 end
+
+	local  var = LActor.getStaticVar(sysarg)
+	local  targetVar = LActor.getStaticVar(ActorPtr)
+	if var == nil or targetVar == nil then return  -1 end
+	
+	local now_t = System.getCurrMiniTime()
+	if var.LastXishuiTime ~= nil and now_t - var.LastXishuiTime < 0 then
+		var.LastXishuiTime = now_t
+	end
+	if var.LastXishuiTime ~= nil and now_t - var.LastXishuiTime <= BathConfig.xishuiCD then
+		--CD 中
+		LActor.sendTipmsg(sysarg, Lang.Bath.t09, ttMessage)
+		return -1
+	end
+
+	if var.BathXishuiTimes ~= nil and var.BathXishuiTimes >= BathConfig.xishuiTimes then	--用了多少次
+		--没次数了
+		LActor.sendTipmsg(sysarg, Lang.Bath.t08, ttMessage)
+		return -1
+	end
+
+	--自己加经验
+	local exp = addExpAndLingqi(sysarg)
+	if exp == nil then return -1 end
+	local str = string.format(Lang.Bath.t13, name, exp, BathConfig.addRootExp)
+	LActor.sendTipmsg(sysarg, str, ttMessage)
+	--对方
+	if targetVar.AcceptXishuiTimes ~= nil and targetVar.AcceptXishuiTimes >= BathConfig.acceptXishuiTimes then
+		--接受次数达上限
+		str = string.format(Lang.Bath.t15, BathConfig.acceptXishuiTimes)
+		LActor.sendTipmsg(ActorPtr, str, ttMessage)
+	else
+		--对方加经验
+		local targeExp = addExpAndLingqi(ActorPtr)
+		str = string.format(Lang.Bath.t14, LActor.getName(sysarg), targeExp, BathConfig.addRootExp)
+		LActor.sendTipmsg(ActorPtr, str, ttMessage)
+		--接受次数加1
+		if targetVar.AcceptXishuiTimes == nil then
+			targetVar.AcceptXishuiTimes = 0
+		end 
+		targetVar.AcceptXishuiTimes = targetVar.AcceptXishuiTimes + 1
+	end
+
+	var.LastXishuiTime = now_t
+	var.BathXishuiTimes = var.BathXishuiTimes + 1
+
+	-- 触发成就事件
+	LActor.triggerAchieveEvent(sysarg, 33)
+
+	return 0
+end
+
+function bathgetActorHandle(name)
+	local ActorPtr = System.getActorPtr(name)
+	if ActorPtr == nil then return 0 end
+	local handle = LActor.getHandle(ActorPtr)
+	return handle
+end
+
+MiscsImplement.BathPpAndXiShui = function(sysarg, msgid, packet)
+	local msgtype = DataPack.readInt(packet)
+	if msgtype == nil then return end
+	local name = DataPack.readString(packet)
+	local bresult = -1
+	if msgtype == 1 then
+		--打泡泡
+		if name == nil then return end
+		bresult = BathPaoPao(sysarg, name)
+	elseif msgtype == 2 then 
+		--戏水
+		if name == nil then return end
+		bresult = BathXishui(sysarg, name)
+	end
+
+	if msgtype == 1 or msgtype == 2 then
+		local npack = DataPack.allocPacket(sysarg,139,59)  --申请一个数据包
+		if npack == nil then return end
+		local handle = bathgetActorHandle(name)
+		DataPack.writeInt(npack, msgtype)
+		DataPack.writeInt(npack, bresult)
+		DataPack.writeInt64(npack, handle)
+		DataPack.flush(npack)
+	end
+
+	BathDetailReturn(sysarg)
+	return
+end
+
+EventCallDispatcher.OnEnterBath = function(sysarg, hfb, way)
+	BiFunc.LogFubenEnter(sysarg, "xishui", "")
+end
+
+EventCallDispatcher.OnExitBath = function(sysarg, hfb, way)
+	local var = LActor.getDyanmicVar(sysarg)
+	if var == nil then return end
+	--退出默认没有在坐骑上
+	if var.BefEnterBathState == 1 then
+		local result = false
+		--完全退出场景后再上马
+	 	LActor.postEntityScriptDelayMsg(sysarg, 0, result, 12)	 	
+		var.BefEnterBathState = 0
+	end
+	LActor.removeState(sysarg, 25)	--游泳状态
+	LActor.removeState(sysarg, 24)
+	LActor.refreshActor(sysarg)	--重新计算属性,恢复外观和移动速度
+
+	-- 从匹配库中删除
+	local aid = LActor.getActorId(sysarg)
+	local rank = MiscsImplement.SignRank
+	if rank ~= nil then
+		Ranking.removeId(rank, aid)
+	end
+	var.moramatch = nil
+	var.moraactor = nil
+
+	-- 日志记录退出玩法次数
+	local extra = ""
+	local  var_s = LActor.getStaticVar(sysarg)
+	if var_s ~= nil and var_s.BathXishuiTimes ~= nil and var_s.BathPaopaoTimes ~= nil then
+		extra = string.format("%d,%d", var_s.BathXishuiTimes, var_s.BathPaopaoTimes)
+	end
+	BiFunc.LogFubenExit(sysarg, "xishui", extra)
+
+	return
+end
+
+function BathUpMount(sysarg, arg)
+	if sysarg == nil then return end
+	LActor.ChangeStatus(sysarg, true)
+end
+
+
+MiscsImplement.registerMsgHandler(LogicCmd.miscSys.sub.cBathAction, MiscsImplement.BathPpAndXiShui)
+MiscsImplement.registerMsgHandler(LogicCmd.miscSys.sub.cEnterBath, MiscsImplement.EnterBathScene)
+EventCallDispatcher.registerFubenExit(BathConfig.fubenId, EventCallDispatcher.OnExitBath)
+EventCallDispatcher.registerFubenEnter(BathConfig.fubenId, EventCallDispatcher.OnEnterBath)
+table.insert(LocalDT.ScriptDelayConfig[12], BathUpMount)
+

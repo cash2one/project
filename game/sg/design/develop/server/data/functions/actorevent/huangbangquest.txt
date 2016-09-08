@@ -1,0 +1,182 @@
+--皇榜任务
+--#include "data\config\huangbangquest\huangbangquestconfig.txt" once
+
+
+HuangbangQuest = {}
+
+function HuangbangQuest.getActorVar(actor)
+	if not actor or not LActor.isActorSystemOpen(actor, siHuangbangQuest) then return end
+
+	local var = LActor.getStaticVar(actor)
+	if not var then return end
+
+	local actorVar = var.huangbangQuest
+	if not actorVar then
+		var.huangbangQuest = {}
+		actorVar = var.huangbangQuest
+
+		actorVar.hasFinish = 0		--已完成多少个任务
+		actorVar.begin = 0 		--是否已经开始了皇榜任务（接了第一个任务之后 1）
+		actorVar.curQuestId = 0 	--当前任务id
+	end
+
+	return var.huangbangQuest
+end
+
+function HuangbangQuest.sendInfo(actor)
+	if not actor then return end
+
+	local var = HuangbangQuest.getActorVar(actor)
+	if not var then return end
+
+	local pack = DataPack.allocPacket(actor, 6, 20)
+	if pack == nil then return end
+
+	DataPack.writeInt(pack, HuangbangQuestConfig.maxCount)
+	DataPack.writeInt(pack, var.hasFinish or 0)
+
+	DataPack.flush(pack)
+end
+
+--随机任务
+function HuangbangQuest.randomQuest(actor)
+	local var = HuangbangQuest.getActorVar(actor)
+	if not var then return end
+
+	local level = LActor.getLevel(actor)
+	local questConfig = {}
+	for _, conf in ipairs(HuangbangQuestConfig.randomQuest) do	
+		if level >= conf.minLevel then
+			questConfig = {}
+			for _, qid in pairs(conf.questIds) do
+				if qid ~= var.curQuestId then
+					table.insert(questConfig, qid)
+				end
+			end
+		end
+	end
+	if #questConfig == 0 then
+		print("error huangbangquest randomQuest nil       "..LActor.getActorId(actor).."  "..level)
+		return
+	end
+
+	local idx = System.getRandomNumber( #questConfig ) + 1
+	if not questConfig[idx] then return end
+
+	var.curQuestId = questConfig[idx]
+	if var.begin == 0 then
+		--设置可接任务
+		LActor.setHuangbangAcceptQuestId(actor, questConfig[idx])
+	else
+		LActor.addQuest(actor, questConfig[idx])
+	end
+
+	HuangbangQuest.sendInfo(actor)
+end
+
+function HuangbangQuest.opensys(actor, args)
+	if not actor or not args or args[1] ~= siHuangbangQuest then return end
+
+	HuangbangQuest.randomQuest(actor)
+end
+
+--接受、完成任务时触发
+function HuangbangQuest.handleQuestEvent(actor, args)
+	if not actor or not args then return end
+	if args[3] ~= qtHuangbang then return end
+
+	local var = HuangbangQuest.getActorVar(actor)
+	if not var or var.curQuestId ~= args[2] then return end
+
+	if args[1] == seAddQuest then
+		if not var.begin or var.begin == 0 then
+			var.begin = 1
+			LActor.setHuangbangAcceptQuestId(actor, 0)
+		end
+		HuangbangQuest.sendInfo(actor)
+	elseif args[1] == seFinish then
+		--活跃度
+		ActivationTrigger(actor, 34)
+		LActor.OnQuestEvent(qtCorssHuangBang, 0, 1, true, actor)
+
+		var.hasFinish = var.hasFinish + 1
+		HuangbangQuest.giveExtraAward(actor, var.hasFinish)
+		if var.hasFinish >= HuangbangQuestConfig.maxCount then
+			var.curQuestId = 0
+			HuangbangQuest.sendInfo(actor)
+			return
+		end
+
+		HuangbangQuest.randomQuest(actor, args)
+	end	
+end
+
+--额外奖励
+function HuangbangQuest.giveExtraAward(actor, loopId)
+	if not actor or not loopId then return end
+
+	local itemid
+	for _, conf in ipairs(HuangbangQuestConfig.extraAwards) do
+		if conf.loopId == loopId then
+			itemid = conf.itemid
+			break
+		end
+	end
+	if not itemid then return end
+
+	if Item.getBagEmptyGridCount(actor) >= 1 then
+		LActor.addItem(actor, itemid, 0, 0, 1, 1, "huangbangquest_extraAward", 22)
+	else
+		System.sendGmMailOffLine(LActor.getActorId(actor), Lang.ScriptTips.huangbang002, 1, itemid, 1, 0, Lang.ScriptTips.huangbang001)
+	end
+end
+
+function HuangbangQuest.newDay(actor)
+	local var = HuangbangQuest.getActorVar(actor)
+	if not var then return end
+
+	var.hasFinish = 0
+	var.begin = 0
+	if var.curQuestId ~= 0 then
+		LActor.GiveUpQuest(actor, var.curQuestId, true)
+	end
+	HuangbangQuest.randomQuest(actor)
+end
+
+function HuangbangQuest.onLogin(actor)
+	local var = HuangbangQuest.getActorVar(actor)
+	if not var then return end
+
+	if var.begin == 0 then
+		--设置可接任务
+		LActor.setHuangbangAcceptQuestId(actor, var.curQuestId)
+	end
+
+	HuangbangQuest.sendInfo(actor)
+end
+
+--皇榜任务可接 条件判断，放跑环那里一起处理了checkAddLoopQuest
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeQuestEvent, HuangbangQuest.handleQuestEvent)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeOpenSys, HuangbangQuest.opensys)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, HuangbangQuest.newDay)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, HuangbangQuest.onLogin)
+
+
+function HuangbangQuest.gmFunction(actor, args)
+	local gmid = tonumber(args[1])
+	if gmid == 1 then
+		HuangbangQuest.randomQuest(actor)
+	end
+end
+
+GmEventFuncList.register( "huangbang", HuangbangQuest.gmFunction,1)
+
+function HuangbangQuest.leftCount(actor)
+	if not actor then return 0 end
+
+	local var = HuangbangQuest.getActorVar(actor)
+	if not var or (var.hasFinish and var.hasFinish >= HuangbangQuestConfig.maxCount) then return 0 end
+
+	return 1
+end
+GetQuestTargetCount.register(qtCorssHuangBang, HuangbangQuest.leftCount)

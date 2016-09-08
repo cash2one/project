@@ -1,0 +1,14 @@
+--#include "..\..\..\language\LangCode.txt" once
+activity29Conf = {
+	activityId = 29,
+
+	activities =
+	{
+	[102] = 
+		{
+			--七夕连续登录活动
+			id = 102,
+			lxloginReward = {{1, 42014, 1}, {2, 42015, 1}, {3, 42016, 1},{4, 42017, 1},{5, 42018, 1},{6, 42019, 1},},	
+		},
+	},
+}

@@ -1,0 +1,65 @@
+--群杀王莽
+--#include "..\..\language\LangCode.txt" once
+
+QunShaWangMangConfig = {
+	fubenId = 221,
+	sceneId = 13,
+	enterPos = {1, 1},	--进入的位置
+
+	startTime = "2016-5-18 5:0:0", 		--活动时间
+	endTime = "2016-10-25 23:59:59",
+	fight = 2500,	--推荐战力
+	level = 30,	--等级限制
+	enterCount = 3,	--进入次数
+	memberCount = {1,3},	--副本人数
+	awards = {
+		--显示的奖励，具体的奖励 配在怪物掉落上
+		{itemType = 1, itemId = 1101, itemNum = 1},
+		{itemType = 2, itemId = 0, itemNum = 1000},
+	},
+
+	refreshMonster = {
+		--刷怪配置
+		[1] = {
+			--怪物配置
+			{
+				monsterId = 1104, --怪物id
+				posX1 = 7, --怪物x坐标范围
+				posX2 = 11,
+				posY1 = 21,
+				posY2 = 25,
+				nCount = 4, --怪物数量
+			}, 
+			{
+				monsterId = 1701, --怪物id
+				posX1 = 17, --怪物x坐标范围
+				posX2 = 24,
+				posY1 = 37,
+				posY2 = 40,
+				nCount = 4, --怪物数量
+			}, 
+		},
+		[2] = {
+			--怪物配置
+			{
+				monsterId = 1105, --怪物id
+				posX1 = 7, --怪物x坐标范围
+				posX2 = 11,
+				posY1 = 21,
+				posY2 = 25,
+				nCount = 4, --怪物数量
+			}, 
+		},
+		[3] = {
+			--怪物配置
+			{
+				monsterId = 1105, --怪物id
+				posX1 = 7, --怪物x坐标范围
+				posX2 = 11,
+				posY1 = 21,
+				posY2 = 25,
+				nCount = 4, --怪物数量
+			}, 
+		},
+	},
+}

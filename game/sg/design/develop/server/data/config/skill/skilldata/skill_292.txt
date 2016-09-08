@@ -1,0 +1,16 @@
+﻿{
+	id = 292,
+	name = Lang.Skill.s292Name,
+	desc = Lang.Skill.s292Desc,
+	vocation = 1,
+	skillType = 1,
+	skillSpellType = 3,
+	skillClass = 1,
+	commonCd = 0,
+	canbeDefault = false,
+	specialBuffCond = 0,
+	notAutoUse = true,
+	skillSubLevel = { 
+--#include "Skill_292_1.txt"
+	},
+},

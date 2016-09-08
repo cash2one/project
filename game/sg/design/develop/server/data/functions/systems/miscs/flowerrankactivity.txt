@@ -1,0 +1,215 @@
+--送花收花排行榜活动
+--#include "data\config\misc\rankactivityconfig.txt" once
+
+FlowerRankActivity = {}
+
+local FlowerRankName1 = "FlowerRankName1"	--送花排行榜
+local FlowerRank1 = "FlowerRank1.txt"
+local FlowerRankName2 = "FlowerRankName2"	--收花排行榜
+local FlowerRank2 = "FlowerRank2.txt"
+
+function FlowerRankActivity.init()
+	local rank1 = Ranking.getRanking(FlowerRankName1)
+	if rank1 == nil then
+		rank1 = Ranking.add(FlowerRankName1, 1500)
+		if rank1 ~= nil then
+			if Ranking.load(rank1, FlowerRank1) == false then
+				Ranking.addColumn(rank1, "name")	--姓名
+				Ranking.addColumn(rank1, "actorid")	--actorid
+				Ranking.addColumn(rank1, "job")	--职业
+			end
+		end
+	end
+	Ranking.addRef(rank1)
+
+	local rank2 = Ranking.getRanking(FlowerRankName2)
+	if rank2 == nil then
+		rank2 = Ranking.add(FlowerRankName2, 1500)
+		if rank2 ~= nil then
+			if Ranking.load(rank2, FlowerRank2) == false then
+				Ranking.addColumn(rank2, "name")	--姓名
+				Ranking.addColumn(rank2, "job")	--职业
+			end
+		end
+	end
+	Ranking.addRef(rank2)
+end
+
+function FlowerRankActivity.save()
+	local rank1 = Ranking.getRanking(FlowerRankName1)
+	if rank1 == nil then
+		rank1 = Ranking.add(FlowerRankName1, 1500)
+		if rank1 ~= nil then
+			if Ranking.load(rank1, FlowerRank1) == false then
+				Ranking.addColumn(rank1, "name")	--姓名
+				Ranking.addColumn(rank1, "actorid")	--actorid
+				Ranking.addColumn(rank1, "job")	--职业
+			end
+		end
+	end
+	Ranking.addRef(rank1)
+
+	local rank2 = Ranking.getRanking(FlowerRankName2)
+	if rank2 == nil then
+		rank2 = Ranking.add(FlowerRankName2, 1500)
+		if rank2 ~= nil then
+			if Ranking.load(rank2, FlowerRank2) == false then
+				Ranking.addColumn(rank2, "name")	--姓名
+				Ranking.addColumn(rank2, "job")	--职业
+			end
+		end
+	end
+	Ranking.addRef(rank2)
+
+	Ranking.save(rank1, FlowerRank1)
+	Ranking.save(rank2, FlowerRank2)
+end
+
+--玩家送花
+function FlowerRankActivitySendFlower(actor, otherActorId, otherActorName, otherActorJob, count)
+	if not actor or not otherActorId or not otherActorName or not otherActorJob or not count then return end
+
+	local sysVar = System.getStaticVar()
+	if not sysVar or not sysVar.rankActivity or not sysVar.rankActivity[13] or not sysVar.rankActivity[13].isInActivity then return end
+
+	--送花排行榜
+	local rank1 = Ranking.getRanking(FlowerRankName1)
+	if rank1 == nil then
+		FlowerRankActivity.init()
+		rank1 = Ranking.getRanking(FlowerRankName1)
+		print("error FlowerRank not init rankinfo 1111")
+		if rank1 == nil then
+			print("error FlowerRank not init rankinfo 2222222")
+			return
+		end
+	end
+
+	local actorid = LActor.getActorId(actor)
+	if actorid == nil or actorid == 0 then return end
+
+	local item1 = Ranking.getItemPtrFromId(rank1, actorid)
+	if item1 then
+		Ranking.updateItem(rank1, actorid, count)
+	else
+		item1 = Ranking.addItem(rank1, actorid, count)
+		if not item1 then
+			print("error add FlowerRank1  "..actorid.." "..count)
+			return
+		end
+		Ranking.setSub(item1, 0, LActor.getName(actor))
+		Ranking.setSub(item1, 1, LActor.getActorjob(actor))
+	end
+
+	--收花排行榜
+	local rank2 = Ranking.getRanking(FlowerRankName2)
+	if rank2 == nil then return end
+
+	local item2 = Ranking.getItemPtrFromId(rank2, otherActorId)
+	if item2 then
+		Ranking.updateItem(rank2, otherActorId, count)
+	else
+		item2 = Ranking.addItem(rank2, otherActorId, count)
+		if not item2 then
+			print("error add FlowerRank2  "..otherActorId.." "..count)
+			return
+		end
+		Ranking.setSub(item2, 0, otherActorName)
+		Ranking.setSub(item2, 1, otherActorJob)
+	end
+
+	FlowerRankActivity.sendInfo(actor)
+end
+
+function FlowerRankActivity.sendInfo(actor)
+	if not actor then return end
+
+	local actorid = LActor.getActorId(actor)
+	local rank1 = Ranking.getRanking(FlowerRankName1)
+	local rank2 = Ranking.getRanking(FlowerRankName2)
+	if not rank1 or not rank2 then return end
+
+	local songhuaTable, shouhuaTable = FlowerRankActivity.getRankInfo()
+
+	local pack = DataPack.allocPacket(actor, BaseTypes.SystemId.timeRewardSystem, 167)
+	if pack == nil then return end
+
+	local actorItem1 = Ranking.getItemPtrFromId(rank1, actorid)
+	if actorItem1 then
+		DataPack.writeInt(pack, Ranking.getPoint(actorItem1))
+	else
+		DataPack.writeInt(pack, 0)
+	end
+	DataPack.writeByte(pack, #songhuaTable)
+	for i, actorInfo in ipairs(songhuaTable) do
+		DataPack.writeByte(pack, i)
+		DataPack.writeString(pack, actorInfo.name)
+		DataPack.writeByte(pack, actorInfo.job)
+		DataPack.writeInt(pack, actorInfo.point)
+	end
+	
+	local actorItem2 = Ranking.getItemPtrFromId(rank2, actorid)
+	if actorItem2 then
+		DataPack.writeInt(pack, Ranking.getPoint(actorItem2))
+	else
+		DataPack.writeInt(pack, 0)
+	end
+	DataPack.writeByte(pack, #shouhuaTable)
+	for i, actorInfo in ipairs(shouhuaTable) do
+		DataPack.writeByte(pack, i)
+		DataPack.writeString(pack, actorInfo.name)
+		DataPack.writeByte(pack, actorInfo.job)
+		DataPack.writeInt(pack, actorInfo.point)
+	end
+
+	DataPack.flush(pack)
+end
+
+function FlowerRankActivity.getRankInfo()
+	local actorCount = RankActivityConfig[13].everyDayActorCount
+	
+	local rank1 = Ranking.getRanking(FlowerRankName1)
+	local rank2 = Ranking.getRanking(FlowerRankName2)
+	if not rank1 or not rank2 then return {}, {} end
+
+	--送花
+	local actorCount1 = actorCount
+	local itemCount1 = Ranking.getRankItemCount(rank1)
+	if itemCount1 < actorCount then actorCount1 = itemCount1 end
+
+	local rankTable1 = LuaHelp.getRankingItemList(rank1, actorCount1)
+	if not rankTable1 then rankTable1 = {} end
+
+	local songhuaTable = {}
+	for i, rankItem in ipairs(rankTable1) do
+		songhuaTable[i] = {actorid = Ranking.getId(rankItem), name = Ranking.getSub(rankItem, 0), job = Ranking.getSub(rankItem, 1), point = Ranking.getPoint(rankItem)}
+	end
+
+	--收花
+	local actorCount2 = actorCount	
+	local itemCount2 = Ranking.getRankItemCount(rank2)
+	if itemCount2 < actorCount then actorCount2 = itemCount2 end
+
+	local rankTable2 = LuaHelp.getRankingItemList(rank2, actorCount2)
+	if not rankTable2 then rankTable2 = {} end
+
+	local shouhuaTable = {}
+	for i, rankItem in ipairs(rankTable2) do
+		shouhuaTable[i] = {actorid = Ranking.getId(rankItem), name = Ranking.getSub(rankItem, 0), job = Ranking.getSub(rankItem, 1), point = Ranking.getPoint(rankItem)}
+	end
+
+	return songhuaTable, shouhuaTable
+end
+
+GameStartEventList.registerEvent(FlowerRankActivity.init)
+GameStopEventList.registerEvent(FlowerRankActivity.save)
+
+function FlowerRankActivity.check(actor, args)
+	local tmp1 = tonumber(args[1])
+	if tmp1 == 1 then
+		FlowerRankActivity.sendInfo(actor)
+	elseif tmp1 == 2 then
+		FlowerRankActivitySendFlower(actor, tonumber(args[2]), args[2], 1, 100)
+	end
+end
+
+GmEventFuncList.register( "songhua", FlowerRankActivity.check, 1)

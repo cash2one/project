@@ -1,0 +1,14 @@
+--#include "..\..\..\language\LangCode.txt"
+activity3003Conf = {
+	activityId = 3003,
+
+	activities =
+	{
+		[93] = 
+		{
+			--每日充值返利活动
+			id = 93,
+			target = {{1000, 41001}, {2000, 41002}, {5000, 41003},},
+		},
+	},
+}

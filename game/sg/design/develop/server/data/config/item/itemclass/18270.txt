@@ -1,0 +1,29 @@
+﻿{
+	id = 18270,
+	name = Lang.Item.n18270,
+	desc = Lang.Item.i18270,
+	type = 82,
+	sellType = 82,
+	icon = 338,
+	shape = {0,0,0,0,0,0,0,0},
+	color = 4,
+	dura = 0,
+	dup = 0,
+	colGroup = 0,
+	dealType = 0,
+	dealPrice = 0,
+	time = 0,
+	suitId = 0,
+	staitcAttrs = {  
+	},
+	strongAttrs = {  
+	},
+	flags = { 
+		recordLog = true,
+		denyDeal = true,
+		denySell = true, 
+	},
+	conds = { 
+		{ cond = 1, value = 1, }, 
+	},
+},

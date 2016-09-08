@@ -1,0 +1,685 @@
+--处理好友相关的函数
+--#include "data\config\misc\friendrelevantconfig.txt" once
+
+FriendOpFuncList = {}
+
+
+--设置好友亲密度加成的属性
+
+FriendOpFuncList.TeamAttrChange = function (ptr,lvl)	--单独设置一个人的属性
+	if lvl == 0 then return end
+	LActor.setTeamChange(ptr,-1,0,true, false)
+	local conf  = friendconfig.attrs[lvl]
+	local sType = {}
+    local sValue = {}
+   	for k, v in pairs(conf) do
+    	table.insert(sType,conf[k].type)
+    	table.insert(sValue,conf[k].value)
+    	LActor.setTeamChange(ptr,sType[k],sValue[k],false,false)
+    end
+    LActor.setTeamChange(ptr,-1,0,false, true)
+end
+
+
+FriendOpFuncList.TeamTwoAttrChange = function (ptr1,ptr2,lvl1,lvl2)	--设置两个人不同亲密度的属性
+	local conf1 = friendconfig.attrs[lvl1]
+	local conf2 = friendconfig.attrs[lvl2]
+	local sType = {}
+    local sValue = {}
+    LActor.setTeamChange(ptr1,-1,0,true, false)
+    LActor.setTeamChange(ptr2,-1,0,true, false)
+    if lvl1 ~= nil then
+    	for k, v in pairs(conf1) do
+        	table.insert(sType, conf1[k].type)
+        	table.insert(sValue, conf1[k].value)
+        	LActor.setTeamChange(ptr1,sType[k],sValue[k],false,false)		--设置两个人的属性
+    	end
+    end
+
+    LActor.setTeamChange(ptr1,-1,0,false, true)
+    if lvl2 ~= nil then
+    	for m,n in pairs(conf2) do 
+        	table.insert(sType, conf2[m].type)
+        	table.insert(sValue, conf2[m].value)
+        	LActor.setTeamChange(ptr2,sType[m],sValue[m],false,false)		--设置两个人的属性          
+    	end
+    end
+    LActor.setTeamChange(ptr2,-1,0,false, true)
+end
+
+FriendOpFuncList.TeamAttrOneChange = function (ptr1,ptr2,lvl)		--设置两个人同一亲密度的属性
+	if lvl == 0 then return end
+	LActor.setTeamChange(ptr1,-1,0,true, false)
+	LActor.setTeamChange(ptr2,-1,0,true, false)
+	local conf  = friendconfig.attrs[lvl]
+	local sType = {}
+    local sValue = {}
+   	for k, v in pairs(conf) do
+    	table.insert(sType, conf[k].type)
+    	table.insert(sValue, conf[k].value)
+    	LActor.setTeamChange(ptr1,sType[k],sValue[k],false,false)
+    	LActor.setTeamChange(ptr2,sType[k],sValue[k],false,false)
+    end
+    LActor.setTeamChange(ptr1,-1,0,false, true)
+    LActor.setTeamChange(ptr2,-1,0,false, true)
+end
+
+
+
+
+
+
+--定时器，用于删除24小时后的好友申请
+FriendOpFuncList.refreshfriend = function (sysarg)
+	local var = LActor.getStaticVar(sysarg)
+	local ranks = {}
+	if not var.request_list then return end
+
+	for i = 1,#var.request_list do
+		if var.request_list[i] ~= nil then	  --判断申请列中是否存在空值
+			ranks[i] = {}
+			ranks[i].name = var.request_list[i][1]
+			ranks[i].time = var.request_list[i][2]
+			ranks[i].id = var.request_list[i][3]
+			if ranks[i].time + 3600*24 <= System.getCurrMiniTime() then       --超过24小时删掉信息
+				var.request_list[i] = nil
+				--print("=====清空申请列表i："..i.." name:"..LActor.getName(sysarg))
+			end
+		end
+	end	
+end
+
+--一分钟定时器
+table.insert(ActorTimeFnTable, FriendOpFuncList.refreshfriend)
+
+
+
+FriendOpFuncList.friendattrs = function (sysarg, args)
+	if args[1] == nil then return end   --
+	local func = FriendOpFuncList[args[1]]
+	if func ~= nil then
+	  local len=#args
+      if #args < 4 then
+        func(sysarg, args[2]) 
+      else
+        func(sysarg,args[2],args[3],args[4])
+      end
+	end
+end
+
+--好友申请列表的下发
+FriendOpFuncList[15] = function (sysarg,dp)
+	local var = LActor.getStaticVar(sysarg)
+	local ranks = {}
+
+	local passkey = LActor.getIntProperty(sysarg, PROP_ACTOR_PASS_KEY)
+	
+	if not var.request_list then return end  --一条数据都没有的时候直接返回
+	
+
+	for i=1,#var.request_list do
+		if var.request_list[i] ~= nil then	 --判断申请列表是否为空
+			ranks[i] = {}
+			ranks[i].name = var.request_list[i][1]
+			ranks[i].time = var.request_list[i][2]
+			ranks[i].id = var.request_list[i][3]
+			local ptr = LActor.getActorById(ranks[i].id)
+			if not ptr then 							--判断玩家是否在线，否则按照申请列表保存的数据发送
+				ranks[i].vip = var.request_list[i][4]
+	    		ranks[i].level = var.request_list[i][5] 
+	    		ranks[i].score = var.request_list[i][6] 
+	    		ranks[i].job = var.request_list[i][7] 
+	    		ranks[i].icon = var.request_list[i][8] 
+			else
+				ranks[i].vip = LActor.getVIPLevel(ptr)
+    			ranks[i].level = LActor.getLevel(ptr)
+   				ranks[i].score = LActor.getActorFightCapacity(ptr)
+   				ranks[i].job = LActor.getActorjob(ptr)
+   				ranks[i].icon = LActor.getActoricon(ptr)
+			end
+		end
+	end
+	local total = #var.request_list
+	local npack = DataPack.allocPacket(sysarg,25,15)
+
+    DataPack.writeInt(npack, total)	              --下发申请列表给客户端
+
+    for i = 1,#var.request_list do
+
+        local val = ranks[i]
+        if val ~= nil then 
+        	local char_id = val.id
+	        local char_name = val.name
+	        local char_vip = val.vip
+	        local char_level = val.level
+	        local char_score = val.score
+	        local char_job = val.job
+	        local char_icon = val.icon
+	        DataPack.writeInt(npack, char_id)
+	        DataPack.writeString(npack, char_name)
+	        DataPack.writeInt(npack, char_vip)
+	        DataPack.writeInt(npack, char_level)
+	        DataPack.writeInt(npack, char_score)
+	        DataPack.writeInt(npack, char_job)
+	        DataPack.writeInt(npack, char_icon)
+	    end
+    end
+    DataPack.flush(npack)
+end
+
+
+
+--拉黑名单数据保存供邮箱系统使用
+FriendOpFuncList[2] = function(sysarg,args)
+	local actorid = args
+	local aid = LActor.getActorId(sysarg)
+	local var = System.getStaticVar()
+	local bf = var.black_friend
+	if not bf then
+		var.black_friend = {} 
+		bf = var.black_friend
+	end
+
+	if not bf[aid] then
+		bf[aid] = {}
+	end
+	local binfo = bf[aid]
+	binfo[actorid] = actorid
+end
+
+
+--添加申请列表数据，不放到数据库，直接用system.staticvar中保存
+FriendOpFuncList[3] = function(sysarg,args, selfToSelf,dp)
+   
+
+  debug_print("3 operator:"..args)
+  debug_print(selfToSelf)
+  debug_print("selfToSelf end")
+
+  local actorid = args
+  local ptr = LActor.getActorById(actorid)
+  --print("====被申请人："..LActor.getName(ptr))
+  local str = LActor.getStaticVar(ptr)
+  local aid = LActor.getActorId(sysarg) 
+  local time = System.getCurrMiniTime()                                
+
+
+  local actorname, vip, job, level,score,icon
+    --申请玩家的基本信息
+    if not selfToSelf  then --如果为nil表示是在线加好友
+      actorname = LActor.getName(sysarg)
+      vip = LActor.getVIPLevel(sysarg)
+      job = LActor.getActorjob(sysarg)
+      level = LActor.getLevel(sysarg)
+      score = LActor.getActorFightCapacity(sysarg)
+      icon = LActor.getActoricon(sysarg)
+  else 
+    if dp==nil then  return end;
+
+    debug_print("---------dp")
+    aid = DataPack.readInt(dp) --aid是A加B时A的id
+    DataPack.readInt(dp) --mtFriend
+    score=DataPack.readInt(dp) --fightvalue
+
+    level=DataPack.readInt(dp)
+    job = DataPack.readInt(dp)
+    vip =DataPack.readInt(dp)
+    icon=DataPack.readInt(dp)
+
+    actorname=DataPack.readString(dp)
+
+    debug_print("dp aid"..aid.." anme:"..actorname)
+
+
+    end
+
+
+    --往对方玩家插入数据 
+    if str.request_list == nil then str.request_list = {} end 
+    local sign = true
+    
+    if str.request_list_len == nil then
+    	str.request_list_len = #str.request_list
+    end
+    -- str.request_list_len = str.request_list_len + 1
+    -- local temp = str.request_list_len + 1 
+    -- print("===temp:"..temp)
+    -- if temp == 1 then
+    --   str.request_list[temp] = {}
+    --   str.request_list[temp][1] = actorname
+    --   str.request_list[temp][2] = time
+    --   str.request_list[temp][3] = aid
+    --   str.request_list[temp][4] = vip
+    --   str.request_list[temp][5] = level
+    --   str.request_list[temp][6] = score
+    --   str.request_list[temp][7] = job
+    --   str.request_list[temp][8] = icon
+    --   sign = false
+    -- else
+	  for i=1,#str.request_list do
+	    if str.request_list[i] ~= nil then    
+	      if str.request_list[i][3] == aid then
+	        str.request_list[i][2] = time
+	        sign = false
+	        break
+	      end
+	    end
+	 end
+  --print("====request_list_len:"..str.request_list_len)
+  if sign then
+  	  str.request_list_len = str.request_list_len + 1
+  	  local temp = str.request_list_len
+      str.request_list[temp] = {}
+      str.request_list[temp][1] = actorname
+      str.request_list[temp][2] = time
+      str.request_list[temp][3] = aid
+      str.request_list[temp][4] = vip
+      str.request_list[temp][5] = level
+      str.request_list[temp][6] = score
+      str.request_list[temp][7] = job
+      str.request_list[temp][8] = icon
+      --print("====申请好友成功："..actorname.." len:"..#str.request_list)
+     -- print("")
+  end
+  
+end
+
+
+
+---------加好友和拒绝好友时候在这里删除保存的数据
+FriendOpFuncList[4] = function(sysarg,args)
+	local actorid = args
+	local aid = LActor.getActorId(sysarg) 
+	--local ptr = LActor.getActorByName(actorid)
+	local var = LActor.getStaticVar(sysarg)
+	local ranks = {}
+	--print("=======")
+	if not var.request_list then
+		var.request_list = {}
+	end
+	if var.request_list_len == nil then
+		var.request_list_len = #var.request_list
+	end
+	--print("=====申请列表长度："..#var.request_list)
+	-- local total_1 = 0
+	--  for i = 1, #var.request_list do
+ --        if var.request_list[i] ~= nil then
+ --            total_1 = total_1 + 1
+ --        end
+ --    end
+ --    print("====下发所有的申请列表:"..total_1)
+	for i = 1,var.request_list_len do  --遍历申请列表，删除添加人的信息
+		if var.request_list[i] ~= nil then
+			if var.request_list[i][3] == actorid then
+				var.request_list[i] = nil
+				--print("====6666")
+			end
+		end
+	end
+
+	for i=1,var.request_list_len do
+		if var.request_list[i] ~= nil then	 --判断申请列表是否为空
+			ranks[i] = {}
+			ranks[i].name = var.request_list[i][1]
+			ranks[i].time = var.request_list[i][2]
+			ranks[i].id = var.request_list[i][3]
+			local ptr = LActor.getActorById(ranks[i].id)
+			if not ptr then 							--判断玩家是否在线，否则按照申请列表保存的数据发送
+				ranks[i].vip = var.request_list[i][4]
+	    		ranks[i].level = var.request_list[i][5] 
+	    		ranks[i].score = var.request_list[i][6] 
+	    		ranks[i].job = var.request_list[i][7] 
+	    		ranks[i].icon = var.request_list[i][8] 
+			else
+				ranks[i].vip = LActor.getVIPLevel(ptr)
+    			ranks[i].level = LActor.getLevel(ptr)
+   				ranks[i].score = LActor.getActorFightCapacity(ptr)
+   				ranks[i].job = LActor.getActorjob(ptr)
+   				ranks[i].icon = LActor.getActoricon(ptr)
+			end
+		end
+	end
+
+	local total = 0                         --获取列表中存在总的条数
+    for i = 1, #var.request_list do
+        if var.request_list[i] ~= nil then
+            total = total + 1
+        end
+    end
+	local npack = DataPack.allocPacket(sysarg,25,15)
+	--print("====22 下发所有的申请列表:"..total)
+    DataPack.writeInt(npack, total)	              --下发所有的申请列表
+    for i = 1,var.request_list_len do
+    	if var.request_list[i] ~= nil then
+    		local val = ranks[i]
+        	if val ~= nil then 
+        		local char_id = val.id
+	        	local char_name = val.name
+	        	local char_vip = val.vip
+	        	local char_level = val.level
+	        	local char_score = val.score
+	        	local char_job = val.job
+	        	local char_icon = val.icon
+	        	DataPack.writeInt(npack, char_id)
+	        	DataPack.writeString(npack, char_name)
+	        	DataPack.writeInt(npack, char_vip)
+	        	DataPack.writeInt(npack, char_level)
+	        	DataPack.writeInt(npack, char_score)
+	        	DataPack.writeInt(npack, char_job)
+	        	DataPack.writeInt(npack, char_icon)
+	        	--print("===char_name:"..char_name)
+	    	end
+	    end
+    end
+    DataPack.flush(npack)
+end
+
+
+
+
+
+---------删除黑名单在这里移除列表
+FriendOpFuncList[5] = function(sysarg,args)
+	local actorid = args
+	local aid = LActor.getActorId(sysarg)
+	local var = System.getStaticVar()
+	local bf = var.black_friend
+
+	if not bf then 
+		bf = {}
+	end
+
+	if not bf[aid] then
+		bf[aid] = {}
+	end
+
+	local binfo = bf[aid]
+	binfo[actorid] = nil
+end
+
+
+--是否在黑名单里面 返回值为true表示在黑名单里面，false表示不在黑名单里面
+IsInBlackList = function(obj_id , src_id)
+
+	local var = System.getStaticVar()
+	local bf = var.black_friend
+
+	if not bf then 
+		--print("ts1")
+		return false
+	end
+
+	if not bf[obj_id] then
+		--print("ts2")
+		return false
+	end
+
+	if not bf[obj_id][src_id] then
+		--print("ts3")
+		return false
+	end
+
+	--print("ts4")
+	return true
+end
+
+FriendOpFuncList.SaveFriendCount = function (sysarg)
+
+	local var = LActor.getStaticVar(sysarg)
+	if not var.Friend_Count then
+		var.Friend_Count = 0
+	end
+
+	local count = LActor.GetFriendCount(sysarg)
+	if count >= var.Friend_Count then
+		var.Friend_Count = count
+	end
+	--print("========好友历史数量"..var.Friend_Count)
+	local npack = DataPack.allocPacket(sysarg,25,16)
+
+    DataPack.writeInt(npack, var.Friend_Count)
+    DataPack.flush(npack)	  	
+end
+
+
+
+--好友组队属性的变化
+FriendOpFuncList[6] = function(sysarg,teamid)
+	local teamptr = TeamFun.getTeam(teamid)			--获取队伍的指针
+
+	-- print("======队伍id",teamid)
+	-- if teamid < 0 then 
+	-- 	LActor.setTeamChange(ptr,-1,0)
+	-- 	return
+	-- end
+
+	local members = TeamFun.getMemberList(teamptr)	--获取队伍的成员列表
+	local count = TeamFun.getMemberCount(teamptr)   --获取队伍的人数
+	local leadptr = TeamFun.getTeamCaptain(teamptr) 
+	
+	print("====count:"..count)
+    if count == 1 then   --一个人组队时没有属性加成
+    	LActor.setTeamChange(leadptr,-1,0,true,true)         --队伍剩余一个人的时候在这里刷新属性
+        return 
+
+    elseif count == 2 then   --两人组队时只需判断两个人是否好友
+    	-- print("======组队属性")
+    	if members ~= nil then
+    		local ptr = TeamFun.getMemberActor(members[1])
+			local atr = TeamFun.getMemberActor(members[2])
+			local aid = LActor.getActorId(atr)  
+			local ptrid = LActor.getActorId(ptr) 
+			
+			--必须要是对方好友才能加属
+        	if LActor.isFriend(ptr, LActor.getActorId(atr)) or LActor.isFriend(atr, LActor.getActorId(ptr)) then
+	            local friendlylvl_1 = LActor.getFriendfriendlylvl(ptr,aid,1)
+	            local friendlylvl_2 = LActor.getFriendfriendlylvl(atr,ptrid,1)
+	            local friendlylvl = friendlylvl_1
+	            if friendlylvl_2 > friendlylvl_1 then
+	            	friendlylvl = friendlylvl_2
+	            end
+	        	print("==222222222=======friendlylvl",friendlylvl,aid)
+	        	if friendlylvl <= 0 then return end             --一级的时候不加属性
+	        	local conf = friendconfig.attrs[friendlylvl]
+	        	local sType = {}
+	        	local sValue = {}
+	        	LActor.setTeamChange(ptr,-1,0,true,false)							--设置属性的时候现在这里刷新属性
+	        	LActor.setTeamChange(atr,-1,0,true,false)
+	        	for k, v in pairs(conf) do
+	            	table.insert(sType, conf[k].type)
+	            	table.insert(sValue, conf[k].value)
+	            	--print("=====value",conf[k].type,conf[k].value)
+	            	LActor.setTeamChange(ptr,sType[k],sValue[k],false,false)		--设置两个人的属性
+	            	LActor.setTeamChange(atr,sType[k],sValue[k],false,false)
+	            	--LActor.setTeamChange(atr,sType[k],sValue[k],false, false)
+	          		-- print("======增加的属性",dump(sType),dump(sValue))
+	        	end
+	        	LActor.setTeamChange(ptr,-1,0,false,true)
+	        	LActor.setTeamChange(atr,-1,0,false,true)
+	        else 
+	        	LActor.setTeamChange(ptr,-1,0,true,true)
+	        	LActor.setTeamChange(atr,-1,0,true,true) 
+	        	print("=====kkkkk")
+        	end
+        	
+        end
+	elseif count == 3 then 
+		if members == nil then return end
+		local ptr1 = TeamFun.getMemberActor(members[1])  --获取队员里面的三个指针
+		local ptr2 = TeamFun.getMemberActor(members[2])
+		local ptr3 = TeamFun.getMemberActor(members[3])
+
+		local friendlylvl1 = 0		--三个人相互的亲密度等级
+		local friendlylvl2 =  0
+		local friendlylvl3 = 0 
+
+		if LActor.isFriend(ptr1,LActor.getActorId(ptr2)) or LActor.isFriend(ptr2,LActor.getActorId(ptr1)) then		--获取三个人的亲密度，不是好友则为0
+		 	local friendlylvl_1 = LActor.getFriendfriendlylvl(ptr1,LActor.getActorId(ptr2),1)
+		 	local friendlylvl_2 = LActor.getFriendfriendlylvl(ptr2,LActor.getActorId(ptr1),1)
+		 	friendlylvl1 = friendlylvl_1
+		 	if friendlylvl_2 > friendlylvl_1 then
+		 		friendlylvl1 = friendlylvl_2
+		 	end
+		 	if friendlylvl1 < 0 then
+		 		friendlylvl1 = 0
+		 	end
+		 	--friendlylvl1 = LActor.getFriendfriendlylvl(ptr1,LActor.getActorId(ptr2),1)
+		end
+
+		if LActor.isFriend(ptr2,LActor.getActorId(ptr3)) or  LActor.isFriend(ptr3,LActor.getActorId(ptr2)) then
+			local friendlylvl_1 = LActor.getFriendfriendlylvl(ptr2,LActor.getActorId(ptr3),1)
+			local friendlylvl_2 = LActor.getFriendfriendlylvl(ptr3,LActor.getActorId(ptr2),1)
+			friendlylvl2 = friendlylvl_1
+			if friendlylvl_2 > friendlylvl_1 then
+				friendlylvl2 = friendlylvl_2
+			end
+			if friendlylvl2 < 0 then
+				friendlylvl2 = 0
+			end
+			--friendlylvl2 = LActor.getFriendfriendlylvl(ptr2,LActor.getActorId(ptr3),1)
+		end
+
+		if LActor.isFriend(ptr3,LActor.getActorId(ptr1)) or LActor.isFriend(ptr1,LActor.getActorId(ptr3)) then
+			local friendlylvl_1 = LActor.getFriendfriendlylvl(ptr3,LActor.getActorId(ptr1),1)
+			local friendlylvl_2 = LActor.getFriendfriendlylvl(ptr1,LActor.getActorId(ptr3),1)
+			friendlylvl3 = friendlylvl_1
+			if friendlylvl_2 > friendlylvl_1 then
+				friendlylvl3 = friendlylvl_2
+			end
+			if friendlylvl3 < 0 then
+				friendlylvl3 = 0
+			end
+			--friendlylvl3 = LActor.getFriendfriendlylvl(ptr3,LActor.getActorId(ptr1),1)
+		end
+
+		print("======组队属性2")
+		print("====friendlylvl1:"..friendlylvl1)
+		print("====friendlylvl2:"..friendlylvl2)
+		print("====friendlylvl3:"..friendlylvl3)
+		if friendlylvl1 == 0 and friendlylvl2 == 0 and friendlylvl3 == 0 then 
+			LActor.setTeamChange(ptr1,-1,0,true,true)
+	        LActor.setTeamChange(ptr2,-1,0,true,true)
+	        LActor.setTeamChange(ptr3,-1,0,true,true)
+			return 
+		end  --都不是好友则直接返回
+
+		if friendlylvl1 == 0 and friendlylvl2 == 0 and friendlylvl3 ~= 0 then				--只有两个人是好友的情况
+			-- print("======组队属性3")
+			FriendOpFuncList.TeamAttrOneChange(ptr1,ptr3,friendlylvl3)
+        end
+
+        if friendlylvl1 == 0 and friendlylvl2 ~= 0 and friendlylvl3 == 0 then
+        	-- print("======组队属性4")
+        	FriendOpFuncList.TeamAttrOneChange(ptr2,ptr3,friendlylvl2)
+        end
+
+        if friendlylvl1 ~= 0 and friendlylvl2 == 0 and friendlylvl3 == 0 then 
+        	 --print("======组队属性5")
+        	FriendOpFuncList.TeamAttrOneChange(ptr1,ptr2,friendlylvl1)
+        end
+
+		if friendlylvl1 == 0 and friendlylvl2 ~= 0 and friendlylvl3 ~= 0 then				--三队友中有一对不是好友
+			--print("======组队属性6")
+			if friendlylvl2 > friendlylvl3 then
+				--print('======支线1')
+				FriendOpFuncList.TeamAttrOneChange(ptr2,ptr3,friendlylvl2)
+				FriendOpFuncList.TeamAttrChange(ptr1,friendlylvl3)
+			else
+				--print('======支线2')
+				FriendOpFuncList.TeamAttrOneChange(ptr1,ptr3,friendlylvl3)
+				FriendOpFuncList.TeamAttrChange(ptr2,friendlylvl2)
+			end
+        end
+
+        if friendlylvl1 ~= 0 and friendlylvl2 == 0 and friendlylvl3 ~= 0 then
+        	--print("======组队属性7")
+        	if friendlylvl1 > friendlylvl3 then
+        		--print('======支线3')
+        		FriendOpFuncList.TeamAttrOneChange(ptr1,ptr2,friendlylvl1)
+        		FriendOpFuncList.TeamAttrChange(ptr3,friendlylvl3)
+        	else
+        		--print('======支线4')
+        		FriendOpFuncList.TeamAttrOneChange(ptr1,ptr3,friendlylvl3)
+        		FriendOpFuncList.TeamAttrChange(ptr2,friendlylvl1)
+			end
+        end
+        	
+        if friendlylvl1 ~= 0 and friendlylvl2 ~= 0 and friendlylvl3 == 0 then
+        	--print("======组队属性8")
+        	if friendlylvl1 > friendlylvl2 then
+        		--print('======支线5')
+        		FriendOpFuncList.TeamAttrOneChange(ptr1,ptr2,friendlylvl1)
+        		FriendOpFuncList.TeamAttrChange(ptr3,friendlylvl2)
+        	else
+        		--print('======支线6')
+        		FriendOpFuncList.TeamAttrOneChange(ptr2,ptr3,friendlylvl2)
+        		FriendOpFuncList.TeamAttrChange(ptr1,friendlylvl1)
+        	end
+        end	
+       -- print("=============亲密度",friendlylvl1,friendlylvl2,friendlylvl3)
+        if friendlylvl1 ~= 0 and friendlylvl2 ~= 0 and friendlylvl3 ~= 0 then		--三个组队都是好友
+       -- print("======组队属性9")
+        	if friendlylvl1 > friendlylvl2 then
+        		if friendlylvl1 > friendlylvl3 then 
+        			FriendOpFuncList.TeamAttrOneChange(ptr1,ptr2,friendlylvl1)
+        			-- print("======组队属性10")
+        			if friendlylvl2 > friendlylvl3 then
+        				FriendOpFuncList.TeamAttrChange(ptr3,friendlylvl2)
+        				--print("======组队属性11")
+        			else
+        				FriendOpFuncList.TeamAttrChange(ptr3,friendlylvl3)
+        				--print("======组队属性12")
+        			end
+        		else
+        			--print("======组队属性13")
+        			if friendlylvl2 < friendlylvl3 then
+        				--print("======组队属性14")
+        				FriendOpFuncList.TeamAttrOneChange(ptr1,ptr3,friendlylvl3)
+        				FriendOpFuncList.TeamAttrChange(ptr2,friendlylvl1)
+        			end
+        		end
+        	else 
+        		--print("======组队属性15")
+        		if friendlylvl2 > friendlylvl3 then
+        			--print("======组队属性16")
+        			FriendOpFuncList.TeamAttrOneChange(ptr2,ptr3,friendlylvl2)
+        			if friendlylvl1 > friendlylvl3 then
+        				FriendOpFuncList.TeamAttrChange(ptr1,friendlylvl1)
+        				--print("======组队属性17")
+        			else
+        				--print("======组队属性18")
+        				FriendOpFuncList.TeamAttrChange(ptr1,friendlylvl3)
+        			end
+        		else
+        			FriendOpFuncList.TeamAttrOneChange(ptr1,ptr3,friendlylvl3)
+        			FriendOpFuncList.TeamAttrChange(ptr2,friendlylvl2)
+        			--print("======组队属性19")
+        		end
+        	end
+        end
+	end
+end
+
+-- --是否在黑名单里面 返回值为true表示在黑名单里面，false表示不在黑名单里面
+-- IsInBlackList = function(obj_id , src_id)
+
+-- 	local var = System.getStaticVar()
+-- 	local bf = var.black_friend
+
+-- 	if not bf then 
+-- 		return false
+-- 	end
+
+-- 	if not bf[obj_id] then
+-- 		return false
+-- 	end
+
+-- 	if not bf[obj_id][src_id] then
+-- 		return false
+-- 	end
+
+-- 	return true
+-- end
+
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeFlower, FriendOpFuncList.friendattrs)

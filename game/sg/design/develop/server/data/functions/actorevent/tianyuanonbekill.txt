@@ -1,0 +1,123 @@
+﻿--#include "data\config\task\TianYuanConfig.txt" once
+--#include "data\functions\Tasks\TianYuan\TianYuanSet.txt" once
+--#include "data\functions\tasks\tianyuan\tianyuanfunc.txt" once
+
+ EventCallDispatcher.TianYuanOnKillByActor = function (beKiller, killer)
+	debug_print("TianYuanOnKillByActor1")
+	local killerPtr = killer[1]
+	if killerPtr == nil or beKiller == nil  then 
+		if LActor.isActor(killerPtr) == false then
+			killerPtr = LActor.getMonsterOwner(killerPtr)
+		end
+		if killerPtr == nil then
+			return
+		end 
+	end 
+	--debug_print("TianYuanOnKillByActor2")
+	local bekillerSceneId = LActor.getSceneId(beKiller)
+	local killerSceneId = LActor.getSceneId(killerPtr)
+	local killerName = LActor.getName(killerPtr)
+	local beKillerName = LActor.getName(beKiller)
+	debug_print("TianYuanOnKillByActor", killerSceneId , bekillerSceneId , TianYuanConfig.SCENEID)
+	if bekillerSceneId == killerSceneId and killerSceneId == TianYuanConfig.SCENEID then
+		if LActor.getLevel(killerPtr) - LActor.getLevel(beKiller) > 10 then return end
+		local KillerId = LActor.getIntProperty(killerPtr, PROP_ENTITY_ID)    --获取角色ID
+		local dayRanking = Ranking.getRanking(TianYuanRankName) --通过排行名称获取排行对象
+		if dayRanking == nil then return end
+
+		local killerItem = Ranking.getItemPtrFromId(dayRanking, KillerId) 
+		if killerItem ~= nil then
+			--debug_print("killscore"..TianYuanConfig.KILLSCORE.."killerid"..KillerId)
+			Ranking.updateItem(dayRanking,KillerId,TianYuanConfig.KILLSCORE)        --如果存在名单则加分
+			Ranking.setSub(killerItem, 0, killerName)
+		else     
+			--如果不存在则创建
+			--debug_print("killscore"..TianYuanConfig.KILLSCORE.."killerid"..KillerId)
+			killerItem = Ranking.addItem(dayRanking,KillerId,TianYuanConfig.KILLSCORE)         --如果不存在名单则初始化
+			if killerItem ~= nil then
+				TianYuanFunc.InitRankItem(killerItem, killerPtr)
+			end
+		end
+
+		LActor.triggerAchieveEvent(killerPtr, 49) -- 击杀敌对玩家
+		XuanYuanZhiZhanNoticePersion( killerPtr )
+	end
+end
+
+-- 玩家死亡
+EventCallDispatcher.TianYuanActorDeath = function(sysarg, arg)
+	debug_print("tianyuan actor death")
+	if LActor.getSceneId(sysarg) ~= TianYuanConfig.SCENEID then return end -- 不在雁门关场景不处理
+
+	-- 玩家死亡可获得1点个人积分
+	local rank_list = Ranking.getRanking(TianYuanRankName)
+	if rank_list == nil then
+		debug_print("TianYuanRankName rank list is nil")
+		return
+	end
+
+	local actor_id = LActor.getIntProperty(sysarg, PROP_ENTITY_ID)
+	local rank_item = Ranking.getItemPtrFromId(rank_list, actor_id)
+	if rank_item ~= nil then
+		Ranking.updateItem(rank_list, actor_id, TianYuanConfig.deathScore)
+	else
+		rank_item = Ranking.addItem(rank_list, actor_id, TianYuanConfig.deathScore)         --如果不存在名单则初始化
+		if rank_item ~= nil then
+			TianYuanFunc.InitRankItem(rank_item, sysarg)
+		end
+	end
+
+	-- 如果是对方伙伴最后一击，则给其主人加分
+	if arg[1] ~= nil then
+		--debug_print("TianYuanOnKillByActor1")
+		--[[
+		local ispet = LActor.isPet( arg[1] )
+		local isactor = LActor.isActor( arg[1] )
+		local flag = false
+		local killerPtr = nil 
+		local beKiller = sysarg
+		if not ispet and isactor then
+			return -- kill by actor 时，TianYuanOnKillByActor会加积分
+		end
+		if ispet and not isactor then
+			flag = true
+			killerPtr = LActor.getMonsterOwner( arg[1] )
+		end
+
+		if not flag or killerPtr == nil or beKiller == nil then return end 
+
+		LActor.triggerAchieveEvent(killerPtr, 49) -- 击杀敌对玩家
+		
+		--debug_print("TianYuanOnKillByActor2")
+		local bekillerSceneId = LActor.getSceneId(beKiller)
+		local killerSceneId = LActor.getSceneId(killerPtr)
+		local killerName = LActor.getName(killerPtr)
+		local beKillerName = LActor.getName(beKiller)
+		--debug_print("TianYuanOnKillByActor"..killerSceneId)
+		if bekillerSceneId == killerSceneId and killerSceneId == TianYuanConfig.SCENEID then
+			if LActor.getLevel(killerPtr) - LActor.getLevel(beKiller) > 10 then return end
+			local KillerId = LActor.getIntProperty(killerPtr, PROP_ENTITY_ID)    --获取角色ID
+			local dayRanking = Ranking.getRanking(TianYuanRankName) --通过排行名称获取排行对象
+			if dayRanking == nil then return end
+
+			local killerItem = Ranking.getItemPtrFromId(dayRanking, KillerId) 
+			if killerItem ~= nil then
+				--debug_print("killscore"..TianYuanConfig.KILLSCORE.."killerid"..KillerId)
+				Ranking.updateItem(dayRanking,KillerId,TianYuanConfig.KILLSCORE)        --如果存在名单则加分
+				Ranking.setSub(killerItem, 0, killerName)
+			else     
+				--如果不存在则创建 
+				--debug_print("killscore"..TianYuanConfig.KILLSCORE.."killerid"..KillerId)
+				killerItem = Ranking.addItem(dayRanking,KillerId,TianYuanConfig.KILLSCORE)         --如果不存在名单则初始化
+				if killerItem ~= nil then
+					TianYuanFunc.InitRankItem(killerItem, killerPtr)
+				end
+			end
+		end
+		--]]
+	end
+end
+
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeKilledByActor, EventCallDispatcher.TianYuanOnKillByActor)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeOnActorDeath, EventCallDispatcher.TianYuanActorDeath)

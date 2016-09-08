@@ -1,0 +1,667 @@
+--[[
+	大富翁
+]]
+--#include "richmanconf.txt" once
+--#include "activitycontrolhandler.txt" once
+
+-- 协议定义
+local RICHMAN_MACRO = {
+	ITEMLIST = 177,   	-- 请求大富翁物品列表
+	RICHMANINFO = 178,  -- 请求大富翁当前进度信息
+	GETGIFT = 179,      -- 请求领取环游礼包
+	THROWDICE = 180,    -- 投掷骰子
+	REWARDINFO = 181,   -- 请求达成任务奖励信息
+	GETREWARD = 182,    -- 领取任务奖励信息
+}
+
+--  大富翁函数列表
+ONLINEREWARD.richManFunc = {}
+
+-- 特效
+ONLINEREWARD.richManFunc.playItemEffect = function (sysarg, src, itemId, count)
+	-- 播放特效
+	local effects = {}
+	local effect = {}
+	effect.type = 1  -- 1为物品,暂时只支持发物品所以写死
+	effect.id = itemId
+	effect.count = count
+	effects[#effects+1] = effect
+	if #effects > 0 then
+		MiscFunc.PlayItemEffect(sysarg, src, effects)
+	end
+end
+
+-- 大富翁初始化
+ONLINEREWARD.richManFunc.Init = function (sysarg)
+	local var = LActor.getStaticVar(sysarg)
+	if not var then return end
+
+	-- 变量列表
+	if not var.richManVar then
+		var.richManVar = {}
+	end
+
+	-- 完成的跑环次数
+	if not var.richManVar.loopCount then
+		var.richManVar.loopCount = 0
+	end
+
+	-- 当前游标位置
+	if not var.richManVar.cursorPos then
+		var.richManVar.cursorPos = 0
+	end
+
+	-- 环游所得物品列表
+	if not var.richManVar.loopItemList then
+		var.richManVar.loopItemList = {}
+	end
+
+	-- 客户端要求添加
+	-- 环游步进
+	if not var.richManVar.step then
+		var.richManVar.step = {}
+	end
+
+	-- 礼包可领取个数
+	if not var.richManVar.giftNum then
+		var.richManVar.giftNum = 0
+	end
+
+	-- 已经使用的免费次数
+	if not var.richManVar.freeDiceCount then
+		var.richManVar.freeDiceCount = 0
+	end
+
+	-- 上次免费掷骰子的时间
+	if not var.richManVar.diceTime then
+		var.richManVar.diceTime = 0
+	end
+end
+
+-- 新的一天重置 
+ONLINEREWARD.richManFunc.newDayHandle = function (sysarg)
+
+	local var = LActor.getStaticVar(sysarg)
+	if not var then return end
+
+	local state = ONLINEREWARD.GetActivityState(richManConf.activityId,var.download_from)
+	if state == 0 then 
+		return 
+	end	
+
+	ONLINEREWARD.richManFunc.Init(sysarg)
+
+	-- 重置游标位置
+	var.richManVar.cursorPos = 0
+
+	-- 重置免费次数
+	var.richManVar.freeDiceCount = 0
+
+	-- 重置掷骰子的时间间隔
+	var.richManVar.diceTime = 0
+end
+
+-- 客户端获取物品列表
+ONLINEREWARD.richManFunc.getItemInfo = function (sysarg)
+	local var = LActor.getStaticVar(sysarg)
+	if not var then return end
+
+	local state = ONLINEREWARD.GetActivityState(richManConf.activityId,var.download_from)
+	if state ~= 0 then 
+		--是否重置
+		ONLINEREWARD.CheckResetActivityInfo(sysarg, richManConf.activityId)			 
+	end
+
+	local conf = richManConf.itemList
+	local npack = DataPack.allocPacket(sysarg, BaseTypes.SystemId.miscsSystem, RICHMAN_MACRO.ITEMLIST)
+	if not npack then  return end
+	DataPack.writeInt(npack, richManConf.loopGift)	
+	DataPack.writeInt(npack, #conf)
+	for i = 1,#conf do
+		DataPack.writeInt(npack, conf[i].itemid)
+	end		
+	DataPack.flush(npack)
+end
+
+-- 获取活动信息
+-- flag 本参数应客户端要去添加
+-- flag用于描述 0=客户端拉取界面, 1=投掷普通骰子有结果, 2=黄金骰子有结果，3=条件不满足(播放动画什么的就不用做了)
+ONLINEREWARD.richManFunc.getActivityInfo = function (sysarg, msgid, dp, flag)
+	local var = LActor.getStaticVar(sysarg)
+	if not var then return end
+
+	local state = ONLINEREWARD.GetActivityState(richManConf.activityId,var.download_from)
+	if state ~= 0 then 
+		--是否重置
+		ONLINEREWARD.CheckResetActivityInfo(sysarg, richManConf.activityId)		 
+	end
+
+	ONLINEREWARD.richManFunc.Init(sysarg)
+
+	if not flag then
+		flag = 0
+	end
+
+	local npack = DataPack.allocPacket(sysarg, BaseTypes.SystemId.miscsSystem, RICHMAN_MACRO.RICHMANINFO)
+	if not npack then  return end
+	-- 完成跑环次数
+	local loopCount = var.richManVar.loopCount
+	-- 游标所在位置
+	local cursorPos = var.richManVar.cursorPos
+	-- 客户端要求添加
+	-- 步进数量 
+	local stepCount = #var.richManVar.step
+	-- 剩余免费次数
+	local remainCount = richManConf.freeDiceNum - var.richManVar.freeDiceCount
+	-- 距离下次免费的倒计时时间
+	local curTime = System.getCurrMiniTime()
+	local countdown = (var.richManVar.diceTime + richManConf.freeDiceInterval*60) - curTime
+	if countdown <= 0 then
+		countdown = 0
+	end
+	-- 可领取礼包个数
+	local giftNum = var.richManVar.giftNum
+	-- 获取的物品表
+	local loopItemList = var.richManVar.loopItemList
+	-- 活动结束时
+	if state == 0 then
+		flag = 0
+		loopCount = 0
+		cursorPos = 0
+		stepCount = 0
+		remainCount = 0
+		countdown = 0
+	end
+	DataPack.writeInt(npack, flag)	
+	DataPack.writeInt(npack, loopCount)
+	DataPack.writeInt(npack, cursorPos)
+	DataPack.writeInt(npack, stepCount)
+	-- 步进
+	for i=1, stepCount do
+		local step = var.richManVar.step[i]
+		DataPack.writeInt(npack, step)
+	end
+	DataPack.writeInt(npack, remainCount)
+	DataPack.writeInt(npack, countdown)
+	DataPack.writeInt(npack, giftNum)
+	DataPack.writeInt(npack, #loopItemList)
+	for i = 1,#loopItemList do
+		DataPack.writeInt(npack, loopItemList[i][1])	-- 物品的id
+		DataPack.writeInt(npack, loopItemList[i][2])	-- 物品的个数
+	end
+	DataPack.flush(npack)
+end
+
+-- 领取环游礼包
+ONLINEREWARD.richManFunc.getLoopGift  = function (sysarg, msgid, dp)
+	local var = LActor.getStaticVar(sysarg)
+	if not var then return end
+
+	local giftNum = DataPack.readChar(dp)
+	local itemId = richManConf.loopGift
+	local needspace = Item.getAddItemNeedGridCount(sysarg, itemId, giftNum, 0, 0, 1)
+	if ( Item.getBagEmptyGridCount( sysarg ) < needspace) then
+		-- local str = string.format(Lang.ScriptTips.f00016,needspace)
+		-- LActor.sendTipmsg(sysarg, str,ttMessage)
+		LActor.SendGeneralTips(sysarg, 7, 0, 0)
+		return
+	end
+
+	if giftNum <= 0 then
+		return
+	end
+
+	if var.richManVar.giftNum < giftNum then
+		return
+	end
+
+	var.richManVar.giftNum = var.richManVar.giftNum - giftNum
+	-- 绑定
+    local bingFlag = 1
+    -- 增加物品,
+    if LActor.addItem(sysarg, itemId, 0, 0, giftNum, bingFlag, "richManGift", 1) >= 1 then
+    	ONLINEREWARD.richManFunc.playItemEffect(sysarg, 3, itemId, giftNum)
+    end
+
+	-- 重新更新客户端
+	ONLINEREWARD.richManFunc.getActivityInfo(sysarg, BaseTypes.SystemId.miscsSystem, nil, 0)
+end
+
+-- 检测钱
+ONLINEREWARD.richManFunc.checkMoney = function (sysarg, diceType)
+	local var = LActor.getStaticVar(sysarg)
+	if not var then return end
+
+	local result = true
+	-- 需要的钱	
+	local diceMoney = 0
+	if 1 == diceType then
+		diceMoney = richManConf.normalDiceCost
+	elseif 2 == diceType then
+		diceMoney = richManConf.goldDiceCost
+	else
+		result = false
+	end
+
+	-- 检查钱
+	local freeTime = false		-- 是否处于免费时间
+	local curTime = System.getCurrMiniTime()
+	if curTime - var.richManVar.diceTime >= richManConf.freeDiceInterval * 60 then
+		freeTime = true
+	end
+
+	if 1 == diceType then	-- 普通骰子
+		if freeTime then		-- 处于免费时间
+			if var.richManVar.freeDiceCount < richManConf.freeDiceNum then	
+				diceMoney = 0
+			end
+		end
+	end
+
+	if LActor.getMoneyCount( sysarg, mtYuanbao) < diceMoney then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.dfw002, ttMessage)
+		result = false
+	end
+
+	return result, diceMoney
+end
+
+-- 掷骰子各种条件检测
+ONLINEREWARD.richManFunc.check = function (sysarg, diceType)
+	local var = LActor.getStaticVar(sysarg)
+	if not var then return end
+
+	local result = true
+	-- 需要的格子
+	local lotteryGrid = 0
+
+	if 1 == diceType then
+		lotteryGrid = richManConf.normalNeedGrid
+	elseif 2 == diceType then
+		lotteryGrid = richManConf.goldNeedGrid
+	else
+		result = false
+	end
+
+	-- 检查等级够不够开放
+	local level = LActor.getIntProperty(sysarg, PROP_LEVEL)
+	if level < richManConf.openLevel then 
+		LActor.sendTipmsg( sysarg, Lang.ScriptTips.dfw003, ttMessage )
+		result = false
+	end
+
+	-- 检查梦境仓库
+	if LActor.getLotteryStoreRestCount(sysarg) < lotteryGrid then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.dfw004, ttMessage)
+		result = false
+	end
+
+	return result		
+end
+
+-- 客户端掷骰子
+ONLINEREWARD.richManFunc.throwDice = function (sysarg, msgid, dp)
+	local var = LActor.getStaticVar(sysarg)
+	if not var then return end
+
+	local state = ONLINEREWARD.GetActivityState(richManConf.activityId,var.download_from)
+	if state == 0 then 
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.dfw001, ttMessage)
+		return
+	end
+	
+	--是否重置
+	ONLINEREWARD.CheckResetActivityInfo(sysarg, richManConf.activityId)			 
+
+	ONLINEREWARD.richManFunc.Init(sysarg)
+
+	-- 是哪种骰子
+	local diceType = DataPack.readChar(dp)
+	-- 先检测天珠(条件是否满足,需要多少钱)
+	local result = false
+	local isFulfil, needMoney =  ONLINEREWARD.richManFunc.checkMoney(sysarg, diceType)
+	-- 检测其他条件
+	local result = ONLINEREWARD.richManFunc.check(sysarg, diceType)
+	if (not isFulfil) or (not result) then
+		ONLINEREWARD.richManFunc.getActivityInfo(sysarg, BaseTypes.SystemId.miscsSystem, nil, 3)
+		return
+	end
+
+	-- 免费的
+	local isFree = false
+	if 0 == needMoney then
+		isFree = true
+		var.richManVar.freeDiceCount = var.richManVar.freeDiceCount + 1
+		var.richManVar.diceTime = System.getCurrMiniTime()
+	else
+		-- 扣钱
+		local diceStr = string.format("%d", diceType)
+		LActor.changeMoney(sysarg, mtYuanbao, -needMoney, 1, true, "richman", diceStr)
+	end
+
+	-- 掷骰子次数
+	local throwDiceNum = 0
+	-- 是否双倍
+	local isDouble = false
+
+	if 1 == diceType then
+		throwDiceNum = richManConf.normalNeedGrid
+	elseif 2 == diceType then
+		throwDiceNum = richManConf.goldNeedGrid
+	end
+
+	-- 先清空上次抽奖物品列表信息
+	var.richManVar.loopItemList = nil
+	var.richManVar.loopItemList = {}
+
+	-- 清空上次步进
+	var.richManVar.step = nil
+	var.richManVar.step = {}
+
+	local stepList = var.richManVar.step
+
+	for i=1, throwDiceNum do
+		local cursorPos,step = ONLINEREWARD.richManFunc.getLotteryItemIndex(sysarg)
+		-- 黄金骰子最后一次双倍奖励
+		if i == richManConf.goldNeedGrid then
+			isDouble = true		
+		end
+		stepList[#stepList + 1] = step
+		ONLINEREWARD.richManFunc.addLotteryItem(sysarg, cursorPos, isDouble, isFree)
+		ONLINEREWARD.richManFunc.updataGetItemInfo(sysarg, cursorPos, isDouble)
+	end
+
+	-- 更新客户端
+	ONLINEREWARD.richManFunc.getActivityInfo(sysarg, BaseTypes.SystemId.miscsSystem, nil, diceType)	
+end
+
+-- 一次投掷骰子
+ONLINEREWARD.richManFunc.getLotteryItemIndex = function (sysarg)
+	local var = LActor.getStaticVar(sysarg)
+	if not var then return end
+
+	local itemList = richManConf.itemList
+	local itemCount = #itemList
+	-- 当前游标所在位置
+	local cursorPos = var.richManVar.cursorPos
+	-- 抽到的物品所在位置(相对游标)
+	local itemPos = 0
+	local sixSum = 0
+	-- 取游标之后的六个概率值之和,作为随机数的最大范围
+	for j = 1, 6 do
+		local pos = (cursorPos + j) % (itemCount)
+		-- 到最尾了,cursorPos + j = itemCount,lua没有0位置
+		if 0 == pos then
+			pos = itemCount
+		end
+		sixSum = sixSum + itemList[pos].present
+	end
+
+	-- 随机一个数
+	local randNum = System.getRandomNumber(sixSum)
+
+	-- 在此概率和中查找一个位置(1-6)
+	local partTotal = 0
+	for j = 1, 6 do
+		local pos = (cursorPos + j) % (itemCount)
+		if 0 == pos then
+			pos = itemCount
+		end
+		partTotal = partTotal + itemList[pos].present
+		if randNum < partTotal then
+			itemPos = j
+			break
+		end
+	end
+
+	-- 计算当前游标值
+	cursorPos = cursorPos + itemPos
+	-- 环游一圈
+	if cursorPos > itemCount then
+		cursorPos = cursorPos - itemCount
+		var.richManVar.loopCount = var.richManVar.loopCount + 1
+		var.richManVar.giftNum = var.richManVar.giftNum + 1
+	end
+
+	-- 掷骰子完成,置当前游标
+	var.richManVar.cursorPos = 	cursorPos
+
+	return cursorPos, itemPos
+end
+
+-- 抽到物品的信息
+ONLINEREWARD.richManFunc.updataGetItemInfo = function (sysarg,cursorPos, isDouble)
+	local var = LActor.getStaticVar(sysarg)
+	if not var then return end
+
+	local itemList = richManConf.itemList
+	local itemConf = itemList[cursorPos]
+	local loopItemList = var.richManVar.loopItemList
+
+	local isExist = false
+	-- 查找是否存在
+	for i=1, #loopItemList do
+		if itemConf.itemid == loopItemList[i][1] then
+			isExist = true
+			if isDouble then
+				loopItemList[i][2] = loopItemList[i][2] + 2
+			end
+		end
+	end
+
+	-- 第一次存进去,放在最后
+	if not isExist then
+		-- 初始化这一项
+		loopItemList[#loopItemList + 1] = {}
+		loopItemList[#loopItemList][1] = itemConf.itemid
+		loopItemList[#loopItemList][2] = 1
+		if isDouble then
+			loopItemList[#loopItemList][2] = 2
+		end
+	end
+end
+
+-- 添加物品与公告
+ONLINEREWARD.richManFunc.addLotteryItem = function (sysarg, cursorPos, isDouble, isFree)
+	local itemList = richManConf.itemList
+	local itemConf = itemList[cursorPos]
+	-- 增加物品
+	local itemNum = itemConf.count
+	if isDouble then
+		itemNum = itemNum * 2
+	end
+	local bind = 1
+	if not isFree then
+		bind = itemConf.bind
+	end
+																					-- 梦境不添加日志
+	LActor.addLotteryItem(sysarg, itemConf.itemid, itemNum, 0, itemConf.strong, bind, false)
+	-- 公告
+	local camp = LActor.getIntProperty(sysarg, PROP_CAMP)
+	if itemConf.broadcast then
+		local str = string.format(Lang.ScriptTips.dfw005, CampColor[camp], CampShortName[camp], LActor.getName(sysarg), Item.getColorName(itemConf.itemid))
+		System.broadcastTipmsg(str, ttScreenCenter)
+		str = string.format(str..Lang.ScriptTips.dfw006, 1)
+		-- System.broadcastTipmsg(str, ttHearsay)
+	end
+end
+
+----------------------------------------------------------------------------
+
+--[[
+	领取环游达成条件奖励,第二个活动
+	loopRewardFlag 0=不可领取 1 = 可领取 2 = 已经领取
+]]
+
+----------------------------------------------------------------------------
+ONLINEREWARD.richManFunc.loopRewardsInit = function (sysarg)
+	local var = LActor.getStaticVar(sysarg)
+	if not var then return end
+
+	ONLINEREWARD.richManFunc.Init(sysarg)
+
+	-- 领取标识
+	if not var.richManVar.loopRewardFlag then
+		var.richManVar.loopRewardFlag = {}
+	end
+
+	for i=1, #richManConf.loopRwards do
+		if not var.richManVar.loopRewardFlag[i] then
+			var.richManVar.loopRewardFlag[i] = 0
+		end
+	end
+
+end
+
+-- 客户端请求信息
+ONLINEREWARD.richManFunc.getLoopRewardsInfo = function (sysarg)
+	local var = LActor.getStaticVar(sysarg)
+	if not var then return end
+
+	local state = ONLINEREWARD.GetActivityState(richManConf.activityId,var.download_from)
+	if state == 0 then 
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.dfw001, ttMessage)
+	end
+	
+	--是否重置
+	ONLINEREWARD.CheckResetActivityInfo(sysarg, richManConf.activityId)	 
+
+	ONLINEREWARD.richManFunc.loopRewardsInit(sysarg)
+	local npack = DataPack.allocPacket(sysarg, BaseTypes.SystemId.miscsSystem, RICHMAN_MACRO.REWARDINFO)
+	if not npack then  return end
+	-- 已经环游圈数
+	local loopCount = var.richManVar.loopCount
+	-- 奖励项数
+	local rewardNum = #richManConf.loopRwards
+	for i = 1, rewardNum do
+		-- 达标圈数
+		local circle = richManConf.loopRwards[i].circle
+		if loopCount >= circle then
+			if var.richManVar.loopRewardFlag[i] == 0 then
+				var.richManVar.loopRewardFlag[i] = 1
+			end
+		end
+	end	
+	DataPack.writeInt(npack, loopCount)
+	DataPack.writeChar(npack, rewardNum)
+	for i = 1, rewardNum do
+		DataPack.writeChar(npack, var.richManVar.loopRewardFlag[i])
+	end		
+	DataPack.flush(npack)
+end
+
+-- 客户端请求领取
+ONLINEREWARD.richManFunc.getLoopReward = function (sysarg, msgid, dp)
+	local var = LActor.getStaticVar(sysarg)
+	if not var then return end
+	-- 礼包索引
+	local giftIndex = DataPack.readChar(dp)
+
+	-- 是否有奖励
+ 	local conf = richManConf.loopRwards
+ 	if not conf[giftIndex] then
+ 		return
+ 	end
+
+    local bag_space = conf[giftIndex].count
+    if Item.getBagEmptyGridCount(sysarg) <  bag_space  then
+        -- 提示背包空间不足
+        LActor.sendTipmsg(sysarg, Lang.ScriptTips.tower006, ttMessage)
+        return
+    end	
+
+ 	if 1 == var.richManVar.loopRewardFlag[giftIndex] then
+		-- 绑定
+	    local bingFlag = 1
+	    local itemId = conf[giftIndex].itemId
+	    local itemNum = conf[giftIndex].count
+	    var.richManVar.loopRewardFlag[giftIndex] = 2
+	    -- 增加物品,
+	    if LActor.addItem(sysarg, itemId, 0, 0, itemNum, bingFlag, "richManGift", 1) >= 1 then
+	    	ONLINEREWARD.richManFunc.playItemEffect(sysarg, 3, itemId, itemNum)
+	    end
+ 	end	
+
+	-- 重新更新客户端
+	ONLINEREWARD.richManFunc.getLoopRewardsInfo(sysarg) 		
+end
+
+-- 图标保留
+ONLINEREWARD.CheckActivityRewardInfo[richManConf.activityId] = function(sysarg)
+	local var = LActor.getStaticVar(sysarg)
+	if not var then return end
+
+	ONLINEREWARD.richManFunc.loopRewardsInit(sysarg)
+
+	local result = 0
+	-- 礼包
+	if var.richManVar.giftNum > 0 then
+		result = 1
+	end
+
+	-- 奖励项数
+	local rewardNum = #richManConf.loopRwards
+	for i = 1, rewardNum do
+		if var.richManVar.loopRewardFlag[i] == 1 then
+			result = 1
+		end
+	end
+
+	return result		
+end
+
+--后台调控,活动重开后,清理数据,提升返好礼
+ONLINEREWARD.ResetActivityInfo[richManConf.activityId] = function(sysarg)
+	local var = LActor.getStaticVar(sysarg)
+	if not var then return end
+
+	ONLINEREWARD.richManFunc.loopRewardsInit(sysarg)
+
+	local giftNum = var.richManVar.giftNum
+	local giftId = richManConf.loopGift	
+	-- 礼包
+	if giftNum > 0 then
+		ONLINEREWARD.ResetActivityMail(sysarg, richManConf.activityId, 117, giftId, giftNum)
+	end
+
+	-- 奖励项数
+	local rewardNum = #richManConf.loopRwards
+	for i = 1, rewardNum do
+		if var.richManVar.loopRewardFlag[i] == 1 then
+			local itemId = richManConf.loopRwards[i].itemId
+			local itemNum = richManConf.loopRwards[i].count
+			ONLINEREWARD.ResetActivityMail(sysarg, richManConf.activityId, 117, itemId, itemNum)
+		end
+	end
+	-- 清除记录
+
+	-- 完成的跑环次数
+	var.richManVar.loopCount = nil
+	-- 当前游标位置
+	var.richManVar.cursorPos = nil
+	-- 环游所得物品列表
+	var.richManVar.loopItemList = nil
+	-- 环游步进
+	var.richManVar.step = nil
+	-- 礼包可领取个数
+	var.richManVar.giftNum = nil
+	-- 已经使用的免费次数
+	var.richManVar.freeDiceCount = nil
+	-- 上次免费掷骰子的时间
+	var.richManVar.diceTime = nil
+	-- 领取礼包标识
+	for i = 1, rewardNum do
+		var.richManVar.loopRewardFlag[i] = nil
+	end
+	-- 变量列表
+	var.richManVar = nil
+end
+
+-- MiscsImplement.registerMsgHandler(RICHMAN_MACRO.ITEMLIST, ONLINEREWARD.richManFunc.getItemInfo)
+-- MiscsImplement.registerMsgHandler(RICHMAN_MACRO.RICHMANINFO, ONLINEREWARD.richManFunc.getActivityInfo)
+-- MiscsImplement.registerMsgHandler(RICHMAN_MACRO.GETGIFT, ONLINEREWARD.richManFunc.getLoopGift)
+-- MiscsImplement.registerMsgHandler(RICHMAN_MACRO.THROWDICE, ONLINEREWARD.richManFunc.throwDice)
+-- MiscsImplement.registerMsgHandler(RICHMAN_MACRO.REWARDINFO, ONLINEREWARD.richManFunc.getLoopRewardsInfo)
+-- MiscsImplement.registerMsgHandler(RICHMAN_MACRO.GETREWARD, ONLINEREWARD.richManFunc.getLoopReward)
+
+--EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, ONLINEREWARD.richManFunc.newDayHandle)

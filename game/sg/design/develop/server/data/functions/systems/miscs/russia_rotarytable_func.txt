@@ -1,0 +1,412 @@
+--充值幸运大转盘 logic
+--#include "data\config\misc\russia_rotarytable_conf.txt" once
+--#include "data\language\LangCode.txt" once
+--#include "..\timereward\activitycontrolhandler.txt" once
+--#include "data\functions\gmevent.txt" once
+
+--充值幸运大转盘
+
+RechargeRotaryTableFunc = {}
+RechargeRotaryTableFunc.TreasureLogList = {}
+RechargeRotaryTableFunc.TreasureLogCount = 0
+
+--更新活动信息(当前累积充值数、已抽奖次数、可抽奖的总次数)
+RechargeRotaryTableFunc.UpdateActivityInfo = function (sysarg, msgid, dp)
+     --print("RechargeRotaryTableFunc.UpdateActivityInfo")
+     local state = ONLINEREWARD.GetActivityState(RussiaRotaryTableConf.activityId)
+
+     if state == 0 then
+          LActor.sendTipmsg(sysarg, Lang.ScriptTips.xyzp008, ttMessage)
+          return
+     end
+
+     ONLINEREWARD.CheckResetActivityInfo(sysarg, RussiaRotaryTableConf.activityId)
+
+     local var = LActor.getStaticVar(sysarg)
+     if var == nil then return end
+     if var.CurLotteryCount == nil then var.CurLotteryCount = 0 end
+     if var.LotteryFreeUseCount == nil then var.LotteryFreeUseCount = 1 end
+     if var.RechargeRotaryLotteryMyLog == nil then  var.RechargeRotaryLotteryMyLog = {} end 
+     --local itemnum = LActor.getItemCount(sysarg,RussiaRotaryTableConf.useitem)
+     local yuanbao = LActor.getMoneyCount(sysarg, mtYuanbao)
+
+     local npack = DataPack.allocPacket(sysarg, 139, 100)
+     if npack == nil then return end
+     --DataPack.writeInt(npack, itemnum)
+     DataPack.writeInt(npack, var.LotteryFreeUseCount)
+     DataPack.writeInt(npack, yuanbao)
+
+     --print("RechargeRotaryTableFunc.UpdateActivityInfo itemnum:"..itemnum)
+    -- print("RechargeRotaryTableFunc.UpdateActivityInfo yuanbao:"..yuanbao)
+
+     DataPack.flush(npack)
+end
+
+RechargeRotaryTableFunc.GetProbabilityIndex = function(sysarg,probabilitys)
+     --print("RechargeRotaryTableFunc.GetProbabilityIndex")
+     local result = 0
+     if probabilitys == nil or type(probabilitys) ~= "table" then return result end
+     local awards = RussiaRotaryTableConf.awards
+     local limits = RussiaRotaryTableConf.limits
+     local fobidtable  = {}
+
+     local sys_var = System.getStaticVar()
+     if sys_var.russiaItemList == nil then
+          sys_var.russiaItemList = {}
+     end
+     for i=1,#limits do
+          if sys_var.russiaItemList[i] == nil then
+               sys_var.russiaItemList[i] = 0
+          end
+     end
+     local num = 0
+     for i=1, #probabilitys do
+          local ifLimit = false
+          for j=1,#limits do
+               if limits[j].itemid == awards[i].itemid and sys_var.russiaItemList[j] >= limits[j].limit then
+                    ifLimit = true
+                    table.insert(fobidtable, i)
+                    break
+               end
+          end
+          if not ifLimit then
+               --print("index:"..i..",probabilitys:"..probabilitys[i])
+               num = num + probabilitys[i]
+          end
+
+     end
+     --print("num>>>"..num)
+     if num < 1 then return result end
+     local result = 0
+     local rand = System.getRandomNumber(num-1) + 1
+     --print("rand:"..rand)
+     for i=1, #probabilitys do
+          local ifLimit = false
+          for j=1,#fobidtable do
+               if i == fobidtable[j] then ifLimit = true end
+          end
+          if not ifLimit then
+               --print("check rand index:"..i)
+               rand = rand - probabilitys[i]
+               if rand <= 0 then
+                    result = i
+                    for j=1,#limits do
+                         if limits[j].itemid == awards[i].itemid then
+                              sys_var.russiaItemList[j] = sys_var.russiaItemList[j] + 1
+                              break
+                         end
+                    end
+                    break
+               end
+          end
+     end
+     return result
+end
+
+--抽奖
+RechargeRotaryTableFunc.OnPlayLottery = function(sysarg, msgid, dp)
+     --print("RechargeRotaryTableFunc.OnPlayLottery")
+     local isPlayer = DataPack.readChar(dp)
+     if isPlayer == nil or isPlayer < 0 or isPlayer > 1 then return end
+     local moneytype = mtYuanbao
+
+	local state = ONLINEREWARD.GetActivityState(RussiaRotaryTableConf.activityId)
+
+     if state == 0 then
+          return
+     end
+
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+
+     if var.CurLotteryCount == nil then var.CurLotteryCount = 0 end
+
+     if var.CurLotteryCount >= RussiaRotaryTableConf.maxrotarynum then
+          LActor.sendTipmsg(sysarg, Lang.ScriptTips.xyzp003, ttMessage)
+          return
+     end
+
+     local conf = RussiaRotaryTableConf
+     if Item.getBagEmptyGridCount(sysarg) <  conf.bag_space then
+          --提示背包空间不足
+          LActor.sendTipmsg(sysarg, Lang.ScriptTips.xyzp004, ttMessage)
+          return
+     end
+
+     --add wupeng 幸运大转盘抽奖改造 begin
+     local LactorYB = LActor.getMoneyCount(sysarg, moneytype)
+     
+     --[[if LActor.getItemCount(sysarg, RussiaRotaryTableConf.useitem) < 1 and  LactorYB < RussiaRotaryTableConf.useyb then 
+          --木有道具了或者天珠数量不足
+          LActor.sendTipmsg(sysarg, Lang.ScriptTips.xyzp001, ttMessage)
+          return
+     end]]
+
+     if var.LotteryFreeUseCount == 0  and  LactorYB < RussiaRotaryTableConf.useyb then 
+          --无免费次数或者天珠数量不足
+          LActor.sendTipmsg(sysarg, Lang.ScriptTips.xyzp009, ttMessage)
+          return
+     end
+
+     --[[if LActor.getItemCount(sysarg, RussiaRotaryTableConf.useitem) >= 1 then
+          LActor.removeItem(sysarg,RussiaRotaryTableConf.useitem,1,-1,-1,-1,"RechargeRotary_Lottery",5)
+     else
+          LActor.changeMoney(sysarg, moneytype, -RussiaRotaryTableConf.useyb, 1, true, "luck", "zhuanpan")
+     end]]
+     if var.LotteryFreeUseCount ~= 0 and var.LotteryFreeUseCount ~= nil  then
+          var.LotteryFreeUseCount = var.LotteryFreeUseCount - 1
+     else
+          LActor.changeMoney(sysarg, moneytype, -RussiaRotaryTableConf.useyb, 1, true, "luck", "zhuanpan")
+     end
+     --add wupeng 幸运大转盘抽奖改造 end
+
+
+     local probability_index = RechargeRotaryTableFunc.GetProbabilityIndex(sysarg,conf.probability)
+	
+     --print("probability_index>>>"..probability_index)
+	local award = conf.awards[probability_index]
+	if award == nil then
+		--提示找不当前的奖励项
+          LActor.sendTipmsg(sysarg, Lang.ScriptTips.xyzp002, ttMessage)
+		return
+	end
+
+     --下发抽奖成功
+     local npack = DataPack.allocPacket(sysarg, 139, 102)
+     if npack == nil then return end
+     DataPack.writeChar(npack, probability_index)
+     DataPack.flush(npack)
+     --print("RechargeRotaryTableFunc.OnPlayLottery probability_index:"..probability_index..",itemid:"..award.itemid)
+
+     var.CurLotteryCount = var.CurLotteryCount + 1
+     RechargeRotaryTableFunc.UpdateActivityInfo(sysarg)
+
+	if isPlayer == 0 then
+          RechargeRotaryTableFunc.addItem(sysarg, probability_index)
+     else
+          var.LotteryProbabilityindex = probability_index
+          --LActor.postEntityScriptCallbackMsg(sysarg, EntityCallbackMsg.LuckyRotaryTableTips, 3900, probability_index)
+     end
+end
+--RechargeRotaryTableFunc.OnBroadCastTips = function(sysarg, probability_index)
+     --print("RechargeRotaryTableFunc.OnBroadCastTips probability_index:"..probability_index)
+     --RechargeRotaryTableFunc.addItem(sysarg, probability_index)
+--end
+
+RechargeRotaryTableFunc.OnPlayLotteryOver = function(sysarg)
+     --print("RechargeRotaryTableFunc.OnBroadCastTips OnPlayLotteryOver")
+     local var = LActor.getStaticVar(sysarg)
+     if var == nil then return end
+     if var.LotteryProbabilityindex == nil or var.LotteryProbabilityindex == 0 then return end
+     RechargeRotaryTableFunc.addItem(sysarg, var.LotteryProbabilityindex)
+     var.LotteryProbabilityindex = 0
+end
+
+RechargeRotaryTableFunc.addItem = function(sysarg, probability_index)
+     --print("RechargeRotaryTableFunc.OnBroadCastTips")
+     if sysarg == nil or probability_index == nil then return end
+
+     local var = LActor.getStaticVar(sysarg)
+     if var == nil then return end
+
+     local award = RussiaRotaryTableConf.awards[probability_index]
+     if award == nil then
+          --提示找不当前的奖励项
+          LActor.sendTipmsg(sysarg, Lang.ScriptTips.xyzp002, ttMessage)
+          return
+     end
+
+ 
+
+     if LActor.addItem(sysarg, award.itemid, 0, 0, award.count, 1, "RechargeRotary_Lottery", 1) >= 1 then
+          -- 播放特效
+          local effects = {}
+          local effect = {}
+          effect.type = 1  -- 1为物品,暂时只支持发物品所以写死
+          effect.id = award.itemid
+          effect.count = award.count
+          effects[#effects+1] = effect
+          if #effects > 0 then
+               MiscFunc.PlayItemEffect(sysarg, 11, effects)
+          end
+
+          local char_name = LActor.getName(sysarg)
+          if char_name == nil then
+            char_name = " "
+          end
+
+          local item_name = Item.getColorName(award.itemid)
+          if item_name == nil then
+             item_name = " "
+          end
+
+	      local temp = #(var.RechargeRotaryLotteryMyLog) + 1 
+	      if var.RechargeRotaryLotteryMyLog[temp] == nil then
+	       	  var.RechargeRotaryLotteryMyLog[temp] = {}
+			  var.RechargeRotaryLotteryMyLog[temp][1] = char_name
+			  var.RechargeRotaryLotteryMyLog[temp][2] = item_name
+			  var.RechargeRotaryLotteryMyLog[temp][3] = award.count
+		  end
+
+
+          if award.istreasure then
+               --print("RechargeRotaryTableFunc.OnPlayLottery istreasure")
+               table.insert(RechargeRotaryTableFunc.TreasureLogList, {char_name, item_name, award.count})
+               if #RechargeRotaryTableFunc.TreasureLogList > 10 then
+                    table.remove(RechargeRotaryTableFunc.TreasureLogList, 1)
+               end
+
+               --增加珍品记录
+               local dp = LDataPack.allocPacket()
+               if dp == nil then return end
+               LDataPack.writeByte(dp, 139)
+               LDataPack.writeByte(dp, 103)
+               LDataPack.writeString(dp, char_name)
+               LDataPack.writeString(dp, item_name)
+               LDataPack.writeChar(dp, award.count)
+               System.broadcastData(dp)
+
+               local annostr = string.format(Lang.ScriptTips.xyzp005, char_name, item_name, award.count)
+               System.broadcastTipmsg(annostr, ttChatWindow)
+               annostr = string.format(Lang.ScriptTips.xyzp006, char_name, item_name, award.count)
+               --System.broadcastTipmsg(annostr, ttGmTip)
+          end
+     else --邮件道具
+          System.sendGmMailOffLine(LActor.getActorId(sysarg), Lang.ScriptTips.xyzp007, 1, award.itemid, award.count, 1)
+     end
+end
+
+--获取幸运大转盘珍品列表记录
+RechargeRotaryTableFunc.OnGetLotteryLog = function(sysarg, msgid, dp)
+     --print("RechargeRotaryTableFunc.OnGetLotteryLog")
+     local state = ONLINEREWARD.GetActivityState(RussiaRotaryTableConf.activityId)
+
+     if state == 0 then
+          LActor.sendTipmsg(sysarg, Lang.ScriptTips.xyzp008, ttMessage)
+          return
+     end
+
+     local npack = DataPack.allocPacket(sysarg, 139, 101)
+     if npack == nil then return end
+
+     local lognum = #RechargeRotaryTableFunc.TreasureLogList
+
+     DataPack.writeShort(npack, lognum)
+     --print("RechargeRotaryTableFunc.OnGetLotteryLog num:"..#RechargeRotaryTableFunc.TreasureLogList)
+     for i = lognum,1,-1 do
+          local val = RechargeRotaryTableFunc.TreasureLogList[i]
+          local char_name = val[1] or ""
+          local item_name = val[2] or ""
+          local item_count = val[3] or 1
+          DataPack.writeString(npack, char_name)
+          DataPack.writeString(npack, item_name)
+          DataPack.writeChar(npack, item_count)
+          --print("RechargeRotaryTableFunc.OnGetLotteryLog index:"..i..",item_name:"..item_name)
+     end
+     DataPack.flush(npack)
+
+end
+
+--获取自己抽到的物品列表记录
+RechargeRotaryTableFunc.OnGetMyLotteryLog = function(sysarg, msgid, dp)
+     --print("RechargeRotaryTableFunc.OnGetLotteryLog")
+     local state = ONLINEREWARD.GetActivityState(RussiaRotaryTableConf.activityId)
+
+     if state == 0 then
+          LActor.sendTipmsg(sysarg, Lang.ScriptTips.xyzp008, ttMessage)
+          return
+     end
+
+      local var = LActor.getStaticVar(sysarg)
+     if var == nil then return end
+
+     local npack = DataPack.allocPacket(sysarg, 139, 148)
+     if npack == nil then return end
+
+     local lognum = #var.RechargeRotaryLotteryMyLog
+
+     DataPack.writeShort(npack, lognum)
+     --print("RechargeRotaryTableFunc.OnGetLotteryLog num:"..#RechargeRotaryTableFunc.TreasureLogList)
+     for i = lognum,1,-1 do
+          local val = var.RechargeRotaryLotteryMyLog[i]
+          local char_name = val[1] or ""
+          local item_name = val[2] or ""
+          local item_count = val[3] or 1
+          DataPack.writeString(npack, char_name)
+          DataPack.writeString(npack, item_name)
+          DataPack.writeChar(npack, item_count)
+          --print("RechargeRotaryTableFunc.OnGetLotteryLog index:"..i..",item_name:"..item_name)
+     end
+     DataPack.flush(npack)
+
+end
+
+
+--登录操作
+RechargeRotaryTableFunc.OnRotaryTableLogin = function(sysarg, msgid, dp)
+     --print("RechargeRotaryTableFunc.OnRotaryTableLogin")
+     local var = LActor.getStaticVar(sysarg)
+     if var == nil then return end
+
+     if var.LotteryFreeUseCount == nil then 
+          var.LotteryFreeUseCount = 1
+     end
+
+     if var.RechargeRotaryLotteryMyLog == nil then 
+     	var.RechargeRotaryLotteryMyLog = {}
+     end
+
+     if var.LotteryProbabilityindex == nil or var.LotteryProbabilityindex == 0 then return end
+     RechargeRotaryTableFunc.addItem(sysarg, var.LotteryProbabilityindex)
+     var.LotteryProbabilityindex = 0
+
+     --新增
+     if var.index == nil then
+     var.index = 0
+     end
+     if var.temp == nil then
+     var.temp =0
+     end 
+
+end
+
+--重置当天使用转盘次数
+RechargeRotaryTableFunc.resetZpNum = function(sysarg)
+     print("RechargeRotaryTableFunc.resetZpNum")
+     local var = LActor.getStaticVar(sysarg)
+     if var == nil then return end
+
+     var.CurLotteryCount = 0
+
+end
+
+--新的一天到来
+RechargeRotaryTableFunc.OnRotaryNewDay = function(sysarg)
+	print("RechargeRotaryTableFunc.OnRotaryNewDay")
+	local var = LActor.getStaticVar(sysarg)
+     if var == nil then return end
+
+	local state = ONLINEREWARD.GetActivityState(RussiaRotaryTableConf.activityId)
+     if state == 0 then return  end
+     var.LotteryFreeUseCount = 1
+
+end
+
+
+--请求幸运大转盘活动信息
+MiscsImplement.registerMsgHandler(100, RechargeRotaryTableFunc.UpdateActivityInfo)
+--请求幸运大转盘珍品列表记录
+MiscsImplement.registerMsgHandler(101, RechargeRotaryTableFunc.OnGetLotteryLog)
+MiscsImplement.registerMsgHandler(148, RechargeRotaryTableFunc.OnGetMyLotteryLog)
+--幸运大转盘活动请求抽奖
+MiscsImplement.registerMsgHandler(102, RechargeRotaryTableFunc.OnPlayLottery)
+--幸运大转盘活动请求已动画完毕
+MiscsImplement.registerMsgHandler(103, RechargeRotaryTableFunc.OnPlayLotteryOver)
+
+--EventCallDispatcher.regEntityCallbackMsg(EntityCallbackMsg.LuckyRotaryTableTips, RechargeRotaryTableFunc.OnBroadCastTips)
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, RechargeRotaryTableFunc.OnRotaryTableLogin)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, RechargeRotaryTableFunc.OnRotaryNewDay)
+
+GmEventFuncList.register("resetzpnum", RechargeRotaryTableFunc.resetZpNum, 1) -- 重置当天使用转盘次数
+

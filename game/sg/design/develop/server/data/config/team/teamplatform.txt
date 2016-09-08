@@ -1,0 +1,106 @@
+--#include "..\..\language\LangCode.txt"
+
+
+TeamPlatformCofig =
+{
+	--副本
+	{
+		tartype = 1,
+		type_name = "副本",
+		value = {
+			{	
+			    name ="守卫昆阳",
+				fubenid= 4,
+				--难度
+				diff = {1 ,2 ,3},
+				diff_name = { "简单", "困难", "深渊" },
+			},
+			{
+			    name ="无尽秘藏",
+				fubenid= 5,
+				--难度
+				diff = {1 ,2 ,3},
+				diff_name = { "简单", "困难", "深渊" },
+			},
+			{
+			    name ="剑试云台",
+				fubenid= 15,
+				--难度
+				diff = {1 ,2 ,3},
+				diff_name = { "简单", "困难", "深渊" },
+			},
+			{
+			    name ="龙脉珍宝",
+				fubenid= 16,
+				--难度
+				diff = {1 ,2 ,3},
+				diff_name = { "简单", "困难", "深渊" },
+			},
+			{
+			    name ="血战豫州",
+				fubenid= 17,
+				--难度
+				diff = {1 ,2 ,3},
+				diff_name = { "简单", "困难", "深渊" },
+			},
+			{
+			    name ="烽火长安",
+				fubenid= 18,
+				--难度
+				diff = {1 ,2 ,3},
+				diff_name = { "简单", "困难", "深渊" },
+			},
+
+		},
+	},
+	
+	--专题副本
+	{
+		tartype = 4,
+		type_name = "专题活动",
+		value = {
+			{
+			    name ="诛莽复汉",
+				fubenid= 19,
+				--难度
+				diff = { },
+				diff_name = {},
+			},
+			{
+				name ="帝魂惊梦",
+				fubenid= 20,
+				--难度
+				diff = {},
+				diff_name = {},
+			},
+			{
+				name ="斩奸奠魂",
+				fubenid= 21,
+				--难度
+				diff = {},
+				diff_name = {},
+			},			
+			{
+			    name ="断情绝梦",
+				fubenid= 22,
+				--难度
+				diff = { },
+				diff_name = {},
+			},
+
+		},
+	},
+	{
+		tartype = 0,
+		type_name = "无",
+		value = {
+			{
+				name ="无",
+				fubenid= 0,
+				--难度
+				diff = {},
+				diff_name = {},
+			},
+		},
+	},
+}

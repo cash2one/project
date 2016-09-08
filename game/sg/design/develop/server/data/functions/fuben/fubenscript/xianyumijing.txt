@@ -1,0 +1,133 @@
+
+
+XYMJhandle = {}
+
+-- 进入副本初始化
+XYMJhandle.OnEnterXYMJ = function( sysarg, hfb, way )
+	local hsc = LActor.getSceneHandle(sysarg)
+	if hsc == nil then return end
+	local pfb = Fuben.getFubenPtr( hfb )
+	local fbid = Fuben.getFubenIdbyFuBenPtr(pfb)
+
+	local var_fb = Fuben.getDyanmicVar(pfb)
+	if var_fb == nil then return end
+
+	if var_fb.xymj_fbidx == nil then -- 副本难度
+		var_fb.xymj_fbidx = Fuben.getFubenDifficulty(hfb)
+		if var_fb.xymj_fbidx == nil then return end
+	end
+
+	LActor.OnQuestEvent(53, 0, 1, true, sysarg)
+	-- 初始化
+	fubenbase.Init( sysarg , fbid , xianyumijingconfig.sceneid[1])
+
+	if var_fb.xymj_pro == nil then -- 刷到第几波怪
+		var_fb.xymj_pro = 0
+	end
+
+	if var_fb.xymj_first == nil then -- 第一次进入
+
+		var_fb.xymj_first = 1
+		-- 2秒后刷怪
+		var_fb.xymj_pro = var_fb.xymj_pro + 1
+		Fuben.postSceneTimeCall(hsc, TimerMsg.XYMJMosterRefresh, 2, 1)
+
+		-- 下发进度
+		XYMJhandle.ShowProcess(sysarg, var_fb)
+	end
+
+	-- 触发任务事件
+	LActor.OnQuestEvent(qtXianYuMiJing, 0, 1, true, sysarg)
+end
+
+--(1) 通知客户端显示第几波 s-c
+XYMJhandle.ShowProcess = function( sysarg, var_fb )
+	print("================XYMJhandle.ShowProcess")
+
+	local npack = DataPack.allocPacket(sysarg, 167, 11)
+	DataPack.writeInt(npack, 123) -- 副本id
+	DataPack.writeInt(npack, 1) -- 协议号
+	DataPack.writeInt(npack, var_fb.xymj_pro) -- 当前进度
+	DataPack.writeInt(npack, #xianyumijingconfig.refresh[var_fb.xymj_fbidx]) -- 总进度
+
+	DataPack.flush(npack)
+end
+
+-- 延迟刷怪
+XYMJhandle.DelayRefreshMonster = function( msgid, pscene )
+	local hsc = Fuben.getSceneHandleByPtr(pscene)
+	if hsc == nil then return end
+	local pfb = Fuben.getSceneFuben(pscene)
+	if pfb == nil then return end
+	local fbid = Fuben.getFubenIdbyFuBenPtr(pfb)
+	local var_fb = Fuben.getDyanmicVar(pfb)
+	if var_fb == nil or var_fb.xymj_fbidx == nil or var_fb.xymj_pro == nil then return end
+	-- 刷怪
+	local idx = var_fb.xymj_pro
+	local conf = xianyumijingconfig.refresh[var_fb.xymj_fbidx]
+	if conf[idx] then
+		for i=1,#conf[idx] do
+			Fuben.createMonsters(hsc, conf[idx][i].monsterId, conf[idx][i].posX1, conf[idx][i].posX2, conf[idx][i].posY1, conf[idx][i].posY2, conf[idx][i].num, 0)
+		end
+	end
+end
+
+-- 所有怪物死亡方法
+XYMJhandle.OnMonAllKilled = function( sceneId, scenePtr, flag, et )
+	local hsc = Fuben.getSceneHandleByPtr(scenePtr)
+	if hsc == nil then return end
+	local pfb = LActor.getFubenPrt(et)
+	local fbid = Fuben.getFubenIdbyFuBenPtr(pfb)
+	if pfb == nil then return end
+	local var_fb = Fuben.getDyanmicVar(pfb)
+	if var_fb == nil or var_fb.xymj_fbidx == nil or var_fb.xymj_pro == nil then return end
+
+	local actor_list = LuaHelp.getFbActorList(pfb)
+
+	if var_fb.xymj_pro >= #xianyumijingconfig.refresh[var_fb.xymj_fbidx] then
+		-- 计算星级
+		local left_t = Fuben.getFbTime(pfb)
+		if pfb == nil then return end
+		local start_n = 1
+		for i=1,#xianyumijingconfig.start_time[var_fb.xymj_fbidx] do
+			if left_t < xianyumijingconfig.start_time[var_fb.xymj_fbidx][i] then
+				start_n = i
+				break
+			end
+		end
+		var_fb.nStart = start_n
+		var_fb.IsTongguan = 1
+		-- 副本结算
+		print("------副本结算------")
+		for i=1,#actor_list do
+			LActor.OnQuestEvent(53, 1, 1, true, actor_list[i])
+			fubenjiesuan.GameOver( actor_list[i] )
+		end
+	else
+		-- 刷下一波怪
+		var_fb.xymj_pro = var_fb.xymj_pro + 1
+		Fuben.postSceneTimeCall(hsc, TimerMsg.XYMJMosterRefresh, 2, 1)
+		-- 下发进度
+		for i=1,#actor_list do
+			XYMJhandle.ShowProcess(actor_list[i], var_fb)
+		end
+	end
+end
+
+XYMJhandle.OnExitXYMJ = function( sysarg, hfb, way )
+	if not way or way ~= 1 or not sysarg or not hfb then
+		print(" ---------退出副本--------"..tostring(way))
+		return
+	end
+	fubenbase.ExitFubenRestore( sysarg )
+end
+
+for i=1,#xianyumijingconfig.fbid do
+	EventCallDispatcher.registerFubenEnter(xianyumijingconfig.fbid[i],XYMJhandle.OnEnterXYMJ)
+	-- 退出副本处理
+	EventCallDispatcher.registerFubenExit(xianyumijingconfig.fbid[i], XYMJhandle.OnExitXYMJ)
+end
+for i=1,#xianyumijingconfig.sceneid do
+	MonAllKilledDispatcher.register( xianyumijingconfig.sceneid[i], XYMJhandle.OnMonAllKilled )
+end
+TimerMsgFunc.register(TimerMsg.XYMJMosterRefresh, XYMJhandle.DelayRefreshMonster)

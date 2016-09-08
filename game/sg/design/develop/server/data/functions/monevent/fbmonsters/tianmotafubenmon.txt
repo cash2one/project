@@ -1,0 +1,62 @@
+-- 魔界入口副本的怪物刷新处理
+--#include "data\functions\config\fubenconfig\tianmotafubenconfig.txt" once	--  魔界入口副本配置
+
+tianMoTaFubenMon = {}
+-- 单个怪物杀死触发的事件
+tianMoTaFubenMon.OnKillMonster = function(monster,sysarg,monsterid)
+	-- 判断副本
+	--print("monster killed1 : "..monsterid)
+	local fubenId = LActor.getFubenId(sysarg)
+	local isExist = 0
+	for i=1,#TianMoTaConfig.fubenId do
+		if fubenId ~= TianMoTaConfig.fubenId[i] then
+			isExist = 1
+			break
+		end
+	end
+
+	if isExist == 0 then
+		return
+	end
+
+	--print("monster killed2 : "..monsterid)
+	local Fhandle = LActor.getFubenHandle(sysarg)
+	CommonFubenJiesuanConfig.OnKillMonster(Fhandle,fubenId,sysarg,monsterid)
+	--print("monster over")
+end
+
+-- 场景所有怪物死亡事件
+tianMoTaFubenMon.OnMonsterAllDie = function(sceneId, scenePtr, flag, monster)
+	--print("-----all die")
+	local fubenId = TianMoTaConfig.fubenId[1]
+	CommonFubenJiesuanConfig.OnMonsterAllDie(fubenId,sceneId,monster)		-- 公用的杀死怪物处理，设置层数，结算
+	--print("-----do over")
+end
+
+-- 进入场景处理
+tianMoTaFubenMon.EnterScene = function(sysarg, hscene)
+	local Fhandle = LActor.getFubenHandle(sysarg)
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+	fbVar.floor = fbVar.floor + 1
+
+	Fuben.SetFubenGameTime(Fhandle,TianMoTaConfig.gameTime)
+
+	LActor.SendAndChangeCaleValue(sysarg, caleOther3, fbVar.floor, false)
+	LActor.SendAndChangeCaleValue(sysarg, caleOther2, TianMoTaConfig.monsterCount[fbVar.floor], false)
+	LActor.SendAndChangeCaleValue(sysarg, caleRemainMonster, TianMoTaConfig.monsterCount[fbVar.floor], false)
+	LActor.SendAndChangeCaleValue(sysarg, caleGameTime, TianMoTaConfig.gameTime, false)
+	LActor.SendAndChangeCaleValue(sysarg, caleSceneExp, 0, false)
+end
+
+-- 注册怪物
+for i=1,#TianMoTaConfig.monsterIdList do
+	MonDieDispatcher.register( TianMoTaConfig.monsterIdList[i],  tianMoTaFubenMon.OnKillMonster)
+end
+
+-- 注册怪物全部杀死
+for i=1,#TianMoTaConfig.sceneId do
+	MonAllKilledDispatcher.register( TianMoTaConfig.sceneId[i], tianMoTaFubenMon.OnMonsterAllDie )
+end
+
+

@@ -1,0 +1,823 @@
+﻿-- 过关斩将副本处理脚本
+--#include "data\functions\globaldefine.txt" once
+--#include "data\config\misc\TongTianTaConf.txt" once
+--#include "data\functions\timermsgfunc.txt" once
+--#include "data\functions\systems\miscs\tongtiantafunc.txt" once
+--#include "data\functions\bifunc.txt" once
+--#include "data\functions\actorevent\onfubengametimeouthandler.txt" once
+--#include "data\functions\actorevent\onfubentimeouthandler.txt" once
+--#include "data\config\task\TianYuanConfig.txt" once
+--#include "data\config\misc\arenaconfig.txt" once
+--#include "data\config\store\liudaoshop.txt" once
+--#include "data\functions\monevent\monsteractionimpl.txt" once
+
+TongTianTaFunc = {}
+TongTianTaFunc.OnEnterScene = {} -- 进入每一层的特殊处理
+TongTianTaFunc.OnExitScene = {} -- 退出每一层的特殊处理
+TongTianTaFunc.SceneFloors = {} -- 每个场景对应的层数
+
+-- 特殊进入某层场景的特殊处理
+
+--消息分派
+TongTianTaFunc.main = function(sysarg, param)
+
+	local msgid = param[1]
+	local packet = param[2]
+	if msgid == 5 then
+		TongTianTaFunc.getTongTianTaInfo(sysarg)
+	elseif msgid == 6 then
+		local layer = DataPack.readInt(packet)
+		TongTianTaFunc.OnEnterFuBen(sysarg, layer)
+	elseif msgid == 7 then
+		TongTianTaFunc.OnEnterNext(sysarg)
+	elseif msgid == 8 then
+		TongTianTaFunc.Reset(sysarg)
+	elseif msgid == 12 then
+		TongTianTaFunc.getMasters(sysarg)
+	elseif msgid == 14 then
+		TongTianTaFunc.TongTianTaCalSend(sysarg, nil)
+	else
+		print(string.format("msgid(%d) error", msgid))
+	end
+end
+
+--每周一清除数据
+function TongTianTaClear()
+	local sysVar = System.getStaticVar()
+	if sysVar ~= nil and sysVar.tongtianta ~= nil then
+		for i=1,#TongTianTaConf.scenes do
+			if sysVar.tongtianta[i] ~= nil then 
+				weekaward = TongTianTaConf.scenes[i].weekaward
+				if weekaward ~= nil then
+					for j,mail in ipairs(weekaward) do
+						System.sendGmMailOffLine(sysVar.tongtianta[i].aid, Lang.ScriptTips.ttt010, mail.type, mail.itemid, mail.count, mail.bind)
+					end
+				end
+			end
+
+			local rankName = TongTianTaPublic.getRandName(i)
+			local thisRank = TongTianTaPublic.InitRank(rankName, rankName, TongTianTaPublic.RankSize, {"master", "name", "sex", "vocation", "icon"})
+			if thisRank ~= nil then
+				Ranking.clearRanking(thisRank)
+				Ranking.save(thisRank, rankName)
+			end
+		end
+	end
+	sysVar.tongtianta = nil
+end
+
+--新的一周，要清空玩家爬塔信息
+TongTianTaFunc.OnNewDay = function(sysarg)
+
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+
+	--每天清神秘商店购买次数
+	if var.tongtianta ~= nil then
+		var.tongtianta.trader = nil
+	end
+
+	--每周清通关数据
+	local now = System.getCurrMiniTime()
+	if var.tongtianta == nil then var.tongtianta = {} end
+	if var.tongtianta.date == nil then var.tongtianta.date = now end
+	if TongTianTaFunc.isSameWeek(var.tongtianta.date, now) then
+		return
+	end
+	var.tongtianta.maxlayer = 0
+	var.tongtianta.date = now
+
+	local var_d = LActor.getDyanmicVar(sysarg)
+	if var_d ~= nil then
+		if var_d.tongtianta == nil then 
+			var_d.tongtianta = {}
+		end
+		var_d.tongtianta.layer = 0
+		var_d.tongtianta.timeleft = 0xFFFF
+	end
+
+	--玩家在副本内，则设为超时
+	local fbid = LActor.getFubenId(sysarg)
+	if LActor.isInFuben(sysarg) and fbid == TongTianTaConf.fbid then
+		Fuben.SetFubenGameTime(LActor.getFubenHandle(sysarg),1)
+		return
+	end
+end
+
+--玩家登陆,初始化玩家层主信息
+TongTianTaFunc.OnLogin = function(sysarg)
+
+	if LActor.getLevel(sysarg) < TongTianTaConf.opneLevel then return end
+
+	--如果系统没有开启,则开启
+	if not LActor.isActorSystemOpen(sysarg, siTongTianTa) then
+		LActor.openActorSystem(sysarg, siTongTianTa)
+	end
+
+	local var_d = LActor.getDyanmicVar(sysarg)
+	if var_d == nil then return end
+	var_d.tongtianta = {}
+	var_d.tongtianta.layer = 0
+	var_d.tongtianta.timeleft = 0
+
+	local sysVar = System.getStaticVar()
+	if sysVar == nil or sysVar.tongtianta == nil then return end
+	local aid = LActor.getActorId(sysarg)
+	local oldlayer = 0
+	for i=1,table.getn(TongTianTaConf.scenes) do
+		if sysVar.tongtianta[i] == nil then break end
+		if sysVar.tongtianta[i].aid == aid then
+			var_d.tongtianta.layer = i
+			var_d.tongtianta.timeleft = sysVar.tongtianta[i].timeleft
+		end
+		if sysVar.tongtianta[i].oldaid ~= nil and sysVar.tongtianta[i].oldaid == aid then
+			sysVar.tongtianta[i].oldaid = 0
+			oldlayer = i
+		end
+	end
+
+	--通知老层主
+	if oldlayer ~= 0 then
+		local npack = DataPack.allocPacket(sysarg, 48, 11)
+		if npack ~= nil then
+			DataPack.writeInt(npack, oldlayer)
+			DataPack.writeString(npack, (sysVar.tongtianta[oldlayer].name or "玩家") )
+			DataPack.flush(npack)
+		end
+	end
+
+	--初始化刷新时间
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	if var.tongtianta == nil then
+		var.tongtianta = {}
+		var.tongtianta.maxlayer = 0
+		var.tongtianta.date = System.getCurrMiniTime()
+	end
+	if var.tongtianta.date == nil then
+		var.tongtianta.date = System.getCurrMiniTime()
+	end
+end
+
+--获取玩家副本信息
+TongTianTaFunc.getTongTianTaInfo = function(sysarg)
+	local npack = DataPack.allocPacket(sysarg, 48, 5)
+	if npack == nil then return end
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	if var.tongtianta == nil then
+		var.tongtianta = {}
+		var.tongtianta.maxlayer = 0
+		var.tongtianta.date = System.getCurrMiniTime()
+	end
+	if var.tongtianta.date == nil then
+		var.tongtianta.date = System.getCurrMiniTime()
+	end
+	local var_d = LActor.getDyanmicVar(sysarg)
+	if var_d == nil then return end
+	if var_d.tongtianta == nil then
+		var_d.tongtianta = {}
+		var_d.tongtianta.layer = 0
+		var_d.tongtianta.timeleft = 0xFFFF
+	end
+
+	local maxlayer = 0
+	local masterlayer = 0
+	local spendtime = 0xFFFF
+	if var.tongtianta ~= nil and var_d.tongtianta ~= nil then
+		maxlayer = var.tongtianta.maxlayer or 0
+		masterlayer = var_d.tongtianta.layer or 0
+		if TongTianTaConf.scenes[masterlayer] ~= nil then
+			spendtime = TongTianTaConf.scenes[masterlayer].gametime - var_d.tongtianta.timeleft
+		end
+	end
+
+	DataPack.writeInt(npack,maxlayer)
+	DataPack.writeInt(npack,masterlayer)
+	DataPack.writeInt(npack,spendtime)
+	DataPack.flush(npack)
+	-- print(string.format("info max(%d) master(%d) time(%d)", maxlayer, masterlayer, spendtime))
+end
+
+--获取层主信息
+TongTianTaFunc.getMasters = function(sysarg)
+	local npack = DataPack.allocPacket(sysarg, 48, 12)
+	if npack == nil then return end
+	local sysVar = System.getStaticVar()
+	if sysVar == nil then return end
+
+	local count = 0
+	if sysVar.tongtianta ~= nil then
+		for i=1,#TongTianTaConf.scenes do
+			if sysVar.tongtianta[i] == nil then break end
+			count = count + 1
+		end
+	end
+	DataPack.writeInt(npack, count)
+	for i=1,count do
+		DataPack.writeString(npack, (sysVar.tongtianta[i].name or "玩家"))
+		DataPack.writeInt(npack, (sysVar.tongtianta[i].aid or 0))
+		DataPack.writeInt(npack, (sysVar.tongtianta[i].sex or 0))
+		DataPack.writeInt(npack, (sysVar.tongtianta[i].icon or 0))
+		DataPack.writeInt(npack, TongTianTaConf.scenes[i].gametime - sysVar.tongtianta[i].timeleft)
+		--print(string.format("%s aid(%d) sex(%d) icon(%d) time(%d)", sysVar.tongtianta[i].name, sysVar.tongtianta[i].aid, sysVar.tongtianta[i].sex,
+		--	sysVar.tongtianta[i].icon, TongTianTaConf.scenes[i].gametime - sysVar.tongtianta[i].timeleft))
+	end
+	DataPack.flush(npack)
+end
+
+--是否能进入副本
+TongTianTaFunc.canEnterFuBen = function(sysarg, layer)
+
+	if LActor.hasState(sysarg, esProtection) then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.sx019, ttMessage)
+		return false
+	end
+	local fbid = LActor.getFubenId(sysarg)
+	local sceneid = LActor.getSceneId(sysarg)
+	if LActor.isInFuben(sysarg) or sceneid == TianYuanConfig.SCENEID or sceneid == ArenaConf.sceneId or sceneid == ArenaConf.zbsSceneId then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.ttt001, ttMessage)
+		return false
+	end
+	if LActor.isDeath(sysarg) then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.ttt009, ttMessage)
+		return false
+	end
+	local teamid = LActor.getTeamId(sysarg)
+	if teamid > 0 then
+		local globalNpc = LActor.getHandle(System.getGlobalNpc())
+		LActor.messageBox(sysarg, globalNpc, 0, Lang.ScriptTips.ttt002, string.format("确定/LevelTeamAndEnterFuben,%d",layer), Lang.ScriptTips.f00057, "")
+		return false
+	end
+	-- PK状态下不能进入
+	if LActor.hasState(sysarg, esPkState) then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.ttt003, ttMessage)
+		return false
+	end
+	if LActor.getIntProperty(sysarg, PROP_LEVEL) < TongTianTaConf.opneLevel then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.ttt011, ttMessage)
+		return false
+	end
+	if layer > 1 then
+		local var = LActor.getStaticVar(sysarg)
+		if var == nil or var.tongtianta == nil or var.tongtianta.maxlayer == nil or  var.tongtianta.maxlayer+1 < layer then
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.ttt005, ttMessage)
+			return false
+		end
+	end
+	--每周第一次挑战需清空仓库
+	--[[local var = LActor.getStaticVar(sysarg)
+	if var == nil then return false end
+	if var.tongtianta == nil or var.tongtianta.maxlayer == nil or var.tongtianta.maxlayer < 1 then
+		if LActor.IsTongTianTaStoreEmpty(sysarg) ~= 0 then
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.ttt004, ttMessage)
+			return false
+		end
+	end]]
+	return true
+end
+
+function LevelTeamAndEnterFuben(sysarg, layer)
+	layer = tonumber(layer)
+	local teamptr = TeamFun.getTeam(LActor.getTeamId(sysarg))
+	if teamptr ~= nil then
+		TeamFun.delMember(teamptr, LActor.getActorId(sysarg))
+	end
+ 	TongTianTaFunc.OnEnterFuBen(sysarg, layer)
+ end
+
+--进入副本
+TongTianTaFunc.OnEnterFuBen = function(sysarg, layer)
+	print(string.format("%s enter %d layer", LActor.getName(sysarg), layer))
+	if TongTianTaFunc.canEnterFuBen(sysarg, layer) == false then return end
+	-- 创建副本
+	--print("TongTianTaConf.fbid+++++++++++++++++++++:",TongTianTaConf.fbid)
+	local hFuben = Fuben.createFuBen(TongTianTaConf.fbid)
+	--print("hFuben=======================：",hFuben)
+	if hFuben == nil then
+		LActor.sendTipmsg( sysarg, Lang.ScriptTips.f00065, ttDialog )
+		return
+	end
+	local sceneid = TongTianTaConf.scenes[1].sceneid + layer - 1
+	LActor.enterFuBen( sysarg, hFuben, sceneid, -1, -1 )
+
+	--进入副本加buff
+	local buff = TongTianTaConf.InDamageBuff
+	LActor.addBuff(sysarg, buff.type, buff.group, buff.value, buff.times, buff.interval, buff.name)
+	local buff = TongTianTaConf.OutDamageBuff
+	LActor.addBuff(sysarg, buff.type, buff.group, buff.value, buff.times, buff.interval, buff.name)
+end
+
+--进入下一关
+TongTianTaFunc.OnEnterNext = function(sysarg)
+	-- print("TongTianTaFunc.OnEnterNext")
+	local fbid = LActor.getFubenId(sysarg)
+	if (not LActor.isInFuben(sysarg)) or fbid ~= TongTianTaConf.fbid then
+		print("OnEnterNext actor is not in fuben or in other fuben")
+		return
+	end
+
+	local sid = LActor.getSceneId(sysarg)
+	local layer = TongTianTaFunc.SceneFloors[sid]
+	local var = LActor.getStaticVar(sysarg)
+
+	-- 修改为按照层数判定是否能进入下层 
+	--[[if 30 == layer then 
+		LActor.sendTipmsg(sysarg, "31层尚未开放", ttMessage)
+		return
+	end]]
+
+	if var == nil or var.tongtianta == nil or var.tongtianta.maxlayer == nil or  var.tongtianta.maxlayer < layer then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.ttt005, ttMessage)
+		return
+	end
+	if layer == nil or layer < 1 or layer > #TongTianTaConf.scenes then
+		print("tongtianta scene error:"..sid)
+		return 
+	end
+	local sconf = TongTianTaConf.scenes[layer]
+	if sconf == nil then
+		print("tongtianta scene conf error"..layer)
+		return 
+	end
+	local teleportConf = sconf.teleport
+	if teleportConf ~= nil then
+		System.telportFuBenScene(sysarg, LActor.getFubenHandle(sysarg), teleportConf.toSceneid, teleportConf.toPosy, teleportConf.toSceneid)
+	end
+end
+
+--重新挑战
+TongTianTaFunc.Reset = function(sysarg)
+	local fbid = LActor.getFubenId(sysarg)
+	if not LActor.isInFuben(sysarg) or fbid ~= TongTianTaConf.fbid then
+		print("Reset actor is not in fuben or in other fuben")
+		return
+	end
+
+	local sid = LActor.getSceneId(sysarg)
+	local layer = TongTianTaFunc.SceneFloors[sid]
+	if layer == nil or layer < 1 or layer > #TongTianTaConf.scenes then
+		print("tongtianta scene error:"..sid)
+		return 
+	end
+	local pfb = LActor.getFubenPrt(sysarg)
+	local fbvar = Fuben.getDyanmicVar(pfb)
+	--if fbvar.fbLayerFail == nil or fbvar.fbLayerFail ~= layer then
+	--	print(string.format("tongtianta reset error %d", layer))
+	--	return
+	--end
+	fbvar.fbLayerFail = 0
+
+	local sconf = TongTianTaConf.scenes[layer]
+	if LActor.isDeath(sysarg) then
+		LActor.relive(sysarg)
+	end
+	--[[
+	local sceneptr = LActor.getScenePtr(sysarg)
+	local Hfuben = LActor.getFubenHandle(sysarg)
+	if sceneptr ~= nil then
+		local hscene = Fuben.getSceneHandleByPtr(sceneptr)
+		Fuben.clearAllMonster(hscene)
+		local maxhp = LActor.getIntProperty(sysarg,PROP_MAXHP)
+		LActor.changeHp(sysarg,maxhp)
+		local maxmp = LActor.getIntProperty(sysarg,PROP_MAXMP)
+		LActor.changeMp(sysarg,maxmp)
+		LActor.clearSkillCd(sysarg)
+		Fuben.createMonstersByConfig(hscene)
+		Fuben.SetFubenGameTime(Hfuben, sconf.gametime)
+		LActor.SendAndChangeCaleValue(sysarg,caleGameTime, sconf.gametime, false)
+	end
+	local pfb = LActor.getFubenPrt(sysarg)
+	if pfb ~= nil then
+		local fvar = Fuben.getDyanmicVar(pfb)
+		if fvar ~= nil then
+			fvar.fbRestMonster = sconf.monster.total
+		end
+	end
+	]]
+
+	local maxhp = LActor.getIntProperty(sysarg,PROP_MAXHP)
+	LActor.changeHp(sysarg,maxhp)
+	local maxmp = LActor.getIntProperty(sysarg,PROP_MAXMP)
+	LActor.changeMp(sysarg,maxmp)
+	LActor.clearSkillCd(sysarg)
+	local hfb = LActor.getFubenHandle(sysarg)
+	Fuben.SetFubenTime(hfb,5)	--释放原来的副本
+	local hFuben = Fuben.createFuBen(TongTianTaConf.fbid)
+	if hFuben == nil then
+		LActor.sendTipmsg( sysarg, Lang.ScriptTips.f00065, ttDialog )
+		return
+	end
+	local sceneid = TongTianTaConf.scenes[1].sceneid + layer - 1
+	LActor.enterFuBen( sysarg, hFuben, sceneid, -1, -1 )
+end
+
+-- 发送统计消息
+TongTianTaFunc.TongTianTaCalSend = function(sysarg, arg)
+	--local floor = arg[2]
+	local sid = LActor.getSceneId(sysarg)
+	local floor = TongTianTaFunc.SceneFloors[sid]
+
+	if floor == nil then return end
+	
+	local sconf = TongTianTaConf.scenes[floor]
+	if sconf == nil then
+		print("tongtianta scene conf error"..floor)
+		return 
+	end
+
+	local pfb = LActor.getFubenPrt(sysarg)
+	if pfb == nil then
+		print("TongTianTaCalSend pfb == nil")
+		return
+	end
+
+	local fvar = Fuben.getDyanmicVar(pfb)
+	if fvar == nil then
+		print("TongTianTaCalSend fvar == nil")
+		return
+	end
+
+	local nmon = 0
+	if fvar.fbRestMonster ~= nil then
+		nmon = fvar.fbRestMonster
+	end
+
+	-- print("fbgametime:"..Fuben.GetFubenGameTime(pfb))
+	local gametime = Fuben.GetFubenGameTime(pfb)
+	local master_time = 0
+	local fastest_time = 0
+	local sysVar = System.getStaticVar()
+	if sysVar ~= nil and sysVar.tongtianta ~= nil and sysVar.tongtianta[floor] ~= nil then
+		master_time = sysVar.tongtianta[floor].timeleft or 0
+		if master_time > 0 then
+			master_time = TongTianTaConf.scenes[floor].gametime - master_time
+		end
+	end
+	local rankName = TongTianTaPublic.getRandName(floor)
+	local thisRank = TongTianTaPublic.InitRank(rankName, rankName, TongTianTaPublic.RankSize, {"master", "name", "sex", "vocation"})
+	if thisRank ~= nil then
+		local rankItem = Ranking.getItemFromIndex(thisRank, 0)
+		if rankItem ~= nil then
+			fastest_time = Ranking.getPoint(rankItem) or 0
+			if fastest_time > 0 then
+				fastest_time = TongTianTaConf.scenes[floor].gametime - fastest_time
+			end
+		end
+	end
+	LActor.ChangeCaleValue(sysarg, caleOther1, floor, false)
+	LActor.ChangeCaleValue(sysarg, caleGameTime, gametime, false)
+	LActor.ChangeCaleValue(sysarg, caleOther2, TongTianTaConf.scenes[floor].gametime - gametime, false) --已用时
+	LActor.ChangeCaleValue(sysarg, caleOther3, master_time, false)
+	LActor.ChangeCaleValue(sysarg, caleOther4, fastest_time, false)
+	LActor.SendAllCaleValue(sysarg)
+end
+
+-- 进入过关斩将通用处理
+TongTianTaFunc.OnEnterTongTianTaScene = function (sysarg, hscene)
+	print(string.format("%s enter tongtianta scene(%d)", LActor.getName(sysarg), LActor.getSceneId(sysarg)))
+	local pfb = LActor.getFubenPrt(sysarg)
+	if pfb == nil then return end
+
+	local sid = LActor.getSceneId(sysarg)
+	local layer = TongTianTaFunc.SceneFloors[sid]
+	if layer == nil or layer < 1 or layer > #TongTianTaConf.scenes then
+		print("tongtianta scene error:"..sid)
+		return 
+	end
+
+	local newEnter = true ;
+	if Fuben.getFubenProgress(pfb) >= layer then 
+		newEnter = false ;
+	end
+	--print("enter tongtianta layer:"..layer)
+	Fuben.setFubenProgress(pfb, layer)
+
+	local sconf = TongTianTaConf.scenes[layer]
+	if sconf == nil then
+		print("tongtianta scene conf error"..layer)
+		return 
+	end
+
+	local fvar = Fuben.getDyanmicVar(pfb)
+	local hfb = Fuben.getFubenHandle(pfb)
+	if fvar.lastscene == nil or fvar.lastscene ~= sid then -- 进入新的层
+		fvar.lastscene = sid
+
+		if hfb ~= 0 then
+			Fuben.SetFubenGameTime(hfb, sconf.gametime)
+		end
+		fvar.fbRestMonster = sconf.monster.total -- 总共多少怪物
+		fvar.fbFloorExp = 0 --本层获得的经验
+	end
+	--[[
+	if fvar.fbLayerPass ~= nil and fvar.fbLayerPass == layer then
+		Fuben.postSceneTimeCall(hscene, TimerMsg.TongTianTaPanelDelay, 10, 1, 0, layer)
+		--print(string.format("layer pass %d %d", fvar.fbLayerPass, layer))
+	end
+	if fvar.fbLayerFail ~= nil and fvar.fbLayerFail == layer then
+		print(string.format("layer fail %d %d", fvar.fbLayerFail, layer))
+		Fuben.postSceneTimeCall(hscene, TimerMsg.TongTianTaPanelDelay, 10, 1, 1, layer)
+	end]]
+
+	LActor.setExitSceneEvent(sysarg, true )
+
+	local result = false
+	LActor.postEntityScriptDelayMsg(sysarg, 1000, result, 41, layer)
+
+	-- 特殊场景处理
+	local func = TongTianTaFunc.OnEnterScene[layer]
+	if func ~= nil then
+		func(sysarg, hscene, layer)
+	end
+
+	-- 进去就通关
+	if sconf.conds.type ~= nil and sconf.conds.type == 3 then
+		TongTianTaPublic.OnTongGuan(sysarg, layer, sconf)
+	end
+
+	--设置层主石像
+	local masterinfo = TongTianTaPublic.getMasterInfo(layer)
+	if masterinfo ~= nil and newEnter == true then
+		local master_sex = masterinfo.sex or 0
+		local master_vocation = masterinfo.vocation or 1
+		--[[这个接口有问题
+		System.createnpc(masterinfo.name, nil, sid, sconf.totems.x, sconf.totems.y,
+			sconf.totems[master_sex][master_vocation][1], sconf.totems[master_sex][master_vocation][2], hfb)
+		]]
+		print(string.format("totem %d %d", master_sex, master_vocation))
+		local totem = LActor.createTotemMonster(sysarg, sconf.totems[master_sex][master_vocation][1],
+			sconf.totems.x, sconf.totems.y, 0, masterinfo.name)
+	end
+
+	--第10层加入特殊处理，会出现坠火谷
+	if newEnter and layer % 5 == 0 and layer ~= 50 then 
+		local hlScene = LActor.getSceneHandle(sysarg);
+		if hlScene ~= 0 then 
+			Fuben.postSceneTimeCall(hlScene, TimerMsg.MonsterTianHuoTimer, TongTianTaTianHuoConf.startTime, 1, 1 ,TongTianTaTianHuoConf.EffectConfigId, TongTianTaTianHuoConf.EffectRange, TongTianTaTianHuoConf.BeforeEffectConfigId);
+		end
+	end
+end
+
+
+-- 退出场景
+TongTianTaFunc.OnExitTongTianTaScene = function (sysarg, hscene)
+	-- print(string.format("%s exit tongtianta scene(%d)", LActor.getName(sysarg), LActor.getSceneId(sysarg)))
+	local pfb = LActor.getFubenPrt(sysarg)
+	if pfb == nil then return end
+
+	local layer = Fuben.getFubenProgress(pfb) -- 第几层
+	if layer > #TongTianTaConf.scenes then
+		print("max tongtianta layer:"..layer)
+		return 
+	end
+
+	local sconf = TongTianTaConf.scenes[layer]
+	if sconf == nil then
+		print("tongtianta scene conf error"..layer)
+		return 
+	end
+
+	Fuben.clearSceneTimeCall(hscene)
+end
+
+-- 该层的游戏结束
+TongTianTaFunc.OnGameOver = function(pfb)
+	local actors = LuaHelp.getFbActorList(pfb)
+	local Hfuben = Fuben.getFubenHandle(pfb)
+
+	if actors == nil then
+		Fuben.closeFuben(Hfuben)
+		return
+	end
+	local sysarg = actors[1]
+	if sysarg == nil then
+		Fuben.closeFuben(Hfuben)
+		return
+	end
+
+	local sceneptr = LActor.getScenePtr(sysarg)
+	if sceneptr ~= nil then
+		local hscene = Fuben.getSceneHandleByPtr(sceneptr)
+		Fuben.clearAllMonster(hscene)
+	end
+	
+	local fbvar = Fuben.getDyanmicVar(pfb)
+	if fbvar == nil then
+		Fuben.closeFuben(Hfuben)
+		return
+	end
+	if fbvar.fbLayerPass == nil or fbvar.fbLayerPass < Fuben.getFubenProgress(pfb) then
+		local npack = DataPack.allocPacket(sysarg, 48, 10)
+		if npack ~= nil then
+			DataPack.flush(npack)
+		end
+		fbvar.fbLayerFail = Fuben.getFubenProgress(pfb)
+	end
+
+	--设置副本15s后关闭
+	Fuben.SetFubenTime(Hfuben,15)
+end
+
+TongTianTaFunc.actordeath = function(sysarg)
+
+	local fbid = LActor.getFubenId(sysarg)
+	if fbid == TongTianTaConf.fbid then
+		print("过关斩将城===============玩家死掉=======================")
+		local npack = DataPack.allocPacket(sysarg, 48, 10)
+		if npack ~= nil then
+			--print("++++++++++++++++++++++++++++++++++++++")
+			DataPack.flush(npack)
+		end
+	end
+end
+
+TongTianTaFunc.SendPanel = function(msgId, hs, panelType, layer)
+	--print(string.format("send panel %d %d", panelType, layer))
+	--print("send panel", panelType, layer)
+	if panelType == 0 then
+		print("pass panel")
+		TongTianTaPublic.sendPassPanel(sysarg, 0, 0, 0, layer, 0, 0)
+	else
+		local npack = DataPack.allocPacket(sysarg, 48, 10)
+		if npack ~= nil then
+			print("fail panel")
+			DataPack.flush(npack)
+		end
+	end
+end
+
+-- 退出副本
+TongTianTaFunc.OnFbExit = function(sysarg, hfb, way)
+	print(string.format("TongTianTaFunc.OnFbExit %d", way))
+	if LActor.isDeath(sysarg) then
+		LActor.relive(sysarg)
+		local maxhp = LActor.getIntProperty(sysarg,PROP_MAXHP)
+		LActor.changeHp(sysarg,maxhp)
+	end
+
+	LActor.delBuff(sysarg, TongTianTaConf.InDamageBuff.type, TongTianTaConf.InDamageBuff.group)
+	LActor.delBuff(sysarg, TongTianTaConf.OutDamageBuff.type, TongTianTaConf.OutDamageBuff.group)
+
+	Fuben.SetFubenTime(hfb,1)
+
+	--local fbPtr = Fuben.getFubenPtr(hfb)
+	--if fbPtr == nil then return end
+	-- 触发成就
+	--local nfloor = Fuben.getFubenProgress(pfb)
+	--LActor.triggerAchieveEvent(sysarg, 47, TongTianTaConf.fbid, nfloor)
+
+	-- BI
+	--BiFunc.LogFuben(sysarg, "huantian", tostring(nfloor))
+end
+
+--购买
+TongTianTaFunc.TongTianTaBuyItem = function(sysarg, sid, id, num)
+	-- print(string.format("TongTianTaBuyItem %d %d %d", sid, id, num))
+	if sysarg == nil then return end
+	if num <= 0 then return end
+
+	local var = LActor.getStaticVar(sysarg)
+
+	local items = LiudaoShop[5].items
+
+	if var.tongtianta == nil then var.tongtianta = {} end
+	if var.tongtianta.trader == nil then
+		--初始化次数
+		var.tongtianta.trader = {}
+		for i=1, #items do   		--商店表
+			var.tongtianta.trader[items[i].id] = items[i].singleBuyLimit
+			if var.tongtianta.trader[items[i].id] == 0 then
+				var.tongtianta.trader[items[i].id] = 10000
+			end
+		end
+	end
+
+	local itemDetail = nil
+	for j = 1, #items do
+		if items[j].id == id then 
+			itemDetail = items[j]
+			break
+		end
+	end
+
+	if itemDetail == nil then
+		LActor.sendTipmsg(sysarg, Lang.LiuDao.t01, ttMessage) --物品不存在
+		return
+	end
+	local itemid = itemDetail.item
+	if var.tongtianta.trader[id] - num < 0 then
+		LActor.sendTipmsg(sysarg, Lang.LiuDao.t02, ttMessage) --超过了限购数
+		return			
+	end
+
+	if not LActor.canAddItem(sysarg, itemid, num, 0, itemDetail.strong, itemDetail.price[1].bind) then
+   		-- LActor.sendTipmsg(sysarg, Lang.ScriptTips.n00006,ttTipmsgWindow) --背包已满
+   		LActor.SendGeneralTips(sysarg, 7, 0, 0)
+   		return
+   	end
+
+	local price = itemDetail.price[1].price * num
+	local strlog = ""
+	if itemDetail.price[1].type == mtYuanbao then
+		strlog = "ybtongtianta"
+	elseif itemDetail.price[1].type == mtBindYuanbao then
+		strlog = "bdtongtianta"
+	elseif itemDetail.price[1].type == mtCoin then
+		strlog = "cointongtianta"
+	elseif itemDetail.price[1].type == mtBindCoin then
+		strlog = "bcointongtianta" 
+	end
+	if LActor.getMoneyCount( sysarg, itemDetail.price[1].type ) < price then
+		LActor.sendTipmsg( sysarg, Lang.ScriptTips.ttt012, ttMessage )
+		return
+	else
+		-- 扣除钱币
+		if not LActor.changeMoney( sysarg, itemDetail.price[1].type, -price, 1, true, strlog, "", "", tostring(itemid) ) then
+			LActor.sendTipmsg( sysarg, Lang.LiuDao.t05, ttMessage )
+			return
+		end
+	end
+	
+	local bind = 0
+	if itemDetail.price[1].bind then
+		bind = 1
+	end
+
+	--LActor.addItem(sysarg, itemid, 0 , itemDetail.strong, num, bind)
+	--var.tongtianta.trader[id] = var.tongtianta.trader[id] - num
+	local effects = {}
+	for i = 1,num do
+		LActor.addItem(sysarg, itemid, 0 , itemDetail.strong, 1, bind)
+		local effect = {}
+		effect.type = 1  -- 1为物品,暂时只支持发物品所以写死
+		effect.id = itemid
+		effect.count = 1
+		effects[#effects+1] = effect
+	end
+	if #effects > 0 then
+		MiscFunc.PlayItemEffect(sysarg, 11, effects)
+	end
+	var.tongtianta.trader[id] = var.tongtianta.trader[id] - num
+	return
+end
+
+--是否是同一周
+TongTianTaFunc.isSameWeek = function(t1, t2)
+	local BaseTime = System.timeEncode(2010, 1, 4, 0, 0, 0)
+	local SecOfWeek = 7 * 24 * 3600
+	return math.floor(( t1 - BaseTime ) / SecOfWeek) == math.floor((t2 - BaseTime) / SecOfWeek)
+end
+
+--发奖励，不清层主
+TongTianTaFunc.SendAward = function()
+	local sysVar = System.getStaticVar()
+	if sysVar ~= nil and sysVar.tongtianta ~= nil then
+		for i=1,#TongTianTaConf.scenes do
+			if sysVar.tongtianta[i] ~= nil and sysVar.tongtianta[i].aid ~= nil and sysVar.tongtianta[i].aid ~= 0 then 
+				weekaward = TongTianTaConf.scenes[i].weekaward
+				if weekaward ~= nil then
+					for j,mail in ipairs(weekaward) do
+						System.sendGmMailOffLine(sysVar.tongtianta[i].aid, Lang.ScriptTips.ttt010, mail.type, mail.itemid, mail.count, mail.bind)
+					end
+				end
+			end
+		end
+	end
+end
+
+TongTianTaFunc.OnActorLevelUp = function ( sysarg )
+	if LActor.getLevel(sysarg) < TongTianTaConf.opneLevel then return end
+
+	--如果系统没有开启,则开启
+	if not LActor.isActorSystemOpen(sysarg, siTongTianTa) then
+		LActor.openActorSystem(sysarg, siTongTianTa)
+	end
+
+	--同时开放秘籍系统
+	if not LActor.isActorSystemOpen(sysarg, siMijiSys) then
+    	LActor.openActorSystem(sysarg, siMijiSys)
+  	end
+end
+
+--[[
+EventCallDispatcher.registerFubenGameOver(TongTianTaConf.fbid,  TongTianTaFunc.OnGameOver)
+EventCallDispatcher.registerFubenExit(TongTianTaConf.fbid, TongTianTaFunc.OnFbExit)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeOnActorDeath, TongTianTaFunc.actordeath)
+-- 进入场景处理
+for i=1, #TongTianTaConf.scenes do
+	local scene = TongTianTaConf.scenes[i]
+	EventCallDispatcher.registerSceneEnter(scene.sceneid, TongTianTaFunc.OnEnterTongTianTaScene)
+	EventCallDispatcher.registerSceneExit(scene.sceneid, TongTianTaFunc.OnExitTongTianTaScene)
+
+	TongTianTaFunc.SceneFloors[scene.sceneid] = i
+end
+
+table.insert(LocalDT.ScriptDelayConfig[41], TongTianTaFunc.TongTianTaCalSend)
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, TongTianTaFunc.OnNewDay)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, TongTianTaFunc.OnLogin)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeTongtianta, TongTianTaFunc.main)
+TimerMsgFunc.register(TimerMsg.TongTianTaPanelDelay, TongTianTaFunc.SendPanel)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeLevel, TongTianTaFunc.OnActorLevelUp)
+--]]

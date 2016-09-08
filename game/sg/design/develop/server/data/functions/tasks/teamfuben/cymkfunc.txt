@@ -1,0 +1,118 @@
+-- 炽翼秘窟副本函数
+
+--#include "data\functions\entrustfunc.txt" once
+--#include "data\config\task\cymkconf.txt" once
+--#include "data\functions\timermsgfunc.txt" once
+
+CymkPublic = {}
+CymkPublic.OnInitRoundEx = {}
+
+-- 进入新场景的处理
+CymkPublic.InitRound = function(pfb, rd)
+	local hfb = Fuben.getFubenHandle(pfb)
+	local hscene = Fuben.getSceneHandleById(CymkConf.scenes[rd].sceneid ,hfb)
+	local fvar = Fuben.getDyanmicVar(pfb)
+
+	local sconf = CymkConf.scenes[rd]
+	Fuben.SetFubenGameTime(hfb, sconf.gametime) -- 设置游戏时间
+	Fuben.setFubenProgress(pfb, rd)
+
+	-- 冰块，火球初始化
+	local effects = sconf.effects
+	if effects ~= nil then
+		for i=1,#effects do
+			local ef = effects[i]
+			Fuben.postSceneTimeCall(hscene, TimerMsg.CymkEffect, ef.interval, ef.times, rd, i)
+		end
+	end
+
+	-- 技能
+	local skills = sconf.skills
+	if skills ~= nil then
+		for i=1,#skills do
+			local ef = skills[i]
+			Fuben.postSceneTimeCall(hscene, TimerMsg.CymkSkill, ef.interval, ef.times, rd, i)
+		end
+	end
+
+	-- 怪物加buff
+	local buffs = sconf.buffs
+	if buffs ~= nil then
+		Fuben.postSceneTimeCall(hscene, TimerMsg.CymkBuff, 1, 1, rd)
+	end
+
+	if rd == 3 then
+		Fuben.postSceneTimeCall(hscene, TimerMsg.CymkSwcySkill, 60, -1, rd)
+	end
+end
+
+-- 通关处理
+CymkPublic.OnTongGuan = function(pfb, rd, sconf)
+	local hfb = Fuben.getFubenHandle(pfb)
+	-- 给予奖励
+	local actors = LuaHelp.getFbActorList(pfb)
+	if actors ~= nil then
+		local ef = CymkConf.passEffect
+		for i=1,#actors do
+			local actor = actors[i]
+			if rd < #CymkConf.scenes then
+				LActor.playCenterEffect(actor, ef.id, ef.time) -- 播放通关特效
+			end
+			if actor ~= nil then
+				print("CymkPublic.OnTongGuan awardType "..CymkConf.awardType)
+				print("CymkPublic.OnTongGuan awardType cnt "..sconf.award)
+
+				LActor.changeTeamToken(actor, CymkConf.awardType, sconf.award)
+				print("通关处理+++++++++++++:"..rd)
+				LActor.SendAndChangeCaleValue(actor, caleOther2, sconf.award, true)-- 统计
+				print("get token is ",LActor.getTeamToken(actor, CymkConf.awardType))
+			end
+		end
+	end
+
+	local hscene = Fuben.getSceneHandleById(CymkConf.scenes[rd].sceneid, hfb)
+	Fuben.clearSceneTimeCall(hscene) -- 清空上次的定时器
+
+	-- 创建传送门
+	local teleportConf = sconf.teleport
+	if teleportConf ~= nil then
+		-- print("create transter:"..layer)
+		local comfirm
+		if teleportConf.comfirm == nil then
+			comfirm = 0
+		else
+			comfirm = teleportConf.comfirm
+		end
+
+		Fuben.createTranster(hscene, teleportConf.modelid, teleportConf.posx, teleportConf.posy, teleportConf.toPosx, teleportConf.toPosy, teleportConf.toSceneid, teleportConf.name, comfirm)
+	end
+
+	if rd < #CymkConf.scenes then
+		-- 初始化下一个场景
+		CymkPublic.InitRound(pfb, rd + 1)
+	else
+		local actors = LuaHelp.getFbActorList(pfb)
+		if actors ~= nil then
+			local ef = CymkConf.finalEffect
+			for i=1,#actors do
+				local actor = actors[i]
+				LActor.playCenterEffect(actor, ef.id, ef.time)
+			end
+		end
+		-- 结束了
+		Fuben.SetFubenTime(hfb, 1)
+	end
+end
+
+
+-- 挑战失败
+CymkPublic.OnFailed = function(pfb)
+	local actors = LuaHelp.getFbActorList(pfb)
+	if actors ~= nil then
+		local ef = CymkConf.failEffect
+		for i=1,#actors do
+			LActor.playCenterEffect(actors[i], ef.id, ef.time)
+		end
+	end
+	Fuben.SetFubenTime(Fuben.getFubenHandle(pfb), 1) -- 10秒后副本销毁
+end

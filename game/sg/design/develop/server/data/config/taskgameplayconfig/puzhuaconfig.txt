@@ -1,0 +1,120 @@
+
+--#include "..\..\language\LangCode.txt"
+
+PuZhua_config = {
+	clearTaskTime = 30 * 60,
+	task_list = {
+		--{ taskid = , monsterid = , petid =  },
+{ taskid = 92, monsterid = 27, petid = 27 },
+{ taskid = 101, monsterid = 26, petid = 26 },
+{ taskid = 158, monsterid = 57, petid = 57 },--zhuxian
+
+{ taskid = 5010, monsterid = 7, petid = 7 },
+{ taskid = 5028, monsterid = 20, petid = 20 },
+{ taskid = 5147, monsterid = 156, petid = 156 },
+{ taskid = 5171, monsterid = 160, petid = 160 },
+{ taskid = 5177, monsterid = 103, petid = 103 },
+{ taskid = 5179, monsterid = 103, petid = 103 },--zhixian
+
+{ taskid =22016 , monsterid =23 , petid =23  },
+{ taskid =22017 , monsterid =26 , petid =26  },
+{ taskid =22018 , monsterid =27 , petid =27  },
+{ taskid =22019 , monsterid =28 , petid =28  },
+{ taskid =22020 , monsterid =29 , petid =29  },--xuanshang 1-39
+
+{ taskid =22041 , monsterid =16 , petid =16  },
+{ taskid =22042 , monsterid =17 , petid =17  },
+{ taskid =22043 , monsterid =27 , petid =27  },
+{ taskid =22044 , monsterid =29 , petid =29  },
+{ taskid =22045 , monsterid =30 , petid =30  },--xuanshang 40-49
+
+
+{ taskid =10011 , monsterid =15 , petid =15  },
+{ taskid =10012 , monsterid =16 , petid =16  },
+{ taskid =10013 , monsterid =17 , petid =17  },
+{ taskid =10014 , monsterid =23 , petid =23  },
+{ taskid =10015 , monsterid =24 , petid =24  },
+{ taskid =10016 , monsterid =25 , petid =25  },
+{ taskid =10017 , monsterid =26 , petid =26  },
+{ taskid =10018 , monsterid =27 , petid =27  },
+{ taskid =10019 , monsterid =28 , petid =28  },--paohuan 1-39
+
+{ taskid =10061 , monsterid =39 , petid =39  },
+{ taskid =10062 , monsterid =29 , petid =29  },
+{ taskid =10063 , monsterid =31 , petid =31  },
+{ taskid =10064 , monsterid =73 , petid =73  },
+{ taskid =10065 , monsterid =15 , petid =15  },
+{ taskid =10066 , monsterid =27 , petid =27  },
+{ taskid =10067 , monsterid =30 , petid =30  },
+{ taskid =10068 , monsterid =29 , petid =29  },
+{ taskid =10069 , monsterid =74 , petid =74  },--paohuan 40-49
+
+{ taskid =10111 , monsterid =31 , petid =31  },
+{ taskid =10112 , monsterid =39 , petid =39  },
+{ taskid =10113 , monsterid =73 , petid =73  },
+{ taskid =10114 , monsterid =74 , petid =74  },
+{ taskid =10115 , monsterid =59 , petid =59  },
+{ taskid =10116 , monsterid =72 , petid =72  },
+{ taskid =10117 , monsterid =41 , petid =41  },
+{ taskid =10118 , monsterid =43 , petid =43  },
+{ taskid =10119 , monsterid =44 , petid =44  },--paohuan 50-59
+
+{ taskid =10161 , monsterid =51 , petid =51  },
+{ taskid =10162 , monsterid =55 , petid =55  },
+{ taskid =10163 , monsterid =54 , petid =54  },
+{ taskid =10164 , monsterid =53 , petid =53  },
+{ taskid =10165 , monsterid =52 , petid =52  },
+{ taskid =10166 , monsterid =71 , petid =71  },
+{ taskid =10167 , monsterid =70 , petid =70  },
+{ taskid =10168 , monsterid =56 , petid =56  },
+{ taskid =10169 , monsterid =60 , petid =60  },--paohuan 60-69
+
+
+		-- { taskid = 23033, monsterid = 51, petid = 15 },
+		-- { taskid = 23034, monsterid = 60, petid = 27 },
+		-- { taskid = 23035, monsterid = 72, petid = 27 },
+		-- { taskid = 23053, monsterid = 51, petid = 15 },
+		-- { taskid = 23054, monsterid = 60, petid = 27 },
+		-- { taskid = 23055, monsterid = 72, petid = 27 },
+-- { taskid = , monsterid = , petid =  },
+		-- { taskid = 22018, monsterid = 31, petid = 82 },
+		-- { taskid = 22019, monsterid = 28, petid = 64 },
+		-- { taskid = 22020, monsterid = 29, petid = 65 },
+		-- { taskid = 22037, monsterid = 38, petid = 8 },
+		-- { taskid = 22038, monsterid = 39, petid = 80 },
+		-- { taskid = 22039, monsterid = 42, petid = 61 },
+		-- { taskid = 22040, monsterid = 41, petid = 43 },
+		-- { taskid = 22057, monsterid = 50, petid = 54 },
+		-- { taskid = 22058, monsterid = 49, petid = 35 },
+		-- { taskid = 22059, monsterid = 51, petid = 35 },
+		-- { taskid = 22060, monsterid = 52, petid = 54 },
+		-- { taskid = 22077, monsterid = 76, petid = 21 },
+		-- { taskid = 22078, monsterid = 10, petid = 72 },
+		-- { taskid = 22079, monsterid = 11, petid = 3 },
+		-- { taskid = 22080, monsterid = 75, petid = 19 },
+		-- { taskid = 22097, monsterid = 87, petid = 29 },
+		-- { taskid = 22098, monsterid = 86, petid = 29 },
+		-- { taskid = 22099, monsterid = 80, petid = 1 },
+		-- { taskid = 22100, monsterid = 81, petid = 1 },
+		-- { taskid = 23017, monsterid = 30, petid = 1 },
+		-- { taskid = 23018, monsterid = 31, petid = 82 },
+		-- { taskid = 23019, monsterid = 28, petid = 64 },
+		-- { taskid = 23020, monsterid = 29, petid = 65 },
+		-- { taskid = 23037, monsterid = 38, petid = 8 },
+		-- { taskid = 23038, monsterid = 39, petid = 80 },
+		-- { taskid = 23039, monsterid = 42, petid = 61 },
+		-- { taskid = 23040, monsterid = 41, petid = 43 },
+		-- { taskid = 23057, monsterid = 50, petid = 54 },
+		-- { taskid = 23058, monsterid = 49, petid = 35 },
+		-- { taskid = 23059, monsterid = 51, petid = 35 },
+		-- { taskid = 23060, monsterid = 52, petid = 54 },
+		-- { taskid = 23077, monsterid = 76, petid = 21 },
+		-- { taskid = 23078, monsterid = 10, petid = 72 },
+		-- { taskid = 23079, monsterid = 11, petid = 3 },
+		-- { taskid = 23080, monsterid = 75, petid = 19 },
+		-- { taskid = 23097, monsterid = 87, petid = 29 },
+		-- { taskid = 23098, monsterid = 86, petid = 29 },
+		-- { taskid = 23099, monsterid = 80, petid = 1 },
+		-- { taskid = 23100, monsterid = 81, petid = 1 },
+	},
+}

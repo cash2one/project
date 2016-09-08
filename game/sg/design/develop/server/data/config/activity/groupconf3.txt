@@ -1,0 +1,59 @@
+﻿--groupconf.text 团购活动配置
+groupActivityID3 = 83
+
+Groupconf83 = 
+{
+	--团购活动配置(可以根据活动ID进行配置)
+	[1] = {	
+		
+		--每天团购的物品列表 -- 实惠礼包
+		itemListA = 
+		{
+			--第一天
+			{itemID = 64002, count = 1, broadcast = true},
+			--第二天
+			{itemID = 64002, count = 1, broadcast = true},
+			--第三天
+			{itemID = 64002, count = 1, broadcast = true},
+		},
+		--每天团购的物品列表 -- 超值礼包
+		itemListB = 
+		{
+			--第一天
+			{itemID = 64003, count = 1, broadcast = true},
+			--第二天
+			{itemID = 64003, count = 1, broadcast = true},
+			--第三天
+			{itemID = 64003, count = 1, broadcast = true},
+		},
+		-- { 实惠礼包可购买数量， 超值礼包可购买数量}
+		itemTimes = { 5, 1 },
+		--是否要购买礼包A才能购买礼包B的条件开关
+		canbuy = true,
+		--如果canbuy == true,则此字段表示需要购买多少个A才能买B
+		buyNum = 5,
+		--购买两种礼包可获得积分配置,依次为{A,B}
+		itemPoint = {1, 1},
+		--购买两种礼包需要的天珠,依次为{A,B}
+		itemPrice = {188, 2588},
+		--积分礼包领取条件需要多少积分,可获得物品ID
+		needList = { score = 5, itemID = 60066},
+		--每日积分是否重置的开关配置
+		isReset = false,
+		--是否需要增加排行榜
+		isSetRank = true,
+		--仙宗排名榜
+		guildRank = 
+		{
+			CharmRankName = "tuangou1", --排行榜名称
+			charmcount = 3,		   --排行宗数
+			-- 礼包列表
+			awards =
+			{
+				{ranklevel = 1, awardid = 60072, awardcount = 1},  --第一名的礼包
+				{ranklevel = 2, awardid = 60073, awardcount = 1},  --第二名的礼包
+				{ranklevel = 3, awardid = 60074, awardcount = 1},  --第三名的礼包
+			},
+		},
+	},
+}

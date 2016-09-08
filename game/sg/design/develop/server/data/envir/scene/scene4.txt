@@ -1,0 +1,117 @@
+﻿--配置
+{
+	--场景1
+	--这个id必须每次递增，比如第一个场景id是0，下一个一定是1，类推
+	scenceid = 4,
+	--场景名称
+	scencename = Lang.SceneName.s4,
+	--场景对应的地图,只需要填文件名，不需要写路径和后缀名，比如这个地图文件是map/demo.jxm，只需要写demo
+	mapfilename = "yz",
+    --限制等级,低于这个等级无法进入场景
+	level = 14,
+	needFinishQid = 32, -- 进入的任务限制 填任务id
+    --限制等级,低于这个等级无法进入副本
+	minlevel = 1,
+	--限制物品，这是一个数字列表，代表有这些物品的玩家不能进入
+	forbiddenitem = {},
+	--限制的技能列表，有这些技能的玩家不能进入
+	forbiddenskill = {},
+	--0表示可以pk，1表示不可以，默认是0
+	nopk = 1,
+	progress = 0,
+	music = "yewaiqingxin.mp3", 
+	musicInterval=5,
+        --在世界地图上的坐标x
+        worldmapPosx =0,
+        worldmapPosy =0,
+        --场景的长宽,是指格子数的长宽
+        sceneWidth =101,
+        sceneHeight =84,
+
+	poetry = "",
+	--area安全区
+	area = 
+	{   
+		{ name = Lang.SceneName.s4, range = { 0,0,101,0,101,84,0,84}, center = {59,80},
+		    attri = {
+		    {type= 46 ,value = {0}},			  
+					}
+		},
+		{ name = Lang.SceneName.s4, range = { 20,49,44,49,20,58,49,58 }, center = { 28,52 },--对应寻路配置里的x与y 
+            attri = 
+            {
+                {type=68,value = {5043}, fun = "OnZhaoHuanArea"},
+            },
+        },
+        { name = Lang.SceneName.s4, range = { 31,10,44,10,31,20,44,20 }, center = { 34,12 },--对应寻路配置里的x与y 
+            attri = 
+            {
+                {type=68,value = {5054}, fun = "OnZhaoHuanArea"},
+            },
+        },
+        { name = Lang.SceneName.s4, range = { 18,3,32,3,18,15,32,15 }, center = { 22,11 },--对应寻路配置里的x与y 
+            attri = 
+            {
+                {type=68,value = {5078}, fun = "OnZhaoHuanArea"},
+            },
+        },	
+	},
+	--refresh项用来配置这个场景的刷怪点，每个场景可以有多个刷怪点，可以用include包含多个刷怪点
+
+     
+ refresh =
+{
+--#include "refresh4.txt"	
+},
+
+	--这里配置这个场景出现的NPC，如果有多个NPC，这配置多行，每一项（行）表示一个NPC
+	npc = 
+	{
+		--name表示npc的名称，
+		--posx和posy分别表示出现的位置坐标
+		--script是对应的脚本名字，需要用相对路径
+		--modelid表示外观模型id
+        --camp表示是阵营的id，默认是0表示所有的阵营都能用，1 无忌 2逍遥  3日月，如果是0可以不配置
+{npcid=401, dir=1, name = Lang.EntityName.n401 ,posx = 82, posy = 72, script = "data/script/yuzhou/liuxiu.txt",modelid=13,icon = 1,utype = 1},  --刘秀
+{npcid=402, dir=3, name = Lang.EntityName.n402 ,posx = 82, posy = 53, script = "data/script/yuzhou/yinlihua.txt",modelid=6,icon = 1,utype = 1},  --阴丽华
+{npcid=403, dir=5, name = Lang.EntityName.n403 ,posx = 80, posy = 21, script = "data/script/yuzhou/dingrou.txt",modelid=42,icon = 1,utype = 1},  --丁柔
+{npcid=404, dir=3, name = Lang.EntityName.n404 ,posx = 77, posy = 51, script = "data/script/yuzhou/wangchang.txt",modelid=7,icon = 1,utype = 1},  --王常
+{npcid=405, dir=5, name = Lang.EntityName.n405 ,posx = 92, posy = 51, script = "data/script/yuzhou/mawu.txt",modelid=47,icon = 1,utype = 1},  --马武
+{npcid=406, dir=5, name = Lang.EntityName.n406 ,posx = 85, posy = 29, script = "data/script/yuzhou/chengdan.txt",modelid=29,icon = 1,utype = 1},  --成丹
+{npcid=407, dir=3, name = Lang.EntityName.n407 ,posx = 69, posy = 29, script = "data/script/yuzhou/xinjunbingtou.txt",modelid=28,icon = 1,utype = 1},  --新军兵头
+{npcid=408, dir=2, name = Lang.EntityName.n408 ,posx = 72, posy = 45, script = "data/script/yuzhou/xinjunguanbing.txt",modelid=27,icon = 1,utype = 1},  --新军官兵
+{npcid=409, dir=3, name = Lang.EntityName.n409 ,posx = 46, posy = 57, script = "data/script/yuzhou/liuji.txt",modelid=20,icon = 1,utype = 1},  --刘稷
+{npcid=410, dir=5, name = Lang.EntityName.n410 ,posx = 35, posy = 68, script = "data/script/yuzhou/liuliang.txt",modelid=23,icon = 1,utype = 1},  --刘良
+{npcid=411, dir=3, name = Lang.EntityName.n411 ,posx = 21, posy = 54, script = "data/script/yuzhou/liuyin.txt",modelid=14,icon = 1,utype = 1},  --刘縯
+{npcid=412, dir=3, name = Lang.EntityName.n412 ,posx = 19, posy = 70, script = "data/script/yuzhou/liubaji.txt",modelid=17,icon = 1,utype = 1},  --刘伯姬
+{npcid=413, dir=5, name = Lang.EntityName.n413 ,posx = 36, posy = 30, script = "data/script/yuzhou/liyi.txt",modelid=48,icon = 1,utype = 1},  --李轶
+{npcid=414, dir=3, name = Lang.EntityName.n414 ,posx = 11, posy = 12, script = "data/script/yuzhou/yuchijun.txt",modelid=22,icon = 1,utype = 1},  --尉迟峻
+{npcid=415, dir=5, name = Lang.EntityName.n415 ,posx = 64, posy = 9, script = "data/script/yuzhou/lihua.txt",modelid=6,icon = 1,utype = 1},  --丽华
+{npcid=416, dir=3, name = Lang.EntityName.n416 ,posx = 60, posy = 8, script = "data/script/yuzhou/yanziling.txt",modelid=19,icon = 1,utype = 1},  --严子陵
+{npcid=417, dir=5, name = Lang.EntityName.n417 ,posx = 51, posy = 7, script = "data/script/yuzhou/yanzhi.txt",modelid=41,icon = 1,utype = 1},  --胭脂
+{npcid=418, dir=5, name = Lang.EntityName.n418 ,posx = 40, posy = 7, script = "data/script/yuzhou/gongsunshi.txt",modelid=38,icon = 1,utype = 1},  --公孙石
+{npcid=419, dir=3, name = Lang.EntityName.n419 ,posx = 38, posy = 8, script = "data/script/yuzhou/xiaoqie.txt",modelid=37,icon = 1,utype = 1},  --小妾
+{npcid=420, dir=3, name = Lang.EntityName.n420 ,posx = 22, posy = 8, script = "data/script/yuzhou/dengchan.txt",modelid=10,icon = 1,utype = 1},  --邓婵
+{npcid=421, dir=3, name = Lang.EntityName.n421 ,posx = 25, posy = 8, script = "data/script/yuzhou/liuxuan.txt",modelid=18,icon = 1,utype = 1},  --刘玄
+{npcid=422, dir=3, name = Lang.EntityName.n422 ,posx = 27, posy = 51, script = "data/script/yuzhou/yinji.txt",modelid=5,icon = 1,utype = 1},  --阴戟
+{npcid=423, dir=5, name = Lang.EntityName.n423 ,posx = 36, posy = 50, script = "data/script/yuzhou/liuxiu1.txt",modelid=13,icon = 1,utype = 1},  --刘秀1
+{npcid=424, dir=5, name = Lang.EntityName.n424 ,posx = 35, posy = 15, script = "data/script/yuzhou/liuyin1.txt",modelid=14,icon = 1,utype = 1},  --刘縯1
+{npcid=425, dir=3, name = Lang.EntityName.n425 ,posx = 7, posy = 14, script = "data/script/yuzhou/yinji1.txt",modelid=5,icon = 1,utype = 1},  --阴戟1
+{npcid=426, dir=7, name = Lang.EntityName.n426 ,posx = 24, posy = 29, script = "data/script/yuzhou/liubaji1.txt",modelid=17,icon = 1,utype = 1},  --刘伯姬1
+{npcid=427, dir=1, name = Lang.EntityName.n427 ,posx = 61, posy = 13, script = "data/script/yuzhou/liuxiu2.txt",modelid=13,icon = 1,utype = 1},  --刘秀2
+{npcid=428, dir=3, name = Lang.EntityName.n428 ,posx = 61, posy = 30, script = "data/script/yuzhou/guanbi1.txt",modelid=41,icon = 1,utype = 1},  --官婢1
+{npcid=429, dir=3, name = Lang.EntityName.n429 ,posx = 60, posy = 33, script = "data/script/yuzhou/guanbi2.txt",modelid=41,icon = 1,utype = 1},  --官婢2
+{npcid=430, dir=3, name = Lang.EntityName.n430 ,posx = 57, posy = 35, script = "data/script/yuzhou/guanbi3.txt",modelid=41,icon = 1,utype = 1},  --官婢3
+
+  },
+  teleport = 
+  {  
+{ posx = 77, posy = 81,toSceneid =1,toPosx = 101, toPosy = 83,modelid = 50000,name = Lang.SceneName.s1},  --去南阳
+{ posx = 98, posy = 26,toSceneid =6,toPosx = 169, toPosy = 125,modelid = 50000,name = Lang.SceneName.s6},  --去洛阳
+{ posx = 56, posy = 76,toSceneid =8,toPosx = 56, toPosy = 83,modelid = 50000,name = Lang.SceneName.s8},  --去长聚
+{ posx = 6, posy = 80,toSceneid =18,toPosx = 75, toPosy = 58,modelid = 50000,name = Lang.SceneName.s18},  --去舂陵
+{ posx = 90, posy = 20,toSceneid =13,toPosx = 14, toPosy = 11,modelid = 50000,name = Lang.SceneName.s13},  --去世界boss30
+
+
+  },
+},

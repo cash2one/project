@@ -1,0 +1,94 @@
+--本文档配置PK系统方面的参数。比如杀戮值的计算需要的相关的参数等
+--本配置文件出现的相关名词，比如“杀戮值基础基数”等，可以查看策划文档《PK系统.docx》文件，这里就不详细解释了
+PkConfig = 
+{
+	--配置多少分钟减少一点的杀戮值，单位：分钟
+	subPk = 3,
+	--切磋的超时时间，单位：分钟
+	matchTime = 3,
+	--切磋结束后，失败一方增加的血量，是其最大血量的百分比
+	addHp = 0.2,		--小数，比如“0.2”，表示将会增加其最大血量的20%
+	--当角色杀戮值是300时，红名
+	redName = 300,
+	--从这个等级开始，可以攻击别人，在这个等级下，不能攻击别人，也不能被攻击,即PK开关强制关
+	canPkStartLevel = 25,
+	--和canPkStartLevel相反，这个等级或以上，pk开关强制开，即默认会给人PK（非rpwt），除非购买物品”保护咒符“
+	canPkEndLevel = 70,
+	--设置pk 模式的cd 时间
+	pk_cd = 10,
+	--关于杀戮值的计算相关参数配置
+	pkParam =
+	{
+		--最大的杀戮值。玩家的杀戮值不能超过这个
+		pkMax = 1000,
+		--杀戮值基础基数
+		pkBase = 20,
+		--OtherParam，PK对象参数的设置
+		otherParam = {
+			--敌对阵营
+			enemyZY = 0,
+			--中立阵营
+			neutralZY = 0.75,
+			--同阵营玩家	1
+			sameZY = 1,
+			--同帮派玩家	1.2
+			sameGuild = 1.2,
+			--好友	1.2
+			friend = 1.2,
+			--结拜、夫妻	1.5
+			brother = 1.5,
+			marry = 1.5,
+			--师傅	2
+			master = 2,
+		},
+		--PK对象杀戮值参数
+		--这个参数是按数字段配置的，比如0到60的杀戮值，参数值是1
+		otherPk = {
+			{ start = 0, theEnd= 59, value = 1},	--这个配置表示0到59的杀戮值，参数值是1，下面的类推
+			{ start = 60, theEnd = 99, value = 0.8},
+			{ start = 100, theEnd = 299, value = 0.6},
+			{ start = 300, theEnd = 1001, value = 0},		--最后这个end字段，可以填个非常大的数字，不过一定要大于PkMax
+		},
+	},
+	--战魂值计算相关
+	zhanHunParam =
+	{
+		--对方等级对应的 战魂标准值。等级从11开始,levelStart表示起始的等级
+		levelStart = 40,
+		--对方等级对应的 战魂标准值,这里填50个数字，从10-60，每个数字代表这个等级对应的战魂标准值，比如第一个是11级对应的标准值
+		levelBase = {5,	6,	6,	7,	7,	8,	9,	9,	10,	11,	12,	13,	14,	15,	16,	17,	19,	20,	22,	23,	25,	27,	29,	32,	34,	37,	40,	43,	47,	50,	54,	59,	63,	68,	74,	80,	86,	93,	101,	109,	117,	127,	137,	148,	160,	172,	186,	201,	217,	235,},--样例，只列了几个
+
+		--对象参数
+		otherParam = {
+			--敌对阵营玩家
+			enemyZY = 1,
+			--中立阵营
+			neutralZY = 0.8,
+			--同阵营玩家
+			sameZY = 0.8,
+		},
+ 	--对方的杀戮值参数
+		otherPk = {
+			{ start = 0, theEnd = 59, value = 1},	--这个配置表示0到59的杀戮值，参数值是1，下面的类推
+			{ start = 60, theEnd = 99, value = 1.1},
+			{ start = 100, theEnd = 299, value = 1.3},
+			{ start = 300, theEnd = 1000, value = 1.5},		--最后这个theEnd字段，可以填个非常大的数字，不过一定要大于PkMax
+		},
+		--等级差距参数
+		levelGap = {
+			{ start = -60, theEnd = 0, value = 1.0},	--表示等级差距是0时,参数是1.0
+			{ start = 1, theEnd = 1, value = 0.9},
+			{ start = 2, theEnd = 2, value = 0.8},
+			{ start = 3, theEnd = 3, value = 0.7},
+			{ start = 4, theEnd = 4, value = 0.6},
+			{ start = 5, theEnd = 5, value = 0.5},
+			{ start = 6, theEnd = 6, value = 0.4},
+			{ start = 7, theEnd = 7, value = 0.3},
+			{ start = 8, theEnd = 8, value = 0.2},
+			{ start = 9, theEnd = 9, value = 0.1},
+			{ start = 10, theEnd = 60, value = 0.0},	--表示等级差距是10到60级时,参数是0.这个我随便写的，到时策划再根据实际数值填
+			--其他等级差距参数
+
+		}
+	}
+}

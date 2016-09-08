@@ -1,0 +1,529 @@
+--#include "data\config\dailyattendance\dailyloginrewardconf.txt" once
+--#include "data\config\sanshi\dailyloginrewardconf.txt" once
+--#include "data\language\LangCode.txt" once
+--#include "data/config/vip/sign_reward_config.txt" once
+--#include "data/config/vip/total_login_reward.txt" once
+
+--跨日触发
+ONLINEREWARD.NewDayForDailyLoginReward = function (sysarg, arg)
+	--print("ONLINEREWARD.NewDayForDailyLoginReward")
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	if var.dailyloginreward == nil then return end
+	ONLINEREWARD.newDaySendSignReward(sysarg)
+	local currYear, currMonth, currDay = 0, 0, 0
+  	currYear, currMonth, currDay = System.getDate(currYear, currMonth, currDay)
+  	
+  	var.dailyloginreward.TodayFlag = 0  --今天是否签到过的标志位
+  	--跨月了清空签到信息
+  	if var.dailyloginreward.month ~= currMonth or var.dailyloginreward.year ~= currYear then
+  		var.dailyloginreward.reward = 0
+  		var.dailyloginreward.month = currMonth
+  		var.dailyloginreward.year = currYear
+  		var.dailyloginreward.ExtraSign = 0
+  		var.dailyloginreward.SignDay = 1 		--下次签到签到的奖励
+  		--var.dailyloginreward.sign_days = 0
+		--var.dailyloginreward.sign_reward_index = 0
+  	end
+  	if var.dailyloginreward.sign_reward_index ~= nil and var.dailyloginreward.sign_reward_index >= #SignReward.sign_reward_days then
+		var.dailyloginreward.sign_reward_index = 0
+		var.dailyloginreward.sign_days = 0
+	end
+  	ONLINEREWARD.SendDailyLoginRewardInfo(sysarg)
+
+  	--下发累计登陆信息
+  	ONLINEREWARD.SendTotalLogin(sysarg)
+end
+
+
+--签到（正常签到和补签调用）
+ONLINEREWARD.SignReward = function(sysarg , nMonth , nDay , isExtraSign)
+	--print("-----签到（正常签到和补签调用）")
+	print(nMonth,nDay,nDay)
+	if nil == sysarg then
+		return false
+	end
+
+	local rewardconf = SignReward[nMonth]
+	if nil == rewardconf then
+		print("没有这个月的签到奖励配置："..tostring(nMonth))
+		return false
+	end
+
+	local dayRewardConf = rewardconf[nDay]
+	if nil == dayRewardConf then
+		print(string.format("没有这个%s月%s日的签到奖励配置",tostring(nMonth),tostring(nDay) ))
+		return false
+	end
+
+	--如果是补签
+	if isExtraSign then
+		local needCoin = (dayRewardConf.ExtraSignCost or 0)
+		local hasyuanbao = LActor.getMoneyCount(sysarg, mtYuanbao)
+		if hasyuanbao < needCoin then
+			--LActor.sendTipmsg(sysarg, Lang.ScriptTips.mtqd005 ,ttMessage)
+			LActor.SendGeneralTips(sysarg, 1, mtYuanbao, needCoin-hasyuanbao)
+			return false
+		end
+		LActor.changeMoney(sysarg, mtYuanbao, -needCoin, 1,  true, "daily", "sign")
+	end
+
+	local currRewardConf = dayRewardConf.reward
+
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	if var.dailyloginreward == nil then return false end
+	if var.dailyloginreward.month == nil then return false end --签到的月份
+	if var.dailyloginreward.reward == nil then return false end --签到的奖励记录
+
+	--vip奖励翻倍
+	local VipLevel = LActor.getVIPLevel(sysarg)
+	local DoubleNum = 1
+	if dayRewardConf.vip_double then
+		if dayRewardConf.vip_double[VipLevel] then
+			DoubleNum = DoubleNum * dayRewardConf.vip_double[VipLevel]
+		else
+			for i = (VipLevel - 1) , 1 , -1 do
+				if dayRewardConf.vip_double[i] then
+					DoubleNum = dayRewardConf.vip_double[i]
+					break
+				end
+			end
+		end
+	end
+	print("DoubleNum:"..tostring(DoubleNum))
+
+	-- 检查背包够不够空间
+	local needspace = 0  --物品所需空格
+	for i,c in ipairs(currRewardConf) do
+		if c.type == 1 then
+			needspace = needspace + Item.getAddItemNeedGridCount( sysarg, c.id, c.count * DoubleNum )
+		end
+	end
+	if needspace > Item.getBagEmptyGridCount( sysarg ) then
+		-- LActor.sendTipmsg( sysarg, Lang.ScriptTips.mtqd001,ttDialog)
+		LActor.SendGeneralTips(sysarg, 7, 0, 0)
+		return false
+	end
+
+	local effects = {} -- 用于播放特效
+
+  	--领奖了
+	for i = 1, #currRewardConf do
+		local c = currRewardConf[i]
+		local giveNum = c.count * DoubleNum
+		if c.type == 1 then -- 物品
+			LActor.addItem(sysarg,c.id,0,0, giveNum,0,"SignReward",1)
+			local effect = {} -- 特效
+		    effect.type = 1
+		    effect.id = c.id
+		    effect.count = giveNum
+		    effects[#effects+1] = effect
+
+		elseif c.type == 2 then -- 绑定银两
+			LActor.changeMoney( sysarg, c.id, giveNum, 0, true, "online_reward",1)
+
+			local effect = {} -- 特效
+		    effect.type = 2
+		    effect.id = c.id
+		    effect.count = giveNum
+		    effects[#effects+1] = effect
+		end
+	end
+
+	-- 播放特效
+	if #effects > 0 then
+		MiscFunc.PlayItemEffect(sysarg, 1, effects)
+	end
+	
+	
+	--置为已签到
+	print("var.dailyloginreward.reward:"..tostring(var.dailyloginreward.reward))
+	var.dailyloginreward.reward = System.setIntBit(var.dailyloginreward.reward, nDay - 1, true)
+	print("var.dailyloginreward.reward:"..tostring(var.dailyloginreward.reward))
+
+	return true
+end
+
+ONLINEREWARD.newDaySendSignReward = function ( sysarg )
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	if var.dailyloginreward == nil then return end
+	if var.dailyloginreward.sign_days == nil then return end
+	if var.dailyloginreward.sign_reward_index == nil then return end
+	
+	local index = var.dailyloginreward.sign_reward_index + 1
+	if index > #SignReward.sign_reward_days then
+		return
+	end
+	if var.dailyloginreward.sign_days < SignReward.sign_reward_days[index][1] then
+		return
+	end
+	local itemid, itemnum = SignReward.sign_reward_days[index][2],SignReward.sign_reward_days[index][3] or 1
+	System.sendGmMailOffLine(LActor.getActorId(sysarg), Lang.ScriptTips.yqd1001, 1, itemid, itemnum, 1, Lang.ScriptTips.yqd1002)
+	var.dailyloginreward.sign_reward_index = var.dailyloginreward.sign_reward_index + 1
+	--ONLINEREWARD.SendDailyLoginRewardInfo(sysarg)
+end
+--
+ONLINEREWARD.GetLeijiSignReward = function ( sysarg)
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	if var.dailyloginreward == nil then return end
+	if var.dailyloginreward.sign_days == nil then return end
+	if var.dailyloginreward.sign_reward_index == nil then return end
+	
+	local index = var.dailyloginreward.sign_reward_index + 1
+	if index > #SignReward.sign_reward_days then
+		return
+	end
+	if var.dailyloginreward.sign_days < SignReward.sign_reward_days[index][1] then
+		return
+	end
+	local bagGrid = Item.getBagEmptyGridCount(sysarg)      --玩家身上有多少个格子
+	if bagGrid == 0 then
+		LActor.SendGeneralTips(sysarg, 7, 0, 0)
+		return
+	end
+	local itemid, itemnum = SignReward.sign_reward_days[index][2],SignReward.sign_reward_days[index][3] or 1
+	LActor.addItem(sysarg, itemid, 0, 0, itemnum, 1, "yueqiandao", 1)
+	var.dailyloginreward.sign_reward_index = var.dailyloginreward.sign_reward_index + 1
+	ONLINEREWARD.SendDailyLoginRewardInfo(sysarg)
+end
+
+--请求领取每天签到奖励
+ONLINEREWARD.GetDailyLoginReward = function (sysarg, packet)
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	if var.dailyloginreward == nil then return end
+	if var.dailyloginreward.month == nil then return end --签到的月份
+	if var.dailyloginreward.reward == nil then return end --签到的奖励记录
+
+	if var.dailyloginreward.ExtraSign == nil then
+		var.dailyloginreward.ExtraSign = 0
+	end
+
+	if nil == var.dailyloginreward.TodayFlag then
+		var.dailyloginreward.TodayFlag = 0  --今天是否签到过的标志位
+	end
+
+	if nil == var.dailyloginreward.SignDay then
+		var.dailyloginreward.SignDay = 1
+	end
+	if var.dailyloginreward.sign_days == nil then
+		var.dailyloginreward.sign_days = 0
+	end
+	local currYear, currMonth, currDay = 0, 0, 0
+  	currYear, currMonth, currDay = System.getDate(currYear, currMonth, currDay)
+
+  	local SignDayType = DataPack.readChar(packet) or 0
+  	
+  	if var.dailyloginreward.SignDay + 1 > currDay and 0 ~= SignDayType and var.dailyloginreward.TodayFlag == 0 then
+  		LActor.sendTipmsg(sysarg, Lang.ScriptTips.mtqd002 ,ttMessage)
+  		return
+  	end
+  	if (var.dailyloginreward.SignDay or 1) > currDay then
+
+  		if 0 ~= SignDayType then --补签
+  			LActor.sendTipmsg(sysarg, Lang.ScriptTips.mtqd002 ,ttMessage)
+  		else 					 --签到
+  			LActor.sendTipmsg(sysarg, Lang.ScriptTips.mtqd003 ,ttMessage)
+  		end
+  		return
+  	end
+
+
+  	if currMonth ~= var.dailyloginreward.month then
+  		ONLINEREWARD.SendDailyLoginRewardInfo(sysarg)
+  		return
+  	end
+
+  	
+  	--[[
+  	if SignDay >= currDay then
+  		print("补签还未到的日，非法操作")
+  		return
+  	end
+  	--]]
+
+  	--SignDay = 1
+
+  	local isExtraSign = false	--是否补签的标志位
+  	--print("var.dailyloginreward.reward:"..tostring(var.dailyloginreward.reward))
+  	--print("SignDayType:"..tostring(SignDayType))
+  	if 0 ~= SignDayType then
+  		isExtraSign = true
+
+  		--[[
+  		SignDay = 1
+  		for i = 0 , currDay - 2 do
+
+  			local wxj_test = System.getIntBit(var.dailyloginreward.reward, i)
+  			print("i:"..tostring(i).."   "..tostring(wxj_test))
+
+	  		if 0 == System.getIntBit(var .dailyloginreward.reward, i) then
+	  			SignDay = i + 1
+	  			break
+	  		end
+	  	end
+
+  		currDay = SignDay
+  		--]]
+
+  		--判断补签次数是否用完
+  		local VipLevel = LActor.getVIPLevel(sysarg)
+  		local ExtraSignNum = (VIPConfig.exteraSignNum[VipLevel] or 0) + 5 --默认的签到次数为5
+  		if var.dailyloginreward.ExtraSign >= ExtraSignNum then
+  			LActor.sendTipmsg(sysarg, Lang.ScriptTips.mtqd004 ,ttMessage)
+  			return
+  		end
+  	else
+  		--print("var.dailyloginreward.TodayFlag:"..tostring(var.dailyloginreward.TodayFlag))
+  		if 1 == var.dailyloginreward.TodayFlag then --今天已签到过
+  			return
+  		end
+  	end
+
+  	currDay = var.dailyloginreward.SignDay or 1
+
+  	if 1 == System.getIntBit(var.dailyloginreward.reward, currDay - 1) then --已签到过
+  		--提示已领
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.mtqd003 ,ttMessage)
+		return 
+  	end
+
+
+  	if ONLINEREWARD.SignReward(sysarg , currMonth , currDay , isExtraSign) then
+
+  		--补签的要把补签次数加上
+  		if 0 ~= SignDayType then
+  			var.dailyloginreward.ExtraSign = var.dailyloginreward.ExtraSign + 1
+  		else
+  			var.dailyloginreward.TodayFlag = 1
+  			--print("设置为true")
+  		end
+
+  		var.dailyloginreward.SignDay = var.dailyloginreward.SignDay + 1
+  		if isExtraSign == false then
+  			var.dailyloginreward.sign_days = var.dailyloginreward.sign_days + 1
+  		end
+  		ONLINEREWARD.SendDailyLoginRewardInfo(sysarg)
+  	end
+
+end
+
+
+
+
+
+--下发每日签到的数据
+ONLINEREWARD.SendDailyLoginRewardInfo = function (sysarg)
+	--print("ONLINEREWARD.SendDailyLoginRewardInfo")
+	local var = LActor.getStaticVar(sysarg)
+
+	local currYear, currMonth, currDay = 0, 0, 0
+  	currYear, currMonth, currDay = System.getDate(currYear, currMonth, currDay)
+
+	if var == nil then return end
+	if var.dailyloginreward == nil then
+		var.dailyloginreward = {}
+		var.dailyloginreward.reward = 0			--以位存签到的标志位
+		var.dailyloginreward.month = currMonth	--签到的月份
+		var.dailyloginreward.year = currYear	--签到的年份
+		var.dailyloginreward.ExtraSign = 0		--补签次数
+
+		var.dailyloginreward.TodayFlag = 0  --今天是否签到过的标志位
+		var.dailyloginreward.SignDay = 1 		--下次签到签到的奖励
+		var.dailyloginreward.sign_days = 0
+		var.dailyloginreward.sign_reward_index = 0
+	end
+
+	local npack = DataPack.allocPacket(sysarg, 138, 113)
+	DataPack.writeInt(npack, var.dailyloginreward.reward or 0)
+	DataPack.writeChar(npack,var.dailyloginreward.ExtraSign or 0)
+
+	DataPack.writeChar(npack,var.dailyloginreward.TodayFlag or 0)
+	DataPack.writeChar(npack,var.dailyloginreward.SignDay or 1)
+	DataPack.writeChar(npack,var.dailyloginreward.sign_days or 0)
+	DataPack.writeChar(npack,var.dailyloginreward.sign_reward_index or 0)
+
+	DataPack.flush(npack)
+end
+
+--登陆处理
+ONLINEREWARD.LoginForDailyLoginReward = function (sysarg, arg)
+	--print("ONLINEREWARD.SendDailyLoginRewardInfo")
+	--发送签到信息
+	ONLINEREWARD.SendDailyLoginRewardInfo(sysarg)
+
+	--发送累计登陆信息
+	ONLINEREWARD.SendTotalLogin(sysarg)
+end
+
+
+--发送累计登陆信息
+ONLINEREWARD.SendTotalLogin = function(sysarg)
+	if true then
+		return
+	end
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+
+	local t = System.getCurrMiniTime()
+
+	if nil == var.TotalLogin then
+		var.TotalLogin = {}
+		var.TotalLogin.TotalDay = 1
+		var.TotalLogin.Reward = {}
+		var.TotalLogin.LastTime = t
+	end
+	
+	if System.isSameDay(var.TotalLogin.LastTime, t) == false then
+		var.TotalLogin.LastTime = t
+		var.TotalLogin.TotalDay = var.TotalLogin.TotalDay + 1
+	end
+	local totalDay = var.TotalLogin.TotalDay or 1
+
+
+	if nil == var.TotalLogin.Reward then
+		var.TotalLogin.Reward = {}
+	end
+
+
+	local send_num = 0
+	local sendUnion = {}
+	for i , currReward in ipairs(TotalLoginReward) do
+		--print("i:"..tostring(i))
+		if (currReward.DayNum or 0) > totalDay then
+			break
+		end
+		if 1 == var.TotalLogin.Reward[i] then
+			send_num = send_num + 1
+			table.insert(sendUnion , {id = i , flag = 1})
+		end
+	end
+
+
+
+	local npack = DataPack.allocPacket(sysarg, 138, 117)
+	DataPack.writeInt(npack,var.TotalLogin.TotalDay or 1)
+	DataPack.writeWord(npack,send_num)
+	--print("send_num:"..tostring(send_num))
+	for i , v in ipairs(sendUnion) do
+		DataPack.writeWord(npack,v.id)
+		DataPack.writeChar(npack,v.flag)
+	end
+	DataPack.flush(npack)
+
+	--print("var.TotalLogin.TotalDay:"..tostring(var.TotalLogin.TotalDay))
+	--print("send_num:"..tostring(send_num))
+
+end
+
+
+
+--领取累计登陆奖励信息
+ONLINEREWARD.GetTotalLoginReward = function(sysarg,packet)
+	if true then
+		return
+	end
+	print("领取累计登陆奖励")
+	local var = LActor.getStaticVar(sysarg)
+	if nil == var then return end
+	if nil == var.TotalLogin then return end
+	if nil == var.TotalLogin.Reward then return end
+
+	local ReceiveId = DataPack.readWord(packet)
+	if nil == TotalLoginReward[ReceiveId] then
+		--print("heere0")
+		return
+	end
+
+	local totalDay = var.TotalLogin.TotalDay
+
+	local currRewardConfig = TotalLoginReward[ReceiveId]
+	if currRewardConfig.DayNum > totalDay then
+		local str = string.format(Lang.ScriptTips.ljdl002,currRewardConfig.DayNum)
+		LActor.sendTipmsg(sysarg, str ,ttMessage)
+		--print("heere1")
+		return 
+	end
+	if 1 == var.TotalLogin.Reward[ReceiveId] then
+		--print("heere2")
+		return
+	end
+
+
+	-- 获取奖励配置
+	-- 检查背包够不够空间
+	local needspace = 0  --物品所需空格
+	for i,c in ipairs(currRewardConfig.reward) do
+		if c.type == 1 then
+			needspace = needspace + Item.getAddItemNeedGridCount( sysarg, c.id, c.count )
+		end
+	end
+	if needspace > Item.getBagEmptyGridCount( sysarg ) then
+		-- LActor.sendTipmsg( sysarg, Lang.ScriptTips.ljdl001,ttDialog)
+		LActor.SendGeneralTips(sysarg, 7, 0, 0)
+		return
+	end
+	--print("needspace:"..tostring(needspace))
+
+	local effects = {} -- 用于播放特效
+
+  	--领奖了
+	for i = 1, #(currRewardConfig.reward) do
+		local c = currRewardConfig.reward[i]
+		if c.type == 1 then -- 物品
+			LActor.addItem(sysarg,c.id,0,0, c.count,0,"OnlineReward",57)
+			--[[
+			local itemname = Item.getItemName(c.itemid)
+			if itemname ~= nil then
+				local allmsg = string.format(Lang.ScriptTips.q00037,itemname,c.amount)
+				print(allmsg)
+				LActor.sendTipmsg(sysarg, allmsg, ttMessage)  
+			end
+			]]
+
+			local effect = {} -- 特效
+		    effect.type = 1
+		    effect.id = c.id
+		    effect.count = c.count
+		    effects[#effects+1] = effect
+
+		elseif c.type == 2 then -- 绑定银两
+			LActor.changeMoney( sysarg, c.id, c.count, 0, true, "online_reward" )
+			--[[
+			local moneystr = MONEYTYPE[c.type]
+			local allmsg = string.format(moneystr,c.amount)  
+			LActor.sendTipmsg(sysarg, allmsg, ttMessage)
+			]]
+
+			local effect = {} -- 特效
+		    effect.type = 2
+		    effect.id = c.id
+		    effect.count = c.count
+		    effects[#effects+1] = effect
+		end
+	end
+
+	-- 播放特效
+	if #effects > 0 then
+		MiscFunc.PlayItemEffect(sysarg, 1, effects)
+	end
+
+	var.TotalLogin.Reward[ReceiveId] = 1
+
+
+	local npack = DataPack.allocPacket(sysarg, 138, 118)
+	DataPack.writeWord(npack,ReceiveId)
+	DataPack.writeChar(npack,1)
+	DataPack.flush(npack)
+
+end
+
+
+
+
+--跨日与登录触发
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, ONLINEREWARD.NewDayForDailyLoginReward)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, ONLINEREWARD.LoginForDailyLoginReward)

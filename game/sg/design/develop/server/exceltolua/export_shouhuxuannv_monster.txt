@@ -1,0 +1,100 @@
+--导出星图配置表
+----------------------------------------------------------------------------------------
+--写文件
+
+
+
+
+
+monster_config = {}
+
+function ReadShouHuXuanNvMonster( )
+    -- body
+    local objexcel = CExcelReader:new()
+    if not objexcel then
+        print("objexcel is null")
+        return
+    end
+    objexcel:Init_App()
+    objexcel:OpenRead()
+    local obj = objexcel:LoadSheetByIndex(1)
+    if not obj then
+        print("LoadSheetByIndex失败!")
+        objexcel:Close()
+        objexcel:Quit_App()
+        return
+    end
+    local nCount = objexcel:GetCurrentSheetColCount()
+    local mCount = objexcel:GetCurrentSheetRowCount()
+    print("nCount", nCount)
+    print("mCount", mCount)
+    for i = 2, mCount do
+        local wave =  tonumber(objexcel:ReadCellAsString(i, 1))
+        local mixLeve =  tonumber(objexcel:ReadCellAsString(i, 2))
+        local maxLeve =  tonumber(objexcel:ReadCellAsString(i, 3))
+        local onewaveMonsterAll =  tonumber(objexcel:ReadCellAsString(i, 4))
+        if monster_config[wave] == nil then
+            monster_config[wave] = {}
+        end
+        local tmp = {}
+        tmp.maxLevel = mixLeve
+        tmp.minLevel = maxLeve
+        tmp.monstercount = onewaveMonsterAll
+        tmp.curmosnttabe = {}
+        local mosnter_table = {}
+        local monster_id1 = tonumber(objexcel:ReadCellAsString(i, 5))
+        local posX1 =  tonumber(objexcel:ReadCellAsString(i, 6))
+        local posX2 =  tonumber(objexcel:ReadCellAsString(i, 7))
+        local posY1 =  tonumber(objexcel:ReadCellAsString(i, 8))
+        local posY2 =  tonumber(objexcel:ReadCellAsString(i, 9))
+        local cont1 = tonumber(objexcel:ReadCellAsString(i, 10))
+        mosnter_table.monsterId = monster_id1
+        mosnter_table.posX1 = posX1
+        mosnter_table.posX2 = posX2
+        mosnter_table.posY1 = posY1
+        mosnter_table.posY2 = posY2
+        mosnter_table.nCount = cont1
+        table.insert(tmp.curmosnttabe , mosnter_table)
+       if math.fmod( i - 1 , 5 ) ~= 0  then
+            local mosnter_table1 = {}
+            monster_id1 = tonumber(objexcel:ReadCellAsString(i, 11))
+            posX1 = tonumber(objexcel:ReadCellAsString(i, 12))
+            posX2 = tonumber(objexcel:ReadCellAsString(i, 13))
+            posY1 = tonumber(objexcel:ReadCellAsString(i, 14))
+            posY2 = tonumber(objexcel:ReadCellAsString(i, 15))
+            cont1 = tonumber(objexcel:ReadCellAsString(i, 16))
+            mosnter_table1.monsterId = monster_id1
+            mosnter_table1.posX1 = posX1
+            mosnter_table1.posX2 = posX2
+            mosnter_table1.posY1 = posY1
+            mosnter_table1.posY2 = posY2
+            mosnter_table1.nCount = cont1
+            table.insert(tmp.curmosnttabe , mosnter_table1)
+            monster_id1 = tonumber(objexcel:ReadCellAsString(i, 17))
+            posX1 = tonumber(objexcel:ReadCellAsString(i, 18))
+            posX2 = tonumber(objexcel:ReadCellAsString(i, 19))
+            posY1 = tonumber(objexcel:ReadCellAsString(i, 20))
+            posY2 = tonumber(objexcel:ReadCellAsString(i, 21))
+            cont1 = tonumber(objexcel:ReadCellAsString(i, 22))
+            local mosnter_table2 = {}
+            mosnter_table2.monsterId = monster_id1
+            mosnter_table2.posX1 = posX1
+            mosnter_table2.posX2 = posX2
+            mosnter_table2.posY1 = posY1
+            mosnter_table2.posY2 = posY2
+            mosnter_table2.nCount = cont1
+            table.insert(tmp.curmosnttabe , mosnter_table2)
+        end
+        table.insert(monster_config[wave] , tmp)
+    end
+    local str_monCof = ""
+    for k , v in pairs ( monster_config ) do
+        str_monCof =  str_monCof..string.format("[%d] =\n " , k)
+        str_monCof = str_monCof..dump(v)..",\n"
+    end
+    objexcel:WriteFile("data\\functions\\config\\fubenconfig\\shouhuxuannv_td_monster.txt", str_monCof)
+    objexcel:Close()
+    objexcel:Quit_App()
+    objexcel:delete()
+end
+

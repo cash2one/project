@@ -1,0 +1,26 @@
+--#include "..\..\..\language\LangCode.txt"
+
+activity60Conf = {
+	activityId = 60,
+
+	activities =
+	{
+		[103]={
+			--活动id
+			id = 103,
+			-- 目标
+			target = {
+				-- 获得七夕伙伴
+				[1] = {count = 1},
+				-- 送花
+				[2] = {count = 520},
+				-- 参与七夕boss
+				[3] = {count = 3},
+				-- 连续登陆
+				[4] = {count = 5},
+			},
+			-- 奖励称号
+			title = 100,
+		},
+	},
+}

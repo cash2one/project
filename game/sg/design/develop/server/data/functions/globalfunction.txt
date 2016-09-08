@@ -1,0 +1,248 @@
+﻿--lua script
+thisNPC = nil
+InitFnTable = {}
+FinaFnTable = {}
+MainFnTable = {}
+TimeFnTable = {}
+ActorTimeFnTable = {}
+PrecisionTimeFnTable = {}
+
+--脚本子模块使用的局部函数或常量存放位置，避免使用全局对象 
+local LocalDT = {}
+local ONLINEREWARD = {}
+local ANSWERSYSTEM = {}
+local activityFunc = {}
+local EnhanceTable = {}
+local OFFLINEFBSYSTEM = {}
+
+
+-- 全局控制打印
+debug_print = function (...)
+	--print(...)
+end
+log_print = function ( ... )
+	-- print(...)
+end
+
+--#include "data\functions\commawardfunc.txt" once
+--#include "data\functions\monevent\actorchangehpmpimpl.txt" once
+--#include "data\config\levelopenplaysys.txt" once
+--#include "data\functions\actorevent\actortimer.txt" once
+--#include "monsterfunction.txt" once
+--#include "data\language\LangCode.txt" once
+--#include "BaseDef\BaseTypes.txt" once        
+--#include "data\functions\miscfunc.txt" once
+--#include "ActorEvent\ActorEventDispatcher.txt" once
+--#include "data\functions\gmevent.txt" once
+--#include "data\functions\timermsgfunc.txt" once
+--#include "Systems\SystemHandlerDispatcher.txt" once
+--#include "Tasks\taskInclude.txt" once
+--#include "CampKingNPC\CampKingNpcChangeName.txt" once
+--#include "GlobalEntityCallbackScript.txt" once
+--#include "TempTaskFunc.txt" once
+--#include "data\functions\Tasks\fengCeReward\getRewardCodeBagFunc.txt" once
+--#include "data\functions\Tasks\TianYuan\TianYuanSet.txt" once
+--#include "GameStartEvent.txt" once
+--#include "WorldBossFunc.txt" once
+--#include "qixibossfun.txt" once
+--#include "data\functions\gmcmd.txt" once
+--#include "data\functions\tasks\campbattle\zhenyingshilianmain.txt" once
+--#include "data\functions\systems\answerquestion\answerAutorun.txt" once
+--#include "jybossfunc.txt" once
+--#include "data\functions\systems\timereward\activitytimehandler.txt" once
+--#include "data\functions\actorevent\playfubenhandle.txt" once
+--#include "data\functions\fuben\fubensystemdispatcher.txt" once
+--#include "data\functions\fubendaily\fubenfunc.txt" once
+--#include "data\functions\gameplay\qinqishuhua.txt" once
+--#include "data\functions\gameplay\danrentianti.txt" once
+--#include "data\functions\taskgameplay\TaskNPCEntity.txt" once
+--#include "data\functions\taskgameplay\lua_quest_system_msghandle.txt" once
+--#include "data\functions\taskgameplay\normaldayquest.txt" once
+--#include "data\functions\gameplay\qianghongbao.txt" once
+--#include "data\functions\gameplay\zuduitianti.txt" once
+--#include "data\functions\plotplayer\dayplothandle.txt" once
+
+-- 以下为玩法类的include注册入口
+--#include "data\functions\actorevent\simple_questplayfunc.txt" once
+--#include "data\functions\globalrefreshfunc.txt" once
+
+
+-- 每次读入全局脚本都输出下日志
+print("load global function!!!!")
+
+function main(sysarg)
+	return Lang.Talk.t02466
+end
+
+--传送到某个场景
+function telportScene(sysarg,sceneid,x,y,talktonpc,effect)
+	if effect == nil then effect = 0 end
+	System.telportScene(sysarg,sceneid,x,y,effect)
+	if talktonpc ~= nil then
+		LActor.npcTalkByName(sysarg, talktonpc, "", 1000)
+	end
+end
+
+--玩家开始游戏要执行的参数
+function startPlay(sysarg)
+	--添加初始的任务
+	local zy = LActor.getIntProperty( sysarg, PROP_CAMP )
+	if zy == 1 then --天机
+		LActor.addQuest(sysarg,1)
+		--LActor.npcTalkByName(sysarg,Lang.EntityName.n00001)
+	elseif zy == 2 then
+		LActor.addQuest(sysarg,31)
+		--LActor.npcTalkByName(sysarg,Lang.EntityName.n00001)
+	else
+		LActor.addQuest(sysarg,61)
+		--LActor.npcTalkByName(sysarg,Lang.EntityName.n00001)
+	end
+end
+
+--打开购买某个物品的窗口
+function buyThisItem(sysarg,itemId)
+	LActor.openDialogs(sysarg,diBuyAnItem,itemId)
+end
+
+function emptyFunc(sysarg)
+end
+
+function cancelFunction(sysarg)
+end
+
+--检查活动礼包各种卡
+--[[
+	4、内测新手卡；
+	5、好评卡（100万张）；
+	6、VIP特权礼包（5万张）；
+	7、王者礼包（5万张）；
+--]]
+function checkNewPlayerNumber(sysarg,number,typeid)
+	checkPlayerNumber(sysarg,number,typeid)
+end
+
+function openServerTime(sysarg, year, mon, day, hour, m)
+	System.setOpenServerTime(year, mon, day, hour, m)
+end
+
+--一分钟定时执行的函数
+function OnGameTimer()
+	for i = 1, #TimeFnTable do
+		TimeFnTable[i]()
+	end
+end
+
+-- 高精度的定时函数，现在为5s一次
+function OnGamePrecisionTimer(curTime)
+	for _, func in ipairs(PrecisionTimeFnTable) do
+		func(curTime)
+	end
+end
+
+--[[初始化函数]]--
+function initialization(npcobj)
+
+	thisNPC = npcobj
+	for i = 1, table.getn(InitFnTable) do
+		--print("initialization..table.getn="..table.getn(InitFnTable))
+		InitFnTable[i]( npcobj )
+	end
+end
+
+--[[析构化函数]]--
+function finalization(npcobj)
+	for i = 1, table.getn(FinaFnTable) do
+		FinaFnTable[i]( npcobj )
+	end
+	thisNPC = nil
+end
+
+function setcontractid(sysarg)
+	local st = LActor.getStaticVar( sysarg )
+	st.contractid = "100634204T2201210180001"
+
+	local st = LActor.getStaticVar(sysarg)
+	if st and st.contractid ~= nil then
+		LActor.informCompletion(sysarg, st.contractid)
+	end
+end
+
+function setfeed(sysarg)
+	LActor.txSetFeed(sysarg, 0, tx_set_feed_url)
+end
+
+function setmovemode(sysarg, arg)
+	System.newMove(tonumber(arg)==1)
+end
+-- function SetChargeConfigAfterGQ()
+-- 	print("SetChargeConfigAfterGQ...")
+-- 	System.SetChargeConfig(1, 1000)	
+-- 	System.SetChargeConfig(2, 5000)	
+-- 	System.SetChargeConfig(3, 20000)
+-- end
+
+-- function testCharge()
+-- 	System.SetChargeConfig(1, 1020)	
+-- 	System.SetChargeConfig(3, 20010)
+-- end
+
+-- function ttttttt(sysarg)
+-- 	-- 弹出对话框，用户点击后会传送到指定的地方，文字相关的放到语言包，11,20,20 分别表示场景id，x，y坐标，5000表示5秒倒计时，其他不要改
+-- 	LActor.messageBox(sysarg,0,0,"把你传送到大黄那","确定/telportScene,11,30,20",nil, nil, 5000,0,"",0,1)
+-- end
+
+
+-- test
+-- local var = System.getStaticVar()
+-- if var.zactest == nil then
+-- 	var.zactest = {}
+-- 	var.zactest[1] = {}
+-- 	var.zactest[1][1] = 1
+-- 	var.zactest[2] = {}
+-- 	var.zactest[2][1] = 2
+-- 	var.zactest[3] = {}
+-- 	var.zactest[3][1] = "fff"
+-- end
+-- var.zactest[3][1] = "fff"
+-- print("len:"..#var.zactest)
+-- for i=1,#var.zactest do
+-- 	local tt = var.zactest[i]
+-- 	for j=1,#tt do
+-- 		print(tt[j])
+-- 	end
+-- end
+
+--开启第二次充值返利活动
+function openround2pay( sysarg )
+	local serverList = { 107, 109, 110} --要开启的服的列表
+	local sid = System.getServerId()
+	local flag = false
+	for i=1, #serverList do
+		if serverList[i] == sid then
+			flag = true
+			break
+		end
+	end
+	local sysVar = System.getStaticVar()
+	if flag and sysVar.round2PayClose ~= nil and sysVar.round2PayClose ==1 then
+		sysVar.round2PayClose = 0
+		if System.getOpenServerDay() <= 7 then
+			sysVar.round2PayEndTime = System.getOpenServerStartDateTime() + 14 * 86400
+		else
+			sysVar.round2PayEndTime = System.getToday() + 7 * 86400
+		end
+
+		local year, month, day, hour, minute, sec = 0, 0, 0, 0, 0, 0
+   		year, month, day, hour, minute, sec = System.timeDecode(sysVar.round2PayEndTime, year, month, day, hour, minute, sec)
+   		local round2PayEndTime = string.format("%d-%d-%d %d:%d:%d", year, month, day, hour, minute, sec)
+   		print("openround2pay sysVar.round2PayEndTime = ".. sysVar.round2PayEndTime .. " ("..round2PayEndTime ..")")
+	end
+end
+
+-- 将第二轮充值返利结束时间置空，重启时会被重设
+resetround2payendtime1 = function(sysarg)
+	local sysVar = System.getStaticVar()
+	sysVar.round2PayEndTime = nil
+	sysVar.round2PayClose = nil
+	print("sysVar.round2PayEndTime ,  sysVar.round2PayClose  reset nil")
+end

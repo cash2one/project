@@ -1,0 +1,1090 @@
+--通天试炼
+--#include "data\config\gameplay\tongtianshilianconfig.txt" once
+--#include "data\config\gameplay\tongtianshilianawardconfig.txt" once
+--#include "data\config\gameplay\tongtianshilianmonster.txt" once
+--#include "data\config\gameplay\tongtianshilianextraaward.txt" once
+tongtianshilian = {}
+
+local CMD = {
+	GACTD   = 1, -- 获得通天试炼数据
+	SDBEGIN = 2, -- 扫荡开始
+	SDEND   = 3, -- 扫荡结束
+	CZSD    = 4, -- 重置扫荡
+	JL		= 5, -- 奖励
+}
+
+function  tongtianshilian.GetCurrentDaySec()
+    local hour,minute,second = 0,0,0
+    hour, minute, second = System.getTime(hour, minute, second)
+    return hour * 60 *60 + minute * 60 + second
+end
+
+function tongtianshilian.IsOpenSys( sysarg )
+	-- body
+	local nLevel = LActor.getLevel( sysarg )
+	if nLevel >= LevelOpenPlaySys.tt_sl_lvl then
+		return true
+	end
+	LActor.sendTipmsg(sysarg , "通天试炼系统还未开放" , ttWarmTip)
+	return false
+end
+--外部入口
+function tongtianshilian.EntryTongtianshilian( sysarg, Fhandle )
+	-- body
+	if tongtianshilian.IsOpenSys( sysarg ) == false then
+		return
+	end
+	--
+	--保存进入副本是的hp
+	LActor.OnQuestEvent(qtWulishilian, 0, 1, true, sysarg)
+
+	local nStaticVar = LActor.getStaticVar(sysarg)
+	if nStaticVar.TongTianShiLian_entry_hp == nil then
+		nStaticVar.TongTianShiLian_entry_hp = 0
+	end
+	if nStaticVar.TongTianShiLian_entry_mp == nil then
+		nStaticVar.TongTianShiLian_entry_mp = 0
+	end
+	if nStaticVar.TongTianShiLian_top_index == nil then
+		nStaticVar.TongTianShiLian_entry_index = 0
+	else
+		nStaticVar.TongTianShiLian_entry_index = nStaticVar.TongTianShiLian_top_index
+	end
+
+	nStaticVar.TongTianShiLian_entry_hp = LActor.getIntProperty(sysarg , PROP_HP)
+	nStaticVar.TongTianShiLian_entry_mp = LActor.getIntProperty(sysarg , PROP_MP)
+	nStaticVar.IsProtocolEntry = 1
+	if nStaticVar.TongTiansShiLian_history_top_index == nil then
+		nStaticVar.TongTianShiLian_Entry_histoty_top_index = 0
+	else
+		nStaticVar.TongTianShiLian_Entry_histoty_top_index = nStaticVar.TongTiansShiLian_history_top_index
+	end
+	--清除CD
+	tongtianshilian.EnterTier( sysarg, Fhandle)
+	--进入副本是记录 开始的层数
+	--nStaticVar.TongTianShiLian_entry_index = nStaticVar.TongTianShiLian_top_index
+
+	-- 触发任务事件
+	LActor.OnQuestEvent(qtTongTianShiLian, 0, 1, true, sysarg)
+end
+
+--内部进入接口
+function tongtianshilian.EnterTier( sysarg, Fhandle)
+	if tongtianshilian.IsOpenSys( sysarg ) == false then
+		return
+	end
+	local nStaticVar = LActor.getStaticVar(sysarg)
+	if nStaticVar.TongTianShiLian_top_index == nil then
+		nStaticVar.TongTianShiLian_top_index = 0
+	end
+	if nStaticVar.TongTiansShiLian_history_top_index == nil then
+		nStaticVar.TongTiansShiLian_history_top_index = 0
+		nStaticVar.TongTiansShiLian_history_top_time = System.getCurrMiniTime()
+	end
+	--print("-======================",nStaticVar.TongTianShiLian_top_index)
+	if nStaticVar.TongTiansShiLian_history_top_index == nStaticVar.TongTianShiLian_top_index and nStaticVar.TongTiansShiLian_history_top_index >= TTSL_Config.max_top then
+		--game over
+		LActor.sendTipmsg( sysarg , "到达通天试炼 最高层" , ttWarmTip)
+		return
+	end
+	local nMaxHp = LActor.getIntProperty( sysarg , PROP_MAXHP)
+	local nMaxMp = LActor.getIntProperty( sysarg , PROP_MAXMP)
+	LActor.setIntProperty( sysarg , PROP_HP , nMaxHp)
+	LActor.setIntProperty( sysarg , PROP_MP , nMaxMp)
+	local nEntery_inde = math.mod( nStaticVar.TongTianShiLian_top_index , TTSL_Config.scene_num) + 1
+
+	if nEntery_inde > #TTSL_Config.sceneId then
+		LActor.sendTipmsg( sysarg , "场景太少了" , ttWarmTip)
+		return
+	end
+	local nSceneId = TTSL_Config.sceneId[nEntery_inde]
+	local nEntry_pos = TTSL_Config.playerPos[nSceneId]
+	if nEntry_pos == nil then
+		local str = string.format("----nEntery_inde = %d-----nSceneId = %d----配置错误--",nEntery_inde,nSceneId)
+		print(str)
+		return
+	end
+	LActor.clearSkillCd( sysarg )
+	Fuben.SetFubenTime(Fhandle,TTSL_Config.limitTime)
+	local EntryFlag = false
+	if LActor.getFubenId( sysarg ) == TTSL_Config.fubenId[1] then
+		EntryFlag = true
+	end
+	LActor.enterFuBen( sysarg, Fhandle, nSceneId, nEntry_pos[1], nEntry_pos[2] )
+
+	if EntryFlag == false then
+		fubenbase.Init( sysarg , TTSL_Config.fubenId[1] , nSceneId) --ef
+	end
+	--local  nVar = LActor.getStaticVar( sysarg )
+	--if nVar.TongTinaShiLian_Leave == nil then
+	--print("------++++++++++++++++++++++++++++++++-- nVar.TongTinaShiLian_Leave---------", nVar.TongTinaShiLian_Leave)
+	local npack = DataPack.allocPacket( sysarg , 167 , 11 )
+	DataPack.writeInt(npack , 6)
+	DataPack.writeInt(npack , 8)
+	if nStaticVar.IsProtocolEntry ~= nil then
+		DataPack.writeByte( npack ,1)
+		nStaticVar.IsProtocolEntry = nil
+	else
+		DataPack.writeByte( npack ,0)
+	end
+
+	DataPack.writeInt(npack , nStaticVar.TongTianShiLian_top_index + 1)
+	DataPack.flush( npack )
+
+	tongtianshilian.getCurLayerInfor( sysarg )
+	--end
+	--local nScenePtr = LActor.getScenePtr(sysarg)
+	--定时器
+	--local hscene = LActor.getSceneHandle( sysarg )
+	--Fuben.postSceneTimeCall(hscene, TimerMsg.TongTSLTips, TTSL_Config.entery_tips_time, 1)
+	--Fuben.postSceneTimeCall(hscene, TimerMsg.TongTSLCM, TTSL_Config.entery_create_Mon_time, 1)
+--	tongtianshilian.CreateMonster(nScenePtr, nStaticVar.TongTianShiLian_top_index + 1)
+end
+
+--怪物全部死亡
+function tongtianshilian.MonsterDieAll( sceneId, scenePtr, flag, monster )
+	local pfb = LActor.getFubenPrt(monster)
+   	local actors = LuaHelp.getFbActorList(pfb)
+
+   	if actors == nil or #actors ~= 1 then
+   		print("-----error tongtianshilian not one actor------")
+   		return
+   	end
+
+   	local sysarg = actors[1]
+	local nStaticVar = LActor.getStaticVar(sysarg)
+	if nStaticVar.TongTianShiLian_top_index == nil then
+		print("-------TongTianShiLian_top_index---error---")
+		return
+	end
+
+	local now = System.getCurrMiniTime()
+	if nStaticVar.TongTiansShiLian_history_top_index == nil then
+		nStaticVar.TongTiansShiLian_history_top_index = 0
+		nStaticVar.TongTiansShiLian_history_top_time = now
+	end
+
+	if nStaticVar.TongTianShiLian_exp == nil then nStaticVar.TongTianShiLian_exp = 0 end
+
+	nStaticVar.TongTianShiLian_top_index = nStaticVar.TongTianShiLian_top_index + 1
+
+	if TongtianshilianNormalAward[nStaticVar.TongTianShiLian_top_index] then
+		local double = getAcitivityIsDouble(daWulishilian) or 1
+		local exp = TongtianshilianNormalAward[nStaticVar.TongTianShiLian_top_index].exp * double
+		nStaticVar.TongTianShiLian_exp = nStaticVar.TongTianShiLian_exp + exp
+		LActor.addExp(sysarg, exp, 214, 0)
+		for _, conf in pairs(TongtianshilianNormalAward[nStaticVar.TongTianShiLian_top_index].items) do
+			local rand = System.getRandomNumber(100) + 1
+			local total = 0
+			for _, rateConf in ipairs(conf.countRate) do
+				total = total + rateConf.rate
+				if rand <= total then
+					LActor.addItem(sysarg, conf.itemid, 0, 0, rateConf.count*double , 0, "tongtianshilian additem",55, true)
+					fubenjiesuan.PackUpItem(sysarg, {conf.itemid, 0, 0, 0, rateConf.count*double})
+					break
+				end
+			end
+		end
+	end
+
+	if nStaticVar.TongTianShiLian_top_index > nStaticVar.TongTiansShiLian_history_top_index then
+		nStaticVar.TongTiansShiLian_history_top_index = nStaticVar.TongTianShiLian_top_index
+		nStaticVar.TongTiansShiLian_history_top_time = now
+	end
+	LActor.OnQuestEvent(qtFinishTongTianCount, nStaticVar.TongTianShiLian_top_index, 1, true, sysarg)
+
+	if nStaticVar.TongTiansShiLian_history_top_index == nStaticVar.TongTianShiLian_top_index and nStaticVar.TongTiansShiLian_history_top_index >= TTSL_Config.max_top then
+		tongtianshilian.OnGetAward( sysarg , 1)
+
+		local nFubenHandle = LActor.getFubenHandle(sysarg)
+		Fuben.SetFubenTime(nFubenHandle, 10)
+		return
+	end
+	local npack = DataPack.allocPacket(sysarg , 167 , 11)
+	DataPack.writeInt( npack , 6)
+	DataPack.writeInt( npack , 7)
+	DataPack.flush( npack )
+	--怪物全部死亡
+	--创建下一层的
+	--local nFubenHandle = LActor.getFubenHandle(sysarg)
+--	tongtianshilian.EnterTier( sysarg , nFubenHandle)
+end
+
+function tongtianshilian.giftbag(sysarg , nAward_list , nSendAward_list , nlayer)
+	local double = getAcitivityIsDouble(daWulishilian) or 1
+	for k , v in pairs ( TTSL_Extra_Award ) do
+		if v.layer == nlayer then
+			print("-------------v.layer--------------",v.layer)
+		--	print_table(v.list)
+			for n , m in pairs ( v.list ) do
+				local nAddItemNum = LActor.addItem(sysarg, m.id, 0, 0, m.count*double , 0, "add fuben award Item",29,true)
+				if nAddItemNum < m.count*double then
+					if nAddItemNum == 0 then
+						table.insert(nSendAward_list , { m.id , 1 , m.count*double })
+					else
+						table.insert(nSendAward_list , { m.id , 1 , m.count*double - nAddItemNum })
+						table.insert(nAward_list , { m.id , 1 , nAddItemNum })
+					end
+				else
+					table.insert(nAward_list , { m.id , 1 , m.count*double })
+				end
+			end
+			break
+		end
+	end
+end
+
+--  挑战奖励
+function tongtianshilian.Award(sysarg)
+	-- body
+	if not sysarg  then
+		print("tongtianshilian award not actor")
+		return
+	end
+	local fubenid = LActor.getFubenId(sysarg)
+	local Fhandle = LActor.getFubenHandle(sysarg)
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+	if fbVar.fbAwardList == nil then
+		print("tongtianshilian award error not fbAwardList---")
+	end
+	
+
+	local nStaticVar = LActor.getStaticVar(sysarg)
+	if nStaticVar.fuben_exp == nil then
+		nStaticVar.fuben_exp = 0
+	end
+
+
+	if nStaticVar.TongTianShiLian_Entry_histoty_top_index == nil then
+		print(" tongtianshilian error not TongTianShiLian_Entry_histoty_top_index------")
+		return
+	end
+	if nStaticVar.TongTianShiLian_entry_index == nil then
+		--nStaticVar.TongTianShiLian_entry_index = 0
+		print("tongtianshilian error, not TongTianShiLian_entry_index")
+		return
+	end
+	if nStaticVar.TongTianShiLian_top_index == nil then
+		--nStaticVar.TongTianShiLian_top_index = 0
+		print("tongtianshilian error, not TongTianShiLian_top_index ")
+		return
+	end
+	if nStaticVar.TongTianShiLian_entry_index > nStaticVar.TongTianShiLian_top_index then
+		print("tongtianshilian error, TongTianShiLian_entry_index and TongTianShiLian_top_index-------")
+		return
+	end
+	local nAward_list = {}
+	local nSendAward_list = {}
+--	print("===============================",nStaticVar.TongTianShiLian_Entry_histoty_top_index , nStaticVar.TongTianShiLian_top_index)
+	if nStaticVar.TongTianShiLian_Entry_histoty_top_index < nStaticVar.TongTianShiLian_top_index then
+		local nFiveLayer =  math.floor(nStaticVar.TongTianShiLian_Entry_histoty_top_index / TTSL_Config.extra_layer)
+		local i = 1
+		while ( i )
+		do
+			
+			local nlayer = (TTSL_Config.extra_layer * ( nFiveLayer + i ))
+			if nlayer <=  nStaticVar.TongTianShiLian_top_index then
+				tongtianshilian.giftbag(sysarg , nAward_list , nSendAward_list , nlayer)
+			else
+				break
+			end
+			i = i + 1
+		end
+	end
+	local nPackItemTable = {}
+	local nActorId = LActor.getActorId( sysarg )
+	if fbVar.fbAwardList ~= nil and fbVar.fbAwardList[nActorId] ~= nil then
+		local nSize = #fbVar.fbAwardList[nActorId]
+		--物品类型的问题
+		for k = 1, nSize  do
+			local nColor = Item.getItemPropertyById( fbVar.fbAwardList[nActorId][k][1] , Item.ipItemColor)
+			local nTemp = {
+				id = fbVar.fbAwardList[nActorId][k][1],
+				cout = fbVar.fbAwardList[nActorId][k][2],
+				color = nColor,
+			}
+			table.insert( nPackItemTable , nTemp )
+		end
+	else
+		print("----tongtianshilian-----nActorId----------")
+	end
+
+	table.sort( nPackItemTable , compares)
+	--print_table( nPackItemTable )
+	local nSize = 0
+	if #nPackItemTable < 4 then
+		nSize = #nPackItemTable
+	else
+		nSize = 4
+	end
+
+	local fuben_exp = LActor.getCaleData( sysarg , 0)
+
+	--local nCion = LActor.getCaleData( sysarg ,2)
+
+	local npack = DataPack.allocPacket(sysarg, 167, 11)
+	DataPack.writeInt( npack, 6)
+	DataPack.writeInt( npack, 5)
+	DataPack.writeInt(npack,nStaticVar.TongTianShiLian_entry_index)
+	DataPack.writeInt(npack,nStaticVar.TongTianShiLian_top_index)
+	DataPack.writeInt(npack,nStaticVar.TongTiansShiLian_history_top_index)
+	--print("=========Exp==========",nStaticVar.fuben_exp , LActor.getIntProperty(sysarg,PROP_ACTOR_EXP))
+	--local fuben_exp = LActor.getIntProperty(sysarg,PROP_ACTOR_EXP) - nStaticVar.fuben_exp
+	DataPack.writeInt(npack,fuben_exp)
+	DataPack.writeInt(npack,nSize + #nAward_list)
+	for k = 1 , nSize do
+		DataPack.writeWord(npack,nPackItemTable[k].id)
+		DataPack.writeInt(npack, nPackItemTable[k].cout)
+	end
+	for k , v in pairs (nAward_list) do
+		DataPack.writeWord(npack,v[1])
+		DataPack.writeInt(npack, v[3])
+	end
+	DataPack.flush(npack)
+	--发送邮件
+	local actorid = LActor.getActorId( sysarg )
+	for k , v in pairs (nSendAward_list) do
+		System.sendGmMailOffLine(actorid, "您的背包已满，请清理背包后领取通天试炼的奖励！" , 1, v[1],v[2], v[3],"遗失的奖励")
+	end
+end
+
+
+function tongtianshilian.Exit(sysarg)
+	-- body
+	local nStaticVar = LActor.getStaticVar( sysarg )
+	if nStaticVar.TongTianShiLian_top_index == nil then
+		nStaticVar.TongTianShiLian_top_index = 0
+	end
+	LActor.setIntProperty( sysarg , PROP_HP, nStaticVar.TongTianShiLian_entry_hp)
+	LActor.setIntProperty( sysarg , PROP_MP, nStaticVar.TongTianShiLian_entry_mp)
+	if nStaticVar.TongTianShiLian_entry_index ~= nil then
+		nStaticVar.TongTianShiLian_entry_index = nil
+	end
+	nStaticVar.TongTianShiLian_exp = 0
+
+	--恢复技能cd
+	LActor.partnerOnActorRelive( sysarg )
+	LActor.restoreRecordCD( sysarg )
+	
+end
+
+function tongtianshilian.ClearTongtianshilianDailyData( sysarg )
+	--新的一天清除 通天试炼重置次数
+	local nStaticVar = LActor.getStaticVar(sysarg)
+	if nStaticVar == nil then
+		return
+	end
+	nStaticVar.TongTianShiLian_reset_cout = nil
+end
+
+
+function tongtianshilian.CreateMonster(sceneptr, index)
+	--创建怪物
+	if index > #TTSL_Monster then
+		local str = string.format("---tongtianshilian----当前层数怪物配置 %d----最高层数怪物配置 %d--",index, #TTSL_Monster)
+		print(str)
+	end
+
+	local nMonsterConfig = TTSL_Monster[index].monster_list
+	if nMonsterConfig == nil then
+		print("---tongtianshilian error, not nMonsterConfig----")
+		return
+	end
+
+	local nSceneHandel = Fuben.getSceneHandleByPtr(sceneptr)
+	for k , v in pairs ( nMonsterConfig) do
+		--print(dump(v))
+		Fuben.createMonsters(nSceneHandel , v.monsterid , v.pos[1] , v.pos[2] , v.pos[3] , v.pos[4] , v.num, 0)
+	end
+end
+
+--获得玩家 在通天试炼数据
+function tongtianshilian.getActivityData( sysarg )
+	-- body
+	if tongtianshilian.IsOpenSys( sysarg ) == false then
+		return
+	end
+	local nStaticVar = LActor.getStaticVar(sysarg)
+	local npack = DataPack.allocPacket(sysarg , 167 , 11)
+	DataPack.writeInt(npack , 6)
+	DataPack.writeInt(npack , 1)
+
+	if nStaticVar.TongTianShiLian_top_index == nil then
+		nStaticVar.TongTianShiLian_top_index = 0
+	end
+	if nStaticVar.TongTianShiLian_saodang_End_time == nil then
+		nStaticVar.TongTianShiLian_saodang_End_time = 0
+	end
+
+	local now = System.getCurrMiniTime()
+	if nStaticVar.TongTiansShiLian_history_top_index == nil then
+		nStaticVar.TongTiansShiLian_history_top_index = 0
+		nStaticVar.TongTiansShiLian_history_top_time = now
+	end
+	DataPack.writeInt(npack , nStaticVar.TongTianShiLian_top_index )
+	DataPack.writeInt(npack , nStaticVar.TongTiansShiLian_history_top_index)
+
+	if nStaticVar.TongTianShiLian_reset_cout == nil then
+		nStaticVar.TongTianShiLian_reset_cout = 0
+	end
+	
+	DataPack.writeInt( npack, nStaticVar.TongTianShiLian_reset_cout)
+
+	if nStaticVar.TongTianShiLian_saodang_star_time == nil then
+		DataPack.writeByte(npack, 0) --是否在扫荡期间
+		DataPack.writeInt64(npack, 0)
+	else
+		DataPack.writeByte(npack, 1)
+		local nLastTime = nStaticVar.TongTianShiLian_saodang_End_time - now
+		if nLastTime < 0 then
+			nLastTime = 0
+		end
+		DataPack.writeUInt(npack, nLastTime )
+	end
+	DataPack.flush(npack)
+end
+
+
+--扫荡 重置  --返回重置扫荡 (4 - 4)
+function tongtianshilian.ResetSaodangData(sysarg)
+	if tongtianshilian.IsOpenSys( sysarg ) == false then
+		return
+	end
+	local nStaticVar = LActor.getStaticVar(sysarg)
+	if nStaticVar.TongTianShiLian_reset_cout == nil then
+		nStaticVar.TongTianShiLian_reset_cout = 0
+	end
+	if nStaticVar.TongTianShiLian_top_index == nil or nStaticVar.TongTianShiLian_top_index == 0 then
+		--print("------还未有通关记录--------")
+		LActor.sendTipmsg(sysarg , "还未有通关记录" , ttWarmTip)
+		return
+	end
+	if nStaticVar.TongTianShiLian_reset_cout < TTSL_Config.mianfei_reset_cout then
+		--每天第一次免费
+		--print("--------第一次免费---------")
+		--return
+	else
+		local nVipLevel = LActor.getVIPLevel(sysarg)
+		local nResetVip_count = 0
+		if nVipLevel ~= 0 then
+			nResetVip_count = VIPConfig.tongtianReset[nVipLevel]
+		end
+
+		if nStaticVar.TongTianShiLian_reset_cout > nResetVip_count + TTSL_Config.reset_count then
+			LActor.sendTipmsg(sysarg , "重置次数用完了" , ttWarmTip)
+			return
+		end
+
+		local nCost_table = TTSL_Config.reset_cost[nStaticVar.TongTianShiLian_reset_cout]
+		if nCost_table == nil then
+			nCost_table =  TTSL_Config.reset_cost[#TTSL_Config.reset_cost]
+		end
+		local nCurGold = LActor.getMoneyCount( sysarg , mtYuanbao)
+		local needMoney = math.floor(nCost_table[2] * nStaticVar.TongTianShiLian_top_index)
+		if needMoney > nCurGold then
+			--LActor.sendTipmsg( sysarg , "天珠不足" , ttWarmTip)
+			LActor.SendGeneralTips(sysarg, 1, mtYuanbao, needMoney-nCurGold)
+			return
+		end
+		if LActor.changeMoney(sysarg, mtYuanbao, -needMoney, 1, true, "tongtianshilian", "resetcost") == false then
+			LActor.sendTipmsg( sysarg , "天珠不足" , ttWarmTip)
+			return
+		end
+	end
+	nStaticVar.TongTianShiLian_top_index = nil
+	nStaticVar.TongTianShiLian_reset_cout = nStaticVar.TongTianShiLian_reset_cout + 1
+	local npack = DataPack.allocPacket(sysarg, 167 , 11)
+	DataPack.writeInt(npack , 6)
+	DataPack.writeInt(npack , 4)
+	DataPack.writeByte( npack , 1)
+	DataPack.writeInt( npack, nStaticVar.TongTianShiLian_reset_cout)
+	DataPack.flush(npack)
+end
+
+--开始 扫荡
+function tongtianshilian.SaoDangBegin(sysarg)
+	if tongtianshilian.IsOpenSys( sysarg ) == false then
+		return
+	end
+	local nStaticVar = LActor.getStaticVar(sysarg)
+
+	if nStaticVar.TongTiansShiLian_history_top_index == nil then
+	--	print("------还未有通关记录------")
+		LActor.sendTipmsg( sysarg , "还未有通关记录" , ttWarmTip)
+		return
+	end
+
+	if nStaticVar.TongTianShiLian_top_index == nil then
+		nStaticVar.TongTianShiLian_top_index = 0
+		--print("--------当前层数是 1层 不需要重置----------")
+		--return
+	end
+	--local nstr = string.format("------------扫荡开始--start_index =%d history_top_index = %d-------",nStaticVar.TongTianShiLian_top_index,nStaticVar.TongTiansShiLian_history_top_index)
+	--print(nstr)
+	if nStaticVar.TongTianShiLian_top_index == nStaticVar.TongTiansShiLian_history_top_index then
+		LActor.sendTipmsg( sysarg , "已经达到最高层" , ttWarmTip)
+		return
+	end
+
+	if nStaticVar.TongTianShiLian_saodang_star_time ~= nil then
+		LActor.sendTipmsg( sysarg , "已经开始扫荡" , ttWarmTip)
+		return
+	end
+
+
+
+	nStaticVar.TongTianShiLian_saodang_star_time = System.getCurrMiniTime()
+	local nLastSaoDangEndTim = ( nStaticVar.TongTiansShiLian_history_top_index - nStaticVar.TongTianShiLian_top_index ) * TTSL_Config.saodang_time
+	nStaticVar.TongTianShiLian_saodang_End_time = nLastSaoDangEndTim + nStaticVar.TongTianShiLian_saodang_star_time
+	local npack = DataPack.allocPacket( sysarg , 167 , 11)
+	DataPack.writeInt(npack , 6)
+	DataPack.writeInt(npack , 2)
+	DataPack.writeByte(npack , 1)
+	DataPack.writeUInt(npack , nLastSaoDangEndTim )
+	DataPack.flush( npack )
+	local nVipLevel = LActor.getVIPLevel(sysarg)
+	if VIPConfig.tongtianPushCd[nVipLevel] == 1 then
+		tongtianshilian.SaoDangEnd(sysarg)
+	end
+
+	---print("------开始扫荡时间 = %d------",nStaticVar.TongTianShiLian_saodang_star_time)
+end
+
+function compares( data1 , data2 )
+	if not data1 or not data2 then
+		return
+	end
+	if data1.color > data2.color then
+		return true
+	end
+	return false
+	-- body
+end
+
+function tongtianshilian.AddItemAward(sysarg,nAward_list ,nSendAward_list, nAward_config)
+	--print_table(nAward_config)
+	if type(nAward_list) ~= 'table' or type(nSendAward_list) ~= 'table' or type(nAward_config) ~= 'table' or sysarg == nil then
+		print("--------tongtianshilian error, AddItemAward type--------")
+		return
+	end
+	local double = getAcitivityIsDouble(daWulishilian) or 1
+	if nAward_config.type_ == 1 then -- 物品
+		local nAddItemNum = LActor.addItem(sysarg, nAward_config.itemid_, 0, 0, nAward_config.itemnum_*double, 0, "add fuben award Item")
+		if nAddItemNum < nAward_config.itemnum_*double then
+			if nAddItemNum == 0 then
+				table.insert(nSendAward_list , { nAward_config.itemid_ , nAward_config.type_ , nAward_config.itemnum_*double })
+			else
+				table.insert(nSendAward_list , { nAward_config.itemid_ , nAward_config.type_ , nAward_config.itemnum_*double - nAddItemNum })
+				table.insert(nAward_list , { nAward_config.itemid_ , nAward_config.type_ , nAddItemNum })
+			end
+		else
+			table.insert(nAward_list , { nAward_config.itemid_ , nAward_config.type_ , nAddItemNum })
+		end
+		return nAddItemNum
+	elseif nAward_config.type_ == 2 then --货币
+		LActor.changeMoney(sysarg, nAward_config.itemid_, nAward_config.itemnum_*double, 1, true, "pack money", "gamereward")
+	elseif nAward_config.type_ == 3 then --宗门贡献值
+		LActor.giveAward(sysarg, qatGuildContribution , nAward_config.itemnum_*double )
+	elseif nAward_config.type_ == 6 then --经验
+		LActor.addExp(sysarg, nAward_config.itemnum_*double, 214, 0)
+	elseif nAward_config.type_ == 10 then --威望
+		LActor.giveAward(sysarg, qatShengWang , nAward_config.itemnum_*double)
+	elseif nAward_config.type_ == 16 then --荣誉值
+		LActor.giveAward(sysarg, qatHonor , nAward_config.itemnum_*double )
+	elseif nAward_config.type_ == 17 then --钥匙
+		LActor.giveAward(sysarg, qatPassKey , nAward_config.itemnum_*double )
+	end
+	table.insert(nAward_list , { nAward_config.itemid_ , nAward_config.type_ , nAward_config.itemnum_*double })
+end
+
+function tongtianshilian.tidyAwardConfig( srcaward , awardconfig )
+	-- body
+	if not srcaward or not awardconfig or type(awardconfig) ~= 'table' or type( srcaward ) ~= 'table' then
+		return
+	end
+	local temp = {}
+	temp.type_ = awardconfig.type_
+	temp.itemnum_ = awardconfig.itemnum_
+	temp.itemid_ = awardconfig.itemid_
+	if awardconfig.type_ == 1 or  awardconfig.type_ == 2 then
+		if srcaward[awardconfig.itemid_] == nil then
+			srcaward[awardconfig.itemid_] = temp
+		else
+			srcaward[awardconfig.itemid_].itemnum_ = srcaward[awardconfig.itemid_].itemnum_  + temp.itemnum_
+		end
+	else
+		if srcaward[temp.type_] == nil then
+			srcaward[temp.type_] = temp
+		else
+			srcaward[temp.type_].itemnum_ = srcaward[temp.type_].itemnum_ + temp.itemnum_
+		end
+	end
+end
+
+--扫荡结束
+function tongtianshilian.SaoDangEnd(sysarg)
+	if tongtianshilian.IsOpenSys( sysarg ) == false then
+		return
+	end
+	local nStaticVar = LActor.getStaticVar(sysarg)
+	if nStaticVar.TongTianShiLian_top_index == nil then
+		LActor.sendTipmsg( sysarg , " 没有开始扫荡" , ttWarmTip)
+		return
+	end
+	if nStaticVar.TongTiansShiLian_history_top_index == nil then
+		LActor.sendTipmsg( sysarg , " 没有通过记录 ， 不能扫荡" , ttWarmTip)
+		return
+	end
+	if nStaticVar.TongTianShiLian_saodang_star_time == nil then
+		LActor.sendTipmsg( sysarg , "没有开始扫荡" , ttWarmTip)
+		--nStaticVar.TongTianShiLian_saodang_star_time = 0
+		return
+	end
+
+	local nSaoDangCount = 0
+
+	local nVipLevel = LActor.getVIPLevel(sysarg)
+	if VIPConfig.tongtianPushCd[nVipLevel] == 1 then --vip达到VIPLevel 后0cd
+		nSaoDangCount = nStaticVar.TongTiansShiLian_history_top_index - nStaticVar.TongTianShiLian_top_index
+	else
+
+		nSaoDangCount = math.floor(( System.getCurrMiniTime() - nStaticVar.TongTianShiLian_saodang_star_time ) / TTSL_Config.saodang_time)
+		if nSaoDangCount > nStaticVar.TongTiansShiLian_history_top_index - nStaticVar.TongTianShiLian_top_index then
+			nSaoDangCount = nStaticVar.TongTiansShiLian_history_top_index - nStaticVar.TongTianShiLian_top_index
+		end
+
+		--local str = string.format("----curtime = %d ----start_time = %d-- saodang_count = %d-----",System.getCurrMiniTime(),nStaticVar.TongTianShiLian_saodang_star_time,nSaoDangCount)
+		--print(str)
+	end
+	local nAward_list = {}
+	local nSendAward_list = {}
+	local nSaoDangAward = {}
+	for x = 1 , nSaoDangCount do
+		local nIndex =  nStaticVar.TongTianShiLian_top_index + x
+		if nIndex > #TTSL_Award_Config then
+			print("tongtianshilian error, SaoDangEnd config  "..nIndex)
+			return
+		end
+
+		local nAward_config = TTSL_Award_Config[nIndex]
+		--增加奖励
+		for k , v in pairs ( nAward_config ) do
+			local nRandomNum = System.getRandomNumber(10000)
+			local nMinRate = 0
+			local nMaxRate = 0
+			--print(string.format("-------nRandomNum-----------=%d",nRandomNum))
+			for n , m in pairs( v )do
+				if m.gropu_ == 0 then
+					tongtianshilian.tidyAwardConfig( nSaoDangAward , m )
+				else
+					nMinRate = 0
+					nMaxRate = m.rate_ + nMaxRate
+					if nMinRate <= nRandomNum and nMaxRate >= nRandomNum then
+						tongtianshilian.tidyAwardConfig( nSaoDangAward , m )
+						break
+					end 
+				end
+			end
+		end
+	end
+	for k , v in pairs ( nSaoDangAward ) do
+		tongtianshilian.AddItemAward(sysarg , nAward_list , nSendAward_list , v)
+	end
+
+	local nItemTable = {}
+	local nothertable = {}
+	if #nAward_list >= 1 then
+		tongtianshilian.tidytableItem( nAward_list , nItemTable , nothertable )--排序
+	end
+	table.sort( nItemTable , compares)
+	--print("-2------------------------------------")
+	--print_table( nItemTable )
+	--print("-3------------------------------------")
+	--print_table( nothertable )
+	local nSize = 0
+	if #nItemTable > 4 then
+		nSize = 4
+	else
+		nSize = #nItemTable
+	end
+	local nOtherItemLen = 0
+	for k , v in pairs ( nothertable ) do
+		nOtherItemLen = nOtherItemLen + 1
+	end
+	local npack = DataPack.allocPacket(sysarg , 167, 11)
+	DataPack.writeInt( npack , 6)
+	DataPack.writeInt( npack , 6)
+	DataPack.writeInt( npack , nStaticVar.TongTianShiLian_top_index)
+	DataPack.writeInt( npack , nStaticVar.TongTianShiLian_top_index + nSaoDangCount )
+	DataPack.writeInt( npack , nSize + nOtherItemLen)
+	--发送结果
+	for k = 1, nSize do
+		DataPack.writeWord(npack , nItemTable[k].id)
+		DataPack.writeInt(npack , nItemTable[k].type)
+		DataPack.writeInt(npack , nItemTable[k].cout)
+	end
+
+	for k , v in pairs ( nothertable ) do
+		DataPack.writeWord(npack , v.id)
+		DataPack.writeInt(npack , v.type)
+		DataPack.writeInt(npack , v.cout)
+	end
+	DataPack.flush( npack )
+	--发送邮件
+	for k , v in pairs (nSendAward_list) do
+		System.sendGmMailOffLine(actorid, "您的背包已满，请清理背包后领取通天试炼的奖励！" , 1, v[1],v[2], v[3])
+	end
+	nStaticVar.TongTianShiLian_top_index = nStaticVar.TongTianShiLian_top_index + nSaoDangCount
+	nStaticVar.TongTianShiLian_saodang_star_time = nil
+end
+
+function tongtianshilian.tidytableItem( tablesrc , tabledest1 ,tabledest2 )
+	-- body
+	for k , v in pairs ( tablesrc ) do
+		if v[2] == 1 then
+			local nFlage = false
+			for i , j in pairs ( tabledest1 ) do
+		
+				if j.id == v[1] then
+					tabledest1[i].cout = tabledest1[i].cout + v[3]
+					nFlage = true
+					break
+				end
+			end
+			if nFlage == false then
+				local nItemColor = Item.getItemPropertyById( v[1] , Item.ipItemColor)
+				local nTemp = {
+					id = v[1],
+					type = v[2],
+					cout = v[3],
+					color = nItemColor,
+				}
+				table.insert(tabledest1 , nTemp)
+			end
+		else
+			if tabledest2[v[2]] == nil then
+				local nTemp = {
+					id = v[1],
+					type = v[2],
+					cout = v[3],
+					color = 0,
+				}
+				tabledest2[v[2]] = nTemp
+			else
+				tabledest2[v[2]].cout = tabledest2[v[2]].cout + v[3]
+			end
+		end
+	end
+end
+
+function tongtianshilian.getCurLayerInfor( sysarg )
+	if tongtianshilian.IsOpenSys( sysarg ) == false then
+		return
+	end
+
+	if not sysarg then
+		return
+	end
+	local nFubenId = LActor.getFubenId( sysarg )
+	if nFubenId ~= TTSL_Config.fubenId[1] then
+		print("---------tongtianshilian getCurLayerInfor not in tongtianshilian-----------")
+		return
+	end
+	local nStaticVar = LActor.getStaticVar( sysarg )
+	local nCurLayer = 0
+	if nStaticVar.TongTianShiLian_top_index == nil then
+		nCurLayer = 0
+	else
+		nCurLayer = nStaticVar.TongTianShiLian_top_index
+	end
+	local nfbptr = LActor.getFubenPrt( sysarg )
+	local nlastTime = Fuben.getFbTime( nfbptr )
+
+	local npack = DataPack.allocPacket( sysarg , 167 , 11)
+	DataPack.writeInt( npack , 6)
+	DataPack.writeInt( npack , 12)
+	DataPack.writeInt( npack , nCurLayer + 1)
+	DataPack.writeInt( npack , nlastTime)
+	DataPack.flush(npack)
+end
+
+function tongtianshilian.HandleNetworkData( sysarg, dp)
+	if tongtianshilian.IsOpenSys( sysarg ) == false then
+		return
+	end
+	local cmdid = DataPack.readInt(dp)
+	--local cmdid = tonumber(cmdid[1])
+	--print(str)
+	if cmdid == 1 then
+		tongtianshilian.getActivityData(sysarg)
+	elseif cmdid == 2 then
+		tongtianshilian.SaoDangBegin(sysarg)
+	elseif cmdid == 3 then
+		tongtianshilian.SaoDangEnd(sysarg)
+	elseif cmdid == 4 then
+		tongtianshilian.ResetSaodangData(sysarg)
+	elseif cmdid == 5 then
+		tongtianshilian.EntryNextLayer(sysarg)
+	elseif cmdid == 6 then
+		--播放完特效
+		tongtianshilian.CMDcreateMonster( sysarg )
+	elseif cmdid == 7 then
+		tongtianshilian.OnGetAward( sysarg )
+	elseif cmdid == 8 then
+		tongtianshilian.OnContinue(sysarg)
+	elseif cmdid == 12 then
+		tongtianshilian.getCurLayerInfor( sysarg )
+	elseif cmdid == 10 then
+		tongtianshilian.showData( sysarg )
+	else
+		local str = string.format("--------该命令不存在 = %d--------",cmdid)
+		print(str)
+	end
+end
+
+function tongtianshilian.showData( sysarg )
+	if not sysarg then
+		return
+	end
+	local nVar = LActor.getStaticVar( sysarg )
+	print("------top index---------",nVar.TongTianShiLian_top_index)
+	print("------reset_cout---------",nVar.TongTianShiLian_reset_cout)
+	print("----------history_top_index--------------",nVar.TongTiansShiLian_history_top_index)
+
+end
+
+--玩家死亡 结束
+function tongtianshilian.OnActorDie( actorobj )	
+	if actorobj == nil then
+		return
+	end
+	local nFubenId = LActor.getFubenId( actorobj )
+	if nFubenId ~= TTSL_Config.fubenId[1] then
+		return
+	end
+	tongtianshilian.OnGetAward( actorobj , 1)
+	--tongtianshilian.Award( actorobj )
+	
+	local nFubenHandle = LActor.getFubenHandle(actorobj)
+	Fuben.SetFubenTime(nFubenHandle, 10)
+end
+
+function tongtianshilian.sendtips( msgid, pscene )
+   	local pfb = Fuben.getSceneFuben(pscene)
+	local actors = LuaHelp.getFbActorList(pfb)
+	if actors == nil then return end
+	for i = 1 , #actors do
+		local player = actors[i]
+		local nVar = LActor.getStaticVar( player )
+		local nTips = ""
+		if nVar.TongTianShiLian_top_index == nil then
+			nTips = string.format("第%d层" , 1)
+		else
+			nTips = string.format("第%d层", nVar.TongTianShiLian_top_index + 1)
+		end
+		--LActor.sendTipmsg( player , nTips , ttScreenCenter)
+	end
+
+end
+
+function tongtianshilian.CMDcreateMonster( sysarg )
+	if sysarg == nil then
+		return
+	end
+
+	local fubenid = LActor.getFubenId( sysarg )
+	if fubenid ~= TTSL_Config.fubenId[1] then
+		return
+	end
+
+	local sceneHandle = LActor.getSceneHandle( sysarg )
+	if not Fuben.isKillAllMonster(sceneHandle) then
+		print("tongtianshilian error CMDcreateMonster, not killallmonster    ---------       "..LActor.getSceneId(sysarg))
+		return
+	end
+
+	local nVar = LActor.getStaticVar( sysarg )
+	local nIndex = 1
+	if nVar.TongTianShiLian_top_index ~= nil then
+		nIndex = tonumber( nVar.TongTianShiLian_top_index)
+		nIndex = nIndex + 1
+	end
+	tongtianshilian.CreateMonster( LActor.getScenePtr( sysarg ) , nIndex)
+end
+
+function tongtianshilian.NextWaveMonster( msgid, pscene )
+	-- body
+   	local pfb = Fuben.getSceneFuben(pscene)
+	local actors = LuaHelp.getFbActorList(pfb)
+	if actors == nil then return end
+	for i = 1 , #actors do
+		local nVar = LActor.getStaticVar( actors[i] )
+		local nIndex = 1
+		if nVar.TongTianShiLian_top_index ~= nil then
+			nIndex = tonumber( nVar.TongTianShiLian_top_index)
+		end
+		tongtianshilian.CreateMonster( pscene , nIndex + 1)
+	end
+end
+
+function tongtianshilian.EntryNextLayer( actorobj )
+	-- body
+	if not actorobj then
+		return
+	end
+	local fubenid = LActor.getFubenId( actorobj )
+	if fubenid ~= TTSL_Config.fubenId[1] then
+		return
+	end
+	local nFubenHandle = LActor.getFubenHandle( actorobj )
+	if nFubenHandle == 0 then
+		return
+	end
+	tongtianshilian.EnterTier( actorobj , nFubenHandle)
+
+end
+
+function tongtianshilian.OnExittongtianshilian(  sysarg , hfb ,way )
+	-- body
+	--print("---------退出副本降水量的---------")
+	local  nVar = LActor.getStaticVar( sysarg )
+	if not way or way ~= 1 or not sysarg or not hfb then
+		--local  nVar = LActor.getStaticVar( sysarg )
+		--nVar.TongTinaShiLian_Leave = 1
+		return
+	end
+	--nVar.TongTinaShiLian_Leave = nil
+	-- local nStaticVar = LActor.getStaticVar( sysarg )
+
+	-- --print("------------TongTiansShiLian_top_index------------",nStaticVar.TongTianShiLian_top_index)
+	-- --print("------------TongTianShiLian_entry_index------------",nStaticVar.TongTianShiLian_entry_index)
+
+	-- if nStaticVar.TongTianShiLian_top_index == nil then
+	-- 	nStaticVar.TongTianShiLian_top_index = 0
+	-- end
+	-- if nStaticVar.TongTianShiLian_entry_index == nil then
+	-- 	nStaticVar.TongTianShiLian_entry_index = 0
+	-- end
+
+	-- if nStaticVar.TongTianShiLian_top_index - nStaticVar.TongTianShiLian_entry_index > 0 then
+	-- 	print("---------通天试炼奖励-------------")
+	-- 	--tongtianshilian.Award( sysarg )
+	-- end
+	tongtianshilian.Exit( sysarg )
+	-- 活跃度
+    ActivationTrigger(sysarg, 6)
+end
+
+function tongtianshilian.OnGetAward( sysarg , leave)
+	local isInFuben
+	local fbId = LActor.getFubenId(sysarg)
+	for _, tmp in pairs(TTSL_Config.fubenId) do
+		if fbId == tmp then
+			isInFuben = 1
+			break
+		end
+	end
+	if not isInFuben then return end
+
+	local fubenptr = LActor.getFubenPrt( sysarg )
+	--Fuben.setStopFBRunOne( fubenptr , true)
+	Fuben.setStopMonsterRunOne(sysarg)
+	local nStaticVar = LActor.getStaticVar( sysarg )
+
+	--print("------------TongTiansShiLian_top_index------------",nStaticVar.TongTianShiLian_top_index)
+	--print("------------TongTianShiLian_entry_index------------",nStaticVar.TongTianShiLian_entry_index)
+
+	if nStaticVar.TongTianShiLian_top_index == nil then
+		nStaticVar.TongTianShiLian_top_index = 0
+	end
+	if nStaticVar.TongTianShiLian_entry_index == nil then
+		nStaticVar.TongTianShiLian_entry_index = 0
+	end
+	--print("============================",nStaticVar.TongTianShiLian_top_index,)
+	if nStaticVar.TongTianShiLian_top_index - nStaticVar.TongTianShiLian_entry_index > 0 then
+		tongtianshilian.Award( sysarg )
+	else
+		local npack = DataPack.allocPacket( sysarg , 167 , 11)
+		DataPack.writeInt( npack , 6)
+		DataPack.writeInt( npack , 9)
+		if leave == nil then
+			DataPack.writeByte( npack , 0)
+		else
+			DataPack.writeByte( npack , 1)
+		end
+		DataPack.flush( npack)
+	end
+end
+
+--继续游戏
+function tongtianshilian.OnContinue(sysarg)
+	local fbId = LActor.getFubenId(sysarg)
+	for _, tmp in pairs(TTSL_Config.fubenId) do
+		if fbId == tmp then
+			Fuben.setStopMonsterRunOne(sysarg, false)
+			break
+		end
+	end
+end
+
+function tongtianshilian.OnGameOverBefore( fubenptr )
+	local nFbActionList = LuaHelp.getFbActorList( fubenptr )
+	if nFbActionList == nil then
+		return
+	end
+	for i = 1 , #nFbActionList do
+		tongtianshilian.OnGetAward( nFbActionList[i] )
+	end
+end
+
+-- EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeOnActorDeath, fubenbase.OnFubenActorDie)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, tongtianshilian.ClearTongtianshilianDailyData)
+FubenMsgHandle.registerMsgHandler(TTSL_Config.fubenId[1], tongtianshilian.HandleNetworkData) --注册副本中消息处理协议
+
+--TimerMsgFunc.register(TimerMsg.TongTSLTips, tongtianshilian.sendtips)
+
+--TimerMsgFunc.register(TimerMsg.TongTSLCM, tongtianshilian.NextWaveMonster)
+
+for i=1,#TTSL_Config.sceneId do
+	--print("------场景怪物全部死亡事件------",TTSL_Config.sceneId[i])
+	MonAllKilledDispatcher.register( TTSL_Config.sceneId[i], tongtianshilian.MonsterDieAll )
+end
+
+--注册副本初始化函数
+for k, v in pairs ( TTSL_Config.fubenId ) do
+	fubenbase.registerEnterFuben(v,tongtianshilian.EntryTongtianshilian)
+	EventCallDispatcher.registerFubenExit(v,tongtianshilian.OnExittongtianshilian)
+	EventCallDispatcher.registerFubenGameOverBefore( v , tongtianshilian.OnGameOverBefore)
+end
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeOnActorDeath, tongtianshilian.OnActorDie)
+GmEventFuncList.register( "ttsl",tongtianshilian.HandleNetworkData,1)
+
+
+function tongtianshilian.leftCount(sysarg, index)
+	if not sysarg then return 0 end
+
+	if not index then index = TTSL_Config.max_top end
+
+ 	local nLevel = LActor.getLevel( sysarg )
+	if nLevel < LevelOpenPlaySys.tt_sl_lvl then return 0 end
+
+	local nStaticVar = LActor.getStaticVar(sysarg)
+
+	local nVipLevel = LActor.getVIPLevel(sysarg)
+	local nResetVip_count = 0
+	if nVipLevel ~= 0 then
+		nResetVip_count = VIPConfig.tongtianReset[nVipLevel]
+	end
+	if not nStaticVar.TongTianShiLian_reset_cout or nStaticVar.TongTianShiLian_reset_cout < nResetVip_count + TTSL_Config.reset_count then
+		return 1
+	end
+	
+	if nStaticVar.TongTianShiLian_top_index  and nStaticVar.TongTianShiLian_top_index  >= index then
+		return 0
+	else
+		return 1
+	end
+end
+GetQuestTargetCount.register(qtFinishTongTianCount, tongtianshilian.leftCount)
+GetQuestTargetCount.register(qtTongTianShiLian, tongtianshilian.leftCount)

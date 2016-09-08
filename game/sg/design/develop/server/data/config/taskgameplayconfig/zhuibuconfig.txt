@@ -1,0 +1,31 @@
+ZhuiBu_Config = {
+    -- [27] = {
+    --     monsterid = 8,
+    --     monsterlivetime = 80,
+    -- },
+    -- [] = {--任务id
+    --     monsterid = ,--怪物id
+    --     monsterlivetime = 180,--怪物存活时间 默认180S
+    -- },
+    [5067] = {--任务id
+        monsterid = 37,--怪物id
+        monsterlivetime = 180,--怪物存活时间
+    },
+    [5132] = {--任务id
+        monsterid = 136,--怪物id
+        monsterlivetime = 180,--怪物存活时间
+    },
+    [5143] = {--任务id
+        monsterid = 91,--怪物id
+        monsterlivetime = 180,--怪物存活时间
+    },
+    [5160] = {--任务id
+        monsterid = 86,--怪物id
+        monsterlivetime = 180,--怪物存活时间
+    },
+    [5181] = {--任务id
+        monsterid = 157,--怪物id
+        monsterlivetime = 180,--怪物存活时间
+    },
+    
+}

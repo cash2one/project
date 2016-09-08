@@ -1,0 +1,15 @@
+--#include "..\..\..\language\LangCode.txt"
+activity58Conf = {
+	activityId = 58,
+
+	activities =
+	{
+		[3]={
+			--活动id,累计消费活动
+			id = 3,
+			--消费奖励额度及奖励id列表  {消费额度,奖励礼包id},
+			target = {{1000, 39029}, {5000, 39030}, {10000, 39031}, {30000, 39032},  },
+		},
+	},
+}
+		

@@ -1,0 +1,59 @@
+
+function ReadClientModelIdToFaceId()
+    local npc_head_id_config = {}
+
+    local objexcel = CExcelReader:new()
+    if not objexcel then
+        print("objexcel is null")
+        return
+    end
+
+    objexcel:Init_App()
+    objexcel:OpenRead()
+
+    print("=============>>>>>> NPC模型ID转头像ID配置开始读取...\n")
+
+    local obj = objexcel:LoadSheetByIndex(1)
+    if not obj then
+        print("LoadSheetByIndex失败!")
+        objexcel:Close()
+        objexcel:Quit_App()
+        return
+    end
+
+    local cCount = objexcel:GetCurrentSheetColCount()
+    local rCount = objexcel:GetCurrentSheetRowCount()
+
+    for i = 2, rCount do
+        local modelId = tonumber(objexcel:ReadCellAsString(i, 1)) or 0
+        if modelId > 0 then
+            if npc_head_id_config[modelId] == nil then
+                local faceId = tonumber(objexcel:ReadCellAsString(i, 2)) or 0
+                if faceId > 0 then
+                    npc_head_id_config[modelId] = faceId
+                else
+                    print(string.format("=============>>>>>> ERROR <NPC模型ID转头像ID配置>第%d行空头像编号 模型ID[%d]", i, modelId))
+                end
+            else
+                print(string.format("=============>>>>>> WARNNING <NPC模型ID转头像ID配置>第%d行重复模型ID[%d]", i, modelId))
+            end
+        else
+            print(string.format("=============>>>>>> WARNNING <NPC模型ID转头像ID配置>第%d行空编号", i))
+        end
+    end
+
+    print("=============>>>>>> NPC模型ID转头像ID配置完成读取...\n")
+
+    print("=============>>>>>> NPC模型ID转头像ID配置开始写入...")
+
+    local str = string.format("npc_head_id_config = \n%s", dump(npc_head_id_config, true))
+    objexcel:WriteFileWithUTF8("npc_head_id_config.lua", str)
+
+    print("=============>>>>>> NPC模型ID转头像ID配置完成写入...\n")
+
+    print("============>>> 导出NPC模型ID转头像ID成功")
+
+    objexcel:Close()
+    objexcel:Quit_App()
+    objexcel:delete()
+end

@@ -1,0 +1,34 @@
+{
+	id = 33,	--行为ID
+	trigger = 1,	--触发类型，血量为1，时间为2
+
+	isInit = 0 ,
+	--创建的时候会调用,和info里的sequence一样
+	initSequence =
+	{
+		
+	},
+
+	infos = 
+	{
+		{
+			sequId = 1,
+			param = 0 ,
+			sequence = {
+				{
+					type = 12,	--动作列表
+					duration = 2,
+					--可以设置条件列表(只有符合所有条件才会执行items操作)
+					conditions = 
+				  	{
+				  		{ conditionType = 1, targetMonster = {1204,1205} } , --是否目标怪物已经在该场景不存在了
+				  	},
+					items =
+					{
+						{ type = 21, duration = 2, target= { { monsterId = 1202, addBuffConfigId = 9}, } }, --向指定目标删除某个buff
+					} ,
+				},
+			}
+		},
+	},
+},

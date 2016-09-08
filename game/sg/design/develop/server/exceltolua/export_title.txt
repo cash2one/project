@@ -1,0 +1,257 @@
+--导出称号配置表
+
+--格式模板
+--[[
+--诛天城主
+	{
+		id = 1,
+		name = Lang.Title.name240,
+		groupId =1,
+		groupName = Lang.Title.groupName011,
+		desc = Lang.Title.desc148,
+		time = 1,
+		staticAttrs = 	--称号属性
+		{ 
+			{ type = 27, value = 400, },  --攻击
+		    { type = 23, value = 80, },  --物防	
+			{ type = 33, value = 80, },  --法防
+			{ type = 17, value = 12000, },  --生命
+			{ type = 35, value = 80, },  --爆击
+			{ type = 25, value = 80, },  --抗爆
+			{ type = 39, value = 80, },  --命中
+			{ type = 37, value = 80, },  --闪避
+		},
+	},
+--]]
+
+local strLangTemplate = "name%d=\"%s\",groupName%d=\"%s\",desc%d=\"%s\","
+
+local strTemplete = [[
+{
+	id = %d,
+	name = Lang.Title.name%d,
+	type = %d,
+	resid = %d,
+	groupId = %d,
+	groupName = Lang.Title.groupName%d,
+	desc = Lang.Title.desc%d,
+	time = %d,
+	staticAttrs = {
+		%s
+	},
+},
+
+]]
+
+local strTemplete2 = [[
+{
+	id = %d,
+	name = Lang.Title.name%d,
+	type = %d,
+	resid = %d,
+	groupId = %d,
+	groupName = Lang.Title.groupName%d,
+	desc = Lang.Title.desc%d,
+	time = %d,
+},
+
+]]
+
+
+function ReadTitle()
+	local objexcel = CExcelReader:new()
+	if not objexcel then
+		print("objexcel is null")
+		return
+	end
+
+	objexcel:Init_App()
+	objexcel:OpenRead()
+
+	local obj = objexcel:LoadSheetByIndex(1)
+	if not obj then
+		print("LoadSheetByIndex失败!")
+		objexcel:Close()
+		objexcel:Quit_App()
+		return
+	end
+
+	local nCount = objexcel:GetCurrentSheetColCount()
+	local mCount = objexcel:GetCurrentSheetRowCount()
+
+
+	print("nCount", nCount)
+	print("mCount", mCount)
+
+	--[[
+	local objComment = objexcel:LoadCommentByIndex(1)
+	if not objComment then
+		print("LoadCommentByIndex Failed!")
+		objexcel:Close()
+		objexcel:Quit_App()
+		return
+	end]]
+
+
+
+	local strAllLang = "Title=\n{\n"
+	local strAllConcent = "--#include \"..\\..\\language\\LangCode.txt\" \n\nTitles = {\n"
+	
+	local itemfile = "data\\config\\achieve\\titles.txt"
+	print(itemfile)
+
+	for i = 2, mCount do
+
+		--local strTemp = objexcel:ReadCommentAsString(i, 1)
+		--print(strTemp)
+
+
+
+
+
+		local concent = {} --第一行构造成一个table
+
+		local strValue = objexcel:ReadCellAsString(i, 1)
+		concent.id = tonumber(strValue)
+		
+		strValue = objexcel:ReadCellAsString(i, 2)
+		concent.name = tostring(strValue) or ""
+
+		strValue = objexcel:ReadCellAsString(i, 3)
+		concent.resid = tonumber(strValue) or ""
+
+		strValue = objexcel:ReadCellAsString(i, 4)
+		concent.type = tonumber(strValue) or ""
+		
+		strValue = objexcel:ReadCellAsString(i, 6)
+		concent.groupId = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 5)
+		concent.groupName = tostring(strValue) or ""
+
+		strValue = objexcel:ReadCellAsString(i, 7)
+		concent.time = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 8)
+		concent.desc = tostring(strValue) or ""
+
+		concent.staticAttrs = {}
+		strValue = objexcel:ReadCellAsString(i, 9)--攻击
+		if strValue and strValue ~= "" then
+			concent.staticAttrs[#concent.staticAttrs+1] = {type = 27, value = tonumber(strValue)}
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 10)--物理防御
+		if strValue and strValue ~= "" then
+			concent.staticAttrs[#concent.staticAttrs+1] = {type = 23, value = tonumber(strValue)}
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 11)--法力防御
+		if strValue and strValue ~= "" then
+			concent.staticAttrs[#concent.staticAttrs+1] = {type = 33, value = tonumber(strValue)}
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 12)--生命
+		if strValue and strValue ~= "" then
+			concent.staticAttrs[#concent.staticAttrs+1] = {type = 17, value = tonumber(strValue)}
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 13)--灵力
+		if strValue and strValue ~= "" then
+			concent.staticAttrs[#concent.staticAttrs+1] = {type = 19, value = tonumber(strValue)}
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 14)--命中
+		if strValue and strValue ~= "" then
+			concent.staticAttrs[#concent.staticAttrs+1] = {type = 39, value = tonumber(strValue)}
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 15)--闪避
+		if strValue and strValue ~= "" then
+			concent.staticAttrs[#concent.staticAttrs+1] = {type = 37, value = tonumber(strValue)}
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 16)--暴击
+		if strValue and strValue ~= "" then
+			concent.staticAttrs[#concent.staticAttrs+1] = {type = 35, value = tonumber(strValue)}
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 17)--抗暴击
+		if strValue and strValue ~= "" then
+			concent.staticAttrs[#concent.staticAttrs+1] = {type = 25, value = tonumber(strValue)}
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 18)--会心
+		if strValue and strValue ~= "" then
+			concent.staticAttrs[#concent.staticAttrs+1] = {type = 63, value = tonumber(strValue)}
+		end
+
+
+
+		local strStaitcAttrs = ""
+		for k, v in pairs(concent.staticAttrs) do
+			if k == 1 then
+				local strCond = string.format("\n\t\t{type = %d, value = %d,},\n", v.type, v.value)
+				strStaitcAttrs = strStaitcAttrs..strCond
+			else
+				local strCond = string.format("\t\t{type = %d, value = %d,},\n", v.type, v.value)
+				strStaitcAttrs = strStaitcAttrs..strCond
+			end
+		end
+
+		local str = ""
+		if #concent.staticAttrs > 0 then
+			str = string.format(strTemplete, 
+										concent.id,
+										concent.id,
+										concent.type,
+										concent.resid,
+										concent.groupId,
+										concent.id,
+										concent.id,
+										concent.time,
+										strStaitcAttrs
+										)
+		else
+			str = string.format(strTemplete2, 
+										concent.id,
+										concent.id,
+										concent.type,
+										concent.resid,
+										concent.groupId,
+										concent.id,
+										concent.id,
+										concent.time
+										)			
+		end
+
+	
+
+		--写文件
+		--writeConfig(itemfile, str)
+		print(str)
+
+		strAllConcent = strAllConcent .. str
+		if mCount == i then
+			strAllConcent = strAllConcent .. "\n}"
+			objexcel:WriteFile(itemfile, strAllConcent)
+		end
+
+		--语言包
+		local strLang = string.format(strLangTemplate, concent.id, concent.name, concent.id, concent.groupName, concent.id, concent.desc)
+		strAllLang = strAllLang..strLang.."\n"
+		if mCount == i then
+			strAllLang = strAllLang .. "\n}"
+			objexcel:WriteFile("data\\language\\zh-cn\\title.txt", strAllLang)
+		end
+	end
+
+
+	objexcel:Close()
+	objexcel:Quit_App()
+	objexcel:delete()
+end
+----------------------------------------------------------------------------------------
+
+
+

@@ -1,0 +1,985 @@
+--------琴棋书画
+--------时间:2015-10-20
+--------author : hwl
+
+--#include "data\config\gameplay\qinqishuhuaconfig.txt"
+
+
+
+local qinqishuhua = {}
+local SystemId = 169
+
+-- 辅助研究类型
+-- local QinQiShuHua_Count =
+-- {
+-- 	[1] = "QinQiShuHua_FuQin_count",
+-- 	[2] = "QinQiShuHua_YanQi_count",
+-- 	[3] = "QinQiShuHua_DuShu_count",
+-- 	[4] = "QinQiShuHua_HuiTu_count",
+-- }
+
+local NWCMD = 
+{
+	GQQSH_DATA 			= 1,
+	STAR_FIX_POLISH 	= 2,
+	CANCEL_FIX_POLISH   = 3,
+	GAWARD				= 4,
+	UNLOCKTUPU 			= 5,
+	GET_ARTIRS_DATA		= 6,
+	GET_FRIEND_JOIN		= 7,
+	CHOSE_FRIEND	    = 8,
+	GET_HISTORY_TUPU_ID = 9,
+
+}
+
+function qinqishuhua.IsOpenSys(sysarg)
+	-- body
+	local nLevel = LActor.getLevel( sysarg )
+	if nLevel >= LevelOpenPlaySys.qq_sh_lvl then
+		return true
+	end
+	LActor.sendTipmsg(sysarg , Lang.QinQiShuHua.qqsh001 , ttWarmTip)
+	return false
+end
+--激活图谱
+function qinqishuhua.UnlockTuPu( sysarg, dp)
+	-- body
+	--策划需要 不需要手动解锁图谱
+	if true then
+		return
+	end
+	local tupuid  = DataPack.readInt(dp)
+	local nStaticVar = LActor.getStaticVar( sysarg)
+
+	if nStaticVar.QinQiShuHua_Artistry_table == nil then
+		nStaticVar.QinQiShuHua_Artistry_table = {}
+		-- 1 琴 2 棋 3 书 4 画 对应的技艺值
+		for i = 1, 4 do
+			if nStaticVar.QinQiShuHua_Artistry_table[i] == nil then
+				nStaticVar.QinQiShuHua_Artistry_table[i] = {}
+			end
+			nStaticVar.QinQiShuHua_Artistry_table[i].id = i
+			nStaticVar.QinQiShuHua_Artistry_table[i].value = 0
+		end
+	end
+
+	if nStaticVar.QinQiShuHua_Activate_table == nil then
+		nStaticVar.QinQiShuHua_Activate_table = {}
+	end
+
+	local tupu_config = QQSH_ALL_ConFig.QQSH_Tu_Pu_Config[tupuid]
+	if tupu_config == nil then
+		local str = string.format(Lang.ScriptTips.qqsh002,tupuid)
+		LActor.sendTipmsg( sysarg, str, ttWarmTip )
+		return
+	end
+
+	local nFlage = false
+	for i = 1 , #nStaticVar.QinQiShuHua_Activate_table do
+		if nStaticVar.QinQiShuHua_Activate_table[i] == tupuid then
+			nFlage = true
+		end
+	end
+
+	if nFlage == true then
+		local str = string.format(Lang.ScriptTips.qqsh001,tupu_config.desc)
+		LActor.sendTipmsg( sysarg, str, ttWarmTip )
+		return
+	end
+
+	if nStaticVar.QinQiShuHua_Artistry_table[tupu_config.type].value < tupu_config.unlook_value then
+		--local str = string.format(Lang.ScriptTips.qqsh009)
+		debug_print(Lang.ScriptTips.qqsh009)
+		LActor.sendTipmsg( sysarg, Lang.ScriptTips.qqsh009, ttWarmTip )
+		return
+	end
+	nStaticVar.QinQiShuHua_Artistry_table[tupu_config.type].value = nStaticVar.QinQiShuHua_Artistry_table[tupu_config.type].value - tupu_config.unlook_value
+	local tupu_size = #nStaticVar.QinQiShuHua_Activate_table
+	nStaticVar.QinQiShuHua_Activate_table[tupu_size + 1] = tupuid
+	local pack = DataPack.allocPacket(sysarg, SystemId , NWCMD.UNLOCKTUPU)
+	DataPack.writeInt( pack , tupuid)
+	DataPack.writeChar( pack , 1)
+	DataPack.writeInt( pack , nStaticVar.QinQiShuHua_Artistry_table[tupu_config.type].value)
+	DataPack.flush(pack)
+	-- 激活成功图谱
+end
+--开始修炼
+function qinqishuhua.Star_fix_Polish( sysarg , dp)
+	if qinqishuhua.IsOpenSys(sysarg) == false then
+		return
+	end
+
+	LActor.OnQuestEvent(qtJoinQQSH, 0, 1, true, sysarg)
+
+	local tupuid = DataPack.readInt(dp)
+	local nfuzhu = DataPack.readInt(dp)
+	local nAid = DataPack.readInt(dp)
+	--local nfriendName = DataPack.readString(dp)
+	-- body
+	local nStaticVar = LActor.getStaticVar(sysarg)
+
+	if nStaticVar.Friend_Invoid_Data == nil then
+		nStaticVar.Friend_Invoid_Data = {}
+	end
+	local nSysvar = System.getStaticVar()
+	if nSysvar.QinQiShuHua_All_Data == nil then
+		nSysvar.QinQiShuHua_All_Data = {}
+	end
+
+	if nAid > 0 then
+		if nSysvar.QinQiShuHua_All_Data[Aid] ~= nil and nSysvar.QinQiShuHua_All_Data[Aid] > QQSH_ALL_ConFig.QQSH_Misc_Config.every_cout then
+			LActor.sendTipmsg(sysarg , Lang.QinQiShuHua.qqsh002, ttWarmTip)
+			return
+		end
+
+		if nStaticVar.Friend_Invoid_Data[nAid] ~= nil then
+			local nNum = nStaticVar.Friend_Invoid_Data[nAid]
+			if System.getBitValue(nNum , nfuzhu) == true then
+				LActor.sendTipmsg( sysarg , Lang.QinQiShuHua.qqsh002 , ttWarmTip)
+				return
+			end
+		end
+	end
+	if tupuid < 1 then
+		debug_print(" 研究的图谱id不正确")
+		return
+	end
+	local tupu_config = QQSH_ALL_ConFig.QQSH_Tu_Pu_Config[tupuid]
+	if tupu_config == nil then
+		local str = string.format(Lang.ScriptTips.qqsh002,tupuid)
+		LActor.sendTipmsg( sysarg, str, ttWarmTip )
+		return
+	end
+	if nStaticVar.QinQiShuHua_Artistry_table == nil then
+		nStaticVar.QinQiShuHua_Artistry_table = {}
+		-- 1 琴 2 棋 3 书 4 画 对应的技艺值
+		for i = 1, 4 do
+			nStaticVar.QinQiShuHua_Artistry_table[i] = {}
+			nStaticVar.QinQiShuHua_Artistry_table[i].id = i
+			nStaticVar.QinQiShuHua_Artistry_table[i].value = 0
+		end
+	end
+	
+	local nType = tupu_config.type
+	debug_print("------np---------",nType)
+	if nType < 1 or nType > 4 then
+		debug_print(" ------nType 类型错误-----",nType)
+	end
+	if tupu_config.unlook_value > nStaticVar.QinQiShuHua_Artistry_table[nType].value then
+		LActor.sendTipmsg(sysarg , Lang.QinQiShuHua.qqsh003 , ttWarmTip)
+		return
+	end
+
+	local nConfig = QQSH_ALL_ConFig.QQSH_Config[nType]
+	if nConfig == nil then
+		debug_print("---------配置有误-------")
+		return
+	end
+	if nConfig[1] == 1 then
+		if nStaticVar.QinQiShuHua_Count == nil then
+			nStaticVar.QinQiShuHua_Count = {}
+			nStaticVar.QinQiShuHua_Count[1] = 0
+			nStaticVar.QinQiShuHua_Count[2] = 0
+			nStaticVar.QinQiShuHua_Count[3] = 0
+			nStaticVar.QinQiShuHua_Count[4] = 0
+		end
+		
+		debug_print("------nStaticVar.QinQiShuHua_Count[nType]---------",nStaticVar.QinQiShuHua_Count[nType]) 
+		if nStaticVar.QinQiShuHua_Count[nType] >= nConfig[2] then
+			LActor.sendTipmsg( sysarg , nConfig[3] , ttWarmTip)
+			return
+		end
+	end
+
+	-- if nStaticVar.QinQiShuHua_Activate_table == nil then
+	-- 	local str = string.format(Lang.ScriptTips.qqsh003,tupu_config.desc)
+	-- 	LActor.sendTipmsg( sysarg, str, ttWarmTip )
+	-- 	return
+	-- end
+	-- local nActivity_len = #nStaticVar.QinQiShuHua_Activate_table
+	-- local nFlag = false
+	-- for i = 1 , nActivity_len do
+	-- 	if nStaticVar.QinQiShuHua_Activate_table[i] == tupuid then
+	-- 		nFlag = true
+	-- 	end
+	-- end
+	-- if nFlag == false then
+	-- 	local str = string.format(Lang.ScriptTips.qqsh003,tupu_config.desc)
+	-- 	LActor.sendTipmsg( sysarg, str, ttWarmTip )
+	-- 	return
+	-- end
+
+
+	--是否在研究中
+	if nStaticVar.QinQiShuHua_Study_index ~= nil then
+		local nstrdesc = ""
+		if QQSH_ALL_ConFig.QQSH_Tu_Pu_Config[nStaticVar.QinQiShuHua_Study_index] == nil then
+			nstrdesc = ""
+		else
+			nstrdesc = QQSH_ALL_ConFig.QQSH_Tu_Pu_Config[nStaticVar.QinQiShuHua_Study_index].desc
+		end
+		local str = string.format(Lang.QinQiShuHua.qqsh004,nstrdesc)
+		LActor.sendTipmsg( sysarg, str, ttWarmTip )
+		return
+	end
+	nStaticVar.QinQiShuHua_Study_index = tupuid
+	nStaticVar.QinQiShuHua_Star_time = System.getCurrMiniTime()
+	if nAid > 0 then
+		nStaticVar.QinQiShuHua_Friend_Actor_Aid = nAid
+		nStaticVar.QinQiShuHua_AssistType = nfuzhu
+		local nTempNum = math.pow(2,nfuzhu)
+		if nStaticVar.Friend_Invoid_Data[nAid] == nil then
+			nStaticVar.Friend_Invoid_Data[nAid] =  nTempNum
+		else
+			nStaticVar.Friend_Invoid_Data[nAid] =  nStaticVar.Friend_Invoid_Data[nAid] + nTempNum
+		end
+	end
+	nStaticVar.QinQiShuHua_Count[nType] =  nStaticVar.QinQiShuHua_Count[nType] + 1
+	--研究返回
+	if nStaticVar.QinQiShuHua_History_fix == nil then
+		nStaticVar.QinQiShuHua_History_fix = {}
+		local history_size = #nStaticVar.QinQiShuHua_History_fix
+		nStaticVar.QinQiShuHua_History_fix[history_size+1] = tupuid
+		qinqishuhua.GetHistroyFixId( sysarg )
+	else
+		local nIsFixFlag = false
+		local history_size = #nStaticVar.QinQiShuHua_History_fix
+		for i = 1 ,history_size do
+			if nStaticVar.QinQiShuHua_History_fix[i] ~= nil and nStaticVar.QinQiShuHua_History_fix[i] == tupuid then
+				nIsFixFlag = true
+				break
+			end
+		end
+		if nIsFixFlag == false then
+			nStaticVar.QinQiShuHua_History_fix[history_size+1] = tupuid
+			qinqishuhua.GetHistroyFixId( sysarg )
+		end
+	end
+	local pack = DataPack.allocPacket(sysarg, SystemId, NWCMD.STAR_FIX_POLISH)
+	if pack == nil then
+		return
+	end
+	DataPack.writeInt( pack , tupuid)
+	DataPack.writeChar( pack , 1)
+	DataPack.flush(pack)
+	LActor.OnQuestEvent(qtSucQinQiShuHua, 0, 1, true, sysarg)
+end
+
+--取消研究
+function qinqishuhua.Cancel_fix_Polish( sysarg )
+	-- body
+	if qinqishuhua.IsOpenSys(sysarg) == false then
+		return
+	end
+
+	local nStaticVar = LActor.getStaticVar( sysarg )
+	if nStaticVar.QinQiShuHua_Study_index == nil then
+		LActor.sendTipmsg( sysarg, Lang.ScriptTips.qqsh005, ttWarmTip )
+		return
+	end
+	if nStaticVar.QinQiShuHua_Friend_Actor_Aid ~= nil and nStaticVar.QinQiShuHua_Friend_Actor_Aid > 0 then
+		local nSysVar = System.getStaticVar()
+		--local nSysVar = System.getStaticVar()
+		if nSysVar.QinQiShuHua_All_Data == nil then
+			nSysVar.QinQiShuHua_All_Data = {}
+		end
+		local Aid = nStaticVar.QinQiShuHua_Friend_Actor_Aid
+		if nSysVar.QinQiShuHua_All_Data[Aid] ~= nil and nSysVar.QinQiShuHua_All_Data[Aid] ~= 0 then
+			nSysVar.QinQiShuHua_All_Data[Aid] = nSysVar.QinQiShuHua_All_Data[Aid] - 1
+		end
+		if nStaticVar.Friend_Invoid_Data[Aid] ~= nil then
+			if nStaticVar.QinQiShuHua_AssistType ~= nil then
+				local nfuzhu = nStaticVar.QinQiShuHua_AssistType
+				local nufzhuNum = math.pow(2,nfuzhu)
+				--local nNum = nStaticVar.Friend_Invoid_Data[Aid]
+				if nStaticVar.Friend_Invoid_Data[Aid] ~= nil then
+					nStaticVar.Friend_Invoid_Data[Aid] = nil
+				end
+
+				-- if nufzhuNum > nNum then
+				-- 	debug_print("======has problem==========Cancel_fix_Polish")
+				-- else
+				-- 	nStaticVar.Friend_Invoid_Data[Aid] = nNum - nufzhuNum
+				-- end
+			end
+
+		end
+	end
+	local nFix_conf = QQSH_ALL_ConFig.QQSH_Tu_Pu_Config[nStaticVar.QinQiShuHua_Study_index]
+	if nFix_conf == nil then
+		debug_print("==========配置错误====="..tostring(nStaticVar.QinQiShuHua_Study_index))
+	else
+		local Type = nFix_conf.type
+		if nStaticVar.QinQiShuHua_Count ~= nil then
+			for i = 1 , #nStaticVar.QinQiShuHua_Count do
+				if Type == i and nStaticVar.QinQiShuHua_Count[i] > 0 then
+					nStaticVar.QinQiShuHua_Count[i] = nStaticVar.QinQiShuHua_Count[i] - 1
+				end
+			end
+		end
+	end
+	nStaticVar.QinQiShuHua_Study_index = nil
+	nStaticVar.QinQiShuHua_Star_time = nil
+	nStaticVar.QinQiShuHua_AssistType = nil
+	nStaticVar.QinQiShuHua_Friend_Actor_Aid = nil
+
+	
+	local pack = DataPack.allocPacket(sysarg,SystemId,NWCMD.CANCEL_FIX_POLISH)
+	DataPack.writeChar(pack, 1)
+	DataPack.flush(pack)
+	--返回取消研究成功
+end
+
+--获取技艺值
+function qinqishuhua.getArtistry_value( sysarg )
+	if sysarg == nil then
+		return
+	end
+	if qinqishuhua.IsOpenSys(sysarg) == false then
+		return
+	end
+	local nVar = LActor.getStaticVar( sysarg )
+	if nVar.QinQiShuHua_Artistry_table == nil then
+		nVar.QinQiShuHua_Artistry_table = {}
+		-- 1 琴 2 棋 3 书 4 画 对应的技艺值
+		for i = 1, 4 do
+			nVar.QinQiShuHua_Artistry_table[i] = {}
+			nVar.QinQiShuHua_Artistry_table[i].id = i
+			nVar.QinQiShuHua_Artistry_table[i].value = 0
+		end
+	end
+	if nVar.QinQiShuHua_Count == nil then
+		nVar.QinQiShuHua_Count = {}
+		nVar.QinQiShuHua_Count[1] = 0
+		nVar.QinQiShuHua_Count[2] = 0
+		nVar.QinQiShuHua_Count[3] = 0
+		nVar.QinQiShuHua_Count[4] = 0
+	end
+	debug_print("======================",#nVar.QinQiShuHua_Artistry_table)
+	local npack = DataPack.allocPacket(sysarg , 169 , 6)
+	DataPack.writeInt( npack , #nVar.QinQiShuHua_Artistry_table)
+	for i = 1 , #nVar.QinQiShuHua_Artistry_table do
+		DataPack.writeInt( npack , nVar.QinQiShuHua_Artistry_table[i].id)
+		DataPack.writeInt( npack , nVar.QinQiShuHua_Artistry_table[i].value)
+		DataPack.writeInt( npack , nVar.QinQiShuHua_Count[i])
+	end
+	DataPack.flush( npack )
+end
+
+
+--获得图谱数据
+function qinqishuhua.getTuPuData( sysarg , dp)
+	-- body
+	debug_print("========qinqishuhua.getTuPuData=======")
+	if qinqishuhua.IsOpenSys(sysarg) == false then
+		return
+	end
+	local type = DataPack.readByte( dp )
+	if type < 1 or type > 4 then
+		LActor.sendTipmsg(sysarg , Lang.QinQiShuHua.qqsh005 , ttWarmTip)
+		return
+	end
+
+	local nStaticVar = LActor.getStaticVar( sysarg )
+
+	-- if nStaticVar.QinQiShuHua_Activate_table == nil then
+	-- 	nStaticVar.QinQiShuHua_Activate_table = {}
+	-- end
+	-- local temp_tupu = {}
+	-- for i = 1 , #nStaticVar.QinQiShuHua_Activate_table do
+	-- 	if nStaticVar.QinQiShuHua_Activate_table[i] == ntupuid then
+	-- 		table.insert(temp_tupu , nStaticVar.QinQiShuHua_Activate_table[i])
+	-- 	end
+	-- end
+	if nStaticVar.QinQiShuHua_Artistry_table == nil then
+		nStaticVar.QinQiShuHua_Artistry_table = {}
+		-- 1 琴 2 棋 3 书 4 画 对应的技艺值
+		for i = 1, 4 do
+			nStaticVar.QinQiShuHua_Artistry_table[i] = {}
+			nStaticVar.QinQiShuHua_Artistry_table[i].id = i
+			nStaticVar.QinQiShuHua_Artistry_table[i].value = 0
+		end
+	end
+	local pack = DataPack.allocPacket( sysarg, SystemId , NWCMD.GQQSH_DATA)
+	-- DataPack.writeInt( pack, #temp_tupu)
+	-- for k , v in pairs ( temp_tupu ) do
+	-- 	DataPack.writeInt( pack, v)
+	-- end
+	--研修id
+	DataPack.writeInt( pack, nStaticVar.QinQiShuHua_Artistry_table[type].value)
+	local fix_id 
+	if nStaticVar.QinQiShuHua_Study_index == nil then
+		--QinQiShuHua_Study_index
+		DataPack.writeInt( pack , 0)
+		fix_id = 0
+	else
+		DataPack.writeInt( pack , nStaticVar.QinQiShuHua_Study_index)
+		fix_id = nStaticVar.QinQiShuHua_Study_index
+	end
+	--开始研修的时间
+	if nStaticVar.QinQiShuHua_Star_time == nil then
+		DataPack.writeUInt( pack , 0)
+	else
+		local nlasttime = 0
+		local tupuconfig = QQSH_ALL_ConFig.QQSH_Tu_Pu_Config[fix_id]
+		if tupuconfig ~= nil then
+			nlasttime = nStaticVar.QinQiShuHua_Star_time + tupuconfig.fix_time - System.getCurrMiniTime()
+		end
+		if nlasttime < 0 then
+			nlasttime = 0
+		end
+		DataPack.writeUInt( pack , nlasttime)
+	end
+	--辅助研究id
+	if nStaticVar.QinQiShuHua_AssistType == nil then
+		DataPack.writeInt( pack , 0)
+	else
+		DataPack.writeInt( pack , nStaticVar.QinQiShuHua_AssistType)
+	end
+	--好友AID
+	debug_print("----------------nStaticVar.QinQiShuHua_Friend_Actor_Aid--",nStaticVar.QinQiShuHua_Friend_Actor_Aid)
+	if nStaticVar.QinQiShuHua_Friend_Actor_Aid == nil then
+		DataPack.writeInt( pack , 0)
+	else
+		DataPack.writeInt( pack , nStaticVar.QinQiShuHua_Friend_Actor_Aid)
+	end
+
+	DataPack.flush(pack)
+
+	debug_print(nStaticVar.QinQiShuHua_Study_index)
+	debug_print(nStaticVar.QinQiShuHua_Star_time)
+	debug_print(nStaticVar.QinQiShuHua_AssistType)
+	debug_print(nStaticVar.QinQiShuHua_Friend_Actor_Aid)
+	-- debug_print(nStaticVar.QinQiShuHua_Star_time)
+	-- debug_print(nStaticVar.QinQiShuHua_Star_time)
+	-- debug_print(nStaticVar.QinQiShuHua_Star_time)
+	-- debug_print(nStaticVar.QinQiShuHua_Star_time)
+end
+
+function qinqishuhua.GetHistroyFixId( sysarg )
+	local nStaticVar = LActor.getStaticVar( sysarg )
+	local pack = DataPack.allocPacket( sysarg , 169, 9)
+	if pack == nil then
+		return
+	end
+	if nStaticVar.QinQiShuHua_History_fix == nil then
+		DataPack.writeInt( pack , 0)
+	else
+		local nHistory_size = #nStaticVar.QinQiShuHua_History_fix
+		DataPack.writeInt( pack , nHistory_size)
+		for i = 1 , nHistory_size do 
+			DataPack.writeInt(pack , nStaticVar.QinQiShuHua_History_fix[i] or 0 )
+		end
+	end
+	DataPack.flush(pack)
+end
+
+function qinqishuhua.End_fix_Polish( sysarg )
+	-- body
+	if qinqishuhua.IsOpenSys(sysarg) == false then
+		return
+	end
+	local nStaticVar = LActor.getStaticVar(sysarg)
+
+	if nStaticVar.QinQiShuHua_Study_index == nil then
+		LActor.sendTipmsg( sysarg, Lang.ScriptTips.qqsh011, ttWarmTip )
+		return
+	end
+	local polishid = nStaticVar.QinQiShuHua_Study_index
+	local tupu_config = QQSH_ALL_ConFig.QQSH_Tu_Pu_Config[polishid]
+	if tupu_config == nil then
+		--LActor.sendTipmsg( sysarg, Lang.ScriptTips.qqsh007, ttWarmTip )
+		print("qin qi shu hua config error tupuid=%d",polishid)
+		return
+	end
+	local Aid = nStaticVar.QinQiShuHua_Friend_Actor_Aid
+	--local nNeedTime = tupu_config.fix_time
+	local nType = 0
+	if Aid ~= nil and Aid > 0 then
+		nType = nStaticVar.QinQiShuHua_AssistType
+	end
+
+	local nFix_time_Scale = 1
+	local nFix_award_Scale = 1
+	local nArtistry_Scale = 1
+
+	if nType ~= nil and nType ~= 0 then
+		if nType < 1 or nType > 3 then
+			debug_print(string.format("辅助研修项目= %d",nType))
+			return
+		end
+
+		--辅助研修配置  
+		local nAss_config = QQSH_ALL_ConFig.QQSH_Assist_config[nType] 
+		if nAss_config == nil then
+			debug_print("辅助研修项目为空")
+			return
+		end
+
+		for k , v in pairs ( nAss_config ) do
+			if v[1] == 1 then --减少时间
+				nFix_time_Scale = nArtistry_Scale - v[2]/100
+			elseif v[1] == 2 then --增加奖励
+				nFix_award_Scale = nFix_award_Scale + v[2]/100
+			elseif v[1] == 3 then --增加技艺值
+				nArtistry_Scale = nArtistry_Scale + v[2]/100
+			end
+		end
+	end
+
+
+	local nNeedTime = tupu_config.fix_time * nFix_time_Scale 
+
+	if nStaticVar.QinQiShuHua_Star_time == nil then
+		nStaticVar.QinQiShuHua_Star_time = 0
+	end
+	local nStarTime = nStaticVar.QinQiShuHua_Star_time
+	local nEndTime = System.getCurrMiniTime()
+	if nNeedTime > nEndTime - nStarTime then
+		local str = string.format(Lang.QinQiShuHua.qqsh008,tupu_config.desc)
+		LActor.sendTipmsg(sysarg , str , ttWarmTip)
+		return
+	end
+	if nStaticVar.QinQiShuHua_Artistry_table == nil then
+		nStaticVar.QinQiShuHua_Artistry_table = {}
+		for i = 1, 4 do
+			nStaticVar.QinQiShuHua_Artistry_table[i] = {}
+			nStaticVar.QinQiShuHua_Artistry_table[i].id = i
+			nStaticVar.QinQiShuHua_Artistry_table[i].value = 0
+		end
+	end
+	if nStaticVar.QinQiShuHua_Artistry_table[tupu_config.type].id == tupu_config.type then
+		local temp_value = tupu_config.activate_value * nArtistry_Scale
+		nStaticVar.QinQiShuHua_Artistry_table[tupu_config.type].value = nStaticVar.QinQiShuHua_Artistry_table[tupu_config.type].value + temp_value
+		--System.sendGmMailOffLine( Aid, "琴棋书画奖励！" , tupu_config.type + 17 , 0, temp_value, 1,"被好友邀请琴棋书画奖励")
+	end
+	if tupu_config.exp_level ~= nil then
+		local nLevel = LActor.getLevel( sysarg )
+		for k , v in pairs ( tupu_config.exp_level ) do
+			if v.minlevel <= nLevel and v.maxLeve >= nLevel then
+				local nCount = v.exp * nFix_award_Scale
+				LActor.giveAward(sysarg, 4 , nCount )
+				--System.sendGmMailOffLine( Aid, "琴棋书画奖励！" , 6 , 0, nCount, 1,"被好友邀请琴棋书画奖励")
+				break
+			end
+		end
+	end
+	if tupu_config.friend_award ~= nil then
+	       --[[
+				物品类型 ： 1 经验  这是id随便填
+							2 钱  对应货币类型 1 
+							3 物品
+	        --]]
+	    if Aid ~= nil and Aid > 0 then
+	    	local nName = LActor.getName( sysarg )
+	    	local nCentex = string.format(Lang.QinQiShuHua.qqsh006 , nName )
+			for k , v in pairs ( tupu_config.friend_award ) do
+				if v[2] == 1 then
+					System.sendGmMailOffLine( Aid, nCentex, 6 , 0, v[3], 1, Lang.QinQiShuHua.qqsh007)
+				elseif v[2] == 2 then
+					System.sendGmMailOffLine( Aid, nCentex, 2 , v[1], v[3], 1,Lang.QinQiShuHua.qqsh007)
+				elseif v[2] == 3 then
+					System.sendGmMailOffLine( Aid, nCentex, 1 , v[1], v[3], 1,Lang.QinQiShuHua.qqsh007)
+				end
+			end
+		end
+	end
+
+	-- 触发任务事件
+	LActor.OnQuestEvent(qtQinQiShuHua, 0, 1, true, sysarg)
+	LActor.OnQuestEvent(qtQinQiShuHua, tupu_config.type, 1, true, sysarg)
+	-- 活跃度
+	ActivationTrigger( sysarg, 16 )
+
+	qinqishuhua.Award( sysarg , tupu_config.award , nFix_award_Scale, nArtistry_Scale , Aid)
+	local pack = DataPack.allocPacket(sysarg,SystemId,NWCMD.GAWARD)
+	DataPack.writeInt( pack , polishid)
+	DataPack.writeChar(pack , 1)
+	DataPack.writeInt( pack , nStaticVar.QinQiShuHua_Artistry_table[tupu_config.type].value)
+	DataPack.flush(pack)
+	nStaticVar.QinQiShuHua_Study_index = nil
+	nStaticVar.QinQiShuHua_Friend_Actor_Aid = nil
+	nStaticVar.QinQiShuHua_AssistType = nil
+	nStaticVar.QinQiShuHua_Star_time = nil
+end
+
+function qinqishuhua.Award( sysarg , award_config , awardscale, artistrscale , Aid)
+	if qinqishuhua.IsOpenSys(sysarg) == false then
+		return
+	end
+	--print_table(award_config)
+	for k , v in pairs ( award_config ) do
+		local nCount = math.ceil(v[3] * awardscale)
+		if v[2] == 1 then
+			--经验
+			LActor.giveAward(sysarg, 4 , nCount )
+			--System.sendGmMailOffLine( Aid, "琴棋书画奖励！" , 6 , 0, nCount, 1,"被好友邀请琴棋书画奖励")
+		elseif v[2] == 2 then
+			--钱
+			LActor.changeMoney(sysarg , v[1] , nCount , 1)
+			--System.sendGmMailOffLine( Aid, "琴棋书画奖励！" , 2 , v[1], nCount, 1,"被好友邀请琴棋书画奖励")
+		elseif v[2] == 3 then
+			--物品
+			local nQuality = Item.getItemPropertyById(v[1],3)
+			local nStrong = Item.getItemPropertyById(v[1],2)
+			local nNum = LActor.addItem(sysarg,v[1], nQuality,nStrong, nCount , 1, Lang.QinQiShuHua.qqsh012)
+			if nNum < nCount then
+				System.sendGmMailOffLine(LActor.getActorId(sysarg), Lang.QinQiShuHua.qqsh012 , 1, v[1], nCount-nNum, 1,Lang.QinQiShuHua.qqsh009)
+			end
+		end
+	end
+end
+
+function qinqishuhua.ShowData( sysarg )
+	-- body
+	if qinqishuhua.IsOpenSys(sysarg) == false then
+		return
+	end
+	local nStaticVar = LActor.getStaticVar( sysarg )
+	local str = "琴棋书画数据"
+
+	if nStaticVar.QinQiShuHua_Artistry_table == nil then
+		nStaticVar.QinQiShuHua_Artistry_table = {}
+		-- 1 琴 2 棋 3 书 4 画 对应的技艺值
+		for i = 1, 4 do
+			nStaticVar.QinQiShuHua_Artistry_table[i] = {}
+			nStaticVar.QinQiShuHua_Artistry_table[i].id = i
+			nStaticVar.QinQiShuHua_Artistry_table[i].value = 0
+		end
+	end
+	for i = 1 , 4 do
+		debug_print(string.format("==========type =%d  value = %d",nStaticVar.QinQiShuHua_Artistry_table[i].id,nStaticVar.QinQiShuHua_Artistry_table[i].value))
+	end
+
+	if nStaticVar.QinQiShuHua_Activate_table == nil then
+		nStaticVar.QinQiShuHua_Activate_table = {}
+	end
+	for i = 1, #nStaticVar.QinQiShuHua_Activate_table do
+		str = string.format(str.." 图谱id = %d",nStaticVar.QinQiShuHua_Activate_table[i])
+	end
+	--研修id
+	if nStaticVar.QinQiShuHua_Study_index == nil then
+		nStaticVar.QinQiShuHua_Study_index = 0
+	end
+	--开始研修的时间
+	if nStaticVar.QinQiShuHua_Star_time == nil then
+		nStaticVar.QinQiShuHua_Star_time = 0
+	end
+	--辅助研究id
+	if nStaticVar.QinQiShuHua_AssistType == nil then
+		nStaticVar.QinQiShuHua_AssistType = 0 
+	end
+	--好友名字
+	if nStaticVar.QinQiShuHua_Friend_Actor_Aid == nil then
+		nStaticVar.QinQiShuHua_Friend_Actor_Aid = 0
+	end
+	debug_print(str)
+	debug_print("研修id="..tostring(nStaticVar.QinQiShuHua_Study_index))
+	debug_print("开始研修时间 ="..tostring(nStaticVar.QinQiShuHua_Study_index))
+	debug_print("辅助研究id ="..tostring(nStaticVar.QinQiShuHua_Study_index))
+	debug_print("好友Aid ="..tostring(nStaticVar.QinQiShuHua_Study_index))
+	--str = string.format(str.." 研修id= %d 开始研修时间 = %d 辅助研究id = %d 好友Aid = %d",nStaticVar.QinQiShuHua_Study_index,nStaticVar.QinQiShuHua_Star_time,nStaticVar.QinQiShuHua_AssistType,nStaticVar.QinQiShuHua_Friend_Actor_Aid)
+	--debug_print(str)
+end
+
+function  qinqishuhua.Addjiyizhi( sysarg )
+	-- body
+	-- local nStaticVar = LActor.getStaticVar(sysarg)
+	-- if nStaticVar.QinQiShuHua_Artistry_Value == nil then
+	-- 	nStaticVar.QinQiShuHua_Artistry_Value = 0
+	-- end
+	-- nStaticVar.QinQiShuHua_Artistry_Value = nStaticVar.QinQiShuHua_Artistry_Value + 1000
+	-- debug_print(string.format("--------技艺值 = %d-------",nStaticVar.QinQiShuHua_Artistry_Value))
+end
+function qinqishuhua.HandleNetworkData(sysarg, sysid, msgid, dp)
+	if qinqishuhua.IsOpenSys(sysarg) == false then
+		return
+	end
+	debug_print(string.format("------琴棋书画 网络命令 =%d-----",msgid))
+	if msgid == NWCMD.GQQSH_DATA then --获取琴棋书画数据
+		qinqishuhua.getTuPuData( sysarg ,dp)
+	elseif msgid == NWCMD.STAR_FIX_POLISH then --开始研修
+		qinqishuhua.Star_fix_Polish( sysarg , dp)
+	elseif msgid == NWCMD.CANCEL_FIX_POLISH then --取消研修
+		qinqishuhua.Cancel_fix_Polish(sysarg)
+	elseif msgid == NWCMD.GAWARD then --请求解结束研修
+		qinqishuhua.End_fix_Polish(sysarg)
+	elseif msgid == NWCMD.UNLOCKTUPU then
+		-- local tupuid = 1--DataPack.readInt(dp)
+		qinqishuhua.UnlockTuPu( sysarg, dp)
+	elseif msgid == NWCMD.GET_ARTIRS_DATA then
+		qinqishuhua.getArtistry_value( sysarg )
+	elseif msgid == NWCMD.GET_FRIEND_JOIN then
+		qinqishuhua.getfriedData( sysarg )
+	elseif msgid == NWCMD.CHOSE_FRIEND then
+		qinqishuhua.chonsefriend( sysarg , dp )
+	elseif msgid == NWCMD.GET_HISTORY_TUPU_ID then
+		qinqishuhua.GetHistroyFixId(sysarg)
+	elseif msgid == 16 then
+		qinqishuhua.ShowData( sysarg )
+	elseif msgid == 17 then
+		--qinqishuhua.Addjiyizhi( sysarg )
+	end
+end
+
+function qinqishuhua.ClearQinQiShuHuaDailyData( sysarg )
+	-- body
+	if qinqishuhua.IsOpenSys(sysarg) == false then
+		return
+	end
+	local nStaticVar = LActor.getStaticVar(sysarg)
+	if nStaticVar.QinQiShuHua_Count ~= nil then
+		nStaticVar.QinQiShuHua_Count = nil
+	end
+	if nStaticVar.Friend_Invoid_Data ~= nil then
+		nStaticVar.Friend_Invoid_Data = nil
+	end
+	local nSysVar = System.getStaticVar()
+	if nSysVar.QinQiShuHua_All_Data ~= nil then
+		nSysVar.QinQiShuHua_All_Data = nil
+	end
+	--nStaticVar.QinQiShuHua_Count = nil
+end
+function qinqishuhua.getfriedData( sysarg , dp)
+	-- body
+	-- if type( table_temp ) ~= 'table' then
+	-- 	debug_print("=====================")
+	-- end
+	--local nType = DataPack.readInt()
+	if qinqishuhua.IsOpenSys(sysarg) == false then
+		return
+	end
+	local list = LActor.getFriendIdList(sysarg) or {}
+	local nTemp = {}
+	local nSysVar = System.getStaticVar()
+	if nSysVar.QinQiShuHua_All_Data == nil then
+		nSysVar.QinQiShuHua_All_Data = {}
+	end
+	
+	-- if nType < 1 or nType > 3 then
+	-- 	debug_print("请求类型错误")
+	-- 	return
+	-- end
+	local nVar = LActor.getStaticVar( sysarg )
+	if nVar.Friend_Invoid_Data == nil then
+		nVar.Friend_Invoid_Data = {}
+	end
+	debug_print("=====list=======",#list)
+	for i= 1 , #list  do
+		--local nActorName = 
+		local v = list[i]
+		local nIsCanInvoid = 0
+		debug_print("====================",nSysVar.QinQiShuHua_All_Data[v])
+		--[[
+		if  (nSysVar.QinQiShuHua_All_Data[v] ~= nil and nSysVar.QinQiShuHua_All_Data[v] >= QQSH_ALL_ConFig.QQSH_Misc_Config.every_cout) or  nVar.Friend_Invoid_Data[v] ~= nil then
+			nIsCanInvoid = false
+		end
+		--]]
+		if nVar.Friend_Invoid_Data[v] ~= nil then
+			nIsCanInvoid = nVar.Friend_Invoid_Data[v]
+		end
+		local nCareer = 0
+		local nSex = 0
+		local nfriendlylvl = 0
+		local nCount = 0
+		local nLevel = 0
+		if nSysVar.QinQiShuHua_All_Data[v] ~= nil then
+			nCount = nSysVar.QinQiShuHua_All_Data[v]
+		end
+		local name ,nCareer , nSex , nfriendlylvl, nLevel = LActor.getfriendInfor(sysarg , v , 1 , nCareer , nSex , nfriendlylvl, nLevel)
+		--玩家在线的，需要更新下玩家的等级
+		local friend = LActor.getActorById(v)
+		if friend then
+			nLevel = LActor.getLevel(friend)
+		end
+		if name ~= "" and nLevel >= LevelOpenPlaySys.qq_sh_lvl then
+			local temp ={
+				Name = name,
+				Aid = v,
+				Career = nCareer,
+				Sex = nSex,
+				Friendlylvl = nfriendlylvl,
+				Friendly = LActor.getFriendfriendly(sysarg, v, 1),
+				Count = nCount,
+				iSCanInvoid = nIsCanInvoid,
+			}
+			table.insert(nTemp , temp)
+		end
+		
+	end
+	local npack = DataPack.allocPacket(sysarg , 169 , 7)
+	DataPack.writeInt(npack , #nTemp)
+	for k , v in pairs ( nTemp ) do
+		DataPack.writeString(npack , v.Name)
+		DataPack.writeInt(npack , v.Aid)
+		DataPack.writeInt(npack , v.Career)
+		DataPack.writeInt(npack , v.Sex)
+		DataPack.writeInt(npack , v.Friendlylvl)
+		DataPack.writeInt(npack, v.Friendly)
+		DataPack.writeInt(npack , v.Count)
+		DataPack.writeInt(npack , v.iSCanInvoid)
+	end
+	DataPack.flush( npack )
+end
+
+function qinqishuhua.chonsefriend( sysarg , dp )
+	-- body
+	if qinqishuhua.IsOpenSys(sysarg) == false then
+		return
+	end
+	local Aid = DataPack.readInt(dp)
+	local nType = DataPack.readInt(dp)
+	debug_print("====================",Aid,nType)
+	if Aid <= 0 then
+		debug_print("========接受到的Aid为======="..tostring(Aid))
+		return
+	end
+	if nType < 1 or nType > 3 then
+		LActor.sendTipmsg( sysarg , Lang.QinQiShuHua.qqsh010, ttWarmTip)
+		return
+	end
+	local nSysvar = System.getStaticVar()
+	if nSysvar.QinQiShuHua_All_Data == nil then
+		nSysvar.QinQiShuHua_All_Data = {}
+	end
+
+	local nVar = LActor.getStaticVar( sysarg )
+	if nVar.Friend_Invoid_Data == nil then
+		nVar.Friend_Invoid_Data = {}
+	end
+
+	if nSysvar.QinQiShuHua_All_Data[Aid] ~= nil and nSysvar.QinQiShuHua_All_Data[Aid] > QQSH_ALL_ConFig.QQSH_Misc_Config.every_cout then
+		LActor.sendTipmsg(sysarg , Lang.QinQiShuHua.qqsh002, ttWarmTip)
+		return
+	end
+	-- if nVar.Friend_Invoid_Data[Aid] == nil then
+	-- 	nVar.Friend_Invoid_Data[Aid] = 0
+	-- end
+
+	if nVar.Friend_Invoid_Data[Aid] ~= nil then
+		--local nNum = nVar.Friend_Invoid_Data[Aid]
+		--debug_print("=========Friend_Invoid_Data=============",nNum,nType)
+		--local nRet = System.getBitValue(nNum , nType)
+		--if nRet == true then
+			LActor.sendTipmsg( sysarg , Lang.QinQiShuHua.qqsh002 , ttWarmTip)
+			return
+		--end
+		--debug_print("=========Friend_Invoid_Data=============",nNum,nType)
+	end
+	if nSysvar.QinQiShuHua_All_Data[Aid] == nil then
+		nSysvar.QinQiShuHua_All_Data[Aid] = 1
+	else
+		nSysvar.QinQiShuHua_All_Data[Aid] = nSysvar.QinQiShuHua_All_Data[Aid] + 1
+	end
+	--debug_print("============",nType)
+	local npack = DataPack.allocPacket( sysarg , 169 , 8)
+	DataPack.writeInt(npack , Aid)
+	DataPack.writeInt(npack , nType)
+	DataPack.writeChar(npack , 1)
+	DataPack.flush( npack )
+end
+
+function qinqishuhuaAddart( sysarg , type , value )
+	-- body
+	if not sysarg or not type or not value then
+		return
+	end
+	if qinqishuhua.IsOpenSys(sysarg) == false then
+		return
+	end
+	local nStaticVar = LActor.getStaticVar( sysarg )
+	if nStaticVar.QinQiShuHua_Artistry_table == nil then
+		nStaticVar.QinQiShuHua_Artistry_table = {}
+		-- 1 琴 2 棋 3 书 4 画 对应的技艺值
+		for i = 1, 4 do
+			nStaticVar.QinQiShuHua_Artistry_table[i] = {}
+			nStaticVar.QinQiShuHua_Artistry_table[i].id = i
+			nStaticVar.QinQiShuHua_Artistry_table[i].value = 0
+		end
+	end
+	local nType = type - 17
+	if nType < 1 or nType > 4 then
+		return
+	end
+	nStaticVar.QinQiShuHua_Artistry_table[nType].value = nStaticVar.QinQiShuHua_Artistry_table[nType].value + value
+end
+
+
+function qinqishuhua.addartvalue( sysarg , arg )
+	if qinqishuhua.IsOpenSys(sysarg) == false then
+		return
+	end
+	local nIndex = tonumber(arg[1])
+	local nCount = tonumber(arg[2])
+	local nStaticVar = LActor.getStaticVar( sysarg )
+	if nStaticVar.QinQiShuHua_Artistry_table == nil then
+		nStaticVar.QinQiShuHua_Artistry_table = {}
+		-- 1 琴 2 棋 3 书 4 画 对应的技艺值
+		for i = 1, 4 do
+			nStaticVar.QinQiShuHua_Artistry_table[i] = {}
+			nStaticVar.QinQiShuHua_Artistry_table[i].id = i
+			nStaticVar.QinQiShuHua_Artistry_table[i].value = 0
+		end
+	end
+	if nIndex < 1 or nIndex > 4 then
+		debug_print("-==========GM==== 类型错误======")
+		return
+	end
+	nStaticVar.QinQiShuHua_Artistry_table[nIndex].value = nStaticVar.QinQiShuHua_Artistry_table[nIndex].value + nCount
+end
+
+function qinqishuhua.addfixtime( sysarg )
+	-- body
+	if qinqishuhua.IsOpenSys(sysarg) == false then
+		return
+	end
+	local nStaticVar = LActor.getStaticVar( sysarg )
+	if nStaticVar.QinQiShuHua_Star_time ~= nil then
+		nStaticVar.QinQiShuHua_Star_time = nStaticVar.QinQiShuHua_Star_time - 50000
+		if nStaticVar.QinQiShuHua_Star_time < 0 then
+			nStaticVar.QinQiShuHua_Star_time = 0
+		end
+	end
+end
+function  qinqishuhua.Newday( sysarg , nFlag )
+	-- body
+	local nVar = LActor.getStaticVar( sysarg )
+	if nVar == nil then
+		return
+	end
+	nVar.Friend_Invoid_Data = nil
+	nVar.QinQiShuHua_Count = nil
+end
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeDayEnd, qinqishuhua.ClearQinQiShuHuaDailyData)
+
+SystemHandlerDispatcher.registerSystemHander(BaseTypes.SystemId.cscy_QinQiShuHua , qinqishuhua.HandleNetworkData)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, qinqishuhua.Newday)
+
+--返回剩余可研习次数（0没有次数，-1不限次数， 大于0 具体的次数）
+function qinqishuhua.leftCount(sysarg)
+	if qinqishuhua.IsOpenSys(sysarg) == false then
+		return 0
+	end
+	local nVar = LActor.getStaticVar( sysarg )
+	if nVar == nil then return 0 end
+	if nVar.QinQiShuHua_Count == nil then
+		return -1
+	end
+
+
+	local total = 0
+	for nType, conf in pairs(QQSH_ALL_ConFig.QQSH_Config) do
+		if conf[1] == 1 then
+			total = total + conf[2] - nVar.QinQiShuHua_Count[nType]
+		else
+			return -1
+		end
+	end
+
+	return total
+end
+GetQuestTargetCount.register(qtQinQiShuHua, qinqishuhua.leftCount)
+
+GmEventFuncList.register( "addart",qinqishuhua.addartvalue,1)
+GmEventFuncList.register( "showdata",qinqishuhua.ShowData,1)
+GmEventFuncList.register( "addfixtime",qinqishuhua.addfixtime,1)

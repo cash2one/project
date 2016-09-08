@@ -1,0 +1,79 @@
+﻿-- 瑶姬xp技能,
+
+{
+desc=Lang.Skill.s36_1Desc,
+iconID=36,
+	actRange=
+	{
+		{
+			xStart=-12,
+			xEnd=12,
+			yStart=-7,
+			yEnd=7,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+				{
+					conds=
+					{
+					{cond = 5,value =1},
+					{cond = 13,value =true},
+					{cond = 36,value =false},
+					},
+					results=
+					{
+						{mj=0,timeParam=1,type=1,delay=800,value={type=56,id=80,rate=0,value=0,interval=1,vt=0}},
+						{mj=0,timeParam=1,type=3,delay=800,value={rate=100000,value=0}},
+					},
+					specialEffects=
+					{
+						{type=6,mj=0,id=0,keepTime=1000,delay=900,always=false},
+						{type=4,mj=0,id=0,keepTime=0,delay=900,always=false, targetpos=true},
+					},
+				},	
+				{	
+					conds=
+					{
+					{cond = 5,value =2},
+					{cond = 13,value =true},
+					},
+					results=
+					{
+						{mj=0,timeParam=1,type=1,delay=800,value={type=56,id=80,rate=0,value=0,interval=1,vt=0}},
+						{mj=0,timeParam=1,type=3,delay=800,value={rate=20000,value=0}},
+					},
+					specialEffects=
+					{
+						{type=6,mj=0,id=0,keepTime=1000,delay=900,always=false},
+						{type=4,mj=0,id=0,keepTime=0,delay=900,always=false, targetpos=true},
+					},
+				},				
+				{
+					conds=
+					{
+					{cond = 3,value =true},
+					},
+
+					results=
+					{
+					    {mj=0,timeParam=1,type=18,delay=900,value={rate=7,value=300}},
+					},
+					specialEffects=
+					{
+					},
+				},
+			},
+		},
+	},	
+	trainConds=
+	{
+	},
+	spellConds=
+	{
+		{cond=30,value=100,consume=true},--XP值的消耗
+	},
+	singTime=0,
+
+	cooldownTime=0,
+},

@@ -1,0 +1,44 @@
+﻿--lua script
+--Do something about npc trade
+
+--#include "GlobalDefine.txt" once
+--#include "data\config\store\NPCStore.txt" once
+  --#include "ActorDataFunc.txt" once
+
+
+
+--获得NPC买卖数据并发给客户端
+function NPCTradeInfoToClient( sysarg, args )
+	if true then
+		return
+	end
+	local npcid = tonumber( args )
+	local sellconfig = nil
+
+	table.foreachi( NPCStore, function( i, v ) if ( v.npcid == npcid ) then sellconfig = v end end )
+
+	if ( sellconfig == nil ) then
+		return
+	end
+
+	--133 NPC交易子系统 3
+	local npack = DataPack.allocPacket(sysarg, 133, 3)  --申请一个数据包
+	if (npack == nil) then return end
+
+	local len_c_pack = table.getn(sellconfig)
+	DataPack.writeChar(npack, len_c_pack)
+
+	for i = 1, len_c_pack do
+		local s = sellconfig[i]
+		DataPack.writeString(npack, s.selltip)
+		local silen = table.getn(s.items)
+		DataPack.writeByte(npack, silen)
+		for x = 1, silen do
+			DataPack.writeWord(npack, s.items[x])
+		end
+	end
+
+	DataPack.writeChar(npack, npcid)
+
+	DataPack.flush(npack)
+end

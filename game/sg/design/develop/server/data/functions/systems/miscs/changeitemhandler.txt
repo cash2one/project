@@ -1,0 +1,48 @@
+--#include "data\config\pet\pet.txt" once
+
+MiscsImplement.changeItemList = {}
+
+-- 玩家选择消耗某个物品，并获取到其中的一个物品
+MiscsImplement.GetOtherItemForThis = function(sysarg, msgid, packet)
+	if Item.getBagEmptyGridCount( sysarg ) < 1 then
+		LActor.sendTipmsg( sysarg, Lang.ScriptTips.vip003, ttMessage )
+		return
+	end
+	local guid = DataPack.readInt64(packet)
+	local ptr = Item.getBagItemPtrByGuid(sysarg, guid)
+	if ptr == nil then 
+		print("can not find item by guid")
+		return
+	end
+
+	local idx = DataPack.readInt(packet)
+
+	local itemid = Item.getItemId(ptr)
+	if MiscsImplement.changeItemList[itemid] == nil then 
+		print("GlobalItemFn can not find this itemid"..itemid)
+		return
+	end
+
+	local conf = MiscsImplement.changeItemList[itemid]
+	if idx <= 0 or idx > #conf then
+		print("idx invalid"..idx)
+		return
+	end
+
+	itemid = conf[idx]
+	-- 删掉原来的物品，然后新增一个
+	local bind = Item.getItemProperty(sysarg, ptr, Item.ipItemBind, 0) 
+	LActor.removeItemByPtr(sysarg, ptr, 1, true, "GetOtherItemForThis", 2) 
+	LActor.addItem(sysarg, itemid, 0, 0, 1, bind, "GetOtherItemForThis", 1)
+end
+
+MiscsImplement.changeItemInit = function ()
+	for i,v in ipairs(petConf.specialSkillBook) do
+		MiscsImplement.changeItemList[v.itemid] = v.list
+	end
+end
+
+table.insert(InitFnTable, MiscsImplement.changeItemInit)
+
+MiscsImplement.registerMsgHandler(LogicCmd.miscSys.sub.cGetItemList, MiscsImplement.GetOtherItemForThis)
+

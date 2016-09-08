@@ -1,0 +1,264 @@
+--答题活动
+--#include "data\functions\systems\timereward\activityconf.txt" once
+
+AnswerQuestion = {}
+
+function AnswerQuestion.getActorVar(actor)
+	local var = LActor.getStaticVar(actor)
+	if not var then return end
+
+	if not var.answerQuestion then var.answerQuestion = {} end
+
+	return var.answerQuestion
+end
+
+--发送信息
+function AnswerQuestion.sendActorInfo(actor, id)
+	if not activityConf[id] then
+		print("error AnswerQuestion sendActorInfo id        "..id)
+		print(type(id))
+		return
+	end
+
+	local config = activityConf[id].activities[36]
+	if not config then return end
+
+	local state = ONLINEREWARD.GetActivityState(id , nil, actor)
+	if state == 0 then return end
+
+	AnswerQuestion.startActivity(actor, id)
+
+	local var = AnswerQuestion.getActorVar(actor)
+	if not var then return end
+	
+	local questionId
+	if ((var.rightCount or 0) + (var.wrongCount or 0)) == config.questionNum then
+		questionId = 0
+	elseif var.questionInfo and var.questionInfo[(var.rightCount or 0) + (var.wrongCount or 0) + 1] then
+		questionId = var.questionInfo[(var.rightCount or 0) + (var.wrongCount or 0) + 1]
+	else
+		print("answerQuestion error questionInfo :")
+		if var.questionInfo then
+			for i = 1, config.questionNum do
+				print(var.questionInfo[i] or 0)
+			end
+		end
+		print("=================")
+		return
+	end
+
+	local pack = DataPack.allocPacket(actor, BaseTypes.SystemId.timeRewardSystem, 139)
+	if pack == nil then return end
+
+	DataPack.writeInt(pack, id)	--活动id
+	DataPack.writeByte(pack, var.rightCount or 0)	--答对了几道题
+	DataPack.writeByte(pack, var.wrongCount or 0)	--答错了几道题
+	DataPack.writeInt(pack, questionId) 	--当前题目id
+	DataPack.writeByte(pack, (var.hasGetAwards or 0))	--是否已领取了奖励
+	DataPack.writeByte(pack, (var.rightAward or 0))		--答对了的双倍奖励个数
+	DataPack.writeByte(pack, (var.wrongAward or 0))	--答错了的双倍奖励个数
+	DataPack.writeByte(pack, getAcitivityIsDouble(daRichangAnswer) or 1)
+
+	DataPack.flush(pack)
+end
+
+--随机题目 和 一些开始活动时的处理
+function AnswerQuestion.startActivity(actor, id)
+	local var = AnswerQuestion.getActorVar(actor)
+	if not var then return end
+
+	local today = System.getToday()
+	if var.activityTime and var.activityTime == today then return end
+
+	var.activityTime = today --记录这次参加活动的时间
+	var.questionInfo = {}	--题目数据
+	var.hasGetAwards = nil	--是否领取了奖励
+	var.rightCount = 0	--答对题目数量
+	var.wrongCount = 0	--答错题目数量
+	var.rightAward = 0	--答对的双倍奖励数量
+	var.wrongAward = 0	--答错的双倍奖励数量
+
+	local config = activityConf[id].activities[36]
+	if not config then return end
+
+	local tmp = {}
+	for i = 1, #config.questions do
+		table.insert(tmp, i)
+	end
+	for index = 1, config.questionNum do
+		local rate = System.getRandomNumber(#tmp) + 1
+		if tmp[rate] ~= nil then
+			var.questionInfo[index] = tmp[rate]
+			table.remove(tmp, rate)
+		end
+	end
+end
+
+--选择答案，questionId第几道题
+function AnswerQuestion.chooseAnswer(actor, id, questionId, answerId)
+	if not activityConf[id] then
+		print("error AnswerQuestion chooseAnswer id        "..id)
+		print(type(id))
+		return
+	end
+
+	local config = activityConf[id].activities[36]
+	if not config then return end
+
+	if not actor or not questionId or not answerId or answerId < 1 or answerId > 4 then return end
+
+	--活跃度
+	ActivationTrigger(actor, 15)
+
+	local var = AnswerQuestion.getActorVar(actor)
+	if not var or not var.questionInfo or not var.questionInfo[questionId] then return end
+
+	local questionInfo = config.questions[var.questionInfo[questionId]]
+	if not questionInfo then
+		print("answerQuestion config error chooseAnswer not this question     "..var.questionInfo[questionId])
+		return
+	end
+
+	var.rightCount = var.rightCount or 0
+	var.wrongCount = var.wrongCount or 0
+
+	if (var.rightCount + var.wrongCount + 1) ~= questionId then
+		print("answerQuestion error is not time this question   "..questionId.."  "..var.rightCount.." "..var.wrongCount)
+		return
+	end
+
+	if questionId == 1 then
+		-- 答第一题的时候记录日志
+		System.logCounter(LActor.getActorId(actor), LActor.getAccountName(actor), tostring(LActor.getLevel(actor)), "answerQuestion", "", "", "", "", LActor.getName(actor))
+	end
+	--是否算双倍奖励
+	local double = 1
+	local week = System.getDayOfWeek()
+	for idx, value in pairs(config.doubleAward) do
+		if idx == week then
+			if (value.startTime[1] == value.endTime[1] and value.startTime[2] == value.endTime[2] and value.startTime[3] == value.endTime[3])
+			     or System.isInTimeRange(value.startTime[1], value.startTime[2], value.startTime[3], value.endTime[1], value.endTime[2], value.endTime[3]) then
+				double = 2
+			end
+			break
+		end
+	end
+
+	if answerId == questionInfo[2] then
+		var.rightCount = var.rightCount + 1
+		if double == 2 then
+			var.rightAward = (var.rightAward or 0) + 1
+		end
+	else
+		var.wrongCount = var.wrongCount + 1
+		if double == 2 then
+			var.wrongAward = (var.wrongAward or 0) + 1
+		end
+	end
+
+	AnswerQuestion.sendActorInfo(actor, id)
+
+	if (var.rightCount + var.wrongCount) >= config.questionNum then
+		var.questionInfo = nil
+		AnswerQuestion.getAwards(actor, id)
+	end
+end
+
+--领取奖励
+function AnswerQuestion.getAwards(actor, id)
+	if not activityConf[id] then
+		print("error AnswerQuestion getAwards id        "..id)
+		print(type(id))
+		return
+	end
+	
+	local config = activityConf[id].activities[36]
+	if not config then return end
+
+	local var = AnswerQuestion.getActorVar(actor)
+
+	if not var or not var.rightCount or var.hasGetAwards then return end
+
+	if var.rightCount + var.wrongCount ~= config.questionNum then
+		print("answerQuestion has not ans all questions "..var.rightCount.." "..var.wrongCount)
+		return
+	end
+
+	local rightCount = var.rightCount or 0
+	local wrongCount = var.wrongCount or 0
+	local rightAward = var.rightAward or 0
+	local wrongAward = var.wrongAward or 0
+
+	var.hasGetAwards = 1
+	local itemTmp = {}
+	for _, conf in pairs(config.awards[1]) do
+		table.insert(itemTmp, {type = conf.type,  param = conf.param, count = conf.count*rightCount, doubleCount = conf.count*rightAward})
+	end
+	local hasInsert = 0
+	for _, conf in pairs(config.awards[2]) do
+		hasInsert = 0
+		for idx, value in pairs(itemTmp) do
+			if conf.type == value.type and conf.param == value.param then
+				itemTmp[idx].count = itemTmp[idx].count + conf.count*wrongCount
+				itemTmp[idx].doubleCount = itemTmp[idx].doubleCount + conf.count*wrongAward
+				hasInsert = 1
+				break
+			end
+		end
+		if hasInsert ~= 1 then
+			table.insert(itemTmp, {type = conf.type,  param = conf.param, count = conf.count*wrongCount, doubleCount = conf.count*wrongAward})
+		end
+	end
+
+	for _, conf in pairs(itemTmp) do
+		local count = (math.floor(conf.count) + math.floor(conf.doubleCount)) * (getAcitivityIsDouble(daRichangAnswer) or 1)
+		if conf.type == qatEquipment then
+			LActor.addItem(actor, conf.param, 0, 0, count, 1, "answerQuestion")
+		else
+			LActor.giveAward(actor, conf.type, count, 1, conf.param)
+		end
+	end
+
+	-- AnswerQuestion.sendHasGetAwards(actor, id)
+end
+
+--通知是否已领取了奖励
+function AnswerQuestion.sendHasGetAwards(actor, id)
+	local var = AnswerQuestion.getActorVar(actor)
+	if not var then return end
+
+	local pack = DataPack.allocPacket(actor, BaseTypes.SystemId.timeRewardSystem, 141)
+	if pack == nil then return end
+
+	DataPack.writeInt(pack, id)	--活动id
+	DataPack.writeByte(pack, var.hasGetAwards or 0)
+
+	DataPack.flush(pack)
+end
+
+function AnswerQuestion.onLogin(actor)
+	for _, conf in pairs(ActivityControl) do
+		if ONLINEREWARD.GetActivityState(conf.id) ~= 0 then
+			if activityConf[conf.id] and activityConf[conf.id].activities[36] then
+				AnswerQuestion.sendActorInfo(actor, conf.id)
+				return
+			end
+		end
+	end
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, AnswerQuestion.onLogin)
+
+
+function AnswerQuestion.gmFunction(actor, args)
+	local gm1 = tonumber(args[1])
+	if gm1 == 3 then
+		AnswerQuestion.chooseAnswer(actor, 6, tonumber(args[2]), tonumber(args[3]))
+	elseif gm1 == 4 then
+		AnswerQuestion.getAwards(actor)
+	elseif gm1 == 5 then
+		ONLINEREWARD.SetActivityTime(6, args[2].." "..args[3],args[4].." "..args[5], 1, 1)
+	end
+end
+
+GmEventFuncList.register( "answer", AnswerQuestion.gmFunction,1)

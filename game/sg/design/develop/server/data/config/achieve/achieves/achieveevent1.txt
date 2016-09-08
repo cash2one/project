@@ -1,0 +1,971 @@
+--目标成就的第一部分的 成就 的配置
+
+	 --id = 0	完成各种任务100条					
+	{ 						
+		id = 	0	,			
+		logicop = 1,  					
+		atomEventId = 		5	,  		
+		conds =  { }					
+	},						
+	 --id = 1		60级紫色防御套装一套				
+	{ 							
+		id = 1,				
+		logicop = 23,						
+		atomEventId = 41,  			
+		conds = 						
+		{						
+			{					
+				paramID = 1,				
+				paramType = 	1	,   		
+				params = {	1	}	--???这里要填60级紫色防御套装
+			},					
+		}						
+	},							
+	 --id = 2 		等级达到70级				
+	{ 							
+		id = 2,				
+		logicop = 24,						
+		atomEventId = 2,  			
+		conds = 						
+		{						
+			{					
+				paramID = 1,				
+				paramType = 2,   		
+				params = { 70 }	
+			},					
+		}						
+	},					
+	 --id = 3 	完成军团任务					
+	{ 						
+		id = 	3	,			
+		logicop = 1,  					
+		atomEventId = 		5	,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,   			
+				paramType = 	2,	
+				params =      	{	8191, 8358 	}		--军团任务的id范围
+			},				
+		}					
+	},						
+	--id = 4 技能刻印（原：完成运镖任务）			
+	{ 						
+		id = 	4	,			
+		logicop = 1,  					
+		atomEventId = 9,  		
+		conds =  
+		{ 
+		}					
+	},						  	
+	 --id = 5	完成五星品质任务					
+	{ 						
+		id = 	5	,			
+		logicop = 1,  					
+		atomEventId = 		69	,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,			
+				paramType = 	1	,	
+				params =      	{1}     --斩妖除魔
+			},		
+			{				
+				paramID = 2,   			
+				paramType = 	1	,	
+				params =      	{	5	} -- 表示五星
+			},				
+		}					
+	},						
+	 --id = 6 	完成五星护送任务  --优化五星级美女护送 		
+	{ 						
+		id = 	6	,			
+		logicop = 1,					
+		atomEventId = 		69	,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,			
+				paramType = 	1	,	
+				params =      	{2}
+			},			
+			{				
+				paramID = 2,			
+				paramType = 	1	,	
+				params =      	{5} --TODO: 五星护送任务ID的范围或枚举
+			},								
+		}					
+	},		
+	 --id = 7 	达成所有任务活动成就					
+	{ 						
+		id = 	7	,			
+		logicop = 1,  					
+		atomEventId = 		67	,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,   			
+				paramType = 	1	,	
+				params =      	{	1,2,3,5,7,8,9,10,75,76,77,78,79,80,81,82,}
+			},				
+		}					
+	},						
+	 --id = 8	将其中一件装备强化至6级					
+	{ 						
+		id = 	8	,			
+		logicop = 1,  					
+		atomEventId = 		19	,		
+		conds = 					
+		{					
+				
+				{			
+				paramID = 1,   			
+				paramType = 	1	,	
+				params = { 6 }
+				},
+						
+		}					
+	},						
+	 --id = 9 	将其中一件装备强化至9级					
+	{ 						
+		id = 	9	,			
+		logicop = 1,  					
+		atomEventId = 		19	,		
+		conds = 					
+		{					
+			
+			    {				
+				paramID = 1,   			
+				paramType = 	1	,	
+				params = { 9 }
+				},
+							
+		}					
+	},						
+	 --id =10 	将其中一件装备强化至12级					
+	{ 						
+		id = 	10	,			
+		logicop = 1,  					
+		atomEventId = 		19	,		
+		conds = 					
+		{					
+			
+			    {				
+				paramID = 1,   			
+				paramType = 	2	,	
+				params =      	{ 12 }
+				},
+				
+		}					
+	},						
+	 --id = 11 	将其中一件装备强化至15级					
+	{ 						
+		id = 	11	,			
+		logicop = 1,  					
+		atomEventId = 		19	,		
+		conds = 					
+		{					
+			
+			    {				
+				paramID = 1,   			
+				paramType = 	1	,	
+				params =      	{	15	}
+				},
+				
+		}					
+	},						
+	 --id = 12	全身强化+6					
+	{ 						
+		id = 	12	,			
+		logicop = 1,  					
+		atomEventId = 		51	,		
+		conds = 					
+		{					
+			
+			    {				
+				paramID = 1,   			
+				paramType = 	2	,	
+				params =      	{	6, 15	},
+				},
+				
+		}					
+	},						
+	 --id = 13	全身强化+9					
+	{ 						
+		id = 	13	,			
+		logicop = 2,					
+		atomEventId = 		51	,		
+		conds = 					
+		{					
+			    {				
+				paramID = 1,			
+				paramType = 	2	,	
+				params =      	{	9, 15	},
+				},
+		}					
+	},						
+	 --id = 14	全身强化+12					
+	{ 						
+		id = 	14	,			
+		logicop = 3,					
+		atomEventId = 		51	,		
+		conds = 					
+		{					
+			    {				
+				paramID = 1,			
+				paramType = 	2	,	
+				params =      	{	12, 15	},
+				},
+		}					
+	},						
+	 --id = 15	全身强化+15					
+	{ 						
+		id = 	15	,			
+		logicop = 4,					
+		atomEventId = 		51	,		
+		conds = 					
+		{					
+			    {				
+				paramID = 1,			
+				paramType = 	1	,	
+				params =      	{	15	},
+				},
+		}					
+	},						
+	 --id = 16	全身宝石等级之和达到100分					
+	{ 						
+		id = 	16	,			
+		logicop = 5,					
+		atomEventId = 		56	,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,			
+				paramType = 	2	,	
+				params =      	{	100	}
+			},				
+		}					
+	},						
+	 --id = 17	全身宝石等级之和达到120分					
+	{ 						
+		id = 	17	,			
+		logicop = 6,					
+		atomEventId = 		56	,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,			
+				paramType = 	2	,	
+				params =      	{	120	}
+			},				
+		}					
+	},						
+	 --id = 18	全身宝石等级之和达到140分					
+	{ 						
+		id = 	18	,			
+		logicop = 7,					
+		atomEventId = 		56	,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,			
+				paramType = 	2	,	
+				params =      	{	140	}
+			},				
+		}					
+	},						
+	 --id = 19	全身宝石等级之和达到160分					
+	{ 						
+		id = 	19	,			
+		logicop = 8,					
+		atomEventId = 		56	,		
+		conds = 					
+		{					
+			{				
+				paramID =1,			
+				paramType = 	2	,	
+				params =      	{	160	}
+			},				
+		}					
+	},						
+	 --id = 20	全身宝石等级之和达到180分					
+	{ 						
+		id = 	20	,			
+		logicop = 9,					
+		atomEventId = 		56	,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,			
+				paramType = 	2	,	
+				params =      	{	180	}
+			},				
+		}					
+	},						
+	 --id = 21	全身宝石等级之和达到200分					
+	{ 						
+		id = 	21	,			
+		logicop = 10,					
+		atomEventId = 		56	,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,			
+				paramType = 	2	,	
+				params =      	{	200	}
+			},				
+		}					
+	},						
+	 --id = 22	人物身上有10件紫色装备					
+	{ 						
+		id = 	22	,			
+		logicop = 11,					
+		atomEventId = 		68	,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,			
+				paramType = 	1	,	
+				params =      	{	10	}
+			},				
+		}					
+	},						
+	 --id = 23	达成所有神器在手成就					
+	{ 						
+		id = 	23	,			
+		logicop = 12,					
+		atomEventId = 		67	,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,			
+				paramType = 	2	,	
+				params =      	{	12,26	}
+			},				
+		}					
+	},						
+	 --id = 24	击杀深海之恋副本中金甲将					
+	{ 						
+		id = 	24	,			
+		logicop = 13,					
+		atomEventId = 		6	,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,			
+				paramType = 	1	,	
+				params =      	{	121	}
+			},				
+		}					
+	},						
+	 --id = 25	化身副本BOSS一遍					
+	{ 						
+		id = 	25	,			
+		logicop = 14,					
+		atomEventId = 31,		
+		conds = 					
+		{
+			{				
+				paramID = 1,
+				paramType = 1,	
+				params = { 87 }
+			},
+		}					
+	},						
+	 --id = 26	击杀特定怪物ID的次数（副本怪）					
+	{ 						
+		id = 26,			
+		logicop = 15,				
+		atomEventId = 6,		
+		conds = 
+		{				
+			{
+				paramID = 1,			
+				paramType = 1,	
+				params = {182} --
+			},				
+		}					
+	},						
+	 --id = 27	进入副本1000次					
+	{ 						
+		id = 	27	,			
+		logicop = 16,					
+		atomEventId = 		14	,		
+		conds = { }					
+	},											
+		--id = 28	魔界克星（原：达成所有除魔卫道成就）
+  {
+	
+	id = 28,
+	logicop = 17,  	
+	atomEventId = 47,    --原子事件的ID，比如这里是完成任务事件
+	conds = 
+	{
+		{	
+			paramID = 1,     --触发事件第几个参数有效,比如第1个参数,第2个参数...这个程序配置，先全部添1
+			-- paramType参数的类型,与params配合使用
+			--0或不填表示任意参数
+			--1表示枚举,比如怪物的id如果为1,2,3,4,6,那么params ={1,2,3,4,6}
+			--2表示范围,比如20-30的话params就配置params ={20,30}
+			paramType = 1,   
+			params =		--该事件可接受的参数，比如是帮派任务，则应该填所有帮派任务的id   
+			{
+				60
+			}
+		},
+		{	
+			paramID = 2,     --触发事件第几个参数有效,比如第1个参数,第2个参数...这个程序配置，先全部添1
+			-- paramType参数的类型,与params配合使用
+			--0或不填表示任意参数
+			--1表示枚举,比如怪物的id如果为1,2,3,4,6,那么params ={1,2,3,4,6}
+			--2表示范围,比如20-30的话params就配置params ={20,30}
+			paramType = 2,   
+			params =		--该事件可接受的参数，比如是帮派任务，则应该填所有帮派任务的id   
+			{
+				20,25
+				}	
+			},
+		}
+	},
+	 --id = 29	战力值达到1000					
+	{ 						
+		id = 	29	,			
+		logicop = 18,					
+		atomEventId = 		55	,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,			
+				paramType = 	2	,	
+				params =      	{	1000	}
+			},				
+		}					
+	},						
+	 --id = 30	战力值达到5000					
+	{ 						
+		id = 	30	,			
+		logicop = 19,					
+		atomEventId = 		55	,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,			
+				paramType = 	2	,	
+				params =      	{	5000	}
+			},				
+		}					
+	},						
+	 --id = 31	战力值达到20000					
+	{ 						
+		id = 	31	,			
+		logicop = 20,					
+		atomEventId = 		55	,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,			
+				paramType = 	2	,	
+				params =      	{	20000	}
+			},				
+		}					
+	},						
+	 --id = 32	成为VIP玩家					
+	{ 						
+		id = 	32	,			
+		logicop = 21,					
+		atomEventId = 		54	,				
+	},						
+	 --id = 33	击杀其它阵营玩家
+	{ 						
+		id = 	33	,			
+		logicop = 22,					
+		atomEventId = 61,		
+		conds =			
+		{			
+			{
+				paramID = 1,
+				paramType = 1,	
+				params = { 0 }
+			},				
+		}					
+	},						
+	 --id = 34	开启灵猿星宫灵根					
+	{ 						
+		id = 	34	,			
+		logicop = 23,					
+		atomEventId = 		53	,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,			
+				paramType = 	1	,	
+				params =      	{	3	}
+			},				
+		}					
+	},						
+	 --id = 35	开启苍熊星宫灵根					
+	{ 						
+		id = 	35	,			
+		logicop = 24,					
+		atomEventId = 		53	,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,			
+				paramType = 	1	,	
+				params =      	{	6	}
+			},				
+		}					
+	},						
+	 --id = 36	开启朱雀星宫灵根					
+	{ 						
+		id = 	36	,			
+		logicop = 25,					
+		atomEventId = 		53	,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,			
+				paramType = 	1	,	
+				params =      	{	9	}
+			},				
+		}					
+	},						
+	 --id = 37	开启麒麟星宫灵根					
+	{ 						
+		id = 	37	,			
+		logicop = 26,					
+		atomEventId = 		53	,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,			
+				paramType = 	1	,	
+				params =      	{	12	}
+			},				
+		}					
+	},						
+	 --id = 38	达成所有修仙之路成就									
+	{ 							
+		id = 	38,				
+		logicop = 27,						
+		atomEventId = 67,  			
+		conds = 						
+		{						
+			{					
+				paramID = 1,				
+				paramType = 	1	,   		
+				params = {	28,29,30,31,90,91,92,93,94,4,6,54,95,96,97,98,32,100,33,34,35,36,37,38,39,40,41,42	}
+			},					
+		}						
+	},					
+	 --id = 39	拥有一只2阶坐骑
+	{ 						
+		id = 	39	,			
+		logicop = 28,					
+		atomEventId = 		63	,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,			
+				paramType = 	2	,	
+				params =      	{	2	}
+			},				
+		}					
+	},						
+	 --id = 40	拥有一只5阶坐骑					
+	{ 						
+		id = 	40	,			
+		logicop = 29,					
+		atomEventId = 		63	,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,			
+				paramType = 	1	,	
+				params =      	{	5	}
+			},				
+		}					
+	},						
+	 --id = 41	拥有一只6阶坐骑						
+	{ 						
+		id = 	41	,			
+		logicop = 30,					
+		atomEventId = 		63	,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,			
+				paramType = 	1	,	
+				params =      	{	6	}
+			},				
+		}					
+	},						
+	 --id = 42	拥有一只8阶坐骑					
+	{ 						
+		id = 	42	,			
+		logicop = 31,					
+		atomEventId = 63,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,			
+				paramType = 	2,	
+				params = { 8 }
+			},				
+		}					
+	},						
+	 --id = 43	拥有一只10阶坐骑					
+	{ 						
+		id = 	43	,			
+		logicop = 32,					
+		atomEventId = 63,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,			
+				paramType = 	2,	
+				params =      	{ 10 }
+			},				
+		}					
+	},		
+
+	--id = 44	翅膀等阶达到2阶
+	{ 						
+		id = 44,			
+		logicop = 50,					
+		atomEventId = 70,
+		conds = 					
+		{					
+			{
+				paramID = 1,			
+				paramType = 1,	
+				params = { 2 }			
+			},
+		}	
+	},						
+
+	--id = 45	翅膀等阶达到6阶				
+	{ 						
+		id = 45,			
+		logicop = 50,					
+		atomEventId = 70,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,			
+				paramType = 1,	
+				params = { 6 }
+			},				
+		}					
+	},						
+
+	--id = 46	翅膀等级达到50级				
+	{ 						
+		id = 46,			
+		logicop = 50,					
+		atomEventId = 71,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,			
+				paramType = 1,	
+				params = { 50 }
+			},				
+		}					
+	},		
+
+	--id = 47 掳获美人卓文君(美人图谱等级达到11级)
+	{ 						
+		id = 47,			
+		logicop = 36,					
+		atomEventId = 64,		
+		conds = 					
+		{				
+			{
+				paramID = 1,			
+				paramType = 1,	
+				params = { 2 }
+			},				
+		}
+	},			
+
+	--id = 48	掳获美人赵飞燕(美人图谱等级达到31级)
+	{ 						
+		id = 48,			
+		logicop = 37,				
+		atomEventId = 64,		
+		conds = 
+		{			
+			{
+				paramID = 1,
+				paramType = 1,	
+				params = { 4 }
+			},
+		}				
+	},
+
+	--id = 49	掳获美人王昭君(美人图谱等级达到41级)
+	{ 						
+		id = 49,			
+		logicop = 38,				
+		atomEventId = 64,
+		conds = 					
+		{					
+			{				
+				paramID = 1,			
+				paramType = 1,	
+				params ={ 5 }
+			},
+		}
+	},
+
+	 --id = 50	任意伙伴拥有4个中级的技能（原：坐骑穿满装备	）				
+	{
+		id = 	50	,			
+		logicop = 1,					
+		atomEventId = 		26	,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,			
+				paramType = 	2	,	
+				params =      	{2}
+			},			
+			{				
+				paramID = 2,			
+				paramType = 	1	,	
+				params =      	{4}				
+		     },
+          } 
+	  },					
+	 --id = 51	坐骑灵犀值达到120
+	{ 						
+		id = 	51	,			
+		logicop = 40,					
+		atomEventId = 		59	,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,			
+				paramType = 	2	,	
+				params =      	{	120	}
+			},				
+		}					
+	},						
+	 --id = 52	坐骑灵犀值达到140					
+	{ 						
+		id = 	52	,			
+		logicop = 41,					
+		atomEventId = 		59	,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,			
+				paramType = 	2	,	
+				params =      	{	140	}
+			},				
+		}					
+	},						
+	 --id = 53	装备洗练属性全部激活（原：达到所有坐骑灵器成就）					
+	{ 						
+		id = 	53	,			
+		logicop = 1,  					
+		atomEventId = 32,  		
+		conds =  
+		{ 
+		}					
+	},	   			
+	 --id = 54	人际关系人数达10人					
+	{ 						
+		id = 	54	,			
+		logicop = 43,					
+		atomEventId = 		66	,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,			
+				paramType = 	2	,	
+				params =      	{	10	}
+			},				
+		}					
+	},						
+	 --id = 55	人际关系人数达50人					
+	{ 						
+		id = 	55	,			
+		logicop = 44,					
+		atomEventId = 		66	,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,			
+				paramType = 	2	,	
+				params =      	{	50	}
+			},				
+		}					
+	},						
+	 --id = 56	角色帮派贡献达到1000					
+	{ 						
+		id = 	56	,			
+		logicop = 45,					
+		atomEventId = 		37	,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,			
+				paramType = 2,	
+				params =      	{	1000	}
+			},				
+		}					
+	},						
+	 --id = 57	角色帮派贡献达到5000					
+	{ 						
+		id = 	57,			
+		logicop = 46,					
+		atomEventId = 37,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,			
+				paramType = 2,	
+				params = {	5000	}
+			},				
+		}					
+	},						
+	 --id = 58	角色帮派贡献达到50000					
+	{ 						
+		id = 58,			
+		logicop = 47,					
+		atomEventId = 37,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,			
+				paramType = 2,	
+				params = { 50000 }
+			},				
+		}					
+	},						
+	 --id = 59	魅力值达到100					
+	{ 						
+		id = 59,			
+		logicop = 48,					
+		atomEventId = 13,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,			
+				paramType = 2,	
+				params = { 100 }
+			},				
+		}					
+	},		
+
+	 --id = 60	魅力值达到1000					
+	{ 						
+		id = 60,			
+		logicop = 49,					
+		atomEventId = 13,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,			
+				paramType = 2,	
+				params = { 1000 }
+			},				
+		}					
+	},				
+
+	 --id = 61	达成所有声名显赫成就					
+	{ 						
+		id = 61,			
+		logicop = 50,					
+		atomEventId = 67,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,			
+				paramType = 1,	
+				params = { 58,59,60,61,62,63,64,115,116,117,118,119,120,121 }
+			},				
+		}					
+	},		
+
+
+	--id = 66	翅膀等阶达到4阶				
+	{ 						
+		id = 66,			
+		logicop = 50,					
+		atomEventId = 70,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,			
+				paramType = 1,	
+				params = { 4 }
+			},				
+		}					
+	},	
+			
+	--id = 67	翅膀等级达到20级				
+	{ 						
+		id = 67,			
+		logicop = 50,					
+		atomEventId = 71,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,			
+				paramType = 1,	
+				params = { 20 }
+			},				
+		}					
+	},	
+
+	--id = 79	翅膀等级达到35级	
+	{ 						
+		id = 79,			
+		logicop = 50,					
+		atomEventId = 71,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,			
+				paramType = 1,	
+				params = { 35 }
+
+			},				
+		}					
+	},	
+
+
+
+	--id = 105	翅膀技能等级10				
+	{ 						
+		id = 105,			
+		logicop = 50,					
+		atomEventId = 72,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,			
+				paramType = 1,	
+				params = { 10 }
+			},				
+		}					
+	},		
+
+	 --id = 106	达成所有声名显赫成就					
+	{ 						
+		id = 106,			
+		logicop = 50,					
+		atomEventId = 67,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,			
+				paramType = 1,	
+				params = { 101,57,58,59,60,61,62,102,103,104,105 }
+			},				
+		}					
+	},	

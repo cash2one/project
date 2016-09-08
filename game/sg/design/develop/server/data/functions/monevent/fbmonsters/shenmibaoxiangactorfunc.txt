@@ -1,0 +1,66 @@
+--神秘宝箱 
+
+--杀怪时有极小概率掉落神秘宝箱，每个玩家每天获得的神秘宝箱有数量上限，达到上限则无法继续获得宝箱
+
+--#include "data\config\shenmibaoxiang\shenmibaoxiangconfig.txt" once
+
+ShenMiBaoXiangActor={}
+
+ 
+
+ShenMiBaoXiangActor.handleShenMiBaoXiangLootItem=function(sysarg,args)
+	-- --	aeActorLootItem =43,            --玩家拾取物品,物品的id,掉落怪物的ID，怪物的名字
+
+	local  itemId=args[1]
+	local  itemCount=args[5]
+ 
+ 	--print("@@@@@@@@@@@ShenMiBaoXiangActor.handleLootItem")
+ 	--print("itemId:.."..itemId)
+ 	--print("itemCount:"..itemCount)
+
+ 	if itemId ~= ShenMiBaoXiangConf.item_id then return end 
+
+ 	
+ 	local name = LActor.getName(sysarg)
+
+ 	local tipmsg = string.format(ShenMiBaoXiangConf.broadcastMsg, name)
+	--System.broadcastTipmsg(tipmsg, ttScreenCenter)
+
+   System.broadcastTipmsg(tipmsg, ttGmTip)
+
+
+end
+ShenMiBaoXiangActor.Login=function(sysarg)
+	 
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then 
+		return 
+	end 
+
+	if var.shenmibaoxiang_get_times == nil then 
+		var.shenmibaoxiang_get_times =0 
+	end 
+	 
+
+end
+ShenMiBaoXiangActor.newDayArrive=function(sysarg)
+	 
+	local var=LActor.getStaticVar(sysarg)
+	if var == nil then 
+		return 
+	end 
+
+	var.shenmibaoxiang_get_times=0 --每天重置为0
+
+end 
+
+ 
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeActorLootItem,ShenMiBaoXiangActor.handleShenMiBaoXiangLootItem)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin,ShenMiBaoXiangActor.Login)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive,ShenMiBaoXiangActor.newDayArrive)
+
+
+
+
+

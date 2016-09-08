@@ -1,0 +1,53 @@
+--#include "ygmanager.txt" once
+
+YiguiFunc = {}
+
+EventCallDispatcher.HandlerYigui = function (pChar, args)
+	--print("========================================="..args[1]..type(args[1]))
+
+  if args[1] == nil then return end
+  if LActor.isActorSystemOpen(pChar, siFashionDeal) then
+  	local func = YiguiFunc[args[1]]
+  	if func ~= nil and type(func) == "function" then
+  		--print("调用function......")
+    	func(pChar, args[2])
+  	end
+  end
+end
+
+
+
+-- 获取衣柜数据
+YiguiFunc[1] = function( pChar, packet )
+--	print("=====================获取衣柜数据")
+	YiguiManager.sendYiguiInfo(pChar)
+end
+
+-- 幻化时装/武饰
+YiguiFunc[2] = function( pChar, packet )
+	local ygType = DataPack.readByte( packet )
+	local id = DataPack.readInt( packet )
+
+--print("========================ygType "..ygType)
+--print("========================id "..id)
+
+	YiguiManager.huanhua( pChar, ygType, id )
+end
+
+
+
+--计算时装收集加成的属性
+YiguiFunc[11] = function( pChar, nStar)
+	local nStar = tonumber(nStar) or 0
+	YiguiManager.RecalcFashionStarAttribute(pChar , nStar)
+end
+
+
+-- 衣柜时装/武饰升星
+YiguiFunc[181] = function( pChar, packet )
+	local ygType = DataPack.readByte( packet )
+	local itemId = DataPack.readInt( packet )
+	--YiguiManager.fashionUpStar( pChar, ygType, itemId )
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeYigui, EventCallDispatcher.HandlerYigui)

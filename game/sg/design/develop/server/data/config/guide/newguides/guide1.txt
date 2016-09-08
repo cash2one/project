@@ -1,0 +1,60 @@
+﻿--分解的引导
+{
+  triggerList =
+  {
+       { type = 1, valueList = {8061,}},      --有这个任务
+       { type = 4, valueList = {100,}},       --有这个物品
+  } ,
+  
+
+  --引导的步骤 
+  steps = 
+  {
+
+    --第1步 指向导航背包按钮
+    {
+      condList = 
+      {
+	 { type = 2,  helpId = 20, dataList = {0,} },      --背包没打开
+      },
+
+      action = { type = 1, helpId = 2, data = 0, desc = Lang.GuideLang.desc3 },
+    },
+
+
+    --第2步 指向分解按钮
+    {
+      condList = 
+      {
+	 { type = 1,  helpId = 20, dataList = {0,} },        --背包打开
+	 { type = 6,  helpId = 22, dataList = {100,} },      --有这个物品
+	 { type = 9,  helpId = 20, dataList = {1,} },        --鼠标手型
+      },
+
+      action = { type = 1, helpId = 21, data = 0, desc = Lang.GuideLang.desc6 },
+    },
+
+    --第3步 分解物品
+    {
+      condList = 
+      {
+	 { type = 1,  helpId = 20, dataList = {0,} },      --背包打开
+	 { type = 6,  helpId = 22, dataList = {100,} },    --有这个物品
+      },
+
+      --引导玩家 点击装备
+      action = { type = 6, helpId = 22, data = 100, desc = Lang.GuideLang.desc7 },
+    },
+
+    --第4步 关闭窗口
+    {
+      condList = 
+      {
+	 { type = 1,  helpId = 20, dataList = {0,} },      --背包打开
+      },
+
+      --引导玩家关闭
+      action = { type = 4, helpId = 20, data = 0, desc = Lang.GuideLang.desc5 },
+    },
+ }
+}

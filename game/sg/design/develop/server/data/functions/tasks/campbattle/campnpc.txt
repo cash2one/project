@@ -1,0 +1,34 @@
+
+--#include "data\config\camp\campbattleconf.txt" once
+
+-- 阵营战npc入口
+function ZYZ_Main( sysarg )
+  -- local state = Camp.isBattleState()
+  -- if state == false then
+  --   return
+  -- end
+
+  -- local isfirstenter = 1
+  -- local rankList = Camp.getRanking(1)
+  -- if rankList then
+  --   local myitem = Ranking.getItemPtrFromId(rankList, LActor.getActorId(sysarg))
+  --   if myitem then
+  --     isfirstenter = 0
+  --   end
+  -- end
+
+  local var = LActor.getStaticVar(sysarg)
+  if var == nil then return end
+  if var.exitcampbatttime == nil then
+    var.exitcampbatttime = 0
+  end
+  local time = var.exitcampbatttime + CampBattleConf.enterLimitTime - System.getCurrMiniTime()
+  if time < 0 then time = 0 end
+
+  local str = ""
+  str = CampBattleConf.fubenId
+  str= str.."/@EnterCampBattle"
+  str = str..string.format("/@%d",time)
+  -- print(str)
+  return str
+end

@@ -1,0 +1,202 @@
+﻿{
+    entityid = 0,  --怪物的ID
+    name = "testMonster", --怪物的名字
+    modelid = 1, --外观模型id    (整数)
+    level =3,  -- 怪物的等级
+    hprenew = 0, --HP恢复，表示每秒的回复生命的比例  (浮点数)
+    mprenew = 0, --MP恢复,表示每秒的回蓝的比例 (浮点数)
+    outdodgerate = 3,--闪避 (整数)
+    outhitrate = 95,--命中   (整数)
+    outcriticalstrikesrate = 5, --暴击(整数)
+		defcriticalstrikes=10,  --抗暴击(整数)
+    moveoneslottime = 1000, --移动1格需要的时间，也就是移动速度,如果是0表示不能移动,单位：ms,1s=1000ms(整数)
+    attackSpeed = 1000,		--攻击速度（整数）
+    maxhp = 208,   --最大生命(整数)
+    maxmp = 189, --最大蓝(整数)
+    innerattack = 29,--内功攻击(整数)
+    outattack = 25,     --外功攻击(整数)
+    outdefence = 13,    --外功防御 (整数)
+    innerdefence = 7,--内功防御(整数)
+    effectid = 1, --实体出生时的特效id
+    
+    gatherTime = 10, -- 怪物的采集时间，单位秒，只对采集怪有用，其他怪不用配置
+    gatherDie = true,   -- 采集是否会死亡
+
+    camp =0,   --怪物所属的阵营  1逍遥 2星辰 3逸仙 
+
+    exp  =10,       --杀死怪物的基础经验，这个和玩家的等级差有关系
+    lilian = 10,    -- 杀死怪物获得的历练值，不配置就是0
+    attackType=1,    -- 攻击类型，用于客户端显示用。0为无；1为内攻 2为外攻 3为内攻+外攻
+    entityType=1,    -- 怪物实体类型。普通怪为1；采集怪为12；显示怪为13
+    entityExtraType = 1, --怪物实体子类型，实体类型 12时是采集垃圾怪
+    monsterType=1,   -- 怪物类型。1为普通怪；2为精英怪 3为头目 4为boss 
+		isShowVestName = false, --是否在怪物上显示攻击归属者,显示为true
+		defSuperSkill = true, --是否免疫玩家变身技能，免疫为true
+  	reSelTargetRate = 0, -- 怪物受击时改变目标支持概率配置（百分比，0-100， 默认为0，表明一直不改）
+    aiConfigId=1,   --在AI配置表里的ID； 具体怪物是主动还是被动在ai配置文件中的aiType设定。aiconfigid=0表明是无AI
+    attackLevel=1,	-- 攻击等级，用于决定怪物被攻击的优先等级,玩家是100，等级越高的越容易被攻击，数值没有上限
+    
+    attackInterval =500, --怪物的攻击间隔，比如使用技能或者肉搏后需要间隔多长时间才能使用，默认是500
+    maxDropHp =0,  --最大的掉血量，如果为0就是没有限制按正常流程，如果配置了每次掉的血最多这个数
+ 
+    nNearAttackRate =2500,  --普通攻击的系数,4500表示45%
+    --nNearAttackType =1,          --普通攻击的输出类型，1内功攻击，2外功攻击
+    bDeathTriggerScript =true,   --死亡是否触发脚本，默认不需要，这个如果不是boss或者脚本需要的特殊怪物，不要设置为true!!!!!!!!!!
+    triggerDamage = true,       --用于触发受到伤害脚本
+	gatherCheck = true, --采集怪，判断是否需要检查能否采集
+    color = 0xFFFFFFFF, -- 怪物名字的颜色,不配置就是默认白色
+
+    lastKill = false,      -- 是否最后一次击杀计算归属， 不配则为false，表示非最后击杀有效
+    share = false,      -- 是否击杀共享,默认是false（不用配）
+	expMode = 0,		-- 经验共享方式(0:队伍共享，1：不共享，2：周围人共享)，默认是队伍共享
+	expRange = 10,		-- 经验共享范围(多少格,expMode = 2时有效)，默认是10
+	expFactor = 0.4,	-- 经验共享根据人物等级的参数(expMode = 2时有效)，默认是0
+    expLimit = 0,       -- 是否受经验限制，0否1是，默认1
+    dir = -1,           --怪物的初始朝向
+ --bCreateRank = false,	--创建怪物是否创建排行榜 创建为true
+  --dontCountConsecutiveKill=false, -- 连斩是否计数。默认false，表示怪物被杀纳入连斩计数
+    --关于掉落部分 id=0表示金钱，其他的表示物品的ID,count表示数量,quality表示装备的品质
+    --strong表示装备的强化等级,
+    --propability表示怪物平均死亡几次掉落一次该物品，如果必掉就填1，如果有1%的概率掉落，那么就填100
+    -- group表示掉落组，如果groupid=0,那么这件没有组的概念。
+    -- 如果有组的话，那么在同一个组里的物品，是按概率掉落的，比如组里1个10%掉，一个20%掉，那么产出的话一个的概率为10%，另外一个为20%
+    --如果强化和品质填负数的话，比如strong=-3，那么将产生0-3之间等概率随机的一个强化等级物品，
+    --serverdrop为道具每天单服的掉落个数
+	
+     --triggerEvent 表示是否触发脚本事件，如果是需要触发事件就为true，默认是false
+     --broadType =1, 广播的类型 0:不广播 1：附近  2：场景 3：副本  4：世界 5：同阵营广播, 10:发给自己
+
+    --注意，同一个组的掉落配置要紧挨着！！！！！！！！！！！！！！！
+    drops= --掉落
+    {
+       { id=0,count=100,strong =0,quality =0,propability=1, group=0},
+       { id=1,count=1,strong =0,quality =-3,propability=2,group=1},
+       { id=1,count=1,strong =-4,quality =0,propability=3,group=1},
+   },
+   -- 怪物优先攻击怪物id列表，可配置多个
+   priorTarget={14, 12,},
+   
+   -- 怪物发言
+    talk = 
+    {  
+		
+        minInterval = 10, -- 下限间隔时间(只有空闲发言有效)
+        maxInterval = 20, -- 上限间隔时间(只有空闲发言有效)
+		
+        -- type: 发言类型
+        -- type=0 空闲状态
+        -- type=1 发现目标
+        -- type=2 攻击。暂时不支持
+        -- type=3 被攻击
+        -- type=4 死亡
+        -- type=5 血量低于某个值
+        -- type=6 创建的时候
+        -- type=7 消失的时候        
+        -- rate: 发言概率（百分比。例如50%就配置50）
+        -- param：针对type=5使用，用于指定血量低于百分比。例如type=5，param=20表明血量低于20%发言
+        -- bctype：发言广播类型。 1：附近  2：场景 3：副本  4：世界 5：同阵营广播
+        -- tiptype: 提示类型，用于指定发言内容在客户端如何显示。默认是128，在聊天栏显示
+        --[[
+        	tiptype =1, //只在右侧提示栏显示
+					tiptype=2, //屏幕中央，用于xxx把xxx强化到6级之类的全服公告
+					tiptype =4,      //弹出框
+					tiptype =8,  //公告栏，用于GM发通知
+					tiptype = 16,	//短消息，在屏幕中央悬挂，点击后查看内容，
+					tiptype  =32,   //温馨提示
+					tiptype = 64,	// Gm提示信息
+					tiptype =128, //左侧聊天栏里，用于一些系统公告在聊天栏显示
+        --]]
+        -- 注意：对于type=5的发言类型，可以配置多条。
+		info = 
+		{
+		    { 
+			    type=0, rate=50, 
+			    param=0,
+			    bctype=1,
+			    content=
+				{
+				    Lang.Paopao.p000001,
+				    Lang.Paopao.p000002,
+			    },
+		    },
+            {  
+                type=1, rate=60, 
+			    param=1,
+			    bctype=1,
+			    content=
+				{
+                    Lang.Paopao.p000003,
+				    Lang.Paopao.p000004,
+			    },
+		    },
+		    { 
+			    type=2, rate=70, 
+			    param=2,
+			    bctype=1,
+			    content=
+				{
+				    Lang.Paopao.p000005,
+			    },
+		    },
+		
+		    { 
+			    type=3, rate=50, 
+			    param=3,
+			    bctype=1,
+			    content=
+                {
+				    Lang.Paopao.p000006,
+			    },
+		    },
+		
+		    {
+			    type=4, 
+			    rate=50, 
+			    param=4,
+			    bctype=1,
+			    content=
+			    {
+				    Lang.Paopao.p000007,
+			    },
+		    },
+		
+		    { 
+			    type=5, 
+				rate=50, 
+			    param=5,
+			    bctype=1,
+			    content=
+				{
+				    Lang.Paopao.p000008,
+				   
+			    },
+		    },	
+		},
+	},
+	flags=
+	{
+             DenyMove =false,           --不能移动
+             DenyBeMove =false,         --不能被移动，比如牢门
+             DenyAttackActor= false,    --不攻击玩家
+             DenyBeAttack=false,        --不能被攻击
+             DenyAttackedByActor=false, --不能被玩家攻击
+             CanAttackMonster= false,   --能够攻击怪物
+             DenyBeTaunt =false,        --不能被嘲讽
+             DenyAutoAddHp= false,      --不能自动添加HP
+             DenyAutoAddMp =false,      --不能自动添加MP
+             CanSceneTelport =false,    --能跨场景传送
+             CanSeeHideActor =false,    --能看到隐身的玩家
+             DenyDieSubExp =false,      --不进行经验衰减(算经验的时候一般考虑等级差，如果=true不考虑等级差)	
+             DenyUseNearAttack =false,  --不使用肉搏技能，默认的是使用肉搏，如果不使用肉搏就配置为true	
+             DenyDizzyBuff =false,      --不能添加晕眩的buff
+             DenyMoveForbidBuff =false, --不能添加定身的Buff
+             DenyInnnerSkillForbidBuff =false,  --不能添加封的buff
+             DenyOutSkillForbidBuff =false,     --不能添加断的buff
+             DenyMoveSpeedSlowBuff  =false,    --能否添加减速的buff
+             DenySee  =false,           --不能被看到 
+             DenyInitiativeAttackActor=false, -- 主动怪是否不主动攻击玩家，默认是主动攻击玩家
+
+             DenyIgnoreReturnStatus = false,      --是否无视回归状态，默认是不无视的
+	},
+},
+

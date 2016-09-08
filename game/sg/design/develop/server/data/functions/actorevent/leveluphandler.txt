@@ -1,0 +1,21 @@
+--lua script
+-- 玩家升级事件处理
+--#include "data\config\levelopenplaysys.txt" once
+
+--升级到26级时 速传到天元城 芷云
+EventCallDispatcher.handlerLevelUpfor26LvSend = function (sysarg, arg)
+    local nowLevel = tonumber(arg[1])
+    local oldLevel = tonumber(arg[2])
+
+    if nowLevel and oldLevel and LevelOpenSys then
+        for k, v in ipairs(LevelOpenSys) do
+            if nowLevel >= v.level then
+                for n, m in ipairs(v.sysid) do
+                    LActor.openActorSystem(sysarg, m)
+                end
+            end
+        end
+    end
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeLevel, EventCallDispatcher.handlerLevelUpfor26LvSend)

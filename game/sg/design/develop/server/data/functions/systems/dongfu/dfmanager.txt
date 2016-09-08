@@ -1,0 +1,178 @@
+--#include "data\functions\systemvarmanager.txt" once
+--#include "data\config\dongfu\dongfu_conf.txt" once
+--[[
+	洞府管理器
+	洞府信息结构
+	{
+		ownerId = xxx,
+		ownerName = xxx,
+		hdlVar	= xxx, var的handle
+		-- userdata, 洞府本身的信息，需要从数据库中加载并保存回去
+		info = {},
+		-- table, 进入该洞府的玩家 [玩家id] = 1
+		playerSet = {},	
+		-- table, 洞府主人好友 [玩家id] = 1
+		friendSet = {},
+		-- table, 洞府主人好友在线集 [玩家id] = 1，玩家进入洞府时到每个好友洞府中注册
+		olFriendSet = {},
+	}
+]]
+--XXX 注意：重新加载脚本后，需要想办法把每个洞府的playerSet重新找回
+local DongfuManager = {}
+
+_G.__DongfuVar = {}
+_G.__DongfuIdList = {}
+DongfuManager.__friendSet = {}
+
+DongfuManager.initDongfu = function(charId, charName, hdlVar)
+	local var = _G.__DongfuVar
+	if var[charId] == nil then
+		var[charId] = {
+			ownerId		= charId,
+			ownerName	= charName,
+			hdlVar		= hdlVar,
+			info 		= System.getSysVar(hdlVar),
+			playerSet 	= {},
+			olFriendSet	= {},
+		}
+		DongfuManager.initOlFriendSet(charId, var[charId])
+
+		table.insert(_G.__DongfuIdList, charId)
+	end
+	return var[charId]
+end
+
+DongfuManager.onChanged = function(ownerId)
+	if DongfuManager.updateList == nil then
+		DongfuManager.updateList = {}
+	end
+	DongfuManager.updateList[ownerId] = 1
+end
+
+DongfuManager.save = function()
+	if DongfuManager.updateList == nil then return end
+	local var = _G.__DongfuVar
+	if var == nil then return end
+	for ownerId in pairs(DongfuManager.updateList) do
+		local dfData = var[ownerId]
+		if dfData ~= nil then
+			System.saveSysVar(ownerId, SystemIdList.dongfu, dfData.hdlVar)
+		end
+	end
+	DongfuManager.updateList = nil
+end
+
+DongfuManager.getDongfuData = function(ownerId)
+	local var = _G.__DongfuVar
+	return var[ownerId]
+end
+
+DongfuManager.createDongfu = function(ownerId, ownerName)
+	local hdlVar = System.createSysVar(ownerId, ownerName, SystemIdList.dongfu)
+	local dfData = DongfuManager.initDongfu(ownerId, ownerName, hdlVar)
+
+	dfData.info.stateFlags = 1
+	DongfuManager.onChanged(ownerId)
+	return dfData
+end
+
+DongfuManager.isAtHome = function(pChar)
+	local var = LActor.getDyanmicVar(pChar)
+	local cId = LActor.getActorId(pChar)
+	return cId == var.dongfu_id, var.dongfu_id
+end
+
+DongfuManager.isAtDongfu = function(pChar)
+	local var = LActor.getDyanmicVar(pChar)
+	return nil ~= var.dongfu_id, var.dongfu_id
+end
+
+DongfuManager.broadcast = function(playerSet, func)
+	local pChar
+	for cId in pairs(playerSet) do
+		pChar = LActor.getActorById(cId)
+		if pChar ~= nil then
+			func(pChar)
+		end
+	end
+end
+
+DongfuManager.getStateFlag = function(pChar, id)
+	local dfData = DongfuManager.getDongfuData(id)
+	local flag = 0
+	if dfData ~= nil then
+		flag = dfData.info.stateFlags or 0
+	elseif LActor.getFriendLevel(pChar, id) >= DongfuConf.openLevel then
+		flag = 1
+	else
+		flag = 0
+	end
+	return flag
+end
+
+-- value 为true/false，返回是否更改，调用根据返回定是否save
+-- stateFlags是个byte：bit0 灵泉，bit1 草，bit2 虫，bit4 可种，bit5 可收获
+DongfuManager.setStateFlag = function(dfData, flag, value)
+	local flags = dfData.info.stateFlags or 0
+	if System.bitOPMask(flags, flag) ~= value then
+		flags = System.bitOpSetMask(flags, flag, value)
+		dfData.info.stateFlags = flags
+
+		DongfuManager.notiStateFlagToFriend(dfData, flag, flags)
+		DongfuManager.notiStateFlagToSelf(dfData, flag, flags)
+		return true
+	end
+	return false
+end
+
+DongfuManager.notiStateFlagToFriend = function(dfData, flag, flags)
+	local notiFriend = {[0] = 1, [1] = 1, [2] = 1}
+	if notiFriend[flag] ~= nil then
+		local ownerId = dfData.ownerId
+		for cId, online in pairs(dfData.olFriendSet) do
+			local pChar = LActor.getActorById(cId)
+			if pChar ~= nil then
+				local dp = DataPack.allocPacket(pChar, 157, 22)
+				DataPack.writeInt(dp, 1)
+				DataPack.writeInt(dp, ownerId)
+				DataPack.writeByte(dp, flags)
+				DataPack.flush(dp)
+			end
+		end
+	end
+end
+
+DongfuManager.notiStateFlagToSelf = function(dfData, flag, flags)
+	local notiOwner = {[4] = 1, [5] = 1}
+	if notiOwner[flag] ~= nil then
+		local pChar = LActor.getActorById(dfData.ownerId)
+		if pChar ~= nil then
+			local dp = DataPack.allocPacket(pChar, 157, 11)
+			DataPack.writeByte(dp, flags)
+			DataPack.flush(dp)
+		end
+	end
+end
+
+DongfuManager.notiInfoToSelf = function(dfData)
+	local pChar = LActor.getActorById(dfData.ownerId)
+	if pChar ~= nil then
+		local info = dfData.info
+		local dp = DataPack.allocPacket(pChar, 157, 25)
+		DataPack.writeShort(dp, DongfuConf.maxXianluValue[info.level or 1] - (info.usedXianluValue or 0))
+		DataPack.writeByte(dp, info.selfLingquanCount or 0)
+		DataPack.writeByte(dp, info.lingquanAward == 1 and 1 or 0)
+		DataPack.flush(dp)
+	end
+end
+
+--#include "dfhouse.txt" once
+--#include "dfland.txt" once
+--#include "dflingquan.txt" once
+--#include "dfsick.txt" once
+--#include "dfgrown.txt" once
+--#include "dfservant.txt" once
+--#include "dftudigonggong.txt" once
+--#include "dflog.txt" once
+--#include "dffriend.txt" once
+--#include "dfcallback.txt" once

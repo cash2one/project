@@ -1,0 +1,496 @@
+--lua script
+--处理斗地主相关逻辑
+
+--#include "data\config\slave\slaveconfig.txt" once --灵器配置
+
+SlaveOpFuncList = {}
+
+EventCallDispatcher.HandlerSlaveOp = function (sysarg, args)
+  if args[1] == nil then return end
+  
+  local func = SlaveOpFuncList[args[1]]
+  if func ~= nil then
+    func(sysarg, args[2]) 
+  end
+end
+
+--======================协议=======================
+
+SlaveOpFuncList[1] = SlaveOpFuncList.sendMsgList
+SlaveOpFuncList[2] = SlaveOpFuncList.sendSlaveSysData
+SlaveOpFuncList[3] = SlaveOpFuncList.sendMyFailureList
+SlaveOpFuncList[4] = SlaveOpFuncList.sendMyEnemyList
+SlaveOpFuncList[5] = SlaveOpFuncList.sendMySlaveList
+SlaveOpFuncList[6] = SlaveOpFuncList.sendAskForHelpList
+
+--  获取消息列表
+SlaveOpFuncList.sendMsgList = function ( sysarg )
+	if SlaveOpFuncList.isClose( sysarg ) then
+		return
+	end
+	local actorId = LActor.getActorId( sysarg )
+	local slaveActor = FightFun.getSlaveActor( actorId )
+	if slaveActor == nil then
+		return
+	end
+	local strMsg = FightFun.getMsgList( slaveActor )
+	local msgList = SlaveOpFuncList.splitTo2dTable(strMsg, ";", ",")
+	local msgCnt = SlaveOpFuncList.arraySize(msgList)
+	local msgList = {}	
+
+	local npack = DataPack.allocPacket(sysarg,143,1)
+    if npack == nil then return end
+
+    DataPack.writeInt(npack, msgCnt)
+	if msgList == nil or 'table' != type(msgList) then
+		for k, msg in pairs(msgList) do
+			local senderInfo = SlaveOpFuncList.getActorInfo(msg[1])
+			DataPack.writeInt(msg[1])
+			DataPack.writeString(senderInfo.name)
+			DataPack.writeInt(msg[2])
+			DataPack.writeInt(msg[3])
+			DataPack.writeInt(msg[4])
+		end
+	end
+    DataPack.flush(npack)
+end
+
+--  地主苦工系统数据
+SlaveOpFuncList.sendSlaveSysData = function( sysarg )
+	if SlaveOpFuncList.isClose( sysarg ) then
+		return
+	end
+	local actorId = LActor.getActorId( sysarg )
+	local slaveActor = FightFun.getSlaveActor( actorId )
+	if slaveActor == nil then
+		return
+	end
+
+	local masterId = FightFun.getMaster( slaveActor )
+	local liberateTime = FightFun.getLiberateTime( slaveActor )
+	local liberateType = FightFun.getLiberateType( slaveActor )
+	
+	local catchTimes = FightFun.getCatchTime( slaveActor )
+	local interactiveTimes = FightFun.getInteractiveTimes( slaveActor )
+	local resistTimes = FightFun.getResistTimes( slaveActor )
+	local getExp = FightFun.getExp( slaveActor )
+	local slaveStatus = SlaveOpFuncList.getActorSlaveStatus( actorId )
+
+	local npack = DataPack.allocPacket(sysarg,143,2)
+    if npack == nil then return end
+
+    DataPack.writeInt(npack, SlaveConfig.SYSTEM_SWITCH) --系统开关状态
+    DataPack.writeInt(npack, SlaveConfig.OPEN_LEVEL) --系统开启角色等级下限
+    DataPack.writeInt(npack, slaveStatus)  --身份状态
+	DataPack.writeInt(npack, catchTimes) --今天已抓捕/掠夺次数
+	DataPack.writeInt(npack, SlaveConfig.MAX_CATCH_TIMES) --抓捕/掠夺次数上限
+	DataPack.writeInt(npack, interactiveTimes) --今日已互动次数
+	DataPack.writeInt(npack, SlaveConfig.MAX_INTERACTIVE_TIMES) --互动次数上限
+	DataPack.writeInt(npack, resistTimes) --今天已反抗/求救次数
+	DataPack.writeInt(npack, SlaveConfig.MAX_RESIST_TIMES) --反抗/求救次数上限
+    DataPack.writeInt(npack, getExp)  --今日已获得经验
+
+    DataPack.flush(npack)
+end
+
+--  手下败将列表
+SlaveOpFuncList.sendMyFailureList = function( sysarg )
+	if SlaveOpFuncList.isClose( sysarg ) then
+		return
+	end 
+
+	local actorId = LActor.getActorId( sysarg )
+	local slaveActor = FightFun.getSlaveActor( actorId )
+	if slaveActor == nil then
+		return
+	end
+	local strFailureList = FightFun.getFailureList( slaveActor )
+	local failureIdList = SlaveOpFuncList.split(strFailureList, ",")
+	local failureList = {}
+	for k, failureId in pairs( failureIdList ) do
+		failureList[#failureList+1] = SlaveOpFuncList.getActorInfo(failureId)
+	end
+
+	SlaveOpFuncList.doSendSlaveSysVoList( sysarg, 143, 3, failureList)
+end
+
+-- 夺仆之敌列表
+SlaveOpFuncList.sendMyEnemyList = function( sysarg )
+	if SlaveOpFuncList.isClose( sysarg ) then
+		return
+	end 
+
+	local actorId = LActor.getActorId( sysarg )
+	local slaveActor = FightFun.getSlaveActor( actorId )
+	if slaveActor == nil then
+		return
+	end
+	local strEnemyList = FightFun.getEnemyList( slaveActor )
+	local enemyIdList = SlaveOpFuncList.split(strEnemyList, ",")
+	local enemyList = {}
+	for k, enemyId in pairs( enemyIdList ) do
+		enemyList[#enemyList+1] = SlaveOpFuncList.getActorInfo(enemyId)
+	end
+
+	SlaveOpFuncList.doSendSlaveSysVoList( sysarg, 143, 4, enemyList)
+end
+
+--  苦工列表
+SlaveOpFuncList.sendMySlaveList = function( sysarg )
+	if SlaveOpFuncList.isClose( sysarg ) then
+		return
+	end 
+
+	local actorId = LActor.getActorId( sysarg )
+	local slaveActor = FightFun.getSlaveActor( actorId )
+	if slaveActor == nil then
+		return
+	end
+	local strSlaveList = FightFun.getSlaveList( slaveActor )
+	local slaveTmpList = SlaveOpFuncList.splitTo2dTable(strSlaveList, ";", ",")
+	local slaveList = {}
+	for k, slave in pairs( slaveTmpList ) do
+		slaveList[#slaveList+1] = SlaveOpFuncList.getActorInfo(slave[1])
+	end
+	SlaveOpFuncList.doSendSlaveSysVoList( sysarg, 143, 5, slaveList)
+end
+
+--  求救列表
+SlaveOpFuncList.sendAskForHelpList = function( sysarg )
+	if SlaveOpFuncList.isClose( sysarg ) then
+		return
+	end 
+	
+	local actorId = LActor.getActorId( sysarg )
+	local slaveActor = FightFun.getSlaveActor( actorId )
+	if slaveActor == nil then
+		return
+	end
+	local strHelpist = FightFun.getHelpList( slaveActor )
+	local helpIdList = SlaveOpFuncList.split(strHelpist, ",")
+	local helpList = {}
+	for k, helpId in pairs( helpIdList ) do
+		helpList[#helpList+1] = SlaveOpFuncList.getActorInfo(helpId)
+	end
+	SlaveOpFuncList.doSendSlaveSysVoList( sysarg, 143, 6, helpList)
+end
+
+--  抓捕/掠夺
+SlaveOpFuncList[6] = function( sysarg , dp)
+	if SlaveOpFuncList.isClose( sysarg ) then
+		return
+	end 
+	
+	local pid = DataPack.readInt( dp )	--玩家ID
+	local force = DataPack.readInt( dp )  -- 若对手已经有地主，是否与地主PK？
+
+	local actorId = LActor.getActorId( sysarg )
+	local slaveActor = FightFun.getSlaveActor( actorId )
+	if slaveActor == nil then
+		return
+	end
+
+	local slaveStatus = SlaveOpFuncList.getActorSlaveStatus( actorId )
+	if slaveStatus == SlaveConfig.slaveStatus.SLAVE then
+		return
+	end
+
+	local todayCatchTimes = FightFun.getCatchTimes( slaveActor )
+	if todayCatchTimes >= SlaveConfig.slaveStatus.MAX_CATCH_TIMES then
+		LActor.sendTipmsg( sysarg, Lang.Slave.t003, ttMessage ) 
+		return
+	end
+
+	local strSlaveList = FightFun.getSlaveList( slaveActor )
+	local slaveList = SlaveOpFuncList.splitTo2dTable(strSlaveList, ";", ",")
+
+	for k, slave in pairs( slaveList ) do
+		if slave[1] == pid then
+			LActor.sendTipmsg( sysarg, Lang.Slave.t005, ttMessage ) 
+			return
+		end
+	end
+
+	if #slaveList >= SlaveConfig.slaveStatus.MAX_SLAVE_COUNT then
+		LActor.sendTipmsg( sysarg, Lang.Slave.t004, ttMessage )
+		return
+	end
+
+	local strFailureList = FightFun.getFailureList( slaveActor )
+	local failureIdList = SlaveOpFuncList.split(strFailureList, ",")
+	local isInFailureList = false
+	for k, failureId in pairs( failureIdList ) do
+		if failureId == pid then
+			isInFailureList = true
+			break
+		end
+	end
+    if not isInFailureList then
+    	LActor.sendTipmsg( sysarg, Lang.Slave.t006, ttMessage )
+    	return
+    end
+
+    local failureStatus = SlaveOpFuncList.getActorSlaveStatus( pid )
+    if failureStatus == SlaveConfig.slaveStatus.FREE_BY_PAY then
+    	LActor.sendTipmsg( sysarg, Lang.Slave.t007, ttMessage )
+		return
+	end
+
+	if failureStatus == SlaveConfig.slaveStatus.FREE_BY_PAY then
+    	LActor.sendTipmsg( sysarg, Lang.Slave.t007, ttMessage )
+		return
+	end
+
+	if failureStatus == SlaveConfig.slaveStatus.LANDOWNER then
+    	local failureActor = FightFun.getSlaveActor( pid )
+    	local strFailureSlaveList = FightFun.getSlaveList( failureActor )
+		local failureSlaveList = SlaveOpFuncList.splitTo2dTable(strFailureSlaveList, ";", ",")
+		local lastInteractiveTime = 0 --最后互动的时间
+		local nowUnixTime = System.getCurrMiniTime()
+		for k, slaveItem in pairs( failureSlaveList ) do
+			slaveItem[2] --地主与此苦工最近互动的时间
+			if slaveItem[2] > lastInteractiveTime then
+				lastInteractiveTime = slaveItem[2]
+			end
+		end
+		--判断是否在互动保护期内
+		if lastInteractiveTime ~=0 and ( nowUnixTime - lastInteractiveTime < SlaveConfig.INTERACTIVE_PROTECT_TIME ) then
+			LActor.sendTipmsg( sysarg, Lang.Slave.t008, ttMessage )
+			return
+		else
+			local firstSlaveId = failureSlaveList[1][1] --默认掠夺对方第一个苦工
+			
+		end
+	end
+
+	if failureStatus == SlaveConfig.slaveStatus.SLAVE then
+    	local failureActor = FightFun.getSlaveActor( pid )
+    	local masterId = FightFun.getMaster( failureActor )
+
+    	local landownerActor = FightFun.getSlaveActor( masterId )
+    	local strLandownerSlaveList = FightFun.getSlaveList( landownerActor )
+		local landownerSlaveList = SlaveOpFuncList.splitTo2dTable(strLandownerSlaveList, ";", ",")
+		local lastInteractiveTime = 0 --最后互动的时间
+		local nowUnixTime = System.getCurrMiniTime()
+		for k, slaveItem in pairs( landownerSlaveList ) do
+			slaveItem[2] --地主与此苦工最近互动的时间
+			if slaveItem[2] > lastInteractiveTime then
+				lastInteractiveTime = slaveItem[2]
+			end
+		end
+		--判断是否在互动保护期内
+		if lastInteractiveTime ~=0 and ( nowUnixTime - lastInteractiveTime < SlaveConfig.INTERACTIVE_PROTECT_TIME ) then
+			LActor.sendTipmsg( sysarg, Lang.Slave.t009, ttMessage )
+			return
+		else
+			local firstSlaveId = pid --默认掠夺对方第一个苦工
+			
+		end
+	end
+
+	if failureStatus == SlaveConfig.slaveStatus.FREE then
+    	
+	end
+
+	SlaveOpFuncList.doSendSlaveSysVoList( sysarg, 143, 6, list)
+end
+
+
+
+
+--=================== end 协议=====================
+
+
+--================= 辅助函数 ======================
+
+SlaveOpFuncList.slaveSysVo = {
+	id = 0 ,       -- 角色ID
+	name = "",     -- 角色名
+	level =0 ,     -- 角色等级
+	job = 0 ,      -- 职业ID
+	familyId = 0 , -- 帮派ID
+	familyName = "", -- 帮派名
+	camp = 0 ,     -- 阵营
+	sex = 0,       -- 性别
+	faceId = 0,    -- 头像ID
+	slaveStatus = 0, -- 身份标识
+}
+
+SlaveOpFuncList.getActorInfo = function( pid )
+	local info = SlaveOpFuncList.slaveSysVo 
+	local actor = FightFun.getSlaveActor( pid )
+	if actor == nil then 
+		return info
+	end
+	local actorInfo = FightFun.getActorInfo( actor )
+	if actorInfo == nil 
+		return info
+	end
+
+	info.id       = pid
+	info.name     = actorInfo.name
+	info.level    = actorInfo.level
+	info.job      = actorInfo.job
+	info.familyId = actorInfo.familyId
+	info.familyName = actorInfo.familyName
+	info.camp     = actorInfo.camp
+	info.sex      = actorInfo.sex
+	info.faceId   = actorInfo.faceId
+	info.slaveStatus = SlaveOpFuncList.getActorSlaveStatus( pid )
+	return info
+end
+
+SlaveOpFuncList.getActorSlaveStatus = function( pid )
+	local slaveActor = FightFun.getSlaveActor( pid )
+	if slaveActor == nil then
+		return
+	end
+	local masterId = FightFun.getMaster( slaveActor )
+	local liberateTime = FightFun.getLiberateTime( slaveActor )
+	local liberateType = FightFun.getLiberateType( slaveActor )
+	local strSlaveList = FightFun.getSlaveList( slaveActor )
+	local slaveList = SlaveOpFuncList.splitTo2dTable(strSlaveList, ";", ",")
+	local cur = System.getCurrMiniTime() 
+	local sameDay = System.isSameDay(cur, liberateTime)
+
+	if masterId > 0 then
+		return SlaveConfig.slaveStatus.SLAVE
+	end
+	if #slaveList > 0 then
+		return SlaveConfig.slaveStatus.LANDOWNER
+	end
+	if #slaveList == 0 and masterId == 0 and liberateType == SlaveConfig.liberateType.FREE_BY_PAY and sameDay then
+		return SlaveConfig.slaveStatus.FREE_BY_PAY
+	else
+		return SlaveConfig.slaveStatus.FREE
+	end
+end
+
+
+SlaveOpFuncList.isClose = function(sysarg)
+	local actorLevel = LActor.getIntProperty( sysarg, PROP_LEVEL )
+	if 1 ~= SlaveConfig.SYSTEM_SWITCH or actorLevel < SlaveConfig.OPEN_LEVEL then
+		LActor.sendTipmsg( sysarg, Lang.Slave.t001, ttMessage ) 
+		return true
+	end
+	return false
+end
+
+-- 返回地主苦工系统提示信息
+SlaveOpFuncList.SendMessage = function(sysarg, type, msg)
+	if 1 ~= SlaveConfig.SYSTEM_SWITCH then
+		LActor.sendTipmsg( sysarg, Lang.Slave.t001, ttMessage ) 
+		return
+	end
+
+	local npack = DataPack.allocPacket(sysarg, 143, 15)
+    if npack == nil then return end
+
+    DataPack.writeInt(npack, type)
+    DataPack.writeString(npack, msg) 
+    DataPack.flush(npack)
+end
+
+
+SlaveOpFuncList.doSendSlaveSysVoList = function( sysarg, systemId, protocolId, list)
+	local npack = DataPack.allocPacket( sysarg, systemId, protocolId )
+    if npack == nil then return end
+
+	if nil == list or 'table' != type(list) then
+		return 
+	end
+	local size = SlaveOpFuncList.arraySize( list )
+	DataPack.writeInt(npack, size)        -- 数组长度
+	for vo in pairs(list) do
+		DataPack.writeInt(npack, vo.id)        -- (int32) id : 角色ID
+		DataPack.writeString(npack, vo.name)   -- (string) name : 角色名
+		DataPack.writeInt(npack, vo.level)     -- (int32) level : 角色等级
+		DataPack.writeInt(npack, vo.job)       -- (int32) job : 职业ID
+		DataPack.writeInt(npack, vo.familyId)       -- (int32) familyId : 帮派ID
+		DataPack.writeString(npack, vo.familyName)   -- (string) familyName : 帮派名
+		DataPack.writeString(npack, vo.camp)   -- (int32) camp : 阵营
+		DataPack.writeString(npack, vo.sex)   -- (int32) sex : 性别
+		DataPack.writeString(npack, vo.faceId)   -- (int32) faceId : 头像ID
+		DataPack.writeString(npack, vo.slaveStatus)   -- (int32) slaveStatus : 身份状态
+	end
+	DataPack.flush(npack)
+end
+
+SlaveOpFuncList.arraySize = function(arr)
+	if nil == arr or 'table' != type(arr) then
+		return 0
+	end
+	local size = 0
+	for a in pairs(arr) do
+		size = size + 1
+	end
+	return size
+end
+
+SlaveOpFuncList.checkIsInMyFailureList = function( sysarg, pid )
+    local actorId = LActor.getActorId( sysarg )
+	local slaveActor = FightFun.getSlaveActor( actorId )
+	if slaveActor == nil then
+		return
+	end
+	local strFailureList = FightFun.getFailureList( slaveActor )
+	local failureIdList = SlaveOpFuncList.split(strFailureList, ",")
+	for k, failureId in pairs( failureIdList ) do
+		if failureId == pid then
+			return true
+		end
+	end
+	return false
+end
+
+
+--把字符串分隔为一维数组
+SlaveOpFuncList.split = function(str, splitChar)
+    local subStrTab = {};
+    while true do
+        local pos = string.find(str, splitChar);
+        if (not pos) then
+            subStrTab[#subStrTab + 1] = str;
+            break;
+        end
+        local subStr = string.sub(str, 1, pos - 1);
+        subStrTab[#subStrTab + 1] = subStr;
+        str = string.sub(str, pos + 1, #str);
+    end
+    return subStrTab;
+end
+
+--把字符串分隔为二维数组
+SlaveOpFuncList.splitTo2dTable = function(str, topSep, subSep)
+    local t = {}
+    local result = {}
+    t = SlaveOpFuncList.split(str, topSep)
+    for k,v in pairs(t) do
+        result[k] = SlaveOpFuncList.split(v, subSep)
+    end
+    return result
+end
+
+--把二维数组合成字符串
+SlaveOpFuncList.concat = function(tab, topSep, subSep)
+    local t = {}
+    local str = ""
+    for k,v in pairs(tab) do
+        t[k] = table.concat(v, subSep)
+    end
+    str = table.concat( t, topSep )
+    return str
+end
+
+--=============== end 辅助函数 ======================
+
+
+
+--新的一天到来
+EventCallDispatcher.NewDayAcrriveVipHuntCount = function( sysarg, arg )
+	SlaveOpFuncList.init()
+end
+
+SlaveOpFuncList.init() --初始化系统参数
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeSlave, EventCallDispatcher.HandlerSlaveOp)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, EventCallDispatcher.NewDayAcrriveVipHuntCount)

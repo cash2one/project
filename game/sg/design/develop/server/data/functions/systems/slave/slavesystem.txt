@@ -1,0 +1,3 @@
+--#include "data\functions\actorevent\slavehandler.txt" once
+
+SystemHandlerDispatcher.registerSystemHander(BaseTypes.SystemId.slaveSystem, SlaveOpFuncList.main)

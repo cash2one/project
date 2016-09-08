@@ -1,0 +1,137 @@
+--定义一系列action产生的effect效果
+
+function getActionEffectConfigByIndex(index)
+	return ActionEffectConfig[index];
+end
+
+ActionEffectConfig =
+{
+	[1] = {
+				effectId = 74,  --特效id
+				effectType = 6,  --特效类型
+				time = 800,  --释放时间
+				delay = 1500,   --释放延迟
+				BuffConfigId = 15, --产生buff id
+				BuffEffectTime = 0, --buff时间
+				AfterEffectConfigId = 2, --后续产生效果id
+		  },
+    [2] = {
+    			effectId = 20089 , 
+				effectType = 5, 
+				time = 120000, 
+				delay = 0,
+				BuffConfigId = 16,
+				BuffEffectTime = 120,
+				AfterEffectConfigId = 0,
+		  },
+
+	[3] = {
+				effectId = 75,  --特效id
+				effectType = 6,  --特效类型
+				time = 800,  --释放时间
+				delay = 0,   --释放延迟
+				BuffConfigId = 0, --产生buff id
+				BuffEffectTime = 0, --buff时间
+				AfterEffectConfigId = 0, --后续产生效果id
+		  },
+	[4] = {
+				effectId = 20117,  --特效id
+				effectType = 6,  --特效类型
+				time = 8000,  --释放时间
+				delay = 1500,   --释放延迟
+				BuffConfigId = 0, --产生buff id
+				BuffEffectTime = 0, --buff时间
+				AfterEffectConfigId = 0, --后续产生效果id
+		  },
+    [5] = {
+    			effectId = 20115 , 
+				effectType = 6, 
+				time = 1000, 
+				delay = 9500,
+				BuffConfigId = 0,
+				BuffEffectTime = 0,
+				AfterEffectConfigId = 0,
+		  },
+
+	[6] = {
+				effectId = 20116,  --特效id
+				effectType = 6,  --特效类型
+				time = 1000,  --释放时间
+				delay = 9500,   --释放延迟
+				BuffConfigId = 15, --产生buff id
+				BuffEffectTime = 0, --buff时间
+				AfterEffectConfigId = 0, --后续产生效果id
+		  },
+	[7] = {
+				effectId = 74,  --特效id
+				effectType = 6,  --特效类型
+				time = 800,  --释放时间
+				delay = 1500,   --释放延迟
+				BuffConfigId = 15, --产生buff id
+				BuffEffectTime = 0, --buff时间
+				AfterEffectConfigId = 8, --后续产生效果id
+		  },
+    [8] = {
+    			effectId = 20089 , 
+				effectType = 5, 
+				time = 20000, 
+				delay = 0,
+				BuffConfigId = 16,
+				BuffEffectTime = 20,
+				AfterEffectConfigId = 0,
+		  },
+	[9] = {
+				effectId = 75,  --特效id
+				effectType = 6,  --特效类型
+				time = 800,  --释放时间
+				delay = 0,   --释放延迟
+				BuffConfigId = 0, --产生buff id
+				BuffEffectTime = 0, --buff时间
+				AfterEffectConfigId = 0, --后续产生效果id
+		  },
+	[10] = {
+				effectId = 74,  --特效id
+				effectType = 6,  --特效类型
+				time = 800,  --释放时间
+				delay = 1500,   --释放延迟
+				BuffConfigId = 15, --产生buff id
+				BuffEffectTime = 0, --buff时间
+				AfterEffectConfigId = 0, --后续产生效果id
+		  },
+	[11] = {
+				effectId = 74,  --特效id
+				effectType = 6,  --特效类型
+				time = 800,  --释放时间
+				delay = 1500,   --释放延迟
+				BuffConfigId = 15, --产生buff id
+				BuffEffectTime = 0, --buff时间
+				AfterEffectConfigId = 12, --后续产生效果id
+		  },
+	[12] = {
+    			effectId = 20089 , 
+				effectType = 5, 
+				time = 5000, --持续5s
+				delay = 0,
+				BuffConfigId = 16,
+				BuffEffectTime = 5,
+				AfterEffectConfigId = 0,
+		  },
+	[13] = {
+				effectId = 74,  --特效id
+				effectType = 6,  --特效类型
+				time = 800,  --释放时间
+				delay = 1500,   --释放延迟
+				BuffConfigId = 15, --产生buff id
+				BuffEffectTime = 0, --buff时间
+				AfterEffectConfigId = 14, --后续产生效果id
+		  },
+	[14] = {
+    			effectId = 20089 , 
+				effectType = 5, 
+				time = 9000000,
+				delay = 0,
+				BuffConfigId = 16,
+				BuffEffectTime = 9000000,
+				AfterEffectConfigId = 0,
+		  },
+}

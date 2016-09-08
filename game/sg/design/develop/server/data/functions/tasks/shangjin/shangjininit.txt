@@ -1,0 +1,56 @@
+﻿--#include "data\functions\Tasks\ShangJin\ShangJinSet.txt" once --赏金
+function ShangJinenter(sysarg)
+    LActor.exitTeam(sysarg)
+	MoveToShangJin(sysarg)
+end
+function ShangJinCancel(sysarg)
+end
+function MoveToShangJin(sysarg)
+--[[
+local level = LActor.getIntProperty( sysarg, PROP_LEVEL)
+if level < ShangJinSet.limitLevel then
+    return string.format(Lang.TaskTalk.ShJin001, ShangJinSet.limitLevel)
+	end
+ local teamid = LActor.getTeamId(sysarg)
+ if teamid then
+ LActor.messageBox(sysarg,LActor.getNpc(sysarg),0,Lang.TaskTalk.ShJin002,Lang.TaskTalk.ShJin003.."/ShangJinenter",Lang.TaskTalk.ShJin004.."/ShangJinCancel",nil)
+ end
+  local var = LActor.getDyanmicVar(sysarg)
+  if var.ShJMonCount == nil then --怪被杀了多少只
+    var.ShJMonCount = 0
+  else
+    var.ShJMonCount = 0
+  end
+  
+  if var.ShJYuanBao == nil then --额外天珠
+    var.ShJYuanBao = 0
+  else
+	var.ShJYuanBao = 0
+  end
+  
+  if var.ShJMonStep == nil then
+   var.ShJMonStep=0 --第几波怪
+  else
+   var.ShJMonStep=0
+  end
+  
+  if var.ShJGameStart == nil then
+    var.ShJGameStart = 0
+  else
+	var.ShJGameStart = 0
+  end
+  
+	local Hfuben = Fuben.createFuBen(ShangJinSet.Fbid)
+	Fuben.SetFubenTime(Hfuben,ShangJinSet.LimitTime[1])
+	if Hfuben ~= 0 then
+		local hScene = Fuben.getSceneHandleById(ShangJinSet.Scene, Hfuben)
+		if ShangJinMonster ~= nil then
+			local reward=ShangJinMonster
+			Fuben.createMonsters(hScene, reward[1].monsterId, reward[1].posX1, reward[1].posX2, reward[1].posY1,reward[1].posY2, reward[1].nCount,0)
+			LActor.enterFuBen(sysarg,Hfuben,ShangJinSet.Scene,ShangJinSet.nx,ShangJinSet.ny)
+				
+		end
+
+	end
+	]]--
+end

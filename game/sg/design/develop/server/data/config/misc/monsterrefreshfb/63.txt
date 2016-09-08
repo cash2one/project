@@ -1,0 +1,64 @@
+﻿-- 破狱之战
+{
+	fbid = 99,
+
+	fubenlistid = 6,
+
+	sceneid = 1059, -- 场景ID
+
+	--初始化怒气值
+
+	--打死一波怪,是否要下发方向指引
+	ifgonext = true,
+
+	--怪物总数量
+	monsternum = 16,
+
+	monsters =
+	{
+		--第一波怪
+		[1] = {
+			{
+				monsterId = 468, --怪物id
+				posX1 = 13, --怪物x坐标范围
+				posX2 = 18,
+				posY1 = 23,
+				posY2 = 26,
+				num = 5,
+			},
+
+		},
+		--第二波怪
+		[2] = {
+			{
+				monsterId = 469, --怪物id
+				posX1 = 29, --怪物x坐标范围
+				posX2 = 34,
+				posY1 = 22,
+				posY2 = 25,
+				num = 5,
+			},
+			
+		},
+        --第三波怪
+        [3] = {
+			{
+				monsterId = 470, --怪物id
+				posX1 = 47, --怪物x坐标范围
+				posX2 = 51,
+				posY1 = 23,
+				posY2 = 25,
+				num = 5,
+			},
+
+			{
+				monsterId = 471, --怪物id
+				posX1 = 56, --怪物x坐标范围
+				posX2 = 56,
+				posY1 = 24,
+				posY2 = 24,
+				num = 1,
+			},
+		},
+	},
+}

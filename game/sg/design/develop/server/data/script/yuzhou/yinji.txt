@@ -1,0 +1,61 @@
+﻿thisNPC = nil
+InitFnTable = {}
+FinaFnTable = {}
+MainFnTable = {}
+
+--#include "data\language\LangCode.txt" once
+--#include "data\functions\NormalFuncForQuest.txt" once
+
+PromMs = {
+--#include "data\config\quest\quests\5038.txt"
+--#include "data\config\quest\quests\5039.txt"
+--#include "data\config\quest\quests\5042.txt"
+--#include "data\config\quest\quests\5043.txt"
+--#include "data\config\quest\quests\5047.txt"
+--#include "data\config\quest\quests\5048.txt"
+--#include "data\config\quest\quests\5059.txt"
+--#include "data\config\quest\quests\5061.txt"
+--#include "data\config\quest\quests\5072.txt"
+}
+
+CompMs = {
+--#include "data\config\quest\quests\82.txt"
+--#include "data\config\quest\quests\84.txt"
+--#include "data\config\quest\quests\87.txt"
+--#include "data\config\quest\quests\90.txt"
+--#include "data\config\quest\quests\91.txt"
+--#include "data\config\quest\quests\93.txt"
+--#include "data\config\quest\quests\95.txt"
+--#include "data\config\quest\quests\5038.txt"
+--#include "data\config\quest\quests\5042.txt"
+--#include "data\config\quest\quests\5046.txt"
+--#include "data\config\quest\quests\5047.txt"
+--#include "data\config\quest\quests\5058.txt"
+--#include "data\config\quest\quests\5060.txt"
+--#include "data\config\quest\quests\5071.txt"
+}
+
+
+function main(sysarg)
+  return commonQuestNpcMain(sysarg)
+end
+
+function OnAbortMessions(sysarg, mission)
+  local messionid = tonumber(mission)
+end
+
+function initialization(npcobj)
+  local i
+  thisNPC = npcobj  
+  for i = 1, table.getn(InitFnTable) do
+    InitFnTable[i]( npcobj )
+  end
+end
+
+function finalization(npcobj)
+  local i
+  for i = 1, table.getn(FinaFnTable) do
+    FinaFnTable[i]( npcobj )
+  end
+  thisNPC = nil
+end

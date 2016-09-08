@@ -1,0 +1,95 @@
+﻿-- 副本委托相关函数
+--#include "data\config\misc\entrustconf.txt" once
+
+EntrustFunc = {}
+
+-- 设置副本通关进度
+EntrustFunc.SetFubenValue = function(sysarg, fbid, floor)
+	--print("setfbval:"..floor.."fbid:"..fbid)
+	local idx = nil
+	for i=1,#EntrustConf do
+		if EntrustConf[i].fbid == fbid then
+			idx = i
+			break
+		end
+	end
+
+	-- print(idx)
+	if idx == nil then return end
+
+	local conf = EntrustConf[idx]
+
+	local var = LActor.getStaticVar(sysarg)
+
+	-- print(sysarg)
+	-- print(var)
+	if var == nil then return end
+
+	if var.entrust == nil then
+		var.entrust = {}
+	end
+	if var.entrust[idx] == nil then
+		var.entrust[idx] = {}
+	end
+
+	local info = var.entrust[idx]
+
+	if info.maxfloor == nil or floor > info.maxfloor then
+		info.maxfloor = floor
+
+		-- 通知客户端
+		local npack = DataPack.allocPacket(sysarg,42,9)
+	    if npack == nil then return end
+	    DataPack.writeInt( npack, fbid )
+	    DataPack.writeInt( npack, floor )
+	    DataPack.flush(npack)
+	end
+
+	-- print(info.maxfloor)
+end
+
+-- 获取最大挑战层数
+EntrustFunc.GetFubenValue = function(sysarg, fbid)
+	print("getfbval --- fbid:"..fbid)
+	local idx = nil
+	for i=1,#EntrustConf do
+		if EntrustConf[i].fbid == fbid then
+			idx = i
+			break
+		end
+	end
+	print("---111")
+	if idx == nil then return end
+
+	print("---222")
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+
+	print("---333")
+	if var.entrust == nil then
+		var.entrust = {}
+	end
+	if var.entrust[idx] == nil then
+		var.entrust[idx] = {}
+	end
+
+	local info = var.entrust[idx]
+
+	print(string.format("max floor:  %d",info.maxfloor))
+	return info.maxfloor
+end
+
+-- 能否使用商店
+EntrustFunc.CanUseShop = function(sysarg)
+	local var = LActor.getStaticVar(sysarg)
+	if var.entrust == nil then
+		return false
+	end
+
+	local info = var.entrust[3] -- 暂时固定3可以用商店,以后改成可配置的
+	if info == nil then
+		return false
+	end
+
+	return (info.state == 1 or info.state == 2) -- 委托中或完成未领取奖励都可以打开
+end

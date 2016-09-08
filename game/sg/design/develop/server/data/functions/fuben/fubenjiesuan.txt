@@ -1,0 +1,654 @@
+
+--#include "data\functions\config\fubenconfig\lieqifubenconfig.txt" once -- 猎奇战场
+--#include "data\functions\config\fubenconfig\shouhuxuannvconfig.txt" once	-- 守护玄女副本
+--#include "data\functions\config\fubenconfig\linchongbaodaoconfig.txt" once --灵宠宝岛
+--#include "data\functions\config\fubenconfig\xianyumijingconfig.txt" once --仙羽秘境
+--#include "data\functions\config\fubenconfig\wujinmicangconfig.txt" once	-- 无尽秘藏副本
+--#include "data\functions\config\fubenconfig\longmaizhenbaoconfig.txt" once --龙脉珍宝
+--#include "data\functions\config\fubenconfig\fubenaward.txt" once
+--#include "data\config\monster\monsterconfig.txt" once
+--#include "data\config\gameplay\jianshiyuantaiconfig.txt" once
+
+fubenjiesuan = {}
+
+fubenjiesuan.doubleAcitivityFuben = {
+	-- [fubenid] = 对应的活动id
+	[1] = daTianjiqiyuan,
+	[2] = daMountFuben,
+	[3] = daYuntaijianglu,
+}
+
+FubenALLConfig = {
+	[LieqiFubenConfig.fubenId[1] ] = LieqiFubenConfig,
+	[ShouhuXuanNvConfig.fubenId[1] ] = ShouhuXuanNvConfig,
+	[linchongbaodaoconfig.fbid[1] ] = linchongbaodaoconfig,
+	[xianyumijingconfig.fbid[1]] = xianyumijingconfig,
+	[wujinmicangconfig.fubenId[1]] = wujinmicangconfig,
+	[longmaizhenbaoconfig.fubenId[1]] = longmaizhenbaoconfig,
+	[JianShiYunTaiConfig.fubenId] = JianShiYunTaiConfig,
+}
+
+-- 活跃度系统类型
+activation_type = {
+	[LieqiFubenConfig.fubenId[1] ] = 3,
+	[ShouhuXuanNvConfig.fubenId[1] ] = 2,
+	[linchongbaodaoconfig.fbid[1] ] = 4,
+	[xianyumijingconfig.fbid[1]] = 5,
+	[wujinmicangconfig.fubenId[1]] = 1,
+	[JianShiYunTaiConfig.fubenId] = 24,
+	[longmaizhenbaoconfig.fubenId[1]] = 25,
+}
+
+-- 把对应的副本id的配置文件添加到FubenALLConfig表中
+fubenjiesuan.AddFubenConfig = function (fubenId, fubenConfig)
+	if fubenId == nil or fubenConfig == nil then return end
+	if FubenALLConfig[fubenId] ~= nil then
+		debug_print("=======> 已经存在该副本id的副本结算配置了:" .. tostring(fubenId))
+	else
+		FubenALLConfig[fubenId] = fubenConfig
+	end
+end
+
+-- 把对应的副本id的活跃数值添加到activation_type表中
+fubenjiesuan.AddActivationType = function (fubenId, activationType)
+	if fubenId == nil or activationType == nil then return end
+	if activation_type[fubenId] ~= nil then
+		debug_print("=======> 已经存在该副本id的副本活跃类型了:" .. tostring(fubenId))
+	else
+		activation_type[fubenId] = activationType
+	end
+end
+
+fubenjiesuan.GetActivationType = function (fubenId)
+	return activation_type[fubenId]
+end
+
+-- 随机函数
+fubenjiesuan.getRandomNumber = function(probability)
+	local r = System.getRandomNumber(10000)
+	if probability > r then
+		return 1
+	end
+	return 0
+end
+
+
+fubenjiesuan.CopyTableToUseDataMenberList = function ( usedataArrary, tabledata )
+	if #tabledata ~= 3 then
+		--debug_print("-----CopyTableToUseDataMenberList 长度不对------")
+		return
+	end
+	usedataArrary[1] = tabledata[1]
+	usedataArrary[2] = tabledata[2]
+	usedataArrary[3] = tabledata[3]
+end
+
+
+fubenjiesuan.OnKillMonster = function(monster, sysarg, monsterid)
+
+--[[
+	local fubenid = LActor.getFubenId(sysarg)
+	if fubenid == 0 then
+		debug_print("公共场景不统计")
+		return
+	end
+	local Fhandle = LActor.getFubenHandle(sysarg)
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+	if fbVar.KillMonsterExp == nil then
+		fbVar.KillMonsterExp = {}
+	end
+	local nMonsterConfig = Monster[monsterid]
+	if nMonsterConfig == nil or nMonsterConfig.exp == nil then
+		debug_print("非法配置")
+		return
+	end
+	local nTeamId = LActor.getTeamId(sysarg)
+	if nTeamId ~= nil and nTeamId > 0 then
+		local nPlayers = LuaHelp.getTeamMemberList(sysarg)
+		if nPlayers == nil then
+			debug_print(" 获取队伍玩家列表错误")
+		else
+			for i = 1 , #nPlayers do
+				local nActorId = LActor.getActorId(nPlayers[i])
+
+				if fbVar.KillMonsterExp[nActorId] == nil then
+					fbVar.KillMonsterExp[nActorId] = {}
+				end
+
+				if fbVar.KillMonsterExp[nActorId].exp == nil then
+					fbVar.KillMonsterExp[nActorId].exp = 0
+				end
+
+				fbVar.KillMonsterExp[nActorId].exp = fbVar.KillMonsterExp[nActorId].exp + nMonsterConfig.exp
+			end
+		end
+	else
+		local nActorId = LActor.getActorId(sysarg)
+		if fbVar.KillMonsterExp[nActorId] == nil then
+			fbVar.KillMonsterExp[nActorId] = {}
+		end
+
+		if fbVar.KillMonsterExp[nActorId].exp == nil then
+			fbVar.KillMonsterExp[nActorId].exp = 0
+		end
+		
+		fbVar.KillMonsterExp[nActorId].exp = fbVar.KillMonsterExp[nActorId].exp + nMonsterConfig.exp
+	end
+	--]]
+end
+
+
+
+fubenjiesuan.OnMonsterAllDie = function(sceneId, scenePtr, flag, monster)
+	-- 如果所有怪物死亡时 通关在此 调用副本结算
+	-- 否则在 对应的副本中 调用GameOver 方法
+
+	--local hScene = Fuben.getSceneHandleByPtr(scenePtr)
+	--Fuben.clearAllMonster(hScene)
+	local pfb = LActor.getFubenPrt(monster)
+   	local actors = LuaHelp.getFbActorList(pfb)
+	if actors ~= nil then
+		for i = 1,#actors do
+			local actor = actors[i]
+			fubenjiesuan.GameOver(actor)
+		end
+	else
+		debug_print("------没有玩家在场景---------",sceneId)
+	end
+	local Fhandle = LActor.getFubenHandle(monster)
+	Fuben.setFBAccout(Fhandle , true)
+	Fuben.SetFubenTime(Fhandle, 15)
+	--fubenbase.clearfubenDyamicData(pfb)
+
+ 	--fubenjiesuan.GameOver(sysarg)
+end
+
+fubenjiesuan.GetTableLen = function ( tables )
+	if tables == nil then
+		return
+	end
+	local count = 0
+	for k , v in pairs ( tables ) do
+		count = count + 1
+	end
+	return count
+end
+
+fubenjiesuan.GameOver = function ( sysarg )
+	local fubenid = LActor.getFubenId(sysarg)
+	local nFubenconfig = FubenALLConfig[fubenid]
+	local enterCount, addCount = Fuben.getEnterFubenInfo( sysarg, fubenid )
+
+	local npack = DataPack.allocPacket(sysarg,167 ,1)
+	DataPack.writeInt(npack,1)
+	DataPack.writeUInt(npack,fubenid)
+	DataPack.writeUInt(npack,enterCount )
+	DataPack.flush(npack)
+	if nFubenconfig == nil then
+		--debug_print("----------副本id 错误---------"..tostring(fubenid))
+		return
+	end
+	local Fhandle = LActor.getFubenHandle(sysarg)
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+
+	if fbVar.IsTongguan == nil then
+		--debug_print("设置通关错误")
+		return
+	end
+
+	local nActorId = LActor.getActorId(sysarg)
+	if not fbVar.gameoverDialog then fbVar.gameoverDialog = {} end
+	if fbVar.gameoverDialog[nActorId] then return end
+
+	fbVar.gameoverDialog[nActorId] = 1 	--是否已执行过gameover
+
+	--debug_print("------是否通关---",fbVar.IsTongguan)
+	local diff = LActor.GetFubenDifficulty( sysarg )
+	local nfbdata = FuBen[fubenid]
+	local fubenname = ""
+	if nfbdata ~= nil then
+		fubenname = nfbdata.fbname
+	end
+	local nAwardTable = {}
+	if fbVar.IsTongguan ~= 0 then
+		System.logCounter( LActor.getActorId(sysarg),  LActor.getAccountName(sysarg) , tostring(LActor.getLevel(sysarg)) , "fuben" ,""  , tostring(diff) , "copy" , fubenname , tostring(fubenid) , "end" , "win" , lfBI)
+		if nFubenconfig.isfanpai == 1 then
+			-- 翻牌结算
+			if fbVar.nStart == nil or fbVar.nStart == 0 then
+				--debug_print("-----配置错误 或 计算星级错误----------")
+				fbVar.nStart = 0
+			end
+			fubenjiesuan.FanpaiAward(sysarg, fubenid,fbVar.nStart, nAwardTable)
+		else
+			-- 普通结算
+			fubenjiesuan.NormalAward(sysarg, fubenid,nAwardTable)
+		end
+	else
+		System.logCounter( LActor.getActorId(sysarg),  LActor.getAccountName(sysarg) , tostring(LActor.getLevel(sysarg)) , "fuben" ,""  , tostring(diff) , "copy" , fubenname , tostring(fubenid) , "end" , "fail" , lfBI)
+	end
+
+	local fuben_exp = LActor.getCaleData( sysarg , 0)
+	local nCion = LActor.getCaleData( sysarg ,2)
+	local npack = DataPack.allocPacket(sysarg, 167, 10)
+	DataPack.writeInt(npack,fubenid)
+	local nActorVar = LActor.getStaticVar(sysarg)
+	-- if nActorVar.fuben_exp == nil then
+	-- 	nActorVar.fuben_exp = LActor.getIntProperty(sysarg,PROP_ACTOR_EXP)
+	-- end
+	-- local fuben_exp = LActor.getIntProperty(sysarg,PROP_ACTOR_EXP) - nActorVar.fuben_exp
+	DataPack.writeInt(npack,fuben_exp)
+	-- if nActorVar.fuben_coin == nil then
+	-- 	nActorVar.fuben_coin = LActor.getMoneyCount(sysarg, mtBindCoin)
+	-- end
+	-- local nCion = LActor.getMoneyCount(sysarg, mtBindCoin) - nActorVar.fuben_coin
+	DataPack.writeInt(npack,nCion)
+	--debug_print(string.format("-----------副本获得的贝币---=%d",nCion))
+	if fbVar.EnteryCopytime == nil then
+		fbVar.EnteryCopytime = System.getCurrMiniTime()
+	end
+	local nCostTiem = System.getCurrMiniTime() - fbVar.EnteryCopytime
+	--debug_print(string.format("-----------副本消耗的时间---=%d",nCostTiem))
+	DataPack.writeInt(npack, nCostTiem)
+	DataPack.writeChar(npack,fbVar.IsTongguan)
+	if fbVar.fbAwardList ~= nil and fbVar.fbAwardList[nActorId] ~= nil then
+		local nSize = #fbVar.fbAwardList[nActorId]
+		--debug_print(string.format("掉落奖励列表-----------%d",nSize))
+		DataPack.writeInt(npack,nSize)
+		for k = 1, nSize  do
+			DataPack.writeWord(npack,1) -- 默认物品
+			DataPack.writeWord(npack,fbVar.fbAwardList[nActorId][k][1])
+			DataPack.writeInt(npack,fbVar.fbAwardList[nActorId][k][2])
+			--DataPack.writeChar(npack,fbVar.fbAwardList[nActorId][k][3])
+		end
+	else
+		DataPack.writeInt(npack,0)
+	end
+	if nFubenconfig.isfanpai == 1 then
+		--debug_print(string.format("-----------翻牌结算-------星级---=%d",fbVar.nStart))
+		DataPack.writeChar(npack,1)
+		DataPack.writeChar(npack,fbVar.nStart)
+	else
+		--debug_print(string.format("-----------普通结算-------星级---")) 
+		DataPack.writeChar(npack,0)
+		DataPack.writeChar(npack,0)
+	end
+	local nAwardSize = #nAwardTable
+	--debug_print(string.format("-----------------========================---")) 
+	DataPack.writeInt(npack,nAwardSize)
+	--debug_print(string.format("副本奖励列表-----------%d",nAwardSize))
+	for k , v in pairs (nAwardTable) do
+		DataPack.writeWord(npack,v[1])
+		DataPack.writeInt(npack,v[3])
+		DataPack.writeChar(npack,v[2])
+	end
+	DataPack.flush(npack)
+	if nActorVar.fuben_exp ~= nil then
+		nActorVar.fuben_exp = nil
+	end
+	if nActorVar.fuben_coin ~= nil then
+		nActorVar.fuben_coin = nil
+	end
+
+	-- 活跃度
+	-- ActivationTrigger(sysarg, activation_type[fubenid])
+	-- 成就事件
+	LActor.SetAchieveProcessByType(sysarg, 103, 1, 1); -- aAchievePassFuben
+end
+
+fubenjiesuan.NormalChooseAward = function ( srctable , destable )
+	-- body
+	if not srctable or not destable or type( srctable) ~= "table" or type( destable ) ~= "table" then
+		return
+	end
+	local nSrcSize = #srctable
+	if nSrcSize < 3 then
+		for k , v in pairs ( srctable ) do
+			table.insert( destable , v)
+		end
+	else
+		--赛选奖励规则
+	end
+end
+
+
+fubenjiesuan.NormalAward = function ( sysarg, fubenid , nAwardTable)
+	-- body
+
+	--local  nTongguanConfig = FubenALLConfig[fubenid].TongguanAward
+	--debug_print("-------普通奖励  begjin---------")
+	fubenid = tonumber(fubenid)
+	local nTongguanConfig = FuBenAward[fubenid]
+	if nTongguanConfig == nil then
+		return
+	end
+	--print_table(nTongguanConfig)
+	local actorid = LActor.getActorId(sysarg)
+	local diff = LActor.GetFubenDifficulty( sysarg )
+	if diff < 1 or diff > 3 then
+		--debug_print("-----配置有骷髅----------")
+		return
+	end
+	local nFubenAward = nTongguanConfig[diff]
+	if nFubenAward == nil then
+		--debug_print("-----配置有骷髅------423452345----")
+		return
+	end
+
+	--DataPack.writeInt(datapack,#nTongguanConfig)
+	local nAwardLen = 0
+	local activityId = fubenjiesuan.doubleAcitivityFuben[fubenid]
+	local double = 1
+	if activityId then
+		double = getAcitivityIsDouble(activityId)
+	end
+
+	for k , v in pairs ( nFubenAward ) do
+		local nMinRate = 0
+		local nHigthRate = 0
+		local nRate = System.getRandomNumber(10000)
+		--print_table( v )
+		for n , j in pairs ( v ) do
+			if j.gropu_ == 0 then
+				--添加
+				local nRate1 = System.getRandomNumber(10000)
+				--debug_print("gropu_===================>nRate",nRate1 , j.rate_)
+				if nRate1 > 0 and nRate1 <= j.rate_ then
+					--debug_print("j.itemid_:"..tostring(j.itemid_))
+					--debug_print("j.type_:"..tostring(j.type_))
+					--debug_print("j.itemnum_:"..tostring(j.itemnum_))
+					local ntemp = { j.itemid_ , j.type_ , j.itemnum_*double }
+					local nAddNum = fubenjiesuan.AddTableIten(sysarg, ntemp)
+					if nAddNum == nil then
+							table.insert(nAwardTable,ntemp)
+					else
+						if nAddNum == 0 then
+							local str = string.format(Lang.ScriptTips.fbjl0001,FuBen[fubenid].fbname)
+							System.sendGmMailOffLine(actorid, str , j.type_, j.itemid_,j.itemnum_*double, 0 ,Lang.ScriptTips.fbjl0002)
+						elseif nAddNum > 0 and nAddNum < ntemp[3] then
+							local str = string.format(Lang.ScriptTips.fbjl0001,FuBen[fubenid].fbname)
+							System.sendGmMailOffLine(actorid, str , j.type_, j.itemid_,j.itemnum_*double - nAddNum, 0 ,Lang.ScriptTips.fbjl0002)
+							ntemp[3] = nAddNum
+							table.insert(nAwardTable,ntemp)
+						else
+							table.insert(nAwardTable,ntemp)
+						end
+					end
+				end
+			else
+				--概率
+				nMinRate = nHigthRate
+				nHigthRate = nHigthRate + j.rate_
+				if nMinRate <= nRate and nHigthRate >= nRate then
+					local ntemp = { j.itemid_ , j.type_ , j.itemnum_*double }
+					local nAddNum = fubenjiesuan.AddTableIten(sysarg, ntemp)
+					if nAddNum == nil then
+						table.insert(nAwardTable,ntemp)
+					else
+						if nAddNum == 0 then
+							local str = string.format(Lang.ScriptTips.fbjl0001,FuBen[fubenid].fbname)
+							System.sendGmMailOffLine(actorid, str , j.type_, j.itemid_,j.itemnum_*double, 0 ,Lang.ScriptTips.fbjl0002)
+						elseif nAddNum > 0 and nAddNum < ntemp[3] then
+							local str = string.format(Lang.ScriptTips.fbjl0001,FuBen[fubenid].fbname)
+							System.sendGmMailOffLine(actorid, str , j.type_, j.itemid_,j.itemnum_*double - nAddNum, 0 ,Lang.ScriptTips.fbjl0002)
+							--ntemp[3] = nAddNum
+							table.insert(nAwardTable,ntemp)
+						else
+							table.insert(nAwardTable,ntemp)
+						end
+					end
+					break
+				end
+			end
+		end
+	end
+	--debug_print("-------普通奖励  end---------")
+end
+
+fubenjiesuan.TableInsert = function ( desTable, srcTable )
+
+	-- local nFlag = false
+	-- for k , v in pairs ( desTable ) do
+	-- 	if v[1] == srcTable[1] and v[2] == srcTable[2] then
+	-- 		desTable[k][3] = desTable[k][3] + srcTable[3]
+	-- 		nFlag = true
+	-- 	end
+	-- end
+
+	-- if nFlag == false then
+		table.insert(desTable,srcTable)
+	--end
+
+	-- body
+end
+
+
+fubenjiesuan.FanpaiAward = function ( sysarg, fubenid ,nStart, nAwardTable)
+	fubenid = tonumber(fubenid)
+	local nTongguanConfig = FuBenAward[fubenid]
+	if nTongguanConfig == nil then
+		--debug_print("--------没有通关奖励-----")
+		return
+	end
+	--print_table(nTongguanConfig)
+	local actorid = LActor.getActorId(sysarg)
+	local diff = LActor.GetFubenDifficulty( sysarg )
+	if diff < 1 or diff > 3 then
+		return
+	end
+	local nFubenAward = nTongguanConfig[diff]
+	if nFubenAward == nil then
+		--debug_print("---------配置遗漏---------"..tostring(diff))
+		return
+	end
+	local table_temp = {}
+	local len = 0
+	for k , v in pairs ( nFubenAward ) do
+		if table_temp[k] == nil then
+			table_temp[k] = {}
+		end
+		for n , j in pairs ( v ) do
+			if j.gropu_ ~= 0 then
+				table.insert(table_temp[k] , j)
+				len = len + 1
+			end
+		end
+	end
+	if len == 0 then
+		return
+	end
+
+	local activityId = fubenjiesuan.doubleAcitivityFuben[fubenid]
+	local double = 1
+	if activityId then
+		double = getAcitivityIsDouble(activityId)
+	end
+
+	local nCurStart = nStart
+	local nFanPaiAward = {}
+	local nSendEmialAward = {}
+	while(nCurStart > 0 )
+	do
+		for k , v in pairs ( table_temp ) do
+			local nMinRate = 0
+			local nHigthRate = 0
+			local nFlag_ = false
+			local nRate = System.getRandomNumber(10000)
+			for n , j in pairs ( v ) do
+				if j.gropu_ == 0 then
+					--添加
+					--debug_print("------配置问题来咯------")
+				else
+					--概率
+					nMinRate = nHigthRate
+					nHigthRate = nHigthRate + j.rate_
+					if nMinRate <= nRate and nHigthRate >= nRate then
+						local ntemp = { j.itemid_ , j.type_ , j.itemnum_*double }
+						local nAddNum = fubenjiesuan.AddTableIten(sysarg, ntemp)
+						if nAddNum == 0 then
+							--local temp = {v[1], v[2] , v[3]}
+			 				fubenjiesuan.TableInsert(nSendEmialAward,ntemp)
+						elseif nAddNum > 0 and nAddNum < ntemp[3] then
+							--local temp = {v[1],v[2] , v[3]-nAddNum}
+							ntemp[3] = j.itemnum_*double - nAddNum 
+	 						fubenjiesuan.TableInsert(nSendEmialAward,ntemp)
+		 					ntemp[3] = nAddNum
+		 					fubenjiesuan.TableInsert(nFanPaiAward,ntemp)
+						else
+							--local temp = {v[1],v[2] ,v[3]}
+			 				fubenjiesuan.TableInsert(nFanPaiAward,ntemp)
+						end
+						nCurStart = nCurStart - 1
+						break
+					end
+				end
+			end
+
+		end
+		-- local nRandomNumber = System.getRandomNumber(10000)
+		-- local nRate = 0
+		-- for k , v in pairs ( nFubenAward ) do
+		-- 	nRate = nRate + v[5]
+		-- 	if nRate >= nRandomNumber then
+		-- 		local nAddNum = fubenjiesuan.AddTableIten(sysarg, {v[1],v[2],v[3]})
+		-- 		if nAddNum ~= nil then
+		-- 			if nAddNum == 0 then
+		-- 				local temp = {v[1],v[3] - nAddNum}
+		-- 				fubenjiesuan.TableInsert(nSendEmialAward,temp)
+		-- 			elseif nAddNum == v[3] then
+		-- 				local temp = {v[1],v[3],v[4]}
+		-- 				fubenjiesuan.TableInsert(nFanPaiAward,temp)
+		-- 			else
+		-- 				local temp = {v[1],v[3]-nAddNum,v[4]}
+		-- 				fubenjiesuan.TableInsert(nSendEmialAward,temp)
+		-- 				temp[3] = nAddNum
+		-- 				fubenjiesuan.TableInsert(nFanPaiAward,temp)
+		-- 			end
+		-- 		else
+		-- 			local temp = {v[1],v[3],v[4]}
+		-- 			fubenjiesuan.TableInsert(nFanPaiAward,temp)
+		-- 		end
+		-- 		nCurStart = nCurStart - 1
+		-- 		break
+		-- 	end
+		-- end
+	end
+
+	for k , v in pairs (nFanPaiAward) do
+		table.insert(nAwardTable,v)
+	end
+	local actorid = LActor.getActorId(sysarg)
+	if actorid == 0 then
+		return
+	end
+	for k , v in pairs ( nSendEmialAward ) do
+		table.insert(nAwardTable , v)
+		local str = string.format(Lang.ScriptTips.fbjl0001,FuBen[fubenid].fbname)
+		System.sendGmMailOffLine(actorid, str , v[2], v[1],v[3], 0 ,Lang.ScriptTips.fbjl0002)
+		--System.sendGmMailOffLine(actorid, str , j.type_, j.itemid_,j.itemnum_, 0 ,Lang.ScriptTips.fbjl0002,)
+	end
+end
+
+fubenjiesuan.AddTableIten = function ( sysarg , nItemtab )
+	-- body
+	--debug_print(nItemtab)
+	--debug_print("----------------正价wuiedf-----------")
+	--print_table(nItemtab)
+	if nItemtab == nil or #nItemtab ~= 3 or not sysarg then
+		--debug_print("----------------------------")
+		return nil
+	end
+
+	local fubenid = LActor.getFubenId(sysarg)
+	
+	if nItemtab[2] == 1 then -- 物品
+		local nAddItemNum = LActor.addItem(sysarg, nItemtab[1], 0, 0, nItemtab[3], 0, "add fuben award Item",1)
+		if nAddItemNum < nItemtab[3] then
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.mount008, ttMessage)
+		end
+		return nAddItemNum
+	elseif nItemtab[2] == 2 then --货币
+		LActor.changeMoney(sysarg, nItemtab[1], nItemtab[3], 1, true, "pack money", "gamereward")
+	elseif nItemtab[2] == 3 then --宗门贡献值
+		LActor.giveAward(sysarg, 5 , nItemtab[3])
+	elseif nItemtab[2] == 5 then --星魂(原灵根)
+		LActor.giveAward(sysarg, 9 , nItemtab[3], 0, 0, "fubenjiesuan.txt", 1, false, "fubenjiesuan", string.format("fuben_%d", fubenid))
+	elseif nItemtab[2] == 6 then --经验
+		LActor.giveAward(sysarg, 4 , nItemtab[3])
+	elseif nItemtab[2] == 10 then --威望
+		LActor.giveAward(sysarg, 6 , nItemtab[3], 0, 0, "fubenjiesuan.txt", 1, false, "fubenjiesuan", string.format("fuben_%d", fubenid))
+	elseif nItemtab[2] == 16 then --荣誉值
+		LActor.giveAward(sysarg, 7 , nItemtab[3])
+	elseif nItemtab[2] == 17 then --钥匙
+		LActor.giveAward(sysarg, 8 , nItemtab[3])
+	end
+end
+
+fubenjiesuan.PackUpItem = function (sysarg, arg)
+	-- body
+	local Fhandle = LActor.getFubenHandle(sysarg)
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+	local nActorId = LActor.getActorId(sysarg)
+	local nItemId = arg[1]
+	local nItemBind = arg[4]
+	local nNumber = arg[5]
+	if fbVar.fbAwardList == nil then
+		return
+	end
+	--debug_print(string.format("-------拾取物品 =%d--%d--%d----",nItemId , nItemBind, nNumber))
+	if fbVar.fbAwardList[nActorId] == nil then
+		fbVar.fbAwardList[nActorId] = {}
+	end
+	
+	local nSize = #fbVar.fbAwardList[nActorId]
+	local nFlag = false
+	for i= 1, nSize do
+		if fbVar.fbAwardList[nActorId][i][1] == nItemId and  nItemBind == fbVar.fbAwardList[nActorId][i][3] then
+			fbVar.fbAwardList[nActorId][i][2] = fbVar.fbAwardList[nActorId][i][2] + nNumber
+			nFlag = true
+		end
+	end
+	--原来没有拾取的物品
+	if nFlag == false then
+		nSize = nSize + 1
+		fbVar.fbAwardList[nActorId][nSize] = {}
+		fubenjiesuan.CopyTableToUseDataMenberList(fbVar.fbAwardList[nActorId][nSize],{nItemId,nNumber,nItemBind})
+	end
+end
+
+fubenjiesuan.showCurData = function ( sysarg )
+	-- body
+	local fubenid = LActor.getFubenId(sysarg)
+	if fubenid == 0 then
+		fubenid = 120
+	end
+	local Fhandle = LActor.getFubenHandle(sysarg)
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+	local  nActorId = LActor.getActorId(sysarg)
+	if fbVar.fbAwardList == nil  then
+		--debug_print("----fbAwardList--------")
+		fbVar.fbAwardList = {}
+	end
+	if fbVar.fbAwardList[nActorId] == nil then
+		fbVar.fbAwardList[nActorId] = {}
+	end
+	local awardsize = #fbVar.fbAwardList[nActorId]
+
+	for i= 1 , awardsize do
+		--debug_print(string.format("物品id = %d-----物品数量num = %d-----是否绑定 = %d ",fbVar.fbAwardList[nActorId][i][1],fbVar.fbAwardList[nActorId][i][2],fbVar.fbAwardList[nActorId][i][3]))
+	end
+
+	local nActorVar = LActor.getStaticVar(sysarg)
+	if nActorVar.fuben_exp == nil then
+		nActorVar.fuben_exp = LActor.getIntProperty(sysarg,PROP_ACTOR_EXP)
+	end
+	local fuben_exp = LActor.getIntProperty(sysarg,PROP_ACTOR_EXP) - nActorVar.fuben_exp
+	local str = string.format("-----副本中获得的经验 = %d ----",fuben_exp)
+	--debug_print(str)
+end
+
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeActorLootItem, fubenjiesuan.PackUpItem)

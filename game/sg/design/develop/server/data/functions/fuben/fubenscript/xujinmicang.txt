@@ -1,0 +1,305 @@
+
+----无尽秘藏副本
+
+
+
+
+wujinmicang = {}
+
+
+--初始化副本
+wujinmicang.OnInitCopy = function(sysarg, Fhandle)
+	debug_print("-----------初始化副本--无尽秘藏副本---------")
+	--for i = 1,table.getn( sysarg ) do
+
+     --LActor.enterFuBen( sysarg, Fhandle, wujinmicangconfig.sceneId[1], wujinmicangconfig.playerPos[1][1], wujinmicangconfig.playerPos[1][2] )
+    --end
+
+    --local i = 1
+	local nTeam = LActor.getTeamId( sysarg )
+	if nTeam > 0 then
+		local nActionList = LuaHelp.getTeamMemberList(sysarg)
+		for i = 1 , #nActionList do
+      		LActor.enterFuBen( nActionList[i], Fhandle, wujinmicangconfig.sceneId[1], wujinmicangconfig.playerPos[i][1], wujinmicangconfig.playerPos[i][2] )
+      		-- 触发任务事件
+			LActor.OnQuestEvent(qtWuJinMiZang, 0, 1, true, nActionList[i])
+      	end
+ 	else
+ 		LActor.enterFuBen( sysarg, Fhandle, wujinmicangconfig.sceneId[1], wujinmicangconfig.playerPos[1][1], wujinmicangconfig.playerPos[1][2] )
+ 		-- 触发任务事件
+		LActor.OnQuestEvent(qtWuJinMiZang, 0, 1, true, sysarg)
+  	end
+
+	Fuben.SetFubenTime(Fhandle,wujinmicangconfig.limitTime)
+
+	fubenbase.Init(sysarg,wujinmicangconfig.fubenId[1],wujinmicangconfig.sceneId[1])
+
+	--特殊化 副本信息
+
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+	fbVar.wujinmicang_create_first_monster = 1
+	--[[
+	local hscene = Fuben.getSceneHandleById(ShouhuXuanNvConfig.sceneId[1], Fhandle) 
+
+	local nDiff = Fuben.getFubenDifficulty(Fhandle)
+
+	local nMonsterConfig = wujinmicangconfig.startRefreshMonst[nDiff]
+
+	if nMonsterConfig == nil then
+		debug_print("---无尽秘藏副本配置错误---")
+		return
+	end
+	for k , v in pairs (nMonsterConfig) do
+		Fuben.createMonsters(hscene, v.monsterId, v.posX1, v.posX2, v.posY1, v.posY2, v.nCount,0)
+	end
+	--]]
+
+	
+end
+
+
+wujinmicang.getRandomNumberResult = function ( RandomNum , table)
+	-- body
+	local nrate = System.getRandomNumber(RandomNum)
+	if type(table) ~= 'table' then
+		return
+	end
+	local sum = 0
+	for k , v in pairs ( table ) do
+		if nrate <= sum + v.rate then
+			--debug_print("---------返回值------------",k)
+			return k
+		else
+			sum = sum + v.rate
+		end
+	end
+end
+
+-- 怪物死亡
+wujinmicang.OnMonsterDie = function ( monster, sysarg, monId )
+	local fptr = LActor.getFubenPrt( sysarg )
+	if fptr == nil then
+		return
+	end
+	local fbid = Fuben.getFubenIdbyFuBenPtr(fptr)
+	if fbid ~= wujinmicangconfig.fubenId[1] then
+		print("------------------wujinmicang.OnMonsterDie register error")
+		return
+	end
+	
+	-- body
+	fubenjiesuan.OnKillMonster( monster, sysarg, monId )
+
+	local Fhandle = LActor.getFubenHandle(sysarg)
+	--debug_print("-----怪物死亡----")
+	local nDiff = Fuben.getFubenDifficulty(Fhandle)
+	local nMonsterConfig = wujinmicangconfig.RefreshMonster[nDiff]
+	if nMonsterConfig == nil then
+		--debug_print("无尽秘藏副本配置错误")
+		return
+	end
+	local nIndex = wujinmicang.getRandomNumberResult(100,nMonsterConfig)
+	--debug_print("-------nIndex-----------",nIndex)
+	
+--	local Fhandle = LActor.getFubenHandle(sysarg)
+	local hscene = Fuben.getSceneHandleById(wujinmicangconfig.sceneId[1], Fhandle)
+
+	local nVar = Fuben.getDyanmicVar( fptr )
+	if nVar.WuJinMiCang_Kill_Monster_Count == nil then
+		nVar.WuJinMiCang_Kill_Monster_Count = 1
+	else
+		nVar.WuJinMiCang_Kill_Monster_Count = nVar.WuJinMiCang_Kill_Monster_Count + 1
+	end
+	log_print("==============killer===="..tostring(nVar.WuJinMiCang_Kill_Monster_Count))
+	if nVar.WuJinMiCang_Kill_Monster_Count >= wujinmicangconfig.allmonstercout then
+		if nVar.IsTongguan ~= 1 then
+			nVar.IsTongguan = 1
+			local sceneId = LActor.getSceneId( sysarg )
+			local scenePtr = LActor.getScenePtr( sysarg )
+			fubenjiesuan.OnMonsterAllDie(sceneId, scenePtr, 1, sysarg)
+		end
+		return
+	end
+
+	if not nVar.wujinmicang_create_monster_count then
+		print("------------------wujinmicang.OnMonsterDie error, problem still exist") 
+		nVar.wujinmicang_create_monster_count = 1 
+	end
+	if nVar.wujinmicang_create_monster_count < wujinmicangconfig.allmonstercout then
+		nVar.wujinmicang_create_monster_count = nVar.wujinmicang_create_monster_count + 1
+		Fuben.createMonsters(hscene, nMonsterConfig[nIndex].monsterId, nMonsterConfig[nIndex].posX1, nMonsterConfig[nIndex].posX2, nMonsterConfig[nIndex].posY1, nMonsterConfig[nIndex].posY2, 1,0)
+	end
+	log_print("==============killer===="..tostring(nVar.wujinmicang_create_monster_count))
+end
+
+
+wujinmicang.OnActorDie = function ( sysarg, nkiller )
+	local nFubenId = LActor.getFubenId( sysarg )
+	if nFubenId ~= wujinmicangconfig.fubenId[1] then
+		return
+	end
+	local nteamid = LActor.getTeamId( sysarg )
+	if nteamid > 0 then
+
+		local teamptr = TeamFun.getTeam( nteamid )
+		if teamptr ~= nil then
+			if TeamFun.TeamMemerIsDieAll(teamptr) == true then 
+				fubenjiesuan.OnMonsterAllDie(sceneId, scenePtr, 1, sysarg)
+			end
+		end
+	else
+		local sceneId = LActor.getSceneId( sysarg )
+		local scenePtr = LActor.getScenePtr( sysarg )
+		fubenjiesuan.OnMonsterAllDie(sceneId, scenePtr, 1, sysarg)
+	end
+end
+
+
+
+-- 结束副本
+wujinmicang.OnFubenOverTime = function ( sysarg )
+	local pfb = LActor.getFubenPrt(sysarg)
+   	local actors = LuaHelp.getFbActorList(pfb)
+	if actors ~= nil then
+		for i = 1,#actors do
+			actor = actors[i]
+			fubenjiesuan.GameOver(actor)
+		end
+	end
+end
+
+
+wujinmicang.OnExitFuben = function ( sysarg, hfb, way )
+	-- body
+	if not way or way ~= 1 or not sysarg or not hfb then
+		--debug_print(" ---------退出副本--------"..tostring(way))
+		return
+	end
+	--debug_print(" ---------清空退出副本数据--------"..tostring(way)) 
+	-- local fbPtr = Fuben.getFubenPtr( hfb )
+	-- local fbVar = Fuben.getDyanmicVar(fbPtr)
+	-- fbVar.wujinmicang_create_first_monster = nil
+
+	fubenbase.ExitFubenRestore( sysarg )
+end
+
+wujinmicang.CreateFirstWaveMonster = function ( sysarg )
+	-- body
+	--debug_print("=========wujinmicang.CreateFirstWaveMonster===========")
+	local nFubenid = LActor.getFubenId( sysarg )
+	if nFubenid ~= wujinmicangconfig.fubenId[1] then
+		return
+	end
+
+	local Fhandle = LActor.getFubenHandle( sysarg )
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+	if fbVar.wujinmicang_create_first_monster == nil or fbVar.wujinmicang_create_first_monster == 0 then
+		return
+	elseif fbVar.wujinmicang_create_first_monster == 1 then
+		fbVar.wujinmicang_create_first_monster = 0
+	end
+	local hscene = Fuben.getSceneHandleById(wujinmicangconfig.sceneId[1], Fhandle)
+
+	local nDiff = Fuben.getFubenDifficulty(Fhandle)
+
+	local nMonsterConfig = wujinmicangconfig.startRefreshMonst[nDiff]
+
+	if nMonsterConfig == nil then
+		debug_print("---无尽秘藏副本配置错误---")
+		return
+	end
+	for k , v in pairs (nMonsterConfig) do
+		Fuben.createMonsters(hscene, v.monsterId, v.posX1, v.posX2, v.posY1, v.posY2, v.nCount,0)
+		if fbVar.wujinmicang_create_monster_count == nil then
+			fbVar.wujinmicang_create_monster_count = v.nCount
+		else
+			fbVar.wujinmicang_create_monster_count = v.nCount + fbVar.wujinmicang_create_monster_count
+		end
+	end
+end
+
+
+wujinmicang.getmosterdiecount = function ( sysarg )
+	-- body
+	if sysarg == nil then
+		return
+	end
+	local fptr = LActor.getFubenPrt( sysarg )
+	if fptr == nil then
+		return
+	end
+	local nVar = Fuben.getDyanmicVar( fptr )
+	local nCount = 0
+	debug_print("=========getmosterdiecount========",nVar.WuJinMiCang_Kill_Monster_Count)
+	if nVar.WuJinMiCang_Kill_Monster_Count ~= nil then
+		nCount = nVar.WuJinMiCang_Kill_Monster_Count
+	end
+	local nFubenid = LActor.getFubenId(sysarg)
+	local npack = DataPack.allocPacket(sysarg,167,11)
+	DataPack.writeInt( npack , nFubenid)
+	DataPack.writeInt( npack , 12)
+	DataPack.writeInt( npack , nCount)
+	DataPack.writeInt( npack , wujinmicangconfig.allmonstercout)
+	DataPack.flush(npack)
+
+end
+
+wujinmicang.HandleNetworkData = function ( sysarg, dp)
+
+	local cmdid = DataPack.readInt(dp)
+	if cmdid == 1 then
+		wujinmicang.CreateFirstWaveMonster( sysarg )
+	elseif cmdid == 12 then
+		wujinmicang.getmosterdiecount( sysarg )
+	else
+		debug_print(" 无尽秘藏没有该命令",cmdid)
+	end
+end
+wujinmicang.OnGameOver = function ( fubenptr)
+	-- body
+
+	local nFbActionList = LuaHelp.getFbActorList( fubenptr )
+	if nFbActionList == nil then
+		return
+	end
+	local fbVar = Fuben.getDyanmicVar(fubenptr)
+	fbVar.IsTongguan = 1
+	Fuben.setStopMonsterRunOne(nFbActionList[1])
+	for i = 1 , #nFbActionList do
+		fubenjiesuan.GameOver(nFbActionList[i])
+	end
+end
+
+--以上所有事件都要注册
+
+-- 注册怪物被杀死事件
+for i=1,#wujinmicangconfig.monsterIdList do
+	--debug_print("------注册怪物 id 事件------",ShouhuXuanNvConfig.monsterIdList[i])
+	MonDieDispatcher.register( wujinmicangconfig.monsterIdList[i],  wujinmicang.OnMonsterDie)
+end
+
+--注册副本初始化函数
+for k, v in pairs ( wujinmicangconfig.fubenId ) do
+--	debug_print("-------注册无尽秘藏------",v)
+	fubenbase.registerEnterFuben(v,wujinmicang.OnInitCopy)
+	EventCallDispatcher.registerFubenExit(v,lieqifuben.OnExitFuben)
+end
+
+--注册定时器
+--TimerMsgFunc.register(TimerMsg.SHXNMosterRefresh, wujinmicang.OnRefreshMonster)
+--EventCallDispatcher.registerFubenEnter(LieqiFubenConfig.fubenId, lieqifuben.AgainLogin)	-- 重新登陆处理
+--EventCallDispatcher.registerFubenExit(LieqiFubenConfig.fubenId, lieqifuben.LoginOut)		-- 登出处理
+--副本时间到
+
+EventCallDispatcher.registerFubenGameOverBefore(wujinmicangconfig.fubenId[1],  wujinmicang.OnGameOver)
+
+FubenMsgHandle.registerMsgHandler(wujinmicangconfig.fubenId[1],wujinmicang.HandleNetworkData) --注册副本中消息处理协议
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeOnActorDeath, wujinmicang.OnExitFuben)
+
+EventCallDispatcher.registerFubenGameOver(wujinmicangconfig.fubenId[1], wujinmicang.OnFubenOverTime)
+--EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeOnActorDeath, wujinmicang.OnActorDie)
+
+
+

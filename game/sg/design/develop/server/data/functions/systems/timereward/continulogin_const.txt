@@ -1,0 +1,93 @@
+﻿--[[ 奖励类型
+qatEquipment=0,             //物品或者装备
+qatRootExp = 1,	            //真气
+qatExp = 2,                	//角色经验值
+qatGuildContribution = 3,	//帮派贡献值
+qatZYContribution = 4,		//阵营贡献
+qatBindMoney = 5,           //贝币
+qatMoney = 6,	            //银两
+qatLiJin = 7,	            //绑定天珠
+qatTitle = 8,	            //称谓
+qatSkill = 9,	            //技能
+qatAchievePoint =11,        //成就点
+威望	12
+伙伴 13
+活跃度 14
+天珠 15
+帮派繁荣度 16
+帮派玥石 17
+灵力值  18
+
+目前只实现物品和天珠
+]]
+
+LocalDT.ContinuLoginRewardConfig = --非充值玩家
+	{
+		{type = 0, amount = 1, itemid = 18210, job = 0, quality=0, strong=0, bind=1},	--连续登录1天
+		{type = 0, amount = 1, itemid = 18710, job = 0, quality=0, strong=0, bind=1},	--连续登录2天
+		{type = 0, amount = 1, itemid = 18520, job = 0, quality=0, strong=0, bind=1},	--连续登录3天
+		{type = 0, amount = 1, itemid = 18530, job = 0, quality=0, strong=0, bind=1},	--连续登录4天
+		{type = 0, amount = 1, itemid = 18540, job = 0, quality=0, strong=0, bind=1},	--连续登录5天
+		{type = 0, amount = 1, itemid = 18510, job = 0, quality=0, strong=0, bind=1},	--连续登录6天
+		{type = 0, amount = 1, itemid = 18606, job = 0, quality=0, strong=0, bind=1},	--连续登录7天
+		{type = 0, amount = 1, itemid = 18211, job = 0, quality=0, strong=0, bind=1},	--连续登录8天
+		{type = 0, amount = 1, itemid = 18600, job = 0, quality=0, strong=0, bind=1},	--连续登录9天
+		{type = 0, amount = 1, itemid = 18810, job = 0, quality=0, strong=0, bind=1},	--连续登录10天
+		{type = 0, amount = 1, itemid = 18521, job = 0, quality=0, strong=0, bind=1},	--连续登录11天
+		{type = 0, amount = 1, itemid = 18531, job = 0, quality=0, strong=0, bind=1},	--连续登录12天
+		{type = 0, amount = 1, itemid = 18541, job = 0, quality=0, strong=0, bind=1},	--连续登录13天
+		{type = 0, amount = 1, itemid = 18511, job = 0, quality=0, strong=0, bind=1},	--连续登录14天
+		{type = 0, amount = 1, itemid = 18711, job = 0, quality=0, strong=0, bind=1},	--连续登录15天
+		{type = 0, amount = 1, itemid = 18720, job = 0, quality=0, strong=0, bind=1},	--连续登录16天
+		{type = 0, amount = 1, itemid = 18603, job = 0, quality=0, strong=0, bind=1},	--连续登录17天
+		{type = 0, amount = 1, itemid = 18603, job = 0, quality=0, strong=0, bind=1},	--连续登录18天
+		{type = 0, amount = 1, itemid = 18800, job = 0, quality=0, strong=0, bind=1},	--连续登录19天
+		{type = 0, amount = 1, itemid = 18522, job = 0, quality=0, strong=0, bind=1},	--连续登录20天
+		{type = 0, amount = 1, itemid = 18532, job = 0, quality=0, strong=0, bind=1},	--连续登录21天
+		{type = 0, amount = 1, itemid = 18542, job = 0, quality=0, strong=0, bind=1},	--连续登录22天
+		{type = 0, amount = 1, itemid = 18512, job = 0, quality=0, strong=0, bind=1},	--连续登录23天
+		{type = 0, amount = 1, itemid = 18219, job = 0, quality=0, strong=0, bind=1},	--连续登录24天
+		{type = 0, amount = 1, itemid = 18712, job = 0, quality=0, strong=0, bind=1},	--连续登录25天
+		{type = 0, amount = 1, itemid = 18604, job = 0, quality=0, strong=0, bind=1},	--连续登录26天
+		{type = 0, amount = 1, itemid = 18607, job = 0, quality=0, strong=0, bind=1},	--连续登录27天
+		{type = 0, amount = 1, itemid = 18605, job = 0, quality=0, strong=0, bind=1},	--连续登录28天
+		{type = 0, amount = 1, itemid = 18543, job = 0, quality=0, strong=0, bind=1},	--连续登录29天
+		{type = 0, amount = 1, itemid = 18602, job = 0, quality=0, strong=0, bind=1},	--连续登录30天
+
+	
+	 }
+	 
+LocalDT.ContinuLoginVIPRewardConfig = --充值玩家
+	{
+		{type = 0, amount = 1, itemid = 18210, job = 0, quality=0, strong=0, bind=1},	--连续登录1天
+		{type = 0, amount = 1, itemid = 18710, job = 0, quality=0, strong=0, bind=1},	--连续登录2天
+		{type = 0, amount = 1, itemid = 18520, job = 0, quality=0, strong=0, bind=1},	--连续登录3天
+		{type = 0, amount = 1, itemid = 18530, job = 0, quality=0, strong=0, bind=1},	--连续登录4天
+		{type = 0, amount = 1, itemid = 18540, job = 0, quality=0, strong=0, bind=1},	--连续登录5天
+		{type = 0, amount = 1, itemid = 18510, job = 0, quality=0, strong=0, bind=1},	--连续登录6天
+		{type = 0, amount = 1, itemid = 18606, job = 0, quality=0, strong=0, bind=1},	--连续登录7天
+		{type = 0, amount = 1, itemid = 18211, job = 0, quality=0, strong=0, bind=1},	--连续登录8天
+		{type = 0, amount = 1, itemid = 18600, job = 0, quality=0, strong=0, bind=1},	--连续登录9天
+		{type = 0, amount = 1, itemid = 18810, job = 0, quality=0, strong=0, bind=1},	--连续登录10天
+		{type = 0, amount = 1, itemid = 18521, job = 0, quality=0, strong=0, bind=1},	--连续登录11天
+		{type = 0, amount = 1, itemid = 18531, job = 0, quality=0, strong=0, bind=1},	--连续登录12天
+		{type = 0, amount = 1, itemid = 18541, job = 0, quality=0, strong=0, bind=1},	--连续登录13天
+		{type = 0, amount = 1, itemid = 18511, job = 0, quality=0, strong=0, bind=1},	--连续登录14天
+		{type = 0, amount = 1, itemid = 18711, job = 0, quality=0, strong=0, bind=1},	--连续登录15天
+		{type = 0, amount = 1, itemid = 18720, job = 0, quality=0, strong=0, bind=1},	--连续登录16天
+		{type = 0, amount = 1, itemid = 18603, job = 0, quality=0, strong=0, bind=1},	--连续登录17天
+		{type = 0, amount = 1, itemid = 18603, job = 0, quality=0, strong=0, bind=1},	--连续登录18天
+		{type = 0, amount = 1, itemid = 18800, job = 0, quality=0, strong=0, bind=1},	--连续登录19天
+		{type = 0, amount = 1, itemid = 18522, job = 0, quality=0, strong=0, bind=1},	--连续登录20天
+		{type = 0, amount = 1, itemid = 18532, job = 0, quality=0, strong=0, bind=1},	--连续登录21天
+		{type = 0, amount = 1, itemid = 18542, job = 0, quality=0, strong=0, bind=1},	--连续登录22天
+		{type = 0, amount = 1, itemid = 18512, job = 0, quality=0, strong=0, bind=1},	--连续登录23天
+		{type = 0, amount = 1, itemid = 18219, job = 0, quality=0, strong=0, bind=1},	--连续登录24天
+		{type = 0, amount = 1, itemid = 18712, job = 0, quality=0, strong=0, bind=1},	--连续登录25天
+		{type = 0, amount = 1, itemid = 18604, job = 0, quality=0, strong=0, bind=1},	--连续登录26天
+		{type = 0, amount = 1, itemid = 18607, job = 0, quality=0, strong=0, bind=1},	--连续登录27天
+		{type = 0, amount = 1, itemid = 18605, job = 0, quality=0, strong=0, bind=1},	--连续登录28天
+		{type = 0, amount = 1, itemid = 18543, job = 0, quality=0, strong=0, bind=1},	--连续登录29天
+		{type = 0, amount = 1, itemid = 18602, job = 0, quality=0, strong=0, bind=1},	--连续登录30天
+				
+	 }

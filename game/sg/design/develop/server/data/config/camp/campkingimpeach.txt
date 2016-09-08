@@ -1,0 +1,17 @@
+﻿--阵营军团长弹劾配置
+
+--#include "..\..\language\LangCode.txt"
+
+CampKingImpeachConfig=
+{
+	minLevelReq			= 45,			-- 最低等级限制
+	minCampContrReq = 2000, 	-- 最低阵营贡献值需求
+	timeReq = {6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},	-- 弹劾时间区间，以小时为单位
+	endTime = "21:00",  -- 弹劾截止时间
+	minVoteCount = 10, 	-- 最小投票数量。只有投票数量超过这个，才会可能弹劾成功
+	succImpeachRate = 0.6, -- 弹劾成功的最低支持弹劾投票百分比。例如0.6表示至少有60%的玩家投了支持弹劾军团长票
+	
+	reqItemId 		= 2165,				-- 弹劾消耗的物品
+	reqItemCnt	 	= 1,				-- 弹劾消耗物品数量
+	coinReq = 2000,					-- 投票消耗银两
+}

@@ -1,0 +1,168 @@
+﻿--成就称号选择的消息处理实现 
+--[[
+
+	--#include "data\config\achieve\titles.txt" once
+	--msgid:5
+
+	MiscsImplement.setArchiveTitleHandler = function (sysarg, msgid, packet)
+	--设置当前称号
+	local titleid = DataPack.readWord(packet) 
+	--print("titleid:"..titleid)  
+	local curtitle = LActor.getIntProperty(sysarg,PROP_ACTOR_CURTITLE)
+	--print("curtitle:"..curtitle)
+	local buffs
+	local titleName
+	local i
+
+	--称号相同 
+	if titleid == curtitle then
+	return 
+	end      
+
+	--没有获得此称号 0 除外
+	if(titleid ~= 0) then 
+	if not LActor.HasTitle(sysarg, titleid) then
+	return
+	end
+	end
+
+	--移除当前称号buff 
+	--print("curtitle:"..curtitle)
+	if curtitle > 0 then
+	curtitle = curtitle + 1
+	if Titles[curtitle] == nil then 
+	LActor.setUIntProperty(sysarg,PROP_ACTOR_CURTITLE, 0)
+	return
+	end
+	buffs = Titles[curtitle].buff 
+	if buffs == nil then 
+	return
+	end
+	--print("-----------------")
+	for i = 1, #buffs do
+	LActor.delBuff(sysarg, buffs[i].type, buffs[i].group)
+	end
+	end
+
+	--取消称号 
+	if titleid == 0 then
+	LActor.setUIntProperty(sysarg,PROP_ACTOR_CURTITLE, 0)
+	return 
+	end
+
+	--设置称号 
+	if Titles[titleid] == nil then return end
+	LActor.setUIntProperty(sysarg,PROP_ACTOR_CURTITLE, titleid)
+	--设置称号buff
+	titleid = titleid + 1
+
+	titleName = Titles[titleid].name 
+	buffs = Titles[titleid].buff
+	for i = 1, #buffs do
+	LActor.addBuff(sysarg, buffs[i].type, buffs[i].group, buffs[i].value, -1, 1, titleName)
+	end
+	end
+
+	MiscsImplement.registerMsgHandler(5, MiscsImplement.setArchiveTitleHandler)
+--]]
+
+
+-- 称号获得途径
+--#include "data\config\achieve\titleway.txt" once
+--#include "data\config\achieve\ranktitle.txt" once
+
+Title_Way = {}
+
+Title_Way.OnLogin = function( sysarg )
+	local aid = LActor.getActorId(sysarg)
+	local sys_s_var = System.getStaticVar()
+	if sys_s_var == nil then return end
+	-- 大乱斗
+	if sys_s_var.dld_first_title ~= nil and sys_s_var.dld_first_title == aid then
+		LActor.GiveTitle(sysarg, titleway.WLZC_first)
+		sys_s_var.dld_first_title = nil
+	end
+	-- 组队天梯
+	if sys_s_var.zdtt_first_title ~= nil then
+		for i=1,3 do
+			if sys_s_var.zdtt_first_title[i] and sys_s_var.zdtt_first_title[i] == aid then
+				LActor.GiveTitle(sysarg, titleway.ZDTT_first)
+				sys_s_var.zdtt_first_title[i] = nil
+				break
+			end
+		end
+	end
+	-- 单人天梯
+	if sys_s_var.drtt_first_title ~= nil and sys_s_var.drtt_first_title == aid then
+		LActor.GiveTitle(sysarg, titleway.DRTT_first)
+		sys_s_var.drtt_first_title = nil
+	end
+end
+
+Title_Way.onNewdayLogin = function (sysarg)
+	--排行榜称号
+	local sys_s_var = System.getStaticVar()
+	if sys_s_var == nil or sys_s_var.ranktitle == nil then return end
+
+	local aid = LActor.getActorId(sysarg)
+	for _, conf in pairs(RankTitle) do
+		if not sys_s_var.ranktitle[conf.rank] then return end
+		for index, titleid in pairs(conf.title) do
+			if sys_s_var.ranktitle[conf.rank][index] then
+				if sys_s_var.ranktitle[conf.rank][index].before and aid == sys_s_var.ranktitle[conf.rank][index].before then
+					LActor.GiveupTitle(sysarg, titleid)
+					print("RankTitle GiveupTitle   "..conf.rank.." "..index.."  "..aid)
+				end
+				if sys_s_var.ranktitle[conf.rank][index].now and aid == sys_s_var.ranktitle[conf.rank][index].now then
+					LActor.GiveTitle(sysarg, titleid)
+					print("RankTitle GiveTitle   "..conf.rank.." "..index.."  "..aid)
+				end
+			end
+		end
+	end
+end
+
+--更新排行榜称号
+function RankTitleUpdate()
+	print("RankTitleUpdate")
+	local sys_s_var = System.getStaticVar()
+	if sys_s_var == nil then return end
+
+	local today = System.getToday()
+	if not sys_s_var.time or sys_s_var.time ~= today then
+		System.saveActorAndRefreshRank()
+		LActor.regScriptCallback(System.getGlobalNpc(), nil, 1*1000, 0, 1, "RankTitleUpdate")
+		sys_s_var.time = today
+
+		print("RankTitleUpdate delay")
+		return
+	end
+
+	if not sys_s_var.ranktitle then sys_s_var.ranktitle = {} end
+	for _, conf in pairs(RankTitle) do
+		if not sys_s_var.ranktitle[conf.rank] then sys_s_var.ranktitle[conf.rank] = {} end
+		for index, titleid in pairs(conf.title) do
+			local sysarg
+			if not sys_s_var.ranktitle[conf.rank][index] then
+				sys_s_var.ranktitle[conf.rank][index] = {}
+			else
+				sys_s_var.ranktitle[conf.rank][index].before = sys_s_var.ranktitle[conf.rank][index].now
+				sysarg = LActor.getActorById(sys_s_var.ranktitle[conf.rank][index].before)
+				if sysarg then
+					LActor.GiveupTitle(sysarg, titleid)
+				end
+			end
+			local firstActorId = Ranking.getActorIdFromDbRank(conf.rank, index - 1)
+			sys_s_var.ranktitle[conf.rank][index].now = firstActorId
+
+			sysarg = LActor.getActorById(firstActorId)
+			if sysarg then
+				LActor.GiveTitle(sysarg, titleid)
+			end
+		end
+	end
+	print("RankTitleUpdate success")
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, Title_Way.OnLogin)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, Title_Way.onNewdayLogin)

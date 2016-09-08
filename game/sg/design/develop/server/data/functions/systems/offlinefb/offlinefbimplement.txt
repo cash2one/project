@@ -1,0 +1,13 @@
+﻿-- 新手副本处理脚本
+--#include "gamestartfbhandler.txt" once
+
+OFFLINEFBSYSTEM.MsgImplement = function (sysarg, systemid, msgid, packet)
+  --print("msgid:"..msgid)
+  if msgid == 1 then
+    OFFLINEFBSYSTEM.savefbprocess(sysarg, packet)
+  elseif msgid == 2 then
+    OFFLINEFBSYSTEM.exitstartfbscene(sysarg, packet)
+  end
+end
+
+SystemHandlerDispatcher.registerSystemHander(BaseTypes.SystemId.offlinefbSystem, OFFLINEFBSYSTEM.MsgImplement)

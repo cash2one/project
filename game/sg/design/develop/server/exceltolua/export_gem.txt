@@ -1,0 +1,298 @@
+--导出法宝配置表
+--#include "tabledump.txt"
+----------------------------------------------------------------------------------------
+-- 裁切函数 sep裁切依据
+function Split(str, sep)
+	local sep, fields = sep or "\t", {}
+	local pattern = string.format("([^%s]+)", sep)
+	str:gsub(pattern, function(c) fields[#fields + 1] = c end)
+	return fields
+end
+
+function ReadGemConfig()
+	local objexcel = CExcelReader:new()
+	if not objexcel then
+		print("objexcel is null")
+		return
+	end
+
+	objexcel:Init_App()
+	objexcel:OpenRead()
+
+	local obj = objexcel:LoadSheetByIndex(1)
+	if not obj then
+		print("LoadSheetByIndex失败!")
+		objexcel:Close()
+		objexcel:Quit_App()
+		return
+	end
+
+	local nCount = objexcel:GetCurrentSheetColCount()
+	local mCount = objexcel:GetCurrentSheetRowCount()
+
+
+	print("nCount", nCount)
+	print("mCount", mCount)
+
+	local allstr = ""
+	-- 记录错误信息
+	local errMsg = ""
+
+	local AllGemInit = {
+		GemInit = {},
+		upgradeCount = 10,
+		vipUpgradeCount = {
+        	1, 2, 3, 4, 5, 6, 7, 8, 9, 10
+    	},
+		GemAttrs = {},
+		GemSkills = {},
+	    skillResetFreeNum = 1,
+	    skillResetCost = 50,
+	}
+	-- 属性类型定义
+	local attrTypes = { -- 生命,攻击,物防,道防,会心
+		17, 27, 23, 33, 63
+	}
+	-- 最大属性加成数量
+	local maxPropNum = #attrTypes
+
+	-- 特殊的专门记录gemId跟skillId对应的表
+	local tmpTable = {}
+
+	local GemInit = {}
+	local GemAttrs = {}
+	local GemSkills = {}
+	for i = 2, mCount do
+		local concent = {} --第一行构造成一个table
+
+		local strValue = objexcel:ReadCellAsString(i, 1)
+		concent.gemId = tonumber(strValue)
+		
+		strValue = objexcel:ReadCellAsString(i, 2)
+		concent.gemName = tostring(strValue) or ""
+		
+		strValue = objexcel:ReadCellAsString(i, 3)
+		concent.condId = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 4)
+		concent.condDesc = tostring(strValue) or ""
+
+		concent.gemLevel = 0
+		concent.gemSkillLevel = 1
+
+		--领取条件
+		concent.active = {}
+		strValue = objexcel:ReadCellAsString(i, 5)
+		concent.active.needLevel = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 6)
+		concent.active.itemId = tonumber(strValue) or 0
+		
+		strValue = objexcel:ReadCellAsString(i, 7)
+		concent.active.itemNum = tonumber(strValue) or 0
+		
+		strValue = objexcel:ReadCellAsString(i, 8)
+		concent.active.coinNum = tonumber(strValue) or 0
+
+		GemInit[i-1] = concent
+		
+		-- 记录属性参数
+		local attrTable = {
+			bases = {}, -- 基础值
+			inpros = {}, -- 成长
+		}
+		-- 属性列表 最高只有5中目前
+		for n = 1, maxPropNum do
+			strValue = objexcel:ReadCellAsString(i, n + 8)
+			local base = tonumber(strValue)
+			strValue = objexcel:ReadCellAsString(i, n + 8 + maxPropNum)
+			local inpro = tonumber(strValue)
+			if not base then
+				base = -1
+				inpro = 0
+			end
+			table.insert(attrTable.bases, base)
+			table.insert(attrTable.inpros, inpro)
+		end
+
+		-- 取技能id
+		local tmp = {}
+		tmp.gemId = concent.gemId
+		tmp.gemSkillId = tonumber(objexcel:ReadCellAsString(i, 8 + maxPropNum * 2 + 1))
+		table.insert(tmpTable, tmp)
+		concent.gemSkillId = tmp.gemSkillId
+
+		-- 取修炼上限
+		strValue = objexcel:ReadCellAsString(i, 8 + maxPropNum * 2 + 2)
+		local maxLevel = tonumber(strValue)
+
+		-- 取每级修炼消耗材料
+		strValue = objexcel:ReadCellAsString(i, 8 + maxPropNum * 2 + 3)
+		local needItemId = tonumber(strValue)
+
+		-- 取每级修炼消耗材料个数字符串
+		strValue = objexcel:ReadCellAsString(i, 8 + maxPropNum * 2 + 4)
+		local needItemNumStr = strValue
+
+		-- 取每级修炼消耗铜钱字符串
+		strValue = objexcel:ReadCellAsString(i, 8 + maxPropNum * 2 + 5)
+		local needCoinNumStr = strValue
+
+		-- 进行裁切
+		local itemNumTable = Split(needItemNumStr, ",")
+		local coinNumTable = Split(needCoinNumStr, ",")
+
+		if #itemNumTable ~= maxLevel then
+			errMsg = string.format("attrs config: id = [%d], col on [%d] is error, overflow num is [%d]!!", concent.gemId, 8 + maxPropNum * 2 + 4, #itemNumTable - maxLevel)
+			break
+		end
+
+		if #coinNumTable ~= maxLevel then
+			errMsg = string.format("attrs config: id = [%d], col on [%d] is error, overflow num is [%d]!!", concent.gemId, 8 + maxPropNum * 2 + 5, #coinNumTable - maxLevel)
+			break
+		end
+
+		-- 第N个法宝的属性表
+		local itemAttrTable = {}
+		itemAttrTable.upgrades = {}
+		for n = 1, maxLevel + 1 do
+			-- GemAttrs表外层法宝
+			local itemTable = {}
+			itemTable.upgradeItemId = needItemId -- 需要消耗的材料id
+			if n <= maxLevel then
+				itemTable.upgradeItemNum = tonumber(itemNumTable[n]) -- 需要消耗的材料id的数量
+				itemTable.coinNum = tonumber(coinNumTable[n]) -- 铜币消耗
+			else
+				itemTable.upgradeItemNum = 0 -- 需要消耗的材料id的数量
+				itemTable.coinNum = 0 -- 铜币消耗
+			end
+			-- 对应的属性表
+			itemTable.attrs = {} -- 对应等级属性
+			for m = 1, maxPropNum do
+				local t = {}
+				t.type = attrTypes[m]
+				if attrTable.bases[m] ~= -1 then
+					t.value = attrTable.bases[m] + attrTable.inpros[m] * (n - 1)
+				else
+					t.value = 0
+				end
+				table.insert(itemTable.attrs, t)
+			end
+			table.insert(itemAttrTable.upgrades, itemTable)
+		end
+		itemAttrTable.gemId = concent.gemId
+		table.insert(GemAttrs, itemAttrTable)
+
+		-- 法宝原画ID
+		strValue = objexcel:ReadCellAsString(i, 8 + maxPropNum * 2 + 6)
+		concent.oriId = tonumber(strValue)
+
+		-- 法宝模型ID
+		strValue = objexcel:ReadCellAsString(i, 8 + maxPropNum * 2 + 7)
+		concent.modelId = tonumber(strValue)
+
+		-- 领取道具id
+		strValue = objexcel:ReadCellAsString(i, 8 + maxPropNum * 2 + 8)
+		concent.getFromItemId = tonumber(strValue)
+
+	end
+
+	-- sheet2部分
+	local obj = objexcel:LoadSheetByIndex(2)
+	if not obj then
+		print("LoadSheetByIndex失败!")
+		objexcel:Close()
+		objexcel:Quit_App()
+		return
+	end
+
+	local nCount = objexcel:GetCurrentSheetColCount()
+	local mCount = objexcel:GetCurrentSheetRowCount() -- 行
+
+	for i = 2, mCount do
+		local concent = {}
+		local strValue = objexcel:ReadCellAsString(i, 1)
+		concent.skillId = tonumber(strValue) -- 技能id
+
+		local strValue = objexcel:ReadCellAsString(i, 2)
+		concent.upgradeSkillItemId = tonumber(strValue) -- 材料id
+
+		local strValue = objexcel:ReadCellAsString(i, 3)
+		local maxLevel = tonumber(strValue)
+
+		-- 取每级进度字符串
+		strValue = objexcel:ReadCellAsString(i, 4)
+		local progressStr = strValue
+
+		-- 取每级消耗铜钱字符串
+		strValue = objexcel:ReadCellAsString(i, 5)
+		local needCoinNumStr = strValue
+
+		-- 进行裁切
+		local progressTable = Split(progressStr, ",")
+		local coinNumTable = Split(needCoinNumStr, ",")
+
+		if #progressTable ~= maxLevel - 1 then
+			errMsg = string.format("skill config: id = [%d], col on [%d] is error, overflow num is [%d]!!", concent.gemId, 4, #progressTable - maxLevel)
+			break
+		end
+
+		if #coinNumTable ~= maxLevel - 1 then
+			errMsg = string.format("skill config: id = [%d], col on [%d] is error, overflow num is [%d]!!", 5, #coinNumTable - maxLevel)
+			break
+		end
+
+		concent.progress = {}
+		concent.coinNum = {}
+		for n = 1, maxLevel do
+			table.insert(concent.progress, progressTable[n])
+			table.insert(concent.coinNum, coinNumTable[n])
+		end
+		table.insert(GemSkills, concent)
+	end
+
+
+	-- 在技能table中搜索 (仅仅作为技能table表才有效)
+	local function searchSkillInfoById(skillTable, id)
+		for k, v in pairs(skillTable) do
+			if v.skillId == id then
+				return v
+			end
+		end
+		return nil
+	end
+
+	local gemSkillTable = {}
+	-- 做技能的id跟gem表的对应
+	for k, v in ipairs(tmpTable) do
+		local skillInfo = searchSkillInfoById(GemSkills, v.gemSkillId)
+		if skillInfo then
+			table.insert(gemSkillTable, skillInfo)
+		else
+			errMsg = string.format("sheet2 skill config: skillid = [%d] is missing!!", v.gemSkillId)
+			break
+		end
+	end
+
+	local str = ""
+
+	if errMsg == "" then
+		AllGemInit.GemInit = GemInit
+		AllGemInit.GemAttrs = GemAttrs
+		AllGemInit.GemSkills = gemSkillTable
+		str = dump(AllGemInit)
+		-- str = string.sub(str, 1, string.len(str) - 1)
+		str = string.format("--#include \"..\\..\\language\\LangCode.txt\" once\nGemConfig = %s\n", str)
+	else
+		str = errMsg
+	end
+	objexcel:WriteFile("data\\config\\gem\\gemconfig.txt", str)
+
+	objexcel:Close()
+	objexcel:Quit_App()
+	objexcel:delete()
+end
+----------------------------------------------------------------------------------------
+
+
+

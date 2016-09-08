@@ -1,0 +1,30 @@
+{
+	id = 19002,
+	name = Lang.Item.n19002,
+	desc = Lang.Item.i19002,
+	type = 90,
+	sellType = 32,
+	icon = 596,
+	shape = {0,0,0,0,0,0,0,0},
+	color = 0,
+	dura = 15000,
+	dup = 99,
+	colGroup = 8,
+	dealType = 0,
+	dealPrice = 20,
+	time = 0,
+	suitId = 0,
+	staitcAttrs = {  
+{type=78,value =640},
+{type=0, value=4 },
+{type=0, value=2 },
+{type=0, value=92},
+	},
+	strongAttrs = {  
+	},
+	flags = { 
+	},
+	conds = { 
+		{ cond = 1, value = 40, }, 
+	},
+},

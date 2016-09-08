@@ -1,0 +1,1109 @@
+
+--翅膀的处理脚本
+--#include "data\config\wings\wings.txt" once
+--#include "data\functions\gmevent.txt" once
+
+WingOpFuncList = {}
+
+--与c++中的base_attri_结构构成映射
+WingOpFuncList.AttributeIdUnion = {17 , 27 , 23 , 33 , 39 , 37 , 63}
+WingOpFuncList.BaoJiName = { Lang.Wing.b001, Lang.Wing.b002, Lang.Wing.b003 }
+
+
+
+
+
+WingOpFuncList.HandlerWingOp = function (sysarg, args)
+	if true then return end
+	if args[1] == nil then return end   --
+	local func = WingOpFuncList[args[1]]
+	if func ~= nil then
+		if 5 == args[1] then
+			func(sysarg, args) 
+		else
+			func(sysarg, args[2]) 
+		end
+	end
+end
+
+local function getTableNum(t)
+	if "table" ~= type(t) then
+		return 0
+	end
+	local num = 0
+	for i , v in pairs(t) do
+		num = num + 1
+	end
+	return num
+end
+
+
+
+--获取材料价钱
+WingOpFuncList.GetShangChengItem = function(id_item)
+	-- body
+	local items = GameStore[7].items
+	for k,v in pairs(items) do
+		if v.item == id_item then
+			return v.id
+		end
+	end
+	return -1
+end
+
+
+--计算普通翅膀的属性
+WingOpFuncList.GetWingAttribute = function(wing_id , level)
+	local AddAttribute = {}
+	if nil == Wings.upLevel[wing_id] then
+		print(string.format("error Wings.upLevel[%s] is nil",tostring(wing_id)))
+		return AddAttribute
+	end
+	if nil == Wings.upLevel[wing_id].upgradAttr then
+		print(string.format("error Wings.upLevel[%s].upgradAttr is nil",tostring(wing_id)))
+		return AddAttribute
+	end
+	if nil == Wings.upLevel[wing_id].upgradAttr[level] then
+		print(string.format("error Wings.upLevel[%s].upgradAttr[%s] is nil",tostring(wing_id) , tostring(level) ))
+		return AddAttribute
+	end
+	--[[
+	if nil == Wings.stage[wing_id].addStageAttr then
+		print(string.format("error Wings.upLevel[%s].addStageAttr is nil",tostring(wing_id)))
+		return AddAttribute
+	end
+	--]]
+
+	local currWingLevelTmp = Wings.upLevel[wing_id].upgradAttr[level]	--获取等级的属性加成
+	--local currWingStageTmp = Wings.stage[wing_id].addStageAttr[1]		--获取阶级的属性加成
+	--增加等级加成属性
+	for _ , v in pairs(currWingLevelTmp) do
+		local attribute_id = v.type
+		if attribute_id == 27 then
+		end
+		AddAttribute[attribute_id] = (AddAttribute[attribute_id] or 0) + v.value
+	end
+	--[[
+	--增加阶级加成属性
+	for _ , v in pairs(currWingStageTmp) do
+		local attribute_id = v.type
+		if attribute_id == 27 then
+		end
+		AddAttribute[attribute_id] = (AddAttribute[attribute_id] or 0) + v.value
+	end
+	--]]
+	return AddAttribute
+end
+
+--计算特殊化形的属性
+WingOpFuncList.GetSpecialModelAttribute = function(wing_id)
+	local AddAttribute = {}
+	local SpecialWingUnion = Wings.specialWing --特殊化形的集合
+	local currWingModel = SpecialWingUnion[wing_id]
+	if nil == SpecialWingUnion[wing_id] then
+		return
+	end
+	if nil == currWingModel then
+		print("error SpecialWingModel id:"..tostring(wing_id).." is not exist")
+		return AddAttribute
+	end
+	if nil == currWingModel.attrs then
+		print("error SpecialWingModel id:"..tostring(wing_id).." attrs is nil")
+		return AddAttribute
+	end
+	for _ , v in pairs(currWingModel.attrs) do
+		local attribute_id = v.type
+		AddAttribute[attribute_id] = (AddAttribute[attribute_id] or 0) + v.value
+	end 
+	return AddAttribute
+end
+
+--计算所有特殊化形的属性
+WingOpFuncList.GetAllSpecialModelAttribute = function(wing_union_userdata , SpecialTime)
+	local AllWingAttribute = {}
+	local wing_union = {}
+	local MaxSpecialId = #(Wings.specialWing)
+	local NowTime = System.getCurrMiniTime()
+	for i = 1 , MaxSpecialId do
+		if wing_union_userdata and wing_union_userdata[i] then
+			if SpecialTime[i] then 	--特殊化形是有时间限制的
+				if SpecialTime[i] >  NowTime then
+					wing_union[i] = i
+				end
+			else
+				wing_union[i] = i
+			end
+		end
+	end
+	if next(wing_union) then
+		for i , v in pairs(wing_union) do
+			local currAttribute = WingOpFuncList.GetSpecialModelAttribute(i)
+			for _ , AddValue in pairs(currAttribute) do
+				AllWingAttribute[_] = (AllWingAttribute[_] or 0) + (AddValue or 0)
+			end
+		end
+	end
+	return AllWingAttribute
+end
+
+
+--计算所有的翅膀的属性加成
+--[[
+WingOpFuncList.GetAllWingAttribute = function(wing_id , level , wing_union)
+	local AllWingAttribute = WingOpFuncList.GetWingAttribute (wing_id , level)
+	local AllSpecialWingAttribute = WingOpFuncList.GetAllSpecialModelAttribute(wing_union)
+
+	for _ , AddValue in pairs(AllWingAttribute) do
+		AllWingAttribute[_] = (AllWingAttribute[_] or 0) + (AllSpecialWingAttribute[_] or 0)
+	end
+	return AllWingAttribute
+end
+--]]
+
+
+
+--计算爆击类型(type为1时为升级暴击，为2时为进阶暴击)
+WingOpFuncList.CalcBaojiType = function(curId,type)
+	local valtr = nil
+	if 1 == type then
+    	valtr = Wings.upLevel[curId].baojilv
+    elseif 2 == type then
+    	valtr = Wings.stage[curId].baojilv
+    else
+    	print("error WingOpFuncList.CalcBaojiType type:"..tostring(type))
+    	return 0
+    end
+    if valtr == nil then
+	   print( "invalid baoji table" )
+	   return 0
+    end
+    local randVal = System.getRandomNumber( 100 ) + 1
+	local sum = 0
+	for i=1, #valtr do
+		sum = sum + valtr[i]
+		if randVal <= sum then
+			return i
+		end
+	end
+	return 0
+end
+
+
+--发送翅膀未开启消息
+WingOpFuncList.OffWingMsg = function(sysarg,actorid)
+	if nil == actorid then
+		actorid = LActor.getActorId(sysarg)
+	end
+	if actorid then
+		local npack = DataPack.allocPacket(sysarg,40,1)
+		DataPack.writeChar(npack,0)			--未开启
+		DataPack.writeInt(npack,actorid)	--玩家id
+		DataPack.writeInt(npack,0)			--穿上的翅膀id
+		DataPack.writeInt(npack,0)			--化形的id
+		DataPack.writeInt(npack,0)			--战斗力
+		DataPack.writeInt(npack,0)			--当前等级
+		DataPack.writeInt(npack,0)			--等级经验
+		DataPack.writeInt(npack,0)			--阶级经验
+		DataPack.writeInt(npack,0)			--特殊化形数量
+		DataPack.flush(npack)
+	end
+end
+
+--发送属性变化消息
+WingOpFuncList.UpdateAttribute = function(sysarg,Attribute)
+	if "table" == type(Attribute) then
+		local npack = DataPack.allocPacket(sysarg,40,5)
+		for i , v in ipairs(WingOpFuncList.AttributeIdUnion) do
+			local AttributeId = Attribute[v]
+			DataPack.writeInt(npack,(AttributeId or 0))
+		end
+		DataPack.flush(npack)
+	end
+end
+
+--发送所有的信息
+WingOpFuncList.SendAllInfo =function(sysarg,actorid,Attribute)
+	local var = LActor.getStaticVar(sysarg)
+    if nil == var then
+    	WingOpFuncList.OffWingMsg(sysarg,actorid)
+    	return
+    end
+    local WingInfo = var.WingInfo
+   	if nil == WingInfo then
+   		WingOpFuncList.OffWingMsg(sysarg,actorid)
+   		return
+   	end
+   	local wing_id ,level,stage,level_exp,stage_exp,wing_model_id,score = 
+   			WingInfo.wing_id ,WingInfo.level,WingInfo.stage,WingInfo.level_exp,WingInfo.stage_exp,WingInfo.wing_model_id,WingInfo.score
+   	if nil == Wings.upLevel[wing_id] then
+   		WingOpFuncList.OffWingMsg(sysarg,actorid)
+   		return
+   	end
+
+   	--[[
+   	print("actorid:"..tostring(actorid))
+   	print("wing_id:"..tostring(wing_id))
+   	print("WingInfo.model_type:"..tostring(WingInfo.model_type))
+   	print("wing_model_id:"..tostring(wing_model_id))
+   	print("score:"..tostring(score))
+   	print("level:"..tostring(level))
+   	print("level_exp:"..tostring(level_exp))
+   	print("stage_exp:"..tostring(stage_exp))
+   	--]]
+
+   	local SpecialModel = WingInfo.SpecialModel
+   	local SpecialTime = WingInfo.SpecialTime
+   	local npack = DataPack.allocPacket(sysarg,40,1)
+	DataPack.writeChar(npack,1)					--开启
+	DataPack.writeInt(npack,actorid)			--玩家id
+	DataPack.writeInt(npack,wing_id)			--穿上的翅膀id
+	DataPack.writeChar(npack,WingInfo.model_type or 0)		--化形的类型
+	DataPack.writeInt(npack,wing_model_id)		--化形的id
+	DataPack.writeInt(npack,score)				--战斗力
+	DataPack.writeInt(npack,level)				--当前等级
+	DataPack.writeInt(npack,level_exp)			--等级经验
+	DataPack.writeInt(npack,stage_exp)			--阶级经验
+
+	if SpecialModel then
+		local SpecialModelNum = (SpecialModel.num or 0)
+		--print("SpecialModelNum:"..tostring(SpecialModelNum))
+		if SpecialModelNum > 0 then
+			DataPack.writeInt(npack,SpecialModelNum)		--特殊化形数量
+			--print("SpecialModelNum:"..tostring(SpecialModelNum))
+			local MaxSpecialId = #(Wings.specialWing)
+			for SpecialModelId = 1 , MaxSpecialId do
+				if SpecialModel[SpecialModelId] then
+					DataPack.writeInt(npack,SpecialModelId)					--特殊化形的id
+					DataPack.writeUInt(npack,SpecialTime[SpecialTime] or 0)	--特殊化形到期的时间戳
+				end
+			end
+		else
+			DataPack.writeInt(npack,0)						--特殊化形数量
+		end
+	else
+		DataPack.writeInt(npack,0)						--特殊化形数量
+	end
+
+	local WingAddAttribute = Attribute
+	if not WingAddAttribute then
+		WingAddAttribute = WingOpFuncList.GetWingAttribute(wing_id , level)
+	end
+
+	if "table" == type(WingAddAttribute) then
+		for i , v in ipairs(WingOpFuncList.AttributeIdUnion) do
+			local AttributeId = WingAddAttribute[v]
+			DataPack.writeInt(npack,(AttributeId or 0))
+			--print("i:"..tostring(AttributeId))
+		end
+	end
+
+
+	DataPack.flush(npack)
+
+	--[[
+	print("wing_id:"..tostring(var.WingInfo.wing_id))
+	print("level:"..tostring(var.WingInfo.level))
+	print("stage:"..tostring(var.WingInfo.stage))
+	print("stage:"..tostring(var.WingInfo.stage))
+	print("level_exp:"..tostring(var.WingInfo.level_exp))
+	print("stage_exp:"..tostring(var.WingInfo.stage_exp))
+	print("wing_model_id:"..tostring(var.WingInfo.wing_model_id))
+	print("model_type:"..tostring(var.WingInfo.model_type))
+	--]]
+end
+
+
+WingOpFuncList.SetWingEffictive = function(sysarg ,wing_type , wing_id)
+	local nModelId = nil
+	if 0 == wing_type then
+		if Wings.upLevel[wing_id] then
+			nModelId = Wings.upLevel[wing_id].modelId
+		end
+	else
+		if Wings.specialWing[wing_id] then
+			nModelId = Wings.specialWing[wing_id].modelId
+		end
+	end
+	if nModelId then
+		LActor.setWingEffect(sysarg, nModelId)
+	end
+end
+
+
+--发送所有信息
+WingOpFuncList[1] = function(sysarg,dp)
+	local actorid = DataPack.readInt(dp)
+	--print("actorid:"..tostring(actorid))
+	local actor = LActor.getActorById(actorid)
+	WingOpFuncList.SendAllInfo(actor,actorid)
+end
+
+--翅膀培养(升级)
+WingOpFuncList[2] = function(sysarg,dp)
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then
+   		--print("getStaticVar = nil ")
+   		return
+   end
+   local WingInfo = var.WingInfo
+   if nil == WingInfo then
+   		return
+   end
+
+	local wing_id ,level,stage,level_exp,stage_exp,wing_model_id,score = 
+   			WingInfo.wing_id ,WingInfo.level,WingInfo.stage,WingInfo.level_exp,WingInfo.stage_exp,WingInfo.wing_model_id,WingInfo.score
+	local bAutobuy = DataPack.readChar(dp)
+	if 1 ~= bAutobuy then
+		bAutobuy = 0
+	end
+	--print("bAutobuy:"..tostring(bAutobuy))
+	--找出当前阶级对应的表
+    local tlevel = Wings.upLevel[wing_id]
+    --判断等级是否达到当前阶的上限
+	if level >= #tlevel.upgradAttr then
+    	--print("=============2",wingid) 
+    	LActor.sendTipmsg(sysarg, Lang.Wing.t01, ttMessage) --培养已满，快去进阶
+    	return 
+    end
+
+
+    local isSuccess = 0
+    local bjType = 0
+    --print("#tlevel.upgradeExp:"..tostring(#tlevel.upgradeExp))
+    --print("#tlevel.upgradAttr:"..tostring(#tlevel.upgradAttr))
+
+    --判断经验值
+    --判断材料是否足
+    local needMoney = tlevel.upCost[level]
+    local hasbindcoin = LActor.getMoneyCount(sysarg,mtBindCoin)
+    if hasbindcoin < needMoney then 
+    	--print("=========铜钱不足")
+        --LActor.sendTipmsg(sysarg, Lang.Wing.t02, ttMessage)   --铜钱不够
+        LActor.SendGeneralTips(sysarg, 1, mtBindCoin, needMoney-hasbindcoin)
+    	return
+    end
+
+    local itemId = tlevel.upItemid[level]   --获取升级材料id
+    local needItemcount = tlevel.upItemCount[level]
+    local count = LActor.getItemCount(sysarg,itemId)      --获取玩家身上的材料数量
+    if count >= needItemcount then --材料充足
+    	--扣材料
+    	LActor.changeMoney(sysarg, mtBindCoin, -needMoney, 1, true, "wing" ,"level")
+    	LActor.removeItem(sysarg, itemId, needItemcount)
+    else --材料不足
+    	if bAutobuy == 0 then 
+    		--print("=========1111")
+    		--LActor.sendTipmsg(sysarg, Lang.wing.t03, ttMessage) --材料不足
+    		LActor.SendGeneralTips(sysarg, 2, itemId, needItemcount-count)
+    		print("-----------------材料不足了---------------------")
+    		return
+        end
+        --print("=======yuanbao1")
+        local goodsId = WingOpFuncList.GetShangChengItem(itemId)
+        local moneyUseItem = Item.getItemPrice(goodsId)
+        
+        --商城没卖的
+        if moneyUseItem < 0 then
+        	LActor.sendTipmsg(sysarg, Lang.wing.t03, ttMessage) --材料不足
+    		print("-----------------商城没卖的---------------------")
+    		return
+        end
+
+
+        local needYuanbao = (needItemcount - count) * moneyUseItem
+        local hasyuanbao = LActor.getMoneyCount(sysarg, mtYuanbao)
+        if hasyuanbao < needYuanbao then
+         	--LActor.sendTipmsg(sysarg, Lang.wing.t04, ttMessage)     --天珠不足
+         	LActor.SendGeneralTips(sysarg, 1, mtYuanbao, needYuanbao-hasyuanbao)
+			return
+        end
+        --扣天珠和剩下材料
+        LActor.changeMoney(sysarg, mtBindCoin, -needMoney, 1, true, "wing" ,"level")
+        LActor.changeMoney(sysarg, mtYuanbao, -needYuanbao, 1,  true, "wing", "level")
+		if count > 0 then
+			LActor.removeItem(sysarg, itemId, count)
+		end
+    end
+    --print("here")
+   
+     -- 计算获得的经验
+	local addExp = tlevel.addExp
+	-- 暴击
+	bjType = WingOpFuncList.CalcBaojiType(wing_id , 1)
+	--print("======bjType",bjType)
+	if bjType > 0 then
+    	local multVal = tlevel.jinjiebaoji[bjType] or 1		-- 暴击经验倍数
+		addExp = addExp * multVal
+		LActor.sendTipmsg( sysarg, WingOpFuncList.BaoJiName[bjType], ttTipmsgWindow )
+	end
+
+	
+    local maxExp = tlevel.upgradeExp[level]
+    --print("=======maxExp",maxExp)
+    --print("addExp:"..tostring(addExp))
+    --print("level_exp:"..tostring(level_exp)) 
+    level_exp = level_exp + addExp  
+    if level_exp >= maxExp then 
+    	
+    	--print("=====chenggong")
+        isSuccess = 1  
+    end
+    
+
+    if isSuccess == 1 then
+    	level = level + 1
+    	--print("level_exp,maxExp:",level_exp,maxExp)
+    	--print("========level",level)
+    	level_exp = level_exp - maxExp
+    	--print("level_exp,maxExp:",level_exp,maxExp)
+    	--print("========level_exp",level_exp)
+
+    	--升级了，重新计算翅膀的属性
+    	local WingAddAttribute = WingOpFuncList.GetWingAttribute(wing_id , level)
+    	local calc = LActor.getAttrCalc(sysarg, actWing)
+    	if calc == nil then return end
+		LActor.resetAttrCalc(calc)
+		for AttributeId , value in pairs(WingAddAttribute) do
+			LActor.addCalcAttr(calc, AttributeId, value)
+		end
+		LActor.refreshActor(sysarg)
+		local score_union = WingInfo.score_union
+		local NormalWingScore = LActor.getCalcFight(sysarg, calc)
+		--print("pre_score:"..score)
+		score = score_union.special_score + NormalWingScore
+		--print("later_score:"..score)
+		WingOpFuncList.UpdateAttribute(sysarg,WingAddAttribute)	--发送属性变化消息
+
+		--计算完毕，保存数据
+		WingInfo.level = level
+		WingInfo.level_exp = level_exp
+		WingInfo.score = score
+		WingInfo.score_union.normal_score = NormalWingScore
+
+      	--记录日志
+    	System.logCounter(LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)),
+    	"wing",
+    	tostring(score),
+    	"",
+    	"tisheng",
+    	"",
+    	"",
+    	"",
+    	tostring(level), 
+    	lfBI)
+
+    	LActor.setWingScore(sysarg, WingInfo.score)
+    else
+    	--计算完毕，保存数据
+    	WingInfo.level_exp = level_exp
+
+    	--print("========jingyang3",level_exp)
+    end
+
+    --发送消息
+    local npack = DataPack.allocPacket(sysarg,40,2)
+    DataPack.writeChar(npack, bjType)
+    DataPack.writeInt(npack,level)
+    DataPack.writeInt(npack,level_exp)
+    DataPack.writeInt(npack,score)
+    DataPack.flush(npack)
+
+    --print("level:"..tostring(level))
+    --print("level_exp:"..tostring(level_exp))
+    --print("bjType:"..tostring(bjType))
+    --print("ok ok ok")
+
+
+    --触发成就
+	LActor.SetAchieveProcessByType(sysarg, 90, 1, 1)
+    --翅膀培养
+    LActor.OnQuestEvent(42, 0, 1, true, sysarg, false)
+end
+
+
+--发送翅膀进阶失败协议
+WingOpFuncList.sendStageUpfail = function(sysarg)
+	 local npack = DataPack.allocPacket(sysarg,40,7)
+	 DataPack.flush(npack)
+end
+
+
+
+--翅膀进阶
+WingOpFuncList[3] = function(sysarg, dp)
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then
+   		--print("getStaticVar = nil ")
+   		return
+   end
+   local WingInfo = var.WingInfo
+   if nil == WingInfo then
+   		return
+   end
+
+	local bAutobuy = DataPack.readChar(dp)
+	if 1 ~= bAutobuy then
+		bAutobuy = 0
+	end
+	local wing_id ,level,stage,level_exp,stage_exp,wing_model_id,score = 
+   			WingInfo.wing_id ,WingInfo.level,WingInfo.stage,WingInfo.level_exp,WingInfo.stage_exp,WingInfo.wing_model_id,WingInfo.score
+
+	--取得翅膀的表
+	local tlevel = Wings.upLevel[wing_id]
+	local tstage = Wings.stage[wing_id]
+	local maxlevel = #(tlevel.upgradAttr)
+	--print("========info",level,level_exp,stage_exp)
+	if level ~= maxlevel then
+    	--print("=======jinjieweiman")
+    	LActor.sendTipmsg(sysarg,Lang.Wing.t07,ttMessage)  --进阶未到10级
+    	WingOpFuncList.sendStageUpfail(sysarg)
+    	return 
+    end 
+    if stage >= #(Wings.stage) then
+    	--print("max stage")
+    	LActor.sendTipmsg(sysarg,Lang.Wing.t05,ttMessage)  --进阶满了
+    	WingOpFuncList.sendStageUpfail(sysarg)
+    	return 
+    end
+    local needMoney = tstage.stageCost
+    local hasbindcoin = LActor.getMoneyCount(sysarg,mtBindCoin)
+    if hasbindcoin < needMoney then 
+    	--LActor.sendTipmsg(sysarg,Lang.wing.t06,ttMessage)   --进阶铜钱不足
+    	LActor.SendGeneralTips(sysarg, 1, mtBindCoin, needMoney-hasbindcoin)
+    	WingOpFuncList.sendStageUpfail(sysarg)
+    	return 
+    end
+    local itemId = tstage.jinjieitemId              	--获取进阶材料id
+    local needItemcount = tstage.itemCost        		--获取进阶材料的数量
+    local count = LActor.getItemCount(sysarg,itemId)     --获取玩家身上的材料数量
+    if count >= needItemcount then --材料充足
+    	--扣材料
+    	LActor.changeMoney(sysarg, mtBindCoin, -needMoney, 1, true, "wing" ,"stage")
+    	LActor.removeItem(sysarg, itemId, needItemcount)
+    	--print("here1")
+    else --材料不足
+    	if bAutobuy == 0 then 
+    		--LActor.sendTipmsg(sysarg, Lang.wing.t08, ttMessage) --材料不足
+    		LActor.SendGeneralTips(sysarg, 2, itemId, needItemcount-count)
+    		--print("here2")
+    		WingOpFuncList.sendStageUpfail(sysarg)
+    		return
+        end
+        --print("=======yuanbao1")
+        local goodsId = WingOpFuncList.GetShangChengItem(itemId)
+        local moneyUseItem = Item.getItemPrice(goodsId)
+
+        --商城没卖的
+        if moneyUseItem < 0 then
+        	LActor.sendTipmsg(sysarg, Lang.wing.t08, ttMessage) --材料不足
+    		print("-----------------商城没卖的---------------------")
+    		WingOpFuncList.sendStageUpfail(sysarg)
+    		return
+        end
+
+        local needYuanbao = (needItemcount - count) * moneyUseItem
+        local hasyuanbao = LActor.getMoneyCount(sysarg, mtYuanbao)
+        if hasyuanbao < needYuanbao then
+         	--LActor.sendTipmsg(sysarg, Lang.wing.t04, ttMessage)     --天珠不足
+         	LActor.SendGeneralTips(sysarg, 1, mtYuanbao, needYuanbao-hasyuanbao)
+         	WingOpFuncList.sendStageUpfail(sysarg)
+			return
+        end
+        --扣天珠和剩下材料
+        LActor.changeMoney(sysarg, mtYuanbao, -needYuanbao, 1,  true, "wing", "stage")
+		if count > 0 then
+			LActor.removeItem(sysarg, itemId, count)
+		end
+    end
+
+    --计算获得的经验
+    local addExp = tstage.addStageExp
+    local bjType = WingOpFuncList.CalcBaojiType(wing_id , 2)
+    if bjType > 0 then
+		local multVal = tstage.jinjiebaoji[bjType] or 1		-- 暴击经验倍数
+		addExp = addExp * multVal
+		local tipmsg = string.format( Lang.Wing.t09, WingOpFuncList.BaoJiName[bjType], multVal )
+		LActor.sendTipmsg( sysarg, tipmsg, ttTipmsgWindow )
+	end
+
+	local maxExp = tstage.maxStageExp
+    local isSuccess = 0
+    if stage_exp + addExp >= maxExp then 
+    	stage_exp = stage_exp + addExp
+    	if wing_id >= #(Wings.stage) then
+		   LActor.sendTipmsg(sysaeg,Lang.Wing.t05, ttMessage)  --已经达到最大阶值
+		   WingOpFuncList.sendStageUpfail(sysarg)
+	       return 
+	    end
+    	--print("=====chenggong")
+       isSuccess = 1
+    end
+
+    if isSuccess == 1 then   		     
+	    wing_id = wing_id + 1 
+	    stage = wing_id
+	    wing_model_id = wing_id
+		stage_exp = stage_exp - maxExp
+	    level = 1
+	    level_exp = 0
+
+
+	    --广播
+	    if Wings.stage[wing_id].broadcast then
+			local tname = Wings.upLevel[wing_id].name
+			local str = string.format(Lang.Wing.sw001, LActor.getName(sysarg),wing_id, tname)
+			System.broadcastTipmsg(str, ttScreenCenter)
+			--System.broadcastTipmsg(str, ttHearsay)
+		end
+		
+		--进阶了，重新计算翅膀的属性
+    	local WingAddAttribute = WingOpFuncList.GetWingAttribute(wing_id , level)
+    	local calc = LActor.getAttrCalc(sysarg, actWing)
+    	if calc == nil then return end
+		LActor.resetAttrCalc(calc)
+		for AttributeId , value in pairs(WingAddAttribute) do
+			LActor.addCalcAttr(calc, AttributeId, value)
+		end
+		LActor.refreshActor(sysarg)
+		local score_union = WingInfo.score_union
+		local NormalWingScore = LActor.getCalcFight(sysarg, calc)
+		--print("pre_score:"..score)
+		score = score_union.special_score + NormalWingScore
+		--print("later_score:"..score)
+		
+
+		--计算完毕，存储数据
+		WingInfo.wing_id = wing_id
+		WingInfo.level = level
+		WingInfo.stage = stage
+		WingInfo.level_exp = level_exp
+		WingInfo.stage_exp = stage_exp
+		WingInfo.wing_model_id = wing_model_id
+		WingInfo.score = score
+		WingInfo.model_type = 0
+
+		WingOpFuncList.UpdateAttribute(sysarg,WingAddAttribute)	--发送属性变化消息
+		WingOpFuncList.SetWingEffictive(sysarg ,WingInfo.model_type , WingInfo.wing_id)
+
+    	if score and score > 0 then
+	    	System.logCounter(LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)),
+				   "wing",
+				   tostring(capacity),
+				   "",
+				   "jinjie",
+				   "",
+				   "",
+				   "",
+				   tostring(stage), 
+				  lfBI)
+	    end
+
+	    --翅膀进阶
+    	--LActor.OnQuestEvent(3, 32, 1, true, sysarg, false)
+
+    	--触发成就
+    	LActor.SetAchieveProcessByType(sysarg, 70, 2, stage)
+
+    	LActor.setWingScore(sysarg, WingInfo.score)
+
+    	if 9 == stage then
+    		qianghongbao.SystemHB(sysarg,15,2)
+    	elseif 10 == stage then
+    		qianghongbao.SystemHB(sysarg,16,2)
+    	end
+
+	else
+		stage_exp = stage_exp + addExp
+
+		--计算完毕，存储数据
+		WingInfo.stage_exp = stage_exp
+    end
+    local npack = DataPack.allocPacket(sysarg,40,3)
+	DataPack.writeChar(npack, bjType)
+	DataPack.writeInt(npack , stage)
+	DataPack.writeInt(npack , stage_exp)
+	DataPack.writeInt(npack , score)
+	DataPack.writeInt(npack , level)
+	DataPack.writeInt(npack , level_exp)
+	DataPack.flush(npack)
+	--print("ok ok ok")
+end
+
+--翅膀化形
+WingOpFuncList[4] = function(sysarg, dp)
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then
+   		--print("getStaticVar = nil ")
+   		return
+   end
+   local WingInfo = var.WingInfo
+   if nil == WingInfo then
+   		return
+   end
+
+	local ChangeType = DataPack.readChar(dp)
+	local nModelId = DataPack.readInt(dp)
+	if ChangeType ~= 1 then
+		ChangeType = 0
+	end
+	--ChangeType = 1
+	--nModelId = 1
+	if 0 == ChangeType then
+		local wing_id  = WingInfo.wing_id
+		if nModelId <= 0 or nModelId > wing_id then
+			print("error "..LActor.getAccountName(sysarg).." ChangeWingModel wrong id:"..nModelId)
+			LActor.sendTipmsg(sysarg, Lang.wing.t14, ttMessage)
+			--print("here1")
+			return
+		end
+	else
+		local SpecialWingModelUnion = WingInfo.SpecialModel
+		if nil == SpecialWingModelUnion[nModelId] then
+			LActor.sendTipmsg(sysarg, Lang.wing.t14, ttMessage)
+			print("error "..LActor.getAccountName(sysarg).." ChangeWingModel wrong id:"..nModelId)
+			--print("here2")
+			return
+		else
+			local NowTime = System.getCurrMiniTime()
+			if WingInfo.SpecialTime and WingInfo.SpecialTime[nModelId] and WingInfo.SpecialTime[nModelId] < NowTime then
+				LActor.sendTipmsg(sysarg, Lang.wing.t14, ttMessage)
+				print("error "..LActor.getAccountName(sysarg).." ChangeWingModel wrong id:"..nModelId)
+				--print("here2")
+				return
+			end
+		end
+	end
+
+	--保存数据了
+	WingInfo.wing_model_id = nModelId
+	WingInfo.model_type = ChangeType
+
+	WingOpFuncList.SetWingEffictive(sysarg ,WingInfo.model_type , WingInfo.wing_model_id)
+
+	local npack = DataPack.allocPacket(sysarg,40,4)
+	DataPack.writeChar(npack , 0)
+	DataPack.writeChar(npack , ChangeType)
+	DataPack.writeInt(npack , nModelId)
+	DataPack.flush(npack)
+	--print("ok")
+end
+
+--获得新的翅膀特殊化形
+WingOpFuncList[5] = function(sysarg, args )
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then
+   		--print("getStaticVar = nil ")
+   		return
+   end
+   local WingInfo = var.WingInfo
+   if nil == WingInfo then
+   		LActor.sendTipmsg(sysarg, Lang.Wing.t15, ttMessage)
+   		return
+   end
+
+   	local pItem = args[2]
+	local itemId = args[3]
+	local useTime = args[4]
+
+	if pItem == nil then
+		return
+	end
+
+	local nModelId = nil
+	local conf = Wings.specialWing
+	for index , value in pairs(conf) do
+		if value.itemId == itemId then
+			nModelId = index
+		end
+	end
+	if nil == nModelId then
+		return
+	end
+
+
+	local SpecialWingUnion = Wings.specialWing --特殊化形的集合
+	if nil == SpecialWingUnion[nModelId] then --不存在的特殊化形id
+		return
+	end
+
+	print("获得特殊化形开始")
+	local SpecialModel = WingInfo.SpecialModel
+	local SpecialTime = WingInfo.SpecialTime
+	if nil == SpecialTime then
+		WingInfo.SpecialTime = {}
+		SpecialTime = WingInfo.SpecialTime
+	end
+	
+	local bReCalcFlag = false	--是否需要增加特殊化形的属性的标志位
+	if useTime > 0 then 	--特殊化形是有期限的
+		local NowTime = System.getCurrMiniTime()
+		if SpecialModel[nModelId] then
+			if (SpecialTime[nModelId] or 0) < NowTime then 	--已过期
+				SpecialTime[nModelId] = NowTime + useTime
+				bReCalcFlag = true
+			else 	--还没过期
+				SpecialTime[nModelId] = SpecialTime[nModelId] + useTime
+			end
+		else
+			SpecialModel[nModelId] = nModelId
+			SpecialTime[nModelId] = NowTime + useTime
+			bReCalcFlag = true
+			WingInfo.SpecialModel.num = (WingInfo.SpecialModel.num or 0) + 1
+		end
+	else 					--特殊化形是没有期限的
+		if SpecialModel[nModelId] then --已经获得过了(没有时间限制的特殊化形已经获得过，直接return)
+			return
+		end
+		bReCalcFlag = true
+		SpecialModel[nModelId] = nModelId
+		WingInfo.SpecialModel.num = (WingInfo.SpecialModel.num or 0) + 1
+	end
+
+	
+	
+	--扣除物品
+	LActor.removeItemByPtr(sysarg, pItem, 1, true, "useSpecialWingItem", 2)
+
+	
+	if bReCalcFlag then
+		local special_calc = LActor.getAttrCalc(sysarg, actSpecialWing)
+		local SpecialAddAttribute = WingOpFuncList.GetAllSpecialModelAttribute(SpecialModel , SpecialTime)
+		LActor.resetAttrCalc(special_calc)
+		for AttributeId , value in pairs(SpecialAddAttribute) do
+			print("属性："..tostring(value))
+			LActor.addCalcAttr(special_calc, AttributeId, value)
+		end
+		LActor.refreshActor(sysarg)
+		local special_score = LActor.getCalcFight(sysarg, special_calc)
+		--print("pre_score:"..score_union.normal_score)
+		print("special_score:"..tostring(special_score))
+		local score_union = WingInfo.score_union
+		local score = special_score + score_union.normal_score
+		WingInfo.score_union.special_score = special_score
+		WingInfo.score = score
+	end
+
+	--print("type:SpecialModel:"..type(SpecialModel))
+	--print("1:"..tostring(SpecialModel[1]))
+	--print("2:"..tostring(SpecialModel[2]))
+
+	LActor.setWingScore(sysarg, WingInfo.score)
+
+	local npack = DataPack.allocPacket(sysarg,40,6)
+	DataPack.writeInt(npack , nModelId)
+	DataPack.writeChar(npack , 1)
+	DataPack.writeInt(npack , WingInfo.score)
+	DataPack.writeUInt(npack , SpecialTime[nModelId] or 0)
+	DataPack.flush(npack)
+
+end
+
+--玩家登陆游戏
+WingOpFuncList[11] = function(sysarg, dp)
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then
+   		--print("getStaticVar = nil ")
+   		return
+   end
+   local WingInfo = var.WingInfo
+   if nil == WingInfo then
+   		return
+   end
+
+   LActor.openAttrCalc(sysarg, actWing, true)
+   LActor.openAttrCalc(sysarg, actSpecialWing, true)
+
+   local actorid = LActor.getActorId(sysarg)
+	
+
+
+	-----
+   local wing_id ,level,stage,level_exp,stage_exp,wing_model_id,score = 
+   			WingInfo.wing_id ,WingInfo.level,WingInfo.stage,WingInfo.level_exp,WingInfo.stage_exp,WingInfo.wing_model_id,WingInfo.score
+   local SpecialWingModel = WingInfo.SpecialModel
+
+   --计算翅膀属性
+   local WingAddAttribute = WingOpFuncList.GetWingAttribute(wing_id , level)
+   local calc = LActor.getAttrCalc(sysarg, actWing)
+	if calc == nil then return end
+	LActor.resetAttrCalc(calc)
+	for AttributeId , value in pairs(WingAddAttribute) do
+		LActor.addCalcAttr(calc, AttributeId, value)
+	end
+   
+   	--计算特殊化形属性
+   	local SpecialModelNum = (SpecialWingModel.num or 0)
+   	--print("SpecialModelNum:"..SpecialModelNum)
+  	if SpecialModelNum > 0 then
+  		local special_calc = LActor.getAttrCalc(sysarg, actSpecialWing)
+		local SpecialAddAttribute = WingOpFuncList.GetAllSpecialModelAttribute(SpecialWingModel,WingInfo.SpecialTime)
+		LActor.resetAttrCalc(special_calc)
+		for AttributeId , value in pairs(SpecialAddAttribute) do
+			LActor.addCalcAttr(calc, AttributeId, value)
+			print("属性："..tostring(value))
+		end
+  	end
+
+  	WingOpFuncList.SendAllInfo(sysarg,actorid,WingAddAttribute)
+
+  	--发送翅膀属性信息(放在了下发翅膀信息的地方发)
+  	--WingOpFuncList.UpdateAttribute(sysarg,WingAddAttribute)
+
+  	WingOpFuncList.SetWingEffictive(sysarg ,WingInfo.model_type , WingInfo.wing_model_id)
+
+  	LActor.setWingScore(sysarg, WingInfo.score)
+end
+
+--翅膀初始化
+WingOpFuncList[12] = function(sysarg, dp)
+	--print("h1")
+	LActor.openAttrCalc(sysarg, actWing, true)
+	LActor.openAttrCalc(sysarg, actSpecialWing, true)
+	--print("h2")
+
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then
+   		--print("getStaticVar = nil ")
+   		return
+   end
+   local WingInfo = var.WingInfo
+   if nil ~= WingInfo then
+   		return
+   end
+
+	var.WingInfo = {
+		wing_id = 1 ,
+		level = 1,
+		stage = 1,
+		level_exp = 0,
+		stage_exp = 0,
+		wing_model_id = 1,	--化形的翅膀id
+		model_type = 0,	--化形的翅膀是普通还是特殊(0普通，1特殊)
+		score = 0,		--翅膀的总战力
+		SpecialModel = {
+		},
+		SpecialTime = {	--特殊化形到期时间
+		},
+		score_union = {
+			normal_score = 0,	--普通翅膀的战力
+			special_score = 0,--特殊化形战力
+		}
+	}
+
+	local WingInfo = var.WingInfo
+
+
+	local wing_id = WingInfo.wing_id
+	local level = WingInfo.level
+	--计算翅膀属性
+   local WingAddAttribute = WingOpFuncList.GetWingAttribute(wing_id , level)
+   local calc = LActor.getAttrCalc(sysarg, actWing)
+	if calc == nil then return end
+	LActor.resetAttrCalc(calc)
+	for AttributeId , value in pairs(WingAddAttribute) do
+		LActor.addCalcAttr(calc, AttributeId, value)
+	end
+	local score = LActor.getCalcFight(sysarg, calc)
+
+	--保存数据
+	WingInfo.score = score
+	WingInfo.score_union.normal_score = score
+
+	local actorid = LActor.getActorId(sysarg)
+	WingOpFuncList.SendAllInfo(sysarg,actorid,WingAddAttribute)
+
+	--发送翅膀属性信息(放在了下发翅膀信息的地方发)
+  	--WingOpFuncList.UpdateAttribute(sysarg,WingAddAttribute)
+  	LActor.refreshActor(sysarg)
+  	WingOpFuncList.SetWingEffictive(sysarg ,WingInfo.model_type , WingInfo.wing_id)
+
+  	LActor.setWingScore(sysarg, WingInfo.score)
+
+  	--触发成就
+    LActor.SetAchieveProcessByType(sysarg, 70, 2, 1)
+end
+
+
+--特殊化形时间检测
+WingOpFuncList[13] = function(sysarg)
+	local SpecialWingUnion = Wings.specialWing --特殊化形的集合
+
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then
+   		--print("getStaticVar = nil ")
+   		return
+   end
+   local WingInfo = var.WingInfo
+   if nil == WingInfo then
+   		return
+   end
+   local SpecialModel = WingInfo.SpecialModel
+   if nil == SpecialModel then
+   		return
+   end
+   local SpecialTime = WingInfo.SpecialTime
+   if nil == SpecialTime then
+   		return
+   end
+
+   local NowTime = System.getCurrMiniTime()
+
+   if nil == SpecialModel.num or SpecialModel.num <= 0 then
+   		return
+   end
+
+   for specialModelId , value in pairs(SpecialWingUnion) do
+   		if SpecialModel[specialModelId] then
+   			if SpecialTime[specialModelId] then
+   				if SpecialTime[specialModelId] < NowTime then --特殊化形到期了
+
+   					SpecialTime[specialModelId] = nil
+   					SpecialModel.num = SpecialModel.num - 1
+
+   					--如果当前化形是该特殊化形，还要改外观
+   					if 1 == WingInfo.model_type and specialModelId == WingInfo.wing_model_id then
+   						WingInfo.model_type = 0
+   						WingInfo.wing_model_id = WingInfo.wing_id
+
+
+   						WingOpFuncList.SetWingEffictive(sysarg ,WingInfo.model_type , WingInfo.wing_id)
+						local npack = DataPack.allocPacket(sysarg,40,4)
+						DataPack.writeChar(npack , 0)
+						DataPack.writeChar(npack , WingInfo.model_type)
+						DataPack.writeInt(npack , WingInfo.wing_model_id)
+						DataPack.flush(npack)
+
+
+   					end
+
+   					local special_calc = LActor.getAttrCalc(sysarg, actSpecialWing)
+					local SpecialAddAttribute = WingOpFuncList.GetAllSpecialModelAttribute(SpecialModel , SpecialTime)
+					LActor.resetAttrCalc(special_calc)
+					for AttributeId , value in pairs(SpecialAddAttribute) do
+						LActor.addCalcAttr(calc, AttributeId, value)
+					end
+					LActor.refreshActor(sysarg)
+					local special_score = LActor.getCalcFight(sysarg, calc)
+					--print("pre_score:"..score_union.normal_score)
+					local score = special_score + score_union.normal_score
+					WingInfo.score_union.special_score = special_score
+					WingInfo.score = score
+
+					local npack = DataPack.allocPacket(sysarg,40,6)
+					DataPack.writeInt(npack , specialModelId)
+					DataPack.writeChar(npack , 0)
+					DataPack.writeInt(npack , WingInfo.score)
+					DataPack.writeUInt(npack , SpecialTime[specialModelId] or 0)
+					DataPack.flush(npack)
+					break
+   				end
+   			end
+   		end
+   end
+
+   LActor.setWingScore(sysarg, WingInfo.score)
+
+end
+
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeWing, WingOpFuncList.HandlerWingOp)

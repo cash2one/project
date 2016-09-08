@@ -1,0 +1,73 @@
+﻿--场景相关的配置 
+{
+	--场景1
+	--这个id必须每次递增，比如第一个场景id是0，下一个一定是1，类推
+	scenceid = 20,
+	--场景名称
+	scencename = Lang.SceneName.s20,
+	--场景对应的地图,只需要填文件名，不需要写路径和后缀名，比如这个地图文件是map/demo.jxm，只需要写demo
+	mapfilename = "lygd",
+	--限制等级,低于这个等级无法进入副本
+	minlevel = 1,
+	--限制等级,低于这个等级无法进入场景
+	level = 1,
+	needFinishQid = 32, -- 进入的任务限制 填任务id
+	--限制物品，这是一个数字列表，代表有这些物品的玩家不能进入
+	forbiddenitem = {},
+	--限制的技能列表，有这些技能的玩家不能进入
+	forbiddenskill = {},
+	--0表示可以pk，1表示不可以，默认是0
+	nopk = 1,
+	progress = 0,
+	music = "zhandou.mp3",
+	musicInterval=5,
+        --在世界地图上的坐标x
+        worldmapPosx =0,
+        worldmapPosy =0,
+		--场景的长宽,是指格子数的长宽
+        sceneWidth =62,
+        sceneHeight =62,
+
+	area = 
+	{
+		{ name = Lang.SceneName.s20, range = { 0,0,62,0,0,62,62,62}, center = {34,50},
+		     attri = {
+		      {type= 46 ,value = {0}}, --复活点，无参数,
+        --       {type= 50 ,value = {0}}, --PK模式  
+			}
+	    },	
+				
+	},
+	--refresh项用来配置这个场景的刷怪点，每个场景可以有多个刷怪点，可以用include包含多个刷怪点
+
+     
+ refresh =
+{
+    --#include "refresh18.txt" 	
+},
+	--这里配置这个场景出现的NPC，如果有多个NPC，这配置多行，每一项（行）表示一个NPC
+	npc = 
+	{
+		--name表示npc的名称，
+		--posx和posy分别表示出现的位置坐标
+		--script是对应的脚本名字，需要用相对路径
+		--modelid表示外观模型id
+                --camp表示是阵营的id，默认是0表示所有的阵营都能用，1 无忌 2逍遥  3日月，如果是0可以不配置
+{npcid=2001, dir=3, name = Lang.EntityName.n2001 ,posx = 6, posy = 23, script = "data/script/gongnei/liuxiu.txt",modelid=3,icon = 1,utype = 1},  --刘秀
+{npcid=2002, dir=3, name = Lang.EntityName.n2002 ,posx = 40, posy = 9, script = "data/script/gongnei/yinlihua.txt",modelid=4,icon = 1,utype = 1},  --阴丽华
+{npcid=2003, dir=5, name = Lang.EntityName.n2003 ,posx = 53, posy = 7, script = "data/script/gongnei/liujiang.txt",modelid=30,icon = 1,utype = 1},  --刘疆
+{npcid=2004, dir=5, name = Lang.EntityName.n2004 ,posx = 56, posy = 9, script = "data/script/gongnei/guoshengtong.txt",modelid=36,icon = 1,utype = 1},  --郭圣通
+{npcid=2005, dir=2, name = Lang.EntityName.n2005 ,posx = 16, posy = 52, script = "data/script/gongnei/fengyi.txt",modelid=34,icon = 1,utype = 1},  --冯异
+{npcid=2006, dir=5, name = Lang.EntityName.n2006 ,posx = 36, posy = 41, script = "data/script/gongnei/dengyu.txt",modelid=1,icon = 1,utype = 1},  --邓禹
+{npcid=2007, dir=2, name = Lang.EntityName.n2007 ,posx = 11, posy = 49, script = "data/script/gongnei/wuhan.txt",modelid=8,icon = 1,utype = 1},  --吴汉
+{npcid=2008, dir=5, name = Lang.EntityName.n2008 ,posx = 33, posy = 39, script = "data/script/gongnei/wangba.txt",modelid=8,icon = 1,utype = 1},  --王霸
+{npcid=2009, dir=3, name = Lang.EntityName.n2009 ,posx = 48, posy = 26, script = "data/script/gongnei/liuyang.txt",modelid=44,icon = 1,utype = 1},  --刘阳
+
+
+  },
+  teleport = 
+  {    
+{ posx = 50, posy = 58,toSceneid =6,toPosx = 20, toPosy = 32,modelid = 50000,name = Lang.SceneName.s6},  --去洛阳
+
+  },
+},

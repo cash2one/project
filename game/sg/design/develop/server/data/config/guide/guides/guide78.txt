@@ -1,0 +1,74 @@
+﻿{
+  maxLevel = 40,
+  
+  --接受任务后引导自动寻路打怪，自动寻路提交任务
+  trigger = 
+  { 
+    type = 1,
+    value = 322,
+  },
+
+  --引导中锁定的窗口ID
+  lockUI = 
+  {
+    70,
+  },
+
+  --引导的步骤 
+  steps = 
+  {
+
+	--第1步 引导点击伙伴蛋
+    {
+      cond = { type = 1, helpId = 21, data = 0 },
+
+      action = { type = 6, helpId = 21, data = 28292, desc = Lang.GuideLang.desc159, showType = 3 },
+	  
+	  hideCond = { type = 2, helpId = 21, data = 0 },
+    },
+
+	--第2步 引导点击领养按钮
+    {
+      cond = { type = 1, helpId = 19, data = 0 },
+
+      action = { type = 1, helpId = 19, data = 0 },
+    },
+
+	--第3步 引导点击伙伴导航
+    {
+      cond = { type = 1, helpId = 8, data = 0 },
+
+      action = { type = 1, helpId = 8, data = 0, desc = "",showType = 2 },
+    },
+    
+    --第4步 引导点击伙伴融合选项卡导航
+    {
+      cond = { type = 1, helpId = 72, data = 0 },
+
+      action = { type = 2, helpId = 72, data = 6, desc = "", showType = 2 },
+      
+      hideCond = { type = 2, helpId = 72, data = 0 },
+    },
+    
+    --第5步 引导点击伙伴融合界面主宠选择列表
+    {
+      cond = { type = 1, helpId = 73, data = 0 },
+
+      action = { type = 1, helpId = 73, data = 0, desc = "" },
+    },
+    
+    --第6步 点击过
+    {
+      cond = { type = 0, helpId = 0, data = 0 },
+
+      action = { type = 0, helpId = 0, data = 0, desc = "" },
+    },
+
+    --第7步 结束引导
+    {
+      cond = { type = 2, helpId = 70, data = 0 },
+
+      action = { type = 16, helpId = 0, data = Lang.GuideLang.func35, desc = "" },
+    },
+  } 
+}

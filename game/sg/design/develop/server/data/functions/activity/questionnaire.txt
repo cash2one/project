@@ -1,0 +1,116 @@
+--调查问卷
+--#include "data\config\activity\activity\questionnaireconfig.txt"
+
+Questionnaire = {}
+
+function Questionnaire.getActorVar(actor)
+	if not actor then return end
+	local var = LActor.getStaticVar(actor)
+	if not var then return end
+
+	if not var.questionnaire then var.questionnaire = {} end
+
+	return var.questionnaire
+end
+
+function Questionnaire.sendInfo(actor)
+	local var = Questionnaire.getActorVar(actor)
+	if not var then return end
+
+	if not var.question then var.question = {} end
+	if not var.awards then var.awards = {} end
+
+	local idx
+	local level = LActor.getLevel(actor)
+	for i, config in ipairs(QuestionnaireConfig) do
+		if level >= config.minLevel and level <= config.maxLevel then
+			idx = i
+			break
+		end
+	end
+	if not idx then return end
+
+	local pack = DataPack.allocPacket(actor, BaseTypes.SystemId.miscsSystem, 227)
+	if pack == nil then return end
+
+	DataPack.writeByte(pack, idx)
+	DataPack.writeByte(pack, (var.question[idx] or 0)+1)
+
+	DataPack.flush(pack)
+end
+
+--答题
+function Questionnaire.answerquest(actor, msgid, packet)
+	local var = Questionnaire.getActorVar(actor)
+	if not var or not packet then return end
+
+	local level = LActor.getLevel(actor)
+	local idx = DataPack.readByte(packet)
+	local questionIdx = DataPack.readByte(packet)
+
+	if not QuestionnaireConfig[idx] then return end
+	local config = QuestionnaireConfig[idx]
+
+	local actorid = LActor.getActorId(actor)
+	if level < config.minLevel or level > config.maxLevel then
+		print("error questionnaire, not this questions  1111  "..actorid.." "..level.." "..idx)
+		return
+	end
+
+	if not config.questions[questionIdx] then return end
+
+	if not var.question then var.question = {} end
+	if not var.question[idx] then var.question[idx] = 0 end
+
+	if questionIdx ~=(var.question[idx] + 1) then
+		print("error questionnaire, not this question  2222   "..actorid.." "..questionIdx.."  "..var.question[idx])
+		return
+	end
+
+	--记录日志
+	local accountName = LActor.getAccountName(actor)
+	local type = config.questions[questionIdx].type
+	if type == 1 then
+		var.question[idx] = questionIdx
+		local answer = DataPack.readByte(packet)
+
+		System.logCounter(actorid, accountName, tostring(level), "questionnaire", LActor.getName(actor), tostring(idx), tostring(questionIdx), tostring(answer))
+	elseif type == 2 then
+		var.question[idx] = questionIdx
+
+		local num = DataPack.readByte(packet)
+		local answer = ""
+		for i = 1, num do
+			answer = answer..tostring(DataPack.readByte(packet))..","
+		end
+
+		System.logCounter(actorid, accountName, tostring(level), "questionnaire", LActor.getName(actor), tostring(idx), tostring(questionIdx), tostring(answer))
+	elseif type == 3 then
+		var.question[idx] = questionIdx
+
+		local answer = DataPack.readString(packet)
+		System.logCounter(actorid, accountName, tostring(level), "questionnaire", LActor.getName(actor), tostring(idx), tostring(questionIdx), tostring(answer))
+	else
+		return
+	end
+
+	--发奖励
+	if questionIdx == #config.questions then
+		if not var.awards then var.awards = {} end
+		if var.awards[idx] then
+			print("error questionnaire, has get this awards    "..actorid.." "..idx)
+			return
+		end
+
+		var.awards[idx] = 1
+		CommAwardFunc.giveToActorOffLine(actorid, config.awards, Lang.ScriptTips.question001, Lang.ScriptTips.question002)
+	end
+
+	Questionnaire.sendInfo(actor)
+end
+
+MiscsImplement.registerMsgHandler(227, Questionnaire.answerquest)
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, Questionnaire.sendInfo)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeLevel, Questionnaire.sendInfo)
+

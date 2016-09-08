@@ -1,0 +1,142 @@
+﻿--#include "data\config\task\ShenHaiConf.txt" once
+--#include "data\functions\fubennpcfunc\commonfuben.txt" once
+
+--同心树将要超时
+function OnTXSWillTimeout( monster )
+	local hScene = LActor.getSceneHandle( monster )
+	--发送倒计时
+	Fuben.sendCountDown( hScene, 10, 1 )
+	--注册结束
+	local timeout = 10*1000
+	--LActor.regScriptCallback( monster, nil, timeout, timeout, 1, "OnTXSTimeout", monster )	--注册同心树倒计时
+	LActor.postEntityScriptCallbackMsg(monster, EntityCallbackMsg.TxsTimeout, timeout)
+end
+
+--同心树倒计时更新
+function OnTXSTimer( monster )
+	--print( "OnTXSTimer" )
+	local fbPtr = LActor.getFubenPrt( monster )
+	local actors = LuaHelp.getFbActorList( fbPtr )
+	local ifDiff = false
+	local lowerNum = 0
+	if actors ~= nil then
+		for i = 1, #actors do
+			local actor = actors[i]
+			--print( "OnTXSTimer index:"..i)
+			--发送倒计时
+			LActor.ChangeCaleValue(actor, caleMonTime, -1, true)
+			local calevlue = LActor.getCaleData(actor, caleMonTime)
+			--print( "OnTXSTimer calevlue:"..calevlue)
+			if lowerNum == 0 then lowerNum = calevlue end
+			if lowerNum ~= calevlue then
+				ifDiff = true
+				--print( "OnTXSTimer diff")
+				if lowerNum > calevlue then lowerNum = calevlue end
+			end
+		end
+		if ifDiff then
+			for i = 1, #actors do
+				local actor = actors[i]
+				--print( "OnTXSTimer diff index:"..i)
+				--发送倒计时
+				LActor.ChangeCaleValue(actor, caleMonTime, lowerNum, false)
+				LActor.SendAllCaleValue( actor )
+			end
+		end
+	end
+
+end
+
+--同心树超时
+function OnTXSTimeout( monster )
+	--print( "OnTXSTimeout" )
+	local scenePtr = LActor.getScenePtr( monster )
+	if scenePtr == nil then return end
+	local fbPtr = Fuben.getSceneFuben( scenePtr )
+	--print( "actors exist" )
+	--玩家退出
+	local actors = LuaHelp.getFbActorList( fbPtr )
+	if actors ~= nil then
+		for i = 1, #actors do
+			local actor = actors[i]
+			LActor.triggerAchieveEvent( actor, 46, ShenHaiConf.fubenId ) --触发通关副本成就事件
+			LActor.exitFuben( actor )
+			LActor.messageBox( actor, 0, 0, Lang.ScriptTips.sh007,  Lang.ScriptTips.x00050.."/confirmExitShenHai", nil, nil )		--弹窗通知
+		end
+	end
+	local hfb = Fuben.getFubenHandle(fbPtr)
+	Fuben.SetFubenTime(hfb, 1)	-- 马上释放副本，免得再执行回调
+end
+
+
+
+--深海之恋副本超时处理
+function OnShenHaiTimeout( fbPtr )
+	local var = Fuben.getDyanmicVar( fbPtr )
+	if var == nil then return end
+	if not var.zxxzIsKilled then	--没有杀死冰封的紫霞仙子
+		local actors = LuaHelp.getFbActorList( fbPtr )
+		if actors ~= nil then
+			for i = 1, #actors do
+				local actor = actors[i]
+				LActor.messageBox( actor, 0, 0, Lang.ScriptTips.sh008,  Lang.ScriptTips.x00050.."/confirmExitShenHai", nil, nil )		--弹窗通知
+			end
+		end
+	end
+end
+
+--确认退出副本
+function confirmExitShenHai( sysarg )
+end
+
+--玩家退出，清除buff
+--[[
+EventCallDispatcher.OnShenHaiLogout = function( sysarg, arg )
+	local sceneId = LActor.getSceneId(sysarg)
+	if sceneId == nil then return end
+
+	--print("exit scene")
+
+	if sceneId == ShenHaiConf.sceneId then
+		LActor.delBuff( sysarg, ShenHaiConf.buff1.type, ShenHaiConf.buff1.group )
+		LActor.delBuff( sysarg, ShenHaiConf.buff2.type, ShenHaiConf.buff2.group )
+	end
+
+end
+]]
+
+-- 玩家退出深海之峦副本
+EventCallDispatcher.OnShenHaiExit = function(sysarg, hfb, way)
+	-- 删除buff
+	LActor.delBuff(sysarg, ShenHaiConf.buff1.type, ShenHaiConf.buff1.group)
+	LActor.delBuff(sysarg, ShenHaiConf.buff2.type, ShenHaiConf.buff2.group)
+end
+
+-- 玩家退出深海之峦副本
+EventCallDispatcher.OnShenHaiEnter = function(sysarg, hfb, way)
+	if way ~= 2 then return end -- 只处理重新登录的情况
+
+	local pfb = Fuben.getFubenPtr(hfb)
+	if pfb == nil then
+		print("pfb is nil on shenhai relogin")
+		return 
+	end
+	local var = Fuben.getDyanmicVar(pfb)
+	if var ~= nil and var.diffsex ~= nil and var.diffsex == 1 then -- 如果是异性玩家
+		local buff1 = ShenHaiConf.buff1
+		local buff2 = ShenHaiConf.buff2
+		local times = Fuben.getFbTime(pfb) -- 获取副本剩余时间
+		--print("relogin fuben time:"..times)
+		if times < 0 or times > buff1.times then return end -- 时间出错
+		LActor.addBuff(sysarg, buff1.type, buff1.group, buff1.value, times, buff1.interval, buff1.name)
+		LActor.addBuff(sysarg, buff2.type, buff2.group, buff2.value, times, buff2.interval, buff2.name)
+	end
+end
+
+-- EventCallDispatcher.registerFubenTimeout(ShenHaiConf.fubenId,  OnShenHaiTimeout )
+-- EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeScriptDelayCallback, EventCallDispatcher.ScriptDelayCallback)
+-- EventCallDispatcher.registerFubenExit(ShenHaiConf.fubenId, EventCallDispatcher.OnShenHaiExit)
+-- EventCallDispatcher.registerFubenEnter(ShenHaiConf.fubenId, EventCallDispatcher.OnShenHaiEnter)
+
+-- EventCallDispatcher.regEntityCallbackMsg(EntityCallbackMsg.TxsCountDown, OnTXSWillTimeout)
+-- EventCallDispatcher.regEntityCallbackMsg(EntityCallbackMsg.TxsTimeout, OnTXSTimeout)

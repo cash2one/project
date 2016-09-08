@@ -1,0 +1,52 @@
+{
+	id = 32,
+	name = Lang.Skill.s32Name,
+	desc = Lang.Skill.s32Desc,
+	vocation = 4,
+	skillType = 2,
+	skillSpellType = 0,
+	skillClass = 1,
+	commonCd = 0,
+	canbeDefault = false,
+	specialBuffCond = 0,
+	notAutoUse = false,
+	trainCondAddtions=
+{
+	{addtionsid=1,cond=1,value=8,consume=false},
+	{addtionsid=2,cond=1,value=14,consume=false},
+},
+	
+	trainCondAdddesc=
+{
+	{addtionid=1,iconid=404,name=Lang.Skill.s32_21Name,desc=Lang.Skill.s32_21Desc},
+	{addtionid=2,iconid=405,name=Lang.Skill.s32_22Name,desc=Lang.Skill.s32_22Desc},
+},
+ 	actions=
+{
+
+	{act=2,effect=1601,type=2},
+		
+},
+	skillSubLevel = { 
+--#include "Skill_32_1.txt"
+--#include "Skill_32_2.txt"
+--#include "Skill_32_3.txt"
+--#include "Skill_32_4.txt"
+--#include "Skill_32_5.txt"
+--#include "Skill_32_6.txt"
+--#include "Skill_32_7.txt"
+--#include "Skill_32_8.txt"
+--#include "Skill_32_9.txt"
+--#include "Skill_32_10.txt"
+--#include "Skill_32_11.txt"
+--#include "Skill_32_12.txt"
+--#include "Skill_32_13.txt"
+--#include "Skill_32_14.txt"
+--#include "Skill_32_15.txt"
+--#include "Skill_32_16.txt"
+--#include "Skill_32_17.txt"
+--#include "Skill_32_18.txt"
+--#include "Skill_32_19.txt"
+--#include "Skill_32_20.txt" 
+	},
+},

@@ -1,0 +1,786 @@
+--赤影传说
+--#include "data\functions\config\fubenconfig\playfubenconfig.txt" once -- 
+--#include "data\config\ciying\ciying.txt" once
+--#include "data\envir\fuben.txt" once
+
+
+CiyingOpFuncList = {}
+
+CiyingOpFuncList.HandlerOp = function (sysarg, args)
+	local nCmd = tonumber(args[1])
+	if 1 == nCmd then		--请求赤影传说
+		CiyingOpFuncList.ViewCiyingInfo(sysarg , args[2])
+	elseif 2 == nCmd then
+		CiyingOpFuncList.EnterCopy(sysarg , args[2])
+   elseif 4 == nCmd then
+      CiyingOpFuncList.PushCopy(sysarg , args[2])
+   elseif 101 == nCmd then -- 仅开通前端通知剧情已结束 解开无敌状态
+      LActor.setJuQingState(actorobj, false)
+	end
+end
+
+
+
+--初始化赤影传说的信息
+CiyingOpFuncList.InitCiyingInfo = function(sysarg)
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then
+   		--debug_print("getStaticVar = nil ")
+   		return
+   end
+   var.CiyingInfo = {}
+   local CiyingInfo = var.CiyingInfo
+
+	
+   --初始化副本相关
+   CiyingInfo.currId = 2					--当前开启的副本id(初始默认第一个副本是开启的)
+   CiyingInfo.fuben_score = {}				--用于记录每个副本所获得的星数
+   CiyingInfo.fuben_score[1] = 0			--默认第一个副本开启并且获得星数为0
+   CiyingInfo.fuben_play = {}				--记录每个副本当天的挑战次数(每天凌晨刷新)
+   LActor.openActorSystem(sysarg, 8)
+   --[[
+   CiyingInfo.fuben_play = {}
+   CiyingInfo.fuben_score = {}
+   for i = 1 , #(CiYing.Story) do
+      CiyingInfo.fuben_play[i] = 0
+      CiyingInfo.fuben_score[i] = 3
+      CiyingInfo.currId = #(CiYing.Story) + 1
+   end
+   CiyingOpFuncList.ViewCiyingInfo(sysarg, args)
+   debug_print("cross all Ciying")
+   --]]
+
+   return CiyingInfo
+end
+
+
+
+--请求赤影传说信息
+CiyingOpFuncList.ViewCiyingInfo = function(sysarg, args)
+   debug_print("--------------------请求赤影传说-----------------------------------------")
+   debug_print("--------------------请求赤影传说-----------------------------------------")
+   debug_print("--------------------请求赤影传说-----------------------------------------")
+   debug_print("--------------------请求赤影传说-----------------------------------------")
+   debug_print("--------------------请求赤影传说-----------------------------------------")
+   debug_print("--------------------请求赤影传说-----------------------------------------")
+   debug_print("--------------------请求赤影传说-----------------------------------------")
+   debug_print("--------------------请求赤影传说-----------------------------------------")
+   debug_print("--------------------请求赤影传说-----------------------------------------")
+   debug_print("--------------------请求赤影传说-----------------------------------------")
+   debug_print("--------------------请求赤影传说-----------------------------------------")
+   debug_print("--------------------请求赤影传说-----------------------------------------")
+   debug_print("--------------------请求赤影传说-----------------------------------------")
+   debug_print("--------------------请求赤影传说-----------------------------------------")
+   debug_print("--------------------请求赤影传说-----------------------------------------")
+   debug_print("--------------------请求赤影传说-----------------------------------------")
+   debug_print("--------------------请求赤影传说-----------------------------------------")
+   debug_print("--------------------请求赤影传说-----------------------------------------")
+	local var = LActor.getStaticVar(sysarg)
+	if nil == var then
+   		--debug_print("getStaticVar = nil ")
+   		return
+   end
+   if nil == var.CiyingInfo then
+   		CiyingOpFuncList.InitCiyingInfo(sysarg)
+   end
+   local CiyingInfo = var.CiyingInfo
+   if nil == CiyingInfo then
+   		return
+   end
+
+   local currStoryId = CiyingInfo.currId
+   local fuben_score = CiyingInfo.fuben_score
+   local npack = DataPack.allocPacket(sysarg,53,1)
+   if currStoryId > #(CiYing.Story) then
+      currStoryId = #(CiYing.Story)
+   end
+   DataPack.writeInt(npack,currStoryId)
+   for i = 1 , currStoryId do
+         DataPack.writeInt(npack,(CiyingInfo.fuben_score[i] or 0) )
+   		DataPack.writeInt(npack,(CiyingInfo.fuben_play[i] or 0) )
+   end
+   DataPack.flush(npack)
+end
+
+
+--请求进入赤影传说副本
+CiyingOpFuncList.EnterCopy = function(sysarg, args)
+	local nEnterId = tonumber(DataPack.readInt(args)) or 0
+   --wxj_test 后面要删掉
+   if nil == nEnterId or 0 == nEnterId then
+      nEnterId = 10
+   end
+   debug_print("-----------------------nEnterId:-------------"..tostring(nEnterId))
+   debug_print("-----------------nEnterId:"..tostring(nEnterId))
+   debug_print("-----------------nEnterId:"..tostring(nEnterId))
+   debug_print("-----------------nEnterId:"..tostring(nEnterId))
+   debug_print("-----------------nEnterId:"..tostring(nEnterId))
+   debug_print("-----------------nEnterId:"..tostring(nEnterId))
+   debug_print("-----------------nEnterId:"..tostring(nEnterId))
+   debug_print("-----------------nEnterId:"..tostring(nEnterId))
+   debug_print("-----------------nEnterId:"..tostring(nEnterId))
+	local currConfig = CiYing.Story[nEnterId]
+	if nil == currConfig then
+		debug_print("wxj_test config not exists")
+		return
+	end
+
+  
+
+	local var = LActor.getStaticVar(sysarg)
+   if nil == var then
+         --debug_print("getStaticVar = nil ")
+         return
+   end
+
+   local currFubenId = LActor.getFubenId(sysarg)
+   if currFubenId > 0 then
+      debug_print("var.hasPass:"..tostring(var.hasPass))
+      debug_print("currFubenId:"..tostring(currFubenId))
+
+
+      local hfb = LActor.getFubenHandle(sysarg)
+      local pfb = Fuben.getFubenPtr(hfb)
+      local var_d = Fuben.getDyanmicVar(pfb)
+
+
+      debug_print("currConfig.fid:"..tostring(currConfig.fid))
+      if var_d and (1 ~= var_d.hasPass or currFubenId ~= currConfig.fid) then
+         LActor.sendTipmsg(sysarg, Lang.ScriptTips.f00013, ttMessage)
+         return 
+      end
+   end
+	
+   if nil == var.CiyingInfo then
+   		CiyingOpFuncList.InitCiyingInfo(sysarg)
+   end
+   local CiyingInfo = var.CiyingInfo
+   if nil == CiyingInfo then
+   		return
+   end
+
+   if nEnterId > CiyingInfo.currId then	--关卡未开启
+   		debug_print("wxj_test guanka does not open")
+         LActor.sendTipmsg(sysarg, Lang.ScriptTips.playfuben001, ttMessage)
+   		return
+   end
+
+   --第一次进入接受了对应的任务才能进入
+   if nEnterId == CiyingInfo.currId then
+      local task_id = currConfig.taskId
+      if task_id > 0 then  --有接受任务限制的
+         if not LActor.hasQuest(sysarg , task_id) then
+            LActor.sendTipmsg(sysarg, Lang.ScriptTips.playfuben001, ttMessage)
+            return
+         end
+      end
+   end
+
+   --判断挑战次数是否足够
+   local currFubenConfig = FuBen[currConfig.fid]
+   if nil == currFubenConfig then
+   		debug_print("Fuben not exists "..tostring(currConfig.fid))
+   		return
+   end
+   local nMaxNum = currFubenConfig.daycount
+
+   local vipLevel = LActor.getVIPLevel( sysarg )
+   local vipAddNum = (VIPConfig.stroryFubenAdd[vipLevel] or 0)
+   nMaxNum = nMaxNum + vipAddNum
+   if nMaxNum <= (CiyingInfo.fuben_play[nEnterId] or 0) then
+   		debug_print("wxj_test play num of playing fuben is empty")
+         if playFubenMon.CheckIsInPlayFuben(sysarg) then
+            LActor.exitFuben(sysarg)
+         end
+   		return
+   end
+
+   --wxj_test为了联调进入副本相关的先屏蔽掉(这些都是以后要屏蔽掉的)，直接给星
+   --[[
+   CiyingInfo.fuben_play[nEnterId] = (CiyingInfo.fuben_play[nEnterId]  or 0) + 1
+   local npack = DataPack.allocPacket(sysarg,53,2)
+   DataPack.writeChar(npack,0)
+   DataPack.writeInt(npack , nEnterId)
+   DataPack.writeInt(npack , CiyingInfo.fuben_play[nEnterId])
+   DataPack.flush(npack)
+   CiyingOpFuncList.SuccessCopy(sysarg , currConfig.fid , 1)
+   --]]
+
+   --wxj_test
+   --接下来就是进入剧情副本了
+   local Hfuben = Fuben.createFuBen(currConfig.fid)
+ 
+   --[[
+   local hScene = Fuben.getSceneHandleById(currConfig.sid, Hfuben)
+   debug_print("------------------Fuben.getSceneList(Fuben.getFubenPtr(Hfuben)):",Fuben.getSceneList(Fuben.getFubenPtr(Hfuben)))
+   local pScene = Fuben.getSceneList(Fuben.getFubenPtr(Hfuben))[1]
+   debug_print("hScene:",hScene)
+   debug_print("pScene:",pScene)
+   
+
+   if pScene then
+      Fuben.initDyanmicObstacleData(hScene)
+   end
+   --]]
+
+   CiyingOpFuncList.IsExitFuben(sysarg, args)
+
+   local flag = LActor.enterFuBen(sysarg,Hfuben,currConfig.sid,currConfig.pos[1],currConfig.pos[2])
+   debug_print("flag:"..tostring(flag))
+   if flag then	--进入副本成功，将今天的进入副本的次数加1
+         --[[
+         LActor.setExitSceneEvent(sysarg, true )
+         EventCallDispatcher.registerSceneExit(currConfig.sid, CiyingOpFuncList.ExitScene)
+         --]]
+         --EventCallDispatcher.registerFubenExit(currConfig.fid,CiyingOpFuncList.ExitFuben)
+
+
+         local hfb = LActor.getFubenHandle(sysarg)
+         local pfb = Fuben.getFubenPtr(hfb)
+         local var_d = Fuben.getDyanmicVar(pfb)
+         if var_d == nil then return end
+         var_d.area_ani = nil
+         var_d.play_stage = {}
+
+         var_d.stage_record = {}
+
+         var_d.stageid = 0
+
+         local currHp = LActor.getIntProperty( sysarg , PROP_HP)
+         var_d.currHp = currHp
+
+         --收回伙伴
+         var_d.nPartnerId = (LActor.FubenDropNorPartner(sysarg) or -1)
+         debug_print("var_d.nPartnerId:"..tostring(var_d.nPartnerId)) 
+
+
+         playFubenMon.CallEnterPlayFubenStage(sysarg , currConfig.fid)
+
+         --策划要求打过了剧情副本才扣次数，失败不扣，这里屏蔽掉
+   		--CiyingInfo.fuben_play[nEnterId] = (CiyingInfo.fuben_play[nEnterId]  or 0) + 1
+
+   		Fuben.SetFubenTime(Hfuben, currConfig.starTime[1])
+   		local pfb = LActor.getFubenPrt(sysarg)
+
+         local npack = DataPack.allocPacket(sysarg,53,2)
+         DataPack.writeChar(npack,0)
+         DataPack.writeInt(npack , nEnterId)
+         DataPack.writeInt(npack , CiyingInfo.fuben_play[nEnterId] or 0)
+         DataPack.flush(npack)
+   end
+end
+
+--扫荡副本
+CiyingOpFuncList.PushCopy = function(sysarg, args)
+   local nEnterId = tonumber(DataPack.readInt(args)) or 0
+   local currConfig = CiYing.Story[nEnterId]
+   if nil == currConfig then
+      debug_print("wxj_test config not exists")
+      return
+   end
+
+   local var = LActor.getStaticVar(sysarg)
+   if nil == var then
+         --debug_print("getStaticVar = nil ")
+         return
+   end
+   if nil == var.CiyingInfo then
+        return
+   end
+   local CiyingInfo = var.CiyingInfo
+
+   --只有获得了三星才能扫荡
+   if nil == CiyingInfo.fuben_score or 3 ~= CiyingInfo.fuben_score[nEnterId] then
+      return
+   end
+
+   local currFubenConfig = FuBen[currConfig.fid]
+   if nil == currFubenConfig then
+         debug_print("Fuben not exists "..tostring(currConfig.fid))
+         return
+   end
+   local nMaxNum = currFubenConfig.daycount
+
+   local vipLevel = LActor.getVIPLevel( sysarg )
+   local vipAddNum = (VIPConfig.stroryFubenAdd[vipLevel] or 0)
+   nMaxNum = nMaxNum + vipAddNum
+   local freeNum = nMaxNum - (CiyingInfo.fuben_play[nEnterId] or 0)
+   if freeNum <= 0 then
+         debug_print("wxj_test play num of playing fuben is empty")
+         return
+   end
+
+   local allAward = {}
+   for i = 1 , freeNum do
+
+      local GiveItem = {}
+      local give_Coin = 0  --获得的贝币
+      local give_exp = 0   --获得的经验
+      fubenjiesuan.NormalAward( sysarg, currConfig.fid , GiveItem)
+      local sendAward = {}
+      if GiveItem then
+         for i , v in pairs(GiveItem) do
+            if 2 == v[2] then
+               if 0 == v[1] then
+                  give_Coin = give_Coin + v[3]
+               end
+            elseif 6 == v[2] then
+               give_exp = give_exp + v[3]
+            else
+               table.insert(sendAward , v) 
+            end
+         end
+      end
+
+      table.insert(allAward , {give_Coin = give_Coin ,give_exp = give_exp , sendAward = sendAward })
+
+      
+     
+
+      --[[
+      --wxj wxj_test 不要忘记真的给奖励
+
+      --wxj wxj_test 显示的物品，暂时为了测试，写死
+      DataPack.writeInt(npack1 , 30)   --铜钱
+      DataPack.writeInt(npack1 , 40)   --经验
+      DataPack.writeInt(npack1 , 4)   --获得的其他道具数量
+      for j = 1 , 4 do
+         DataPack.writeInt(npack1 , 26101)   --物品id
+         DataPack.writeInt(npack1 , 3)   --物品数量
+         DataPack.writeChar(npack1 , 1)   --绑定状态
+      end
+      --]]
+
+      CiyingInfo.fuben_play[nEnterId] = (CiyingInfo.fuben_play[nEnterId]  or 0) + 1
+   end
+
+   local npack1 = DataPack.allocPacket(sysarg,53,4)
+   DataPack.writeInt(npack1 , freeNum)
+
+   for i = 1 , freeNum do
+      local tmp = allAward[i]
+      if tmp then
+         DataPack.writeInt(npack1 , tmp.give_Coin)   --铜钱
+         DataPack.writeInt(npack1 , tmp.give_exp)    --经验
+         DataPack.writeInt(npack1 , #(tmp.sendAward))  --获得的其他道具数量
+         if tmp.sendAward then
+            for k , v in pairs (tmp.sendAward) do
+               DataPack.writeWord(npack1,v[1] or 0)
+               DataPack.writeInt(npack1,v[3] or 0)
+               DataPack.writeChar(npack1,v[2] or 0)
+            end
+         end
+      end
+   end
+
+
+   DataPack.flush(npack1)
+
+   local npack = DataPack.allocPacket(sysarg,53,2)
+   DataPack.writeChar(npack,0)
+   DataPack.writeInt(npack , nEnterId)
+   DataPack.writeInt(npack , CiyingInfo.fuben_play[nEnterId])
+   DataPack.flush(npack)
+   --CiyingOpFuncList.SuccessCopy(sysarg , currConfig.fid , 1)
+
+end
+
+--跨天了，重置每个副本每天的挑战次数
+CiyingOpFuncList.OnNewDay = function(sysarg, args)
+   if not LActor.isActorSystemOpen(sysarg, 21) then
+      return
+   end
+
+	local var = LActor.getStaticVar(sysarg)
+	if nil == var then
+   		--debug_print("getStaticVar = nil ")
+   		return
+   end
+   if nil == var.CiyingInfo then
+   		return
+   end
+   local CiyingInfo = var.CiyingInfo
+   local nMaxGuanKaNum = (tonumber(#(CiYing.Story)) or 0)
+   if nil == CiyingInfo.fuben_play then CiyingInfo.fuben_play = {} end
+   for i = 1 , CiyingInfo.currId do
+   		CiyingInfo.fuben_play[i] = 0
+   end
+   CiyingOpFuncList.ViewCiyingInfo(sysarg, args)
+end
+
+--是否退出副本
+CiyingOpFuncList.IsExitFuben = function(sysarg, args)
+   local pfb = LActor.getFubenPrt(sysarg)
+   local fubenId = Fuben.getFubenIdbyFuBenPtr(pfb)
+   if FuBen[fubenId] and 2 == FuBen[fubenId].type then
+      LActor.exitFuben(sysarg)
+   end
+end
+
+--玩家死亡
+CiyingOpFuncList.UserDeath = function(sysarg, args)
+   --LActor.setIntProperty( sysarg , PROP_HP , 1)
+   debug_print("玩家死亡了")
+   CiyingOpFuncList.PlayfubenFailed(sysarg)
+end
+
+--玩家退出
+CiyingOpFuncList.UserLogOut = function(sysarg, args)
+   CiyingOpFuncList.IsExitFuben(sysarg, args)
+end
+
+--玩家退出剧情副本
+CiyingOpFuncList.ExitFuben = function( sysarg, hfb, way )
+   if not playFubenMon.CheckIsInPlayFuben(sysarg) then
+      return
+   end
+
+   debug_print("退出剧情副本")
+   debug_print("sysarg:",sysarg)
+   debug_print("hfb:",hfb)
+   if not sysarg or not hfb then
+      debug_print(" ---------退出副本--------"..tostring(way))
+   end
+   local fbPtr = Fuben.getFubenPtr( hfb )
+   local fbVar = Fuben.getDyanmicVar(fbPtr)
+   if nil == fbVar then return end
+   debug_print("fbVar.nPartnerId:"..tostring(fbVar.nPartnerId))
+
+   fbVar.inNotINplayfuben = 1
+
+   if fbVar.nPartnerId and fbVar.nPartnerId then
+      LActor.FubenResetNorPartner(sysarg , fbVar.nPartnerId)
+   end
+
+    --将玩家设置为可以攻击状态（防止玩家在剧情副本中产生的禁止攻击的状态没有消失）
+   LActor.SetActorIsForbidAttack(sysarg, false)
+
+   --删除禁止刷新外观buff，删除这个buff后会自动刷新外观
+   --LActor.delBuff( sysarg, 79, 0 ) 
+   local npack = DataPack.allocPacket(sysarg,139,185)
+   if npack then
+      DataPack.writeInt(npack , 0)
+      DataPack.flush(npack)
+   end
+
+
+   local currHp = fbVar.currHp or 1
+   LActor.setIntProperty( sysarg , PROP_HP , currHp)
+end
+
+--[[
+--玩家退出剧情副本场景
+CiyingOpFuncList.ExitScene = function(sysarg , hScene, sceneId)
+   debug_print("-------playfuben logout-------------")
+   debug_print("sceneId:"..tostring(sceneId))
+
+   --清空定时器
+   Fuben.clearSceneTimeCall(hScene)
+end
+--]]
+
+
+--剧情副本结算
+CiyingOpFuncList.jiesuan = function(sysarg , fubenId , left_t , getStar)
+   local currFubenConfig = PlayFubenConfig.createmonsterlist[fubenId]
+
+
+   local GiveItem = {}
+   local give_Coin = 0  --获得的贝币
+   local give_exp = 0   --获得的经验
+
+
+   local playFubenId = 0
+   for i , v in pairs(CiYing.Story) do
+      if v.fid == fubenId then
+         playFubenId = i
+         break
+      end
+   end
+   if 0 == playFubenId then
+      debug_print("非剧情副本调用了剧情副本的结算:"..tostring(fubenId))
+      return
+   end
+
+
+   fubenjiesuan.NormalAward( sysarg, fubenId , GiveItem)
+   if nil == GiveItem then
+      debug_print("fubenjiesuan.NormalAward 获得的奖励为nil")
+      return
+   end
+
+   local sendAward = {}
+   for i , v in pairs(GiveItem) do
+      if 2 == v[2] then
+         if 0 == v[1] then
+            give_Coin = give_Coin + v[3]
+         end
+      elseif 6 == v[2] then
+         give_exp = give_exp + v[3]
+      else
+         table.insert(sendAward , v) 
+      end
+   end
+
+   local nUsedTimes = 0
+   local var = LActor.getStaticVar(sysarg)
+   if nil ~= var and nil ~= var.CiyingInfo then --今日已通关次数
+      nUsedTimes = var.CiyingInfo.fuben_play[playFubenId] or 0 
+   end
+
+   
+
+   local npack = DataPack.allocPacket(sysarg, 168, 7)
+   DataPack.writeInt(npack , fubenId)  --副本id
+   DataPack.writeInt(npack , playFubenId)--剧情关卡id
+   DataPack.writeChar(npack , 1)       --成功通关
+
+   DataPack.writeInt(npack , nUsedTimes)
+
+   DataPack.writeInt(npack , give_exp) --副本获得经验
+   DataPack.writeInt(npack , give_Coin)--获得的贝币
+   DataPack.writeUInt(npack , left_t or 0)  --副本花费的时间
+   debug_print("left_t:"..tostring(left_t))
+   DataPack.writeChar(npack , getStar or 1)--获得的星级
+
+   local nAwardSize = #sendAward
+   DataPack.writeInt(npack , nAwardSize)
+   for k , v in pairs (sendAward) do
+      DataPack.writeWord(npack,v[1])
+      DataPack.writeInt(npack,v[3])
+      DataPack.writeChar(npack,v[2])
+   end
+   DataPack.flush(npack)
+
+end
+
+--成功通过赤影传说副本
+CiyingOpFuncList.SuccessCopy = function(sysarg , fubenId , left_t)
+   debug_print("fubenId:"..tostring(fubenId))
+   local currConfig = nil
+
+   for i , v in pairs(CiYing.Story) do
+      if v.fid == fubenId then
+         currConfig = v
+         break
+      end
+   end
+   if nil == currConfig then
+      return
+   end
+
+
+   local hfb = LActor.getFubenHandle(sysarg)
+   local pfb = Fuben.getFubenPtr(hfb)
+   local var_d = Fuben.getDyanmicVar(pfb)
+   if var_d == nil then return end
+   
+   if var_d.hasPass then
+      debug_print("-----------已经领取过奖励了----------------")
+      return
+   end
+   debug_print("here")
+
+   local gametime = left_t or 0
+
+   --计算多少星
+   local nMaxStar = #currConfig.starTime
+   local getStar = 1
+   for i = nMaxStar , 2 , -1 do  --一星的就不用比较时间了，通过了至少给个一星
+      if gametime <= currConfig.starTime[i] then
+         getStar = i
+         break
+      end
+   end
+
+   local var = LActor.getStaticVar(sysarg)
+   if nil == var then
+         --debug_print("getStaticVar = nil ")
+         return
+   end
+   if nil == var.CiyingInfo then
+         CiyingOpFuncList.InitCiyingInfo(sysarg)
+   end
+   local CiyingInfo = var.CiyingInfo
+   if nil == CiyingInfo then
+         return
+   end
+   if nil == CiyingInfo.fuben_score then
+      CiyingInfo.fuben_score = {}
+   end
+
+
+   local UpdateFlag = false      --是否需要通知前端的标志位
+   local currStar = CiyingInfo.fuben_score[currConfig.id] or 0
+   if 0 == currStar then   --首次通关该关卡
+      CiyingInfo.currId = currConfig.id + 1
+      UpdateFlag = true
+   end
+   if currStar < getStar then    --获得的星数比原来高
+      CiyingInfo.fuben_score[currConfig.id] = getStar
+      
+      UpdateFlag = true
+
+      --获得了星数要加上去
+      local rootnum = LActor.getIntProperty(sysarg, PROP_ROOT_EXP) or 0
+      LActor.setIntProperty(sysarg, PROP_ROOT_EXP , (rootnum + getStar - currStar) )
+      currStar = getStar
+   end
+
+   CiyingInfo.fuben_play[currConfig.id] = (CiyingInfo.fuben_play[currConfig.id] or 0) + 1
+
+   if UpdateFlag then
+      local npack = DataPack.allocPacket(sysarg,53,3)
+      local sendId = CiyingInfo.currId
+      if sendId > #(CiYing.Story) then
+         sendId = #(CiYing.Story)
+      end
+      DataPack.writeInt(npack , sendId)
+      DataPack.writeInt(npack , currConfig.id)
+      DataPack.writeInt(npack , CiyingInfo.fuben_play[currConfig.id] or 0)
+      DataPack.writeInt(npack , getStar )
+      local rootnum = LActor.getIntProperty(sysarg, PROP_ROOT_EXP) or 0
+      DataPack.writeInt(npack , rootnum )  
+      DataPack.flush(npack)
+   end
+
+   debug_print("=====================> 赤影传说的 CiyingInfo.currId = " .. CiyingInfo.currId .. " ..... currConfig.id = " .. currConfig.id)
+
+   --弹出结算界面
+   CiyingOpFuncList.jiesuan(sysarg , fubenId , left_t , getStar)
+   --标志为已领取过奖励
+   var_d.hasPass = 1
+
+   debug_print("副本结算完毕")
+
+
+   --十秒后退出剧情副本
+   --Fuben.SetFubenTime(hfb, 15 ) --本来应该是10秒后踢出的（这里多加五秒）
+    --退出副本
+    --LActor.exitFuben(sysarg)
+
+   if fubenId and fubenId > 0 then
+      LActor.OnQuestEvent(55, fubenId, 1, true, sysarg)
+
+      local nextConf = nil
+      local preConf = nil
+      for i , v in pairs(CiYing.Story) do
+         if v.id == CiyingInfo.currId then
+            nextConf = v
+            break
+         end
+      end
+      for i , v in pairs(CiYing.Story) do
+         if v.id == currConfig.id then
+            preConf = v
+            break
+         end
+      end
+      if nextConf == nil then -- 已经到最后了
+      else
+         if nextConf.FirstId - 1 == preConf.FirstId then
+            debug_print("=========================> 触发完成了赤影传说第" .. preConf.FirstId .. "章.")
+            -- 成就事件
+            -- LActor.SetAchieveProcessByType(sysarg, 112, 2, preConf.FirstId); -- aAchieveEventChiYingChapter
+         end
+      end
+   end
+
+end
+
+
+--是否处于退出剧情副本的过程中
+function IsIningExitPlayfuben(sysarg)
+   local fbPtr = LActor.getFubenPrt(sysarg)
+   local fbVar = Fuben.getDyanmicVar(fbPtr)
+   if nil == fbVar then return false end
+   local ret = true
+   if 1 == fbVar.inNotINplayfuben then
+      ret = false
+   end
+   return ret
+end
+
+
+
+
+CiyingOpFuncList.CallBeforeFuben = function(fubenptr)
+   local nFbActionList = LuaHelp.getFbActorList( fubenptr )
+   if nFbActionList == nil then
+      return
+   end
+   local sysarg = nFbActionList[1]
+   if nil == sysarg then
+      return
+   end
+   CiyingOpFuncList.PlayfubenFailed(sysarg)
+end
+
+--剧情副本挑战失败
+CiyingOpFuncList.PlayfubenFailed = function(sysarg)
+   debug_print("剧情副本挑战失败")
+   if nil == sysarg then
+      return
+   end
+
+
+   local fubenId = LActor.getFubenId(sysarg)
+   if not fubenId then
+      debug_print("exit3")
+      return
+   end
+
+
+   local playFubenId = 0
+   for i , v in pairs(CiYing.Story) do
+      if v.fid == fubenId then
+         playFubenId = i
+         break
+      end
+   end
+   if 0 == playFubenId then
+      debug_print("非剧情副本调用了剧情副本的结算:"..tostring(fubenId))
+      return
+   end
+   debug_print("----------------bern------------")
+   debug_print("fubenId:"..tostring(fubenId))
+   local npack = DataPack.allocPacket(sysarg, 168, 7)
+   DataPack.writeInt(npack , fubenId)  --副本id
+   DataPack.writeInt(npack , playFubenId)--剧情关卡id
+   DataPack.writeChar(npack , 0)       --通关失败
+   DataPack.flush(npack)
+
+
+   --获取当前在副本中的事件，若客户端十秒后不将玩家踢出去，服务器就主动踢
+   local hfb = LActor.getFubenHandle(sysarg)
+   local pfb = Fuben.getFubenPtr(hfb)
+   if nil == pfb then
+      return
+   end
+   Fuben.SetFubenTime(hfb, 15 ) --本来应该是10秒后踢出的（这里多加五秒）
+
+
+end
+
+--注册剧情副本退出前的事件
+--[[
+for fubenId , v in pairs(PlayFubenConfig.createmonsterlist) do
+   EventCallDispatcher.registerFubenGameOverBefore(fubenId,CiyingOpFuncList.CallBeforeFuben)
+end
+--]]
+
+
+--注册所有的剧情副本退出事件
+-- for fubenId , v in pairs(PlayFubenConfig.createmonsterlist) do
+--    EventCallDispatcher.registerFubenExit(fubenId,CiyingOpFuncList.ExitFuben)
+-- end
+
+
+
+
+
+-- EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeCiYing, CiyingOpFuncList.HandlerOp)
+-- EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, CiyingOpFuncList.OnNewDay)
+-- EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeOnActorDeath, CiyingOpFuncList.UserDeath)
+-- EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogout, CiyingOpFuncList.UserLogOut)
+--EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeExitScene, CiyingOpFuncList.ExitScene)

@@ -1,0 +1,128 @@
+--活动，强者之路
+
+--#include "petactivityrewardconf.txt" once
+--#include "activitycontrolhandler.txt" once
+
+--请求至强伙伴奖励情况
+ONLINEREWARD.getPetActivityRewardInfo = function(sysarg)
+	local checklv = ONLINEREWARD.ActivityCheckLevel(sysarg, PetActivityConf.activityId)
+	if not checklv then return end
+
+	local var = LActor.getStaticVar(sysarg)
+	--是否重置
+	local ifreset = ONLINEREWARD.CheckResetActivityInfo(sysarg, PetActivityConf.activityId)
+	local state = ONLINEREWARD.GetActivityState(PetActivityConf.activityId)
+
+	if var.petGrowLv == nil then
+		var.petGrowLv = LActor.getPetMaxGrowLv(sysarg)
+	end
+
+	local level = var.petGrowLv
+
+	if ifreset and state == 1 then 
+		ONLINEREWARD.petactivitycheck(sysarg, nil)
+	end
+
+	if var.PetActivity == nil then
+		ONLINEREWARD.petactivitycheck(sysarg, nil)
+	end
+	if var.PetActivity.Record == nil then var.PetActivity.Record = 0 end
+	if var.PetActivity.Reward == nil then var.PetActivity.Reward = 0 end
+
+	local ifreward = ONLINEREWARD.CheckActivityRewardInfo[PetActivityConf.activityId](sysarg)
+	if state == 0 and ifreward == 0 then return end
+	--print("ONLINEREWARD.getPetActivityRewardInfo state:"..state..",ifreward:"..ifreward)
+
+	local npack = DataPack.allocPacket(sysarg, 138, 55)
+	if npack == nil then return end
+	DataPack.writeInt(npack, var.PetActivity.Record)
+	DataPack.writeInt(npack, var.PetActivity.Reward)
+	DataPack.writeInt(npack, level)
+	DataPack.flush(npack)
+
+	--print("ONLINEREWARD.getPetActivityRewardInfo Record:"..var.PetActivity.Record..",Reward:"..var.PetActivity.Reward..",level:"..level)
+end
+
+--领取至强伙伴奖励
+ONLINEREWARD.getPetActivityReward = function(sysarg, packet)
+	--print("ONLINEREWARD.getPetActivityReward")	
+	local var = LActor.getStaticVar(sysarg)
+
+	local checklv = ONLINEREWARD.ActivityCheckLevel(sysarg, PetActivityConf.activityId)
+	if not checklv then return end
+
+	local Pos = DataPack.readInt(packet)
+	--local Pos = 1
+	if Pos <= 0 or Pos > #PetActivityConf.aimlevel then return end
+
+	Pos = Pos - 1
+
+	if var.PetActivity == nil  or var.PetActivity.Record == nil then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.osa0004, ttMessage)
+		return
+	end
+
+	if not System.bitOPMask(var.PetActivity.Record, Pos) then				--没纪录即没达成
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.osa0004, ttMessage)
+		return
+	end
+
+	if System.bitOPMask(var.PetActivity.Reward, Pos) then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.osa0002, ttMessage)	--领过了
+		return
+	end
+
+	local items = PetActivityConf.rewardlist[Pos + 1]
+	if items == nil then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.osa0004, ttMessage)
+		return
+	end
+
+	--给奖励
+	local bagGrid =Item.getBagEmptyGridCount(sysarg)      --玩家身上有多少个格子
+	if bagGrid == 0 then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.osa0005, ttMessage)
+		return
+	end
+
+	LActor.addItem(sysarg,items.id,items.quality,items.strong,items.count,items.bind,"compensate",1)
+
+	--设置已领取
+	var.PetActivity.Reward = System.bitOpSetMask(var.PetActivity.Reward, Pos, true)
+
+	--上报
+System.logCounter(LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), "neice_act", "1", "", "act_13", "", "", "", tostring(items.id), lfBI)
+
+	ONLINEREWARD.getPetActivityRewardInfo(sysarg)
+end
+
+--请求强者之路奖励情况
+ONLINEREWARD.petactivitycheck = function(sysarg, level)
+	local var = LActor.getStaticVar(sysarg)
+	if var.petGrowLv == nil then var.petGrowLv = 0 end
+
+	if level ~= nil then
+		if var.petGrowLv >= level then return end
+		var.petGrowLv = level
+	end
+
+	--print("ONLINEREWARD.petactivitycheck petGrowLv:"..var.petGrowLv)
+
+	local state = ONLINEREWARD.GetActivityState(PetActivityConf.activityId)
+	if state == 0 then return end
+	
+	local checklv = ONLINEREWARD.ActivityCheckLevel(sysarg, PetActivityConf.activityId)
+	if not checklv then return end
+
+	if var.PetActivity == nil then var.PetActivity = {} end
+	if var.PetActivity.Record == nil then var.PetActivity.Record = 0 end
+	if var.PetActivity.Reward == nil then var.PetActivity.Reward = 0 end
+
+	if var.petGrowLv >= PetActivityConf.aimlevel[1] then
+		for i=1,#PetActivityConf.aimlevel do
+			if var.petGrowLv < PetActivityConf.aimlevel[i] then break end
+			var.PetActivity.Record = System.bitOpSetMask(var.PetActivity.Record, i - 1, true)
+		end
+	end
+end
+

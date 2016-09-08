@@ -1,0 +1,23 @@
+--#include "data\functions\tasks\fudi\fudi_public.txt" once
+
+local function fudi_main(pChar, str)
+	local pGuild = LActor.getGuildPtr(pChar)
+	local say = "fudi\n"
+	if pGuild == nil then return say end
+	if FudiPublic.isOpenFudi(pGuild) then
+		return say .. "  <enter/@enterFudi>"
+	end
+	
+	return say .. "  <open/@openFudi>"
+end
+
+function enterFudi(pChar)
+	FudiPublic.enterFudi(pChar)
+end
+
+function openFudi(pChar)
+	print(" openFudi .....................")
+	FudiPublic.openFudi(pChar, 1)
+end
+
+table.insert(MainFnTable, fudi_main)

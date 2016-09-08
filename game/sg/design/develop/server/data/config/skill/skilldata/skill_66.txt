@@ -1,0 +1,20 @@
+
+-- 区域BOSS单攻连击技能
+{
+	id=66,
+	name=Lang.Skill.s66Name,
+	desc=Lang.Skill.s66Desc,
+	vocation=0,	
+	skillClass =7,
+	skillType=6,
+	skillSpellType=0,
+	commonCd=0,
+	specialBuffCond =0,
+	skillSubLevel=
+	{
+--#include "Skill_66_1.txt"	
+	}
+},
+
+
+

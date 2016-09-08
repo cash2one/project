@@ -1,0 +1,88 @@
+﻿--VIP体验卡物品
+
+
+--[[
+--VIP道具物品使用处理函数
+--sysarg:实体的指针
+--itemidx: 物品的ID
+--itemPtr: 物品的指针
+--ItemTable: 配置的参数列表
+--]]
+
+function VIPCardItemUseHandler(sysarg, itemIdx, itemPtr, conf)
+	if conf == nil then return end
+	if conf.time <= 0 then return end
+
+	local cur_t = System.getCurrMiniTime()
+
+	local canUse = true
+	-- 还有剩余的VIP体验卡时间
+	local viplevel = LActor.getVIPLevel(sysarg)
+	local left_t = LActor.getVipExpTime(sysarg)
+	if left_t > cur_t then
+		if left_t > cur_t + conf.time then
+			if viplevel == conf.vipLevel then
+				LActor.sendTipmsg(sysarg, Lang.ScriptTips.vip006,ttMessage)
+			else
+				LActor.sendTipmsg(sysarg, Lang.ScriptTips.vip005,ttMessage)
+			end
+			canUse = false
+		end
+	else
+		 viplevel = LActor.getVIPLevel(sysarg)
+		if viplevel >= conf.vipLevel then
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.vip004,ttMessage)
+			canUse = false
+		end
+	end
+
+	
+	if LActor.removeItemByPtr(sysarg, itemPtr, 1, true, "use vip card", 86) ~= 1 then
+		print("remove vip card item error")
+		return
+	end
+
+	if canUse then
+		local exptime = cur_t + conf.time
+
+		local var = LActor.getStaticVar(sysarg)
+		if var then
+			var.vipExpTime = exptime
+		end
+		LActor.setVipExpTime(sysarg, exptime)
+		-- 发送VIP体验卡剩余时间
+	  	local npack = DataPack.allocPacket(sysarg,139,65)
+	    if npack == nil then return end
+	    DataPack.writeInt( npack, conf.time )
+	    DataPack.flush(npack)
+	end
+end
+
+-- @brief: 注册VIP道具物品使用Handler
+function VIPCardItemInit(sysarg)
+	for i = 1, table.getn(VIPCardItem) do
+		local conf = VIPCardItem[i]
+		GlobalItemFn[conf.item_id] = { func = VIPCardItemUseHandler, params = conf, }
+	end
+end
+
+table.insert(InitFnTable, VIPCardItemInit)
+
+function YuanBaoCardItemUseHandler(sysarg, itemIdx, itemPtr, conf)
+	if conf == nil then return end
+	local id = conf.item_id
+	local yuanbao = conf.yuanbao
+	--LActor.changeMoney(sysarg, mtYuanbao, yuanbao, 1, true, "yuanbaocard")
+	LActor.removeItemByPtr(sysarg,itemPtr,1,true,"useyuanbaocard",5) 
+	LActor.recharge(sysarg, yuanbao)
+end
+
+-- @brief: 注册新手道具物品使用Handler
+function YuanBaoCardItemInit(sysarg)
+	for i = 1, table.getn(YuanBaoCard) do
+		local conf = YuanBaoCard[i]
+		GlobalItemFn[conf.item_id] = { func = YuanBaoCardItemUseHandler, params = conf, }
+	end
+end
+
+table.insert(InitFnTable, YuanBaoCardItemInit)

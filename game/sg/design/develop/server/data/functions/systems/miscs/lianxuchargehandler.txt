@@ -1,0 +1,464 @@
+--#include "data\config\activity\lianxuchargeconf.txt" once
+
+
+LXCharge_Func = {}
+
+--拉取活动面板
+LXCharge_Func.getActivityInfo = function (sysarg)
+	local state = ONLINEREWARD.GetActivityState(lxchargeConf.activityId)
+	if state == 0 then return  end
+
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+
+	if var.lianxucharge_sum == nil then
+		var.lianxucharge_sum = 0
+	end
+
+	if var.lianxucharge_days == nil then
+		var.lianxucharge_days = 0
+	end
+
+
+
+	if var.lianxucharge_limittableA == nil then var.lianxucharge_limittableA = {} end
+	if var.lianxucharge_signA == nil then var.lianxucharge_signA = {} end
+	for i = 1,#lxchargeConf.charge_valueA do
+		if var.lianxucharge_limittableA[i] == nil then var.lianxucharge_limittableA[i] = 0  end
+		if var.lianxucharge_signA[i] == nil then var.lianxucharge_signA[i] = 0 end
+	end
+
+	if var.lianxucharge_limittableB == nil then var.lianxucharge_limittableB = {} end
+	if var.lianxucharge_signB == nil then var.lianxucharge_signB = {} end
+	for i = 1,#lxchargeConf.charge_valueB do
+		if var.lianxucharge_limittableB[i] == nil then var.lianxucharge_limittableB[i] = 0  end
+		if var.lianxucharge_signB[i] == nil then var.lianxucharge_signB[i] = 0 end
+	end
+
+
+	if var.lianxucharge_limittableC == nil then var.lianxucharge_limittableC = {} end
+	if var.lianxucharge_signC == nil then var.lianxucharge_signC = {} end
+	for i = 1,#lxchargeConf.charge_valueC do
+		if var.lianxucharge_limittableC[i] == nil then var.lianxucharge_limittableC[i] = 0  end
+		if var.lianxucharge_signC[i] == nil then var.lianxucharge_signC[i] = 0 end
+	end
+	
+
+
+	if var.lianxucharge_recodtime == nil then
+		var.lianxucharge_recodtime = System.getToday()
+	end 
+
+	if var.lianxucharge_rewardsignA == nil then var.lianxucharge_rewardsignA = {} end
+	for i = 1,#lxchargeConf.charge_valueA do
+		if var.lianxucharge_rewardsignA[i] == nil then
+			var.lianxucharge_rewardsignA[i] = 0
+		end
+	end
+
+	if var.lianxucharge_rewardsignB == nil then var.lianxucharge_rewardsignB = {} end
+	for i = 1,#lxchargeConf.charge_valueB do
+		if var.lianxucharge_rewardsignB[i] == nil then
+			var.lianxucharge_rewardsignB[i] = 0
+		end
+	end
+
+	if var.lianxucharge_rewardsignC == nil then var.lianxucharge_rewardsignC = {} end
+	for i = 1,#lxchargeConf.charge_valueC do
+		if var.lianxucharge_rewardsignC[i] == nil then
+			var.lianxucharge_rewardsignC[i] = 0
+		end
+	end
+
+	if var.lianxucharge_days >= lxchargeConf.days[1] then
+		for i = 1,#lxchargeConf.charge_valueA do
+    		if  var.lianxucharge_rewardsignA[i] == 0  then
+    			if i == #lxchargeConf.charge_valueA or i == #lxchargeConf.charge_valueA - 1 then
+    				if var.lianxucharge_sum >= lxchargeConf.charge_valueA[i][1] then
+    					var.lianxucharge_rewardsignA[i] = 1
+    				end
+    			elseif  var.lianxucharge_limittableA[i] >= lxchargeConf.days[1]   then
+    				var.lianxucharge_rewardsignA[i] = 1
+    			end
+    		end
+    	end
+    end
+
+	if var.lianxucharge_days >= lxchargeConf.days[2] then
+		for i = 1,#lxchargeConf.charge_valueB do
+    		if var.lianxucharge_rewardsignB[i] == 0  then
+    			if i == #lxchargeConf.charge_valueB or i == #lxchargeConf.charge_valueB - 1 then
+    				if var.lianxucharge_sum >= lxchargeConf.charge_valueB[i][1] then
+    					var.lianxucharge_rewardsignB[i] = 1
+    				end
+    			elseif var.lianxucharge_limittableB[i] >= lxchargeConf.days[2] then
+    				var.lianxucharge_rewardsignB[i] = 1
+    			end
+    		end
+    	end
+    end
+
+	if var.lianxucharge_days >= lxchargeConf.days[3] then
+		for i = 1,#lxchargeConf.charge_valueC do
+    		if var.lianxucharge_rewardsignC[i] == 0  then
+    			if i == #lxchargeConf.charge_valueC or i == #lxchargeConf.charge_valueC - 1 then 
+    				if var.lianxucharge_sum >= lxchargeConf.charge_valueC[i][1] then
+    					var.lianxucharge_rewardsignC[i] = 1
+    				end
+    			elseif var.lianxucharge_limittableC[i] >= lxchargeConf.days[3] then
+    				var.lianxucharge_rewardsignC[i] = 1
+    			end
+    		end
+    	end
+	end
+
+
+	local npack = DataPack.allocPacket(sysarg,138,248)
+    if npack == nil then return end
+
+    DataPack.writeInt(npack,var.lianxucharge_sum) 
+    --print("充值总金额:"..var.lianxucharge_sum)
+    DataPack.writeInt(npack,var.lianxucharge_days) 
+    --print("连续充值天数:"..var.lianxucharge_days)
+
+    DataPack.writeInt(npack,#lxchargeConf.charge_valueA )
+    --print("连续充值3天奖励个数:"..#lxchargeConf.charge_valueA)
+    for i = 1,#lxchargeConf.charge_valueA do
+    	DataPack.writeInt(npack,var.lianxucharge_rewardsignA[i])
+    	--print("第"..i.."个奖励可领取标志:"..var.lianxucharge_rewardsignA[i])
+    end
+
+    DataPack.writeInt(npack,#lxchargeConf.charge_valueB)
+    --print("连续充值5天奖励个数:"..#lxchargeConf.charge_valueB)
+    for i = 1,#lxchargeConf.charge_valueB do
+    	DataPack.writeInt(npack,var.lianxucharge_rewardsignB[i])
+    	--print("第"..i.."个奖励可领取标志:"..var.lianxucharge_rewardsignB[i])
+    end
+
+    DataPack.writeInt(npack,#lxchargeConf.charge_valueC)
+    --print("连续充值7天奖励个数:"..#lxchargeConf.charge_valueC)
+    for i = 1,#lxchargeConf.charge_valueC do
+    	DataPack.writeInt(npack,var.lianxucharge_rewardsignC[i])
+    	--print("第"..i.."个奖励可领取标志:"..var.lianxucharge_rewardsignC[i])
+    end
+    
+    DataPack.flush(npack)
+
+end
+
+--充值
+LXCharge_Func.ActorRecharge = function (sysarg, arg)
+	--print("连续充值活动")
+	local state = ONLINEREWARD.GetActivityState(lxchargeConf.activityId)
+	if state == 0 then return  end
+
+	local nowtime = System.getCurrMiniTime()
+
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+
+
+	if var.lianxucharge_limittableA == nil then var.lianxucharge_limittableA = {} end
+	if var.lianxucharge_signA == nil then var.lianxucharge_signA = {} end
+	for i = 1,#lxchargeConf.charge_valueA do
+		if var.lianxucharge_limittableA[i] == nil then var.lianxucharge_limittableA[i] = 0  end
+		if var.lianxucharge_signA[i] == nil then var.lianxucharge_signA[i] = 0 end
+	end
+
+	if var.lianxucharge_limittableB == nil then var.lianxucharge_limittableB = {} end
+	if var.lianxucharge_signB == nil then var.lianxucharge_signB = {} end
+	for i = 1,#lxchargeConf.charge_valueB do
+		if var.lianxucharge_limittableB[i] == nil then var.lianxucharge_limittableB[i] = 0  end
+		if var.lianxucharge_signB[i] == nil then var.lianxucharge_signB[i] = 0 end
+	end
+
+
+	if var.lianxucharge_limittableC == nil then var.lianxucharge_limittableC = {} end
+	if var.lianxucharge_signC == nil then var.lianxucharge_signC = {} end
+	for i = 1,#lxchargeConf.charge_valueC do
+		if var.lianxucharge_limittableC[i] == nil then var.lianxucharge_limittableC[i] = 0  end
+		if var.lianxucharge_signC[i] == nil then var.lianxucharge_signC[i] = 0 end
+	end
+
+
+	local value = arg[1]
+	if value == 0 then return end
+
+	if var.lianxucharge_todaycharge == nil then
+		var.lianxucharge_todaycharge = 0
+	end
+
+	var.lianxucharge_todaycharge = var.lianxucharge_todaycharge + value
+
+	if var.lianxucharge_recodtime == nil then
+		var.lianxucharge_recodtime = System.getToday()
+	end
+
+	if var.lianxucharge_sum == nil then
+		var.lianxucharge_sum = 0
+	end
+
+	if var.lianxucharge_days == nil then
+		var.lianxucharge_days = 0
+	end
+
+
+	local sign = System.isSameDay(nowtime,var.lianxucharge_recodtime)
+
+	if sign == true then
+		--print("同一天充值")
+		var.lianxucharge_sum = var.lianxucharge_sum + value
+		if var.lianxucharge_days == 0 then
+			var.lianxucharge_days = 1
+		end
+	elseif sign == false then
+		--print("不是同一天充值")
+		local diffday = System.getDayDiff(nowtime,var.lianxucharge_recodtime)
+		--print("diffday========================:"..diffday)
+		if diffday > 1 then
+			--print("相差天数大于一天")
+			var.lianxucharge_sum = value
+			var.lianxucharge_days = 1
+			var.lianxucharge_recodtime = System.getToday()
+
+			for i = 1,#lxchargeConf.charge_valueA do
+				if var.lianxucharge_limittableA[i] ~= nil then var.lianxucharge_limittableA[i] = 0 end
+			end
+
+			for i = 1,#lxchargeConf.charge_valueB do
+				if var.lianxucharge_limittableB[i] ~= nil then var.lianxucharge_limittableB[i] = 0 end
+			end
+
+			for i = 1,#lxchargeConf.charge_valueC do
+				if var.lianxucharge_limittableC[i] ~= nil then var.lianxucharge_limittableC[i] = 0 end
+			end
+
+		elseif diffday == 1 then
+			--print("相差天数为一天")
+			var.lianxucharge_days = var.lianxucharge_days + 1
+			var.lianxucharge_sum = var.lianxucharge_sum + value
+			var.lianxucharge_recodtime = System.getToday()
+		end
+	end
+
+	for i = 1,#lxchargeConf.charge_valueA do
+		if var.lianxucharge_todaycharge >= lxchargeConf.charge_valueA[i][1] and var.lianxucharge_signA[i] == 0 then
+			var.lianxucharge_limittableA[i] = var.lianxucharge_limittableA[i] + 1
+			var.lianxucharge_signA[i] = 1
+		end
+	end
+
+	for i = 1,#lxchargeConf.charge_valueB do
+		if var.lianxucharge_todaycharge >= lxchargeConf.charge_valueB[i][1] and var.lianxucharge_signB[i] == 0 then
+			var.lianxucharge_limittableB[i] = var.lianxucharge_limittableB[i] + 1
+			var.lianxucharge_signB[i] = 1
+		end
+	end
+
+
+	for i = 1,#lxchargeConf.charge_valueC do
+		if var.lianxucharge_todaycharge >= lxchargeConf.charge_valueC[i][1] and var.lianxucharge_signC[i] == 0 then
+			var.lianxucharge_limittableC[i] = var.lianxucharge_limittableC[i] + 1
+			var.lianxucharge_signC[i] = 1
+		end
+	end
+
+
+	LXCharge_Func.getActivityInfo(sysarg)
+end
+
+
+--领取礼包奖励
+LXCharge_Func.getActivityReward = function (sysarg,packet)
+    --print("领取礼包奖励")
+ 	local state = ONLINEREWARD.GetActivityState(lxchargeConf.activityId)
+	if state == 0 then return  end
+
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	local actorid = LActor.getActorId(sysarg)
+
+	local day = tonumber(DataPack.readInt(packet)) 
+	--print("day===========================:"..day)
+	local index = tonumber(DataPack.readInt(packet))
+	--print("index=========================:"..index)
+
+
+	if day == lxchargeConf.days[1] then
+		for i = 1,#lxchargeConf.charge_valueA do
+			if index == i  and var.lianxucharge_rewardsignA[i] == 1 then
+
+				if Item.getBagEmptyGridCount(sysarg) < 1 then
+	    			System.sendGmMailOffLine(actorid, "连续充值礼包奖励" , 1, lxchargeConf.charge_valueA[i][2], 1, 1)
+	    			var.lianxucharge_rewardsignA[i] = 2
+	  			else
+					LActor.addItem(sysarg, lxchargeConf.charge_valueA[i][2], 0, 0, 1, 1, "Lottery", 1)
+					var.lianxucharge_rewardsignA[i] = 2
+
+					-- 播放特效
+					local effects = {}
+					local effect = {}
+					effect.type = 1  -- 1为物品,暂时只支持发物品所以写死
+					effect.id = lxchargeConf.charge_valueA[i][2]
+					effect.count = 1
+					effects[#effects+1] = effect
+					if #effects > 0 then
+						MiscFunc.PlayItemEffect(sysarg, 11, effects)
+					end
+				end
+			end
+		end
+	elseif  day == lxchargeConf.days[2] then
+		for i = 1,#lxchargeConf.charge_valueB do
+			if index == i and var.lianxucharge_rewardsignB[i] == 1 then
+
+				if Item.getBagEmptyGridCount(sysarg) < 1 then
+	    			System.sendGmMailOffLine(actorid, "连续充值礼包奖励" , 1, lxchargeConf.charge_valueB[i][2], 1, 1)
+	    			var.lianxucharge_rewardsignB[i] = 2
+	  			else
+					LActor.addItem(sysarg, lxchargeConf.charge_valueB[i][2], 0, 0, 1, 1, "Lottery", 1)
+					var.lianxucharge_rewardsignB[i] = 2
+
+					-- 播放特效
+					local effects = {}
+					local effect = {}
+					effect.type = 1  -- 1为物品,暂时只支持发物品所以写死
+					effect.id = lxchargeConf.charge_valueB[i][2]
+					effect.count = 1
+					effects[#effects+1] = effect
+					if #effects > 0 then
+						MiscFunc.PlayItemEffect(sysarg, 11, effects)
+					end
+				end
+			end
+		end
+	elseif day == lxchargeConf.days[3] then
+		for i = 1,#lxchargeConf.charge_valueC do
+			if index == i and var.lianxucharge_rewardsignC[i] == 1 then
+
+				if Item.getBagEmptyGridCount(sysarg) < 1 then
+	    			System.sendGmMailOffLine(actorid, "连续充值礼包奖励" , 1, lxchargeConf.charge_valueC[i][2], 1, 1)
+	    			var.lianxucharge_rewardsignC[i] = 2
+	  			else
+					LActor.addItem(sysarg, lxchargeConf.charge_valueC[i][2], 0, 0, 1, 1, "Lottery", 1)
+					var.lianxucharge_rewardsignC[i] = 2
+
+					-- 播放特效
+					local effects = {}
+					local effect = {}
+					effect.type = 1  -- 1为物品,暂时只支持发物品所以写死
+					effect.id = lxchargeConf.charge_valueC[i][2]
+					effect.count = 1
+					effects[#effects+1] = effect
+					if #effects > 0 then
+						MiscFunc.PlayItemEffect(sysarg, 11, effects)
+					end
+				end
+			end
+		end
+	end
+
+	LXCharge_Func.getActivityInfo(sysarg)
+
+end
+
+--下发邮件
+LXCharge_Func.activityend = function(sysarg)
+
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end 
+	local actorid = LActor.getActorId(sysarg)
+
+	local nowtime = System.getCurrMiniTime()
+
+	local state,_,endtime = ONLINEREWARD.GetActivityState(lxchargeConf.activityId)
+
+	if nowtime > endtime then
+		for i = 1,#lxchargeConf.charge_valueA do
+			if var.lianxucharge_rewardsignA ~= nil and var.lianxucharge_rewardsignA[i] ~= nil and var.lianxucharge_rewardsignA[i] == 1 then
+				System.sendGmMailOffLine(actorid, "连续充值礼包奖励" , 1, lxchargeConf.charge_valueA[i][2], 1, 1)
+				var.lianxucharge_rewardsignA[i] = 2
+			end
+		end
+
+		for i = 1,#lxchargeConf.charge_valueB do
+			if var.lianxucharge_rewardsignB ~= nil and var.lianxucharge_rewardsignB[i] ~= nil and var.lianxucharge_rewardsignB[i] == 1 then
+				System.sendGmMailOffLine(actorid, "连续充值礼包奖励" , 1, lxchargeConf.charge_valueB[i][2], 1, 1)
+				var.lianxucharge_rewardsignB[i] = 2
+			end
+		end
+
+		for i = 1,#lxchargeConf.charge_valueC do
+			if var.lianxucharge_rewardsignC ~= nil and var.lianxucharge_rewardsignC[i] ~= nil and var.lianxucharge_rewardsignC[i] == 1 then
+				System.sendGmMailOffLine(actorid, "连续充值礼包奖励" , 1, lxchargeConf.charge_valueC[i][2], 1, 1)
+				var.lianxucharge_rewardsignC[i] = 2
+			end
+		end
+
+		if var.lianxucharge_rewardsignA ~=nil then var.lianxucharge_rewardsignA = nil end 
+		if var.lianxucharge_rewardsignB ~=nil then var.lianxucharge_rewardsignB = nil end 
+		if var.lianxucharge_rewardsignC ~=nil then var.lianxucharge_rewardsignC = nil end 
+
+		if var.lianxucharge_recodtime ~= nil then var.lianxucharge_recodtime = nil end
+		if var.lianxucharge_sum ~= nil then var.lianxucharge_sum = nil end
+		if var.lianxucharge_days ~= nil then var.lianxucharge_days = nil end
+
+		if var.lianxucharge_limittableA ~= nil then var.lianxucharge_limittableA = nil end
+		if var.lianxucharge_signA ~= nil then var.lianxucharge_signA = nil end
+
+		if var.lianxucharge_limittableB ~= nil then var.lianxucharge_limittableB = nil end
+		if var.lianxucharge_signB ~= nil then var.lianxucharge_signB = nil end
+
+		if var.lianxucharge_limittableC ~= nil then var.lianxucharge_limittableC = nil end
+		if var.lianxucharge_signC ~= nil then var.lianxucharge_signC = nil end
+
+	end
+	
+end
+
+LXCharge_Func.NewDay = function (sysarg)
+
+	local state = ONLINEREWARD.GetActivityState(lxchargeConf.activityId)
+	if state == 0 then return  end
+	
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+
+	var.lianxucharge_todaycharge = 0
+
+	for i = 1,#lxchargeConf.charge_valueA do
+		if var.lianxucharge_signA ~= nil and var.lianxucharge_signA[i] ~= nil then
+			var.lianxucharge_signA[i] = 0
+		end
+	end
+
+	for i = 1,#lxchargeConf.charge_valueB do
+		if var.lianxucharge_signB ~= nil and var.lianxucharge_signB[i] ~= nil then
+			var.lianxucharge_signB[i] = 0
+		end
+	end
+
+	for i = 1,#lxchargeConf.charge_valueC do
+		if var.lianxucharge_signC ~= nil and var.lianxucharge_signC[i] ~= nil then
+			var.lianxucharge_signC[i] = 0
+		end
+	end
+
+	if var.lianxucharge_recodtime == nil then return end
+
+	local nowtime = System.getCurrMiniTime()
+	local diffday = System.getDayDiff(nowtime,var.lianxucharge_recodtime)
+
+	if diffday > 1 then
+		var.lianxucharge_sum = 0
+		var.lianxucharge_days = 0
+	end
+
+	LXCharge_Func.getActivityInfo(sysarg)
+end
+
+
+table.insert(ActorTimeFnTable, LXCharge_Func.activityend)
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeRecharge, LXCharge_Func.ActorRecharge)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, LXCharge_Func.NewDay)

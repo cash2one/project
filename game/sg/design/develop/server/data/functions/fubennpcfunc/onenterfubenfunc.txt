@@ -1,0 +1,937 @@
+--lua script
+--#include "data\config\task\ShenHaiConf.txt" once
+--#include "data\functions\Tasks\CrossSystem\CrossSet.txt"
+--#include "data\config\activity\GuildActivity.txt" once   --采集蟠桃相关的常量定义
+--#include "data\functions\Tasks\Nirvana\NirvanaSet.txt" once --必杀技
+--#include "data\functions\Tasks\ShangJin\ShangJinSet.txt" once --赏金
+--#include "data\functions\bifunc.txt" once
+--#include "data\functions\tasks\fengcereward\fcactivefunc.txt" once
+
+--#include "data\functions\fubennpcfunc\commonfuben.txt" once	-- 
+--#include "data\functions\config\fubenconfig\lilianfubenconfig.txt" once			-- 历练副本配置
+--#include "data\functions\config\fubenconfig\chongwudaofubenconfig.txt" once		-- 伙伴岛副本配置
+--#include "data\functions\config\fubenconfig\shangjinfubenconfig.txt" once			-- 赏金副本配置
+--#include "data\functions\config\fubenconfig\xinmohuanjingfubenconfig.txt" once	-- 破狱之战副本配置
+--#include "data\functions\config\fubenconfig\huantianmijingfubenconfig.txt" once	-- 幻天密境
+--#include "data\functions\config\fubenconfig\xuantianfengyinfubenconfig.txt" once	-- 玄天封印副本配置
+--#include "data\functions\config\fubenconfig\tianmotafubenconfig.txt" once			-- 密宗佛塔配置
+--#include "data\functions\config\fubenconfig\mojierukoufubenconfig.txt" once		-- 魔界入口配置
+
+--#include "data\functions\config\fubenconfig\newpetfubenconfig.txt" once		-- 魔界入口配置
+
+--#include "data\config\store\liudaoshop.txt" once   -- 神秘商店
+
+
+NPCFunc = {}
+NPCFunc.OnEnterCopyMap = {}
+
+NPCFunc.Exchange = function( x, y )
+	return y, x
+end
+
+-- 注册进入副本的特殊处理
+NPCFunc.registerEnterFuben = function( fbId, func )
+
+	if NPCFunc.OnEnterCopyMap[fbId] ~= nil then
+		return 
+	end
+	NPCFunc.OnEnterCopyMap[fbId] = func
+	--print("NPCFunc.OnEnterCopyMap[fbId]"..fbId)
+end
+
+--深海之峦 进入副本后的特殊处理
+NPCFunc.OnEnterShenHai = function ( players, Fhandle )
+	if players == nil or type(players) ~= "table" or #players ~= 2 then return end
+
+	--不同的玩家传送到相应的位置
+	local player1, player2 = players[1], players[2]
+	if player1 == nil or player2 == nil then return end
+
+	--触发进入深海之恋目标
+	LActor.triggerTarget( player1, enATShenHai )
+	LActor.triggerTarget( player2, enATShenHai )
+
+	local sex1 = LActor.getIntProperty(player1,PROP_SEX)
+	local sex2 = LActor.getIntProperty(player2,PROP_SEX)
+	if sex1 ~= sex2 then
+		if sex1 == 1 then	--如果是女男则交换
+			player1, player2 = NPCFunc.Exchange( player1, player2 )
+		end
+	else
+		if not TeamFun.isCaptain( player1 ) then	--同性则队长在前
+			player1, player2 = NPCFunc.Exchange( player1, player2 )
+		end
+	end
+
+	-- CommonFubenJiesuanConfig.install(Fhandle)			-- 安装结算
+
+	LActor.enterFuBen( player1, Fhandle, -1, ShenHaiConf.pos1[1], ShenHaiConf.pos1[2] )
+	LActor.enterFuBen( player2, Fhandle, -1, ShenHaiConf.pos2[1], ShenHaiConf.pos2[2] )
+
+	BiFunc.LogFubenEnter(player1, "shen_hai", tostring(sex1))
+	BiFunc.LogFubenEnter(player2, "shen_hai", tostring(sex2))
+
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	if fbPtr ~= nil then
+		local var = Fuben.getDyanmicVar( fbPtr )
+		if var ~= nil then
+			var.diffsex = ( sex1 ~= sex2 )	--保存是否异性玩家属性，下次不用再判断
+		end
+
+		-- 副本时间统计
+		local fbTime = Fuben.getFbTime(fbPtr)
+		LActor.SendAndChangeCaleValue(player1, caleFubenTime, fbTime, false)
+		LActor.SendAndChangeCaleValue(player2, caleFubenTime, fbTime, false)
+	end
+
+	--注册怪物全部杀死事件
+	LActor.registerKillAllMonster( player1, true, 0 )
+
+	--异性玩家给予100%伤害加成buff
+	if sex1 ~= sex2 then
+		local buff1 = ShenHaiConf.buff1
+		local buff2 = ShenHaiConf.buff2
+		LActor.addBuff( player1, buff1.type, buff1.group, buff1.value, buff1.times, buff1.interval, buff1.name )
+		LActor.addBuff( player2, buff1.type, buff1.group, buff1.value, buff1.times, buff1.interval, buff1.name )
+		LActor.addBuff( player1, buff2.type, buff2.group, buff2.value, buff2.times, buff2.interval, buff2.name )
+		LActor.addBuff( player2, buff2.type, buff2.group, buff2.value, buff2.times, buff2.interval, buff2.name )
+	end
+
+	--创建每种怪物
+	local hScene = LActor.getSceneHandle( player1 )
+	for i=1,#ShenHaiConf.refresh1 do
+		local mon = ShenHaiConf.refresh1[i]
+		Fuben.createMonsters( hScene, mon.id, mon.mapx1, mon.mapx2, mon.mapy1, mon.mapy2, mon.count, 0 )
+	end
+end
+
+-- 进入必杀技副本的处理
+NPCFunc.OnEnterNirvana = function(sysarg, Fhandle)
+	--print("MoveToNirvana...")
+	--print("fhandle"..Fhandle)
+	--print("LimitTime"..NirvanaSet.LimitTime[1])
+
+	if Fhandle == nil or NirvanaMonster == nil then return end
+
+	Fuben.SetFubenTime(Fhandle,NirvanaSet.LimitTime[1])
+	local createmonstertime = 0 -- 下一波怪的时间
+	local fbPtr = Fuben.getFubenPtr(Fhandle)
+	local var = Fuben.getDyanmicVar(fbPtr)
+	var.MonsterCount = 0
+	local hScene = Fuben.getSceneHandleById(NirvanaSet.Scene, Fhandle)
+	local reward=NirvanaMonster
+	for i=1, #reward do
+		if reward[i].bossstep == 1 then
+			local npcPtr = Fuben.getNpcPtrByName(hScene,NirvanaSet.MobNpc) 
+			--print("npcPtr...."..npcPtr)
+			Fuben.postDelayCreateMonsters(npcPtr,reward[i].delaytime*1000,reward[i].monsterId,reward[i].posX1, reward[i].posX2, reward[i].posY1,reward[i].posY2,reward[i].nCount,0)
+			createmonstertime = reward[i].delaytime
+			var.MonsterCount = var.MonsterCount + reward[i].nCount
+		end
+	end
+	var.NirvanaStep = 1 --波数
+	var.KillMonCount = 0--已经杀怪的数量
+
+	-- 进入副本
+	LActor.enterFuBen(sysarg,Fhandle,NirvanaSet.Scene,NirvanaSet.nx,NirvanaSet.ny)
+	LActor.ChangeCaleValue(sysarg,caleOther1,var.NirvanaStep)
+	LActor.ChangeCaleValue(sysarg,caleOther2,var.MonsterCount)
+	LActor.ChangeCaleValue(sysarg,caleOther3,var.KillMonCount)
+	LActor.ChangeCaleValue(sysarg,caleFubenTime,NirvanaSet.LimitTime[1])
+	Fuben.SetFubenMonTime(Fhandle,createmonstertime)
+	LActor.ChangeCaleValue(sysarg,caleMonTime,createmonstertime)
+	LActor.SendAllCaleValue(sysarg)
+	
+	LActor.registerKillAllMonster( sysarg, true, 1 )
+
+	LActor.changeAnger(sysarg,-1)
+
+	-- 触发挑战必杀技副本活跃奖励
+	LActor.triggerTarget( sysarg, enATBaGua )
+	FCActivityHandler.ActivityReward (sysarg)
+
+	-- LActor.sendTipmsg(sysarg, Lang.TaskTalk.Nv0004, ttScreenCenter)
+
+	-- 大于1才发送倒计时
+	if createmonstertime > 1 then
+		LActor.sendCountdown(sysarg, createmonstertime, 0)
+	end
+end
+
+-- 进入赏金副本的处理
+NPCFunc.OnEnterShangJin = function(sysarg, Fhandle)
+	-- 初始化
+	CommonFubenJiesuanConfig.install(Fhandle)
+	
+	LActor.enterFuBen( sysarg, Fhandle, ShangJinFubenConfig.sceneId[1], ShangJinFubenConfig.playerPos[1], ShangJinFubenConfig.playerPos[2] )
+	local fbptr = Fuben.getFubenPtr(Fhandle)
+	if fbptr == nil then return end
+
+ 	local var = Fuben.getDyanmicVar(fbptr)
+ 	if var == nil then return end
+  	var.ShJMonCount = 0 --怪被杀了多少只
+  	var.ShJYuanBao = 0 --额外天珠
+  	var.ShJMonStep=0 --第几波怪
+  	var.ShJGameStart = 0
+	
+	local fbid = Fuben.getFubenIdbyFuBenPtr(fbptr)
+	
+	--local Hfuben = Fuben.createFuBen(ShangJinSet.Fbid)
+	Fuben.SetFubenGameTime(Fhandle, ShangJinSet.LimitTime[1]) -- 设置游戏时间
+	Fuben.SetFubenTime(Fhandle,ShangJinSet.LimitTime[1])
+	LActor.SendAndChangeCaleValue(sysarg,caleFubenTime,ShangJinSet.LimitTime[1],false)
+	LActor.SendAndChangeCaleValue(sysarg,caleOther1,var.ShJMonStep+1,false)
+
+	if Fhandle ~= 0 then
+		local hScene = Fuben.getSceneHandleById(ShangJinSet.Scene, Fhandle)
+		if ShangJinMonster ~= nil then
+			for i=1,#ShangJinMonster do
+				if ShangJinMonster[i].bossstep == var.ShJMonStep+1 then
+					if ShangJinMonster[i].bboss == "false" then
+						var.fbRestMonster = ShangJinMonster[i].nCount 
+						Fuben.createMonsters(hScene, ShangJinMonster[i].monsterId, ShangJinMonster[i].posX1, ShangJinMonster[i].posX2, ShangJinMonster[i].posY1, ShangJinMonster[i].posY2, ShangJinMonster[i].nCount,0)
+					end
+				end
+			end
+		end
+	end
+	LActor.registerKillAllMonster( sysarg, true, 1 )
+
+	-- 触发赏金副本活跃奖励
+	LActor.triggerTarget( sysarg, enATJYMT )	
+	FCActivityHandler.ActivityReward (sysarg)
+end
+
+-- 进入历练副本的特殊处理
+NPCFunc.OnEnterLiLian = function(sysarg, Fhandle)
+	--初始化一些变量
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+	CommonFubenJiesuanConfig.install(Fhandle)
+
+    --进入副本
+    --print("-----------------------")
+	LActor.enterFuBen( sysarg, Fhandle, LilianFubenConfig.sceneId[1], LilianFubenConfig.playerPos[1], LilianFubenConfig.playerPos[2] )
+	
+	-- 活跃奖励
+	LActor.triggerTarget( sysarg, enATQingLing )	
+	FCActivityHandler.ActivityReward (sysarg)
+
+	-- 设置副本的游戏时间
+	Fuben.SetFubenGameTime(Fhandle,LilianFubenConfig.gameTime)
+
+	-- 发送统计信息
+	local fbTime = Fuben.GetFubenGameTime(fbPtr)
+
+	LActor.ChangeCaleValue(sysarg, caleGameTime, fbTime)	-- 时间
+	LActor.ChangeCaleValue(sysarg,caleLiLiang,0)
+	LActor.ChangeCaleValue(sysarg,caleRemainMonster, LilianFubenConfig.monsterCount)
+	LActor.SendAllCaleValue(sysarg)
+end
+
+NPCFunc.OnEnterHuanTian = {}
+-- 进入幻天密境副本1
+NPCFunc.OnEnterHuanTian[1] = function(sysarg, Fhandle)
+	--初始化一些变量
+	CommonFubenJiesuanConfig.install(Fhandle)
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+	fbVar.floor = 1
+	-- 设置副本层数
+	-- CommonFubenJiesuanConfig.setFubenFloor(sysarg,Fhandle)
+
+    --进入副本
+	LActor.enterFuBen( sysarg, Fhandle, HuanTianMiJingFubenConfig.fubenToSence[1], HuanTianMiJingFubenConfig.playerPos[1], HuanTianMiJingFubenConfig.playerPos[2] )
+	
+	-- 活跃奖励
+	FCActivityHandler.ActivityReward (sysarg)
+
+	-- 设置副本的游戏时间
+	Fuben.SetFubenGameTime(Fhandle,HuanTianMiJingFubenConfig.gameTime)
+
+	-- 发送统计信息
+	local fbTime = Fuben.GetFubenGameTime(fbPtr)
+
+	-- 层数	8	caleOther3
+	-- 所有怪物数	7	caleOther2
+	-- 本层剩余怪物 9	caleRemainMonster
+	-- 剩余时间	10 caleGameTime
+	-- 本曾经验 12 caleSceneExp
+	-- 总经验 0 caleExp
+	
+	LActor.ChangeCaleValue(sysarg, caleOther3, fbVar.floor)
+	LActor.ChangeCaleValue(sysarg, caleOther2, HuanTianMiJingFubenConfig.monsterCount[fbVar.floor])
+	LActor.ChangeCaleValue(sysarg, caleRemainMonster, HuanTianMiJingFubenConfig.monsterCount[fbVar.floor])
+	LActor.ChangeCaleValue(sysarg, caleGameTime, fbTime)	-- 时间
+	LActor.ChangeCaleValue(sysarg,caleSceneExp,0)
+	LActor.ChangeCaleValue(sysarg,caleExp, 0)
+	LActor.SendAllCaleValue(sysarg)
+end
+
+-- 进入幻天密境副本2
+NPCFunc.OnEnterHuanTian[2] = function(sysarg, Fhandle)
+	--初始化一些变量
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbId = Fuben.getFubenIdbyFuBenPtr(fbPtr)
+	if 0 == CommonFubenJiesuanConfig.OnEnTerFuben(sysarg,2,fbId) then
+		LActor.sendTipmsg( sysarg, Lang.ScriptTips.f00087, ttDialog )
+		return 2
+	end
+	CommonFubenJiesuanConfig.install(Fhandle)
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+	fbVar.floor = 4
+	-- 设置副本层数
+	-- CommonFubenJiesuanConfig.setFubenFloor(sysarg,Fhandle)
+
+    --进入副本
+	LActor.enterFuBen( sysarg, Fhandle, HuanTianMiJingFubenConfig.fubenToSence[2], HuanTianMiJingFubenConfig.playerPos[1], HuanTianMiJingFubenConfig.playerPos[2] )
+	
+	-- 活跃奖励
+	FCActivityHandler.ActivityReward (sysarg)
+
+	-- 设置副本的游戏时间
+	Fuben.SetFubenGameTime(Fhandle,HuanTianMiJingFubenConfig.gameTime)
+
+	-- 发送统计信息
+	local fbTime = Fuben.GetFubenGameTime(fbPtr)
+
+	LActor.ChangeCaleValue(sysarg, caleOther3, fbVar.floor)
+	LActor.ChangeCaleValue(sysarg, caleOther2, HuanTianMiJingFubenConfig.monsterCount[fbVar.floor])
+	LActor.ChangeCaleValue(sysarg, caleRemainMonster, HuanTianMiJingFubenConfig.monsterCount[fbVar.floor])
+	LActor.ChangeCaleValue(sysarg, caleGameTime, fbTime)	-- 时间
+	LActor.ChangeCaleValue(sysarg,caleSceneExp,0)
+	LActor.ChangeCaleValue(sysarg,caleExp, 0)
+	LActor.SendAllCaleValue(sysarg)
+end
+
+-- 进入幻天密境副本3
+NPCFunc.OnEnterHuanTian[3] = function(sysarg, Fhandle)
+	--初始化一些变量
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbId = Fuben.getFubenIdbyFuBenPtr(fbPtr)
+	if 0 == CommonFubenJiesuanConfig.OnEnTerFuben(sysarg,3,fbId) then
+		LActor.sendTipmsg( sysarg, Lang.ScriptTips.f00087, ttDialog )
+		return 2
+	end
+	CommonFubenJiesuanConfig.install(Fhandle)
+
+    --进入副本
+	LActor.enterFuBen( sysarg, Fhandle, HuanTianMiJingFubenConfig.fubenToSence[3], HuanTianMiJingFubenConfig.playerPos[1], HuanTianMiJingFubenConfig.playerPos[2] )
+	
+	-- 活跃奖励
+	FCActivityHandler.ActivityReward (sysarg)
+
+	-- 设置副本的游戏时间
+	Fuben.SetFubenGameTime(Fhandle,HuanTianMiJingFubenConfig.gameTime)
+
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+	fbVar.floor = 7
+
+	-- 发送统计信息
+	local fbTime = Fuben.GetFubenGameTime(fbPtr)
+
+	LActor.ChangeCaleValue(sysarg, caleOther3, fbVar.floor)
+	LActor.ChangeCaleValue(sysarg, caleOther2, HuanTianMiJingFubenConfig.monsterCount[fbVar.floor])
+	LActor.ChangeCaleValue(sysarg, caleRemainMonster, HuanTianMiJingFubenConfig.monsterCount[fbVar.floor])
+	LActor.ChangeCaleValue(sysarg, caleGameTime, fbTime)	-- 时间
+	LActor.ChangeCaleValue(sysarg,caleSceneExp,0)
+	LActor.ChangeCaleValue(sysarg,caleExp, 0)
+	LActor.SendAllCaleValue(sysarg)
+end
+
+-- 进入幻天密境副本4
+NPCFunc.OnEnterHuanTian[4] = function(sysarg, Fhandle)
+	--初始化一些变量
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbId = Fuben.getFubenIdbyFuBenPtr(fbPtr)
+	if 0 == CommonFubenJiesuanConfig.OnEnTerFuben(sysarg,4,fbId) then
+		LActor.sendTipmsg( sysarg, Lang.ScriptTips.f00087, ttDialog )
+		return 2
+	end
+	CommonFubenJiesuanConfig.install(Fhandle)
+
+    --进入副本
+	LActor.enterFuBen( sysarg, Fhandle, HuanTianMiJingFubenConfig.fubenToSence[4], HuanTianMiJingFubenConfig.playerPos[1], HuanTianMiJingFubenConfig.playerPos[2] )
+	
+	-- 活跃奖励
+	FCActivityHandler.ActivityReward (sysarg)
+
+	-- 设置副本的游戏时间
+	Fuben.SetFubenGameTime(Fhandle,HuanTianMiJingFubenConfig.gameTime)
+
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+	fbVar.floor = 10
+
+	-- 发送统计信息
+	local fbTime = Fuben.GetFubenGameTime(fbPtr)
+
+	LActor.ChangeCaleValue(sysarg, caleOther3, fbVar.floor)
+	LActor.ChangeCaleValue(sysarg, caleOther2, HuanTianMiJingFubenConfig.monsterCount[fbVar.floor])
+	LActor.ChangeCaleValue(sysarg, caleRemainMonster, HuanTianMiJingFubenConfig.monsterCount[fbVar.floor])
+	LActor.ChangeCaleValue(sysarg, caleGameTime, fbTime)	-- 时间
+	LActor.ChangeCaleValue(sysarg,caleSceneExp,0)
+	LActor.ChangeCaleValue(sysarg,caleExp, 0)
+	LActor.SendAllCaleValue(sysarg)
+end
+
+-- 进入幻天密境副本5
+NPCFunc.OnEnterHuanTian[5] = function(sysarg, Fhandle)
+	--初始化一些变量
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbId = Fuben.getFubenIdbyFuBenPtr(fbPtr)
+	if 0 == CommonFubenJiesuanConfig.OnEnTerFuben(sysarg,5,fbId) then
+		LActor.sendTipmsg( sysarg, Lang.ScriptTips.f00087, ttDialog )
+		return 2
+	end
+	CommonFubenJiesuanConfig.install(Fhandle)
+
+    --进入副本
+	LActor.enterFuBen( sysarg, Fhandle, HuanTianMiJingFubenConfig.fubenToSence[5], HuanTianMiJingFubenConfig.playerPos[1], HuanTianMiJingFubenConfig.playerPos[2] )
+	
+	-- 活跃奖励
+	FCActivityHandler.ActivityReward (sysarg)
+
+	-- 设置副本的游戏时间
+	Fuben.SetFubenGameTime(Fhandle,HuanTianMiJingFubenConfig.gameTime)
+
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+	fbVar.floor = 13
+
+	-- 发送统计信息
+	local fbTime = Fuben.GetFubenGameTime(fbPtr)
+
+	LActor.ChangeCaleValue(sysarg, caleOther3, fbVar.floor)
+	LActor.ChangeCaleValue(sysarg, caleOther2, HuanTianMiJingFubenConfig.monsterCount[fbVar.floor])
+	LActor.ChangeCaleValue(sysarg, caleRemainMonster, HuanTianMiJingFubenConfig.monsterCount[fbVar.floor])
+	LActor.ChangeCaleValue(sysarg, caleGameTime, fbTime)	-- 时间
+	LActor.ChangeCaleValue(sysarg,caleSceneExp,0)
+	LActor.ChangeCaleValue(sysarg,caleExp, 0)
+	LActor.SendAllCaleValue(sysarg)
+end
+
+-- 进入幻天密境副本6
+NPCFunc.OnEnterHuanTian[6] = function(sysarg, Fhandle)
+	--初始化一些变量
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbId = Fuben.getFubenIdbyFuBenPtr(fbPtr)
+	if 0 == CommonFubenJiesuanConfig.OnEnTerFuben(sysarg,6,fbId) then
+		LActor.sendTipmsg( sysarg, Lang.ScriptTips.f00087, ttDialog )
+		return 2
+	end
+	CommonFubenJiesuanConfig.install(Fhandle)
+
+    --进入副本
+	LActor.enterFuBen( sysarg, Fhandle, HuanTianMiJingFubenConfig.fubenToSence[6], HuanTianMiJingFubenConfig.playerPos[1], HuanTianMiJingFubenConfig.playerPos[2] )
+	
+	-- 活跃奖励
+	FCActivityHandler.ActivityReward (sysarg)
+
+	-- 设置副本的游戏时间
+	Fuben.SetFubenGameTime(Fhandle,HuanTianMiJingFubenConfig.gameTime)
+
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+	fbVar.floor = 16
+
+	-- 发送统计信息
+	local fbTime = Fuben.GetFubenGameTime(fbPtr)
+
+	LActor.ChangeCaleValue(sysarg, caleOther3, fbVar.floor)
+	LActor.ChangeCaleValue(sysarg, caleOther2, HuanTianMiJingFubenConfig.monsterCount[fbVar.floor])
+	LActor.ChangeCaleValue(sysarg, caleRemainMonster, HuanTianMiJingFubenConfig.monsterCount[fbVar.floor])
+	LActor.ChangeCaleValue(sysarg, caleGameTime, fbTime)	-- 时间
+	LActor.ChangeCaleValue(sysarg,caleSceneExp,0)
+	LActor.ChangeCaleValue(sysarg,caleExp, 0)
+	LActor.SendAllCaleValue(sysarg)
+end
+
+NPCFunc.OnEnterXinMo = {}
+-- 进入破狱之战的处理
+NPCFunc.OnEnterXinMo[1] = function(sysarg, Fhandle)
+	--初始化一些变量
+	CommonFubenJiesuanConfig.install(Fhandle)
+	local fbId = LActor.getFubenId(sysarg)
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+	fbVar.floor = 1
+	LActor.enterFuBen( sysarg, Fhandle, XinMoHuanJingFubenConfig.fubenToSence[1], XinMoHuanJingFubenConfig.playerPos[1], XinMoHuanJingFubenConfig.playerPos[2] )
+
+	-- 设置副本的游戏时间
+	Fuben.SetFubenGameTime(Fhandle,XinMoHuanJingFubenConfig.gameTime)
+
+	-- 发送统计信息
+	local fbTime = Fuben.GetFubenGameTime(fbPtr)
+
+	print("------time:::::  "..XinMoHuanJingFubenConfig.gameTime)
+
+	LActor.ChangeCaleValue(sysarg, caleOther3, fbVar.floor)
+	LActor.ChangeCaleValue(sysarg, caleOther2, XinMoHuanJingFubenConfig.monsterCount[fbVar.floor])
+	LActor.ChangeCaleValue(sysarg, caleRemainMonster, XinMoHuanJingFubenConfig.monsterCount[fbVar.floor])
+	LActor.ChangeCaleValue(sysarg, caleFubenTime, XinMoHuanJingFubenConfig.gameTime)	-- 时间
+	-- LActor.ChangeCaleValue(sysarg,caleSceneExp,0)
+	LActor.ChangeCaleValue(sysarg,caleExp, 0)
+	LActor.SendAllCaleValue(sysarg)
+end
+
+NPCFunc.OnEnterXinMo[2] = function(sysarg, Fhandle)
+	--初始化一些变量
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbId = Fuben.getFubenIdbyFuBenPtr(fbPtr)
+	
+	if 0 == CommonFubenJiesuanConfig.OnEnTerFuben(sysarg,2,fbId) then
+		LActor.sendTipmsg( sysarg, Lang.ScriptTips.f00087, ttDialog )
+		return 2
+	end
+	CommonFubenJiesuanConfig.install(Fhandle)
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+	fbVar.floor = 4
+	LActor.enterFuBen( sysarg, Fhandle, XinMoHuanJingFubenConfig.fubenToSence[2], XinMoHuanJingFubenConfig.playerPos[1], XinMoHuanJingFubenConfig.playerPos[2] )
+
+	-- 设置副本的游戏时间
+	Fuben.SetFubenGameTime(Fhandle,XinMoHuanJingFubenConfig.gameTime)
+
+	-- 发送统计信息
+	local fbTime = Fuben.GetFubenGameTime(fbPtr)
+
+	LActor.ChangeCaleValue(sysarg, caleOther3, fbVar.floor)
+	LActor.ChangeCaleValue(sysarg, caleOther2, XinMoHuanJingFubenConfig.monsterCount[fbVar.floor])
+	LActor.ChangeCaleValue(sysarg, caleRemainMonster, XinMoHuanJingFubenConfig.monsterCount[fbVar.floor])
+	LActor.ChangeCaleValue(sysarg, caleFubenTime, fbTime)	-- 时间
+	LActor.ChangeCaleValue(sysarg,caleSceneExp,0)
+	LActor.ChangeCaleValue(sysarg,caleExp, 0)
+	LActor.SendAllCaleValue(sysarg)
+end
+
+NPCFunc.OnEnterXinMo[3] = function(sysarg, Fhandle)
+	--初始化一些变量
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbId = Fuben.getFubenIdbyFuBenPtr(fbPtr)
+	if 0 == CommonFubenJiesuanConfig.OnEnTerFuben(sysarg,3,fbId) then
+		LActor.sendTipmsg( sysarg, Lang.ScriptTips.f00087, ttDialog )
+		return 2
+	end
+	
+	-- 神秘商店初始化
+	local var = LActor.getStaticVar(sysarg)
+	var.newentrust = {}
+	var.newentrust[LiudaoShop[1].fblistid] = {}
+	var.newentrust[LiudaoShop[1].fblistid].state = 1
+
+	CommonFubenJiesuanConfig.install(Fhandle)
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+	fbVar.floor = 7
+	LActor.enterFuBen( sysarg, Fhandle, XinMoHuanJingFubenConfig.fubenToSence[3], XinMoHuanJingFubenConfig.playerPos[1], XinMoHuanJingFubenConfig.playerPos[2] )
+
+	-- 设置副本的游戏时间
+	Fuben.SetFubenGameTime(Fhandle,XinMoHuanJingFubenConfig.gameTime)
+
+	-- 发送统计信息
+	local fbTime = Fuben.GetFubenGameTime(fbPtr)
+
+	LActor.ChangeCaleValue(sysarg, caleOther3, fbVar.floor)
+	LActor.ChangeCaleValue(sysarg, caleOther2, XinMoHuanJingFubenConfig.monsterCount[fbVar.floor])
+	LActor.ChangeCaleValue(sysarg, caleRemainMonster, XinMoHuanJingFubenConfig.monsterCount[fbVar.floor])
+	LActor.ChangeCaleValue(sysarg, caleFubenTime, fbTime)	-- 时间
+	LActor.ChangeCaleValue(sysarg,caleSceneExp,0)
+	LActor.ChangeCaleValue(sysarg,caleExp, 0)
+	LActor.SendAllCaleValue(sysarg)
+end
+
+NPCFunc.OnEnterXinMo[4] = function(sysarg, Fhandle)
+	--初始化一些变量
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbId = Fuben.getFubenIdbyFuBenPtr(fbPtr)
+	if 0 == CommonFubenJiesuanConfig.OnEnTerFuben(sysarg,4,fbId) then
+		LActor.sendTipmsg( sysarg, Lang.ScriptTips.f00087, ttDialog )
+		return 2
+	end
+	CommonFubenJiesuanConfig.install(Fhandle)
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+	fbVar.floor = 11
+	LActor.enterFuBen( sysarg, Fhandle, XinMoHuanJingFubenConfig.fubenToSence[4], XinMoHuanJingFubenConfig.playerPos[1], XinMoHuanJingFubenConfig.playerPos[2] )
+
+	-- 设置副本的游戏时间
+	Fuben.SetFubenGameTime(Fhandle,XinMoHuanJingFubenConfig.gameTime)
+
+	-- 发送统计信息
+	local fbTime = Fuben.GetFubenGameTime(fbPtr)
+
+	LActor.ChangeCaleValue(sysarg, caleOther3, fbVar.floor)
+	LActor.ChangeCaleValue(sysarg, caleOther2, XinMoHuanJingFubenConfig.monsterCount[fbVar.floor])
+	LActor.ChangeCaleValue(sysarg, caleRemainMonster, XinMoHuanJingFubenConfig.monsterCount[fbVar.floor])
+	LActor.ChangeCaleValue(sysarg, caleFubenTime, fbTime)	-- 时间
+	LActor.ChangeCaleValue(sysarg,caleSceneExp,0)
+	LActor.ChangeCaleValue(sysarg,caleExp, 0)
+	LActor.SendAllCaleValue(sysarg)
+end
+
+NPCFunc.OnEnterXinMo[5] = function(sysarg, Fhandle)
+	--初始化一些变量
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbId = Fuben.getFubenIdbyFuBenPtr(fbPtr)
+	if 0 == CommonFubenJiesuanConfig.OnEnTerFuben(sysarg,5,fbId) then
+		LActor.sendTipmsg( sysarg, Lang.ScriptTips.f00087, ttDialog )
+		return 2
+	end
+	CommonFubenJiesuanConfig.install(Fhandle)
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+	fbVar.floor = 14
+	LActor.enterFuBen( sysarg, Fhandle, XinMoHuanJingFubenConfig.fubenToSence[5], XinMoHuanJingFubenConfig.playerPos[1], XinMoHuanJingFubenConfig.playerPos[2] )
+
+	-- 设置副本的游戏时间
+	Fuben.SetFubenGameTime(Fhandle,XinMoHuanJingFubenConfig.gameTime)
+
+	-- 发送统计信息
+	local fbTime = Fuben.GetFubenGameTime(fbPtr)
+
+	LActor.ChangeCaleValue(sysarg, caleOther3, fbVar.floor)
+	LActor.ChangeCaleValue(sysarg, caleOther2, XinMoHuanJingFubenConfig.monsterCount[fbVar.floor])
+	LActor.ChangeCaleValue(sysarg, caleRemainMonster, XinMoHuanJingFubenConfig.monsterCount[fbVar.floor])
+	LActor.ChangeCaleValue(sysarg, caleFubenTime, fbTime)	-- 时间
+	LActor.ChangeCaleValue(sysarg,caleSceneExp,0)
+	LActor.ChangeCaleValue(sysarg,caleExp, 0)
+	LActor.SendAllCaleValue(sysarg)
+end
+
+NPCFunc.OnEnterXinMo[6] = function(sysarg, Fhandle)
+	--初始化一些变量
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbId = Fuben.getFubenIdbyFuBenPtr(fbPtr)
+	if 0 == CommonFubenJiesuanConfig.OnEnTerFuben(sysarg,6,fbId) then
+		LActor.sendTipmsg( sysarg, Lang.ScriptTips.f00087, ttDialog )
+		return 2
+	end
+	CommonFubenJiesuanConfig.install(Fhandle)
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+	fbVar.floor = 17
+	LActor.enterFuBen( sysarg, Fhandle, XinMoHuanJingFubenConfig.fubenToSence[6], XinMoHuanJingFubenConfig.playerPos[1], XinMoHuanJingFubenConfig.playerPos[2] )
+
+	-- 设置副本的游戏时间
+	Fuben.SetFubenGameTime(Fhandle,XinMoHuanJingFubenConfig.gameTime)
+
+	-- 发送统计信息
+	local fbTime = Fuben.GetFubenGameTime(fbPtr)
+
+	LActor.ChangeCaleValue(sysarg, caleOther3, fbVar.floor)
+	LActor.ChangeCaleValue(sysarg, caleOther2, XinMoHuanJingFubenConfig.monsterCount[fbVar.floor])
+	LActor.ChangeCaleValue(sysarg, caleRemainMonster, XinMoHuanJingFubenConfig.monsterCount[fbVar.floor])
+	LActor.ChangeCaleValue(sysarg, caleFubenTime, fbTime)	-- 时间
+	LActor.ChangeCaleValue(sysarg,caleSceneExp,0)
+	LActor.ChangeCaleValue(sysarg,caleExp, 0)
+	LActor.SendAllCaleValue(sysarg)
+end
+
+
+-- 密宗佛塔的处理
+NPCFunc.OnEnterTianMoTa = {}
+NPCFunc.OnEnterTianMoTa[1] = function(sysarg, Fhandle)
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbId = Fuben.getFubenIdbyFuBenPtr(fbPtr)
+	if 0 == CommonFubenJiesuanConfig.OnEnTerFuben(sysarg,1,fbId) then
+		LActor.sendTipmsg( sysarg, Lang.ScriptTips.f00087, ttDialog )
+		return 2
+	end
+	CommonFubenJiesuanConfig.install(Fhandle)
+	LActor.enterFuBen( sysarg, Fhandle, TianMoTaConfig.fubenToSence[1], TianMoTaConfig.playerPos[1], TianMoTaConfig.playerPos[2] )
+
+	-- 设置副本的游戏时间
+	Fuben.SetFubenGameTime(Fhandle,TianMoTaConfig.gameTime)
+
+	-- 8 7 9 10 12 0
+	-- caleOther3	挑战层数
+	-- caleOther2	所有怪物
+	-- caleRemainMonster 本曾剩余怪物
+	-- caleGameTime  游戏时间
+	-- caleSceneExp  场景经验
+	-- caleExp       总经验 
+	local fbTime = Fuben.GetFubenGameTime(fbPtr)
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+	fbVar.floor = 1
+	LActor.ChangeCaleValue(sysarg, caleOther3, fbVar.floor)
+	LActor.ChangeCaleValue(sysarg, caleOther2, TianMoTaConfig.monsterCount[fbVar.floor])
+	LActor.ChangeCaleValue(sysarg, caleRemainMonster, TianMoTaConfig.monsterCount[fbVar.floor])
+	LActor.ChangeCaleValue(sysarg, caleGameTime, fbTime)	-- 时间
+	LActor.ChangeCaleValue(sysarg,caleSceneExp,0)
+	LActor.ChangeCaleValue(sysarg,caleExp, 0)
+	LActor.SendAllCaleValue(sysarg)
+end
+
+NPCFunc.OnEnterTianMoTa[2] = function(sysarg, Fhandle)
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbId = Fuben.getFubenIdbyFuBenPtr(fbPtr)
+	if 0 == CommonFubenJiesuanConfig.OnEnTerFuben(sysarg,2,fbId) then
+		LActor.sendTipmsg( sysarg, Lang.ScriptTips.f00087, ttDialog )
+		return 2
+	end
+	CommonFubenJiesuanConfig.install(Fhandle)
+	LActor.enterFuBen( sysarg, Fhandle, TianMoTaConfig.fubenToSence[2], TianMoTaConfig.playerPos[1], TianMoTaConfig.playerPos[2] )
+
+	-- 设置副本的游戏时间
+	Fuben.SetFubenGameTime(Fhandle,TianMoTaConfig.gameTime)
+
+	local fbTime = Fuben.GetFubenGameTime(fbPtr)
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+	fbVar.floor = 5
+	LActor.ChangeCaleValue(sysarg, caleOther3, fbVar.floor)
+	LActor.ChangeCaleValue(sysarg, caleOther2, TianMoTaConfig.monsterCount[fbVar.floor])
+	LActor.ChangeCaleValue(sysarg, caleRemainMonster, TianMoTaConfig.monsterCount[fbVar.floor])
+	LActor.ChangeCaleValue(sysarg, caleGameTime, fbTime)	-- 时间
+	LActor.ChangeCaleValue(sysarg,caleSceneExp,0)
+	LActor.ChangeCaleValue(sysarg,caleExp, 0)
+	LActor.SendAllCaleValue(sysarg)
+end
+
+NPCFunc.OnEnterTianMoTa[3] = function(sysarg, Fhandle)
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbId = Fuben.getFubenIdbyFuBenPtr(fbPtr)
+	if 0 == CommonFubenJiesuanConfig.OnEnTerFuben(sysarg,3,fbId) then
+		LActor.sendTipmsg( sysarg, Lang.ScriptTips.f00087, ttDialog )
+		return 2
+	end
+	CommonFubenJiesuanConfig.install(Fhandle)
+	LActor.enterFuBen( sysarg, Fhandle, TianMoTaConfig.fubenToSence[3], TianMoTaConfig.playerPos[1], TianMoTaConfig.playerPos[2] )
+
+	-- 设置副本的游戏时间
+	Fuben.SetFubenGameTime(Fhandle,TianMoTaConfig.gameTime)
+
+	local fbTime = Fuben.GetFubenGameTime(fbPtr)
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+	fbVar.floor = 9
+	LActor.ChangeCaleValue(sysarg, caleOther3, fbVar.floor)
+	LActor.ChangeCaleValue(sysarg, caleOther2, TianMoTaConfig.monsterCount[fbVar.floor])
+	LActor.ChangeCaleValue(sysarg, caleRemainMonster, TianMoTaConfig.monsterCount[fbVar.floor])
+	LActor.ChangeCaleValue(sysarg, caleGameTime, fbTime)	-- 时间
+	LActor.ChangeCaleValue(sysarg,caleSceneExp,0)
+	LActor.ChangeCaleValue(sysarg,caleExp, 0)
+	LActor.SendAllCaleValue(sysarg)
+end
+
+NPCFunc.OnEnterTianMoTa[4] = function(sysarg, Fhandle)
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbId = Fuben.getFubenIdbyFuBenPtr(fbPtr)
+	if 0 == CommonFubenJiesuanConfig.OnEnTerFuben(sysarg,4,fbId) then
+		LActor.sendTipmsg( sysarg, Lang.ScriptTips.f00087, ttDialog )
+		return 2
+	end
+	CommonFubenJiesuanConfig.install(Fhandle)
+	LActor.enterFuBen( sysarg, Fhandle, TianMoTaConfig.fubenToSence[4], TianMoTaConfig.playerPos[1], TianMoTaConfig.playerPos[2] )
+
+	-- 设置副本的游戏时间
+	Fuben.SetFubenGameTime(Fhandle,TianMoTaConfig.gameTime)
+
+	local fbTime = Fuben.GetFubenGameTime(fbPtr)
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+	fbVar.floor = 13
+	LActor.ChangeCaleValue(sysarg, caleOther3, fbVar.floor)
+	LActor.ChangeCaleValue(sysarg, caleOther2, TianMoTaConfig.monsterCount[fbVar.floor])
+	LActor.ChangeCaleValue(sysarg, caleRemainMonster, TianMoTaConfig.monsterCount[fbVar.floor])
+	LActor.ChangeCaleValue(sysarg, caleGameTime, fbTime)	-- 时间
+	LActor.ChangeCaleValue(sysarg,caleSceneExp,0)
+	LActor.ChangeCaleValue(sysarg,caleExp, 0)
+	LActor.SendAllCaleValue(sysarg)
+end
+
+NPCFunc.OnEnterTianMoTa[5] = function(sysarg, Fhandle)
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbId = Fuben.getFubenIdbyFuBenPtr(fbPtr)
+	if 0 == CommonFubenJiesuanConfig.OnEnTerFuben(sysarg,5,fbId) then
+		LActor.sendTipmsg( sysarg, Lang.ScriptTips.f00087, ttDialog )
+		return 2
+	end
+	CommonFubenJiesuanConfig.install(Fhandle)
+	LActor.enterFuBen( sysarg, Fhandle, TianMoTaConfig.fubenToSence[5], TianMoTaConfig.playerPos[1], TianMoTaConfig.playerPos[2] )
+
+	-- 设置副本的游戏时间
+	Fuben.SetFubenGameTime(Fhandle,TianMoTaConfig.gameTime)
+
+	local fbTime = Fuben.GetFubenGameTime(fbPtr)
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+	fbVar.floor = 17
+	LActor.ChangeCaleValue(sysarg, caleOther3, fbVar.floor)
+	LActor.ChangeCaleValue(sysarg, caleOther2, TianMoTaConfig.monsterCount[fbVar.floor])
+	LActor.ChangeCaleValue(sysarg, caleRemainMonster, TianMoTaConfig.monsterCount[fbVar.floor])
+	LActor.ChangeCaleValue(sysarg, caleGameTime, fbTime)	-- 时间
+	LActor.ChangeCaleValue(sysarg,caleSceneExp,0)
+	LActor.ChangeCaleValue(sysarg,caleExp, 0)
+	LActor.SendAllCaleValue(sysarg)
+end
+
+--NPCFunc.OnEnterTianMoTa[6] = function(sysarg, Fhandle)
+--	local fbPtr = Fuben.getFubenPtr( Fhandle )
+--	local fbId = Fuben.getFubenIdbyFuBenPtr(fbPtr)
+--	if 0 == CommonFubenJiesuanConfig.OnEnTerFuben(sysarg,6,fbId) then
+--		LActor.sendTipmsg( sysarg, Lang.ScriptTips.f00087, ttDialog )
+--		return 2
+--	end
+--	CommonFubenJiesuanConfig.install(Fhandle)
+--	LActor.enterFuBen( sysarg, Fhandle, TianMoTaConfig.fubenToSence[6], TianMoTaConfig.playerPos[1], TianMoTaConfig.playerPos[2] )
+--
+--	-- 设置副本的游戏时间
+--	Fuben.SetFubenGameTime(Fhandle,TianMoTaConfig.gameTime)
+--
+--	local fbTime = Fuben.GetFubenGameTime(fbPtr)
+--	local fbPtr = Fuben.getFubenPtr( Fhandle )
+--	local fbVar = Fuben.getDyanmicVar(fbPtr)
+--	fbVar.floor = 21
+--	LActor.ChangeCaleValue(sysarg, caleOther3, fbVar.floor)
+--	LActor.ChangeCaleValue(sysarg, caleOther2, TianMoTaConfig.monsterCount[fbVar.floor])
+--	LActor.ChangeCaleValue(sysarg, caleRemainMonster, TianMoTaConfig.monsterCount[fbVar.floor])
+--	LActor.ChangeCaleValue(sysarg, caleGameTime, fbTime)	-- 时间
+--	LActor.ChangeCaleValue(sysarg,caleSceneExp,0)
+--	LActor.ChangeCaleValue(sysarg,caleExp, 0)
+--	LActor.SendAllCaleValue(sysarg)
+--end
+
+NPCFunc.OnEnterMoJieRuKou = {}
+-- 魔界入口
+NPCFunc.OnEnterMoJieRuKou[1] = function(sysarg, Fhandle)
+	CommonFubenJiesuanConfig.install(Fhandle)
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+
+	for i=1, #MoJieRuKouFubenConfig.babyList do
+		local conf = MoJieRuKouFubenConfig.babyList[i]
+		print("----::"..i..","..conf.mid..","..conf.x..","..conf.y)
+		local monsterPtr = LActor.createMonster(sysarg, conf.mid, conf.x, conf.y, 0)
+		LActor.addState(monsterPtr, esStateAttackedForbid)
+
+		LActor.changeToPet(monsterPtr)
+	end
+
+	LActor.enterFuBen( sysarg, Fhandle, MoJieRuKouFubenConfig.fubenToSence[1], MoJieRuKouFubenConfig.playerPos[1], MoJieRuKouFubenConfig.playerPos[2] )
+
+	-- 设置副本的游戏时间
+	Fuben.SetFubenGameTime(Fhandle,MoJieRuKouFubenConfig.gameTime)
+	fbVar.floor = 1
+
+	local fbTime = Fuben.GetFubenGameTime(fbPtr)
+	LActor.ChangeCaleValue(sysarg, caleRemainMonster, MoJieRuKouFubenConfig.monsterCount[fbVar.floor])
+	LActor.ChangeCaleValue(sysarg, caleGameTime, fbTime)	-- 时间
+	LActor.SendAllCaleValue(sysarg)
+end
+
+-- 玄天封印
+NPCFunc.OnEnterXuanTian = function(sysarg, Fhandle)
+	--初始化一些变量
+	CommonFubenJiesuanConfig.install(Fhandle)
+	LActor.enterFuBen( sysarg, Fhandle, XuanTianFengYinConfig.fubenToSence[1], XuanTianFengYinConfig.playerPos[1], XuanTianFengYinConfig.playerPos[2] )
+
+	-- 设置副本的游戏时间
+	Fuben.SetFubenGameTime(Fhandle,XuanTianFengYinConfig.gameTime)
+	local fbTime = Fuben.GetFubenGameTime(fbPtr)
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+
+	fbVar.floor = 1
+
+	LActor.ChangeCaleValue(sysarg, caleOther3, fbVar.floor)
+	LActor.ChangeCaleValue(sysarg, caleOther2, XuanTianFengYinConfig.monsterCount[fbVar.floor])
+	LActor.ChangeCaleValue(sysarg, caleRemainMonster, XuanTianFengYinConfig.monsterCount[fbVar.floor])
+	LActor.ChangeCaleValue(sysarg, caleGameTime, XuanTianFengYinConfig.gameTime)	-- 时间
+	LActor.ChangeCaleValue(sysarg,caleSceneExp,0)
+	LActor.ChangeCaleValue(sysarg,caleExp, 0)
+	LActor.SendAllCaleValue(sysarg)
+end
+
+
+-- 进入场景处理函数
+NPCFunc.OnEnterNewPetFuben = function(sysarg)
+	-- 随机生成怪物
+	local area = NewPetConfig.monstersArea
+	local monsters = NewPetConfig.monsters
+	local sum = 0
+	for j=1,#monsters do
+		sum = sum + monsters[j].percent
+	end
+
+	local hScene = LActor.getSceneHandle( sysarg )
+
+	for i=1,#area do
+		-- 随机怪物
+		local rd = System.getRandomNumber(sum) 
+		local tmp = 0
+		local monsterId = 0
+		for j=1,#monsters do
+			tmp = tmp + monsters[j].percent
+			if tmp >= rd then
+				monsterId = monsters[j].monsterId
+				break
+			end 
+		end
+		if monsterId ~= 0 then
+			-- 创建怪物
+			Fuben.createMonsters( hScene, monsterId, area[i].posX1, area[i].posX2, area[i].posY1,area[i].posY2,area[i].monsterCount,area[i].livetime)
+		end
+	end
+end
+
+-- 进入新宠物岛
+NPCFunc.OnEnterNewPet = function(sysarg, Fhandle)
+	--初始化一些变量
+	CommonFubenJiesuanConfig.install(Fhandle)
+	LActor.enterFuBen( sysarg, Fhandle, NewPetConfig.fubenToSence[1], NewPetConfig.playerPos[1], NewPetConfig.playerPos[2] )
+
+	NPCFunc.OnEnterNewPetFuben(sysarg)
+	-- 设置副本的游戏时间
+	Fuben.SetFubenGameTime(Fhandle,NewPetConfig.gameTime)
+	local fbTime = Fuben.GetFubenGameTime(fbPtr)
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+
+	fbVar.floor = 1
+
+	LActor.ChangeCaleValue(sysarg, caleOther3, fbVar.floor)
+	LActor.ChangeCaleValue(sysarg, caleOther2, NewPetConfig.monsterCount[fbVar.floor])
+	LActor.ChangeCaleValue(sysarg, caleRemainMonster, NewPetConfig.monsterCount[fbVar.floor])
+	LActor.ChangeCaleValue(sysarg, caleGameTime, NewPetConfig.gameTime)	-- 时间
+	LActor.ChangeCaleValue(sysarg,caleSceneExp,0)
+	LActor.ChangeCaleValue(sysarg,caleExp, 0)
+	LActor.SendAllCaleValue(sysarg)
+end
+
+-- 历练副本的特殊处理
+for i=1,#LilianFubenConfig.fubenId do
+	NPCFunc.registerEnterFuben( LilianFubenConfig.fubenId[i], NPCFunc.OnEnterLiLian) 
+end
+
+-- 幻天副本的特殊处理
+for i=1,#HuanTianMiJingFubenConfig.fubenId do
+	NPCFunc.registerEnterFuben( HuanTianMiJingFubenConfig.fubenId[i], NPCFunc.OnEnterHuanTian[i]) 
+end
+
+-- 破狱之战副本的特殊处理
+for i=1,#XinMoHuanJingFubenConfig.fubenId do
+	NPCFunc.registerEnterFuben( XinMoHuanJingFubenConfig.fubenId[i], NPCFunc.OnEnterXinMo[i]) 
+end
+
+---- 玄天封印
+--for i=1,#XuanTianFengYinConfig.fubenId do
+--	NPCFunc.registerEnterFuben( XuanTianFengYinConfig.fubenId[1], NPCFunc.OnEnterXuanTian) 
+--end
+
+-- 密宗佛塔
+for i=1,#TianMoTaConfig.fubenId do
+	NPCFunc.registerEnterFuben( TianMoTaConfig.fubenId[i], NPCFunc.OnEnterTianMoTa[i]) 
+end
+
+---- 魔界入口
+--for i=1,#MoJieRuKouFubenConfig.fubenId do
+--	NPCFunc.registerEnterFuben( MoJieRuKouFubenConfig.fubenId[i], NPCFunc.OnEnterMoJieRuKou[i]) 
+--end
+
+NPCFunc.registerEnterFuben( ShenHaiConf.fubenId, NPCFunc.OnEnterShenHai )     -- 深海之恋的特殊处理
+NPCFunc.registerEnterFuben( NirvanaSet.FBid,NPCFunc.OnEnterNirvana)           -- 必杀技的特殊处理
+NPCFunc.registerEnterFuben( ShangJinSet.Fbid, NPCFunc.OnEnterShangJin)        -- 赏金副本特殊处理
+NPCFunc.registerEnterFuben( NewPetConfig.fubenId[1], NPCFunc.OnEnterNewPet)   -- 宠物岛副本

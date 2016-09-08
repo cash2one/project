@@ -1,0 +1,99 @@
+--活动 战力排行争霸
+--#include "..\..\language\langCode.txt" once
+FightRankConfig = {
+	openDay = 5,	--开活动时（天）
+	everyDayAwards = {
+		--每日等级排行奖励
+		{ --第一名的奖励
+			--type按邮件的奖励类型
+			{type = 2, id = 3, count = 100, bind = 1},
+			{type = 1, id = 30204, count = 2, bind = 1},
+		},
+		{ --第二名的奖励
+			{type = 2, id = 3, count = 80, bind = 1},
+			{type = 1, id = 30204, count = 1, bind = 1},
+		},
+		{ --第3名的奖励
+			{type = 2, id = 3, count = 80, bind = 1},
+			{type = 1, id = 30204, count = 1, bind = 1},
+		},
+		{ --第4名的奖励
+			{type = 2, id = 3, count = 80, bind = 1},
+			{type = 1, id = 30204, count = 1, bind = 1},
+		},
+		{ --第5名的奖励
+			{type = 2, id = 3, count = 80, bind = 1},
+			{type = 1, id = 30204, count = 1, bind = 1},
+		},
+		{ --第6名的奖励
+			{type = 2, id = 3, count = 50, bind = 1},
+			{type = 1, id = 30203, count = 2, bind = 1},
+		},
+		{ --第6名的奖励
+			{type = 2, id = 3, count = 50, bind = 1},
+			{type = 1, id = 30203, count = 2, bind = 1},
+		},
+		{ --第6名的奖励
+			{type = 2, id = 3, count = 50, bind = 1},
+			{type = 1, id = 30203, count = 2, bind = 1},
+		},
+		{ --第6名的奖励
+			{type = 2, id = 3, count = 50, bind = 1},
+			{type = 1, id = 30203, count = 2, bind = 1},
+		},
+		{ --第6名的奖励
+			{type = 2, id = 3, count = 50, bind = 1},
+			{type = 1, id = 30203, count = 2, bind = 1},
+		},
+	},
+
+	finalAwards = {
+		--终极奖励
+		{
+			rank = {1, 1} ,
+			item = { 
+				{type = 2, id = 3, count = 800,  bind = 0},
+				{type = 1, id = 21205, count = 1,  bind = 0},
+			}, 
+		},
+		{
+			rank = {2, 2} ,
+			item = { 
+				{type = 2, id = 3, count = 600,  bind = 0},
+				{type = 1, id = 21204, count = 1,  bind = 0},
+			}, 
+		},
+		{
+			rank = {3, 3} ,
+			item = { 
+				{type = 2, id = 3, count = 400,  bind = 0},
+				{type = 1, id = 21104, count = 1,  bind = 0},
+			}, 
+		},
+		{
+			rank = {4, 5} ,
+			item = { 
+				{type = 2, id = 3, count = 300,  bind = 0},
+			}, 
+		},
+		{
+			rank = {6, 10} ,
+			item = { 
+				{type = 2, id = 3, count = 200,  bind = 0},
+			}, 
+		},
+		{
+			rank = {11, 20} ,
+			item = { 
+				{type = 2, id = 3, count = 100,  bind = 0},
+			}, 
+		},
+		{
+			rank = {21, 50} ,
+			item = { 
+				{type = 2, id = 3, count = 50,  bind = 0},
+			}, 
+		},
+	},
+	finalActorCount = 50,	--记录的终极奖励人数
+}

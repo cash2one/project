@@ -1,0 +1,25 @@
+
+--深海BOSS冰冻技能
+{
+	id=37,
+	name=Lang.Skill.s37Name,
+	desc=Lang.Skill.s37Desc,
+	vocation=9,	
+	skillType=6,--技能的类型,0表示内功单体,1被动,2内功群体,3,外功单体，4,外功群体,5表示生活技能,6怪物技能,7普通攻击
+	
+	skillClass =9,
+	
+	skillSpellType=0,--表示直接释放，如果选择了目标将直接释放
+
+	commonCd=0,--使用的时候触发的公共的cd时间，单位是毫秒
+
+	specialBuffCond =3,
+
+	skillSubLevel=
+	{
+--#include "Skill_37_1.txt"	
+	}
+},
+
+
+

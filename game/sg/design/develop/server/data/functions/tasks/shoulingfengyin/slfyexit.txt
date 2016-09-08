@@ -1,0 +1,55 @@
+﻿--lua script
+--活动：天山博弈
+--NPC: 洛阳：聆悔大师
+
+--#include "data\language\LangCode.txt" once
+--#include "SLFY_Const.txt" once
+
+
+function tianShanBoYiExit_Main(sysarg)
+  local str = ""
+  local nHour, nMinute, nSecond = System.getTime(0,0,0)
+  if LocalDT.TianShanBoYiConst == nil then return end
+
+  str = Lang.TaskTalk.t00008
+  return str..Lang.TaskTalk.t00009
+end
+
+
+function giveGuiYuFunc(sysarg)
+	if(Item.getBagEmptyGridCount(sysarg) >= LocalDT.TianShanBoYiConst.MUSTFREECOUNT) then
+    local mustItemId = LocalDT.TianShanBoYiConst.MUSTITEMID     --需求的物品ID
+    if mustItemId == nil then return end
+    local itemCount = LActor.getItemCount(sysarg,mustItemId)
+	  if (itemCount ~= nil and itemCount >= 1) then
+	  	LActor.removeItem(sysarg,mustItemId,itemCount,-1,-1,-1,"TianShanBoYi",5)      --删除需求物品
+	  	--根据玩家的棋子数量和等级，给予奖励
+	  	local level = LActor.getIntProperty( sysarg, PROP_LEVEL )
+	  	local exp = math.floor(itemCount*tonumber(15000+(level-20)*LocalDT.TianShanBoYiConst.GETEXPRATE))
+      LActor.addExp(sysarg,exp,0,0)
+      return string.format(Lang.TaskTalk.t00019, exp)
+	  else
+      local tipMsg = string.format(Lang.TaskTalk.t00014)
+	  	LActor.sendTipmsg( sysarg,tipMsg,ttDialog )
+	  end
+	else
+    local tipMsg = string.format(Lang.TaskTalk.t00015, LocalDT.TianShanBoYiConst.MUSTFREECOUNT)
+    LActor.sendTipmsg( sysarg,tipMsg,ttDialog )
+	end
+end
+
+function exitTianShanBoYi(sysarg)
+  local NPChandle = LActor.getNpc(sysarg)
+  LActor.messageBox(sysarg,NPChandle,0,Lang.TaskTalk.t00016,Lang.TaskTalk.t00017,Lang.TaskTalk.t00018,NULL)
+end
+
+function exitBoYiTaiFunc(sysarg)
+  System.telportSceneByName(sysarg,LocalDT.TianShanBoYiConst.RETURNMAP,LocalDT.TianShanBoYiConst.RETURNMAPX,LocalDT.TianShanBoYiConst.RETURNMAPY)
+  LActor.closeNPCDialog( sysarg )
+end
+
+function cencelExitBoYiTaiFunc(sysarg)
+
+end
+
+-- table.insert(MainFnTable,tianShanBoYiExit_Main)

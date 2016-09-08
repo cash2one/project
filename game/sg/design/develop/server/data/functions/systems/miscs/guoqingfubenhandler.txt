@@ -1,0 +1,128 @@
+-- 新春副本处理脚本
+--#include "data\functions\globaldefine.txt" once
+--#include "data\config\misc\guoqingfubenconf.txt" once
+--#include "data\functions\systems\miscs\guoqingfubenfunc.txt" once
+--#include "shophandle.txt" once
+
+GuoQingFubenFunc = {}
+GuoQingFubenFunc.OnEnterScene = {} -- 进入每一层的特殊处理
+GuoQingFubenFunc.OnExitScene = {} -- 退出每一层的特殊处理
+GuoQingFubenFunc.SceneFloors = {} -- 每个场景对应的层数
+
+function test_clear_guoqing()
+	local var = System.getStaticVar()
+	var.xinchunrefreshmon = nil
+end
+
+function GuoqingRefreshMon()
+	local var = System.getStaticVar()
+	var.xinchunrefreshmon = nil
+end
+
+-- 进入场景通用处理
+GuoQingFubenFunc.OnEnterxinchunScene = function (sysarg, hscene)
+	local pfb = LActor.getFubenPrt(sysarg)
+	if pfb == nil then return end
+
+	local sid = LActor.getSceneId(sysarg)
+	local layer = GuoQingFubenFunc.SceneFloors[sid]
+	if layer == nil or layer < 1 or layer > #GuoQingFubenConf.scenes then
+		print("guoqing scene error:"..sid)
+		return 
+	end
+
+	Fuben.setFubenProgress(pfb, layer)
+
+	local sconf = GuoQingFubenConf.scenes[layer]
+	if sconf == nil then
+		print("guoqing scene conf error"..layer)
+		return 
+	end
+
+	LActor.setExitSceneEvent( sysarg, true )
+
+	local fvar = Fuben.getDyanmicVar(pfb)
+	if fvar.lastscene == nil or fvar.lastscene ~= sid then -- 进入新的层
+		fvar.lastscene = sid
+
+		local hfb = Fuben.getFubenHandle(pfb)
+		Fuben.SetFubenGameTime(hfb, sconf.gametime) -- 设置游戏时间
+
+		fvar.fbRestMonster = sconf.monster.total -- 剩余怪物数
+	end
+
+	-- 进去就通关
+	if sconf.conds.type ~= nil and sconf.conds.type == 3 then
+		GuoQingPublic.OnTongGuan(sysarg, layer, sconf)
+	end
+end
+
+-- 退出场景
+GuoQingFubenFunc.OnExitxinchunScene = function (sysarg, hscene)
+	local pfb = LActor.getFubenPrt(sysarg)
+	if pfb == nil then return end
+
+	local layer = Fuben.getFubenProgress(pfb) -- 第几层
+	if layer > #GuoQingFubenConf.scenes then
+		print("max guoqing layer:"..layer)
+		return 
+	end
+
+	local sconf = GuoQingFubenConf.scenes[layer]
+	if sconf == nil then
+		print("guoqing scene conf error"..layer)
+		return 
+	end
+
+	Fuben.clearSceneTimeCall(hscene)
+end
+
+
+-- 该层的游戏结束
+
+GuoQingFubenFunc.OnGameOver = function(pfb)
+	local actors = LuaHelp.getFbActorList(pfb)
+	if actors == nil then return end
+	local sysarg = actors[1]
+	if sysarg == nil then return end
+
+	local layer = Fuben.getFubenProgress(pfb)
+
+	LActor.exitFuben(sysarg) -- 游戏结束，退出副本
+end
+
+GuoQingFubenFunc.exitGuoQingFuben  = function(sysarg, hfb, way)
+	--[[local nyear, nmon, nday, nhour, nmin, nsec = unpack(GuoQingConf.guoqingtime[6][1])
+	local startTime = System.timeEncode(nyear, nmon, nday, nhour, nmin, nsec)  --encode一个时间
+
+	local nyear, nmon, nday, nhour, nmin, nsec = unpack(GuoQingConf.guoqingtime[6][2])
+	local endTime = System.timeEncode(nyear, nmon, nday, nhour, nmin, nsec)  --encode一个时间
+	local nowTime = System.getCurrMiniTime() 
+
+	if nowTime >= endTime or nowTime <= startTime then
+		return
+	end
+
+	local dayCount = GuoQingConf.dayCount
+	local enterCount = Fuben.getEnterFubenInfo(sysarg, GuoQingConf.fbid)
+	local dayLeft = dayCount - enterCount
+
+	local npack = DataPack.allocPacket(sysarg, 150, 4)
+	if npack == nil then return end
+	DataPack.writeInt(npack, dayLeft)
+	DataPack.flush(npack)]]
+end
+
+
+EventCallDispatcher.registerFubenGameOver(GuoQingFubenConf.fbid,  GuoQingFubenFunc.OnGameOver)
+EventCallDispatcher.registerFubenExit(GuoQingFubenConf.fbid, GuoQingFubenFunc.exitGuoQingFuben)
+
+-- 进入场景处理
+for i=1, #GuoQingFubenConf.scenes do
+	local sconf = GuoQingFubenConf.scenes[i]
+	EventCallDispatcher.registerSceneEnter(sconf.sceneid, GuoQingFubenFunc.OnEnterxinchunScene)
+	EventCallDispatcher.registerSceneExit(sconf.sceneid, GuoQingFubenFunc.OnExitxinchunScene)
+
+	GuoQingFubenFunc.SceneFloors[sconf.sceneid] = i
+
+end

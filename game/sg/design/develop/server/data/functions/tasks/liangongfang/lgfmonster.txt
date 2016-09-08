@@ -1,0 +1,47 @@
+﻿-- 塔防中的怪物死亡的处理
+
+--#include "data\language\LangCode.txt" once
+--#include "data\config\task\lgfconf.txt" once
+
+
+MonDieDispatcher.LgfMonsterDie = function ( monster, sysarg, monId )
+	-- 统计杀怪的数量
+	LActor.SendAndChangeCaleValue(sysarg, caleOther2, 1, true)
+	local ptr = LActor.getFubenPrt(monster)	
+	local st = Fuben.getDyanmicVar(ptr)
+	if st.totalKill == nil then
+		st.totalKill = 0
+	end
+	st.totalKill = st.totalKill + 1
+
+	if st.totalKill >= LgfConfig.maxMonsterCnt then
+		-- 副本结束
+		LActor.sendTipmsg(sysarg, Lang.TaskTalk.lgf1, ttScreenCenter)
+		-- 3秒后退出副本
+		LActor.regScriptCallback( sysarg, nil, 3000, 0, 1, "LiangongfangTip", -1, sysarg )
+	end
+end
+
+--注释掉没用到
+--[[
+for i=1, #LgfConfig.enemyId do
+	MonDieDispatcher.register(LgfConfig.enemyId[i], MonDieDispatcher.LgfMonsterDie)
+end
+--]]
+
+-- 杀死副本内所有怪物
+MonAllKilledDispatcher.LgfKillAllMonster = function (sceneId, scenePtr, flag, monster)
+	-- 是否到了最后一波
+	local ptr = LActor.getFubenPrt(monster)
+	local st = Fuben.getDyanmicVar(ptr)
+	if st.totalKill >= LgfConfig.maxMonsterCnt then
+		-- 副本结束
+		LActor.sendTipmsg(sysarg, Lang.TaskTalk.lgf1, ttScreenCenter)
+		-- 3秒后退出副本
+		LActor.regScriptCallback( sysarg, nil, 3000, 0, 1, "LiangongfangTip", -1, sysarg )
+	end
+end
+
+--注释掉没用到
+--MonAllKilledDispatcher.register( LgfConfig.sceneid[1], MonAllKilledDispatcher.LgfKillAllMonster )
+--MonAllKilledDispatcher.register( LgfConfig.sceneid[2], MonAllKilledDispatcher.LgfKillAllMonster )

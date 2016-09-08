@@ -1,0 +1,56 @@
+﻿{
+  maxLevel = 50,
+  
+  --灵器引导
+  trigger = 
+  { 
+    type = 1,
+    value = 313,
+  },
+
+  --引导中锁定的窗口ID
+  lockUI = 
+  {
+    40,
+  },
+
+  --引导的步骤 
+  steps = 
+  {
+
+	--第1步 引导点击灵器的导航按钮
+    {
+      cond = { type = 1,  helpId = 5, data = 0 },
+
+      action = { type = 1, helpId = 5, data = 0, desc = "", showType = 2 },
+    },
+
+	--第2步 引导点击灵器界面的炼魂按钮
+    {
+      cond = { type = 1, helpId = 40, data = 0 },
+
+      action = { type = 1, helpId = 43, data = 0, desc = "" },
+    },
+
+	--第3步 引导点击第一个炼魂师
+    {
+      cond = { type = 1, helpId = 44, data = 0 },
+
+      action = { type = 15, helpId = 45, data = 0, desc = "" },
+    },
+
+	--第4步 引导点击灵器界面关闭按钮
+    {
+      cond = { type = 1, helpId = 40, data = 0 },
+
+      action = { type = 1, helpId = 46, data = 0, desc = "" },
+    },
+
+	--第5步 关闭猎魂界面结束引导
+    {
+      cond = { type = 2, helpId = 40, data = 0 },
+
+      action = { type = 0, helpId = 0, data = Lang.GuideLang.func37, desc = "" },
+    },
+  } 
+}

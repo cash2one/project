@@ -1,0 +1,78 @@
+﻿--lua script
+--for item present bag
+
+--#include "NormalItemDatas.txt" once
+--#include "NormalItemRewards.txt" once
+
+--[[
+--删除buff的药品效果
+--sysarg:实体的指针
+--itemidx: 物品的ID
+--itemPtr: 物品的指针
+--ItemTable: 配置的参数列表 
+--]]
+
+function GivePresentItem(sysarg,itemidx,itemPtr,ItemTable)
+  --奖励检查
+  local rewardid = ItemTable.rewardsID
+  
+  local rewardcheck,needspace = rewardCheck( sysarg, rewardid )
+  --print("reward check:"..rewardcheck.." "..needspace)
+  if ( rewardcheck ~= 0 ) then
+		if ( rewardcheck == 2 ) then 
+			--local str = Lang.ScriptTips.f00011..needspace..Lang.ScriptTips.f00012
+			local str = string.format(Lang.ScriptTips.f00016,needspace)
+			LActor.sendTipmsg( sysarg, str,ttDialog )
+		end
+		return
+  end
+  doReward( sysarg, rewardid )
+  --需要删除
+  if(ItemTable.needDelete) then
+	LActor.removeItemByPtr(sysarg,itemPtr,1,true," ",5)      --删除一个物品
+  end
+end
+
+function PresentItemInit(sysarg)
+  for i = 1,table.getn(PresentItems) do
+	local x = PresentItems[i]
+	GlobalItemFn[x.item_id] = { func = GivePresentItem, params = x }
+  end
+end
+
+table.insert(InitFnTable,PresentItemInit)
+
+function yanHuaFunc(sysarg,itemidx,itemPtr,ItemTable)
+  if ItemTable == nil then return end
+  local id = ItemTable.item_id
+  local exp = ItemTable.exp
+
+  LActor.addExp(sysarg, exp, 0, 0)
+  LActor.removeItemByPtr(sysarg,itemPtr,1,true,"useyanhuaitem",5) 
+  if ItemTable.broadcast ~= nil then
+    local tipmsg = string.format( ItemTable.broadcast,  LActor.getName(sysarg) )  
+    --System.broadcastTipmsg( tipmsg, ttGmTip )
+    System.broadcastTipmsg( tipmsg, ttChatWindow )
+  end
+
+  if ItemTable.screen ~= nil then
+    System.playScrEffectCode(ItemTable.screen, 0)
+  end
+  if ItemTable.effect ~= nil then
+    local effects = ItemTable.effect
+    local posx = LActor.getIntProperty(sysarg, PROP_ENTITY_POSX)
+    local posy = LActor.getIntProperty(sysarg, PROP_ENTITY_POSY)
+    for i=1,#effects do
+      LActor.addSceneEffect(sysarg, effects[i].effect_id, effects[i].type, effects[i].time, effects[i].delay, posx, posy, false)
+    end
+  end
+end
+
+function  yanhuaItemsInit(sysarg)
+  for i = 1,table.getn(NewYearYanHua) do
+  local x = NewYearYanHua[i]
+  GlobalItemFn[x.item_id] = { func = yanHuaFunc, params = x }
+  end
+end
+
+table.insert(InitFnTable,yanhuaItemsInit)

@@ -1,0 +1,203 @@
+--#include "data\config\task\TianYuanConfig.txt" once
+--#include "data\functions\Tasks\TianYuan\TianYuanSet.txt" once
+--#include "data\functions\tasks\tianyuan\tianyuanfunc.txt" once
+
+-- 增加玩家积分
+
+TianyuanAttackBossRecode = {}
+
+
+
+MonDieDispatcher.AddRank =  function (sysarg,score)
+	debug_print("------AddRank----------",sysarg,score)
+	local KillerId = LActor.getIntProperty( sysarg, PROP_ENTITY_ID )    --获取角色ID
+	local KillerName = LActor.getName(sysarg)
+	local dayRanking = Ranking.getRanking(TianYuanRankName) --通过排行名称获取排行对象
+	if dayRanking ~= nil then
+		local killerItem = Ranking.getItemPtrFromId(dayRanking,KillerId) 
+		if killerItem ~= nil then
+			Ranking.updateItem(dayRanking,KillerId,score)        --如果存在名单则加分
+			Ranking.setSub(killerItem, 0, KillerName)
+			local lookPoint = Ranking.getPoint(Ranking.getItemPtrFromId(dayRanking, KillerId))
+		else                                                      --如果不存在则创建 
+			killerItem = Ranking.addItem(dayRanking,KillerId,score)         --如果不存在名单则初始化
+			if killerItem ~= nil then
+				TianYuanFunc.InitRankItem(killerItem, sysarg)
+			end                             --
+		end
+	end
+end
+
+-- 增加帮派积分
+MonDieDispatcher.AddGuildRank = function (sysarg,score,bboss)
+
+	debug_print("-------AddGuildRank--------------",sysarg,score,bboss)
+	local guildid = LActor.getGuildId(sysarg)
+	local KillerName = LActor.getName(sysarg)
+	if guildid == 0 then return end
+	local getguildname = LActor.getGuildName(sysarg)
+	-- 场景公告
+	local hScene = LActor.getSceneHandle(sysarg)
+	if bboss == "true" then
+		--local noticeStr = string.format(Lang.TaskTalk.ty0025, getguildname, KillerName)
+		--Fuben.sendMsgToScene(hScene,noticeStr,ttScreenCenter)
+		--LActor.sendGuildMsg(sysarg,smGuildCommon,str,128)	--发帮派广播
+	end
+
+	local dayRanking = Ranking.getRanking(TianYuanGuildRankName) --通过排行名称获取排行对象
+	if dayRanking ~= nil then
+		local killerItem = Ranking.getItemPtrFromId(dayRanking,guildid) 
+		if killerItem ~= nil then
+			Ranking.updateItem(dayRanking,guildid,score)        --如果存在名单则加分
+			Ranking.setSub(killerItem, 0, getguildname)
+			local lookPoint = Ranking.getPoint(Ranking.getItemPtrFromId(dayRanking, guildid))
+			--local str2 = string.format(Lang.TaskTalk.a00028,beKillerName,addPoint,lookPoint)
+			--LActor.sendTipmsg(killerptr,str2,ttScreenCenter+ttTipmsgWindow)
+		else                                                      --如果不存在则创建 
+			killerItem = Ranking.addItem(dayRanking,guildid,score)         --如果不存在名单则初始化
+			if killerItem ~= nil then
+				Ranking.setSub(killerItem, 0, getguildname)
+				local lookPoint = Ranking.getPoint(Ranking.getItemPtrFromId(dayRanking, guildid))
+				--local str2 = string.format(Lang.TaskTalk.a00028,beKillerName,addPoint,lookPoint)
+				--LActor.sendTipmsg(killerptr,str2,ttScreenCenter+ttTipmsgWindow)
+			end                             --
+		end
+	end
+end
+function RandPoint( data1 , data2 )
+	-- body
+	if data1 == nil or data2 == nil then
+		return false
+	end
+	if data1.num == nil or data2.num == nil then
+		return false
+	end
+	return data1.num > data2.num
+end
+
+-- 怪物死亡
+MonDieDispatcher.TianYuanMonstersDie = function (monster,sysarg,monId)
+	--活动开始标志
+	debug_print("==========monId=========",monId)
+	local sVal = System.getDyanmicVar()
+	if sVal.TianYuanActing ~= 1 then return end
+
+	-- 根据ID获取怪物配置
+	local MonsterConfig = TianYuanMonsterPoint
+    local MonsteridIndex = 0
+	table.foreachi( MonsterConfig, function( i, v )  if (v.monsterId == monId) then  MonsteridIndex= i end end )
+	if MonsteridIndex < 1 then return end
+
+	debug_print("========index======",MonsteridIndex)
+
+	-- 获取归属者信息
+	local vestEntity = LActor.getMonsterEntity(monster) -- 怪物的归属着
+	if vestEntity == nil then return end
+	local vestId = LActor.getIntProperty( vestEntity, PROP_ENTITY_ID )    --获取角色ID
+
+	local guildId = LActor.getGuildId(vestEntity) -- 获取怪物归属者的帮派ID
+	if guildId == 0 then return end
+
+
+	
+	if TianyuanAttackBossRecode[MonsterConfig[MonsteridIndex].monsterId] ~= nil then
+		table.sort(TianyuanAttackBossRecode[MonsterConfig[MonsteridIndex].monsterId],RandPoint)
+	end
+	--通用了 击杀boss 
+	local nBossDieConfigPoint = TianYuanMonsterRankPoint[MonsterConfig[MonsteridIndex].monsterId]
+	if nBossDieConfigPoint ~= nil then
+		local AllPoint = nBossDieConfigPoint.allpoint
+		local nTemp = TianyuanAttackBossRecode[MonsterConfig[MonsteridIndex].monsterId]
+		--print
+		if nTemp ~= nil then
+			--print_table(nTemp)
+			local nIndex = 0
+			for k , v in pairs ( nTemp ) do
+				nIndex = nIndex + 1
+				local nActor = LActor.getActorById(v.Aid)
+				if nActor ~= nil then
+					MonDieDispatcher.AddGuildRank(nActor,AllPoint,true) --帮派
+					MonDieDispatcher.AddRank(nActor,AllPoint) --自己
+				end
+				AllPoint = AllPoint - nBossDieConfigPoint.interval
+				if nIndex > nBossDieConfigPoint.count then
+					break
+				end
+			end
+		end
+	end
+	--清空攻击记录
+	TianyuanAttackBossRecode[MonsterConfig[MonsteridIndex].monsterId] = nil
+	--[[
+	if MonsterConfig[MonsteridIndex].monsterId == TianYuanConfig.refreshNpc.id and sVal.TianYuanBossConf ~= nil then
+		sVal.TianYuanBossConf.state = 0
+		local  currTime = System.getCurrMiniTime()
+		sVal.TianYuanBossConf.refreshTime =  currTime + TianYuanConfig.refreshNpc.time
+		LActor.regScriptCallback( System.getGlobalNpc(), nil, TianYuanConfig.refreshNpc.time*1000, TianYuanConfig.refreshNpc.time*1000, 1, "TianYuanRefreshBoss", 0)
+		TianYuanNoticeBossPos()
+		--debug_print("MonDieDispatcher.TianYuanMonstersDie refreshTime:"..sVal.TianYuanBossConf.refreshTime) 
+	end
+	--]]
+
+
+	MonDieDispatcher.AddGuildRank(vestEntity,MonsterConfig[MonsteridIndex].monsterPoint,MonsterConfig[MonsteridIndex].bisboss) --帮派
+	MonDieDispatcher.AddRank(vestEntity,MonsterConfig[MonsteridIndex].monsterPoint) --自己
+
+	-- 周围同军团玩家
+	local ptrList = LuaHelp.getNearEntityList(vestEntity,14)   --获取周围固定半径内的生物指针
+	if ptrList == nil then return end
+
+	for i=1, #ptrList do
+		local player = ptrList[i]
+		if player ~= nil and player ~= vestEntity and LActor.isActor(player) and guildId == LActor.getGuildId(player) then
+			--分享者 
+			MonDieDispatcher.AddRank(player, MonsterConfig[MonsteridIndex].sharePoint) --分享者
+		end
+	end
+
+	for k , v in pairs ( TianYuanConfig.refreshNpc ) do
+		if v.id == MonsterConfig[MonsteridIndex].monsterId then
+			if sVal.TianYuanBossConf == nil then
+				sVal.TianYuanBossConf = {}
+			end
+			LActor.regScriptCallback( System.getGlobalNpc(), nil, v.time*1000, v.time*1000, 1, "TianYuanRefreshBoss", v.id)
+			--TianYuanNoticeBossPos()
+		end
+	end
+	--改变的时候 发送个人数据
+	XuanYuanZhiZhanNoticePersion( sysarg )
+end
+
+
+
+for i=1,#TianYuanMonsterPoint do
+  --debug_print("register..."..TianYuanMonsterPoint[i].monsterId)
+  MonDieDispatcher.register(TianYuanMonsterPoint[i].monsterId,MonDieDispatcher.TianYuanMonstersDie)
+end
+
+MonDieDispatcher.AddAttackRecode = function ( monster, mid ,val ,sysarg )
+	-- body
+	--debug_print("===================怪物被攻击============",monster, mid ,val ,sysarg)
+	if TianyuanAttackBossRecode[mid] == nil then
+		TianyuanAttackBossRecode[mid] = {}
+	end
+	local nActorId = LActor.getActorId(sysarg)
+	local nFlag = false
+	for k , v in pairs (TianyuanAttackBossRecode[mid]) do
+		if v.Aid == nActorId then
+			nFlag = true
+			TianyuanAttackBossRecode[mid][k].num = TianyuanAttackBossRecode[mid][k].num + val
+		end
+	end
+
+	if nFlag == false then
+		local nTemp = {Aid = nActorId , num = val,}
+		table.insert(TianyuanAttackBossRecode[mid] , nTemp)
+	end
+end
+
+for k , v in pairs (TianYuanBossAttac) do
+	debug_print(v)
+	MonsterDamageDispatch.register(v, MonDieDispatcher.AddAttackRecode)
+end
+

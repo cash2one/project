@@ -1,0 +1,193 @@
+﻿--盛世兑换 exchangehandler1.txt
+--#include "exchangeconf1.txt" once
+
+Exchangehandler1 = {}
+
+--获取分服配置
+Exchangehandler1.getExchangeConf = function()
+	for i = 1, #ExchangeConf do
+		local activityID = ExchangeConf[i].activityID
+		if ONLINEREWARD.GetActivityState(activityID) ~= 0 then
+			return ExchangeConf[i]
+		end
+	end
+end
+
+--统计积分
+Exchangehandler1.countPoint = function(sysarg, rechargevalue, consumeValue)
+	if not sysarg then return end
+	--活动开始才行
+	local config = Exchangehandler1.getExchangeConf()
+	if not config then return end
+
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	ONLINEREWARD.CheckResetActivityInfo(sysarg, config.activityID)
+	--充值统计
+	if not var.rechargevalue then var.rechargevalue = 0 end
+	--消费统计
+	if not var.consumeValue then var.consumeValue = 0 end
+	--活动积分
+	if not var.exchangepoint then var.exchangepoint = 0 end
+	--一次只有一种数据录入
+	if rechargevalue and rechargevalue > 0 then
+		if var.rechargevalue < var.consumeValue then
+			if var.rechargevalue + rechargevalue > var.consumeValue then
+				var.exchangepoint = var.exchangepoint + var.consumeValue - var.rechargevalue
+			else
+				var.exchangepoint = var.exchangepoint + rechargevalue
+			end
+		end
+		var.rechargevalue = var.rechargevalue + rechargevalue
+	elseif consumeValue and consumeValue > 0 then
+		if var.consumeValue < var.rechargevalue then
+			if var.consumeValue + consumeValue > var.rechargevalue then
+				var.exchangepoint = var.exchangepoint + var.rechargevalue - var.consumeValue
+			else
+				var.exchangepoint = var.exchangepoint + consumeValue
+			end
+		end
+		var.consumeValue = var.consumeValue + consumeValue
+	end
+	--print("_________exchangepoint = "..var.exchangepoint..",rechargevalue = "..var.rechargevalue ..",consumeValue = "..var.consumeValue)
+end
+
+--查看自己活动信息
+Exchangehandler1.getActivityInfo = function(sysarg)
+	local config = Exchangehandler1.getExchangeConf()
+	if not config then return end
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	ONLINEREWARD.CheckResetActivityInfo(sysarg, config.activityID)
+	--充值统计
+	if not var.rechargevalue then var.rechargevalue = 0 end
+	--消费统计
+	if not var.consumeValue then var.consumeValue = 0 end
+	--活动积分
+	if not var.exchangepoint then var.exchangepoint = 0 end
+	--下面是发协议
+	local npack = DataPack.allocPacket(sysarg, 138, 243)
+	if npack == nil then return end 
+	--我的充值总额
+	DataPack.writeInt(npack, var.rechargevalue)
+	--我的消费总额
+	DataPack.writeInt(npack, var.consumeValue)
+	--我的活动积分
+	DataPack.writeInt(npack, var.exchangepoint)
+	print("_________exchangepoint = "..var.exchangepoint..",rechargevalue = "..var.rechargevalue ..",consumeValue = "..var.consumeValue)
+	DataPack.flush(npack)
+end
+
+--获取兑换物品数量信息
+Exchangehandler1.getItemCount = function(sysarg)
+	local config = Exchangehandler1.getExchangeConf()
+	if not config then return end
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	--数量信息
+	if not var.exchangeinfo then 
+		var.exchangeinfo = {}
+		for i = 1, #config.exchangeItem do
+			var.exchangeinfo[config.exchangeItem[i].itemID] = config.exchangeItem[i].exchangecount
+		end
+	end
+	--下面是发协议
+	local npack = DataPack.allocPacket(sysarg, 138, 244)
+	if npack == nil then return end 
+	--数据数量
+	DataPack.writeByte(npack, #config.exchangeItem)
+	for i = 1, #config.exchangeItem do
+		DataPack.writeInt(npack, var.exchangeinfo[config.exchangeItem[i].itemID] or 0)
+		--print("___________itemID, "..config.exchangeItem[i].itemID.."="..var.exchangeinfo[config.exchangeItem[i].itemID])
+	end
+	DataPack.flush(npack)
+end
+
+--兑换
+Exchangehandler1.exchangeItem = function(sysarg, packet)
+	local config = Exchangehandler1.getExchangeConf()
+	--print("====================1")
+	if not config then return end
+	--print("====================2")
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	--需要兑换的物品ID
+	local changeItemID = DataPack.readInt(packet)
+	--兑换的数量
+	local exchangcount = DataPack.readInt(packet) or 1
+	--print("====================3")
+	if not changeItemID then return end
+	--print("====================4")
+	for i = 1, #config.exchangeItem do
+		if config.exchangeItem[i].itemID == changeItemID then
+			--检查可兑换数量
+			if var.exchangeinfo[changeItemID] < exchangcount then
+				LActor.sendTipmsg( sysarg, Lang.ScriptTips.exc001, ttMessage )
+				return
+			end
+			--检查积分
+			if var.exchangepoint < config.exchangeItem[i].point*exchangcount then
+				LActor.sendTipmsg( sysarg, Lang.ScriptTips.exc002, ttMessage )
+				return
+			end
+			--判断背包格子
+			if Item.getBagEmptyGridCount(sysarg) < 1 then
+				LActor.sendTipmsg( sysarg, Lang.ScriptTips.sclib03, ttMessage )
+				return
+			end
+			--扣数量
+			var.exchangeinfo[changeItemID] = var.exchangeinfo[changeItemID] - exchangcount
+			--减积分
+			var.exchangepoint = var.exchangepoint - config.exchangeItem[i].point*exchangcount
+			--print("________var.exchangepoint = "..var.exchangepoint..", count = "..var.exchangeinfo[changeItemID])
+			--塞物品
+			local isbind = config.exchangeItem[i].bind
+			local isbroadcast = config.exchangeItem[i].broadcast
+			exchangcount = exchangcount * config.exchangeItem[i].count
+			LActor.addItem(sysarg,changeItemID,0,0,exchangcount,isbind,"bigexchange",1)
+			if isbroadcast then
+				local str = string.format(Lang.ScriptTips.exc003,LActor.getName(sysarg),Item.getColorName(changeItemID))
+				System.broadcastLevelTipmsg(str, 30, ttScreenCenter)
+				local strw = string.format(Lang.ScriptTips.exc004,102)
+				-- System.broadcastLevelTipmsg(str..strw, 30, ttHearsay)
+			end
+			local effects = {}
+			local effect = {}
+			effect.type = 1  
+			effect.id = changeItemID
+			effect.count = exchangcount
+			effects[#effects+1] = effect
+			if #effects > 0 then
+				MiscFunc.PlayItemEffect(sysarg, 1, effects)
+			end
+			Exchangehandler1.getItemCount(sysarg)
+			Exchangehandler1.getActivityInfo(sysarg)
+			break
+		end
+	end
+end
+
+--新的一天
+Exchangehandler1.NewDayArrive = function(sysarg)
+	local config = Exchangehandler1.getExchangeConf()
+	if not config then return end
+	if config.isReset then
+		local var = LActor.getStaticVar(sysarg)
+		if var == nil then return end
+		if var.rechargevalue  then var.rechargevalue = nil end
+		if var.consumeValue  then var.consumeValue = nil end
+		if var.exchangepoint  then var.exchangepoint = nil end
+		if var.exchangeinfo  then var.exchangeinfo = nil end
+	end
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, Exchangehandler1.NewDayArrive)
+--[[
+Exchangehandler.test = function(sysarg)
+	--Exchangehandler.getActivityInfo(sysarg)
+	--Exchangehandler.getItemCount(sysarg)
+	Exchangehandler.exchangeItem(sysarg,18712,2)
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, Exchangehandler.test)
+]]

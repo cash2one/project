@@ -1,0 +1,41 @@
+--#include "data\functions\normalitem\staticawardhandle.txt" once
+
+-- 每天清除全服数据
+function  clearDailyDate()
+	local sys_var = System.getStaticVar()
+	if sys_var == nil then return end
+	if sys_var.cleardailytime == nil then 
+		sys_var.cleardailytime = System.getCurrMiniTime()
+		return
+	end
+
+	local nowtime = System.getCurrMiniTime()
+	if not System.isSameDay(sys_var.cleardailytime, nowtime) then
+		--这里不是同一天，可以清了
+		sys_var.cleardailytime = nowtime
+
+		--幸运罗盘
+		if sys_var.luopanunique ~= nil then sys_var.luopanunique = 1 end
+		if sys_var.russiaItemList ~= nil then
+			for i=1,#RussiaRotaryTableConf.limits do
+				if sys_var.russiaItemList[i] ~= nil then
+				   sys_var.russiaItemList[i] = 0
+				end
+			end
+     	end
+
+
+     	--限时商店
+     	local limits = LimitShop.limits
+     	if sys_var.LimitShop_total ~= nil then sys_var.LimitShop_total = 0 end 
+     	if sys_var.limitshopItemList ~= nil then
+			for i=1,#limits do
+			    if sys_var.limitshopItemList[limits[i].itemid] ~= nil then
+			        sys_var.limitshopItemList[limits[i].itemid] = 0
+			   end
+			end
+		end
+     	
+	end
+end
+

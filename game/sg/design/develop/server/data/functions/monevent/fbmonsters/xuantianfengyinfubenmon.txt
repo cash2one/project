@@ -1,0 +1,54 @@
+-- 心魔幻境副本的怪物刷新处理
+--#include "data\functions\config\fubenconfig\xuantianfengyinfubenconfig.txt" once	-- 幻天密境副本配置
+
+xuanTianFengYinFubenMon = {}
+-- 单个怪物杀死触发的事件
+xuanTianFengYinFubenMon.OnKillMonster = function(monster,sysarg,monsterid)
+	-- 判断副本
+	--print("monster killed1 : "..monsterid)
+	local fubenId = LActor.getFubenId(sysarg)
+	if fubenId ~= XuanTianFengYinConfig.fubenId[1] then
+		return
+	end
+
+	--print("monster killed2 : "..monsterid)
+	local Fhandle = LActor.getFubenHandle(sysarg)
+	CommonFubenJiesuanConfig.OnKillMonster(Fhandle,fubenId,sysarg,monsterid)
+	--print("monster over")
+end
+
+-- 场景所有怪物死亡事件
+xuanTianFengYinFubenMon.OnMonsterAllDie = function(sceneId, scenePtr, flag, monster)
+	--print("-----all die")
+	local fubenId = XuanTianFengYinConfig.fubenId[1]
+	CommonFubenJiesuanConfig.OnMonsterAllDie(fubenId,sceneId,monster)		-- 公用的杀死怪物处理，设置层数，结算
+	--print("-----do over")
+end
+
+-- 进入场景处理
+xuanTianFengYinFubenMon.EnterScene = function(sysarg, hscene)
+	local Fhandle = LActor.getFubenHandle(sysarg)
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+	fbVar.floor = fbVar.floor + 1
+
+	Fuben.SetFubenGameTime(Fhandle,XuanTianFengYinConfig.gameTime)
+
+	LActor.SendAndChangeCaleValue(sysarg, caleOther3, fbVar.floor, false)
+	LActor.SendAndChangeCaleValue(sysarg, caleOther2, XuanTianFengYinConfig.monsterCount[fbVar.floor], false)
+	LActor.SendAndChangeCaleValue(sysarg, caleRemainMonster, XuanTianFengYinConfig.monsterCount[fbVar.floor], false)
+	LActor.SendAndChangeCaleValue(sysarg, caleGameTime, XuanTianFengYinConfig.gameTime, false)
+	LActor.SendAndChangeCaleValue(sysarg, caleSceneExp, 0, false)
+end
+
+---- 注册怪物
+--for i=1,#XuanTianFengYinConfig.monsterIdList do
+--	MonDieDispatcher.register( XuanTianFengYinConfig.monsterIdList[i],  xuanTianFengYinFubenMon.OnKillMonster)
+--end
+--
+---- 注册怪物全部杀死
+--for i=1,#XuanTianFengYinConfig.sceneId do
+--	MonAllKilledDispatcher.register( XuanTianFengYinConfig.sceneId[i], xuanTianFengYinFubenMon.OnMonsterAllDie )
+--end
+
+

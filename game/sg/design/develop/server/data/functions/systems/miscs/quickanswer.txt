@@ -1,0 +1,345 @@
+--抢答活动
+--#include "data\functions\systems\timereward\activityconf.txt" once
+
+QuickAnswer = {}
+
+function QuickAnswer.getSystemVar()
+	local var_sys_d = System.getStaticVar()
+	if not var_sys_d then return end
+
+	if not var_sys_d.quickAnswer then var_sys_d.quickAnswer = {} end
+	return var_sys_d.quickAnswer
+end
+
+function QuickAnswer.getActorVar(actor)
+	local var = LActor.getStaticVar(actor)
+	if not var then return end
+
+	if not var.quickAnswer then var.quickAnswer = {} end
+
+	return var.quickAnswer
+end
+
+--当天活动开启 结束
+function quickAnswerActivity(tmp)
+	tmp = tonumber(tmp)
+	for _, conf in pairs(ActivityControl) do
+		if ONLINEREWARD.GetActivityState(conf.id) ~= 0 then
+			if activityConf[conf.id] and activityConf[conf.id].activities[35] then
+				local config = activityConf[conf.id].activities[35]	
+				if tmp == 1 then
+					--活动开启
+					QuickAnswer.loadQuestions(config)
+					QuickAnswer.openActivity(conf.id)
+				elseif tmp == 2 then
+					--活动结束
+					QuickAnswer.endQuestion(config)
+				end
+				QuickAnswer.sendIsOpen(nil, conf.id)
+				return
+			end
+		end
+	end
+end
+
+--随机题目
+function QuickAnswer.loadQuestions(config)
+	local var_sys_d = QuickAnswer.getSystemVar()
+	if not var_sys_d or var_sys_d.questionInfo then return end
+
+	local tmp = {}
+	for i = 1, #config.questions do
+		table.insert(tmp, i)
+	end
+
+	var_sys_d.firstActor = nil
+	var_sys_d.answerResult = nil
+	var_sys_d.beginTime = System.getCurrMiniTime()
+	if not var_sys_d.questionInfo then var_sys_d.questionInfo = {} end
+
+	for index = 1, config.questionNum do
+		local rate = System.getRandomNumber(#tmp) + 1
+		if tmp[rate] ~= nil then
+			var_sys_d.questionInfo[index] = tmp[rate]
+			table.remove(tmp, rate)
+		end
+	end
+end
+
+--通知活动是否开启了
+function QuickAnswer.sendIsOpen(actor, id)
+	if not activityConf[id] then
+		print("error quickAnswer sendIsOpen id        "..id)
+		print(type(id))
+		return
+	end
+
+	local config = activityConf[id].activities[35]
+	if not config then return end
+
+	local var_sys_d = QuickAnswer.getSystemVar()
+	if not var_sys_d then return end
+
+	local tmp = 0
+	if var_sys_d.beginTime then
+		tmp = var_sys_d.beginTime + config.activityTime - System.getCurrMiniTime()
+		if tmp < 0 then tmp = 0 end
+	end
+
+	if actor then
+		local pack = DataPack.allocPacket(actor, BaseTypes.SystemId.timeRewardSystem, 138)
+		if not pack then return end
+
+		DataPack.writeByte(pack, id)
+		DataPack.writeInt(pack, tmp)
+
+		DataPack.flush(pack)
+	else
+		local pack = LDataPack.allocPacket()
+		if pack == nil then return end
+
+		LDataPack.writeByte(pack, BaseTypes.SystemId.timeRewardSystem)
+		LDataPack.writeByte(pack, 138)
+
+		LDataPack.writeByte(pack, id)
+		LDataPack.writeInt(pack, tmp)
+
+		System.broadcastData(pack)
+	end
+end
+
+--当天活动结束，发奖励了
+function QuickAnswer.endQuestion(config)
+	local var_sys_d = QuickAnswer.getSystemVar()
+	if not var_sys_d or not var_sys_d.questionInfo then return end
+
+	var_sys_d.questionInfo = nil
+	var_sys_d.beginTime = nil
+
+	if not var_sys_d.answerResult or var_sys_d.answerResult.hasSendAward or not  var_sys_d.answerResult.rankActorCount then return end
+
+	local double = getAcitivityIsDouble(daShijieAnswer)
+	local answerResult = var_sys_d.answerResult
+	for i = 1, answerResult.rankActorCount do
+		if answerResult.rankActorList[i] then
+			local context = string.format(Lang.ScriptTips.quickanswer003, i)
+			local award = config.awards2[i]
+			if not award then
+				print("quickAnswer rankActorCount error    "..answerResult.rankActorCount)
+				return
+			end
+			System.sendGmMailOffLine(answerResult.rankActorList[i].actorId, context, award[1].type, award[1].id, award[1].count*double, award[1].bind, Lang.ScriptTips.quickanswer001, award[2].type, award[2].id, award[2].count, award[2].bind)
+		end
+	end
+	
+	answerResult.hasSendAward = 1 	--这次的奖励发了
+end
+
+--发送答题排行榜
+function QuickAnswer.sendRankInfo(actor)
+	local var_sys_d = QuickAnswer.getSystemVar()
+	if not var_sys_d or not var_sys_d.answerResult then return end
+	local answerResult = var_sys_d.answerResult
+
+	local tmp = {}
+	for i = 1, answerResult.rankActorCount do
+		if answerResult.rankActorList[i] then
+			table.insert(tmp, {answerResult.rankActorList[i].name, answerResult.rankActorList[i].result, answerResult.rankActorList[i].time})
+		end
+	end
+
+	local pack = DataPack.allocPacket(actor, BaseTypes.SystemId.timeRewardSystem, 142)
+	if pack == nil then return end
+
+	DataPack.writeByte(pack, #tmp)
+	for _, value in ipairs(tmp) do
+		DataPack.writeString(pack, value[1])	--名字
+		DataPack.writeInt(pack, value[2])	--结果
+		DataPack.writeInt(pack, value[3]) 	--时间
+	end
+	DataPack.flush(pack)
+end
+
+--开活动的时候，玩家在线需要先清数据
+function QuickAnswer.openActivity(id)
+	local actorList = LuaHelp.getAllActorList()
+	if not actorList or #actorList == 0 then return end
+
+	for _, actor in pairs(actorList) do
+		QuickAnswer.sendActorInfo(actor, id)
+	end
+end
+
+--发送玩家的答题信息
+function QuickAnswer.sendActorInfo(actor, id)
+	local var_sys_d = QuickAnswer.getSystemVar()
+	if not var_sys_d or not var_sys_d.questionInfo then return end
+
+	local var = QuickAnswer.getActorVar(actor)
+	if not var then return end
+
+	local now = System.getCurrMiniTime()
+	if not var.activityTime or not System.isSameDay(now, var.activityTime) then
+		var.result = 0
+		var.questionId = 0
+		var.activityTime = now 	--这次参加活动的时间
+	end
+
+	local pack = DataPack.allocPacket(actor, BaseTypes.SystemId.timeRewardSystem, 136)
+	if pack == nil then return end
+
+	DataPack.writeByte(pack, id)
+	DataPack.writeInt(pack, var.result or 0)	--答对了几道题
+	DataPack.writeInt(pack, var.questionId or 0)	--答了几道题
+	DataPack.writeInt(pack, var_sys_d.questionInfo[(var.questionId or 0) + 1] or 0) 	--当前题目id
+
+	DataPack.flush(pack)
+end
+
+--玩家选择结果
+function QuickAnswer.chooseAnswer(actor, id, questionId, answerid)
+	if not activityConf[id] then
+		print("error quickAnswer chooseAnswer id        "..id)
+		print(type(id))
+		return
+	end
+
+	local config = activityConf[id].activities[35]
+	if not config then return end
+
+	if not actor or not questionId or not answerid or answerid < 1 or answerid > 4 then return end
+
+	local var = QuickAnswer.getActorVar(actor)
+	if not var then return end
+	if ((var.questionId or 0) + 1) ~= questionId then
+		QuickAnswer.sendActorInfo(actor, id)
+		print("error quickAnswer, not this questionId       "..(var.questionId or 0).." "..questionId)
+		return
+	end
+
+	--活跃度
+	ActivationTrigger(actor, 14)
+
+	local var_sys_d = QuickAnswer.getSystemVar()
+	if not var_sys_d or not var_sys_d.beginTime or not var_sys_d.questionInfo then return end
+
+	if not var_sys_d.questionInfo[questionId] or not config.questions[var_sys_d.questionInfo[questionId]] then
+		print("quickAnswer error not this question        "..(var_sys_d.questionInfo[questionId] or 0))
+		return
+	end
+
+	if questionId == 1 then
+		-- 答第一题的时候记录日志
+		System.logCounter(LActor.getActorId(actor), LActor.getAccountName(actor), tostring(LActor.getLevel(actor)), "quickAnswer", "", "", "", "", LActor.getName(actor))
+	end
+
+	local questionInfo = config.questions[var_sys_d.questionInfo[questionId]]
+
+	var.questionId = questionId 	--当前答了几道题
+
+	local name = LActor.getName(actor)
+	if answerid == questionInfo[2] then
+		var.result = (var.result or 0)+ 1 	--答对了几道题
+		if questionId == 1 and not var_sys_d.firstActor then
+			var_sys_d.firstActor = name
+			local answerTips = string.format("%s：%s", Lang.ScriptTips.quickanswer006[answerid], questionInfo[questionInfo[2] + 2])
+			System.broadcastTipmsg(string.format(Lang.ScriptTips.quickanswer004, name, answerTips), ttGmTip)
+			local tips = string.format(Lang.ScriptTips.quickanswer005, answerTips)
+			LActor.sendWorldMsg(actor, tips)
+		end
+	end
+
+	QuickAnswer.sendActorInfo(actor, id)
+
+	-- 答完全部题目之后的处理
+	if questionId < config.questionNum then return end
+
+	local actorId = LActor.getActorId(actor)
+	--发答完题的奖励
+	System.sendGmMailOffLine(actorId, Lang.ScriptTips.quickanswer002, config.awards1[1].type, config.awards1[1].id, config.awards1[1].count, config.awards1[1].bind,
+		Lang.ScriptTips.quickanswer001, config.awards1[2].type, config.awards1[2].id, config.awards1[2].count, config.awards1[2].bind)
+
+	var.result = var.result or 0
+	var.time = System.getCurrMiniTime() - var_sys_d.beginTime	--答题所用的时间
+
+	if var.time <= 0 then
+		print("quickAnswer error time          "..var.time)
+		var.time = 1
+	end
+	if not var_sys_d.answerResult then
+		var_sys_d.answerResult = {}
+	end
+
+	local result = var_sys_d.answerResult
+	result.rankActorCount = result.rankActorCount or 0	--已记录的排行榜的玩家个数
+	if result.rankActorList == nil then
+		result.rankActorList = {}
+	end
+
+	if result.rankActorCount == 0 then
+		result.rankActorList = {}
+		result.rankActorCount = 1
+		result.rankActorList[1] = {}
+		result.rankActorList[1].actorId = actorId
+		result.rankActorList[1].name = name
+		result.rankActorList[1].result= var.result
+		result.rankActorList[1].time = var.time
+	else
+		local insertIdx
+		for i = tonumber(result.rankActorCount), 1, -1 do
+			if result.rankActorList[i] and var.result > result.rankActorList[i].result or (var.result == result.rankActorList[i].result and var.time < result.rankActorList[i].time) then
+				insertIdx = i
+				if i < config.questionNum then
+					result.rankActorList[i+1] = {}
+					result.rankActorList[i+1].actorId = result.rankActorList[i].actorId
+					result.rankActorList[i+1].name = result.rankActorList[i].name
+					result.rankActorList[i+1].result = result.rankActorList[i].result
+					result.rankActorList[i+1].time = result.rankActorList[i].time
+				end
+			else
+				if not insertIdx and result.rankActorCount < config.questionNum then
+					insertIdx = i + 1
+				end
+				break
+			end
+		end
+		if insertIdx then
+			result.rankActorList[insertIdx] = {}
+			result.rankActorList[insertIdx].actorId = actorId
+			result.rankActorList[insertIdx].name = name
+			result.rankActorList[insertIdx].result = var.result
+			result.rankActorList[insertIdx].time = var.time
+
+			if result.rankActorCount < config.questionNum then
+				result.rankActorCount = result.rankActorCount + 1
+			end
+		end
+	end
+end
+
+function QuickAnswer.onLogin(actor)
+	for _, conf in pairs(ActivityControl) do
+		if ONLINEREWARD.GetActivityState(conf.id) ~= 0 then
+			if activityConf[conf.id] and activityConf[conf.id].activities[35] then
+				QuickAnswer.sendActorInfo(actor, conf.id)
+				QuickAnswer.sendIsOpen(actor, conf.id)
+				return
+			end
+		end
+	end
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, QuickAnswer.onLogin)
+
+function QuickAnswer.gmFunction(actor, args)
+	local gm1 = tonumber(args[1])
+	if gm1 == 1 or gm1 == 2 then
+		quickAnswerActivity(gm1)
+	elseif gm1 == 3 then
+		QuickAnswer.chooseAnswer(actor, 6, 5, 1)
+	elseif gm1 == 4 then
+		ONLINEREWARD.SetActivityTime(6, "2016-5-1 0:1:1", "2016-10-10 1:1:1", 0, 1)
+	end
+end
+
+GmEventFuncList.register( "question", QuickAnswer.gmFunction,1)

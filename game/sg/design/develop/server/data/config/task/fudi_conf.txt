@@ -1,0 +1,785 @@
+-- 军团领地副本配置
+--#include "data\language\LangCode.txt" once
+
+FudiConf = 
+{
+
+--[[
+-- 难度1
+	{
+		fbid 		= 76,
+		sceneid 	= 1147,
+		fdHard      = Lang.SceneName.s1147,
+		-- 接任务npc
+		npcId		= 111,
+		-- 4个守护npc
+		npcList		= {708, 709, 710, 711},
+
+		-- 2个boss
+		bossList	= {706},
+		bossNotify	= {[706]= "密探回报，血魂炎魔BOSS已经出现，击杀可获得大量军团灵石！"},
+		-- boss关联的任务id
+		taskId		= 9672,
+
+		totalMonsterCount	= 1941,	-- 怪物总数，包括2个不走动的boss
+
+		-- 副本出现小怪的id列表，用于注册这些怪物的攻击目标
+		monsterList	= 
+		{682, 684, 686, 689, 691, 692, 694, 696, 698, 700, 703
+		},
+
+		-- 杀死怪物奖励
+		awardSet	=
+		{
+			[706] = {200000, 6000, 0},			-- [怪物id] = {经验, 灵石, 贡献}
+			[682] = {1000, 1, 1},
+			[684] = {20000, 500, 0},
+			[686] = {1000, 1, 1},
+			[689] = {20000, 500, 0},
+			[691] = {1000, 1, 1},
+			[692] = {20000, 500, 0},
+			[694] = {1000, 1, 1},
+			[696] = {20000, 500, 0},
+			[698] = {1000, 1, 1},
+			[700] = {20000, 500, 0},
+			[703] = {1000, 1, 1},
+			
+		},
+
+		-- 怪物出生点列表
+		monsterBornPointList = 
+		{
+			-- 对应第一个守护npc
+			{8, 9},	-- {x, y}
+			-- 对应第二个守护npc
+			{7, 47},
+			{79, 46},
+			{80, 10},
+		},
+
+		-- 特效配置
+		effect = 
+		{
+			-- 冰块, 特效列表
+			-- id, 时间(毫秒), 延时(毫秒)
+			{
+				{ id = 72, type = 6, time = 800, delay = 0 },
+				{ id = 73, type = 6, time = 800, delay = 2000 },
+				{ id = 3701, type = 6, time = 1500, delay = 2050 },
+			},
+			-- 火球, 特效列表
+			{
+				{ id = 75, type = 6, time = 800, delay = 0 },
+				{ id = 74, type = 6, time = 800, delay = 2000 },
+				-- { id = 6, type = 6, time = 2, delay = 4 },
+			},
+		},
+
+		effects		= 
+		{
+			{
+				type		= 1,		-- 1冰2火
+				hittype 	= 1,		-- 1表示专砸玩家，2表示随机一个范围
+				delay		= 6* 60, 	-- 领地开启多少时间后开始，秒单位
+				interval	= 10,  	-- 间隔
+				times		= -1,	-- 次数，-1无限
+				area		= {49, 7, 53, 10},		-- 作用区域{upTopX, upTopY, rightDownX, rightDownY}	
+
+				results		= 
+				{
+					-- 抄\config\task\cymkconf.txt
+					{ bufftype = 12, group = 0, value = -0.2, times = 1, interval = 1, name = Lang.Actions.b003, timeOverlay = false },
+				},
+			},
+			{
+				type		= 1,		-- 1冰2火
+				hittype 	= 2,		-- 1表示专砸玩家，2表示随机一个范围
+				delay		= 6* 60, 	-- 领地开启多少时间后开始，秒单位
+				interval	= 10,  	-- 间隔
+				times		= -1,	-- 次数，-1无限
+				area		= {39, 14, 43, 15},		-- 作用区域{upTopX, upTopY, rightDownX, rightDownY}	
+
+				results		= 
+				{
+					-- 抄\config\task\cymkconf.txt
+					{ bufftype = 12, group = 0, value = -0.2, times = 1, interval = 1, name = Lang.Actions.b003, timeOverlay = false },
+				},
+			},
+			{
+				type		= 1,		-- 1冰2火
+				hittype 	= 1,		-- 1表示专砸玩家，2表示随机一个范围
+				delay		= 6* 60, 	-- 领地开启多少时间后开始，秒单位
+				interval	= 10,  	-- 间隔
+				times		= -1,	-- 次数，-1无限
+				area		= {45, 11, 48, 13},		-- 作用区域{upTopX, upTopY, rightDownX, rightDownY}	
+
+				results		= 
+				{
+					-- 抄\config\task\cymkconf.txt
+					{ bufftype = 12, group = 0, value = -0.2, times = 1, interval = 1, name = Lang.Actions.b003, timeOverlay = false },
+				},
+			},
+			{
+				type		= 2,		-- 1冰2火
+				hittype 	= 1,		-- 1表示专砸玩家，2表示随机一个范围
+				delay		= 6* 60, 	-- 领地开启多少时间后开始，秒单位
+				interval	= 10,  	-- 间隔
+				times		= -1,	-- 次数，-1无限
+				area		= {5, 29, 10, 30},		-- 作用区域{upTopX, upTopY, rightDownX, rightDownY}	
+
+				results		= 
+				{
+					-- 抄\config\task\cymkconf.txt
+					{ bufftype = 12, group = 0, value = -0.3, times = 1, interval = 1, name = Lang.Actions.b003, timeOverlay = false },
+				},
+			},
+			{
+				type		= 2,		-- 1冰2火
+				hittype 	= 2,		-- 1表示专砸玩家，2表示随机一个范围
+				delay		= 6* 60, 	-- 领地开启多少时间后开始，秒单位
+				interval	= 10,  	-- 间隔
+				times		= -1,	-- 次数，-1无限
+				area		= {15, 24, 18, 26},		-- 作用区域{upTopX, upTopY, rightDownX, rightDownY}	
+
+				results		= 
+				{
+					-- 抄\config\task\cymkconf.txt
+					{ bufftype = 12, group = 0, value = -0.3, times = 1, interval = 1, name = Lang.Actions.b003, timeOverlay = false },
+				},
+			},
+			{
+				type		= 2,		-- 1冰2火
+				hittype 	= 2,		-- 1表示专砸玩家，2表示随机一个范围
+				delay		= 6* 60, 	-- 领地开启多少时间后开始，秒单位
+				interval	= 10,  	-- 间隔
+				times		= -1,	-- 次数，-1无限
+				area		= {9, 27, 12, 29},		-- 作用区域{upTopX, upTopY, rightDownX, rightDownY}	
+
+				results		= 
+				{
+					-- 抄\config\task\cymkconf.txt
+					{ bufftype = 12, group = 0, value = -0.3, times = 1, interval = 1, name = Lang.Actions.b003, timeOverlay = false },
+				},
+			},
+		},
+	},
+
+	-- 难度2
+	{
+        fbid = 77,
+		sceneid 	= 1148,
+		fdHard      = Lang.SceneName.s1148,
+		-- 接任务npc
+		npcId		= 111,
+		-- 4个守护npc
+		npcList		= {738, 739, 740, 741},
+
+		-- 2个boss
+		bossList	= {736},
+		bossNotify	= {[736]= "密探回报，血魂炎魔BOSS已经出现，击杀可获得大量军团灵石！"},
+		-- boss关联的任务id
+		taskId		= 9673,
+		totalMonsterCount	= 1941,	-- 怪物总数，包括2个不走动的boss
+		-- 副本出现小怪的id列表，用于注册这些怪物的攻击目标
+		monsterList	= 
+		{712, 714, 716, 719, 721, 722, 724, 726, 728, 730, 733
+		},
+		-- 杀死怪物奖励
+		awardSet	=
+		{
+			[736] = {400000, 9000, 0},			-- [怪物id] = {经验, 灵石, 贡献}
+			[712] = {1300, 1, 1},
+			[714] = {30000, 750, 0},
+			[716] = {1300, 1, 1},
+			[719] = {30000, 750, 0},
+			[721] = {1300, 1, 1},
+			[722] = {30000, 750, 0},
+			[724] = {1300, 1, 1},
+			[726] = {30000, 750, 0},
+			[728] = {1300, 1, 1},
+			[730] = {30000, 750, 0},
+			[733] = {1300, 1, 1},
+		},
+		-- 怪物出生点列表
+		monsterBornPointList = 
+		{
+			-- 对应第一个守护npc
+			{8, 9},	-- {x, y}
+			-- 对应第二个守护npc
+			{7, 47},
+			{79, 46},
+			{80, 10},
+		},
+
+		-- 特效配置
+		effect = 
+		{
+			-- 冰块, 特效列表
+			-- id, 时间(毫秒), 延时(毫秒)
+			{
+				{ id = 72, type = 6, time = 800, delay = 0 },
+				{ id = 73, type = 6, time = 800, delay = 2000 },
+				{ id = 3701, type = 6, time = 1500, delay = 2050 },
+			},
+			-- 火球, 特效列表
+			{
+				{ id = 75, type = 6, time = 800, delay = 0 },
+				{ id = 74, type = 6, time = 800, delay = 2000 },
+				-- { id = 6, type = 6, time = 2, delay = 4 },
+			},
+		},
+
+		effects		= 
+		{
+			{
+				type		= 1,		-- 1冰2火
+				hittype 	= 1,		-- 1表示专砸玩家，2表示随机一个范围
+				delay		= 6* 60, 	-- 领地开启多少时间后开始，秒单位
+				interval	= 10,  	-- 间隔
+				times		= -1,	-- 次数，-1无限
+				area		= {49, 7, 53, 10},		-- 作用区域{upTopX, upTopY, rightDownX, rightDownY}	
+
+				results		= 
+				{
+					-- 抄\config\task\cymkconf.txt
+					{ bufftype = 12, group = 0, value = -0.2, times = 1, interval = 1, name = Lang.Actions.b003, timeOverlay = false },
+				},
+			},
+			{
+				type		= 1,		-- 1冰2火
+				hittype 	= 2,		-- 1表示专砸玩家，2表示随机一个范围
+				delay		= 6* 60, 	-- 领地开启多少时间后开始，秒单位
+				interval	= 10,  	-- 间隔
+				times		= -1,	-- 次数，-1无限
+				area		= {39, 14, 43, 15},		-- 作用区域{upTopX, upTopY, rightDownX, rightDownY}	
+
+				results		= 
+				{
+					-- 抄\config\task\cymkconf.txt
+					{ bufftype = 12, group = 0, value = -0.2, times = 1, interval = 1, name = Lang.Actions.b003, timeOverlay = false },
+				},
+			},
+			{
+				type		= 1,		-- 1冰2火
+				hittype 	= 1,		-- 1表示专砸玩家，2表示随机一个范围
+				delay		= 6* 60, 	-- 领地开启多少时间后开始，秒单位
+				interval	= 10,  	-- 间隔
+				times		= -1,	-- 次数，-1无限
+				area		= {45, 11, 48, 13},		-- 作用区域{upTopX, upTopY, rightDownX, rightDownY}	
+
+				results		= 
+				{
+					-- 抄\config\task\cymkconf.txt
+					{ bufftype = 12, group = 0, value = -0.2, times = 1, interval = 1, name = Lang.Actions.b003, timeOverlay = false },
+				},
+			},
+			{
+				type		= 2,		-- 1冰2火
+				hittype 	= 1,		-- 1表示专砸玩家，2表示随机一个范围
+				delay		= 6* 60, 	-- 领地开启多少时间后开始，秒单位
+				interval	= 10,  	-- 间隔
+				times		= -1,	-- 次数，-1无限
+				area		= {5, 29, 10, 30},		-- 作用区域{upTopX, upTopY, rightDownX, rightDownY}	
+
+				results		= 
+				{
+					-- 抄\config\task\cymkconf.txt
+					{ bufftype = 12, group = 0, value = -0.3, times = 1, interval = 1, name = Lang.Actions.b003, timeOverlay = false },
+				},
+			},
+			{
+				type		= 2,		-- 1冰2火
+				hittype 	= 2,		-- 1表示专砸玩家，2表示随机一个范围
+				delay		= 6* 60, 	-- 领地开启多少时间后开始，秒单位
+				interval	= 10,  	-- 间隔
+				times		= -1,	-- 次数，-1无限
+				area		= {15, 24, 18, 26},		-- 作用区域{upTopX, upTopY, rightDownX, rightDownY}	
+
+				results		= 
+				{
+					-- 抄\config\task\cymkconf.txt
+					{ bufftype = 12, group = 0, value = -0.3, times = 1, interval = 1, name = Lang.Actions.b003, timeOverlay = false },
+				},
+			},
+			{
+				type		= 2,		-- 1冰2火
+				hittype 	= 2,		-- 1表示专砸玩家，2表示随机一个范围
+				delay		= 6* 60, 	-- 领地开启多少时间后开始，秒单位
+				interval	= 10,  	-- 间隔
+				times		= -1,	-- 次数，-1无限
+				area		= {9, 27, 12, 29},		-- 作用区域{upTopX, upTopY, rightDownX, rightDownY}	
+
+				results		= 
+				{
+					-- 抄\config\task\cymkconf.txt
+					{ bufftype = 12, group = 0, value = -0.3, times = 1, interval = 1, name = Lang.Actions.b003, timeOverlay = false },
+				},
+			},
+		},
+	},
+
+	-- 难度3
+	{
+        fbid = 78,
+		sceneid 	= 1149,
+		fdHard      = Lang.SceneName.s1149,
+		-- 接任务npc
+		npcId		= 111,
+		-- 4个守护npc
+		npcList		= {768, 769, 770, 771},
+
+		-- 2个boss
+		bossList	= {766},
+		bossNotify	= {[766]= "密探回报，血魂炎魔BOSS已经出现，击杀可获得大量军团灵石！"},
+		-- boss关联的任务id
+		taskId		= 9674,
+		totalMonsterCount	= 1941,	-- 怪物总数，包括2个不走动的boss
+		-- 副本出现小怪的id列表，用于注册这些怪物的攻击目标
+		monsterList	= 
+		{742, 744, 746, 749, 751, 752, 754, 756, 758, 760, 763
+		},
+		-- 杀死怪物奖励
+		awardSet	=
+		{
+			[766] = {600000, 12000, 0},			-- [怪物id] = {经验, 灵石, 贡献}
+			[742] = {1500, 1, 1},
+			[744] = {50000, 1000, 0},
+			[746] = {1500, 1, 1},
+			[749] = {50000, 1000, 0},
+			[751] = {1500, 1, 1},
+			[752] = {50000, 1000, 0},
+			[754] = {1500, 1, 1},
+			[756] = {50000, 1000, 0},
+			[758] = {1500, 1, 1},
+			[760] = {50000, 1000, 0},
+			[763] = {1500, 1, 1},
+		},
+		-- 怪物出生点列表
+		monsterBornPointList = 
+		{
+			-- 对应第一个守护npc
+			{8, 9},	-- {x, y}
+			-- 对应第二个守护npc
+			{7, 47},
+			{79, 46},
+			{80, 10},
+		},
+
+		-- 特效配置
+		effect = 
+		{
+			-- 冰块, 特效列表
+			-- id, 时间(毫秒), 延时(毫秒)
+			{
+				{ id = 72, type = 6, time = 800, delay = 0 },
+				{ id = 73, type = 6, time = 800, delay = 2000 },
+				{ id = 3701, type = 6, time = 1500, delay = 2050 },
+			},
+			-- 火球, 特效列表
+			{
+				{ id = 75, type = 6, time = 800, delay = 0 },
+				{ id = 74, type = 6, time = 800, delay = 2000 },
+				-- { id = 6, type = 6, time = 2, delay = 4 },
+			},
+		},
+
+		effects		= 
+		{
+			{
+				type		= 1,		-- 1冰2火
+				hittype 	= 1,		-- 1表示专砸玩家，2表示随机一个范围
+				delay		= 6* 60, 	-- 领地开启多少时间后开始，秒单位
+				interval	= 10,  	-- 间隔
+				times		= -1,	-- 次数，-1无限
+				area		= {49, 7, 53, 10},		-- 作用区域{upTopX, upTopY, rightDownX, rightDownY}	
+
+				results		= 
+				{
+					-- 抄\config\task\cymkconf.txt
+					{ bufftype = 12, group = 0, value = -0.2, times = 1, interval = 1, name = Lang.Actions.b003, timeOverlay = false },
+				},
+			},
+			{
+				type		= 1,		-- 1冰2火
+				hittype 	= 2,		-- 1表示专砸玩家，2表示随机一个范围
+				delay		= 6* 60, 	-- 领地开启多少时间后开始，秒单位
+				interval	= 10,  	-- 间隔
+				times		= -1,	-- 次数，-1无限
+				area		= {39, 14, 43, 15},		-- 作用区域{upTopX, upTopY, rightDownX, rightDownY}	
+
+				results		= 
+				{
+					-- 抄\config\task\cymkconf.txt
+					{ bufftype = 12, group = 0, value = -0.2, times = 1, interval = 1, name = Lang.Actions.b003, timeOverlay = false },
+				},
+			},
+			{
+				type		= 1,		-- 1冰2火
+				hittype 	= 1,		-- 1表示专砸玩家，2表示随机一个范围
+				delay		= 6* 60, 	-- 领地开启多少时间后开始，秒单位
+				interval	= 10,  	-- 间隔
+				times		= -1,	-- 次数，-1无限
+				area		= {45, 11, 48, 13},		-- 作用区域{upTopX, upTopY, rightDownX, rightDownY}	
+
+				results		= 
+				{
+					-- 抄\config\task\cymkconf.txt
+					{ bufftype = 12, group = 0, value = -0.2, times = 1, interval = 1, name = Lang.Actions.b003, timeOverlay = false },
+				},
+			},
+			{
+				type		= 2,		-- 1冰2火
+				hittype 	= 1,		-- 1表示专砸玩家，2表示随机一个范围
+				delay		= 6* 60, 	-- 领地开启多少时间后开始，秒单位
+				interval	= 10,  	-- 间隔
+				times		= -1,	-- 次数，-1无限
+				area		= {5, 29, 10, 30},		-- 作用区域{upTopX, upTopY, rightDownX, rightDownY}	
+
+				results		= 
+				{
+					-- 抄\config\task\cymkconf.txt
+					{ bufftype = 12, group = 0, value = -0.3, times = 1, interval = 1, name = Lang.Actions.b003, timeOverlay = false },
+				},
+			},
+			{
+				type		= 2,		-- 1冰2火
+				hittype 	= 2,		-- 1表示专砸玩家，2表示随机一个范围
+				delay		= 6* 60, 	-- 领地开启多少时间后开始，秒单位
+				interval	= 10,  	-- 间隔
+				times		= -1,	-- 次数，-1无限
+				area		= {15, 24, 18, 26},		-- 作用区域{upTopX, upTopY, rightDownX, rightDownY}	
+
+				results		= 
+				{
+					-- 抄\config\task\cymkconf.txt
+					{ bufftype = 12, group = 0, value = -0.3, times = 1, interval = 1, name = Lang.Actions.b003, timeOverlay = false },
+				},
+			},
+			{
+				type		= 2,		-- 1冰2火
+				hittype 	= 2,		-- 1表示专砸玩家，2表示随机一个范围
+				delay		= 6* 60, 	-- 领地开启多少时间后开始，秒单位
+				interval	= 10,  	-- 间隔
+				times		= -1,	-- 次数，-1无限
+				area		= {9, 27, 12, 29},		-- 作用区域{upTopX, upTopY, rightDownX, rightDownY}	
+
+				results		= 
+				{
+					-- 抄\config\task\cymkconf.txt
+					{ bufftype = 12, group = 0, value = -0.3, times = 1, interval = 1, name = Lang.Actions.b003, timeOverlay = false },
+				},
+			},
+		},
+	},
+
+	-- 难度4
+	{
+        fbid = 79,
+		sceneid 	= 1150,
+		fdHard      = Lang.SceneName.s1150,
+		-- 接任务npc
+		npcId		= 111,
+		-- 4个守护npc
+		npcList		= {798, 799, 800, 801},
+
+		-- 2个boss
+		bossList	= {796},
+		bossNotify	= {[796]= "密探回报，血魂炎魔BOSS已经出现，击杀可获得大量军团灵石！"},
+		-- boss关联的任务id
+		taskId		= 9675,
+		totalMonsterCount	= 1941,	-- 怪物总数，包括2个不走动的boss
+		-- 副本出现小怪的id列表，用于注册这些怪物的攻击目标
+		monsterList	= 
+		{772, 774, 776, 779, 781, 782, 784, 786, 788, 790, 793
+		},
+		-- 杀死怪物奖励
+		awardSet	=
+		{
+			[796] = {900000, 15000, 0},			-- [怪物id] = {经验, 灵石, 贡献}
+			[772] = {1800, 1, 1},
+			[774] = {60000, 1250, 0},
+			[776] = {1800, 1, 1},
+			[779] = {60000, 1250, 0},
+			[781] = {1800, 1, 1},
+			[782] = {60000, 1250, 0},
+			[784] = {1800, 1, 1},
+			[786] = {60000, 1250, 0},
+			[788] = {1800, 1, 1},
+			[790] = {60000, 1250, 0},
+			[793] = {1800, 1, 1},
+		},
+		-- 怪物出生点列表
+		monsterBornPointList = 
+		{
+			-- 对应第一个守护npc
+			{8, 9},	-- {x, y}
+			-- 对应第二个守护npc
+			{7, 47},
+			{79, 46},
+			{80, 10},
+		},
+
+		-- 特效配置
+		effect = 
+		{
+			-- 冰块, 特效列表
+			-- id, 时间(毫秒), 延时(毫秒)
+			{
+				{ id = 72, type = 6, time = 800, delay = 0 },
+				{ id = 73, type = 6, time = 800, delay = 2000 },
+				{ id = 3701, type = 6, time = 1500, delay = 2050 },
+			},
+			-- 火球, 特效列表
+			{
+				{ id = 75, type = 6, time = 800, delay = 0 },
+				{ id = 74, type = 6, time = 800, delay = 2000 },
+				-- { id = 6, type = 6, time = 2, delay = 4 },
+			},
+		},
+
+		effects		= 
+		{
+			{
+				type		= 1,		-- 1冰2火
+				hittype 	= 1,		-- 1表示专砸玩家，2表示随机一个范围
+				delay		= 6* 60, 	-- 领地开启多少时间后开始，秒单位
+				interval	= 10,  	-- 间隔
+				times		= -1,	-- 次数，-1无限
+				area		= {49, 7, 53, 10},		-- 作用区域{upTopX, upTopY, rightDownX, rightDownY}	
+
+				results		= 
+				{
+					-- 抄\config\task\cymkconf.txt
+					{ bufftype = 12, group = 0, value = -0.2, times = 1, interval = 1, name = Lang.Actions.b003, timeOverlay = false },
+				},
+			},
+			{
+				type		= 1,		-- 1冰2火
+				hittype 	= 2,		-- 1表示专砸玩家，2表示随机一个范围
+				delay		= 6* 60, 	-- 领地开启多少时间后开始，秒单位
+				interval	= 10,  	-- 间隔
+				times		= -1,	-- 次数，-1无限
+				area		= {39, 14, 43, 15},		-- 作用区域{upTopX, upTopY, rightDownX, rightDownY}	
+
+				results		= 
+				{
+					-- 抄\config\task\cymkconf.txt
+					{ bufftype = 12, group = 0, value = -0.2, times = 1, interval = 1, name = Lang.Actions.b003, timeOverlay = false },
+				},
+			},
+			{
+				type		= 1,		-- 1冰2火
+				hittype 	= 1,		-- 1表示专砸玩家，2表示随机一个范围
+				delay		= 6* 60, 	-- 领地开启多少时间后开始，秒单位
+				interval	= 10,  	-- 间隔
+				times		= -1,	-- 次数，-1无限
+				area		= {45, 11, 48, 13},		-- 作用区域{upTopX, upTopY, rightDownX, rightDownY}	
+
+				results		= 
+				{
+					-- 抄\config\task\cymkconf.txt
+					{ bufftype = 12, group = 0, value = -0.2, times = 1, interval = 1, name = Lang.Actions.b003, timeOverlay = false },
+				},
+			},
+			{
+				type		= 2,		-- 1冰2火
+				hittype 	= 1,		-- 1表示专砸玩家，2表示随机一个范围
+				delay		= 6* 60, 	-- 领地开启多少时间后开始，秒单位
+				interval	= 10,  	-- 间隔
+				times		= -1,	-- 次数，-1无限
+				area		= {5, 29, 10, 30},		-- 作用区域{upTopX, upTopY, rightDownX, rightDownY}	
+
+				results		= 
+				{
+					-- 抄\config\task\cymkconf.txt
+					{ bufftype = 12, group = 0, value = -0.3, times = 1, interval = 1, name = Lang.Actions.b003, timeOverlay = false },
+				},
+			},
+			{
+				type		= 2,		-- 1冰2火
+				hittype 	= 2,		-- 1表示专砸玩家，2表示随机一个范围
+				delay		= 6* 60, 	-- 领地开启多少时间后开始，秒单位
+				interval	= 10,  	-- 间隔
+				times		= -1,	-- 次数，-1无限
+				area		= {15, 24, 18, 26},		-- 作用区域{upTopX, upTopY, rightDownX, rightDownY}	
+
+				results		= 
+				{
+					-- 抄\config\task\cymkconf.txt
+					{ bufftype = 12, group = 0, value = -0.3, times = 1, interval = 1, name = Lang.Actions.b003, timeOverlay = false },
+				},
+			},
+			{
+				type		= 2,		-- 1冰2火
+				hittype 	= 2,		-- 1表示专砸玩家，2表示随机一个范围
+				delay		= 6* 60, 	-- 领地开启多少时间后开始，秒单位
+				interval	= 10,  	-- 间隔
+				times		= -1,	-- 次数，-1无限
+				area		= {9, 27, 12, 29},		-- 作用区域{upTopX, upTopY, rightDownX, rightDownY}	
+
+				results		= 
+				{
+					-- 抄\config\task\cymkconf.txt
+					{ bufftype = 12, group = 0, value = -0.3, times = 1, interval = 1, name = Lang.Actions.b003, timeOverlay = false },
+				},
+			},
+		},
+	},
+	
+	
+    --难度5
+	{
+        fbid = 80,
+		sceneid 	= 1188,
+		fdHard      = Lang.SceneName.s1188,
+		-- 接任务npc
+		npcId		= 111,
+		-- 4个守护npc
+		npcList		= {943, 944, 945, 946},
+
+		-- 2个boss
+		bossList	= {941},
+		bossNotify	= {[941]= "密探回报，血魂炎魔BOSS已经出现，击杀可获得大量军团灵石！"},
+		-- boss关联的任务id
+		taskId		= 9776,
+		totalMonsterCount	= 1941,	-- 怪物总数，包括2个不走动的boss
+		-- 副本出现小怪的id列表，用于注册这些怪物的攻击目标
+		monsterList	= 
+		{917, 919, 921, 924, 926, 927, 929, 931, 933, 935, 938
+		},
+		-- 杀死怪物奖励
+		awardSet	=
+		{
+			[941] = {1200000, 20000, 0},			-- [怪物id] = {经验, 灵石, 贡献}
+			[917] = {2700, 1, 1},
+			[919] = {100000, 1500, 0},
+			[921] = {2700, 1, 1},
+			[924] = {100000, 1500, 0},
+			[926] = {2700, 1, 1},
+			[927] = {100000, 1500, 0},
+			[929] = {2700, 1, 1},
+			[931] = {100000, 1500, 0},
+			[933] = {2700, 1, 1},
+			[935] = {100000, 1500, 0},
+			[938] = {2700, 1, 1},
+		},
+		-- 怪物出生点列表
+		monsterBornPointList = 
+		{
+			-- 对应第一个守护npc
+			{8, 9},	-- {x, y}
+			-- 对应第二个守护npc
+			{7, 47},
+			{79, 46},
+			{80, 10},
+		},
+
+		-- 特效配置
+		effect = 
+		{
+			-- 冰块, 特效列表
+			-- id, 时间(毫秒), 延时(毫秒)
+			{
+				{ id = 72, type = 6, time = 800, delay = 0 },
+				{ id = 73, type = 6, time = 800, delay = 2000 },
+				{ id = 3701, type = 6, time = 1500, delay = 2050 },
+			},
+			-- 火球, 特效列表
+			{
+				{ id = 75, type = 6, time = 800, delay = 0 },
+				{ id = 74, type = 6, time = 800, delay = 2000 },
+				-- { id = 6, type = 6, time = 2, delay = 4 },
+			},
+		},
+
+		effects		= 
+		{
+			{
+				type		= 1,		-- 1冰2火
+				hittype 	= 1,		-- 1表示专砸玩家，2表示随机一个范围
+				delay		= 6* 60, 	-- 领地开启多少时间后开始，秒单位
+				interval	= 10,  	-- 间隔
+				times		= -1,	-- 次数，-1无限
+				area		= {49, 7, 53, 10},		-- 作用区域{upTopX, upTopY, rightDownX, rightDownY}	
+
+				results		= 
+				{
+					-- 抄\config\task\cymkconf.txt
+					{ bufftype = 12, group = 0, value = -0.2, times = 1, interval = 1, name = Lang.Actions.b003, timeOverlay = false },
+				},
+			},
+			{
+				type		= 1,		-- 1冰2火
+				hittype 	= 2,		-- 1表示专砸玩家，2表示随机一个范围
+				delay		= 6* 60, 	-- 领地开启多少时间后开始，秒单位
+				interval	= 10,  	-- 间隔
+				times		= -1,	-- 次数，-1无限
+				area		= {39, 14, 43, 15},		-- 作用区域{upTopX, upTopY, rightDownX, rightDownY}	
+
+				results		= 
+				{
+					-- 抄\config\task\cymkconf.txt
+					{ bufftype = 12, group = 0, value = -0.2, times = 1, interval = 1, name = Lang.Actions.b003, timeOverlay = false },
+				},
+			},
+			{
+				type		= 1,		-- 1冰2火
+				hittype 	= 1,		-- 1表示专砸玩家，2表示随机一个范围
+				delay		= 6* 60, 	-- 领地开启多少时间后开始，秒单位
+				interval	= 10,  	-- 间隔
+				times		= -1,	-- 次数，-1无限
+				area		= {45, 11, 48, 13},		-- 作用区域{upTopX, upTopY, rightDownX, rightDownY}	
+
+				results		= 
+				{
+					-- 抄\config\task\cymkconf.txt
+					{ bufftype = 12, group = 0, value = -0.2, times = 1, interval = 1, name = Lang.Actions.b003, timeOverlay = false },
+				},
+			},
+			{
+				type		= 2,		-- 1冰2火
+				hittype 	= 1,		-- 1表示专砸玩家，2表示随机一个范围
+				delay		= 6* 60, 	-- 领地开启多少时间后开始，秒单位
+				interval	= 10,  	-- 间隔
+				times		= -1,	-- 次数，-1无限
+				area		= {5, 29, 10, 30},		-- 作用区域{upTopX, upTopY, rightDownX, rightDownY}	
+
+				results		= 
+				{
+					-- 抄\config\task\cymkconf.txt
+					{ bufftype = 12, group = 0, value = -0.3, times = 1, interval = 1, name = Lang.Actions.b003, timeOverlay = false },
+				},
+			},
+			{
+				type		= 2,		-- 1冰2火
+				hittype 	= 2,		-- 1表示专砸玩家，2表示随机一个范围
+				delay		= 6* 60, 	-- 领地开启多少时间后开始，秒单位
+				interval	= 10,  	-- 间隔
+				times		= -1,	-- 次数，-1无限
+				area		= {15, 24, 18, 26},		-- 作用区域{upTopX, upTopY, rightDownX, rightDownY}	
+
+				results		= 
+				{
+					-- 抄\config\task\cymkconf.txt
+					{ bufftype = 12, group = 0, value = -0.3, times = 1, interval = 1, name = Lang.Actions.b003, timeOverlay = false },
+				},
+			},
+			{
+				type		= 2,		-- 1冰2火
+				hittype 	= 2,		-- 1表示专砸玩家，2表示随机一个范围
+				delay		= 6* 60, 	-- 领地开启多少时间后开始，秒单位
+				interval	= 10,  	-- 间隔
+				times		= -1,	-- 次数，-1无限
+				area		= {9, 27, 12, 29},		-- 作用区域{upTopX, upTopY, rightDownX, rightDownY}	
+
+				results		= 
+				{
+					-- 抄\config\task\cymkconf.txt
+					{ bufftype = 12, group = 0, value = -0.3, times = 1, interval = 1, name = Lang.Actions.b003, timeOverlay = false },
+				},
+			},
+		},
+	},
+]]
+	
+}

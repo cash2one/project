@@ -1,0 +1,263 @@
+﻿-- 系统预告配置
+--#include "..\..\language\LangCode.txt"
+--系统图标
+--活动系统：0
+--BOSS系统：1 
+--帮派系统：2
+--擂台系统：3
+--副本系统：4
+--装备系统：5
+--轻功系统：6 
+ --打开的窗口，在查看详细的时候配置打开哪个界面,详细的枚举:
+		--65 技能面板
+		--66 成就面板
+		--67 副职面板
+		--45 背包面板
+		--71 挂机设置面板
+		--72 属性面板
+		--74 打坐面板
+		--case 73://qQ 副本
+    --case 75://tT BOSS
+    --case 80://pP 活动
+		--77 排行面板
+		--78 寄卖面板
+		--81 强化面板
+		--82 任务面板
+		--83 商场面板
+		--86 经脉面板
+		--88 帮派面板
+		--90 人际面板
+		--92 系统设置面板
+		--103 地图面板
+		--105 擂台面板
+		--104 目标面板
+  --[[ 奖励的type定义
+		{
+		atEquipment=0,//道具或者装备
+		atXiuwei =1,  //修为
+		atExp =2,	//角色经验值
+		atGuildContribution=3,	//帮派贡献值
+		atZYContribution=4,//阵营贡献
+		atBindMoney=5,	//绑定银两
+		atMoney=6,	//银两
+		atLiJin=7,	//礼金
+		atTitle=8,	//称谓
+		atSkill=9,	//奖励技能
+		atZhanhun=10, // 战魂
+		atchengjiupoint = 11,	//成就点
+		};
+	--]]
+ 
+ --因Int只能保存32位整形变量 因此现在ID为32个
+ 
+SystemNotifyConfig =
+{
+        --伙伴系统
+    {
+			 id = 1,		--因Int只能保存32位整形变量 因此现在ID为32个
+       minLevel =5,  --从该级开始预告
+       maxLevel =11,  --到该级结束预告
+       openLevel = 11,  --系统开放的等级
+       icon = 29,  --开放系统对应图标
+       desc = Lang.SystemNotify.system9Desc, --详细的描述
+       systemName = Lang.SystemNotify.system9Title, --开放系统的名字，比如坐骑系统
+       openWindow = 67,
+      --奖励列表,
+      awards =
+      {
+        { type = 0, id = 1938, count = 1,  bind = 1, strong = 0, quality = 0 },
+        { type = 0, id = 1939, count = 1,  bind = 1,  strong = 0, quality = 0 },
+        { type = 0, id = 1940, count = 1,  bind = 1,  strong = 0, quality = 0 },
+        { type = 5, id = 0, count = 1000,  bind = 1,  strong = 0, quality = 0 },
+      },
+    },
+    --帮派系统 
+    --[[{
+			id = 10,
+       minLevel =11,  --从该级开始预告 
+       maxLevel =15,  --到该级结束预告 
+       openLevel = 15,  --系统开放的等级
+       icon = 19,  --开放系统对应图标
+       desc = Lang.SystemNotify.system1Desc, --详细的描述
+       systemName = Lang.SystemNotify.system1Title, --开放系统的名字，比如坐骑系统	
+       openWindow = 88, 
+      --奖励列表,
+      awards =
+      {
+        { type = 0, id = 1553, count = 1,  bind = 1, strong = 0, quality = 0 },
+        { type = 0, id = 1558, count = 1,  bind = 1,  strong = 0, quality = 0 },
+        { type = 2, id = 0, count = 18807,  bind = 1,  strong = 0, quality = 0 },
+        { type = 5, id = 0, count = 2000,  bind = 1,  strong = 0, quality = 0 },
+      },
+      
+      
+   },  ]]
+   --轻功系统
+   {
+			 id = 2,
+       minLevel =12,  --从该级开始预告
+       maxLevel =18,  --到该级结束预告
+       openLevel = 18,  --系统开放的等级
+       icon = 23,  --开放系统对应图标
+       desc = Lang.SystemNotify.system6Desc, --详细的描述
+       systemName = Lang.SystemNotify.system6Title, --开放系统的名字，比如坐骑系统
+       openWindow = 0007,
+      awards =
+      {
+        { type = 0, id = 1555, count = 5,  bind = 1, strong = 0, quality = 0 },
+        { type = 0, id = 1559, count = 5,  bind = 1,  strong = 0, quality = 0 },
+        { type = 2, id = 0, count = 8000,  bind = 1,  strong = 0, quality = 0 },
+        { type = 5, id = 0, count = 1000,  bind = 1,  strong = 0, quality = 0 },
+      },
+   },
+   --活动系统
+   {
+			 id = 3,
+       minLevel =26,  --从该级开始预告
+       maxLevel =28,  --到该级结束预告
+       openLevel = 28,  --系统开放的等级
+       icon = 17,  --开放系统对应图标
+       desc = Lang.SystemNotify.system3Desc, --详细的描述
+       systemName = Lang.SystemNotify.system3Title, --开放系统的名字，比如坐骑系统
+       openWindow = 80,
+      awards =
+      {
+        { type = 0, id = 1588, count = 2,  bind = 1, strong = 0, quality = 0 },
+        { type = 0, id = 1589, count = 2,  bind = 1,  strong = 0, quality = 0 },
+        { type = 0, id = 1718, count = 2,  bind = 1,  strong = 0, quality = 0 },
+        { type = 5, id = 0, count = 4000,  bind = 1,  strong = 0, quality = 0 },
+      },
+   },
+   --副本系统
+   --[[{
+			 id = 11,
+       minLevel =21,  --从该级开始预告
+       maxLevel =25,  --到该级结束预告
+       openLevel = 25,  --系统开放的等级
+       icon = 21,  --开放系统对应图标
+       desc = Lang.SystemNotify.system4Desc, --详细的描述
+       systemName = Lang.SystemNotify.system4Title, --开放系统的名字，比如坐骑系统
+       openWindow = 73,
+      awards =
+      {
+        { type = 0, id = 1002, count = 10,  bind = 1, strong = 0, quality = 0 },
+        { type = 0, id = 619, count = 1,  bind = 1,  strong = 0, quality = 0 },
+        { type = 2, id = 0, count = 147448,  bind = 1,  strong = 0, quality = 0 },
+        { type = 5, id = 0, count = 5000,  bind = 1,  strong = 0, quality = 0 },
+      },
+   }, ]]
+   --宝物系统
+   {
+			 id = 4,
+       minLevel =19,  --从该级开始预告
+       maxLevel =25,  --到该级结束预告
+       openLevel = 25,  --系统开放的等级
+       icon = 28,  --开放系统对应图标
+       desc = Lang.SystemNotify.system10Desc, --详细的描述
+       systemName = Lang.SystemNotify.system10Title, --开放系统的名字，比如坐骑系统
+       openWindow = 66,
+      awards =
+      {
+        { type = 2, id = 0, count = 15000,  bind = 1, strong = 0, quality = 0 },
+        { type = 5, id = 0, count = 2000,  bind = 1,  strong = 0, quality = 0 },
+        { type = 0, id = 1918, count = 5,  bind = 1,  strong = 0, quality = 0 },
+        { type = 0, id = 1916, count = 5,  bind = 1,  strong = 0, quality = 0 },
+      },
+   },
+--擂台系统 
+   --[[{
+			 id = 5,
+       minLevel =27,  --从该级开始预告 
+       maxLevel =28,  --到该级结束预告 
+       openLevel = 28,  --系统开放的等级
+       icon = 20,  --开放系统对应图标
+       desc = Lang.SystemNotify.system2Desc, --详细的描述
+       systemName = Lang.SystemNotify.system2Title, --开放系统的名字，比如坐骑系统
+       openWindow = 105, 
+      awards =
+      {
+        { type = 0, id = 775, count = 5,  bind = 1, strong = 0, quality = 0 },
+        { type = 0, id = 765, count = 5,  bind = 1,  strong = 0, quality = 0 },
+        { type = 2, id = 0, count = 296359,  bind = 1,  strong = 0, quality = 0 },
+        { type = 5, id = 0, count = 3000,  bind = 1,  strong = 0, quality = 0 },
+      },
+   }, ]]
+       --结拜系统
+   {
+			 id = 6,
+       minLevel =29,  --从该级开始预告
+       maxLevel =30,  --到该级结束预告
+       openLevel = 30,  --系统开放的等级
+       icon = 26,  --开放系统对应图标
+       desc = Lang.SystemNotify.system8Desc, --详细的描述
+       systemName = Lang.SystemNotify.system8Title, --开放系统的名字，比如坐骑系统
+       openWindow = 110,
+      awards =
+      {
+        { type = 0, id = 1559, count = 5,  bind = 1, strong = 0, quality = 0 },
+        { type = 0, id = 597, count = 10,  bind = 1,  strong = 0, quality = 0 },
+        { type = 0, id = 603, count = 10,  bind = 1,  strong = 0, quality = 0 },
+        { type = 2, id = 0, count = 100000,  bind = 1,  strong = 0, quality = 0 },
+      },
+   },
+  
+   --世界BOSS 
+   {
+			 id = 7,
+       minLevel =31,  --从该级开始预告
+       maxLevel =35,  --到该级结束预告
+       openLevel = 35,  --系统开放的等级
+       icon = 18,  --开放系统对应图标
+       desc = Lang.SystemNotify.system5Desc, --详细的描述
+       systemName = Lang.SystemNotify.system5Title, --开放系统的名字，比如坐骑系统
+       openWindow = 75,
+      awards =
+      {
+        { type = 0, id = 1646, count = 5,  bind = 1, strong = 0, quality = 0 },
+        { type = 0, id = 622, count = 1,  bind = 1,  strong = 0, quality = 0 },
+        { type = 2, id = 0, count = 305640,  bind = 1,  strong = 0, quality = 0 },
+        { type = 5, id = 0, count = 5000,  bind = 1,  strong = 0, quality = 0 },
+      },
+   },
+      --装备增强系统 
+   {
+			 id = 8,
+       minLevel =40,  --从该级开始预告
+       maxLevel =42,  --到该级结束预告
+       openLevel = 42,  --系统开放的等级
+       icon = 22,  --开放系统对应图标
+       desc = Lang.SystemNotify.system7Desc, --详细的描述
+       systemName = Lang.SystemNotify.system7Title, --开放系统的名字，比如坐骑系统
+       openWindow = 81,
+      awards =
+      {
+        { type = 0, id = 787, count = 1,  bind = 1, strong = 0, quality = 0 },
+        { type = 0, id = 1009, count = 1,  bind = 1,  strong = 0, quality = 0 },
+        { type = 0, id = 1004, count = 1,  bind = 1,  strong = 0, quality = 0 },
+        { type = 0, id = 1005, count = 1,  bind = 1,  strong = 0, quality = 0 },
+      },
+   },
+
+   
+ --经脉系统
+   {
+			 id = 9,
+       minLevel =43,  --从该级开始预告
+       maxLevel =45,  --到该级结束预告
+       openLevel = 45,  --系统开放的等级
+       icon = 30,  --开放系统对应图标
+       desc = Lang.SystemNotify.system11Desc, --详细的描述
+       systemName = Lang.SystemNotify.system11Title, --开放系统的名字，比如坐骑系统
+       openWindow = 68,
+      awards =
+      {
+        { type = 0, id = 1886, count = 5,  bind = 1, strong = 0, quality = 0 },
+        { type = 0, id = 1657, count = 5,  bind = 1,  strong = 0, quality = 0 },
+        { type = 2, id = 0, count = 500000,  bind = 1,  strong = 0, quality = 0 },
+        { type = 5, id = 0, count = 10000,  bind = 1,  strong = 0, quality = 0 },
+      },
+   },
+
+
+
+}

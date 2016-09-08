@@ -1,0 +1,227 @@
+﻿--#include "data\config\camp\campbattleconf.txt" once
+--#include "data\functions\GlobalDefine.txt" once
+
+-- 阵营守护兽被杀死
+MonDieDispatcher.CampMonstersDie = function (monster,sysarg,monId)
+	print("CampMonstersDie")
+	local bid = Camp.getBattleId(sysarg)
+	-- 计算获得的积分
+	local rankList = Camp.getRanking(bid)
+	if rankList == nil then
+		print("CampMonsterDie:ranking is nil")
+		return 
+	end
+
+	local monsters = CampBattleConf.monsters
+	local monconf = nil
+	for i=1,#monsters do
+		if monsters[i].id == monId then
+			monconf = monsters[i]
+		end
+	end
+
+	if monconf ~= nil and monconf.score ~= nil and monconf.score > 0 then
+		local id = LActor.getIntProperty(sysarg, PROP_ENTITY_ID)
+		local rankItem = Ranking.getItemPtrFromId(rankList, id)
+		local rankId = Ranking.getId(rankItem)
+		-- Ranking.updateItem(rankList, rankId, monconf.score)
+		-- Camp.addBattScore(bid, LActor.getCampId(sysarg), monconf.score) -- 增加阵营积分
+
+		local tips = string.format(Lang.TaskTalk.zy033, monconf.score)
+		LActor.sendTipmsg(sysarg, tips, ttMessage)
+	end
+
+	local refreshindex = nil
+	for i=1,#CampBattleConf.refreshs do
+		if CampBattleConf.refreshs[i].id == monId then
+			refreshindex = i
+		end
+	end
+
+	local hfb =	LActor.getFubenHandle(sysarg)
+	local pfb = Fuben.getFubenPtr(hfb)
+
+	local fb_var = Fuben.getDyanmicVar(pfb)
+
+	if refreshindex ~= nil then
+		--给乌龟所在阵营的玩家的加buff
+		local actors = LuaHelp.getFbActorList(pfb)
+		local refreshconf = CampBattleConf.refreshs[refreshindex]
+		print("MonDieDispatcher.CampMonstersDie index:"..refreshindex)
+		for i = 1,#actors do
+			local actor = actors[i]
+			local camp = LActor.getIntProperty(actor, PROP_CAMP)
+			if camp == refreshconf.camp then
+				local buff = refreshconf.buff
+				print("MonDieDispatcher.CampMonstersDie add buff:"..buff.type..",i:"..i..",camp:"..camp)
+				LActor.addBuff(actor, buff.type, CampBattleConf.wgBuffGroup, buff.value, buff.times, buff.interval, buff.name)
+				LActor.changeCampBattleBuffModelid(actor, refreshconf.effectid, true)
+			end
+		end
+		if fb_var.wgbuff == nil then fb_var.wgbuff = {} end
+		fb_var.wgbuff[refreshindex] = System.getCurrMiniTime() + refreshconf.buff.times
+		--是否要刷出来一个npc
+		if refreshconf.refreshNpc ~= nil then
+			local hScene = LActor.getSceneHandle(sysarg)
+			local monsterPtr = Fuben.createMonster(hScene, refreshconf.refreshNpc[1], refreshconf.refreshNpc[2], refreshconf.refreshNpc[3], refreshconf.refreshNpc[4])
+			print("MonDieDispatcher.CampMonstersDie refreshNpc:"..refreshconf.refreshNpc[1])
+		end
+	end
+
+	-- 公告
+	local zy = LActor.getCampId(monster)
+	local sys_camp = LActor.getCampId(sysarg)
+	local tips = string.format(Lang.TaskTalk.zy021, CampColor[sys_camp], CampShortName[sys_camp], LActor.getName(sysarg), Zy_cn[zy], LActor.getName(monster))
+	--System.broadcastTipmsg(tips, ttScreenCenter)
+end
+
+function CampBattleCheckMonsterPath(monster)
+	if monster == nil then return end
+end
+
+-- for i=1,#CampBattleConf.refreshs do
+-- 	MonDieDispatcher.register(CampBattleConf.refreshs[i].id, MonDieDispatcher.CampMonstersDie)
+-- end
+
+------------- 新阵营战 -------------
+-- 星宿死亡
+MonDieDispatcher.CampXingsuDie = function(monster,sysarg,monId)
+	local pfb = LActor.getFubenPrt(sysarg)
+	if pfb == nil then return end
+	local vfb = Fuben.getDyanmicVar(pfb)
+	if vfb == nil or vfb.camp_xingsu == nil then return end
+	local hsc = LActor.getSceneHandle(sysarg)
+	if hsc == nil then return end
+	-- 设置副本内的星宿状态
+	-- print("==============="..monId)
+	for i=1,#CampBattleConf.xingsu do
+		if monId == CampBattleConf.xingsu[i].id then
+			vfb.camp_xingsu[i] = 0
+			-- print("----------------"..i)
+			break
+		end
+	end
+	-- 找到对应的玄女索引
+	local xnindex = 0
+	for i=1,#CampBattleConf.xuannv do
+		for j=1,#CampBattleConf.xuannv[i].needdie do
+		 	if CampBattleConf.xuannv[i].needdie[j] == monId then
+		 		xnindex = i
+		 		break
+		 	end
+		end
+		if xnindex ~= 0 then
+			break
+		end 
+	end
+	if xnindex == 0 then return end
+
+	-- 指定的星宿是否都死了
+	local alldie = 1
+	for i=1,#CampBattleConf.xuannv[xnindex].needdie do
+		local num = Fuben.getLiveMonsterCount(hsc, CampBattleConf.xuannv[xnindex].needdie[i])
+		-- print("---------num---------"..num)
+		if num > 0 then
+			alldie = 0
+			break
+		end
+	end
+
+	if alldie == 1 then
+		-- 设置玄女可被攻击
+		-- print("===========设置玄女可被攻击")
+		local xnptr = Fuben.getMonsterPtrById(hsc, CampBattleConf.xuannv[xnindex].id)
+		LActor.setDenyBeAttack(xnptr, false)
+	end
+end
+
+-- 玄女死亡
+MonDieDispatcher.CampXuannvDie = function(monster,sysarg,monId)
+	-- 记录胜利的阵营
+	local sys_var = System.getStaticVar()
+	if sys_var == nil then return end
+	if sys_var.campbattle_winner == nil then -- 防止重复设置
+		sys_var.campbattle_winner = LActor.getIntProperty(sysarg, PROP_CAMP)
+	end
+
+	-- 结束阵营战
+	local cur_t = System.getCurrMiniTime()
+	Camp.setNextBattleTime(cur_t + 5)
+end
+
+-- 中立怪物死亡
+MonDieDispatcher.NormalMonsterDie = function(monster,sysarg,monId)
+	local bid = Camp.getBattleId(sysarg)
+	local idx = 0
+	for i=1,#CampBattleConf.normalmonster do
+		if CampBattleConf.normalmonster[i].id == monId then
+			idx = i
+			break
+		end
+	end
+	if idx == 0 then return end
+
+	if LActor.isActor(sysarg) == false then return end
+	-- 增加击杀数
+	-- 计算获得的积分
+	local rankList = Camp.getRanking(bid)
+	if rankList == nil then
+		print("NormalMonsterDie:ranking is nil")
+		return 
+	end
+	local id = LActor.getIntProperty(sysarg, PROP_ENTITY_ID)
+	local rankItem = Ranking.getItemPtrFromId(rankList, id)
+	if rankItem then
+		local rankId = Ranking.getId(rankItem)
+		Ranking.updateItem(rankList, rankId, CampBattleConf.normalmonster[idx].score)
+	end
+	Camp.addBattScore(bid, LActor.getIntProperty(sysarg, PROP_CAMP), CampBattleConf.normalmonster[idx].jp) -- 增加阵营积分
+	-- local testval = Ranking.getPoint(rankItem)
+	-- print("=======中立怪物死亡======"..testval)
+end
+
+-- 中立BOSS死亡
+MonDieDispatcher.NormalBossDie = function(monster,sysarg,monId)
+	local bid = Camp.getBattleId(sysarg)
+	local idx = 0
+	for i=1,#CampBattleConf.normalboss do
+		if CampBattleConf.normalboss[i].id == monId then
+			idx = i
+			break
+		end
+	end
+	if idx == 0 then return end
+
+	if LActor.isActor(sysarg) == false then return end
+	-- 增加击杀数
+	-- 计算获得的积分
+	local rankList = Camp.getRanking(bid)
+	if rankList == nil then
+		print("NormalBossDie:ranking is nil")
+		return 
+	end
+	local id = LActor.getIntProperty(sysarg, PROP_ENTITY_ID)
+	local rankItem = Ranking.getItemPtrFromId(rankList, id)
+	if rankItem then
+		local rankId = Ranking.getId(rankItem)
+		Ranking.updateItem(rankList, rankId, CampBattleConf.normalboss[idx].score)
+	end
+	Camp.addBattScore(bid, LActor.getIntProperty(sysarg, PROP_CAMP), CampBattleConf.normalboss[idx].jp) -- 增加阵营积分
+end
+
+for i=1,#CampBattleConf.xingsu do
+	MonDieDispatcher.register(CampBattleConf.xingsu[i].id, MonDieDispatcher.CampXingsuDie)
+end
+
+for i=1,#CampBattleConf.xuannv do
+	MonDieDispatcher.register(CampBattleConf.xuannv[i].id, MonDieDispatcher.CampXuannvDie)
+	-- MonHpChangedDispatcher.register(CampBattleConf.xuannv[i].id, MonDieDispatcher.CampXuannvHpChange)
+end
+
+for i=1,#CampBattleConf.normalmonster do
+	MonDieDispatcher.register(CampBattleConf.normalmonster[i].id, MonDieDispatcher.NormalMonsterDie)
+end
+
+for i=1,#CampBattleConf.normalboss do
+	MonDieDispatcher.register(CampBattleConf.normalboss[i].id, MonDieDispatcher.NormalBossDie)
+end

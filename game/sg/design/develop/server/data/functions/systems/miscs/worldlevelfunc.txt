@@ -1,0 +1,165 @@
+﻿-- 世界等级处理
+--#include "data\config\misc\worldlevel.txt" once
+--#include "data\functions\gmevent.txt" once
+
+WorldLevelFunc = {}
+
+
+-- 刷新排行榜，暂时只有这里用到
+function OnRefreshRank()
+	-- 屏蔽时间等级
+	-- WorldLevelFunc.OnRankRefresh()
+end
+
+-- 初始化
+WorldLevelFunc.OnInit = function()
+	local var_sys = System.getStaticVar()
+	if var_sys == nil then return end
+
+	local level = var_sys.worldlevel
+	if level == nil then
+		level = 0
+	end
+
+	System.setWorldLevel(level)
+end
+
+-- 玩家登录
+WorldLevelFunc.OnLoginWorldLevel = function(sysarg, arg)
+	local var_sys = System.getStaticVar()
+	if var_sys == nil then return end
+
+	if var_sys.worldlevel == nil or var_sys.worldlevel < WorldLevel.worldLevelLimit then -- 未达到世界等级
+		return 
+	end
+
+	local avar = LActor.getStaticVar(sysarg)
+	if avar.wlreward == nil then
+		local reward = WorldLevel.worldLevelReward
+		local level = LActor.getLevel(sysarg)
+		if level >= WorldLevel.worldActorLevel then
+			if level >= var_sys.worldlevel - 5 then
+				System.sendGmMailOffLine(LActor.getActorId(sysarg), reward.context, 1, reward.item, reward.count, reward.bind)
+			else
+				System.sendGmMailOffLine(LActor.getActorId(sysarg), reward.context, 0, 0, 0, 0)
+			end
+		end
+		avar.wlreward = 1 -- 标识已经领取过奖励,或已经满足世界等级条件
+	end
+
+	-- 发送世界等级
+	local npack = DataPack.allocPacket(sysarg,139,69)  --申请一个数据包
+    if npack == nil then return end
+
+    DataPack.writeInt( npack, var_sys.worldlevel )
+
+    DataPack.flush(npack)
+end
+
+
+-- 玩家升级处理
+WorldLevelFunc.OnLevelWorldLEvel = function(sysarg, arg)
+	local var_sys = System.getStaticVar()
+	if var_sys == nil then return end
+
+	if var_sys.worldlevel == nil or var_sys.worldlevel < WorldLevel.worldLevelLimit then -- 未达到世界等级
+		return 
+	end
+end
+
+
+-- 排行榜更新处理
+WorldLevelFunc.OnRankRefresh = function()
+	local var_sys = System.getStaticVar()
+	if var_sys == nil then return end
+
+	local oldrank = var_sys.worldlevel
+	if oldrank == nil then
+		oldrank = 0
+	end
+
+	-- 获取等级排行前三的玩家等级
+	local newrank = math.floor((Ranking.getLevelFromDbRank(2, 0) + Ranking.getLevelFromDbRank(2, 1) + Ranking.getLevelFromDbRank(2, 2)) / 3)
+
+	if newrank < WorldLevel.worldLevelLimit then
+		newrank = 0 
+	end
+
+	--print("new world level:"..newrank)
+
+	if oldrank == newrank then return end-- 世界等级没变 
+
+	-- 保存
+	System.setWorldLevel(newrank)
+	var_sys.worldlevel = newrank
+
+	-- 发送新的世界等级
+	local dp = LDataPack.allocPacket()
+	if dp == nil then return end
+
+	LDataPack.writeByte(dp, 139)
+	LDataPack.writeByte(dp, 69)
+	LDataPack.writeInt(dp, newrank)
+
+	System.broadcastData(dp)
+
+	-- 第一次开启世界等级
+	if oldrank == 0 then
+		--System.broadcastTipmsg(Lang.ScriptTips.wl001, ttGmTip ) -- 公告
+
+		-- 给未满足条件的玩家发邮件
+		local reward = WorldLevel.worldLevelReward
+		local item = reward.item
+		local rcount = reward.count
+		local bind = reward.bind
+		local context = reward.context
+		local actors = LuaHelp.getAllActorList()
+		if actors ~= nil then
+			for i=1,#actors do
+				local actor = actors[i]
+
+				local avar = LActor.getStaticVar(actor)
+				avar.wlreward = 1 -- 标识已经领取过奖励,或已经满足世界等级条件
+
+				local level = LActor.getLevel(actor)
+				if level >= WorldLevel.worldActorLevel then
+					if level >= newrank - 5 then -- 没有加成，有奖励
+						System.sendGmMailOffLine(LActor.getActorId(sysarg), context, 1, item, rcount, bind)
+					else
+						System.sendGmMailOffLine(LActor.getActorId(sysarg), context, 0, 0, 0, 0)
+					end
+				end
+			end
+		end
+	end
+end
+
+-- GM命令
+
+-- 重置世界等级，主要是测试用
+GmEventFuncList.ResetWorldLevel = function(sysarg, args)
+	local var_sys = System.getStaticVar()
+	if var_sys == nil then return end
+
+	var_sys.worldlevel = nil
+end
+
+-- 重新计算世界等级
+GmEventFuncList.RefreshWorldLevel = function(sysarg, args)
+	WorldLevelFunc.OnRankRefresh()
+end
+
+-- 重置世界等级，主要是测试用
+GmEventFuncList.ResetWorldLevelFlag = function(sysarg, args)
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+
+	var.wlreward = nil
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, WorldLevelFunc.OnLoginWorldLevel)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeLevel, WorldLevelFunc.OnLevelWorldLEvel)
+table.insert(InitFnTable,WorldLevelFunc.OnInit) 
+GmEventFuncList.register( "resetwl", GmEventFuncList.ResetWorldLevel, 1) -- 重置世界等级
+GmEventFuncList.register( "refreshwl", GmEventFuncList.RefreshWorldLevel, 1) -- 刷新世界等级
+GmEventFuncList.register( "resetwlflag", GmEventFuncList.ResetWorldLevelFlag, 1) -- 重置世界等级标识

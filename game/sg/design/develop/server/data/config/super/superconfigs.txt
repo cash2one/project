@@ -1,0 +1,16 @@
+﻿--#include "..\..\language\LangCode.txt" once
+--[[
+下面是变身的配置,
+每种变身用一个文件存放,格式是super_1.txt,其中1表示技能的ID
+--]]
+
+SuperConfigs=
+{
+--#include "super_1.txt"
+--#include "super_2.txt"
+--#include "super_3.txt"
+--#include "super_4.txt"
+--#include "super_5.txt"
+--#include "super_6.txt"
+--#include "super_7.txt"
+}

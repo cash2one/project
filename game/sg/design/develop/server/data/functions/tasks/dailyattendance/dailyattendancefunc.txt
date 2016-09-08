@@ -1,0 +1,533 @@
+--#include "data\config\dailyattendance\dailyattendanceconf.txt" once
+--#include "data\language\LangCode.txt" once
+
+--每日签到
+
+local DailyAttendanceFunc = {}
+
+DailyAttendanceFunc.GetDaysPerMon = function (year, mon)
+	if mon == 1 or mon == 3 or mon == 5 or mon == 7 or mon == 8 or mon == 10 or mon == 12 then
+		return 31
+	elseif mon == 4 or mon == 6 or mon == 9 or mon == 11 then
+		return 30
+	else
+		if year % 4 == 0 then
+			return 29
+		else
+			return 28
+		end
+	end
+end
+
+DailyAttendanceFunc.GetLeftDaysPerMon = function (sysarg)
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return 0 end
+	local num = 0
+	local year = 0
+	local mon = 0
+	local day = 0
+	year, mon, day = System.getDate(year, mon, day)
+	local count = DailyAttendanceFunc.GetDaysPerMon (year, mon)
+	for i = 1, count do
+		if not System.bitOPMask(var.meitianqiandao.meitianqiandaolist, i) then
+			num = num + 1
+		end
+	end
+	return num
+end
+
+DailyAttendanceFunc.IsFullAttendance = function (sysarg, year, mon)
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return false end
+	local count = DailyAttendanceFunc.GetDaysPerMon (year, mon)
+	for i = 1, count do
+		if not System.bitOPMask(var.meitianqiandao.meitianqiandaolist, i) then
+			return false
+		end
+	end
+	return true
+end
+
+DailyAttendanceFunc.OnInit = function()
+	local sysvar = System.getStaticVar()
+	if sysvar == nil then return end
+	if sysvar.DailyAttendanceTime == nil then
+		sysvar.DailyAttendanceTime = System.getCurrMiniTime()
+	end
+end
+--初始化角色每日签到的数据
+DailyAttendanceFunc.InitDailyAttendanceClientData = function (sysarg)
+
+	local sysvar = System.getStaticVar()
+	if sysvar == nil then return end
+
+	if sysvar.DailyAttendanceTime == nil then
+		sysvar.DailyAttendanceTime = System.getCurrMiniTime()
+	end
+
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	if var.meitianqiandao == nil then
+		var.meitianqiandao = {}	--	一个月的签到数据(是个表)
+	end
+	local nYear = 0
+	local nMonth = 0
+	local nDay = 0
+	nYear, nMonth, nDay = System.getDate(nYear, nMonth, nDay)
+
+	if var.meitianqiandao.monattendancecount == nil and  var.meitianqiandao.meitianqiandaolist == nil
+	then 
+		--判断是不是开服那个月,开服那个月才有
+		local open_t = System.getOpenServerTime()
+		local year, month, day, hour, minute, sec = 0, 0, 0, 0, 0, 0
+		year, month, day = System.timeDecode(open_t, year, month, day, hour, minute, sec)
+		if month == nMonth then
+			var.meitianqiandao.monattendancecount = 0
+			var.meitianqiandao.meitianqiandaolist = 0
+			local resignnum = DailyAttendanceConf.resigndaynum[1];
+			if(nDay >= 15) then resignnum = DailyAttendanceConf.resigndaynum[2] end
+			for i=1,nDay do
+				var.meitianqiandao.meitianqiandaolist = System.bitOpSetMask(var.meitianqiandao.meitianqiandaolist, i, true)
+				var.meitianqiandao.monattendancecount = var.meitianqiandao.monattendancecount + 1
+				if(var.meitianqiandao.monattendancecount >= resignnum) then break end
+			end
+			--print("InitDailyAttendanceClientData meitianqiandaolist:"..var.meitianqiandao.meitianqiandaolist..",monattendancecount"..var.meitianqiandao.monattendancecount)
+		end
+	end
+
+	--根据开服时间当玩家签到当月之前的天数
+	if var.meitianqiandao.monattendancecount == nil then	--	当月签到的次数
+		var.meitianqiandao.monattendancecount = 0
+	end
+
+	if var.meitianqiandao.currentmon == nil then	--	当前月
+		var.meitianqiandao.currentmon = nMonth
+	end
+
+	--if var.meitianqiandao.isattendance == nil then	-- 当天是否已签
+	--	var.meitianqiandao.isattendance = 0		--0 = 未签
+	--end
+
+	if var.meitianqiandao.attendancetime == nil then	-- 签到时间
+		--var.meitianqiandao.attendancetime = System.getCurrMiniTime()
+		var.meitianqiandao.attendancetime = 0
+	end
+
+	--if var.meitianqiandao.ismakeupsign == nil then	-- 当天是否已补签
+	--	var.meitianqiandao.ismakeupsign = 0		--0 = 未签
+	--end
+	if var.meitianqiandao.makeupsigntime == nil then	-- 补签时间
+		--var.meitianqiandao.makeupsigntime = System.getCurrMiniTime()
+		var.meitianqiandao.makeupsigntime = 0
+	end
+
+	if var.meitianqiandao.meitianqiandaorewardlist == nil then	--	初始化每日签到奖励列表 每个位只记录是否已领 0=未领， 1=已领
+		var.meitianqiandao.meitianqiandaorewardlist = 0
+	end
+
+	--if var.meitianqiandao.giftpetattendancecount == nil then	--	伙伴赠送累职签到次数
+	--	var.meitianqiandao.giftpetattendancecount = 0
+	--end
+	if var.meitianqiandao.isgetgiftpetat == nil then	--	是否已领取伙伴赠送	--	0=否，1=是
+		var.meitianqiandao.isgetgiftpetat = 0
+	end
+
+	if var.meitianqiandao.meitianqiandaolist == nil then	--	初始化那条签到的日期列表 每个位是当月的每一天
+		var.meitianqiandao.meitianqiandaolist = 0
+	else
+		--print("zzzzzzcurrentmon" .. var.meitianqiandao.currentmon)
+		--print("zzzzzznMonth" .. nMonth)
+		if var.meitianqiandao.currentmon ~= nMonth then		--换月了
+			--print("xxxxxxxxxxxxxxxxxxxxxxxxxxxx")
+			var.meitianqiandao.meitianqiandaolist = 0	--	初始化那条签到的日期列表
+			var.meitianqiandao.currentmon = nMonth
+			var.meitianqiandao.monattendancecount = 0	--	当前签到的次数置0
+			--var.meitianqiandao.isattendance = 0	-- 当天是否已签
+			--var.meitianqiandao.ismakeupsign = 0 --	当天是否已补签
+			--初始化奖励列表
+			var.meitianqiandao.meitianqiandaorewardlist = 0	--	每个位只记录是否已领 0=未领， 1=已领
+			var.meitianqiandao.isgetgiftpetat = 0
+		end
+	end
+
+end
+
+--获取今天时否已签false = 已签
+DailyAttendanceFunc.GetIsAttendance = function (sysarg)
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return false end
+	if var.meitianqiandao == nil then return false end
+	if var.meitianqiandao.attendancetime == nil then return false end	-- 签到时间
+
+	local nowtime = System.getCurrMiniTime()
+	--print("-------var.meitianqiandao.attendancetime" .. var.meitianqiandao.attendancetime)
+	--local time_difference = System.getDayDiff(nowtime, var.meitianqiandao.attendancetime)
+	if System.isSameDay(nowtime, var.meitianqiandao.attendancetime) then
+		return false
+	end
+	return true
+end
+
+--获取今天时否已补签false = 已签
+DailyAttendanceFunc.GetIsMakeUpSign = function (sysarg)
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return false end
+	if var.meitianqiandao == nil then return false end
+	if var.meitianqiandao.makeupsigntime == nil then return false end	-- 补签时间
+
+	local nowtime = System.getCurrMiniTime()
+	if System.isSameDay(nowtime, var.meitianqiandao.makeupsigntime) then
+		return false
+	end
+	return true
+end
+
+--跨日触发
+DailyAttendanceFunc.NewDayTrigger = function (sysarg, arg)
+	--如玩家当天满签奖励未领取，则第二天系统自动发送到他的邮箱里
+	DailyAttendanceFunc.SendMailAward(sysarg)
+	--出事化玩家数据
+	DailyAttendanceFunc.InitDailyAttendanceClientData(sysarg)
+	--下发每日签到的已签数据
+	DailyAttendanceFunc.SendDailyAttendanceData(sysarg)
+	--下发每日签到当月的奖励领取情况
+	DailyAttendanceFunc.SendDailyAttendanceRewardData(sysarg)
+end
+
+--登录触发
+DailyAttendanceFunc.LoginDayTrigger = function (sysarg, arg)
+
+	DailyAttendanceFunc.InitDailyAttendanceClientData(sysarg)
+
+	--下发每日签到的已签数据
+	DailyAttendanceFunc.SendDailyAttendanceData(sysarg)
+
+	--下发每日签到当月的奖励领取情况
+	DailyAttendanceFunc.SendDailyAttendanceRewardData(sysarg)
+end
+
+--请求领取签到送伙伴奖励
+DailyAttendanceFunc.GetAttendanceGiftPetReward = function (sysarg, msgid, packet)
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	if var.meitianqiandao == nil then return end
+	if var.meitianqiandao.monattendancecount == nil then return end --	当月签到的次数
+	if var.meitianqiandao.attendancetime == nil then return end-- 当天是否已签时间
+	if var.meitianqiandao.makeupsigntime == nil then return end -- 当天是否已补签时间
+	if var.meitianqiandao.meitianqiandaolist == nil then return end -- 每个位是当月的每一天
+	if var.meitianqiandao.meitianqiandaorewardlist == nil then return end	-- 每个位只记录是否已领 0=未领， 1=已领
+	--if var.meitianqiandao.giftpetattendancecount == nil then return end	--	伙伴赠送累积签到次数
+	if var.meitianqiandao.isgetgiftpetat == nil then return end	--	是否已领取伙伴赠送	--	0=否，1=是
+
+	if var.meitianqiandao.isgetgiftpetat ~= 0 then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.mtqd007, ttMessage)
+		return
+	end
+	local num = 0
+	local year = 0
+	local mon = 0
+	local day = 0
+	year, mon, day = System.getDate(year, mon, day)
+	if not DailyAttendanceFunc.IsFullAttendance(sysarg, year, mon) then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.mtqd008, ttMessage)
+		return
+	end
+
+	--领取道具逻辑
+	local reward = DailyAttendanceConf.gift_pet_reward[mon].reward
+	if LActor.addItem(sysarg, reward.id, 0, 0, 1, 1,"meitianqiandaolibao",1) >= 1 then
+		-- 用于播放特效
+		local effects = {}
+		local effect = {}
+		effect.type = 1  -- 1为物品,暂时只支持发物品所以写死
+		effect.id = reward.id
+		effect.count = 1
+		effects[#effects+1] = effect
+		-- 播放特效
+		if #effects > 0 then
+			MiscFunc.PlayItemEffect(sysarg, 7, effects)
+		end
+		--设置已领
+		var.meitianqiandao.isgetgiftpetat = 1
+		--更新客户端
+		DailyAttendanceFunc.SendDailyAttendanceData(sysarg)
+	else
+		--背包已满
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.mtqd001, ttMessage)
+	end
+
+end
+
+--请求领取每天签到奖励
+DailyAttendanceFunc.GetDailyAttendanceReward = function (sysarg, msgid, packet)
+	local index = DataPack.readChar(packet)
+	local option = DailyAttendanceConf.rewards_options[index]
+	if option == nil then	--没有这个选项
+		return
+	end
+
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	if var.meitianqiandao == nil then return end
+	if var.meitianqiandao.monattendancecount == nil then return end --	当月签到的次数
+	if var.meitianqiandao.attendancetime == nil then return end-- 当天是否已签时间
+	if var.meitianqiandao.makeupsigntime == nil then return end -- 当天是否已补签时间
+	if var.meitianqiandao.meitianqiandaolist == nil then return end -- 每个位是当月的每一天
+	if var.meitianqiandao.meitianqiandaorewardlist == nil then return end	-- 每个位只记录是否已领 0=未领， 1=已领
+	--if var.meitianqiandao.giftpetattendancecount == nil then return end	--	伙伴赠送累积签到次数
+	if var.meitianqiandao.isgetgiftpetat == nil then return end	--	是否已领取伙伴赠送	--	0=否，1=是
+
+
+	if not System.bitOPMask(var.meitianqiandao.meitianqiandaorewardlist, index) then -- 未领取
+
+		if LActor.addItem(sysarg, option.reward.id, 0, 0, 1, 1,"meitianqiandaolibao",1) >= 1 then
+			-- 用于播放特效
+			local effects = {}
+			local effect = {}
+			effect.type = 1  -- 1为物品,暂时只支持发物品所以写死
+			effect.id = option.reward.id
+			effect.count = 1
+			effects[#effects+1] = effect
+			-- 播放特效
+			if #effects > 0 then
+				MiscFunc.PlayItemEffect(sysarg, 7, effects)
+			end
+			--设置已领
+			var.meitianqiandao.meitianqiandaorewardlist = System.bitOpSetMask(var.meitianqiandao.meitianqiandaorewardlist, index, true)	--将这个位置为1
+			--更新客户端
+			--DailyAttendanceFunc.SendDailyAttendanceData(sysarg)
+			DailyAttendanceFunc.SendDailyAttendanceRewardData(sysarg)
+		else
+			--背包已满
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.mtqd001, ttMessage)
+		end
+	else
+		--提示已领
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.mtqd002, ttMessage)
+	end
+end
+
+
+--请求签到
+DailyAttendanceFunc.RequestSign = function (sysarg, msgid, packet)
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	if var.meitianqiandao == nil then return end
+	if var.meitianqiandao.monattendancecount == nil then return end --	当月签到的次数
+	if var.meitianqiandao.attendancetime == nil then return end-- 当天是否已签时间
+	if var.meitianqiandao.makeupsigntime == nil then return end -- 当天是否已补签时间
+	if var.meitianqiandao.meitianqiandaolist == nil then return end -- 每个位是当月的每一天
+	if var.meitianqiandao.meitianqiandaorewardlist == nil then return end	-- 每个位只记录是否已领 0=未领， 1=已领
+
+	--if var.meitianqiandao.giftpetattendancecount == nil then return end	--	伙伴赠送累积签到次数
+	if var.meitianqiandao.isgetgiftpetat == nil then return end	--	是否已领取伙伴赠送	--	0=否，1=是
+
+	--if var.meitianqiandao.isattendance == 1 then
+	if DailyAttendanceFunc.GetIsAttendance(sysarg) then
+		var.meitianqiandao.attendancetime = System.getCurrMiniTime()
+		local nYear = 0
+		local nMonth = 0
+		local nDay = 0
+		nYear, nMonth, nDay = System.getDate(nYear, nMonth, nDay)
+		var.meitianqiandao.meitianqiandaolist = System.bitOpSetMask(var.meitianqiandao.meitianqiandaolist, nDay, true)
+		var.meitianqiandao.monattendancecount = var.meitianqiandao.monattendancecount + 1
+
+		--伙伴赠送累积签到次数
+		--if var.meitianqiandao.isgetgiftpetat == 0 and DailyAttendanceConf.gift_pet_reward[nMonth].condition > var.meitianqiandao.giftpetattendancecount then
+		--	var.meitianqiandao.giftpetattendancecount = var.meitianqiandao.giftpetattendancecount + 1
+		--end
+
+		--更新客户端
+		DailyAttendanceFunc.SendDailyAttendanceData(sysarg)
+		DailyAttendanceFunc.SendDailyAttendanceRewardData(sysarg)
+		
+	else
+		--提示已签
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.mtqd003, ttMessage)
+		return
+	end
+end
+
+--请求补签
+DailyAttendanceFunc.RequestMakeUpSign = function (sysarg, msgid, packet)
+
+	local nDay = DataPack.readChar(packet)
+	if nDay < 1 or nDay > 31 then
+		return
+	end
+	--print("x1111111111111111")
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	if var.meitianqiandao == nil then return end
+	if var.meitianqiandao.monattendancecount == nil then return end --	当月签到的次数
+
+	if var.meitianqiandao.attendancetime == nil then return end-- 当天是否已签时间
+	if var.meitianqiandao.makeupsigntime == nil then return end -- 当天是否已补签时间
+	if var.meitianqiandao.meitianqiandaolist == nil then return end -- 每个位是当月的每一天
+	if var.meitianqiandao.meitianqiandaorewardlist == nil then return end	-- 每个位只记录是否已领 0=未领， 1=已领
+
+	--if var.meitianqiandao.giftpetattendancecount == nil then return end	--	伙伴赠送累职签到次数
+	if var.meitianqiandao.isgetgiftpetat == nil then return end	--	是否已领取伙伴赠送	--	0=否，1=是
+
+	if DailyAttendanceFunc.GetIsMakeUpSign(sysarg) then
+		local nowYear = 0
+		local nowMonth = 0
+		local nowDay = 0
+		nowYear, nowMonth, nowDay = System.getDate(nowYear, nowMonth, nowDay)
+		if nDay >= nowDay then
+			return
+		end
+		--判断这一天是否已签
+		--print("补签日期" .. nDay)
+		if not System.bitOPMask(var.meitianqiandao.meitianqiandaolist, nDay) then
+			--更新客户端
+			--print("当前活跃值" .. LActor.getActivity(sysarg))
+			if LActor.getActivity(sysarg) >= DailyAttendanceConf.needactivity then
+			--print("补签 成功")
+
+				var.meitianqiandao.makeupsigntime = System.getCurrMiniTime()
+				var.meitianqiandao.meitianqiandaolist = System.bitOpSetMask(var.meitianqiandao.meitianqiandaolist, nDay, true)
+				var.meitianqiandao.monattendancecount = var.meitianqiandao.monattendancecount + 1
+				--伙伴赠送累积签到次数
+				--if var.meitianqiandao.isgetgiftpetat == 0 and DailyAttendanceConf.gift_pet_reward[nowMonth].condition > var.meitianqiandao.giftpetattendancecount then
+				--	var.meitianqiandao.giftpetattendancecount = var.meitianqiandao.giftpetattendancecount + 1
+				--end
+				DailyAttendanceFunc.SendDailyAttendanceData(sysarg)
+				DailyAttendanceFunc.SendDailyAttendanceRewardData(sysarg)
+			else
+				--提示活跃值不足，不能补签
+				LActor.sendTipmsg(sysarg, Lang.ScriptTips.mtqd006, ttMessage)
+			end
+		else
+			--提示这一天已签，不能补签
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.mtqd005, ttMessage)
+		end
+	else
+		--提示已补签
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.mtqd004, ttMessage)
+		return
+	end
+
+
+end
+
+--下发每日签到的已签数据
+DailyAttendanceFunc.SendDailyAttendanceData = function (sysarg)
+
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	if var.meitianqiandao == nil then return end
+	if var.meitianqiandao.monattendancecount == nil then return end --	当月签到的次数
+
+	if var.meitianqiandao.attendancetime == nil then return end-- 当天是否已签时间
+	if var.meitianqiandao.makeupsigntime == nil then return end -- 当天是否已补签时间
+	if var.meitianqiandao.meitianqiandaolist == nil then return end -- 每个位是当月的每一天
+	if var.meitianqiandao.meitianqiandaorewardlist == nil then return end	-- 每个位只记录是否已领 0=未领， 1=已领
+
+	--if var.meitianqiandao.giftpetattendancecount == nil then return end	--	伙伴赠送累职签到次数
+	if var.meitianqiandao.isgetgiftpetat == nil then return end	--	是否已领取伙伴赠送	--	0=否，1=是
+
+
+	local npack = DataPack.allocPacket(sysarg, BaseTypes.SystemId.miscsSystem, 75)
+	DataPack.writeChar(npack, var.meitianqiandao.monattendancecount)
+	--print("-------------------------" .. var.meitianqiandao.monattendancecount)
+	for i = 1, 31 do
+		if System.bitOPMask(var.meitianqiandao.meitianqiandaolist, i) then
+			--print("++++++++" .. i)
+			DataPack.writeChar(npack, i)
+		end
+	end
+
+	local left = DailyAttendanceFunc.GetLeftDaysPerMon(sysarg)
+	local year = 0
+	local mon = 0
+	local day = 0
+	year, mon, day = System.getDate(year, mon, day)
+	local count = DailyAttendanceFunc.GetDaysPerMon(year, mon)
+	DataPack.writeShort(npack, left)	--签到送伙伴活动的剩余天数
+	DataPack.writeShort(npack, count)
+	DataPack.writeChar(npack, var.meitianqiandao.isgetgiftpetat)
+
+	local status = 0
+	if not DailyAttendanceFunc.GetIsMakeUpSign(sysarg) then
+		status = 1
+	end
+	DataPack.writeChar(npack, status)
+	--print("下发每日签到的已签数据")
+	DataPack.flush(npack)
+
+
+end
+
+--下发每日签到当月的奖励领取情况
+DailyAttendanceFunc.SendDailyAttendanceRewardData = function (sysarg)
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	if var.meitianqiandao == nil then return end
+	if var.meitianqiandao.monattendancecount == nil then return end --	当月签到的次数
+
+	if var.meitianqiandao.attendancetime == nil then return end-- 当天是否已签时间
+	if var.meitianqiandao.makeupsigntime == nil then return end -- 当天是否已补签时间
+	if var.meitianqiandao.meitianqiandaolist == nil then return end -- 每个位是当月的每一天
+	if var.meitianqiandao.meitianqiandaorewardlist == nil then return end	-- 每个位只记录是否已领 0=未领， 1=已领
+
+	--if var.meitianqiandao.giftpetattendancecount == nil then return end	--	伙伴赠送累职签到次数
+	if var.meitianqiandao.isgetgiftpetat == nil then return end	--	是否已领取伙伴赠送	--	0=否，1=是
+
+	local npack = DataPack.allocPacket(sysarg, BaseTypes.SystemId.miscsSystem, 76)
+	local rewards_options = DailyAttendanceConf.rewards_options
+	DataPack.writeChar(npack, #rewards_options)
+	--print("+++++++++" .. #rewards_options)
+	for i = 1, #(rewards_options) do
+		DataPack.writeChar(npack, i)
+		if System.bitOPMask(var.meitianqiandao.meitianqiandaorewardlist, i) then
+			DataPack.writeChar(npack, 1)
+			--print("领取奖励状态1")
+		else
+			DataPack.writeChar(npack, 0)
+			--print("领取奖励状态0")
+		end
+	end
+	--print("下发每日签到当月的奖励领取情况")
+	DataPack.flush(npack)
+end
+
+DailyAttendanceFunc.SendMailAward = function (sysarg )
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return  end
+	if var.meitianqiandao == nil then return end
+	if var.meitianqiandao.attendancetime == nil then return end	
+
+	local year = 0
+	local mon = 0
+	local day = 0
+	year, mon, day = System.getDate(year, mon, day)
+	local month = mon - 1
+	if month <= 0 then
+		year = year - 1
+		month = 12
+	end
+	local reward = DailyAttendanceConf.gift_pet_reward[month].reward
+	local nowtime = System.getCurrMiniTime()
+	if not System.isSameMonth(nowtime, var.meitianqiandao.attendancetime) then
+		if DailyAttendanceFunc.IsFullAttendance(sysarg, year, month) and var.meitianqiandao.isgetgiftpetat == 0 then
+			local actorid = LActor.getActorId(sysarg)
+			System.sendGmMailOffLine(actorid, Lang.ScriptTips.mtqd009, 1, reward.id, 1, 1)
+		end
+	end
+end
+
+--请求签到
+MiscsImplement.registerMsgHandler(75, DailyAttendanceFunc.RequestSign)
+--请求补签
+MiscsImplement.registerMsgHandler(76, DailyAttendanceFunc.RequestMakeUpSign)
+--请求领取签到送伙伴奖励
+MiscsImplement.registerMsgHandler(77, DailyAttendanceFunc.GetAttendanceGiftPetReward)
+--请求领取每天签到奖励
+MiscsImplement.registerMsgHandler(78, DailyAttendanceFunc.GetDailyAttendanceReward)
+
+--跨日与登录触发
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, DailyAttendanceFunc.NewDayTrigger)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, DailyAttendanceFunc.LoginDayTrigger)
+
+table.insert(InitFnTable,DailyAttendanceFunc.OnInit)

@@ -1,0 +1,114 @@
+PlayFubenConfig = {}			-- 剧情副本配置
+
+PlayFubenConfig = {
+	fubenId = {120},				-- 副本ID
+	sceneId = {1276},			-- 场景ID
+	sceneJieSuan = {1058},
+	fubenToSence = {1058},
+
+	toNextTeleport = {},		-- 传送门
+
+	gameTime = 600,				-- 游戏时间
+
+	playerPos = {10,13},		-- 玩家进入副本的位置
+	monsterCount = 25,			-- 怪物个数
+
+	limitTime = 0,				-- 结算的时间限制
+
+	
+	createmonsterlist = {	-- 副本 每个阶段所操作
+		[1] = { -- 普通难度
+	--#include "data\functions\config\fubenconfig\playfuben\playfuben1_1.txt"
+--#include "data\functions\config\fubenconfig\playfuben\playfuben1_2.txt"
+--#include "data\functions\config\fubenconfig\playfuben\playfuben1_3.txt"
+	--#include "data\functions\config\fubenconfig\playfuben\playfuben1_4.txt"
+--#include "data\functions\config\fubenconfig\playfuben\playfuben1_5.txt"
+
+--#include "data\functions\config\fubenconfig\playfuben\playfuben2_1.txt"
+--#include "data\functions\config\fubenconfig\playfuben\playfuben2_2.txt"
+--#include "data\functions\config\fubenconfig\playfuben\playfuben2_3.txt"
+--#include "data\functions\config\fubenconfig\playfuben\playfuben2_4.txt"
+
+--#include "data\functions\config\fubenconfig\playfuben\playfuben3_1.txt"
+--#include "data\functions\config\fubenconfig\playfuben\playfuben3_2.txt"
+--#include "data\functions\config\fubenconfig\playfuben\playfuben3_3.txt"
+--#include "data\functions\config\fubenconfig\playfuben\playfuben3_4.txt"
+
+--#include "data\functions\config\fubenconfig\playfuben\playfuben4_1.txt"
+--#include "data\functions\config\fubenconfig\playfuben\playfuben4_2.txt"
+--#include "data\functions\config\fubenconfig\playfuben\playfuben4_3.txt"
+--#include "data\functions\config\fubenconfig\playfuben\playfuben4_4.txt"
+
+--#include "data\functions\config\fubenconfig\playfuben\playfuben5_1.txt"
+--#include "data\functions\config\fubenconfig\playfuben\playfuben5_2.txt"
+--#include "data\functions\config\fubenconfig\playfuben\playfuben5_3.txt"
+--#include "data\functions\config\fubenconfig\playfuben\playfuben5_4.txt"
+--#include "data\functions\config\fubenconfig\playfuben\playfuben5_5.txt"
+
+--#include "data\functions\config\fubenconfig\playfuben\playfuben6_1.txt"
+--#include "data\functions\config\fubenconfig\playfuben\playfuben6_2.txt"
+--#include "data\functions\config\fubenconfig\playfuben\playfuben6_3.txt"
+--#include "data\functions\config\fubenconfig\playfuben\playfuben6_4.txt"
+--#include "data\functions\config\fubenconfig\playfuben\playfuben6_5.txt"
+
+--#include "data\functions\config\fubenconfig\playfuben\playfuben7_1.txt"
+--#include "data\functions\config\fubenconfig\playfuben\playfuben7_2.txt"
+--#include "data\functions\config\fubenconfig\playfuben\playfuben7_3.txt"
+--#include "data\functions\config\fubenconfig\playfuben\playfuben7_4.txt"
+--#include "data\functions\config\fubenconfig\playfuben\playfuben7_5.txt"
+
+--#include "data\functions\config\fubenconfig\playfuben\playfuben8_1.txt"
+--#include "data\functions\config\fubenconfig\playfuben\playfuben8_2.txt"
+--#include "data\functions\config\fubenconfig\playfuben\playfuben8_3.txt"
+--#include "data\functions\config\fubenconfig\playfuben\playfuben8_4.txt"
+--#include "data\functions\config\fubenconfig\playfuben\playfuben8_5.txt"
+		},
+		[2] = { -- 困难难度
+	--#include "data\functions\config\fubenconfig\playfuben\playfuben_difficult_1_1.txt"
+--#include "data\functions\config\fubenconfig\playfuben\playfuben_difficult_1_2.txt"
+--#include "data\functions\config\fubenconfig\playfuben\playfuben_difficult_1_3.txt"
+	--#include "data\functions\config\fubenconfig\playfuben\playfuben_difficult_1_4.txt"
+--#include "data\functions\config\fubenconfig\playfuben\playfuben_difficult_1_5.txt"
+
+--#include "data\functions\config\fubenconfig\playfuben\playfuben_difficult_2_1.txt"
+--#include "data\functions\config\fubenconfig\playfuben\playfuben_difficult_2_2.txt"
+--#include "data\functions\config\fubenconfig\playfuben\playfuben_difficult_2_3.txt"
+--#include "data\functions\config\fubenconfig\playfuben\playfuben_difficult_2_4.txt"
+
+--#include "data\functions\config\fubenconfig\playfuben\playfuben_difficult_3_1.txt"
+--#include "data\functions\config\fubenconfig\playfuben\playfuben_difficult_3_2.txt"
+--#include "data\functions\config\fubenconfig\playfuben\playfuben_difficult_3_3.txt"
+--#include "data\functions\config\fubenconfig\playfuben\playfuben_difficult_3_4.txt"
+
+--#include "data\functions\config\fubenconfig\playfuben\playfuben_difficult_4_1.txt"
+--#include "data\functions\config\fubenconfig\playfuben\playfuben_difficult_4_2.txt"
+--#include "data\functions\config\fubenconfig\playfuben\playfuben_difficult_4_3.txt"
+--#include "data\functions\config\fubenconfig\playfuben\playfuben_difficult_4_4.txt"
+
+--#include "data\functions\config\fubenconfig\playfuben\playfuben_difficult_5_1.txt"
+--#include "data\functions\config\fubenconfig\playfuben\playfuben_difficult_5_2.txt"
+--#include "data\functions\config\fubenconfig\playfuben\playfuben_difficult_5_3.txt"
+--#include "data\functions\config\fubenconfig\playfuben\playfuben_difficult_5_4.txt"
+--#include "data\functions\config\fubenconfig\playfuben\playfuben_difficult_5_5.txt"
+
+--#include "data\functions\config\fubenconfig\playfuben\playfuben_difficult_6_1.txt"
+--#include "data\functions\config\fubenconfig\playfuben\playfuben_difficult_6_2.txt"
+--#include "data\functions\config\fubenconfig\playfuben\playfuben_difficult_6_3.txt"
+--#include "data\functions\config\fubenconfig\playfuben\playfuben_difficult_6_4.txt"
+--#include "data\functions\config\fubenconfig\playfuben\playfuben_difficult_6_5.txt"
+
+--#include "data\functions\config\fubenconfig\playfuben\playfuben_difficult_7_1.txt"
+--#include "data\functions\config\fubenconfig\playfuben\playfuben_difficult_7_2.txt"
+--#include "data\functions\config\fubenconfig\playfuben\playfuben_difficult_7_3.txt"
+--#include "data\functions\config\fubenconfig\playfuben\playfuben_difficult_7_4.txt"
+--#include "data\functions\config\fubenconfig\playfuben\playfuben_difficult_7_5.txt"
+
+--#include "data\functions\config\fubenconfig\playfuben\playfuben_difficult_8_1.txt"
+--#include "data\functions\config\fubenconfig\playfuben\playfuben_difficult_8_2.txt"
+--#include "data\functions\config\fubenconfig\playfuben\playfuben_difficult_8_3.txt"
+--#include "data\functions\config\fubenconfig\playfuben\playfuben_difficult_8_4.txt"
+--#include "data\functions\config\fubenconfig\playfuben\playfuben_difficult_8_5.txt"
+		},
+	},
+	
+}

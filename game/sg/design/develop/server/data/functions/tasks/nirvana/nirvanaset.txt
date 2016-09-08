@@ -1,0 +1,1774 @@
+﻿--需要配一个npc在这副本里
+NirvanaSet = {
+	limitLevel = 27,--进入等级限制
+	FBid = 11, --副本id
+	LimitTime = {300+15,240+15,180+15,120+15,90+15,60+15,60+15,60+15,60+15,60+15,60+15,60+15,60+15,60+15,60+15}, -- 副本第几波剩余时间
+	Scene = 1054, --场景id
+	nx = 26, --进入场景开始x坐标
+	ny = 18, --进入场景开始y坐标
+	fullAnger = 9999, --玩家增加怒气值
+	MobNpc = Lang.EntityName.n52,--要延时刷怪必须要设置一npc在npc的场景刷怪
+	StepCount = 15, --总的波数
+}
+NirvanaItem = {
+{--第一波怪杀完的宝箱,																		
+},								
+{--第2波怪杀完的宝箱,														
+},								
+{--第3波怪杀完的宝箱,								
+	{--宝箱随机1							
+		{  amount = 1, itemid = 18540, quality=0, strong=0, bind=1 },		
+	},	
+	{--宝箱随机1							
+		{  amount = 1, itemid = 64712, quality=0, strong=0, bind=0 },		
+	},	
+},								
+{--第4波怪杀完的宝箱,														
+},								
+{--第5波怪杀完的宝箱,													
+},								
+{--第6波怪杀完的宝箱,								
+	{--宝箱随机2							
+		{  amount = 1, itemid = 18520, quality=0, strong=0, bind=1 },												
+	},	
+	{--宝箱随机1							
+		{  amount = 1, itemid = 64712, quality=0, strong=0, bind=0 },		
+	},		
+},								
+{--第7波怪杀完的宝箱,													
+},								
+{--第8波怪杀完的宝箱,														
+},	
+{--第9波怪杀完的宝箱,								
+	{--宝箱随机3							
+		{  amount = 1, itemid = 18530, quality=0, strong=0, bind=1 },												
+	},
+	{--宝箱随机1							
+		{  amount = 1, itemid = 64712, quality=0, strong=0, bind=0 },		
+	},		
+},	
+{--第10波怪杀完的宝箱,														
+},	
+{--第11波怪杀完的宝箱,														
+},	
+{--第12波怪杀完的宝箱,								
+	{--宝箱随机4							
+		{  amount = 1, itemid = 18600, quality=0, strong=0, bind=1 },											
+	},	
+	{--宝箱随机1							
+		{  amount = 1, itemid = 64712, quality=0, strong=0, bind=0 },		
+	},		
+},
+{--第13波怪杀完的宝箱,														
+},	
+{--第14波怪杀完的宝箱,														
+},	
+{--第15波怪杀完的宝箱,								
+	{--宝箱随机5							
+		{  amount = 1, itemid = 18720, quality=0, strong=0, bind=1 },											
+	},
+	{--宝箱随机1							
+		{  amount = 1, itemid = 64712, quality=0, strong=0, bind=0 },		
+	},		
+},
+
+}							
+
+NirvanaMonster = {
+--第1拨怪物配置
+		{							
+		monsterId = 174, --怪物id							
+		posX1 = 22, --怪物x坐标范围1							
+		posX2 = 23,							
+		posY1 = 14,							
+		posY2 = 15,							
+		nCount = 1, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 5, --特殊怪的时候给玩家的时间							
+		bossstep = 1, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,	--怪物生存期	
+		Anger = 4, 
+		},  							
+		{							
+		monsterId = 174, --怪物id							
+		posX1 = 17, --怪物x坐标范围2							
+		posX2 = 30,							
+		posY1 = 10,							
+		posY2 = 12,							
+		nCount = 4, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同							
+		GiveTime = 3, --特殊怪的时候给玩家的时间							
+		bossstep = 1, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,	
+		},  							
+		{							
+		monsterId = 174, --怪物id							
+		posX1 = 28, --怪物x坐标范围3							
+		posX2 = 29,							
+		posY1 = 15,							
+		posY2 = 16,						
+		nCount = 1, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 5, --特殊怪的时候给玩家的时间							
+		bossstep = 1, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪
+		LiveTime = 0,
+		Anger = 4,	
+		},  							
+		{							
+		monsterId = 174, --怪物id							
+		posX1 = 32, --怪物x坐标范围4							
+		posX2 = 35,							
+		posY1 = 14,							
+		posY2 = 25,							
+		nCount = 5, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 5, --特殊怪的时候给玩家的时间							
+		bossstep = 1, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,	
+		},  							
+		{							
+		monsterId = 174, --怪物id							
+		posX1 = 26, --怪物x坐标范围5							
+		posX2 = 27,							
+		posY1 = 21,							
+		posY2 = 22,							
+		nCount = 1, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 6, --特殊怪的时候给玩家的时间							
+		bossstep = 1, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,	
+		Anger = 4,	
+		},  							
+		{							
+		monsterId = 174, --怪物id							
+		posX1 = 20, --怪物x坐标范围6							
+		posX2 = 30,							
+		posY1 = 24,							
+		posY2 = 26,							
+		nCount = 4, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 7, --特殊怪的时候给玩家的时间							
+		bossstep = 1, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,	
+		Anger = 4,	
+		},  							
+		{							
+		monsterId = 174, --怪物id							
+		posX1 = 14, --怪物x坐标范围7							
+		posX2 = 18,							
+		posY1 = 21,							
+		posY2 = 27,							
+		nCount = 2, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 8, --特殊怪的时候给玩家的时间							
+		bossstep = 1, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,	
+		Anger = 4,
+		},  							
+		{							
+		monsterId = 174, --怪物id							
+		posX1 = 14, --怪物x坐标范围8							
+		posX2 = 18,							
+		posY1 = 15,							
+		posY2 = 19,							
+		nCount = 4, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 9, --特殊怪的时候给玩家的时间							
+		bossstep = 1, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,	
+		Anger = 4,
+		},  
+--第2拨怪物配置		
+		{							
+		monsterId = 175, --怪物id							
+		posX1 = 22, --怪物x坐标范围1							
+		posX2 = 23,							
+		posY1 = 14,							
+		posY2 = 15,							
+		nCount = 1, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 5, --特殊怪的时候给玩家的时间							
+		bossstep = 2, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 175, --怪物id							
+		posX1 = 17, --怪物x坐标范围2							
+		posX2 = 30,							
+		posY1 = 10,							
+		posY2 = 12,							
+		nCount = 4, --怪物数量						
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同							
+		GiveTime = 5, --特殊怪的时候给玩家的时间							
+		bossstep = 2, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 175, --怪物id							
+		posX1 = 28, --怪物x坐标范围3							
+		posX2 = 29,							
+		posY1 = 15,							
+		posY2 = 16,						
+		nCount = 1, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 5, --特殊怪的时候给玩家的时间							
+		bossstep = 2, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 175, --怪物id							
+		posX1 = 28, --怪物x坐标范围3							
+		posX2 = 29,							
+		posY1 = 15,							
+		posY2 = 16,						
+		nCount = 1, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 5, --特殊怪的时候给玩家的时间							
+		bossstep = 2, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 175, --怪物id							
+		posX1 = 26, --怪物x坐标范围5							
+		posX2 = 27,							
+		posY1 = 21,							
+		posY2 = 22,							
+		nCount = 1, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 6, --特殊怪的时候给玩家的时间							
+		bossstep = 2, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 175, --怪物id							
+		posX1 = 20, --怪物x坐标范围6							
+		posX2 = 30,							
+		posY1 = 24,							
+		posY2 = 26,							
+		nCount = 4, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 7, --特殊怪的时候给玩家的时间							
+		bossstep = 2, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 175, --怪物id							
+		posX1 = 14, --怪物x坐标范围7							
+		posX2 = 18,							
+		posY1 = 21,							
+		posY2 = 27,							
+		nCount = 2, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 8, --特殊怪的时候给玩家的时间							
+		bossstep = 2, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 175, --怪物id							
+		posX1 = 14, --怪物x坐标范围8							
+		posX2 = 18,							
+		posY1 = 15,							
+		posY2 = 19,							
+		nCount = 4, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 9, --特殊怪的时候给玩家的时间							
+		bossstep = 2, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		}, 
+--第3拨怪物配置		
+		{							
+		monsterId = 176, --怪物id							
+		posX1 = 22, --怪物x坐标范围1							
+		posX2 = 23,							
+		posY1 = 14,							
+		posY2 = 15,							
+		nCount = 1, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 5, --特殊怪的时候给玩家的时间							
+		bossstep = 3, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 176, --怪物id							
+		posX1 = 17, --怪物x坐标范围2							
+		posX2 = 30,							
+		posY1 = 10,							
+		posY2 = 12,							
+		nCount = 4, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同							
+		GiveTime = 5, --特殊怪的时候给玩家的时间							
+		bossstep = 3, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 176, --怪物id							
+		posX1 = 28, --怪物x坐标范围3							
+		posX2 = 29,							
+		posY1 = 15,							
+		posY2 = 16,						
+		nCount = 1, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 5, --特殊怪的时候给玩家的时间							
+		bossstep = 3, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 176, --怪物id							
+		posX1 = 32, --怪物x坐标范围4							
+		posX2 = 35,							
+		posY1 = 14,							
+		posY2 = 25,							
+		nCount = 5, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 5, --特殊怪的时候给玩家的时间							
+		bossstep = 3, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 176, --怪物id							
+		posX1 = 26, --怪物x坐标范围5							
+		posX2 = 27,							
+		posY1 = 21,							
+		posY2 = 22,							
+		nCount = 1, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 6, --特殊怪的时候给玩家的时间							
+		bossstep = 3, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 176, --怪物id							
+		posX1 = 20, --怪物x坐标范围6							
+		posX2 = 30,							
+		posY1 = 24,							
+		posY2 = 26,							
+		nCount = 4, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 7, --特殊怪的时候给玩家的时间							
+		bossstep = 3, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 176, --怪物id							
+		posX1 = 14, --怪物x坐标范围7							
+		posX2 = 18,							
+		posY1 = 21,							
+		posY2 = 27,							
+		nCount = 2, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 8, --特殊怪的时候给玩家的时间							
+		bossstep = 3, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 176, --怪物id							
+		posX1 = 14, --怪物x坐标范围8							
+		posX2 = 18,							
+		posY1 = 15,							
+		posY2 = 19,							
+		nCount = 4, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 9, --特殊怪的时候给玩家的时间							
+		bossstep = 3, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		}, 
+--第4拨怪物配置		
+		{							
+		monsterId = 177, --怪物id							
+		posX1 = 22, --怪物x坐标范围1							
+		posX2 = 23,							
+		posY1 = 14,							
+		posY2 = 15,							
+		nCount = 1, --怪物数量						
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 5, --特殊怪的时候给玩家的时间							
+		bossstep = 4, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 177, --怪物id							
+		posX1 = 17, --怪物x坐标范围2							
+		posX2 = 30,							
+		posY1 = 10,							
+		posY2 = 12,							
+		nCount = 4, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同							
+		GiveTime = 5, --特殊怪的时候给玩家的时间							
+		bossstep = 4, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 177, --怪物id							
+		posX1 = 28, --怪物x坐标范围3							
+		posX2 = 29,							
+		posY1 = 15,							
+		posY2 = 16,						
+		nCount = 1, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 5, --特殊怪的时候给玩家的时间							
+		bossstep = 4, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 177, --怪物id							
+		posX1 = 32, --怪物x坐标范围4							
+		posX2 = 35,							
+		posY1 = 14,							
+		posY2 = 25,							
+		nCount = 5, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 5, --特殊怪的时候给玩家的时间							
+		bossstep = 4, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 177, --怪物id							
+		posX1 = 26, --怪物x坐标范围5							
+		posX2 = 27,							
+		posY1 = 21,							
+		posY2 = 22,							
+		nCount = 1, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 6, --特殊怪的时候给玩家的时间							
+		bossstep = 4, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 177, --怪物id							
+		posX1 = 20, --怪物x坐标范围6							
+		posX2 = 30,							
+		posY1 = 24,							
+		posY2 = 26,							
+		nCount = 4, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 7, --特殊怪的时候给玩家的时间							
+		bossstep = 4, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 177, --怪物id							
+		posX1 = 14, --怪物x坐标范围7							
+		posX2 = 18,							
+		posY1 = 21,							
+		posY2 = 27,							
+		nCount = 2, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 8, --特殊怪的时候给玩家的时间							
+		bossstep = 4, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 177, --怪物id							
+		posX1 = 14, --怪物x坐标范围8							
+		posX2 = 18,							
+		posY1 = 15,							
+		posY2 = 19,							
+		nCount = 4, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 9, --特殊怪的时候给玩家的时间							
+		bossstep = 4, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  
+--第5拨怪物配置		
+		{							
+		monsterId = 178, --怪物id							
+		posX1 = 22, --怪物x坐标范围1							
+		posX2 = 23,							
+		posY1 = 14,							
+		posY2 = 15,							
+		nCount = 1, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 5, --特殊怪的时候给玩家的时间							
+		bossstep = 5, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 178, --怪物id							
+		posX1 = 17, --怪物x坐标范围2							
+		posX2 = 30,							
+		posY1 = 10,							
+		posY2 = 12,							
+		nCount = 4, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同							
+		GiveTime = 5, --特殊怪的时候给玩家的时间							
+		bossstep = 5, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 178, --怪物id							
+		posX1 = 28, --怪物x坐标范围3							
+		posX2 = 29,							
+		posY1 = 15,							
+		posY2 = 16,						
+		nCount = 1, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 5, --特殊怪的时候给玩家的时间							
+		bossstep = 5, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪		
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 178, --怪物id							
+		posX1 = 32, --怪物x坐标范围4							
+		posX2 = 35,							
+		posY1 = 14,							
+		posY2 = 25,							
+		nCount = 5, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 5, --特殊怪的时候给玩家的时间							
+		bossstep = 5, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 178, --怪物id							
+		posX1 = 26, --怪物x坐标范围5							
+		posX2 = 27,							
+		posY1 = 21,							
+		posY2 = 22,							
+		nCount = 1, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 6, --特殊怪的时候给玩家的时间							
+		bossstep = 5, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 178, --怪物id							
+		posX1 = 20, --怪物x坐标范围6							
+		posX2 = 30,							
+		posY1 = 24,							
+		posY2 = 26,							
+		nCount = 4, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 7, --特殊怪的时候给玩家的时间							
+		bossstep = 5, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 178, --怪物id							
+		posX1 = 14, --怪物x坐标范围7							
+		posX2 = 18,							
+		posY1 = 21,							
+		posY2 = 27,							
+		nCount = 2, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 8, --特殊怪的时候给玩家的时间							
+		bossstep = 5, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 178, --怪物id							
+		posX1 = 14, --怪物x坐标范围8							
+		posX2 = 18,							
+		posY1 = 15,							
+		posY2 = 19,							
+		nCount = 4, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 9, --特殊怪的时候给玩家的时间							
+		bossstep = 5, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  
+--第6拨怪物配置		
+		{							
+		monsterId = 179, --怪物id							
+		posX1 = 22, --怪物x坐标范围1							
+		posX2 = 23,							
+		posY1 = 14,							
+		posY2 = 15,							
+		nCount = 1, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 5, --特殊怪的时候给玩家的时间							
+		bossstep = 6, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 179, --怪物id							
+		posX1 = 22, --怪物x坐标范围1							
+		posX2 = 23,							
+		posY1 = 14,							
+		posY2 = 15,							
+		nCount = 1, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同							
+		GiveTime = 5, --特殊怪的时候给玩家的时间							
+		bossstep = 6, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 179, --怪物id							
+		posX1 = 28, --怪物x坐标范围3							
+		posX2 = 29,							
+		posY1 = 15,							
+		posY2 = 16,						
+		nCount = 1, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 5, --特殊怪的时候给玩家的时间							
+		bossstep = 6, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 179, --怪物id							
+		posX1 = 32, --怪物x坐标范围4							
+		posX2 = 35,							
+		posY1 = 14,							
+		posY2 = 25,							
+		nCount = 5, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 5, --特殊怪的时候给玩家的时间							
+		bossstep = 6, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 179, --怪物id							
+		posX1 = 26, --怪物x坐标范围5							
+		posX2 = 27,							
+		posY1 = 21,							
+		posY2 = 22,							
+		nCount = 1, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 6, --特殊怪的时候给玩家的时间							
+		bossstep = 6, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪		
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 179, --怪物id							
+		posX1 = 20, --怪物x坐标范围6							
+		posX2 = 30,							
+		posY1 = 24,							
+		posY2 = 26,							
+		nCount = 4, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 7, --特殊怪的时候给玩家的时间							
+		bossstep = 6, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 179, --怪物id							
+		posX1 = 14, --怪物x坐标范围7							
+		posX2 = 18,							
+		posY1 = 21,							
+		posY2 = 27,							
+		nCount = 2, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 8, --特殊怪的时候给玩家的时间							
+		bossstep = 6, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 179, --怪物id							
+		posX1 = 14, --怪物x坐标范围8							
+		posX2 = 18,							
+		posY1 = 15,							
+		posY2 = 19,							
+		nCount = 4, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 9, --特殊怪的时候给玩家的时间							
+		bossstep = 6, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},
+--第7拨怪物配置		
+		{							
+		monsterId = 180, --怪物id							
+		posX1 = 22, --怪物x坐标范围1							
+		posX2 = 23,							
+		posY1 = 14,							
+		posY2 = 15,							
+		nCount = 1, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 5, --特殊怪的时候给玩家的时间							
+		bossstep = 7, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 180, --怪物id							
+		posX1 = 17, --怪物x坐标范围2							
+		posX2 = 30,							
+		posY1 = 10,							
+		posY2 = 12,							
+		nCount = 4, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同							
+		GiveTime = 5, --特殊怪的时候给玩家的时间							
+		bossstep = 7, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 180, --怪物id							
+		posX1 = 28, --怪物x坐标范围3							
+		posX2 = 29,							
+		posY1 = 15,							
+		posY2 = 16,						
+		nCount = 1, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 5, --特殊怪的时候给玩家的时间							
+		bossstep = 7, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 180, --怪物id							
+		posX1 = 32, --怪物x坐标范围4							
+		posX2 = 35,							
+		posY1 = 14,							
+		posY2 = 25,							
+		nCount = 5, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 5, --特殊怪的时候给玩家的时间							
+		bossstep = 7, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 180, --怪物id							
+		posX1 = 26, --怪物x坐标范围5							
+		posX2 = 27,							
+		posY1 = 21,							
+		posY2 = 22,							
+		nCount = 1, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 6, --特殊怪的时候给玩家的时间							
+		bossstep = 7, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 180, --怪物id							
+		posX1 = 24, --怪物x坐标范围6							
+		posX2 = 26,							
+		posY1 = 22,							
+		posY2 = 23,							
+		nCount = 3, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 7, --特殊怪的时候给玩家的时间							
+		bossstep = 7, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 180, --怪物id							
+		posX1 = 14, --怪物x坐标范围7							
+		posX2 = 18,							
+		posY1 = 21,							
+		posY2 = 27,							
+		nCount = 2, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 8, --特殊怪的时候给玩家的时间							
+		bossstep = 7, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 180, --怪物id							
+		posX1 = 14, --怪物x坐标范围8							
+		posX2 = 18,							
+		posY1 = 15,							
+		posY2 = 19,							
+		nCount = 4, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 9, --特殊怪的时候给玩家的时间							
+		bossstep = 7, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},
+--第8拨怪物配置		
+		{							
+		monsterId = 181, --怪物id							
+		posX1 = 22, --怪物x坐标范围1							
+		posX2 = 23,							
+		posY1 = 14,							
+		posY2 = 15,							
+		nCount = 1, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 5, --特殊怪的时候给玩家的时间							
+		bossstep = 8, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+									
+		{							
+		monsterId = 181, --怪物id							
+		posX1 = 17, --怪物x坐标范围2							
+		posX2 = 30,							
+		posY1 = 10,							
+		posY2 = 12,							
+		nCount = 4, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同							
+		GiveTime = 5, --特殊怪的时候给玩家的时间							
+		bossstep = 8, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 181, --怪物id							
+		posX1 = 28, --怪物x坐标范围3							
+		posX2 = 29,							
+		posY1 = 15,							
+		posY2 = 16,						
+		nCount = 1, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 5, --特殊怪的时候给玩家的时间							
+		bossstep = 8, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 181, --怪物id							
+		posX1 = 32, --怪物x坐标范围4							
+		posX2 = 35,							
+		posY1 = 14,							
+		posY2 = 25,							
+		nCount = 5, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 5, --特殊怪的时候给玩家的时间							
+		bossstep = 8, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 181, --怪物id							
+		posX1 = 26, --怪物x坐标范围5							
+		posX2 = 27,							
+		posY1 = 21,							
+		posY2 = 22,							
+		nCount = 1, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 6, --特殊怪的时候给玩家的时间							
+		bossstep = 8, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 181, --怪物id							
+		posX1 = 20, --怪物x坐标范围6							
+		posX2 = 30,							
+		posY1 = 24,							
+		posY2 = 26,							
+		nCount = 4, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 7, --特殊怪的时候给玩家的时间							
+		bossstep = 8, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 181, --怪物id							
+		posX1 = 14, --怪物x坐标范围7							
+		posX2 = 18,							
+		posY1 = 21,							
+		posY2 = 27,							
+		nCount = 2, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 8, --特殊怪的时候给玩家的时间							
+		bossstep = 8, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},	
+		{							
+		monsterId = 181, --怪物id							
+		posX1 = 14, --怪物x坐标范围8							
+		posX2 = 18,							
+		posY1 = 15,							
+		posY2 = 19,							
+		nCount = 4, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 8, --特殊怪的时候给玩家的时间							
+		bossstep = 8, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  	
+--第9拨怪物配置			
+		{							
+		monsterId = 182, --怪物id							
+		posX1 = 22, --怪物x坐标范围1							
+		posX2 = 23,							
+		posY1 = 14,							
+		posY2 = 15,							
+		nCount = 1, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 5, --特殊怪的时候给玩家的时间							
+		bossstep = 9, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 182, --怪物id							
+		posX1 = 17, --怪物x坐标范围2							
+		posX2 = 30,							
+		posY1 = 10,							
+		posY2 = 12,							
+		nCount = 4, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同							
+		GiveTime = 5, --特殊怪的时候给玩家的时间							
+		bossstep = 9, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 182, --怪物id							
+		posX1 = 28, --怪物x坐标范围3							
+		posX2 = 29,							
+		posY1 = 15,							
+		posY2 = 16,						
+		nCount = 1, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 5, --特殊怪的时候给玩家的时间							
+		bossstep = 9, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 182, --怪物id							
+		posX1 = 32, --怪物x坐标范围4							
+		posX2 = 35,							
+		posY1 = 14,							
+		posY2 = 25,							
+		nCount = 5, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 5, --特殊怪的时候给玩家的时间							
+		bossstep = 9, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 182, --怪物id							
+		posX1 = 26, --怪物x坐标范围5							
+		posX2 = 27,							
+		posY1 = 21,							
+		posY2 = 22,							
+		nCount = 1, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 6, --特殊怪的时候给玩家的时间							
+		bossstep = 9, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 182, --怪物id							
+		posX1 = 20, --怪物x坐标范围6							
+		posX2 = 30,							
+		posY1 = 24,							
+		posY2 = 26,							
+		nCount = 4, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 7, --特殊怪的时候给玩家的时间							
+		bossstep = 9, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 182, --怪物id							
+		posX1 = 20, --怪物x坐标范围6							
+		posX2 = 30,							
+		posY1 = 24,							
+		posY2 = 26,							
+		nCount = 4, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 8, --特殊怪的时候给玩家的时间							
+		bossstep = 9, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 182, --怪物id							
+		posX1 = 14, --怪物x坐标范围8							
+		posX2 = 18,							
+		posY1 = 15,							
+		posY2 = 19,							
+		nCount = 4, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 9, --特殊怪的时候给玩家的时间							
+		bossstep = 9, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪
+		LiveTime = 0,
+		Anger = 4,		
+		}, 
+--第10拨怪物配置		
+		{							
+		monsterId = 183, --怪物id							
+		posX1 = 22, --怪物x坐标范围1							
+		posX2 = 23,							
+		posY1 = 14,							
+		posY2 = 15,							
+		nCount = 1, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 5, --特殊怪的时候给玩家的时间							
+		bossstep = 10, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 183, --怪物id							
+		posX1 = 17, --怪物x坐标范围2							
+		posX2 = 30,							
+		posY1 = 10,							
+		posY2 = 12,							
+		nCount = 4, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同							
+		GiveTime = 5, --特殊怪的时候给玩家的时间							
+		bossstep = 10, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 183, --怪物id							
+		posX1 = 28, --怪物x坐标范围3							
+		posX2 = 29,							
+		posY1 = 15,							
+		posY2 = 16,						
+		nCount = 1, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 5, --特殊怪的时候给玩家的时间							
+		bossstep = 10, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 183, --怪物id							
+		posX1 = 32, --怪物x坐标范围4							
+		posX2 = 35,							
+		posY1 = 14,							
+		posY2 = 25,							
+		nCount = 5, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 5, --特殊怪的时候给玩家的时间							
+		bossstep = 10, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 183, --怪物id							
+		posX1 = 26, --怪物x坐标范围5							
+		posX2 = 27,							
+		posY1 = 21,							
+		posY2 = 22,							
+		nCount = 1, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 6, --特殊怪的时候给玩家的时间							
+		bossstep = 10, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 183, --怪物id							
+		posX1 = 20, --怪物x坐标范围6							
+		posX2 = 30,							
+		posY1 = 24,							
+		posY2 = 26,							
+		nCount = 4, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 7, --特殊怪的时候给玩家的时间							
+		bossstep = 10, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 183, --怪物id							
+		posX1 = 14, --怪物x坐标范围7							
+		posX2 = 18,							
+		posY1 = 21,							
+		posY2 = 27,							
+		nCount = 2, --怪物数量						
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 8, --特殊怪的时候给玩家的时间							
+		bossstep = 10, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 183, --怪物id							
+		posX1 = 14, --怪物x坐标范围8							
+		posX2 = 18,							
+		posY1 = 15,							
+		posY2 = 19,							
+		nCount = 4, --怪物数量						
+		SpecialMon = "false ", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 9, --特殊怪的时候给玩家的时间							
+		bossstep = 10, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪		
+		LiveTime = 0,
+		Anger = 4,		
+		},  
+--第11拨怪物配置		
+		{							
+		monsterId = 184, --怪物id							
+		posX1 = 22, --怪物x坐标范围1							
+		posX2 = 23,							
+		posY1 = 14,							
+		posY2 = 15,							
+		nCount = 1, --怪物数量							
+		SpecialMon = "true ", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 9, --特殊怪的时候给玩家的时间							
+		bossstep = 11, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,	
+		Anger = 4,		
+		},  		
+		{							
+		monsterId = 184, --怪物id							
+		posX1 = 17, --怪物x坐标范围2							
+		posX2 = 30,							
+		posY1 = 10,							
+		posY2 = 12,							
+		nCount = 4, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 5, --特殊怪的时候给玩家的时间							
+		bossstep = 11, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 184, --怪物id							
+		posX1 = 28, --怪物x坐标范围3							
+		posX2 = 29,							
+		posY1 = 15,							
+		posY2 = 16,						
+		nCount = 1, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同							
+		GiveTime = 5, --特殊怪的时候给玩家的时间							
+		bossstep = 11, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  				
+		{							
+		monsterId = 184, --怪物id							
+		posX1 = 32, --怪物x坐标范围4							
+		posX2 = 35,							
+		posY1 = 14,							
+		posY2 = 25,							
+		nCount = 5, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 5, --特殊怪的时候给玩家的时间							
+		bossstep = 11, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 184, --怪物id							
+		posX1 = 26, --怪物x坐标范围5							
+		posX2 = 27,							
+		posY1 = 21,							
+		posY2 = 22,							
+		nCount = 1, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 5, --特殊怪的时候给玩家的时间							
+		bossstep = 11, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 184, --怪物id							
+		posX1 = 20, --怪物x坐标范围6							
+		posX2 = 30,							
+		posY1 = 24,							
+		posY2 = 26,							
+		nCount = 4, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 6, --特殊怪的时候给玩家的时间							
+		bossstep = 11, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 184, --怪物id							
+		posX1 = 14, --怪物x坐标范围7							
+		posX2 = 18,							
+		posY1 = 21,							
+		posY2 = 27,							
+		nCount = 2, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 7, --特殊怪的时候给玩家的时间							
+		bossstep = 11, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 184, --怪物id							
+		posX1 = 14, --怪物x坐标范围8							
+		posX2 = 18,							
+		posY1 = 15,							
+		posY2 = 19,							
+		nCount = 4, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 8, --特殊怪的时候给玩家的时间							
+		bossstep = 11, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  	
+--第12拨怪物配置		
+		{							
+		monsterId = 185, --怪物id							
+		posX1 = 22, --怪物x坐标范围1							
+		posX2 = 23,							
+		posY1 = 14,							
+		posY2 = 15,							
+		nCount = 1, --怪物数量							
+		SpecialMon = "false ", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 9, --特殊怪的时候给玩家的时间							
+		bossstep = 12, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪		
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 185, --怪物id							
+		posX1 = 17, --怪物x坐标范围2							
+		posX2 = 30,							
+		posY1 = 10,							
+		posY2 = 12,							
+		nCount = 4, --怪物数量							
+		SpecialMon = "true ", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 9, --特殊怪的时候给玩家的时间							
+		bossstep = 12, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,	
+		Anger = 4,		
+		},  		
+		{							
+		monsterId = 185, --怪物id							
+		posX1 = 28, --怪物x坐标范围3							
+		posX2 = 29,							
+		posY1 = 15,							
+		posY2 = 16,						
+		nCount = 1, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 5, --特殊怪的时候给玩家的时间							
+		bossstep = 12, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 185, --怪物id							
+		posX1 = 32, --怪物x坐标范围4							
+		posX2 = 35,							
+		posY1 = 14,							
+		posY2 = 25,							
+		nCount = 5, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同							
+		GiveTime = 5, --特殊怪的时候给玩家的时间							
+		bossstep = 12, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 185, --怪物id							
+		posX1 = 26, --怪物x坐标范围5							
+		posX2 = 27,							
+		posY1 = 21,							
+		posY2 = 22,							
+		nCount = 1, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 5, --特殊怪的时候给玩家的时间							
+		bossstep = 12, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 185, --怪物id							
+		posX1 = 20, --怪物x坐标范围6							
+		posX2 = 30,							
+		posY1 = 24,							
+		posY2 = 26,							
+		nCount = 4, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 5, --特殊怪的时候给玩家的时间							
+		bossstep = 12, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 185, --怪物id							
+		posX1 = 14, --怪物x坐标范围7							
+		posX2 = 18,							
+		posY1 = 21,							
+		posY2 = 27,							
+		nCount = 2, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 6, --特殊怪的时候给玩家的时间							
+		bossstep = 12, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 185, --怪物id							
+		posX1 = 14, --怪物x坐标范围8							
+		posX2 = 18,							
+		posY1 = 15,							
+		posY2 = 19,							
+		nCount = 4, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 7, --特殊怪的时候给玩家的时间							
+		bossstep = 12, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  
+--第13拨怪物配置			
+		{							
+		monsterId = 186, --怪物id							
+		posX1 = 22, --怪物x坐标范围1							
+		posX2 = 23,							
+		posY1 = 14,							
+		posY2 = 15,							
+		nCount = 1, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 8, --特殊怪的时候给玩家的时间							
+		bossstep = 13, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 186, --怪物id							
+		posX1 = 17, --怪物x坐标范围2							
+		posX2 = 30,							
+		posY1 = 10,							
+		posY2 = 12,							
+		nCount = 4, --怪物数量							
+		SpecialMon = "false ", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 9, --特殊怪的时候给玩家的时间							
+		bossstep = 13, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪		
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 186, --怪物id							
+		posX1 = 28, --怪物x坐标范围3							
+		posX2 = 29,							
+		posY1 = 15,							
+		posY2 = 16,						
+		nCount = 1, --怪物数量							
+		SpecialMon = "true ", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 9, --特殊怪的时候给玩家的时间							
+		bossstep = 13, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,	
+		Anger = 4,		
+		},	
+		{							
+		monsterId = 186, --怪物id							
+		posX1 = 32, --怪物x坐标范围4							
+		posX2 = 35,							
+		posY1 = 14,							
+		posY2 = 25,							
+		nCount = 5, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 5, --特殊怪的时候给玩家的时间							
+		bossstep = 13, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 186, --怪物id							
+		posX1 = 26, --怪物x坐标范围5							
+		posX2 = 27,							
+		posY1 = 21,							
+		posY2 = 22,							
+		nCount = 1, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同							
+		GiveTime = 5, --特殊怪的时候给玩家的时间							
+		bossstep = 13, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 186, --怪物id							
+		posX1 = 20, --怪物x坐标范围6							
+		posX2 = 30,							
+		posY1 = 24,							
+		posY2 = 26,							
+		nCount = 4, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 5, --特殊怪的时候给玩家的时间							
+		bossstep = 13, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 186, --怪物id							
+		posX1 = 14, --怪物x坐标范围7							
+		posX2 = 18,							
+		posY1 = 21,							
+		posY2 = 27,							
+		nCount = 2, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 5, --特殊怪的时候给玩家的时间							
+		bossstep = 13, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 186, --怪物id							
+		posX1 = 14, --怪物x坐标范围8							
+		posX2 = 18,							
+		posY1 = 15,							
+		posY2 = 19,							
+		nCount = 4, --怪物数量						
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 6, --特殊怪的时候给玩家的时间							
+		bossstep = 13, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  
+--第14拨怪物配置			
+		{							
+		monsterId = 187, --怪物id							
+		posX1 = 22, --怪物x坐标范围1							
+		posX2 = 23,							
+		posY1 = 14,							
+		posY2 = 15,							
+		nCount = 1, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 7, --特殊怪的时候给玩家的时间							
+		bossstep = 14, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 187, --怪物id							
+		posX1 = 22, --怪物x坐标范围1							
+		posX2 = 23,							
+		posY1 = 14,							
+		posY2 = 15,							
+		nCount = 1, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 8, --特殊怪的时候给玩家的时间							
+		bossstep = 14, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 187, --怪物id							
+		posX1 = 28, --怪物x坐标范围3							
+		posX2 = 29,							
+		posY1 = 15,							
+		posY2 = 16,						
+		nCount = 1, --怪物数量							
+		SpecialMon = "false ", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 9, --特殊怪的时候给玩家的时间							
+		bossstep = 14, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪		
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 187, --怪物id							
+		posX1 = 32, --怪物x坐标范围4							
+		posX2 = 35,							
+		posY1 = 14,							
+		posY2 = 25,							
+		nCount = 5, --怪物数量							
+		SpecialMon = "true ", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 9, --特殊怪的时候给玩家的时间							
+		bossstep = 14, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,	
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 187, --怪物id							
+		posX1 = 26, --怪物x坐标范围5							
+		posX2 = 27,							
+		posY1 = 21,							
+		posY2 = 22,							
+		nCount = 1, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 5, --特殊怪的时候给玩家的时间							
+		bossstep = 14, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},	
+		{							
+		monsterId = 187, --怪物id							
+		posX1 = 20, --怪物x坐标范围6							
+		posX2 = 30,							
+		posY1 = 24,							
+		posY2 = 26,							
+		nCount = 4, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同							
+		GiveTime = 5, --特殊怪的时候给玩家的时间							
+		bossstep = 14, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 187, --怪物id							
+		posX1 = 14, --怪物x坐标范围7							
+		posX2 = 18,							
+		posY1 = 21,							
+		posY2 = 27,							
+		nCount = 2, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 5, --特殊怪的时候给玩家的时间							
+		bossstep = 14, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 187, --怪物id							
+		posX1 = 14, --怪物x坐标范围8							
+		posX2 = 18,							
+		posY1 = 15,							
+		posY2 = 19,							
+		nCount = 4, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 5, --特殊怪的时候给玩家的时间							
+		bossstep = 14, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  
+--第15拨怪物配置			
+		{							
+		monsterId = 188, --怪物id							
+		posX1 = 22, --怪物x坐标范围1							
+		posX2 = 23,							
+		posY1 = 14,							
+		posY2 = 15,							
+		nCount = 1, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 6, --特殊怪的时候给玩家的时间							
+		bossstep = 15, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 188, --怪物id							
+		posX1 = 17, --怪物x坐标范围2							
+		posX2 = 30,							
+		posY1 = 10,							
+		posY2 = 12,							
+		nCount = 4, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 7, --特殊怪的时候给玩家的时间							
+		bossstep = 15, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 188, --怪物id							
+		posX1 = 28, --怪物x坐标范围3							
+		posX2 = 29,							
+		posY1 = 15,							
+		posY2 = 16,						
+		nCount = 1, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 8, --特殊怪的时候给玩家的时间							
+		bossstep = 15, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 188, --怪物id							
+		posX1 = 32, --怪物x坐标范围4							
+		posX2 = 35,							
+		posY1 = 14,							
+		posY2 = 25,							
+		nCount = 5, --怪物数量							
+		SpecialMon = "false ", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 9, --特殊怪的时候给玩家的时间							
+		bossstep = 15, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪		
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 188, --怪物id							
+		posX1 = 26, --怪物x坐标范围5							
+		posX2 = 27,							
+		posY1 = 21,							
+		posY2 = 22,							
+		nCount = 1, --怪物数量							
+		SpecialMon = "true ", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 9, --特殊怪的时候给玩家的时间							
+		bossstep = 15, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,	
+		Anger = 4,		
+		}, 	
+		{							
+		monsterId = 188, --怪物id							
+		posX1 = 20, --怪物x坐标范围6							
+		posX2 = 30,							
+		posY1 = 24,							
+		posY2 = 26,							
+		nCount = 4, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 5, --特殊怪的时候给玩家的时间							
+		bossstep = 15, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 188, --怪物id							
+		posX1 = 14, --怪物x坐标范围7							
+		posX2 = 18,							
+		posY1 = 21,							
+		posY2 = 27,							
+		nCount = 2, --怪物数量							
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同							
+		GiveTime = 5, --特殊怪的时候给玩家的时间							
+		bossstep = 15, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		},  							
+		{							
+		monsterId = 188, --怪物id							
+		posX1 = 14, --怪物x坐标范围8							
+		posX2 = 18,							
+		posY1 = 15,							
+		posY2 = 19,							
+		nCount = 4, --怪物数量						
+		SpecialMon = "false", --是否特殊怪是,打死时的处理不同 ,是否call特殊怪							
+		GiveTime = 5, --特殊怪的时候给玩家的时间							
+		bossstep = 15, --第几波怪							
+		delaytime = 5, --延时多少秒刷怪	
+		LiveTime = 0,
+		Anger = 4,		
+		}, 
+    }

@@ -1,0 +1,272 @@
+﻿--#include "data\functions\Tasks\CrossSystem\CrossSet.txt" once
+--#include "data\config\task\TianYuanConfig.txt" once
+--#include "data\functions\config\FubenConfig\FubenCountConfig.txt" once
+
+-- 处理客户端退出渡劫请求
+function LeaveCrossFuben(sysarg)
+	if LActor.isDeath(sysarg) then
+		LActor.relive(sysarg)
+		-- 生命、法力恢复至原来(最大值)的20%
+		local maxhp = LActor.getIntProperty(sysarg, PROP_MAXHP)
+		local hp = LActor.getIntProperty(sysarg, PROP_HP)
+		LActor.changeHp(sysarg, maxhp * 0.5 - hp)
+
+		local maxmp = LActor.getIntProperty(sysarg, PROP_MAXMP)
+		local mp = LActor.getIntProperty(sysarg, PROP_MP)
+		LActor.changeMp(sysarg, maxmp * 0.5 - mp)
+	end
+
+	LActor.exitFuben(sysarg)
+end
+
+-- 确认进入渡劫副本
+function Crossenter(sysarg,crosslevel)
+	local level = tonumber(crosslevel)
+	LActor.exitTeam(sysarg)
+	moveCrossFuben(sysarg,level)
+end
+
+-- 取消进入渡劫副本
+function CrossCancel(sysarg)
+end
+
+function GetCrossLevel(sysarg)
+	local fbid = LActor.getFubenId(sysarg)
+	if fbid < 1 then return 0 end
+
+	for i=1, #CrossSet do
+		if CrossSet[i].fbId == fbid then
+			return i
+		end
+	end
+
+	return 0
+end
+
+-- 进入渡劫副本
+function moveCrossFuben(sysarg,crosslevel)
+	local ncrosslevel = tonumber(crosslevel)
+	--print("moveCrossFuben"..crosslevel)
+
+	if ncrosslevel < 1 then -- 玩家重新上线后可能为0，要重新获取一下ncrosslevel
+		ncrosslevel = GetCrossLevel(sysarg)
+	end
+
+	--print("ncrosslevel:"..ncrosslevel)
+		
+	if ncrosslevel > #CrossSet or ncrosslevel<=0  then return end
+	--print("moveCrossFuben1")
+	if ncrosslevel > 1 then --进入渡劫的等级 等于1时不判断,大于1时需要判断是否上阶过了
+		local nstart = LActor.GetCrossStart(sysarg,ncrosslevel-1)
+		if nstart == 0 then return end
+	end
+	
+	local isinfb = false
+	local GameTime = 0
+	local fbTime = 0
+	
+	local fbid = LActor.getFubenId(sysarg)
+	--print("fbid.."..fbid.."crosslevel.."..crosslevel)
+	if fbid == CrossSet[ncrosslevel].fbId then
+		isinfb = true
+		GameTime = CrossSet[ncrosslevel].gameTime
+		fbTime = CrossSet[ncrosslevel].fubenTime
+	end
+
+	if LActor.getIntProperty(sysarg,PROP_HP) == 0 and not isinfb then
+		LActor.sendTipmsg(sysarg, Lang.TaskTalk.cross007, ttMessage)
+		return
+	end
+	
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+
+	--print(var.crossfailed)
+	
+	if isinfb then --处理再次渡劫
+		--print("isinfb....")
+		if LActor.isDeath(sysarg) then
+			LActor.relive(sysarg)
+		end
+		if var.crossfailed == nil or var.crossfailed == 0 then
+			LActor.sendTipmsg(sysarg, Lang.TaskTalk.cross004, ttMessage)
+			return 
+		end
+		var.crossfailed = 0
+
+		local sceneptr = LActor.getScenePtr(sysarg)
+		local Hfuben = LActor.getFubenHandle(sysarg)
+		if sceneptr ~= nil then
+			local hscene = Fuben.getSceneHandleByPtr(sceneptr)
+			Fuben.clearAllMonster(hscene)
+			local monstercount = Fuben.getLiveMonsterCount(hscene)
+			--print("monstercount:"..monstercount)
+			if monstercount == 0 then
+				LActor.enterFuBen(sysarg,Hfuben,CrossSet[ncrosslevel].scene,CrossSet[ncrosslevel].posX,CrossSet[ncrosslevel].posY)
+				local maxhp = LActor.getIntProperty(sysarg,PROP_MAXHP)
+				LActor.changeHp(sysarg,maxhp)
+				local maxmp = LActor.getIntProperty(sysarg,PROP_MAXMP)
+				--print("actorMp:"..actorMp)
+				LActor.changeMp(sysarg,maxmp)
+				Fuben.createMonstersByConfig(hscene)
+				Fuben.SetFubenGameTime(Hfuben,GameTime)
+				Fuben.SetFubenTime(Hfuben,fbTime)
+				LActor.SendAndChangeCaleValue(sysarg,caleOther1,CrossSet[ncrosslevel].attackPower,false)
+				LActor.SendAndChangeCaleValue(sysarg,caleGameTime,GameTime,false)
+			end
+		end
+	else
+		--正常进入渡劫
+		--print("moveCrossFuben2")
+
+		if LActor.hasState(sysarg, esProtection) then
+	    	LActor.sendTipmsg(sysarg, Lang.ScriptTips.sx019, ttMessage)
+	    	return 
+	  	end
+
+		-- 战斗中无法进行渡劫
+		if LActor.hasState(sysarg, esPkState) then  	
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.x00145, ttMessage)
+			return
+		end
+
+		var.crossfailed = 0
+
+		if LActor.isInFuben(sysarg) or LActor.getSceneId(sysarg) == TianYuanConfig.SCENEID then --在其它副本不能渡劫，14是雁门关的场景ID，这里特殊处理
+			LActor.sendTipmsg(sysarg,Lang.TaskTalk.cross004,ttMessage)
+			return
+		end
+
+		-- 如果在队伍中则先退出队伍
+		local teamid = LActor.getTeamId(sysarg)
+		if teamid > 0 then
+			local globalNPC = LActor.getHandle( System.getGlobalNpc() )
+			if globalNPC ~= 0 then
+				LActor.messageBox(sysarg,globalNPC,0,Lang.TaskTalk.cross001,Lang.TaskTalk.cross002.."/Crossenter,"..ncrosslevel,Lang.TaskTalk.cross003.."/CrossCancel",nil)
+			end
+			return
+		end
+		
+		local level = CrossSet[ncrosslevel].level
+		local userlevel = LActor.getIntProperty(sysarg,PROP_LEVEL)
+		if level > userlevel then return end -- 小于进入等级 加提示
+		local Hfuben = Fuben.createFuBen(CrossSet[ncrosslevel].fbId)
+		LActor.enterFuBen(sysarg,Hfuben,CrossSet[ncrosslevel].scene,CrossSet[ncrosslevel].posX,CrossSet[ncrosslevel].posY)
+		Fuben.SetFubenGameTime(Hfuben,CrossSet[ncrosslevel].gameTime)
+		Fuben.SetFubenTime(Hfuben,CrossSet[ncrosslevel].fubenTime)
+		LActor.SendAndChangeCaleValue(sysarg,caleOther1,CrossSet[ncrosslevel].attackPower,false)
+		LActor.SendAndChangeCaleValue(sysarg,caleGameTime,CrossSet[ncrosslevel].gameTime,false)
+		--print("moveCrossFuben3")
+		LActor.registerKillAllMonster(sysarg, true, 1 )
+
+		for i,v in ipairs(fubenconfig.xszylist) do
+			if v == CrossSet[ncrosslevel].fbId then
+		        if var.fubenxszy == nil then var.fubenxszy = 0 end
+		        --print("moveCrossFuben self1.."..var.fubenxszy)
+		        --没有指引过,下发通知,要指引
+		        if not System.bitOPMask(var.fubenxszy, i - 1) then
+		          local npack = DataPack.allocPacket(sysarg, 20, 8)
+		          DataPack.writeInt(npack, v)
+		          DataPack.flush(npack)
+		          var.fubenxszy = System.bitOpSetMask(var.fubenxszy, i - 1, true)
+		          --print("moveCrossFuben self2.."..var.fubenxszy)
+		        end
+		        --print("moveCrossFuben self3.."..var.fubenxszy)
+		        break
+		    end
+		end
+	end
+
+	-- 触发忍者考试事件
+    LActor.triggerTarget(sysarg, enATDuJie)
+end
+
+-- 客户端获取渡劫列表
+function GetCroesspage(sysarg)
+	--local allcount = #CrossSet 
+	--print("GetCroesspage...")
+	local npack = DataPack.allocPacket(sysarg,139,41)  --申请一个数据包
+	if npack == nil then return end
+	--print ("npack == nil")
+	--DataPack.writeInt(npack,page)
+	local rewardflag = 0
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	local allcount = LActor.GetCrossStarCount(sysarg)
+	DataPack.writeInt(npack,allcount)
+
+	for i = 1, allcount do
+		local nstart = LActor.GetCrossStart(sysarg,i)
+		--DataPack.writeByte(npack,CroessSet[i].level)
+		--DataPack.writeByte(npack,CroessSet[i].Property)
+		--DataPack.writeWord(npack,CroessSet[i].PropertyValue)
+		--DataPack.writeByte(npack,CroessSet[i].Titleid)
+		--DataPack.writeInt(npack,CroessSet[i].AttackPower)
+		DataPack.writeByte(npack,nstart)
+		if nstart == 0 then
+			rewardflag = 0
+		else
+			local processindex = math.floor((i - 1) / 32) + 1
+			local tmppos = i - (processindex - 1) * 32 - 1
+			if var.coressprocess == nil or var.coressprocess[processindex] == nil or (not System.bitOPMask(var.coressprocess[processindex], tmppos)) then 
+				rewardflag = 1
+			else
+				rewardflag = 2
+			end
+		end
+		DataPack.writeChar(npack,rewardflag)
+		--print("GetCroesspage index:"..i..",nstar:"..nstart..",rewardflag:"..rewardflag)
+	end
+	DataPack.flush(npack)
+	--print("GetCroesspage..DataPack.flush(npack)")
+end
+
+EventCallDispatcher.OnCrossFubenGameOver = function(fbPtr)
+	--清除所有怪
+	--发送失败信息
+	--print("fbptr"..fbPtr)
+	local fbid = Fuben.getFubenIdbyFuBenPtr(fbPtr)
+	local croesspos = 0
+	for i = 1 ,#CrossSet  do 
+		if fbid == CrossSet[i].fbId then	
+			croesspos = i
+			break	
+		end
+	end
+	--print("fbptr"..fbid)
+	if croesspos > 0 then
+		local hfb = Fuben.getFubenHandle(fbPtr)
+		local actor = Fuben.getFbActorPtr(hfb)
+		if LActor.isDeath(actor) then
+			return 
+		end
+		
+		local hscene = Fuben.getSceneHandleById(CrossSet[croesspos].scene,hfb)
+		Fuben.clearAllMonster(hscene)
+
+		-- 通知退出渡劫副本
+		local npack = DataPack.allocPacket(actor,139,43)  --申请一个数据包
+		if npack == nil then return end
+		DataPack.flush(npack)
+
+		-- 记录渡劫失败
+		local var = LActor.getStaticVar(actor)
+		if var then
+			var.crossfailed = 1
+
+			local allcount = LActor.GetCrossStarCount(sysarg)
+			local jingjie = allcount / 9
+			local jieduan = allcount % 9
+			jingjie = math.floor(jingjie)
+			jieduan = math.floor(jieduan)
+		
+			System.logCounter(LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), "dujie", "", "", "fight", "fail", tostring(jingjie), tostring(jieduan), "", lfBI)
+
+		end
+	end
+end
+
+for i = 1 ,#CrossSet  do
+	EventCallDispatcher.registerFubenGameOver( CrossSet[i].fbId,  EventCallDispatcher.OnCrossFubenGameOver )
+end
+

@@ -1,0 +1,62 @@
+﻿local GlobalItemFn = {}
+
+--#include "..\NormalItem\AddBufferItem.txt" once
+--#include "..\NormalItem\DelBufferItem.txt" once
+--#include "..\NormalItem\RapidEffectItem.txt" once
+--#include "..\NormalItem\DeputyLearnItem.txt" once
+--#include "..\NormalItem\ChuanSongItem.txt" once
+--#include "..\NormalItem\ResurrectionItem.txt" once
+--#include "..\NormalItem\ReduceKillValueItem.txt" once
+--#include "..\NormalItem\PresentBagItem.txt" once
+--#include "..\NormalItem\AddPhysicalItem.txt" once
+--#include "..\NormalItem\FubenChallengeBookItem.txt" once
+--#include "..\NormalItem\UseTaskThingInThePlace.txt" once
+--#include "..\NormalItem\AddQuestItems.txt" once
+--#include "..\NormalItem\SulfurItems.txt" once
+--#include "..\NormalItem\CompositeKeyItems.txt" once
+--#include "..\NormalItem\PowderPacketItems.txt" once
+--#include "..\NormalItem\taskItemInclude.txt" once
+--#include "..\NormalItem\RollItem.txt" once     --爆率物品
+--#include "..\NormalItem\ProabilityItem.txt" once     --爆率物品
+--#include "..\NormalItem\EnlargeBagItem.txt" once     --扩展背包的物品
+--#include "..\NormalItem\UseExpBox.txt" once     --使用经验宝盒
+--#include "..\NormalItem\XiuweiBox.txt" once     --使用修为宝盒
+--#include "..\NormalItem\VIPChargeItem.txt" once 	--VIP道具物品
+--#include "..\NormalItem\LuckyRollAward.txt" once  --转轮 抽奖
+--#include "..\NormalItem\UseRepairItem.txt" once   --磨刀石 
+--#include "..\NormalItem\GemSpriteStrenItem.txt" once -- 宝物灵力道具物品
+--#include "..\NormalItem\GemFuncItem.txt" once --宝物物品道具
+--#include "..\NormalItem\GemExpFunItem.txt" once --宝物经验物品道具
+--#include "..\NormalItem\GemUpLevelFunItem.txt" once --宝物升级物品道具
+--#include "..\NormalItem\AddBuffEffectItem.txt" once --添加buff和特效的道具 
+--#include "..\normalitem\staticawardhandle.txt" once --固定的礼包
+--#include "..\normalitem\vipcarditem.txt" once --VIP体验卡
+--#include "..\normalitem\refreshitem.txt" once --刷星任务物品
+--#include "..\normalitem\gemitem.txt" once --灵器物品
+--#include "..\NormalItem\LianGongFangItem.txt" once --练功房物品
+--#include "..\normalitem\rewarditem.txt" once --奖励物品
+--#include "..\normalitem\changesexitem.txt" once --变性物品
+--#include "..\normalitem\openbagitem.txt" once --背包扩展符
+--#include "data\functions\actorevent\itemeventsplit.txt" once -- 物品分解
+--#include "data\functions\normalitem\wujiangitem.txt" once -- 武将卡牌
+--#include "data\functions\normalitem\xuanguanshiliaoitem.txt" once --炫光鸡
+--#include "data\functions\normalitem\vipexpcaritem.txt" once --VIP经验卡
+
+EventCallDispatcher.handlerUseFunctionItems = function (sysarg, arg)
+	if(arg ==nil) then
+		return false
+	end 
+
+	--物品ID和物品的指针
+	local itemidx = arg[1]  --物品的ID
+	local itemPtr = arg[2] --物品的指针
+	local fnt = GlobalItemFn[itemidx]
+	if (fnt == nil) then
+		return false
+	end
+
+	fnt.func( sysarg, itemidx, itemPtr, fnt.params, arg[3], arg[4] )
+	return true
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUseItem, EventCallDispatcher.handlerUseFunctionItems)

@@ -1,0 +1,19 @@
+﻿{   --仙斗会
+	--副本id
+  	fbid = 7,
+	--副本的适合等级(推荐等级)，
+	recommandLevel = 1,
+	--副本需要统计那些数据,0为经验,1为绑定天珠
+	caleType = {0,2},
+    caleInfo = {
+                  expType = {202},--杀怪获得经验
+               }, 
+	monsterDynProp = false, 
+	-- 0 :经验,3:灵力,6:享用剩余次数
+	--这个副本需要用到的场景列表
+	
+	scenes =
+	{   
+--#include "scene87.txt"
+	},
+},

@@ -1,0 +1,72 @@
+
+
+DongfuManager.onGrown = function(ownerId, landId, lInfo, endTime)
+	local dfData = DongfuManager.getDongfuData(ownerId)
+	local grownNoti = function(pChar)
+		local dp = DataPack.allocPacket(pChar, 157, 13)
+		DataPack.writeInt(dp, ownerId)
+		DataPack.writeByte(dp, landId)
+		DataPack.writeInt(dp, endTime)
+		DataPack.flush(dp)
+	end
+	DongfuManager.broadcast(dfData.playerSet, grownNoti)
+
+	DongfuManager.resetLandFlag(dfData)
+
+	-- 成熟后，虫草消失
+	lInfo.sickFlag = 0
+	DongfuManager.onKillSick(ownerId, dfData, landId)
+end
+
+DongfuManager.actualQuickGrown = function(pChar, ownerId, landId, lInfo, curTime, remaind, moneytype)
+	local yb = math.ceil(remaind / 60 * DongfuConf.quickGrownYB)
+	
+	if not LActor.CheckMoneyEnough(pChar, moneytype, yb) then
+		return false
+	end
+	LActor.changeMoney(pChar, moneytype, -yb, 1, true, "dongfu", "quickGrown")
+
+	lInfo.endTime = curTime
+	DongfuManager.onChanged(ownerId)
+	DongfuManager.onGrown(ownerId, landId, lInfo, curTime)
+	return true
+end
+
+DongfuManager.quickGrown = function(pChar, landId, moneytype)
+	local atHome, ownerId = DongfuManager.isAtHome(pChar)
+	if not atHome then return end
+
+	local dfData = DongfuManager.getDongfuData(ownerId)
+	local info = dfData.info
+	local list = info.list
+	if list == nil or list[landId] == nil then return end
+	local lInfo = list[landId]
+	local curTime = System.getCurrMiniTime()
+	local remaind = lInfo.endTime - curTime
+	if lInfo.plantFlag == 0 or remaind <= 0 then return end
+
+	DongfuManager.actualQuickGrown(pChar, ownerId, landId, lInfo, curTime, remaind, moneytype)
+end
+
+DongfuManager.batchQuickGrown = function(pChar, moneytype)
+	local atHome, ownerId = DongfuManager.isAtHome(pChar)
+	if not atHome then return end
+
+	local dfData = DongfuManager.getDongfuData(ownerId)
+	local info = dfData.info
+	local list = info.list
+	if list == nil then return end
+
+	local curTime = System.getCurrMiniTime()
+	for landId = 1, 9 do 
+		local lInfo = list[landId]
+		if lInfo ~= nil and lInfo.plantFlag == 1 then
+			local remaind = lInfo.endTime - curTime
+			if remaind > 0 then
+				if not DongfuManager.actualQuickGrown(pChar, ownerId, landId, lInfo, curTime, remaind, moneytype) then
+					break
+				end
+			end
+		end
+	end
+end

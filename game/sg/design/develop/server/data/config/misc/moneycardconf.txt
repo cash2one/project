@@ -1,0 +1,27 @@
+--月卡配置
+--#include "..\..\language\LangCode.txt" once
+MoneyCardConf = {
+	--type:月卡类型 1：30天,
+	--30天月卡
+	{
+		type = 1,			--类型
+		item_id = 20,		--商品id
+		return_data = 30,	--返还天数
+		price = 30,		--购买价格（钻石）
+		firstpay = {3,300},	--首日返还(货币类型，数量)
+		daypay = {3,100},	--每日返还(货币类型，数量)
+		lib_id = {30461,1},   --购买月卡送礼包
+		--20
+	},
+	{
+		type = 2,			--类型
+		item_id = 21,		--商品id
+		return_data = 30,	--返还天数
+		price = 98,		--购买价格（钻石）
+		firstpay = {3,980},	--首日返还(货币类型，数量)
+		daypay = {3,330},	--每日返还(货币类型，数量)
+		lib_id = {30462,1},   --购买月卡送礼包
+		--21
+	},
+	
+}

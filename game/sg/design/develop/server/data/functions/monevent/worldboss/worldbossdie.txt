@@ -1,0 +1,258 @@
+﻿--#include "data\config\activity\WorldBoss.txt" once
+
+function OnWorldBossDieTips(monster,sysarg,monId)
+
+	local var = System.getDyanmicVar()
+	if var == nil then return end
+	if var.StartWorldBossTipsStatus == nil then return end
+	if var.currentWorldBossCount == nil then return end
+
+	var.currentWorldBossCount = var.currentWorldBossCount - 1
+	if var.currentWorldBossCount <= 0 then
+		--print("所有BOSS已死，发出提示")
+
+		var.ReadyWorldBossTipsStatus = nil
+		var.StartWorldBossTipsStatus = nil
+		var.currentWorldBossCount = nil
+		--print("+++++++++++++++++++++++++++++++++++++++++++++++")
+
+		-- 广播
+		-- local dp = LDataPack.allocPacket()
+		-- if dp == nil then return end
+
+		-- --print("广播世界BOSS已出现")
+		-- LDataPack.writeByte(dp, 26)
+		-- LDataPack.writeByte(dp, 36)
+
+		-- LDataPack.writeInt(dp, 1)
+
+		-- LDataPack.writeInt(dp, 11)	--int：活动id
+		-- LDataPack.writeInt(dp, 3)	--int：活动状态
+		-- LDataPack.writeInt(dp, 0)	--int：剩余时间
+
+		-- System.broadcastData(dp)	
+
+	end
+end
+
+function WorldBossAward( mid, sysarg )
+	-- boss配置索引
+	local idx = 0
+	for i=1,#WorldBoss do
+		if WorldBoss[i].monsterId == mid then
+			idx = i
+			break
+		end
+	end
+	if idx == 0 then return end
+	-- 伤害排行榜
+	local rank = Ranking.getRanking("worldboss"..mid)
+	if rank then
+		local count = Ranking.getRankItemCount(rank)
+		-- for i=1,count do
+		-- 	local item = Ranking.getItemFromIndex(rank, i-1)
+		-- 	local id = Ranking.getId(item)
+		-- 	local point = Ranking.getPoint(item)
+		-- 	local name = Ranking.getSub(item, 0)
+		-- 	print("======WorldBossAward======"..id.." "..point.." "..name)
+		-- end
+		-- 发放排名奖励
+		local conf = WorldBoss[idx].awards
+		for i=1,#conf do
+			if conf[i].rank[2] < conf[i].rank[1] then return end -- 配置错误
+			local from_, to_
+			if count >= conf[i].rank[2] then
+				from_ = conf[i].rank[1]
+				to_ = conf[i].rank[2]
+			elseif count >= conf[i].rank[1] and count < conf[i].rank[2] then
+				from_ = conf[i].rank[1]
+				to_ = count
+			end
+			if from_ and to_ then
+				-- 发放排名from_到to_的奖励
+				for j=from_,to_ do -- j为排名
+					local item = Ranking.getItemFromIndex(rank, j-1)
+					local aid = Ranking.getId(item)
+					if #conf[i].item > 0 and #conf[i].item <= 5 then
+						local award_list = {}
+						for ai=1,5 do
+							if conf[i].item[ai] then
+								award_list[ai] = conf[i].item[ai]
+							else
+								award_list[ai] = {type = 0, id = 0, count = 0, bind = 0}
+							end
+						end
+						local mail_content = string.format(Lang.TaskTalk.wb09, j)
+						System.sendGmMailOffLine(aid, mail_content , award_list[1].type, award_list[1].id, award_list[1].count, award_list[1].bind, Lang.TaskTalk.wb15
+							, award_list[2].type, award_list[2].id, award_list[2].count, award_list[2].bind
+							, award_list[3].type, award_list[3].id, award_list[3].count, award_list[3].bind
+							, award_list[4].type, award_list[4].id, award_list[4].count, award_list[4].bind
+							, award_list[5].type, award_list[5].id, award_list[5].count, award_list[5].bind)
+					else
+						print("-------worldboss award conf error")
+					end
+					--[[ 下发伤害奖励
+					local point = Ranking.getPoint(item)
+					local award_count = math.modf(point/360) -- 公式
+					System.sendGmMailOffLine(aid, string.format(Lang.TaskTalk.wb17, point), 2, 0, award_count, 0, Lang.TaskTalk.wb15) -- 贝币]]
+				end
+			end
+		end
+	end
+	-- 最后一击奖励
+	local killerid = LActor.getActorId(sysarg)
+	if killerid and killerid > 0 then
+		local conf = WorldBoss[idx].kill_awards
+		if #conf > 0 and #conf <=5 then
+			local award_list = {}
+			for ai=1,5 do
+				if conf[ai] then
+					award_list[ai] = conf[ai]
+				else
+					award_list[ai] = {type = 0, id = 0, count = 0, bind = 0}
+				end
+			end
+			System.sendGmMailOffLine(killerid, Lang.TaskTalk.wb10 , award_list[1].type, award_list[1].id, award_list[1].count, award_list[1].bind, Lang.TaskTalk.wb16
+				, award_list[2].type, award_list[2].id, award_list[2].count, award_list[2].bind
+				, award_list[3].type, award_list[3].id, award_list[3].count, award_list[3].bind
+				, award_list[4].type, award_list[4].id, award_list[4].count, award_list[4].bind
+				, award_list[5].type, award_list[5].id, award_list[5].count, award_list[5].bind)
+		else
+			print("-------worldboss award conf error")
+		end
+	end
+end
+
+function JYBossAward( mid, sysarg, monster_name )
+	-- 公会id
+	local guildid = LActor.getGuildId(sysarg)
+	local actorid = LActor.getActorId(sysarg)
+	local name = LActor.getName(sysarg) or ""
+
+	if guildid <= 0 then return end
+	-- boss配置索引
+	local idx = 0
+	for i=1,#WorldBoss do
+		if WorldBoss[i].monsterId == mid then
+			idx = i
+			break
+		end
+	end
+	if idx == 0 then return end
+
+	local rank = Ranking.getRanking("jyboss"..mid)
+	if rank then
+		local count = Ranking.getRankItemCount(rank)
+		for i=1,count do
+			local item = Ranking.getItemFromIndex(rank, i-1)
+			if item then
+				local gid = Ranking.getSubInt(item, 0)
+				local aid = Ranking.getId(item)
+				if guildid == gid and aid ~= actorid then
+					-- 奖励
+					local conf = WorldBoss[idx].guild_awards
+					if #conf > 0 and #conf <= 5 then
+						local award_list = {}
+						for ai=1,5 do
+							if conf[ai] then
+								award_list[ai] = conf[ai]
+							else
+								award_list[ai] = {type = 0, id = 0, count = 0, bind = 0}
+							end
+						end
+						local mail_content = string.format(Lang.TaskTalk.wb18, name, monster_name)
+						System.sendGmMailOffLine(aid, mail_content , award_list[1].type, award_list[1].id, award_list[1].count, award_list[1].bind, Lang.TaskTalk.wb19
+							, award_list[2].type, award_list[2].id, award_list[2].count, award_list[2].bind
+							, award_list[3].type, award_list[3].id, award_list[3].count, award_list[3].bind
+							, award_list[4].type, award_list[4].id, award_list[4].count, award_list[4].bind
+							, award_list[5].type, award_list[5].id, award_list[5].count, award_list[5].bind)
+					else
+						print("-------jyboss award conf error")
+					end
+				end
+			end
+		end
+	end
+end
+
+MonDieDispatcher.WorldBossDie = function (monster,sysarg,monId)
+	local sys_var_d = System.getDyanmicVar()
+	local sys_var_s = System.getStaticVar()
+	if sys_var_s == nil or sys_var_d == nil then return end
+	local monster_name = LActor.getName(monster) or ""
+	-- 遍历看看是哪个boss死了
+	for i=1,#WorldBoss do
+		if monId == WorldBoss[i].monsterId then		
+			-- 专题活动 世界boss
+			if WorldBoss[i].type == 2 and ONLINEREWARD.GetActivityState(WorldBossFun.ActivityId) == 1 then
+				local aconfig = activityConf[WorldBossFun.ActivityId].activities[WorldBossFun.SubActivityId]
+				if aconfig and aconfig.bossid and aconfig.bossid[i] then
+					monster_name = aconfig.bossid[i].name
+				end
+			end
+			--------------------
+
+			if WorldBoss[i].type == 2 or WorldBoss[i].type == 3 then -- 世界boss击杀者取伤害最高的
+				local rank1_name = ""
+				local lastkill_name = LActor.getName(sysarg) or ""
+				local rank = Ranking.getRanking("worldboss"..monId)
+				if rank then
+					local item = Ranking.getItemFromIndex(rank, 0) -- 第一名
+					if item then
+						rank1_name = Ranking.getSub(item, 0)
+						System.onWorldBossDie(WorldBoss[i].id, rank1_name) -- 名称
+					else
+						rank1_name = LActor.getName(sysarg) or ""
+						System.onWorldBossDie(WorldBoss[i].id, rank1_name)
+					end
+				else
+					rank1_name = LActor.getName(sysarg) or ""
+					System.onWorldBossDie(WorldBoss[i].id, rank1_name)
+				end
+				--公告
+				System.broadcastTipmsg(string.format(Lang.TaskTalk.wb13, monster_name, rank1_name), ttGmTip)
+				System.broadcastTipmsg(string.format(Lang.TaskTalk.wb14, lastkill_name, monster_name), ttGmTip)
+			else -- 普通boss击杀者
+				local actor_name = LActor.getName(sysarg) or ""
+				System.onWorldBossDie(WorldBoss[i].id, actor_name)
+				-- 公告
+				System.broadcastTipmsg(string.format(Lang.TaskTalk.wb11, actor_name, monster_name), ttGmTip)
+			end
+
+			if WorldBoss[i].type == 2 or WorldBoss[i].type == 3 then
+				-- local str = string.format(Lang.TaskTalk.wb06, LActor.getName(sysarg), LActor.getName(monster))
+				-- System.broadcastLevelTipmsg(str, WorldBoss[i].level, ttChatWindow + ttGmTip)
+				OnWorldBossDieTips(monster,sysarg,monId)
+				-- 世界boss奖励
+				WorldBossAward( monId, sysarg )
+			elseif WorldBoss[i].type == 1 then
+				-- 精英boss奖励
+				JYBossAward( monId, sysarg, monster_name )
+			end
+
+			-- 击杀时间 boss是否升级
+			if sys_var_d.worldboss_create_t and sys_var_d.worldboss_create_t[WorldBoss[i].id] and sys_var_s.worldboss_lvl and sys_var_s.worldboss_lvl[WorldBoss[i].id] then
+				if WorldBoss[i].lvlup_t and (System.getCurrMiniTime() - sys_var_d.worldboss_create_t[WorldBoss[i].id]) <= WorldBoss[i].lvlup_t then
+					sys_var_s.worldboss_lvl[WorldBoss[i].id] = sys_var_s.worldboss_lvl[WorldBoss[i].id] + 1
+				end
+				if sys_var_s.worldboss_lvl[WorldBoss[i].id] <= 1 then
+					sys_var_s.worldboss_lvl[WorldBoss[i].id] = 1
+				end
+				if sys_var_s.worldboss_lvl[WorldBoss[i].id] >= #WorldBoss[i].buff then
+					sys_var_s.worldboss_lvl[WorldBoss[i].id] = #WorldBoss[i].buff
+				end
+			end
+			-- 触发成就
+			LActor.SetAchieveProcessByType(sysarg, 102, 1, 1)
+
+			-- 触发任务事件
+			LActor.OnQuestEvent(qtFirstKillWorldBoss, 0, 1, true, sysarg)
+			LActor.OnQuestEvent(qtFirstKillWorldBoss, monId, 1, true, sysarg) -- 击杀某boss
+			return
+		end
+	end
+end
+
+for i=1,#WorldBoss do
+	MonDieDispatcher.register(WorldBoss[i].monsterId, MonDieDispatcher.WorldBossDie)
+end

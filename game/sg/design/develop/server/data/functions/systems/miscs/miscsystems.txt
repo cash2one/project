@@ -1,0 +1,95 @@
+﻿--杂项子系统消息实现 
+
+--子消息号的用的表
+local MiscsImplement = 
+{
+} 
+MiscsImplement.main = function (sysarg, systemid, msgid, packet)
+  if MiscsImplement[msgid] then
+    MiscsImplement[msgid](sysarg, msgid, packet)
+  end
+end    
+
+--[[
+    注册杂项子系统消息处理函数，函数的形式为function (sysarg, msgid, packet)
+]]
+MiscsImplement.registerMsgHandler = function (msgid, proc)
+  if MiscsImplement[msgid] then
+    return false
+  else
+    MiscsImplement[msgid] = proc
+    return true
+  end
+end
+--[[
+    取消已注册的子系统消息处理函数
+]]
+MiscsImplement.unregisterMsgHandler = function (msgid, proc)
+  if MiscsImplement[msgid] == proc then
+    MiscsImplement[msgid] = nil
+    return true
+  else
+    return false
+  end
+end     
+
+--#include "FBRewardMsgHandler.txt" once    
+--#include "ArchiveTitleHandler.txt" once
+--#include "QuestTargetSpaceMoveHandler.txt" once
+--#include "RemoveScriptDelayMsg.txt" once
+--#include "GetLogOutExpMsg.txt" once
+--#include "SetUpSystemDataMsg.txt" once
+--#include "StageChuanSongHandler.txt" once
+--#include "BossOnTimeToClienMsg.txt" once
+--#include "GetAdvanceRewardHandler.txt" once
+--#include "FlowerMsgHandler.txt" once
+--#include "ModifyCampDeclaration.txt" once
+--#include "TelToCampEquipNPC.txt" once
+--#include "ChangeIcon.txt" once
+--#include "MoneyTreeHandler.txt" once
+--#include "RefreshStarHandler.txt" once
+--#include "GatherPeachMsgHandler.txt" once
+--#include "TianYuanRankMsgHandler.txt" once 
+---#include "ShangJinMsgHandler.txt" once
+--#include "Resurrection.txt" once
+--#include "CrossMsgHandler.txt" once
+    --#include "ProtectionQuestHandle.txt" once -- 先取消
+--#include "NirvanaHandler.txt" once
+--#include "bathhandler.txt" once
+---#include "liudaohandle.txt" once
+---#include "tianmotahandle.txt" once
+---#include "mijinghandle.txt" once
+---#include "xuantianhandle.txt" once
+--#include "data\functions\tasks\campbattle\campbattleevent.txt" once
+--#include "changeitemhandler.txt" once
+--#include "miscsmallsystem.txt" once
+--#include "worldlevelfunc.txt" once
+--#include "expbackhandler.txt" once
+--#include "data\functions\tasks\dailyattendance\dailyattendancefunc.txt" once
+--#include "data\functions\systems\miscs\investment_fund_func.txt" once
+--#include "data\functions\tasks\baguadigong\baguafunc.txt" once
+--#include "russia_rotarytable_func.txt" once  --add wupeng
+--#include "equipenhancehandlerex.txt" once
+--#include "limitshophandler.txt" once
+--#include "xuantianhandle.txt" once
+--#include "ShangJinMsgHandler.txt" once
+--#include "data\functions\systems\timereward\richmanhandle.txt" once
+--#include "tehuikuanghuanfunc.txt" once  --特惠活动
+--#include "denglusongyuanbao.txt"  once  --登陆送天珠
+--#include "data\functions\activity\zhounianfanpai\zhounianfanpaifunc.txt" once --add yefeng
+--#include "data\functions\systems\miscs\tejialibhandler.txt"
+--#include "data\functions\systems\miscs\moneycardhandler.txt"
+--#include "data\functions\systems\miscs\viplibhandler.txt"
+--#include "data\functions\systems\miscs\quickanswer.txt" once
+--#include "data\functions\systems\miscs\answerquestion.txt" once
+--#include "data\functions\systems\timereward\wangzheguilaihandler.txt"
+--#include "data\functions\systems\timereward\bugfankuihandler.txt"
+--#include "data\functions\systems\timereward\onermbitem.txt" once
+--#include "data\functions\systems\timereward\zhanlilibhandler.txt" once
+--#include "data\functions\activity\questionnaire.txt" once
+--#include "data\functions\systems\miscs\ranklikehandle.txt" once
+--#include "data\functions\systems\timereward\timelimitrecharge.txt" once --限时充值活动
+
+
+
+SystemHandlerDispatcher.registerSystemHander(BaseTypes.SystemId.miscsSystem, MiscsImplement.main)

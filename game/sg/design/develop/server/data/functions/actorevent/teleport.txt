@@ -1,0 +1,32 @@
+
+--#include "data\envir\FuBen.txt" once
+--#include "data\functions\config\FubenConfig\FubenCountConfig.txt" once
+--#include "data\functions\FuBenNpcFunc\exitFubenFunc.txt"  once
+--#include "data\functions\chuansongnextscene.txt" once
+
+EventCallDispatcher.HandleTeleportComfirm = function (sysarg,arg)
+  if arg[1] == nil then return end
+  local fbid = arg[1]
+  local fbdata = FuBen[fbid]
+  if fbdata == nil then
+    print( "fbdata is nil:"..fbid )
+    return 
+  end
+  local enterCount, addCount = Fuben.getEnterFubenInfo( sysarg, fbid )
+  if addCount == nil  then
+      addCount = 0
+  end
+  if enterCount == nil then
+    enterCount = 0
+  end
+
+  local daycount = fbdata.daycount      
+
+  if daycount == 0 or daycount + addCount - enterCount >= 1 then
+    LActor.messageBox(sysarg,0,0,Lang.ScriptTips.f00018,Lang.ScriptTips.f00056,"再来一次/reEnterFubenFunc,"..fbid,NULL,0,0,"",0,0,1)
+  else  
+    LActor.messageBox(sysarg,0,0,Lang.ScriptTips.f00018,Lang.ScriptTips.f00056,Lang.ScriptTips.f00057,NULL,0,0,"",0,0,1)
+  end
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeTeleportComfirm, EventCallDispatcher.HandleTeleportComfirm)

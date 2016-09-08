@@ -1,0 +1,58 @@
+﻿{
+	--接受任务后（死去兄弟），引导玩家使用物品
+  trigger = 
+  { 
+    type = 1,--引导触发类型 
+    value = 1297,--触发值，如果是任务类的，那么值为任务id；如果是物品的，则为物品id
+  },
+
+  --引导的步骤 
+  steps = 
+  {
+
+    --第1步  指引玩家点击当前任务标签页
+    {
+      cond = { type = 3, helpId = 1, data = 1 },
+
+      --引导玩家 点击追踪面板
+      action = { type = 2, helpId = 1, data = 1, desc = Lang.GuideLang.desc18 },
+    },
+
+
+		--第2步   引导到达指定区域（任务追踪面板）
+    {
+      cond = { type = 8, helpId = 0, data = 1297 },
+
+      --引导玩家点击 当前任务中的内容链接
+      action = { type = 5, helpId = 1297, data = Lang.Talk.t10008, desc = Lang.GuideLang.desc20 },
+    },		
+
+
+    --第3步   打开背包面板
+    {
+      cond = { type = 1, helpId = 5, data = 0 },
+
+      --引导玩家 打开背包面板
+      action = { type = 1, helpId = 6, data = 0, desc = Lang.GuideLang.desc6 },
+    },
+
+
+    --第4步   打开背包面板中“全部”导航条
+    {
+      cond = { type = 3, helpId = 12, data = 1 },
+
+      --引导玩家 打开背包面板
+      action = { type = 2, helpId = 12, data = 1, desc = Lang.GuideLang.desc1 },
+    },
+
+
+    --第5步 直接引导打开对应物品（一支渡魂香）
+    {
+      cond = { type = 0, helpId = 0, data = 0 },
+
+      --引导玩家双击使用物品
+      action = { type = 6, helpId = 8, data = 718, desc = Lang.GuideLang.desc21 },
+    },
+
+  } 
+}

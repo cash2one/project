@@ -1,0 +1,763 @@
+--幸运转盘处理
+--#include "data\functions\systems\timereward\newserver7_conf.txt" once
+-- MeiriChongzhi = {}
+
+
+
+-- MeiriChongzhi.getConf = function()
+-- 	return NewServer7_conf.activities[44]
+-- end
+-- MeiriChongzhi.isOpen = function()
+-- 	local state = ONLINEREWARD.GetActivityState(NewServer7_conf.activityId)
+-- 	local isOpen = true
+-- 	if state == 0 then
+-- 		isOpen = false
+-- 	end
+-- 	return isOpen
+-- end
+-- MeiriChongzhi.get_daily_charge_status = function (daily_charge_list,daily_charge_status)
+-- 	local meiriconf = MeiriChongzhi.getConf()
+-- 	if not meiriconf then
+-- 		return
+-- 	end
+-- 	local sort_recharge = {}
+-- 	for i=1,#daily_charge_list do
+-- 		table.insert(sort_recharge,daily_charge_list[i])
+-- 	end
+-- 	table.sort(sort_recharge,function(a,b) return a > b end)
+	
+-- 	local status = {}
+	
+-- 	local max_recharge = sort_recharge[1] or 0
+-- 	for i,v in ipairs(meiriconf.target) do
+-- 		if max_recharge >= v[1] then
+-- 			if daily_charge_status[i] ~= nil then
+-- 				status[i] = 3
+-- 			else
+-- 				status[i] = 2
+-- 			end
+-- 		else
+-- 			status[i] = 1
+-- 		end
+-- 	end
+	
+-- 	return status
+-- end
+-- MeiriChongzhi.get_charge_daily_status = function (charge_daily_count,charge_daily_count_status)
+-- 	local meiriconf = MeiriChongzhi.getConf()
+-- 	if not meiriconf then
+-- 		return
+-- 	end
+-- 	local status = {}
+-- 	for i,v in ipairs(meiriconf.target2) do
+-- 		if charge_daily_count >= v[1] then
+-- 			if charge_daily_count_status[i] ~= nil then
+-- 				status[i] = 3
+-- 			else
+-- 				status[i] = 2
+-- 			end
+-- 		else
+-- 			status[i] = 1
+-- 		end
+-- 	end
+-- 	return status
+-- end
+-- MeiriChongzhi.GetInfo = function ( sysarg )
+-- 	if not MeiriChongzhi.isOpen() then
+-- 		return
+-- 	end
+-- 	local meiriconf = MeiriChongzhi.getConf()
+-- 	if not meiriconf then
+-- 		return
+-- 	end
+-- 	local var = LActor.getStaticVar(sysarg)
+-- 	if var == nil then
+-- 		return
+-- 	end
+-- 	if var.meirichognzhi == nil then
+-- 		var.meirichognzhi = {}
+-- 	end
+-- 	if var.meirichognzhi.daily_charge_list == nil then
+-- 		var.meirichognzhi.daily_charge_list = {}
+-- 	end
+-- 	if var.meirichognzhi.charge_daily_count == nil then
+-- 		var.meirichognzhi.charge_daily_count = 0
+-- 	end
+-- 	if var.meirichognzhi.daily_charge_status == nil then
+-- 		var.meirichognzhi.daily_charge_status = {}
+-- 	end
+-- 	if var.meirichognzhi.charge_daily_count_status == nil then
+-- 		var.meirichognzhi.charge_daily_count_status = {}
+-- 	end
+-- 	local npack = DataPack.allocPacket(sysarg,138,91)  --申请一个数据包
+-- 	if npack == nil then return end
+-- 	DataPack.writeInt(npack,var.meirichognzhi.charge_daily_count)
+-- 	local charge_status = MeiriChongzhi.get_daily_charge_status(var.meirichognzhi.daily_charge_list,var.meirichognzhi.daily_charge_status)
+-- 	DataPack.writeInt(npack,#charge_status)
+-- 	for i=1,#charge_status do
+-- 		DataPack.writeInt(npack,charge_status[i])
+-- 		--print("===charge_status",charge_status[i])
+-- 	end
+-- 	local charge_daily_status = MeiriChongzhi.get_charge_daily_status(var.meirichognzhi.charge_daily_count,var.meirichognzhi.charge_daily_count_status)
+-- 	DataPack.writeInt(npack,#charge_daily_status)
+-- 	--print("====================")
+-- 	for i=1,#charge_daily_status do
+-- 		DataPack.writeInt(npack,charge_daily_status[i])
+-- 		--print("===charge_daily_status",charge_daily_status[i])
+-- 	end
+-- 	DataPack.flush(npack)
+-- end
+-- MeiriChongzhi.actorRecharge = function( sysarg, arg)
+-- 	if not MeiriChongzhi.isOpen() then
+-- 		return
+-- 	end
+-- 	local meiriconf = MeiriChongzhi.getConf()
+-- 	if not meiriconf then
+-- 		return
+-- 	end
+-- 	local val = arg[1]
+-- 	if val == nil or val == 0 then return end
+
+-- 	local var = LActor.getStaticVar(sysarg)
+-- 	if var == nil then return end
+
+-- 	if var.meirichognzhi == nil then
+-- 		var.meirichognzhi = {}
+-- 	end
+-- 	if var.meirichognzhi.daily_charge_list == nil then
+-- 		var.meirichognzhi.daily_charge_list = {}
+-- 	end
+-- 	if var.meirichognzhi.charge_daily_count == nil then
+-- 		var.meirichognzhi.charge_daily_count = 0
+-- 	end
+-- 	var.meirichognzhi.daily_charge_list[#var.meirichognzhi.daily_charge_list+1] = val
+-- 	if var.meirichognzhi.daily_first == nil then
+-- 		--for i,v in ipairs(meiriconf.target) do
+-- 		if val >= meiriconf.target[1][1] then
+-- 			var.meirichognzhi.charge_daily_count = var.meirichognzhi.charge_daily_count + 1
+-- 			var.meirichognzhi.daily_first = 1
+-- 		end
+-- 		--end
+-- 	end
+-- end
+
+-- MeiriChongzhi.getReward = function ( sysarg, packet)
+-- 	local type = DataPack.readInt(packet)
+-- 	local index = DataPack.readInt(packet)
+-- 	if not MeiriChongzhi.isOpen() then
+-- 		return
+-- 	end
+
+-- 	local meiriconf = MeiriChongzhi.getConf()
+-- 	if not meiriconf then
+-- 		return
+-- 	end
+
+-- 	local var = LActor.getStaticVar(sysarg)
+-- 	if var == nil then return end
+
+-- 	if var.meirichognzhi == nil then
+-- 		var.meirichognzhi = {}
+-- 	end
+
+-- 	if type == 1 then
+-- 		local charge_status = MeiriChongzhi.get_daily_charge_status(var.meirichognzhi.daily_charge_list,var.meirichognzhi.daily_charge_status)
+-- 		if charge_status[index] ~= 2 then
+-- 			return
+-- 		end
+-- 		local bagGrid = Item.getBagEmptyGridCount(sysarg)      --玩家身上有多少个格子
+-- 		if bagGrid == 0 then
+-- 			LActor.SendGeneralTips(sysarg, 7, 0, 0)
+-- 			return
+-- 		end
+-- 		local itemid,itemnum = meiriconf.target[index][2],meiriconf.target[index][3] or 1
+-- 		LActor.addItem(sysarg, itemid, 0, 0, itemnum, 1, "getactivityReward", 1)
+-- 		var.meirichognzhi.daily_charge_status[index] = 1
+-- 	elseif type == 2 then
+-- 		local charge_daily_status = MeiriChongzhi.get_charge_daily_status(var.meirichognzhi.charge_daily_count,var.meirichognzhi.charge_daily_count_status)
+-- 		if charge_daily_status[index] ~= 2 then
+-- 			return
+-- 		end
+-- 		local bagGrid = Item.getBagEmptyGridCount(sysarg)      --玩家身上有多少个格子
+-- 		if bagGrid == 0 then
+-- 			LActor.SendGeneralTips(sysarg, 7, 0, 0)
+-- 			return
+-- 		end
+-- 		local itemid,itemnum = meiriconf.target2[index][2],meiriconf.target2[index][3] or 1
+-- 		LActor.addItem(sysarg, itemid, 0, 0, itemnum, 1, "getactivityReward", 1)
+-- 		var.meirichognzhi.charge_daily_count_status[index] = 1
+-- 	end
+-- 	MeiriChongzhi.GetInfo(sysarg)
+-- end
+-- MeiriChongzhi.daily_send_reward = function ( sysarg, index)
+-- 	local type = 1
+
+-- 	local meiriconf = MeiriChongzhi.getConf()
+-- 	if not meiriconf then
+-- 		return
+-- 	end
+
+-- 	local var = LActor.getStaticVar(sysarg)
+-- 	if var == nil then return end
+
+-- 	if var.meirichognzhi == nil then
+-- 		var.meirichognzhi = {}
+-- 	end
+-- 	if var.meirichognzhi.daily_charge_list == nil then
+-- 		var.meirichognzhi.daily_charge_list = {}
+-- 	end
+-- 	if var.meirichognzhi.charge_daily_count == nil then
+-- 		var.meirichognzhi.charge_daily_count = 0
+-- 	end
+-- 	if var.meirichognzhi.daily_charge_status == nil then
+-- 		var.meirichognzhi.daily_charge_status = {}
+-- 	end
+-- 	if var.meirichognzhi.charge_daily_count_status == nil then
+-- 		var.meirichognzhi.charge_daily_count_status = {}
+-- 	end
+
+-- 	if type == 1 then
+-- 		local charge_status = MeiriChongzhi.get_daily_charge_status(var.meirichognzhi.daily_charge_list,var.meirichognzhi.daily_charge_status)
+-- 		if charge_status[index] ~= 2 then
+-- 			return
+-- 		end
+-- 		local bagGrid = Item.getBagEmptyGridCount(sysarg)      --玩家身上有多少个格子
+-- 		if bagGrid == 0 then
+-- 			LActor.SendGeneralTips(sysarg, 7, 0, 0)
+-- 			return
+-- 		end
+-- 		local itemid,itemnum = meiriconf.target[index][2],meiriconf.target[index][3] or 1
+-- 		System.sendGmMailOffLine(LActor.getActorId(sysarg), Lang.ScriptTips.mrcz1001, 1, itemid, itemnum, 1, Lang.ScriptTips.mrcz1002)
+-- 		--LActor.addItem(sysarg, itemid, 0, 0, itemnum, 1, "getactivityReward", 1)
+-- 		var.meirichognzhi.daily_charge_status[index] = 1
+-- 	elseif type == 2 then
+-- 		local charge_daily_status = MeiriChongzhi.get_charge_daily_status(var.meirichognzhi.charge_daily_count,var.meirichognzhi.charge_daily_count_status)
+-- 		if charge_daily_status[index] ~= 2 then
+-- 			return
+-- 		end
+-- 		local bagGrid = Item.getBagEmptyGridCount(sysarg)      --玩家身上有多少个格子
+-- 		if bagGrid == 0 then
+-- 			LActor.SendGeneralTips(sysarg, 7, 0, 0)
+-- 			return
+-- 		end
+-- 		local itemid,itemnum = meiriconf.target2[index][2],meiriconf.target2[index][3] or 1
+-- 		System.sendGmMailOffLine(LActor.getActorId(sysarg), Lang.ScriptTips.mrcz1001, 1, itemid, itemnum, 1, Lang.ScriptTips.mrcz1002)
+-- 		--LActor.addItem(sysarg, itemid, 0, 0, itemnum, 1, "getactivityReward", 1)
+-- 		var.meirichognzhi.charge_daily_count_status[index] = 1
+-- 	end
+-- 	MeiriChongzhi.GetInfo(sysarg)
+-- end
+-- MeiriChongzhi.newDayforActivity = function ( sysarg )
+-- 	local var = LActor.getStaticVar(sysarg)
+-- 	if var == nil then return end
+-- 	local meiriconf = MeiriChongzhi.getConf()
+-- 	if not meiriconf then
+-- 		return
+-- 	end
+-- 	if not MeiriChongzhi.isOpen() then
+-- 		if var.meirichognzhi == nil then
+-- 			return
+-- 		end
+-- 		if var.meirichognzhi.sendmrreward == nil then
+-- 			print("---活动结束，发送每日充值奖励--")
+-- 			for index,_ in ipairs(meiriconf.target) do
+-- 				MeiriChongzhi.daily_send_reward(sysarg,index)
+-- 			end
+-- 			var.meirichognzhi.sendmrreward = 1
+-- 	    end
+-- 		return
+-- 	end
+	
+-- 	for index,_ in ipairs(meiriconf.target) do
+-- 		MeiriChongzhi.daily_send_reward(sysarg,index)
+-- 	end
+	
+-- 	local var = LActor.getStaticVar(sysarg)
+-- 	if var == nil then return end
+
+-- 	if var.meirichognzhi == nil then
+-- 		var.meirichognzhi = {}
+-- 	end
+-- 	if var.meirichognzhi.daily_charge_list == nil then
+-- 		var.meirichognzhi.daily_charge_list = {}
+-- 	end
+-- 	for i=1,#var.meirichognzhi.daily_charge_list do
+-- 		var.meirichognzhi.daily_charge_list[i] = nil
+-- 	end
+-- 	var.meirichognzhi.daily_charge_list = nil
+-- 	for i=1,#var.meirichognzhi.daily_charge_status do
+-- 		var.meirichognzhi.daily_charge_status[i] = nil
+-- 	end
+-- 	var.meirichognzhi.daily_charge_status = nil
+-- 	var.meirichognzhi.daily_first = nil
+-- end
+-- EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeRecharge, MeiriChongzhi.actorRecharge)
+-- EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, MeiriChongzhi.newDayforActivity)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+MeiriChongzhi = {}
+
+MeiriChongzhi.ActivityId = 0
+MeiriChongzhi.SubActivityId = 0
+MeiriChongzhi.SubActivityId_list = {44,75,76,77,78}
+MeiriChongzhi.DuiZhao_list = { 
+								[1001] 	= 44,
+								[1002]	= 75,
+								[1003]	= 76,
+								[1004]	= 77,
+								[1005]	= 78,
+								}
+
+
+
+MeiriChongzhi.Init1 = function ( )
+	for i,v in pairs(activityConf) do
+		for j,w in pairs(v.activities) do
+			if w and w.id == MeiriChongzhi.SubActivityId then
+				if ONLINEREWARD.GetActivityState(v.activityId) == 1 then
+					MeiriChongzhi.ActivityId = tonumber(v.activityId)
+					print("----每日充值大id",MeiriChongzhi.ActivityId)
+					return
+				end
+			end
+		end
+	end
+end
+
+MeiriChongzhi.Init2 = function ( )
+	for i,v in pairs(activityConf) do
+		for j,w in pairs(v.activities) do
+			for _,m in ipairs(MeiriChongzhi.SubActivityId_list) do
+				if w and w.id == m and ONLINEREWARD.GetActivityState(v.activityId) == 1 then
+					MeiriChongzhi.ActivityId = tonumber(v.activityId)
+					MeiriChongzhi.SubActivityId = m
+					print("----每日充值大id",MeiriChongzhi.ActivityId)
+					print("----每日充值小id",MeiriChongzhi.SubActivityId)
+					return
+					
+				end
+			end
+		end
+	end
+end
+
+
+MeiriChongzhi.Init3 = function( )
+	for k,i in pairs(MeiriChongzhi.DuiZhao_list) do
+		if  ONLINEREWARD.GetActivityState(k) == 1 then 
+			for n,m in pairs(activityConf[k].activities) do
+				if m.id == i then
+					MeiriChongzhi.ActivityId = k
+					MeiriChongzhi.SubActivityId = i
+					--print("--11--每日充值大id",MeiriChongzhi.ActivityId)
+					--print("---11-每日充值小id",MeiriChongzhi.SubActivityId)
+					return
+				end
+			end
+		
+		end
+	end
+end
+function MeirichongzhiNewDay ( )
+	--print("======每日充值新的一天==")
+	MeiriChongzhi.Init3()
+end
+-- MeiriChongzhi.getConf = function()
+-- 	return NewServer7_conf.activities[44]
+-- end
+
+MeiriChongzhi.getConf1 = function ()
+	if activityConf[MeiriChongzhi.ActivityId] then 
+		return activityConf[MeiriChongzhi.ActivityId].activities[MeiriChongzhi.SubActivityId] 
+	end
+	return nil
+end
+
+MeiriChongzhi.isOpen1 = function()
+	local state = ONLINEREWARD.GetActivityState(MeiriChongzhi.ActivityId)
+	local isOpen = true
+	if state == 0 then
+		isOpen = false
+	end
+	return isOpen
+end
+MeiriChongzhi.get_daily_charge_status1 = function (daily_charge_list,daily_charge_status,meiriconf)
+	local meiriconf = meiriconf
+	local sort_recharge = {}
+	for i=1,#daily_charge_list do
+		table.insert(sort_recharge,daily_charge_list[i])
+	end
+	table.sort(sort_recharge,function(a,b) return a > b end)
+	
+	local status = {}
+
+	local max_recharge = sort_recharge[1] or 0
+	for i,v in ipairs(meiriconf.target) do
+		if max_recharge >= v[1] then
+			if daily_charge_status[i] ~= nil then
+				status[i] = 3
+			else
+				status[i] = 2
+			end
+		else
+			status[i] = 1
+		end
+	end
+	
+	return status
+end
+MeiriChongzhi.get_charge_daily_status1 = function (charge_daily_count,charge_daily_count_status)
+	local meiriconf = MeiriChongzhi.getConf1()
+	if not meiriconf then
+		return
+	end
+	local status = {}
+	for i,v in ipairs(meiriconf.target2) do
+		if charge_daily_count >= v[1] then
+			if charge_daily_count_status[i] ~= nil then
+				status[i] = 3
+			else
+				status[i] = 2
+			end
+		else
+			status[i] = 1
+		end
+	end
+	return status
+end
+MeiriChongzhi.GetInfo1 = function ( sysarg )
+	--print("---查询每日充值信息")
+	if not MeiriChongzhi.isOpen1() then
+		return
+	end
+	local meiriconf = MeiriChongzhi.getConf1()
+	if not meiriconf then
+		return
+	end
+	local activeid = MeiriChongzhi.ActivityId
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then
+		return
+	end
+	if not var.activityList[activeid] then
+		var.activityList[activeid] = {}
+	end
+	if var.activityList[activeid].meirichognzhi == nil then
+		var.activityList[activeid].meirichognzhi = {}
+	end
+	if var.activityList[activeid].meirichognzhi.daily_charge_list == nil then
+		var.activityList[activeid].meirichognzhi.daily_charge_list = {}
+	end
+	if var.activityList[activeid].meirichognzhi.charge_daily_count == nil then
+		var.activityList[activeid].meirichognzhi.charge_daily_count = 0
+	end
+	if var.activityList[activeid].meirichognzhi.daily_charge_status == nil then
+		var.activityList[activeid].meirichognzhi.daily_charge_status = {}
+	end
+	if var.activityList[activeid].meirichognzhi.charge_daily_count_status == nil then
+		var.activityList[activeid].meirichognzhi.charge_daily_count_status = {}
+	end
+	local npack = DataPack.allocPacket(sysarg,138,91)  --申请一个数据包
+	if npack == nil then return end
+	DataPack.writeInt(npack,var.activityList[activeid].meirichognzhi.charge_daily_count)
+	--print("===charge_daily_count",var.meirichognzhi.charge_daily_count)
+	local charge_status = MeiriChongzhi.get_daily_charge_status1(var.activityList[activeid].meirichognzhi.daily_charge_list,var.activityList[activeid].meirichognzhi.daily_charge_status,meiriconf)
+	DataPack.writeInt(npack,#charge_status)
+	--print("====================")
+	for i=1,#charge_status do
+		DataPack.writeInt(npack,charge_status[i])
+		--print("===charge_status",charge_status[i])
+	end
+	local charge_daily_status = MeiriChongzhi.get_charge_daily_status1(var.activityList[activeid].meirichognzhi.charge_daily_count,var.activityList[activeid].meirichognzhi.charge_daily_count_status)
+	DataPack.writeInt(npack,#charge_daily_status)
+	--print("====================")
+	for i=1,#charge_daily_status do
+		DataPack.writeInt(npack,charge_daily_status[i])
+		--print("===charge_daily_status",charge_daily_status[i])
+	end
+	DataPack.flush(npack)
+end
+MeiriChongzhi.actorRecharge1 = function( sysarg, arg)
+	if not MeiriChongzhi.isOpen1() then
+		--print("===gggggggg")
+		return
+	end
+	local meiriconf = MeiriChongzhi.getConf1()
+	if not meiriconf then
+		--print("===bbbbbb")
+		return
+	end
+	local val = arg[1]
+	if val == nil or val == 0 then 
+		--print("===gggggggg111")
+		return 
+	end
+
+	local activeid = MeiriChongzhi.ActivityId
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then
+		--print("===gggggggg33")
+		return
+	end
+	if not var.activityList[activeid] then
+		var.activityList[activeid] = {}
+	end
+
+	if var.activityList[activeid].meirichognzhi == nil then
+		var.activityList[activeid].meirichognzhi = {}
+	end
+	if var.activityList[activeid].meirichognzhi.daily_charge_list == nil then
+		var.activityList[activeid].meirichognzhi.daily_charge_list = {}
+	end
+	if var.activityList[activeid].meirichognzhi.charge_daily_count == nil then
+		var.activityList[activeid].meirichognzhi.charge_daily_count = 0
+	end
+	--print("---kkkkkkkkk")
+	var.activityList[activeid].meirichognzhi.daily_charge_list[#var.activityList[activeid].meirichognzhi.daily_charge_list+1] = val
+	if var.activityList[activeid].meirichognzhi.daily_first == nil then
+		--for i,v in ipairs(meiriconf.target) do
+		if val >= meiriconf.target[1][1] then
+			var.activityList[activeid].meirichognzhi.charge_daily_count = var.activityList[activeid].meirichognzhi.charge_daily_count + 1
+			var.activityList[activeid].meirichognzhi.daily_first = 1
+			--print("=kkkkkkkkk")
+		end
+		--end
+	end
+end
+
+MeiriChongzhi.getReward1 = function ( sysarg, packet)
+	local type = DataPack.readInt(packet)
+	local index = DataPack.readInt(packet)
+	if not MeiriChongzhi.isOpen1() then
+		return
+	end
+
+	local meiriconf = MeiriChongzhi.getConf1()
+	if not meiriconf then
+		return
+	end
+
+	local activeid = MeiriChongzhi.ActivityId
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then
+		return
+	end
+	if not var.activityList[activeid] then
+		var.activityList[activeid] = {}
+	end
+
+	if var.activityList[activeid].meirichognzhi == nil then
+		var.activityList[activeid].meirichognzhi = {}
+	end
+	if var.activityList[activeid].meirichognzhi.daily_charge_list == nil then
+		var.activityList[activeid].meirichognzhi.daily_charge_list = {}
+	end
+	if var.activityList[activeid].meirichognzhi.daily_charge_status == nil then
+		var.activityList[activeid].meirichognzhi.daily_charge_status = {}
+	end
+	if var.activityList[activeid].meirichognzhi.daily_charge_status == nil then
+		var.activityList[activeid].meirichognzhi.daily_charge_status = {}
+	end
+	if var.activityList[activeid].meirichognzhi.charge_daily_count == nil then
+		var.activityList[activeid].meirichognzhi.charge_daily_count = 0
+	end
+	if var.activityList[activeid].meirichognzhi.charge_daily_count_status == nil then
+		var.activityList[activeid].meirichognzhi.charge_daily_count_status = {}
+	end
+	if type == 1 then
+		local charge_status = MeiriChongzhi.get_daily_charge_status1(var.activityList[activeid].meirichognzhi.daily_charge_list,var.activityList[activeid].meirichognzhi.daily_charge_status,meiriconf)
+		if charge_status[index] ~= 2 then
+			--print("====9999")
+			return
+		end
+		local bagGrid = Item.getBagEmptyGridCount(sysarg)      --玩家身上有多少个格子
+		if bagGrid == 0 then
+			LActor.SendGeneralTips(sysarg, 7, 0, 0)
+			return
+		end
+		local itemid,itemnum = meiriconf.target[index][2],meiriconf.target[index][3] or 1
+		LActor.addItem(sysarg, itemid, 0, 0, itemnum, 1, "getactivityReward", 1)
+		var.activityList[activeid].meirichognzhi.daily_charge_status[index] = 1
+	elseif type == 2 then
+		local charge_daily_status = MeiriChongzhi.get_charge_daily_status1(var.activityList[activeid].meirichognzhi.charge_daily_count,var.activityList[activeid].meirichognzhi.charge_daily_count_status)
+		if charge_daily_status[index] ~= 2 then
+			--print("====6666666")
+			return
+		end
+		local bagGrid = Item.getBagEmptyGridCount(sysarg)      --玩家身上有多少个格子
+		if bagGrid == 0 then
+			LActor.SendGeneralTips(sysarg, 7, 0, 0)
+			return
+		end
+		local itemid,itemnum = meiriconf.target2[index][2],meiriconf.target2[index][3] or 1
+		LActor.addItem(sysarg, itemid, 0, 0, itemnum, 1, "getactivityReward", 1)
+		var.activityList[activeid].meirichognzhi.charge_daily_count_status[index] = 1
+	end
+	MeiriChongzhi.GetInfo1(sysarg)
+end
+MeiriChongzhi.daily_send_reward1 = function ( sysarg, activityId ,index, meiriconf,type)
+	local type = type or 1
+
+	-- local meiriconf = MeiriChongzhi.getConf()
+	-- if not meiriconf then
+	-- 	return
+	-- end
+	local activeid = activityId
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	if not var.activityList[activeid] then
+		--print("==ssssssss")
+		return
+	end
+	if var.activityList[activeid].meirichognzhi == nil then
+		var.activityList[activeid].meirichognzhi = {}
+	end
+	if var.activityList[activeid].meirichognzhi.daily_charge_list == nil then
+		var.activityList[activeid].meirichognzhi.daily_charge_list = {}
+	end
+	if var.activityList[activeid].meirichognzhi.charge_daily_count == nil then
+		var.activityList[activeid].meirichognzhi.charge_daily_count = 0
+	end
+	if var.activityList[activeid].meirichognzhi.daily_charge_status == nil then
+		var.activityList[activeid].meirichognzhi.daily_charge_status = {}
+	end
+	if var.activityList[activeid].meirichognzhi.charge_daily_count_status == nil then
+		var.activityList[activeid].meirichognzhi.charge_daily_count_status = {}
+	end
+
+	if type == 1 then
+		local charge_status = MeiriChongzhi.get_daily_charge_status1(var.activityList[activeid].meirichognzhi.daily_charge_list,var.activityList[activeid].meirichognzhi.daily_charge_status,meiriconf)
+		if charge_status == nil or charge_status[index] ~= 2 then
+			--print("=====pppppppp "..activeid.."  "..index)
+			return
+		end
+		local bagGrid = Item.getBagEmptyGridCount(sysarg)      --玩家身上有多少个格子
+		if bagGrid == 0 then
+			LActor.SendGeneralTips(sysarg, 7, 0, 0)
+			return
+		end
+		local itemid,itemnum = meiriconf.target[index][2],meiriconf.target[index][3] or 1
+		--print("====---活动结束，发送每日充值奖励",index)
+		System.sendGmMailOffLine(LActor.getActorId(sysarg), Lang.ScriptTips.mrcz1001, 1, itemid, itemnum, 1, Lang.ScriptTips.mrcz1002)
+		--LActor.addItem(sysarg, itemid, 0, 0, itemnum, 1, "getactivityReward", 1)
+		var.activityList[activeid].meirichognzhi.daily_charge_status[index] = 1
+	elseif type == 2 then
+		local charge_daily_status = MeiriChongzhi.get_charge_daily_status1(var.activityList[activeid].meirichognzhi.charge_daily_count,var.activityList[activeid].meirichognzhi.charge_daily_count_status)
+		if charge_daily_status == nil or charge_daily_status[index] ~= 2 then
+			return
+		end
+		local bagGrid = Item.getBagEmptyGridCount(sysarg)      --玩家身上有多少个格子
+		if bagGrid == 0 then
+			LActor.SendGeneralTips(sysarg, 7, 0, 0)
+			return
+		end
+		local itemid,itemnum = meiriconf.target2[index][2],meiriconf.target2[index][3] or 1
+		System.sendGmMailOffLine(LActor.getActorId(sysarg), Lang.ScriptTips.mrcz1001, 1, itemid, itemnum, 1, Lang.ScriptTips.mrcz1002)
+		--LActor.addItem(sysarg, itemid, 0, 0, itemnum, 1, "getactivityReward", 1)
+		var.activityList[activeid].meirichognzhi.charge_daily_count_status[index] = 1
+	end
+	MeiriChongzhi.GetInfo1(sysarg)
+end
+MeiriChongzhi.newDayforActivity1 = function ( sysarg )
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+
+	for v,i in pairs(MeiriChongzhi.DuiZhao_list) do
+		local oneConf = activityConf[v]
+		--print("===== 大id "..v.." 小id "..i)
+		local meiriconf = oneConf.activities[i]
+		if meiriconf ~= nil then
+			local state = ONLINEREWARD.GetActivityState(oneConf.activityId , var.download_from , sysarg)
+			--print("====有每日充值活动的大id "..oneConf.activityId.."  state:"..state)
+			if state ~= 0 then
+				for index,_ in ipairs(meiriconf.target) do
+					MeiriChongzhi.daily_send_reward1(sysarg,v,index,meiriconf,1)
+				end
+				if var.activityList == nil then var.activityList = {} end
+				if var.activityList[v] == nil then var.activityList[v] = {} end
+				if var.activityList[v].meirichognzhi == nil then var.activityList[v].meirichognzhi = {} end
+
+				if var.activityList[v].meirichognzhi.daily_charge_list == nil then
+					var.activityList[v].meirichognzhi.daily_charge_list = {}
+				end
+				for i=1,#var.activityList[v].meirichognzhi.daily_charge_list do
+					var.activityList[v].meirichognzhi.daily_charge_list[i] = nil
+				end
+				var.activityList[v].meirichognzhi.daily_charge_list = nil
+
+				if var.activityList[v].meirichognzhi.daily_charge_status == nil then
+					var.activityList[v].meirichognzhi.daily_charge_status = {}
+				end
+				for i=1,#var.activityList[v].meirichognzhi.daily_charge_status do
+					var.activityList[v].meirichognzhi.daily_charge_status[i] = nil
+				end
+				var.activityList[v].meirichognzhi.daily_charge_status = nil
+				var.activityList[v].meirichognzhi.daily_first = nil
+				--print("---开id",v)
+
+			else
+				--print("=====关id",v)			
+				if var.activityList ~= nil and  var.activityList[v] ~= nil and var.activityList[v].meirichognzhi ~= nil then
+					-- print("====ssssssssssss",v,i)
+					if var.activityList[v].meirichognzhi.sendmrreward == nil then
+						for index,_ in ipairs(meiriconf.target) do
+							--print("===6666666666 33333")
+							MeiriChongzhi.daily_send_reward1(sysarg,v,index,meiriconf,1)
+						end
+						for index,_ in ipairs(meiriconf.target2) do
+							--print("===6666666666 33333")
+							MeiriChongzhi.daily_send_reward1(sysarg,v,index,meiriconf,2)
+						end
+						var.activityList[v].meirichognzhi.sendmrreward = 1
+
+						if var.activityList[v].meirichognzhi.daily_charge_list ~= nil then
+							for i=1,#var.activityList[v].meirichognzhi.daily_charge_list do
+								var.activityList[v].meirichognzhi.daily_charge_list[i] = nil
+							end
+							var.activityList[v].meirichognzhi.daily_charge_list = nil
+						end
+
+						if var.activityList[v].meirichognzhi.daily_charge_status ~= nil then
+							for i=1,#var.activityList[v].meirichognzhi.daily_charge_status do
+								var.activityList[v].meirichognzhi.daily_charge_status[i] = nil
+							end
+							var.activityList[v].meirichognzhi.daily_charge_status = nil
+						end
+						var.activityList[v].meirichognzhi.daily_first = nil
+						var.activityList[v].meirichognzhi.charge_daily_count = nil
+						var.activityList[v].meirichognzhi = nil
+						--print("---wwwwww",v)
+
+			    	end
+			    end
+			end
+		end
+	end
+
+end
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeRecharge, MeiriChongzhi.actorRecharge1)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, MeiriChongzhi.newDayforActivity1)
+
+table.insert(InitFnTable, MeiriChongzhi.Init3)

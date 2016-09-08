@@ -1,0 +1,172 @@
+--#include "dfmanager.txt" once
+--#include "data\functions\actorevent\friendrelevant.txt" once
+
+local DongfuFunc = {}
+
+DongfuFunc.main = function(pChar, sysId, msgId, packet)
+	if not DongfuFunc.isOpen(pChar) then return end
+	local func = DongfuFunc[msgId]
+	if func ~= nil then
+		func(pChar, packet)
+	end
+end
+
+DongfuFunc.onLogin = function(pChar)
+	if not DongfuFunc.isOpen(pChar) then return end
+	DongfuManager.onLogin(pChar)
+end
+
+DongfuFunc.onLogout = function(pChar)
+	if not DongfuFunc.isOpen(pChar) then return end
+	DongfuManager.exit(pChar)
+end
+
+DongfuFunc.onAddFriend = function(pChar, id)
+	if not DongfuFunc.isOpen(pChar) then return end
+	DongfuManager.onAddFriend(pChar, id)
+end
+
+DongfuFunc.onDelFriend = function(pChar, id)
+	if not DongfuFunc.isOpen(pChar) then return end
+	DongfuManager.onDelFriend(pChar, id)
+end
+
+DongfuFunc.onFriendEvent = function(pChar, args)
+	local id, type = args[1], args[2]
+	if type == 1 then
+		DongfuFunc.onAddFriend(pChar, id)
+		FriendOpFuncList.SaveFriendCount(pChar)
+	elseif type == 2 then
+		DongfuFunc.onDelFriend(pChar, id)
+	end
+end
+
+SystemHandlerDispatcher.registerSystemHander(BaseTypes.SystemId.dongfuSystem, DongfuFunc.main)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, DongfuFunc.onLogin)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogout, DongfuFunc.onLogout)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeFriend, DongfuFunc.onFriendEvent)
+
+DongfuFunc.isOpen = function(pChar)
+	return LActor.getLevel(pChar) >= DongfuConf.openLevel
+end
+
+
+
+DongfuFunc[1] = function(pChar, dp)
+	local ownerId = DataPack.readInt(dp)
+	DongfuManager.enter(pChar, ownerId)
+end
+
+DongfuFunc[2] = function(pChar)
+	DongfuManager.exit(pChar)
+end
+
+DongfuFunc[3] = function(pChar, dp)
+	local moneytype = DataPack.readByte(dp)
+	if moneytype == nil or moneytype ~= mtYuanbao and moneytype ~= mtBindYuanbao then return end
+	DongfuManager.upgrade(pChar, moneytype)
+end
+
+DongfuFunc[4] = function(pChar)
+	DongfuManager.lingquanAdd(pChar)
+end
+
+DongfuFunc[5] = function(pChar, dp)
+	local type = DataPack.readByte(dp)
+	DongfuManager.selectPlantType(pChar, type)
+end
+
+DongfuFunc[6] = function(pChar, dp)
+	local type = DataPack.readByte(dp)
+	local moneytype = DataPack.readByte(dp)
+	if moneytype == nil or moneytype ~= mtYuanbao and moneytype ~= mtBindYuanbao then return end
+	DongfuManager.refreshPlantColor(pChar, type, moneytype)
+end
+
+DongfuFunc[7] = function(pChar, dp)
+	local type = DataPack.readByte(dp)
+	local moneytype = DataPack.readByte(dp)
+	if moneytype == nil or moneytype ~= mtYuanbao and moneytype ~= mtBindYuanbao then return end
+	DongfuManager.refreshPlantBestColor(pChar, type, moneytype)
+end
+
+DongfuFunc[8] = function(pChar, dp)
+	local plantType = DataPack.readByte(dp)
+	local landId = DataPack.readByte(dp)
+	DongfuManager.plant(pChar, landId, plantType)
+end
+
+DongfuFunc[9] = function(pChar, dp)
+	local type = DataPack.readByte(dp)
+	local color = DataPack.readByte(dp)
+	local moneytype = DataPack.readByte(dp)
+	if moneytype == nil or moneytype ~= mtYuanbao and moneytype ~= mtBindYuanbao then return end
+	DongfuManager.batchPlant(pChar, type, color, moneytype)
+end
+
+DongfuFunc[10] = function(pChar, dp)
+	DongfuManager.batchHarvest(pChar)
+end
+
+DongfuFunc[12] = function(pChar, dp)
+	local landId = DataPack.readByte(dp)
+	DongfuManager.killSick(pChar, landId)
+end
+
+DongfuFunc[13] = function(pChar, dp)
+	local landId = DataPack.readByte(dp)
+	local moneytype = DataPack.readByte(dp)
+	if moneytype == nil or moneytype ~= mtYuanbao and moneytype ~= mtBindYuanbao then return end
+	DongfuManager.quickGrown(pChar, landId, moneytype)
+end
+--[[
+DongfuFunc[14] = function(pChar, dp)
+	local landId = DataPack.readByte(dp)
+	DongfuManager.remove(pChar, landId)
+end
+]]
+DongfuFunc[15] = function(pChar, dp)
+	local landId = DataPack.readByte(dp)
+	DongfuManager.harvest(pChar, landId)
+end
+
+DongfuFunc[16] = function(pChar, dp)
+	DongfuManager.lingquanAward(pChar)
+end
+
+DongfuFunc[17] = function(pChar, dp)
+	local type = DataPack.readByte(dp)
+	local moneytype = DataPack.readByte(dp)
+	if moneytype == nil or moneytype ~= mtYuanbao and moneytype ~= mtBindYuanbao then return end
+	DongfuManager.summon(pChar, type, moneytype)
+end
+--[[
+DongfuFunc[18] = function(pChar, dp)
+	local autoHarvest = DataPack.readByte(dp)
+	local autoPlant = DataPack.readByte(dp)
+	local type = DataPack.readByte(dp)
+	local color = DataPack.readByte(dp)
+	local count = DataPack.readByte(dp)
+	local moneytype = DataPack.readByte(dp)
+	if moneytype == nil or moneytype ~= mtYuanbao and moneytype ~= mtBindYuanbao then return end
+	DongfuManager.saveAuto(autoHarvest, autoPlant, type, color, count, moneytype)
+end
+]]
+DongfuFunc[19] = function(pChar, dp)
+	DongfuManager.readLog(pChar)
+end
+--[[
+DongfuFunc[20] = function(pChar, dp)
+	DongfuManager.cancelAuto(pChar)
+end
+
+DongfuFunc[21] = function(pChar)
+	DongfuManager.getAutoInfo(pChar)
+end
+]]
+
+DongfuFunc[24] = function(pChar, dp)
+	local moneytype = DataPack.readByte(dp)
+	if moneytype == nil or moneytype ~= mtYuanbao and moneytype ~= mtBindYuanbao then return end
+	DongfuManager.batchQuickGrown(pChar, moneytype)
+end

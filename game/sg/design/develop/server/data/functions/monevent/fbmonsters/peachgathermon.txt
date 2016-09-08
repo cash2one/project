@@ -1,0 +1,79 @@
+﻿--#include "data\language\LangCode.txt" once   --语言包
+--#include "data\config\activity\GuildActivity.txt" once   --采集蟠桃相关的常量定义
+GatherFinishDispatcher.MonGatherPeachFinish = function (monster,sysarg,monId)
+	if GuildActivity == nil then return end
+
+	local var = LActor.getStaticVar(sysarg)
+	
+	if var.getherpeachcount == nil then --初始采集数量
+		var.getherpeachcount = 0
+	end
+	if var.getherpeachMaxcount == nil then
+		var.getherpeachMaxcount = 10
+	end
+	
+	if var.subyuanbaoaddmax == nil then
+		var.subyuanbaoaddmax = 0
+	end
+
+	-- 是否超过最大采集次数
+	if var.getherpeachcount >= var.getherpeachMaxcount then
+		LActor.sendTipmsg(sysarg,Lang.TaskTalk.t00669,ttMessage)
+		return 
+	end
+
+	local building = LGuild.getGuildLevel(sysarg, 1) -- 蟠桃建筑等级
+	if building < 1 then building = 1 end
+	if building > 10 then building = 10 end
+
+	local level =  LActor.getIntProperty(sysarg,PROP_LEVEL)
+	if level < 1 then level = 1 end
+
+	-- 计算获得经验和灵力值
+	local addexp = math.floor((400 * level * level + level * 200 + 1000000) * GuildActivity.PeachExp[building]) -- 增加经验
+	local addroolexp = math.floor(GuildActivity.PeachBaseRoot + GuildActivity.PeachBaseRoot * GuildActivity.PeachRoot[building]) -- 增加真气值
+
+	local oldexp = addexp
+	local var_sys_d = System.getDyanmicVar()
+
+	if var_sys_d.ZhongqiuDoubleExpOne ~= nil and var_sys_d.ZhongqiuDoubleExpOne == 1 then -- 中秋双倍经验活动期间经验翻倍
+		addexp = addexp + oldexp
+	end
+		
+	local rand = System.getRandomNumber(100)
+	if rand < GuildActivity.rate then
+		-- 出现暴击
+		addexp = addexp *10
+		addroolexp = addroolexp * 10
+		local str = string.format(Lang.TaskTalk.t00667,LActor.getName(sysarg))
+		LActor.sendGuildMsg(sysarg,smGuildCommon,str,ttChatWindow+ttScreenCenter)	--发帮派广播
+		var.getherpeachcount=var.getherpeachcount+1
+		LActor.SendAndChangeCaleValue(sysarg,caleOther1,var.getherpeachMaxcount - var.getherpeachcount,false)
+
+		-- 播放特效
+		local posx = LActor.getIntProperty( sysarg, PROP_ENTITY_POSX )
+		local posy = LActor.getIntProperty( sysarg, PROP_ENTITY_POSY ) - 2 -- 头顶播放
+		local showEffect = GuildActivity.bjEffect
+		local hscene = LActor.getSceneHandle(sysarg)
+		Fuben.sendSceneEffect(sysarg, hscene, showEffect[1], showEffect[2], showEffect[3] * 1000, posx, posy)
+
+		LActor.triggerAchieveEvent(sysarg, 27)
+	else
+		var.getherpeachcount=var.getherpeachcount+1
+		LActor.SendAndChangeCaleValue(sysarg,caleOther1,var.getherpeachMaxcount - var.getherpeachcount,false)
+	end
+	
+	LActor.addExp(sysarg,addexp,0,0)
+	LActor.addRootExp(sysarg,addroolexp)
+
+	-- 触发成就事件
+	LActor.triggerAchieveEvent(sysarg, 36)
+	--print("采集怪采集次数"..var.getherpeachcount.."采集最大值"..var.getherpeachMaxcount)
+end
+
+--GatherFinishDispatcher.register(2,GatherFinishDispatcher.Mon2GatherFinish)
+for i=1,#GuildActivity.Activitymonster do
+	if GuildActivity.Activitymonster[i].bRandom == false then
+		GatherFinishDispatcher.register(GuildActivity.Activitymonster[i].id,GatherFinishDispatcher.MonGatherPeachFinish)
+	end
+end

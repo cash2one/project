@@ -1,0 +1,806 @@
+﻿--lua script
+--[[
+    学会技能就会完成的任务的定义 
+]]
+
+--#include "data\config\skill\mijiconfig.txt" once --
+  --#include "data\functions\systems\timereward\repressdemontowerhandle.txt" once --
+
+EventCallDispatcher._SkillQuestData = 
+{
+	[3] = { qid = 147, tid = 30002, },		--511是技能id，qid是任务id，tid是指在任务配置表中写的那个id,注：这每一条的意思是，学会了技能511，就可以完成任务777
+   [16] = { qid = 147, tid = 30002, },			--由于存在不同的职业学不同的技能然后完成同一个任务的情况，所以，这里会有8条(8个职业)相同任务的对应不同的技能
+   [45] = { qid = 147, tid = 30002, },
+   [30] = { qid = 147, tid = 30002, },
+   [59] = { qid = 147, tid = 30002, },
+   [70] = { qid = 147, tid = 30002, },
+   [83] = { qid = 147, tid = 30002, },
+   [96] = { qid = 147, tid = 30002, },
+  
+} 
+
+
+SkillSystemDealFuncTable = {}
+SkillSystemDealFuncResualDealTable = {}
+
+GSkillMijiConf = {
+  SkillMiji = {
+
+  },
+
+  MijiLevelupExp = {
+
+  },
+}
+
+
+function isMijiItem(pitem)
+    local itemType = Item.getItemProperty( sysarg, pitem, Item.ipItemType, 0 )
+    -- print(" ___________: "..itemType)
+    return itemType == Item.itItemMiji
+end
+
+
+SkillSystemDealFuncTable.GetMijiConfig = function()
+  return MijiConf
+end
+
+
+SkillSystemDealFuncTable.GSkillMijiConfInner = function( )
+  return GSkillMijiConf
+end
+
+
+
+
+SkillSystemDealFuncTable.MijiInit  = function()
+    local config = SkillSystemDealFuncTable.GetMijiConfig()
+    local skill_miji = config.skill_miji
+    for i=1,#skill_miji do
+        local itemSet = skill_miji[i].mijiId
+        for j=1,#itemSet do
+          --print(" miji:"..itemSet[j].." skillid: "..skill_miji[i].skillId)
+          GSkillMijiConf.SkillMiji[itemSet[j]] = skill_miji[i].skillId
+        end
+    end
+
+    local miji_exp = config.miji_exp
+    GSkillMijiConf.MijiLevelupExp[1] = miji_exp.green
+    GSkillMijiConf.MijiLevelupExp[2] = miji_exp.blue
+    GSkillMijiConf.MijiLevelupExp[3] = miji_exp.purple
+    GSkillMijiConf.MijiLevelupExp[4] = miji_exp.orange
+    GSkillMijiConf.MijiLevelupExp[5] = miji_exp.red
+
+end
+
+SkillSystemDealFuncTable.MijiInit()
+
+SkillSystemDealFuncTable[3] = function (sysarg, isTest, arg)
+  local qData = EventCallDispatcher._SkillQuestData[arg[2]]
+  if qData then
+    LActor.setQuestValue(sysarg, qData.qid, qData.tid, 1)
+  end
+end
+
+-- --秘籍列表请求处理
+-- SkillSystemDealFuncTable[15] = function( sysarg,arg)
+--   local dbp = arg[2]
+
+
+-- end
+
+SkillSystemDealFuncResualDealTable[16] = function(sysarg, args )
+  local flag = 0
+  if args[1] == true then
+    flag = 1
+  end
+  local guid = args[2]
+  if guid == nil then return end
+  local npack = DataPack.allocPacket(sysarg,5,16)
+  if npack == nil then return end
+  DataPack.writeInt64(npack, guid)
+  DataPack.writeChar(npack, flag)
+  if flag == 1 then
+    local figthValue = args[3] or 0
+    DataPack.writeInt(npack, figthValue)
+  end
+  DataPack.flush(npack)
+end
+
+
+--附带秘籍
+SkillSystemDealFuncTable[16] = function( sysarg, isTest, arg)
+  local dbp = arg[2]
+  local guid
+
+  if isTest ~= true then
+    if dbp == nil then print("SkillSystemDealFuncTable[16]: dbp == niol ") return {false, -1} end
+    guid = DataPack.readInt64(dbp)
+  else
+    guid = arg[2]
+  end
+
+  if LActor.isActorSystemOpen(sysarg, siMijiSys ) == false then
+      return {false, guid}
+  end
+
+  local figthValue = 0
+  local pitem = Item.getBagItemPtrByGuid(sysarg, guid)
+  if pitem == nil then
+    LActor.sendTipmsg(sysarg, Lang.PetLang.p04, ttMessage)
+    return {false, guid}
+  end
+
+  local stdItemId = Item.getItemProperty( sysarg, pitem, Item.ipItemID, 0 )
+
+  local confInner = SkillSystemDealFuncTable.GSkillMijiConfInner()
+  local SkillMiji = confInner.SkillMiji
+  local skillId = -1
+  if SkillMiji and SkillMiji[stdItemId] then
+      skillId = SkillMiji[stdItemId]
+  end
+
+  -- print("skillId: "..skillId.." stdItemId: "..stdItemId)
+  if skillId <= 0 then
+      LActor.sendTipmsg(sysarg, Lang.miji.tt001, ttMessage)
+      return {false, guid}
+  end
+
+  if LActor.getSkillLevel(sysarg, skillId) == 0 then
+    LActor.sendTipmsg(sysarg, Lang.miji.tt002, ttMessage)
+    return {false, guid}
+  end
+
+  local isBind = Item.getItemProperty( sysarg, pitem, Item.ipItemBind, 0)
+  Item.setItemProperty(sysarg, pitem, Item.ipItemBind, 1)
+
+  if LActor.takeOnMijiItem(sysarg, pitem, skillId) < 0 then
+    -- print("LActor.takeOnMijiItem")
+    Item.setItemProperty(sysarg, pitem, Item.ipItemBind, isBind)
+    LActor.sendTipmsg(sysarg, Lang.miji.tt003, ttMessage)
+    return {false, guid}
+  end
+
+  figthValue = LActor.getMijiFightValue(sysarg)
+  -- 秘籍排行榜
+--  ONLINEREWARD.repressDemonTowerFunc.rankUpdata(sysarg, figthValue)
+
+  return {true, guid, figthValue}
+
+end
+
+SkillSystemDealFuncResualDealTable[17] = function( sysarg, args)
+  local guid = args[2]
+  local flag = 0
+  if args[1] == true then
+    flag = 1
+  end
+  if guid == nil then return end
+  local npack = DataPack.allocPacket(sysarg,5,17)
+  if npack == nil then return end
+  DataPack.writeWord(npack, guid)
+  DataPack.writeChar(npack, flag)
+  if flag == 1 then
+      local figthValue = args[3]  or 0
+      DataPack.writeInt(npack, figthValue)
+  end
+  DataPack.flush(npack)
+end
+
+--卸载秘籍
+SkillSystemDealFuncTable[17] = function( sysarg, isTest, arg)
+  local dbp = arg[2]
+
+  local conf = SkillSystemDealFuncTable.GetMijiConfig()
+  local figthValue = 0
+
+
+  local guid   ---换成技能id了
+  if isTest ~= true then
+    if dbp == nil then print("SkillSystemDealFuncTable[16]: dbp == niol ") return end
+    guid = DataPack.readWord(dbp)
+  else
+    guid = arg[2]
+  end
+
+  local pitem = LActor.getSkillMijiItem(sysarg, guid)
+  if pitem == nil then
+      print("SkillSystemDealFuncTable[17] "..guid)
+     LActor.sendTipmsg(sysarg, Lang.miji.tt004, ttMessage)
+    return {false, guid}
+  end
+
+  local costNeed =  conf.takeOffCost
+  local costNeedType = conf.takeoffCostType
+
+  if LActor.getMoneyCount(sysarg, costNeedType) < costNeed then
+      if costNeedType == mtYuanbao then
+        LActor.sendTipmsg(sysarg, Lang.ScriptTips.hf010, ttMessage)
+      elseif costNeedType == mtBindCoin then
+        LActor.sendTipmsg(sysarg, Lang.ScriptTips.hf009, ttMessage)
+      else
+        LActor.sendTipmsg(sysarg, Lang.miji.tt005, ttMessage)
+        return
+      end
+      
+      return {false, guid}
+  end
+
+        -- 判断是否有足够的格子
+  if Item.getBagEmptyGridCount(sysarg) < 1 then
+      LActor.sendTipmsg( sysarg, Lang.ScriptTips.hf013, ttMessage )
+      return {false, guid}
+    end
+
+  if LActor.takeOffMijiItem(sysarg, pitem) < 0 then
+      print(" LActor.takeOffMijiItem(sysarg, pitem) < 0 ")
+      return {false, guid}
+  end
+
+  -- Item.setItemProperty(sysarg, pitem, Item.ipItemBind, 1)  --卸载时再确保是绑定的
+      --处理消耗
+  if costNeed > 0 then
+    LActor.changeMoney(sysarg, costNeedType,-costNeed, 1, true, "miji", "takeoff")
+  end
+  figthValue = LActor.getMijiFightValue(sysarg)
+  -- 秘籍排行榜
+--  ONLINEREWARD.repressDemonTowerFunc.rankUpdata(sysarg, figthValue)
+  return {true, guid, figthValue}
+end
+
+SkillSystemDealFuncResualDealTable[18] = function( sysarg, args)
+  local guid = args[2]
+  local flag = 0
+  if args[1] == true then
+    flag = 1
+  end
+  if guid == nil then return end
+  local npack = DataPack.allocPacket(sysarg,5,18)
+  if npack == nil then return end
+  DataPack.writeInt64(npack, guid)
+  DataPack.writeChar(npack, flag)
+  if flag == 1 then
+    local figthValue = args[3] or 0
+    DataPack.writeInt(npack, figthValue)
+    print("  ==== "..figthValue)
+  end
+  DataPack.flush(npack)
+
+end
+
+
+-----升级
+SkillSystemDealFuncTable[18] = function(sysarg, isTest, arg )
+  local dbp = arg[2]
+
+  local confInner = SkillSystemDealFuncTable.GSkillMijiConfInner()
+  local conf = SkillSystemDealFuncTable.GetMijiConfig()
+
+  local materiaTB = {}
+
+  local guid = DataPack.readInt64(dbp)
+  local mCount = DataPack.readByte(dbp)
+
+  --print(" the guid: "..guid.." mCount: "..mCount)
+
+--计算材料的合法性和经验
+  local exp_add = 0
+  local countTotal = 0
+  local nGuidList = {}
+  for i=1,mCount do
+      materiaTB[i] = {}
+      local guidUse  = DataPack.readInt64(dbp)
+      local countUse = DataPack.readShort(dbp)
+
+      materiaTB[i].guid = guidUse
+      materiaTB[i].count = countUse
+      countTotal = countTotal + countUse
+      -- print("guif "..guidUse.." "..countUse)
+        --不让有guid相同的情况
+      if nGuidList[materiaTB[i].guid] == nil then
+          nGuidList[materiaTB[i].guid] = true
+      else
+          print(" the guid is same")
+          LActor.sendTipmsg(sysarg, Lang.miji.tt008, ttMessage)
+         return {false, guid}
+      end
+
+      local pItemTuShi = Item.getBagItemPtrByGuid(sysarg, guidUse)
+
+      if pItemTuShi == nil then
+          print(" pItemTuShi == nil: "..guidUse)
+          LActor.sendTipmsg(sysarg, Lang.miji.tt006, ttMessage)
+          return {false, guid}
+      end
+      local expUnit = Item.getItemProperty( sysarg, pItemTuShi, Item.ipItemExp, 0)
+
+      materiaTB[i].pItem = pItemTuShi
+      local itemId = Item.getItemProperty( sysarg, pItemTuShi, Item.ipItemID, 0 )
+
+--test.....
+      --print("===========expUnit exp: "..Item.getItemPropertyById(itemId, Item.ipItemExp))
+
+      if expUnit <= 0 then
+          print(" expUnit <= 0: "..itemId)
+          LActor.sendTipmsg(sysarg, Lang.miji.tt007, ttMessage)
+          return {false, guid}
+      end
+
+      local count = Item.getItemProperty( sysarg, pItemTuShi, Item.ipItemCount, 0)
+      if count < countUse then
+          local name = Item.getItemName(itemId)
+          LActor.sendTipmsg(sysarg, name..Lang.miji.tt008, ttMessage)
+          return {false, guid}
+      end
+      exp_add = exp_add + expUnit*countUse
+  end
+
+
+--计算秘籍的合法性及经验
+  local pitem = LActor.getMijiItemByGuid(sysarg, guid)
+  if pitem == nil then
+      print("SkillSystemDealFuncTable[17] "..guid)
+     LActor.sendTipmsg(sysarg, Lang.miji.tt009, ttMessage)
+    return {false, guid}
+  end
+
+  if isMijiItem(pitem) == false then
+      LActor.sendTipmsg(sysarg, Lang.miji.tt0010, ttMessage)
+      return {false, guid}
+  end
+
+  local exp_old = Item.getItemProperty(sysarg, pitem, Item.ipItemExp, 0)
+  if exp_old < 0 then
+    print("   exp_old < 0 ")
+    return {false,guid} 
+  end
+  local exp_new = exp_old + exp_add
+
+--计算升级结果及花费
+  local costNeedType = conf.levelUpCostType
+  local costNeed = exp_add*conf.levelUpCost
+
+  --local nquality = Item.getItemProperty( sysarg, pitem, Item.ipItemQuality, 0)
+  local itemId = Item.getItemProperty( sysarg, pitem, Item.ipItemID, 0 )
+  local color =  Item.getColor(itemId)
+  if color < 1 then
+    print("color < 1")
+    return
+  end
+  local nquality = color
+  -- print(" nquality: "..nquality)
+  local MijiLevelupExp = confInner.MijiLevelupExp
+  local MijiLevelupExpQ = MijiLevelupExp[nquality]
+
+  local levelNew = Item.getItemProperty(sysarg, pitem, Item.ipItemStrong, 0)
+  if levelNew == #MijiLevelupExpQ then
+       LActor.sendTipmsg(sysarg, Lang.miji.tt0018, ttMessage)
+      return {false, guid}
+  end
+
+
+  if LActor.getMoneyCount(sysarg, costNeedType) < costNeed then
+      if costNeedType == mtYuanbao then
+        LActor.sendTipmsg(sysarg, Lang.ScriptTips.hf010, ttMessage)
+      elseif costNeedType == mtBindCoin then
+        LActor.sendTipmsg(sysarg, Lang.ScriptTips.hf009, ttMessage)
+      else
+        LActor.sendTipmsg(sysarg, Lang.miji.tt005, ttMessage)
+        return {false, guid}
+      end
+      return {false, guid}
+  end
+      --处理消耗
+  if costNeed > 0 then
+    LActor.changeMoney(sysarg, costNeedType, -costNeed, 1, true, "miji", "levelup")
+  end
+
+  for i=1,mCount do
+    local count = materiaTB[i].count
+    local pItem = materiaTB[i].pItem
+    LActor.removeItemByPtr( sysarg, pItem, count , true, "mijiLevelup", 19 )
+  end
+
+
+  local j = 0
+  for i=1,#MijiLevelupExpQ do
+    if MijiLevelupExpQ[i] > exp_new and j == 0 then
+        levelNew = i - 1
+        j = 1
+    end
+  end
+  if MijiLevelupExpQ[#MijiLevelupExpQ] <= exp_new then
+      levelNew = #MijiLevelupExpQ
+      -- print("actorid: "..LActor.getActorId(sysarg).." "..exp_new)
+      exp_new = MijiLevelupExpQ[#MijiLevelupExpQ]
+  end
+  
+  Item.setItemProperty(sysarg, pitem, Item.ipItemExp, exp_new)
+  Item.setItemProperty( sysarg, pitem, Item.ipItemStrong, levelNew)
+  local figthValue = LActor.getMijiFightValue(sysarg)
+  -- 秘籍排行榜
+ -- ONLINEREWARD.repressDemonTowerFunc.rankUpdata(sysarg, figthValue)
+  -- print(" figthValue:  "..figthValue)
+  if levelNew == #MijiLevelupExpQ then
+    local zy = LActor.getIntProperty(sysarg,PROP_CAMP)
+    local tipmsg = string.format(  Lang.miji.tt0016, CampShortName[zy], LActor.getName(sysarg), Item.getColorName(itemId) ) --阵营名称，玩家名字，装备名称，宝石名称
+      System.broadcastTipmsg(tipmsg, ttScreenCenter)
+      --System.broadcastTipmsg(tipmsg, ttHearsay)
+  end
+  return {true, guid, figthValue}
+end
+
+
+SkillSystemDealFuncResualDealTable[19] = function( sysarg, args)
+  local guid = args[2]
+  local flag = 0
+  if args[1] == true then
+    flag = 1
+  end
+  if guid == nil then return end
+  local npack = DataPack.allocPacket(sysarg,5,19)
+  if npack == nil then return end
+  DataPack.writeChar(npack, flag)
+  if flag == 1 then
+    guid = guid or 0
+    DataPack.writeInt64(npack, guid)
+  end
+  DataPack.flush(npack)
+end
+
+SkillSystemDealFuncTable.getValueLevel = function( confTable, nValue)
+
+  if confTable[#confTable] <= nValue then
+      return #confTable, confTable[#confTable]
+  end
+  for i=1,#(confTable) do
+      local confUnit = confTable[i]
+      if nValue < confUnit then
+            return (i -1), nValue
+      end
+  end
+
+end
+
+----合成
+SkillSystemDealFuncTable[19] = function(sysarg, isTest, arg )
+  local dbp = arg[2]
+  if not dbp then return end
+
+  local confInner = SkillSystemDealFuncTable.GSkillMijiConfInner()
+  local conf = SkillSystemDealFuncTable.GetMijiConfig()
+
+  local mCount = DataPack.readByte(dbp) --合成材料个数
+  if mCount < 2 then
+      return {false}
+  end
+
+  local guidMain = DataPack.readInt64(dbp) --主合成物
+  if not guidMain then 
+    print("Error guidMain is nil.")
+    return
+  end
+
+  -- print("mCount: "..mCount.." guidMain: "..guidMain)
+  local pItemMain = LActor.getMijiItemByGuid(sysarg, guidMain)
+  local xianLianMain = Item.getItemProperty(sysarg, pItemMain, Item.ipItemTuple, 0)
+  local itemIdMain = Item.getItemProperty( sysarg, pItemMain, Item.ipItemID, 0)
+  local expMain = Item.getItemProperty(sysarg, pItemMain, Item.ipItemExp, 0)
+
+  if xianLianMain == conf.meltingArr[#(conf.meltingArr)] then
+      LActor.sendTipmsg(sysarg, Lang.miji.tt0014, ttMessage)
+      return {false}
+  end
+
+  local materiaTB = {}
+  local itemId = itemIdMain
+  local expTotal = expMain
+  local xianLianTotal = 0
+  local nGuidList = {}
+
+  for i=2,mCount do
+      local guid = DataPack.readInt64(dbp) --材料
+      local pItem = Item.getBagItemPtrByGuid(sysarg, guid)
+      if pItem == nil then 
+        print("!!!!!!can not find guid: "..guid.." "..mCount)
+        LActor.sendTipmsg(sysarg, Lang.miji.tt0020, ttMessage)
+        return {false}
+      end
+      materiaTB[i] = {}
+      materiaTB[i].guid = guid
+      materiaTB[i].pItem = pItem
+
+      -------防止前端发相同的GUID------------------
+      if nGuidList[materiaTB[i].guid] == nil then
+        nGuidList[materiaTB[i].guid] = true
+      else
+        LActor.sendTipmsg(sysarg, Lang.miji.tt008, ttMessage)
+        return {false}
+      end
+      ---------------------------------------------
+
+      local itemId1 = Item.getItemProperty( sysarg, pItem, Item.ipItemID, 0)
+      if itemId1 <= 0 then
+         print(" ++++++++++++++: "..itemId1.." "..mCount)
+         LActor.sendTipmsg(sysarg, Lang.miji.tt006, ttMessage)
+        return {false}
+      end
+
+      if isMijiItem(pItem) == false then
+        LActor.sendTipmsg(sysarg, Lang.miji.tt0011, ttMessage)
+        return {false}
+      end
+      -- print("itemId1: "..itemId1.." itemId: "..itemId)
+      if itemId ~= itemId1 then
+        LActor.sendTipmsg(sysarg, Lang.miji.tt0012, ttMessage)
+        return {false}
+      end
+
+      -- --判断重数
+      local xianLian = Item.getItemProperty(sysarg, pItem, Item.ipItemTuple, 0)
+      -- print(" xianLian: "..xianLian.." xianLianMain "..xianLianMain)
+      if xianLian < 0 then 
+          print(" composLevel1 < 0 ")
+          --LActor.sendTipmsg(sysarg, " 待合成物品重数小于0", ttMessage)
+          return {false}
+      end
+      xianLianTotal = xianLianTotal + xianLian + 1
+
+      local  exp = Item.getItemProperty(sysarg, pItem, Item.ipItemExp, 0)
+      expTotal = expTotal + exp
+  end
+
+  local xianLianNew = xianLianTotal + xianLianMain  --总共有的仙炼值
+
+  local newTruple,xianLianNewAll = SkillSystemDealFuncTable.getValueLevel(conf.meltingArr, xianLianNew)
+  -- print("xianLianNew: "..xianLianNew.." xianLianNewAll: "..xianLianNewAll)
+
+  local color =  Item.getColor(itemId)
+  if color ~= 4 then print("color ~= 4") return end
+  local nquality = color
+  local MijiLevelupExp = confInner.MijiLevelupExp
+  local MijiLevelupExpQ = MijiLevelupExp[nquality]
+  local levelOld = Item.getItemProperty(sysarg, pItemMain, Item.ipItemStrong, 0)
+
+  -- if levelNew == #MijiLevelupExpQ then
+  --     LActor.sendTipmsg(sysarg, Lang.miji.tt0019, ttMessage)
+  --     return {false}
+  -- end
+  -- local costNeed =  conf.composCost[nquality]
+  -- local costNeedType = conf.composCostType
+  -- if LActor.getMoneyCount(sysarg, costNeedType) < costNeed then
+  --     if costNeedType == mtYuanbao then
+  --       LActor.sendTipmsg(sysarg, Lang.ScriptTips.hf010, ttMessage)
+  --     elseif costNeedType == mtBindCoin then
+  --       LActor.sendTipmsg(sysarg, Lang.ScriptTips.hf009, ttMessage)
+  --     else
+  --        LActor.sendTipmsg(sysarg, Lang.miji.tt005, ttMessage)
+  --       return
+  --     end
+  --     return {false}
+  -- end
+
+  -- LActor.changeMoney(sysarg, costNeedType,-costNeed, 1, true, "miji", "compos")
+
+  for i= 2,mCount do
+      local pItem = materiaTB[i].pItem
+      LActor.removeItemByPtr( sysarg, pItem, 1 , true, "", 19 )
+  end
+
+  
+  local levelNew = 0
+  local expTotalNew
+  levelNew, expTotalNew = SkillSystemDealFuncTable.getValueLevel(MijiLevelupExpQ, expTotal)
+  if levelNew < levelOld then
+      print(" old level : "..levelOld.."expTotal: "..expTotal.." expTotalNew "..expTotalNew)
+      print(" new level : "..levelNew.." xianLianNew: "..xianLianNew.." newTruple: "..newTruple)
+  end
+
+  Item.setItemProperty(sysarg, pItemMain, Item.ipItemBind, 1)
+  Item.setItemProperty(sysarg, pItemMain, Item.ipItemTuple,  System.makeInt32(xianLianNewAll, newTruple))
+  Item.setItemProperty(sysarg, pItemMain, Item.ipItemExp, expTotalNew)
+  Item.setItemProperty( sysarg, pItemMain, Item.ipItemStrong, levelNew)
+
+  if (newTruple ) == #(conf.meltingArr) then
+      local zy = LActor.getIntProperty(sysarg,PROP_CAMP)
+      local tipmsg = string.format( Lang.miji.tt0017, CampShortName[zy], LActor.getName(sysarg), Item.getColorName(itemId) ) --阵营名称，玩家名字，装备名称，宝石名称
+      --System.broadcastTipmsg(tipmsg, ttScreenCenter)
+      --System.broadcastTipmsg(tipmsg, ttHearsay)
+
+    if levelNew == #MijiLevelupExpQ then
+      local zy = LActor.getIntProperty(sysarg,PROP_CAMP)
+      local tipmsg = string.format( Lang.miji.tt0016, CampShortName[zy], LActor.getName(sysarg), Item.getColorName(itemId) ) --阵营名称，玩家名字，装备名称，宝石名称
+      --System.broadcastTipmsg(tipmsg, ttScreenCenter)
+      --System.broadcastTipmsg(tipmsg, ttHearsay)
+     end
+  end
+
+  return {true, guidMain}
+end
+
+
+SkillSystemDealFuncTable[20] = function(sysarg, isTest, arg )
+  local dbp = arg[2]
+  local actorid = DataPack.readInt(dbp)
+  local actname = DataPack.readString(dbp)
+
+  local actorPtr = LActor.getActorById(actorid)
+  if actorPtr == nil then
+      actorPtr = LActor.getActorByName(actname)
+  end
+  --仍然找不到
+  if actorPtr == nil then 
+    return ;
+  end
+
+  local allSkillData = LActor.getAllSkillList(actorPtr)
+
+  if allSkillData == nil then return print("allSkillData == nil") end
+
+  local npack = DataPack.allocPacket(sysarg,5,20)
+  local isOpen = 0
+  if LActor.isActorSystemOpen(actorPtr, siMijiSys ) == true then
+      isOpen = 1
+  end
+  local figthValue = LActor.getMijiFightValue(actorPtr)
+  -- print(" isOpen: "..isOpen.." figthValue: "..figthValue)
+  DataPack.writeByte(npack, isOpen)
+  if isOpen == 0 then
+      DataPack.flush(npack)
+      return 
+  end
+  local job = LActor.getIntProperty(actorPtr, PROP_VOCATION)
+  DataPack.writeByte(npack, job)
+  DataPack.writeInt(npack, figthValue)
+  DataPack.writeByte(npack, #allSkillData)
+  -- print("#allSkillData: "..#allSkillData.." job: "..job)
+  for i=1,#allSkillData do
+      local skillid = LActor.getSkillIdBySkillData(allSkillData[i])
+      local skillLevel = LActor.getSkillLevelBySkillData(allSkillData[i])
+      local mijiItem = LActor.getSkillMijiItemBySkillData(allSkillData[i])
+      -- print("skillid: "..skillid.." skillLevel: "..skillLevel)
+      -- print(mijiItem)
+      if skillid > 0  then
+          DataPack.writeWord(npack, skillid)
+          DataPack.writeByte(npack, skillLevel)
+          if skillLevel > 0 then
+            if mijiItem == nil then
+                DataPack.writeByte(npack, 0)
+            else
+              DataPack.writeByte(npack, 1)
+              DataPack.writeUserItem(npack, mijiItem)
+            end
+          end
+      end
+  end
+  DataPack.flush(npack)
+end
+
+function testGetSkill(sysarg)
+  
+end
+
+
+
+EventCallDispatcher.SkillSystemDeal = function(sysarg, args)
+  local subMsgId = args[1]
+  --不做错误判断了，假如错误就报错
+  if subMsgId == nil then
+      print("SB SB EventCallDispatcher.SkillSystemDeal: subMsgId == nil")
+      return
+  end
+  -- print("SkillSystemDeal ================"..subMsgId.."=====================")
+  if  SkillSystemDealFuncTable[subMsgId] == nil then
+      print("SB SB EventCallDispatcher.SkillSystemDeal: subMsgId = "..subMsgId)
+      return
+  end
+  if SkillSystemDealFuncResualDealTable[subMsgId] then
+    SkillSystemDealFuncResualDealTable[subMsgId](sysarg, SkillSystemDealFuncTable[subMsgId](sysarg, nil, args))
+  else
+    SkillSystemDealFuncTable[subMsgId](sysarg, nil, args)
+  end
+end
+
+SkillSystemDealFuncTable.MijiLevelUp = function(sysarg, pItem, exp)
+  local confInner = SkillSystemDealFuncTable.GSkillMijiConfInner()
+  local conf = SkillSystemDealFuncTable.GetMijiConfig()
+  local itemId = Item.getItemProperty( sysarg, pItem, Item.ipItemID, 0)
+  local expMain = Item.getItemProperty(sysarg, pItem, Item.ipItemExp, 0)
+  
+  local exp_new = expMain + exp
+
+  local color =  Item.getColor(itemId)
+  if color < 1 then
+    print("color < 1")
+    return
+  end
+  local nquality = color
+  -- print(" nquality: "..nquality)
+  local MijiLevelupExp = confInner.MijiLevelupExp
+  local MijiLevelupExpQ = MijiLevelupExp[nquality]
+
+  local levelNew = Item.getItemProperty(sysarg, pItem, Item.ipItemStrong, 0)
+  -- print("mian exp: "..expMain.." levelNew: "..levelNew.." "..itemId)
+  if levelNew == #MijiLevelupExpQ then
+      print(" it is already the hight level ")
+      return
+  end
+
+  local j = 0
+  for i=1,#MijiLevelupExpQ do
+    if MijiLevelupExpQ[i] > exp_new and j == 0 then
+        levelNew = i - 1
+        j = 1
+    end
+  end
+  if MijiLevelupExpQ[#MijiLevelupExpQ] <= exp_new then
+      levelNew = #MijiLevelupExpQ
+      exp_new = MijiLevelupExpQ[#MijiLevelupExpQ]
+  end
+  -- print("new exp: "..exp_new.." level: "..levelNew)
+  Item.setItemProperty(sysarg, pItem, Item.ipItemExp, exp_new)
+  Item.setItemProperty( sysarg, pItem, Item.ipItemStrong, levelNew)
+end
+
+-- 
+EventCallDispatcher.OnLoginMiJi = function(sysarg, args)
+  --秘籍是否可以开启(和过关斩将一起开启)
+--  if LActor.getLevel(sysarg) < TongTianTaConf.opneLevel then return end
+
+  if not LActor.isActorSystemOpen(sysarg, siMijiSys) then
+    LActor.openActorSystem(sysarg, siMijiSys)
+  end
+
+  local var = LActor.getStaticVar(sysarg)
+
+  if var == nil then return end
+
+  if var.MijiExpCompet == nil then
+      var.MijiExpCompet = 1
+  else
+      return
+  end
+end
+
+EventCallDispatcher.OnLearnSkill = function (sysarg,args)
+	--local qData = EventCallDispatcher._SkillQuestData[arg[1]]
+	--if qData then
+	--	LActor.setQuestValue(sysarg, qData.qid, qData.tid, 1)
+	--end
+	--]]
+
+   local subMsgId = args[1]
+  --不做错误判断了，假如错误就报错
+  if subMsgId == nil then
+      print("SB SB EventCallDispatcher.SkillSystemDeal: subMsgId == nil")
+      return
+  end
+  --print("SkillSystemDeal ================"..subMsgId.."=====================")
+  if  SkillSystemDealFuncTable[subMsgId] == nil then
+      print("SB SB EventCallDispatcher.SkillSystemDeal: subMsgId = "..subMsgId)
+      return
+  end
+  if SkillSystemDealFuncResualDealTable[subMsgId] then
+    SkillSystemDealFuncResualDealTable[subMsgId](sysarg, SkillSystemDealFuncTable[subMsgId](sysarg, nil, args))
+  else
+    SkillSystemDealFuncTable[subMsgId](sysarg, nil, args)
+  end
+
+
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeLearnSkill, EventCallDispatcher.OnLearnSkill)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, EventCallDispatcher.OnLoginMiJi)
+
+
+function testMiji(sysarg,args)
+  local argInner = {}
+  for i=1,#args do
+    argInner[i] = tonumber(args[i])
+  end
+  if args[1] == nil then print("the first param is need") return end
+  local subMsgId = args[1]
+  SkillSystemDealFuncTable[subMsgId](sysarg, true, args)
+end
+
+

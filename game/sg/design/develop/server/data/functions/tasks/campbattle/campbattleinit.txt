@@ -1,0 +1,611 @@
+﻿--#include "data\config\camp\campbattleconf.txt" once
+--#include "campbattleglobal.txt" once
+--#include "data\functions\mergefunc.txt" once
+--#include "data\functions\systems\timereward\hefuhandler.txt" once
+
+local CampBattleEvent = {}
+
+local CampEventID = {
+	enBattleStart = 1,
+	enBattleEnd = 2,
+	enBattleOpen = 3,
+	enBattleClose = 4,
+	enBattleStatistics = 5,
+	enBattleWeak = 6,
+	enBattleUnion = 7,
+	enBattleCallSS = 8,
+}
+
+function OnCampBattleEvent(ev, param1, param2)
+	local func = CampBattleEvent[ev]
+	if func == nil then return end
+
+	func(param1, param2)
+end
+
+-- 阵营之战开始
+CampBattleEvent[CampEventID.enBattleStart] = function()
+	-- print("--------!!!1111")
+	-- 清空总榜
+	local rankList = Camp.getRanking(0)
+	if rankList then
+		-- print("清空总榜")
+		Ranking.clearRanking(rankList)
+	end
+	-- 清空排行榜信息
+	for i=1,CampBattleConf.maxBattle do
+		local rank = Camp.getRanking(i)
+		if rank ~= nil then
+			-- print("清空排行榜信息")
+			Ranking.clearRanking(rank)
+		end
+	end
+	-- 获胜阵营
+	local sys_var = System.getStaticVar()
+	if sys_var == nil then return end
+	sys_var.campbattle_winner = nil
+	-- 开始公告
+	System.broadcastTipmsg(Lang.TaskTalk.zy041, ttGmTip)
+end
+
+-- 阵营之战结束
+CampBattleEvent[CampEventID.enBattleEnd] = function(campid)
+	-- 获胜阵营
+	local sys_var = System.getStaticVar()
+	if sys_var == nil then return end
+	local win_camp = sys_var.campbattle_winner or 0
+	-- sys_var.campbattle_winner = nil -- 下次开启活动再清
+
+	-- 从总榜取记录，各个战场已经清除
+	local rankList = Camp.getRanking(0)
+	if rankList ~= nil then
+		-- 前3名玩家信息
+		local rank3 = {}
+		for i=1,3 do
+			local item = Ranking.getItemFromIndex(rankList, i-1)
+			local info = {}
+			if item ~= nil then
+				info[1] = GetRankNum(Ranking.getSub(item, 1)) -- 阵营
+				info[2] = Ranking.getSub(item, 0) -- 名称
+				info[3] = Ranking.getPoint(item) -- 积分
+			else
+				info[1] = 0 -- 阵营
+				info[2] = "" -- 名称
+				info[3] = 0
+			end
+			rank3[i] = info
+		end
+
+		local itemCount = Ranking.getRankItemCount(rankList)
+		local items = LuaHelp.getRankingItemList(rankList,itemCount)
+		if items ~= nil then
+			for i=1, #items do
+				local item = items[i]
+				local actorId = Ranking.getId( item )
+				local point = Ranking.getPoint( item )
+				-- local account = Ranking.getSub(item, 9)
+				local camp = Ranking.getSub(item, 1)
+				-- local level = Ranking.getSub(item, 4)
+				-- local fight = Ranking.getSub(item, 10)
+				-- System.logCounter(actorId, account, level, "", fight, tostring(point), "shi_lian", camp, "", "", "")
+				local actor = LActor.getActorById(actorId)
+				-- 如果在线
+				if actor then
+					-- print("++++++++++++++++++++++++下发139 56")
+					local npack = DataPack.allocPacket(actor, 139, 56)
+					if npack == nil then return end
+					DataPack.writeByte(npack, win_camp) -- 胜利阵营
+					DataPack.writeInt(npack, i) -- 排名
+					DataPack.writeByte(npack, camp) -- 所在阵营
+					DataPack.writeInt(npack, point) -- 积分
+					for j=1,3 do
+						local info = rank3[j]
+						DataPack.writeByte(npack, info[1])
+						DataPack.writeString(npack, info[2])
+						DataPack.writeInt(npack, info[3])
+					end
+					DataPack.flush(npack)
+				end
+			end
+		end
+	end
+
+	-- 发放奖励
+	local rank = Camp.getRanking(0)
+	if rank then
+		local count = Ranking.getRankItemCount(rank)
+		-- 发放排名奖励
+		local conf = CampBattleConf.rank_award
+		for i=1,#conf do
+			if conf[i].rank[2] < conf[i].rank[1] then return end -- 配置错误
+			local from_, to_
+			if count >= conf[i].rank[2] then
+				from_ = conf[i].rank[1]
+				to_ = conf[i].rank[2]
+			elseif count >= conf[i].rank[1] and count < conf[i].rank[2] then
+				from_ = conf[i].rank[1]
+				to_ = count
+			end
+			if from_ and to_ then
+				-- 发放排名from_到to_的奖励
+				for j=from_,to_ do -- j为排名
+					local item = Ranking.getItemFromIndex(rank, j-1)
+					local aid = Ranking.getId(item)
+					local point = Ranking.getPoint(item)
+					local camp = Ranking.getSub(item, 1)
+					local award_conf
+					local mail_content
+					if point < CampBattleConf.min_point then -- -- 积分小于10没有排名奖励
+						award_conf = {} -- CampBattleConf.anwei_award
+						mail_content = Lang.TaskTalk.zy039
+					else -- 活动排名奖励
+						award_conf = conf[i].item
+						mail_content = string.format(Lang.TaskTalk.zy037, j)
+					end
+					if #award_conf > 0 and #award_conf <= 5 then
+						local award_list = {}
+						for ai=1,5 do
+							if award_conf[ai] then
+								award_list[ai] = award_conf[ai]
+							else
+								award_list[ai] = {type = 0, id = 0, count = 0, bind = 0}
+							end
+						end
+						System.sendGmMailOffLine(aid, mail_content , award_list[1].type, award_list[1].id, award_list[1].count, award_list[1].bind, Lang.TaskTalk.zy039
+							, award_list[2].type, award_list[2].id, award_list[2].count, award_list[2].bind
+							, award_list[3].type, award_list[3].id, award_list[3].count, award_list[3].bind
+							, award_list[4].type, award_list[4].id, award_list[4].count, award_list[4].bind
+							, award_list[5].type, award_list[5].id, award_list[5].count, award_list[5].bind)
+					else
+						-- print("-------campbattle1 award conf error")
+					end
+					-- 获胜奖励
+					-- print("======获胜奖励1======"..camp,win_camp)
+					if tonumber(camp) == win_camp then
+						if #CampBattleConf.wincamp_award > 0 and #CampBattleConf.wincamp_award <= 5 then
+							local award_list = {}
+							for ai=1,5 do
+								if CampBattleConf.wincamp_award[ai] then
+									award_list[ai] = CampBattleConf.wincamp_award[ai]
+								else
+									award_list[ai] = {type = 0, id = 0, count = 0, bind = 0}
+								end
+							end
+							System.sendGmMailOffLine(aid, Lang.TaskTalk.zy038 , award_list[1].type, award_list[1].id, award_list[1].count, award_list[1].bind, Lang.TaskTalk.zy039
+								, award_list[2].type, award_list[2].id, award_list[2].count, award_list[2].bind
+								, award_list[3].type, award_list[3].id, award_list[3].count, award_list[3].bind
+								, award_list[4].type, award_list[4].id, award_list[4].count, award_list[4].bind
+								, award_list[5].type, award_list[5].id, award_list[5].count, award_list[5].bind)
+						else
+							-- print("-------campbattle2 award conf error")
+						end
+						-- 触发成就
+						local actor = LActor.getActorById(aid)
+						if actor then
+							LActor.SetAchieveProcessByType(actor, 101, 1, 1)
+						end
+					end
+				end
+			end
+		end
+	end
+
+	-- 发放公告
+	if win_camp == 0 then
+		System.broadcastTipmsg(Lang.TaskTalk.zy043, ttGmTip)
+	elseif win_camp > 0 and CampBattleConf.camp_name[win_camp] then
+		System.broadcastTipmsg(string.format(Lang.TaskTalk.zy042, CampBattleConf.camp_name[win_camp]), ttGmTip)
+	end
+
+	HefuFuncList.checkcampstate()
+end
+
+-- 创建战场
+CampBattleEvent[CampEventID.enBattleOpen] = function(bid)
+	-- TODO: 如果是服务器重启时的创建,几时清理排行榜信息
+	--[[
+	local rankList = Ranking.getRanking(CampBattleFile[bid])
+	if rankList == nil then
+		local tips = string.format("create camp rank error,bid:%d,file:%s", bid, CampBattleFile[bid])
+		print(tips)
+		return 
+	end
+	Ranking.clearRanking(rankList)
+	]]
+
+	print("open battle:"..bid)
+
+	local hfb = Camp.getBattFuben(bid)
+	local pfb = Fuben.getFubenPtr(hfb)
+	if pfb == nil then
+		print("camp battle fuben ptr is nil")
+		return 
+	end
+
+	local fb_var = Fuben.getDyanmicVar(pfb)
+	if fb_var == nil then 
+		print("camp battle fuben var is nil")
+		return 
+	end
+
+	fb_var.battleId = bid -- 记录战场的ID
+
+	fb_var.wgbuff = nil
+		
+	-- 创建怪物
+	local hscene = Fuben.getSceneHandleById(CampBattleConf.sceneId, hfb)
+	local monsters = CampBattleConf.monsters
+	for i=1,#monsters do
+		local conf = monsters[i]
+		local mon = Fuben.createMonster(hscene, conf.id, conf.pos[1], conf.pos[2], 0)
+		if mon ~= nil then
+			Camp.setBattleId(mon, bid)
+		end
+	end
+end
+
+-- 发送阵营结束后统计信息
+CampBattleFunc.SendEndStatistics = function()
+end
+
+-- 战场结束
+CampBattleEvent[CampEventID.enBattleClose] = function(bid)
+	print("close battle:"..bid)
+	local hfb = Camp.getBattFuben(bid)
+	if hfb == 0 then
+		print("battle close error, hfb is 0:"..bid)
+		return
+	end
+	local pfb = Fuben.getFubenPtr(hfb)
+	if pfb == nil then
+		print("battle close error, pfb is nil:"..bid)
+		return
+	end
+
+	-- 发送战场排行榜信息
+	-- Camp.sendRanking(bid)
+
+	-- 所有人退出副本
+	local actors = LuaHelp.getFbActorList(pfb)
+	if actors == nil then return end
+	for i = 1,#actors do
+		local actor = actors[i]
+		LActor.exitFuben(actor)
+	end
+end
+
+
+-- 更新统计数据
+CampBattleEvent[CampEventID.enBattleStatistics] = function(bid)
+	if bid < 1 or bid > CampBattleConf.maxBattle then return end
+
+	local hfb = Camp.getBattFuben(bid)
+	if hfb == 0 then
+		print("battle statistics error, hfb is 0:"..bid)
+		return
+	end
+	local pfb = Fuben.getFubenPtr(hfb)
+	if pfb == nil then
+		--print("battle statistics error, pfb is nil:"..bid)
+		return
+	end
+	local vfb = Fuben.getDyanmicVar(pfb)
+	if vfb == nil then return end
+	local pScene = Fuben.getSceneList(pfb)[1]
+	if pScene == nil then return end
+	local hScene = Fuben.getSceneHandleByPtr(pScene)
+	if hScene == nil then return end
+
+	-- 玄女血量
+	local camp_xuannv_1 = Fuben.getMonsterPtrById(hScene, CampBattleConf.xuannv[1].id)
+	local camp_xuannv_2 = Fuben.getMonsterPtrById(hScene, CampBattleConf.xuannv[2].id)
+	local camp_xuannv_1_max = 0
+	local camp_xuannv_1_cur = 0
+	if camp_xuannv_1 then
+		camp_xuannv_1_max = LActor.getIntProperty(camp_xuannv_1, PROP_MAXHP)
+		camp_xuannv_1_cur = LActor.getIntProperty(camp_xuannv_1, PROP_HP)
+	end
+	local camp_xuannv_2_max = 0
+	local camp_xuannv_2_cur = 0
+	if camp_xuannv_2 then
+		camp_xuannv_2_max = LActor.getIntProperty(camp_xuannv_2, PROP_MAXHP)
+		camp_xuannv_2_cur = LActor.getIntProperty(camp_xuannv_2, PROP_HP)
+	end
+	-- 星宿状态
+	local xingsu_state = 0
+	if vfb.camp_xingsu == nil then
+		vfb.camp_xingsu = {}
+	end
+	for i=1,#CampBattleConf.xingsu do
+		if vfb.camp_xingsu[i] and vfb.camp_xingsu[i] == 1 then
+			xingsu_state = xingsu_state + math.pow(2,(i - 1))
+		end
+	end
+	-- 是否有神兽
+	local camp_ss_1 = Fuben.getMonsterPtrById(hScene, CampBattleConf.shenshou[1].monsterId)
+	local camp_ss_2 = Fuben.getMonsterPtrById(hScene, CampBattleConf.shenshou[2].monsterId)
+	local camp_ss_1_max = 0
+	local camp_ss_1_cur = 0
+	if camp_ss_1 then
+		camp_ss_1_max = LActor.getIntProperty(camp_ss_1, PROP_MAXHP)
+		camp_ss_1_cur = LActor.getIntProperty(camp_ss_1, PROP_HP)
+	end
+	local camp_ss_2_max = 0
+	local camp_ss_2_cur = 0
+	if camp_ss_2 then
+		camp_ss_2_max = LActor.getIntProperty(camp_ss_2, PROP_MAXHP)
+		camp_ss_2_cur = LActor.getIntProperty(camp_ss_2, PROP_HP)
+	end
+
+	local rankList = Camp.getRanking(bid)
+	if rankList == nil then
+		return 
+	end
+
+	local scores = {} -- 每个阵营的积分
+	scores[1], scores[2] = Camp.getBattScore(bid)
+	
+	-- 前3名玩家信息
+	local rank3 = {}
+	for i=1,3 do
+		local item = Ranking.getItemFromIndex(rankList, i-1)
+		local info = {}
+		if item ~= nil then
+			info[1] = GetRankNum(Ranking.getSub(item, 1)) -- 阵营
+			info[2] = Ranking.getSub(item, 0) -- 名称
+			info[3] = Ranking.getPoint(item) -- 积分
+			-- info[4] = GetRankNum(Ranking.getSub(item, 5)) -- 击杀
+		else
+			info[1] = 0 -- 阵营
+			info[2] = "" -- 名称
+			info[3] = 0
+			-- info[4] = 0
+		end
+		rank3[i] = info
+	end
+
+	local actors = LuaHelp.getFbActorList(pfb)
+	if actors == nil then return end
+	for i = 1,#actors do
+		local actor = actors[i]
+		if actor ~= nil then
+			local rank = 0
+			local campid = 0
+			local point = 0
+			-- local kill = 0
+			-- local zg = 0
+			-- local lz = 0
+			local rankItem = Ranking.getItemPtrFromId(rankList, LActor.getActorId(actor))
+			if rankItem ~= nil then
+				rank = Ranking.getIndexFromPtr(rankItem) + 1
+				campid = GetRankNum(Ranking.getSub(rankItem, 1))
+				point = Ranking.getPoint(rankItem)
+				-- kill = GetRankNum(Ranking.getSub(rankItem, 5))
+				-- zg = GetRankNum(Ranking.getSub(rankItem, 6))
+				-- lz = GetRankNum(Ranking.getSub(rankItem, 7))
+			end
+			local npack = DataPack.allocPacket(actor, 139, 54)
+			if npack == nil then return end
+			DataPack.writeInt(npack, bid) -- 战场id
+			-- DataPack.writeInt(npack, scores[1]) -- 各阵营积分
+			-- DataPack.writeInt(npack, scores[2])
+			-- DataPack.writeInt(npack, scores[3])
+			DataPack.writeInt(npack, rank) -- 排名
+			DataPack.writeByte(npack, campid) -- 所在阵营
+			DataPack.writeInt(npack, point) -- 积分
+			-- DataPack.writeInt(npack, kill) -- 击杀
+			-- DataPack.writeInt(npack, zg) -- 助攻
+			-- DataPack.writeInt(npack, lz) -- 连斩
+			for i=1,3 do
+				local info = rank3[i]
+				DataPack.writeByte(npack, info[1])
+				DataPack.writeString(npack, info[2])
+				DataPack.writeInt(npack, info[3])
+				-- DataPack.writeInt(npack, info[4])
+			end
+			if campid == 1 then
+				DataPack.writeInt(npack, scores[1]) -- 祭品
+				DataPack.writeInt(npack, camp_xuannv_1_cur)
+				DataPack.writeInt(npack, camp_xuannv_1_max)
+				-- if camp_ss_1 then
+				-- 	DataPack.writeByte(npack, 1)
+				-- else
+				-- 	DataPack.writeByte(npack, 0)
+				-- end
+				DataPack.writeInt(npack, camp_ss_1_cur)
+				DataPack.writeInt(npack, camp_ss_1_max)
+			else
+				DataPack.writeInt(npack, scores[2])
+				DataPack.writeInt(npack, camp_xuannv_2_cur)
+				DataPack.writeInt(npack, camp_xuannv_2_max)
+				-- if camp_ss_2 then
+				-- 	DataPack.writeByte(npack, 1)
+				-- else
+				-- 	DataPack.writeByte(npack, 0)
+				-- end
+				DataPack.writeInt(npack, camp_ss_2_cur)
+				DataPack.writeInt(npack, camp_ss_2_max)
+			end
+			DataPack.writeInt(npack, xingsu_state)
+			DataPack.flush(npack)
+		end
+	end
+end
+
+-- 检查弱势阵营
+CampBattleEvent[CampEventID.enBattleWeak] = function(bid)
+	--print("check weak camp.........")
+	if bid < 1 or bid > CampBattleConf.maxBattle then return end
+
+	local rankList = Camp.getRanking(bid)
+	if rankList == nil then
+		print("camp battle rank list is nil")
+		return 
+	end
+
+	local hfb = Camp.getBattFuben(bid)
+	local pfb = Fuben.getFubenPtr(hfb)
+	if pfb == nil then
+		print("camp battle fuben ptr is nil")
+		return
+	end
+	
+	local scores = {} -- 各阵营的积分
+	scores[1], scores[2], scores[3] = Camp.getBattScore(bid)
+	-- 第一阵营
+	local first_camp = 1
+	for i=2,3 do
+		if scores[i] > scores[first_camp] then
+			first_camp = i
+		end
+	end
+
+	if scores[first_camp] <= 0 then -- 如果第一阵营积分为0则不处理
+		-- print("first camp sorce <= 0")
+		return
+	end
+
+	-- 弱势阵营
+	local buff_idxs = {0, 0, 0} -- 每个阵营获得的buff索引
+	local weaks = CampBattleConf.weakBuffs
+	for i=1,3 do
+		if i ~= first_camp then
+			local rate = scores[i]/scores[first_camp] * 100
+			for j=1, #weaks do
+				local weak_score = weaks[j].score
+				if rate >= weak_score[1] and rate <= weak_score[2] then
+					buff_idxs[i] = j
+					break
+				end
+			end
+		end
+	end
+
+	-- local tips = string.format("weak buff idx:%d,%d,%d", buff_idxs[1], buff_idxs[2], buff_idxs[3])
+	-- print(tips)
+
+
+	-- 比较，相同就不发送了
+	local diff = false
+	local old_buffs = {}
+	old_buffs[1], old_buffs[2], old_buffs[3] = Camp.getWeakBuff(bid)
+	for i=1,#buff_idxs do
+		if old_buffs[i] == nil or buff_idxs[i] == nil or old_buffs[i] ~= buff_idxs[i] then
+			diff = true
+			break
+		end
+	end
+	if diff == false then
+		-- print("same weak buff, return") 
+		return
+	end
+
+
+	local actors = LuaHelp.getFbActorList(pfb)
+	if actors == nil then return end
+	for i = 1,#actors do
+		local actor = actors[i]
+		LActor.delBuffGroup(actor, CampBattleConf.weakBuffGroup) -- 删除旧的buff
+		local camp = LActor.getIntProperty(actor, PROP_CAMP)
+		local idx = buff_idxs[camp]
+		if idx ~= nil and idx > 0 then
+			local buffs = weaks[idx].buffs
+			for i=1,#buffs do
+				local buff = buffs[i]
+				LActor.addBuff(actor, buff.type, CampBattleConf.weakBuffGroup, buff.value, buff.times, buff.interval, buff.name)
+			end
+		end
+	end
+
+	-- 保存buff索引
+	Camp.setWeakBuff(bid, buff_idxs[1], buff_idxs[2], buff_idxs[3])
+end
+
+-- 检查联盟
+CampBattleEvent[CampEventID.enBattleUnion] = function(bid)
+	--print("check camp union.........")
+	local scores = {} -- 各阵营的积分
+	scores[1], scores[2], scores[3] = Camp.getBattScore(bid)
+	local total = scores[1] -- 计算总积分
+	local idx = 1 -- 最高分的阵营
+	for i=2,3 do
+		total = total + scores[i]
+		if scores[i] > scores[idx] then
+			idx = i
+		end
+	end
+	--print("total:"..total)
+	--print("scores:"..scores[idx])
+	if total > 0 and scores[idx] > total * 0.45 then -- 满足联盟条件
+		local u = {}
+		local ni = 1
+		for i=1,3 do
+			if i ~= idx then
+				u[ni] = i
+				ni = ni + 1
+			end
+		end
+		Camp.setBattUnion(bid, u[1], u[2])
+	else
+		Camp.setBattUnion(bid, 0, 0)
+	end
+
+end
+
+-- 达到了刷神兽条件
+CampBattleEvent[CampEventID.enBattleCallSS] = function(bid, camp)
+	-- print("========enBattleCallSS======="..bid.." "..camp)
+	local hfb = Camp.getBattFuben(bid)
+	if hfb == nil then return end
+	local pfb = Fuben.getFubenPtr(hfb)
+	if pfb == ni then return end
+	local hsc = Fuben.getSceneHandleById(CampBattleConf.sceneId, hfb)
+	if hsc == nil then return end
+	local fb_var = Fuben.getDyanmicVar(pfb)
+	if fb_var == nil then return end
+
+	if fb_var.shenshou_lvl == nil then
+		fb_var.shenshou_lvl = {}
+	end
+	if fb_var.shenshou_lvl[camp] == nil then
+		fb_var.shenshou_lvl[camp] = 0
+	end
+	fb_var.shenshou_lvl[camp] = fb_var.shenshou_lvl[camp] +1
+
+	local conf = CampBattleConf.shenshou[camp]
+	local lvl_idx = fb_var.shenshou_lvl[camp]
+	if lvl_idx >= #conf.buff then
+		lvl_idx = #conf.buff
+	end
+	local monster = Fuben.createMonster(hsc, conf.monsterId, conf.posX, conf.posY, conf.livetime)
+	if monster == nil then return end
+	for i=1,#conf.buff[lvl_idx] do
+		LActor.addBuff(monster, conf.buff[lvl_idx][i].type, conf.buff[lvl_idx][i].group, conf.buff[lvl_idx][i].value, conf.buff[lvl_idx][i].times, conf.buff[lvl_idx][i].interval, conf.buff[lvl_idx][i].name)
+	end
+	-- 公告
+	--System.broadcastTipmsg(string.format(Lang.TaskTalk.zy045, CampBattleConf.camp_name[camp], CampBattleConf.camp_name[camp]), ttGmTip)
+	-- if camp == 1 then
+	-- 	System.broadcastCampTipmsg(1, string.format(Lang.TaskTalk.zy046, CampBattleConf.camp_name[camp]), ttScreenCenter)
+	-- 	System.broadcastCampTipmsg(2, string.format(Lang.TaskTalk.zy045, CampBattleConf.camp_name[camp]), ttScreenCenter)
+	-- elseif camp == 2 then
+	-- 	System.broadcastCampTipmsg(2, string.format(Lang.TaskTalk.zy046, CampBattleConf.camp_name[camp]), ttScreenCenter)
+	-- 	System.broadcastCampTipmsg(1, string.format(Lang.TaskTalk.zy045, CampBattleConf.camp_name[camp]), ttScreenCenter)
+	-- end
+end
+
+-- 阵营之战初始化
+function CampBattle_Init(sysarg)
+end
+
+-- 
+function CampBattle_Fina(sysarg)
+end
+
+
+table.insert(InitFnTable,CampBattle_Init)
+table.insert(FinaFnTable,CampBattle_Fina)
+
+
+function testUnion(sysarg)
+	OnCampBattleEvent(CampEventID.enBattleUnion, 1)
+end

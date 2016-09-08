@@ -1,0 +1,17 @@
+﻿{   --世界boss30   xmss1
+	--副本id
+  	fbid = 12,
+	--副本的适合等级(推荐等级)，
+	recommandLevel = 30,
+	--副本需要统计那些数据,0为经验,1为绑定天珠
+	caleType = {0,4}, 
+	
+	--副本不动态调整
+	monsterDynProp = false, 
+	--这个副本需要用到的场景列表
+	
+	scenes =
+	{   
+--#include "scene92.txt"
+	},
+},

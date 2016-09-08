@@ -1,0 +1,49 @@
+-- 设置的时候考虑到赏金副本的玩法十年都不会添加多种类型
+-- 而如果添加类型也只会少量添加一两种，所以采用最直白的一层结构
+-- 放弃采用类型总结的方式配置   added by aXing in 2012-6-6 
+
+ShangJinClient = {
+
+    -- 小金币 small_coin
+    SC_interval = 900,       -- 隔多少毫秒生成一个 (毫秒)  
+    SC_speed = 90,          -- 下落速度  (像素/秒)
+    SC_award = 60,          -- 实际获得多少金币
+    
+    -- 大金币 big_coin
+    BC_interval = 7000,       -- 隔多少毫秒生成一个 (毫秒)
+    BC_speed = 120,          -- 下落速度  (像素/秒)
+    BC_award = 300,          -- 实际获得多少金币
+    
+    -- 元宝 yuanbao
+    YB_interval = 900000,       -- 隔多少毫秒生成一个 (毫秒)
+    YB_speed = 90,          -- 下落速度  (像素/秒)
+    YB_award = 0,           -- 实际获得多少元宝
+    
+    -- 加速buff buff_speed
+    BSpeed_total = 1,       -- 规定时间内出现几个
+    BSpeed_speed = 140,     -- 下落速度  (像素/秒)
+    BSpeed_effect = 1.5,    -- 加速快了多少 (相对原速度)
+    BSpeed_time = 8,        -- 持续时间(秒) 
+    BSpeed_group_id = 0,    -- buff互斥组id 相同id的会被顶掉 
+    
+    -- 减速buff debuff_speed
+    DSpeed_total = 1,       -- 规定时间内出现几个
+    DSpeed_speed = 80,      -- 下落速度  (像素/秒)
+    DSpeed_effect = 0.5,    -- 减速慢了多少 (相对原速度)
+    DSpeed_time = 8,        -- 持续时间(秒)
+    DSpeed_group_id = 0,    -- buff互斥组id 相同id的会被顶掉
+    
+    -- 变大buff buff_large
+    BLarge_total = 1,       -- 规定时间内出现几个
+    BLarge_speed = 140,      -- 下落速度  (像素/秒)
+    BLarge_effect = 1.5,    -- 变大了多少 (相对原模型)
+    BLarge_time = 8,        -- 持续时间(秒)     
+    BLarge_group_id = 1,    -- buff互斥组id 相同id的会被顶掉
+    
+    -- 变小buff buff_small
+    BSmall_total = 1,       -- 规定时间内出现几个
+    BSmall_speed = 80,      -- 下落速度  (像素/秒)
+    BSmall_effect = 0.5,    -- 变小了多少 (相对原模型)
+    BSmall_time = 8,        -- 持续时间(秒)     
+    BSmall_group_id = 1,    -- buff互斥组id 相同id的会被顶掉 
+}

@@ -1,0 +1,119 @@
+﻿--lua script
+--采集蟠桃 定时执行 挂于GLOBAL 
+
+--#include "data\language\LangCode.txt" once  --语言库 
+--#include "data\config\activity\GuildActivity.txt" once   --采集蟠桃相关的常量定义
+--#include "data\config\TasksConfig.inc" once --活动开启状态设置
+--#include "peachpublic.txt" once
+--#include "data\functions\tasks\fengcereward\fcactivefunc.txt" once
+
+LocalDT.GatherPeachRunFunc ={}
+
+--活动开始公告
+LocalDT.GatherPeachRunFunc.NOTICE = {
+  NOTICETIME = "2012-04-26 19:00:00",   --首次执行时间
+  NOTICECYCLE = 24*3600,     --自动执行周期(秒)
+}
+--活动结束
+LocalDT.GatherPeachRunFunc.EXIT = {
+  EXITTIME = "2012-04-26 19:20:00",   --首次执行时间
+  EXITCYCLE = 24*3600,     --自动执行周期(秒)
+}
+
+LocalDT.GatherPeachRunFunc.InitData = nil   --清除 采集蟠桃 名单 
+LocalDT.GatherPeachRunFunc.WorldNotice = nil
+LocalDT.GatherPeachRunFunc.PreWorldNotice = nil
+LocalDT.GatherPeachRunFunc.CallMonster = nil 
+LocalDT.GatherPeachRunFunc.Exit = nil
+
+-- 活动开始
+function GatherPeachWorldNotice()
+	--System.broadcastTipmsg(Lang.TaskTalk.t00664, ttGmTip)
+	System.broadcastTipmsg(Lang.TaskTalk.t00664..Lang.TaskTalk.t00673, ttChatWindow)
+
+	local sVal = System.getDyanmicVar()
+	if sVal == nil then return end	
+	sVal.GatherPeachActing = 1
+end
+ 
+-- 活动结束
+function GatherPeachExit(sysarg)
+	--System.broadcastTipmsg(Lang.TaskTalk.t00665,ttGmTip + ttChatWindow)
+	local sVal = System.getDyanmicVar()
+	sVal.GatherPeachActing = nil
+
+end
+
+
+-- 初始化
+LocalDT.GatherPeachRunFunc.GatherPeach_Init = function (npcobj)
+  
+  if GuildActivity ~= nil and GuildActivity.GatherPeach == false then return end  --活动开启状态的配置
+
+	if LocalDT.GatherPeachRunFunc.WorldNotice == nil then
+		LocalDT.GatherPeachRunFunc.WorldNotice = System.registerTimeCall(thisNPC,"GatherPeachWorldNotice",LocalDT.GatherPeachRunFunc.NOTICE.NOTICETIME,24*3600,true)
+	end
+
+	if LocalDT.GatherPeachRunFunc.Exit == nil then
+		LocalDT.GatherPeachRunFunc.Exit = System.registerTimeCall(thisNPC,"GatherPeachExit",LocalDT.GatherPeachRunFunc.EXIT.EXITTIME,24*3600,true)
+	end
+end
+  
+
+-- 
+LocalDT.GatherPeachRunFunc.GatherPeach_Fina = function (npcobj)
+ 
+  
+end
+
+
+-- table.insert(InitFnTable,LocalDT.GatherPeachRunFunc.GatherPeach_Init)
+-- table.insert(FinaFnTable,LocalDT.GatherPeachRunFunc.GatherPeach_Fina)
+
+
+--[[EventCallDispatcher.PeachVIPChanged = function(sysarg,arg)
+
+print("PeachVIPChanged")
+	local var = LActor.getStaticVar(sysarg) 
+	if (arg[1] > 0) then
+		if var.getherpeachMaxcount ~= nil then
+		
+			local vipLevel = arg[1]
+			local oldviplevel = arg[2]
+			print ("vipLevel.."..vipLevel.."oldviplevel.."..oldviplevel)
+			if oldviplevel == 0 then
+				var.getherpeachMaxcount = var.getherpeachMaxcount + GuildActivity.vipGatherAdd[vipLevel]
+			else
+				var.getherpeachMaxcount = var.getherpeachMaxcount - GuildActivity.vipGatherAdd[oldviplevel] + GuildActivity.vipGatherAdd[vipLevel]
+			end
+				LActor.SendAndChangeCaleValue(sysarg,caleOther1,var.getherpeachMaxcount-var.getherpeachcount,false)
+		end
+	end
+	
+end]]--
+
+-- 蟠桃盛宴活动状态改变
+EventCallDispatcher.OnPeachStateChange = function(guild, pfb, state)
+	--print("OnGuildActivity.......")
+	if state == 1 then -- 活动开始
+		local players = LuaHelp.getFbActorList(pfb)	--场景中的所有玩家
+		if players == nil then return end
+
+		local yuanbao = GuildActivity.SubYuanbao[1] -- 需要的天珠
+		for i = 1, #players do
+			local player = players[i]
+			if player then
+				local var = LActor.getStaticVar(player) 
+				var.getherpeachMaxcount = 10
+				var.subyuanbaoaddmax = 0
+				var.getherpeachcount = 0
+				LActor.SendAndChangeCaleValue(player,caleOther1,var.getherpeachMaxcount-var.getherpeachcount,false)
+				LActor.triggerTarget(player, enATPanTao)
+				FCActivityHandler.ActivityReward (sysarg)
+				SendAddPeachCountYB(player, 0, yuanbao)
+			end
+		end
+	end
+end
+
+-- EventCallDispatcher.registerGuildActivity(GuildActivityId.aPeach, EventCallDispatcher.OnPeachStateChange)

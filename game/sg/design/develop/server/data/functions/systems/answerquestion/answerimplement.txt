@@ -1,0 +1,21 @@
+﻿--#include "answerhandler.txt" once
+
+ANSWERSYSTEM.DispatcherImplement = 
+{
+MessageAssign = function (sysarg, systemid, msgid, packet)
+  --print("msgid:"..msgid)
+    if msgid == 1 then			--消息号为1 客户端打开答题面板
+		ANSWERSYSTEM.sendAnswerInfo(sysarg, packet)
+	elseif msgid == 2 then     	--消息号为2 客户端提交问题答案
+		ANSWERSYSTEM.answerQuestion(sysarg, packet)
+	elseif msgid == 3 then  	--消息号为3 客户端使用帮助
+		ANSWERSYSTEM.answerUseHelp(sysarg, packet, nil)
+	elseif msgid == 4 then  	--消息号为4 客户端关闭答题面板
+		ANSWERSYSTEM.CloseAnswer(sysarg, packet)
+	elseif msgid == 5 then  	--消息号为5 客户端拉取剩余的活动参加次数
+		ANSWERSYSTEM.RemainAnswerNum(sysarg, packet)
+	end
+end,
+}
+
+SystemHandlerDispatcher.registerSystemHander(BaseTypes.SystemId.answerSystem, ANSWERSYSTEM.DispatcherImplement.MessageAssign)

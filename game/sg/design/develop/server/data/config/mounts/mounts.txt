@@ -1,0 +1,23 @@
+﻿--此处配置游戏中坐骑系统的参数													
+--#include "..\..\language\langCode.txt"													
+--生命、攻击、法防、物防、暴击 , 这几个基本属性用1-5数字表示，资质也用对应的值
+
+											
+Mounts = {											
+--#include "zqskillconfig.txt" 
+--#include "zqteShuconfig.txt" 		
+--#include "zqputongconfig.txt"	
+	-- --坐骑技能配置
+	-- SkillConfig = {
+			
+	-- },
+	-- --特殊坐骑配置
+	-- stagesOther = {
+	
+	-- },
+
+	-- stages = {												
+						
+	-- },	
+										
+}

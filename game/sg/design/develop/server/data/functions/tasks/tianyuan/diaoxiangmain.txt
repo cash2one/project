@@ -1,0 +1,47 @@
+﻿--lua script
+--天元城主雕像
+
+--#include "data\language\LangCode.txt" once
+--#include "data\functions\mergepublic.txt" once
+
+function DiaoXiang_Main( sysarg )
+	local str = ""
+	print("=========show XuanyuanChen LeaderId=============",LGuild.getTianYuanStaicLeaderId())
+	-- if LGuild.getTianYuanStaicLeaderId() > 0 then -- 有天元之主才处理
+		-- ty0044 = "-1/@ShowMasterData/@%d/@%s"
+		local mastername = LGuild.getTianYuanLeaderName()
+		if mastername == nil then
+			mastername = ""
+		end
+		local npcid = LActor.getNpcIdByEntity(thisNPC)
+		str = string.format(Lang.TaskTalk.ty0044,npcid,mastername) -- 查看装备
+	-- end
+	
+	return str
+end
+
+--显示天元之主装备信息
+function ShowMasterData(sysarg)
+	LActor.closeNPCDialog(sysarg)
+
+	LGuild.sendMasterData(sysarg)
+end
+
+-- 赠送鲜花
+function GiveFlower(sysarg)
+	local id = LGuild.getTianYuanStaicLeaderId()
+	local actor = System.getEntityPtrByActorID(id)
+	-- 不在线
+	if actor == nil then
+		LActor.sendTipmsg(sysarg, Lang.TaskTalk.ty0051, ttMessage)
+		return 
+	elseif actor == sysarg then
+		LActor.sendTipmsg(sysarg, Lang.TaskTalk.ty0052, ttMessage)
+		return 
+	end
+
+	-- 打开送花窗口
+	LActor.openDialogs(sysarg, diFlower, LActor.getName(actor))
+end
+
+table.insert(MainFnTable,DiaoXiang_Main)

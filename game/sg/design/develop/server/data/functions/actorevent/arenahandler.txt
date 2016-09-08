@@ -1,0 +1,3543 @@
+--lua script
+
+--处理竞技场相关逻辑
+
+--#include "data\config\misc\arenaconfig.txt" once
+--#include "data\functions\miscfunc.txt" once
+--#include "data\functions\gmevent.txt" once
+--#include "data\functions\GlobalDefine.txt" once
+--#include "data\functions\timermsgfunc.txt" once
+
+ArenaFuncList = {}
+
+ArenaFuncList.ArenaPriceRankCount = 16
+--身价
+ArenaFuncList.arenaPriceRankFile = "ArenaPriceRankFile.txt"
+ArenaFuncList.arenaPriceRankName = "ArenaPriceRank"
+ArenaFuncList.arenaPriceRank = nil
+
+--下注
+ArenaFuncList.arenaBetRankFile = "ArenaBetRankFile.txt"
+ArenaFuncList.arenaBetRankName = "ArenaBetRank"
+ArenaFuncList.arenaBetRank = nil
+
+-- 自由赛
+ArenaFuncList.arenaFreeRankFile = "arenafreerank.txt"
+ArenaFuncList.arenaFreeRankName = "ArenaFreeRank"
+ArenaFuncList.ZysRank = nil
+
+-- 争霸赛
+ArenaFuncList.arenaFightRankFile = "arenafightrank.txt"
+ArenaFuncList.arenaFightRankName = "ArenaFightRank"
+ArenaFuncList.ZbsRank = nil
+
+-- 上届16强
+ArenaFuncList.arenaPrevRankFile = "arenaprevrank.txt"
+ArenaFuncList.arenaPrevRankName = "ArenaPrevRank"
+ArenaFuncList.PrevRank = nil
+
+-- 历届仙王
+ArenaFuncList.arenaHisRankFile = "arenahisrank.txt"
+ArenaFuncList.arenaHisRankName = "ArenaHisRank"
+ArenaFuncList.HisRank = nil
+
+-- 自由赛报名榜
+ArenaFuncList.SignRankFile = "arenasignrank.txt"
+ArenaFuncList.SignRankName = "ArenaSign"
+ArenaFuncList.SignRank = nil
+
+ArenaFuncList.ZbsPkMap = { -- 争霸赛相关信息，跟配置的数量要一致
+		{
+			{ 1, 2, 17 },
+			{ 3, 4, 18 },
+			{ 5, 6, 19 },
+			{ 7, 8, 20 },
+		},
+		{ 
+			{ 9, 10, 21 },
+			{ 11, 12, 22 },
+			{ 13, 14, 23 },
+			{ 15, 16, 24 },
+		},
+		{
+			{ 17, 18, 25 },
+			{ 19, 20, 26 },
+			{ 21, 22, 27 },
+			{ 23, 24, 28 },
+		},
+		{
+			{ 25, 26, 29 },
+			{ 27, 28, 30 },
+		},
+		{
+			{ 29, 30, 31 },
+		},
+}
+
+ArenaFuncList.ZbsPkMapCount = 31
+
+
+-- 初始化排行榜
+ArenaFuncList.InitRank = function(rankName, rankFile, maxNum, coloumns)
+	local rank = Ranking.getRanking(rankName)
+	if rank == nil then
+		rank = Ranking.add(rankName, maxNum, 0)
+		if rank == nil then
+			print("can not add rank:"..rankName..","..rankFile)
+			return 
+		end
+		if Ranking.load(rank, rankFile) == false then
+			-- 创建排行榜
+			for i=1, #coloumns do
+				Ranking.addColumn( rank, coloumns[i] )
+			end
+		end
+	end
+
+	local col = Ranking.getColumnCount(rank)
+	for i=col+1,#coloumns do
+		Ranking.addColumn(rank, coloumns[i])
+	end
+	Ranking.save(rank, rankFile)
+
+	Ranking.addRef(rank)
+
+	return rank
+end
+
+-- 争霸赛开始
+ArenaFuncList.OnZbsStart = function()
+	print("zbs start")
+	local var_sys = System.getStaticVar()
+	if var_sys.arenastate ~= nil and System.bitOPMask(var_sys.arenastate, 1) then
+		--后台已经禁止开启了
+		print("ArenaFuncList.OnZbsStart error forbid state:"..var_sys.arenastate)
+		return 
+	end
+	local var_sys_d = System.getDyanmicVar()
+	var_sys_d.zbsRound = 0 -- 争霸赛第几轮，从1开始
+	var_sys_d.zbsState = 0 -- 争霸赛状态，从0开始 : 未开始，准备，开始，结束
+
+	local cur_t = System.getCurrMiniTime()
+
+	local year, month, day, hour, minute, sec = 0, 0, 0, 0, 0, 0
+	year, month, day, hour, minute, sec = System.timeDecode(cur_t, year, month, day, hour, minute, sec)
+	local tick = hour*3600+minute*60+sec
+
+	if cur_t < var_sys_d.arenaopentime then
+		-- 未到开启时间，不用处理
+		print("zbs error: need 2st week")
+		return 
+	end
+	var_sys.zbspkidxs = {}
+	for i=1,ArenaFuncList.ZbsPkMapCount do
+		var_sys.zbspkidxs[i] = 0
+	end
+
+	local rank = ArenaFuncList.ZysRank
+	if rank == nil then return end
+	local newRank = ArenaFuncList.ZbsRank -- 争霸赛排行榜，保存16强对阵情况
+	if newRank == nil then return end
+
+	if Ranking.getRankItemCount(rank) < ArenaConf.zbsNPlayer then
+		print("zbs error: rank count < 16")
+		return 
+	end
+
+	var_sys.zbsstart_t = System.getCurrMiniTime() -- 记录争霸赛开始时间
+
+	Ranking.clearRanking(newRank) -- 先清空一下
+
+	local infos = ArenaConf.zbsInfos
+
+	-- 保存前16名玩家信息
+	local temps = {}
+	local count = Ranking.getRankItemCount(rank)
+	if count > ArenaConf.zbsNPlayer then -- 最多16个人
+		count = ArenaConf.zbsNPlayer
+	end
+	for i=1,count do
+		table.insert(temps, i)
+	end
+	for i=1,count do
+		local idx = System.getRandomNumber(count-i+1) + 1
+		local ridx = temps[idx]
+		table.remove(temps, idx)
+		local newItem = nil
+		local rankItem = Ranking.getItemFromIndex(rank, ridx-1)
+		if rankItem ~= nil then
+			local id = Ranking.getId(rankItem)
+			newItem = Ranking.addItem(newRank, id, count - i)
+			if newItem ~= nil then
+				Ranking.setSub(newItem, 0, Ranking.getSub(rankItem, 0))
+				Ranking.setSub(newItem, 1, Ranking.getSub(rankItem, 8))
+				Ranking.setSub(newItem, 2, Ranking.getSub(rankItem, 9))
+				Ranking.setSub(newItem, 3, Ranking.getSub(rankItem, 2))
+				Ranking.setSub(newItem, 4, Ranking.getSub(rankItem, 3))
+				Ranking.setSubInt(newItem, 9, Ranking.getPoint(rankItem))
+				Ranking.setSub(newItem, 10, Ranking.getSub(rankItem, 4))
+				Ranking.setSub(newItem, 11, Ranking.getSub(rankItem, 5))
+				Ranking.setSub(newItem, 12, Ranking.getSub(rankItem, 7))
+			end
+		else
+			newItem = Ranking.addItem(newRank, 0, count - i)
+		end
+		Ranking.setSub(newItem, 5, "0") -- 四轮的战绩 0 为负，1为胜
+		Ranking.setSub(newItem, 6, "0")
+		Ranking.setSub(newItem, 7, "0")
+		Ranking.setSub(newItem, 8, "0")
+
+		local priceItem = nil
+		local id = Ranking.getId(rankItem)
+		priceItem = Ranking.addItem(ArenaFuncList.arenaPriceRank, id, count - i)
+		if priceItem ~= nil then
+			Ranking.setSub(priceItem, 0, Ranking.getSub(rankItem, 0))
+			Ranking.setSub(priceItem, 1, 0)
+			Ranking.setSub(priceItem, 2, 0)
+			Ranking.setSub(priceItem, 3, 0)
+		end
+	end
+
+	Ranking.save(newRank, ArenaFuncList.arenaFightRankFile) -- 保存一下争霸赛排行榜
+	Ranking.save(ArenaFuncList.arenaPriceRank, ArenaFuncList.arenaPriceRankFile) -- 保存一下身价排行榜
+
+	-- 创建副本
+	local hfb = Fuben.createFuBen(ArenaConf.zbsFubenId)
+	if hfb == 0 then
+		print("can not create zbs fuben")
+	end
+	Fuben.setReserveTime(hfb, System.getCurrMiniTime() + ArenaConf.zbsTime)
+	Fuben.SetFubenTime(hfb, ArenaConf.zbsTime + 5) -- 结束副本时间
+	var_sys_d.zbshfb = hfb
+
+	-- 初始化第一轮对战玩家序号
+	var_sys.zbspkidxs = {}
+	for i=1,ArenaConf.zbsNPlayer do
+		var_sys.zbspkidxs[i] = i
+	end
+
+	-- 初始化积分
+	var_sys_d.zbslastrank = {}
+	for i=1,ArenaConf.zbsNPlayer do
+		var_sys_d.zbslastrank[i] = 0
+	end
+
+	local npc = System.getGlobalNpc()
+
+	-- 测试时可以注释这段代码，用GM命令改变状态
+	for i=1,#infos do
+		local states = infos[i].states -- 每一轮的各个状态
+		for j=1,#states do -- 每个状态的时间
+			local state = states[j] 
+			local tm = state.time
+			local tick2 = tm[1]*3600+tm[2]*60+tm[3]
+			if tick2 <= tick then
+				ArenaFuncList.ZbsStateChanged(npc, i, j)
+			else
+				LActor.postEntityScriptCallbackMsg(npc, EntityCallbackMsg.ZbsStateChanged, (tick2-tick)*1000, i, j)
+			end
+		end
+	end
+end
+
+ArenaFuncList.RefreshFeast = function (msgId, hs, round)
+	local var_sys_d = System.getDyanmicVar()
+	if var_sys_d.zbshfb == nil then
+		return
+	end
+	local  hScene = Fuben.getSceneHandleById( ArenaConf.zbsSceneId, var_sys_d.zbshfb)
+	local livecount = Fuben.getLiveMonsterCount( hScene, ArenaConf.feast.id)
+	local config = ArenaConf.feast.refresh
+	local count = #config - livecount
+	if count < 0 then
+		count = 0
+	end
+	for i=1,#config do
+		Fuben.createMonsters( hScene, ArenaConf.feast.id, config[i][1], config[i][2], config[i][3],config[i][4],1,ArenaConf.feast.livetime)
+	end
+
+	var_sys_d.RefreshFeastTick = System.getCurrMiniTime()
+
+	if round == 1 then
+		System.broadcastTipmsg(Lang.ScriptTips.jjc017,ttScreenCenter)
+	elseif round == 2 then
+		System.broadcastTipmsg(Lang.ScriptTips.jjc018,ttScreenCenter)
+	elseif round == 3 then
+		System.broadcastTipmsg(Lang.ScriptTips.jjc019,ttScreenCenter)
+	else
+		local sys_var_d = System.getStaticVar()
+		if sys_var_d.arenaZBSChampion ~= nil then
+			local Item = Ranking.getItemPtrFromId(ArenaFuncList.ZysRank, sys_var_d.arenaZBSChampion)
+			if Item ~= nil then
+				local zy = tonumber(Ranking.getSub(Item,5)) 
+				local name = Ranking.getSub(Item,0) 
+				local tipmsg = string.format(Lang.ScriptTips.jjc020,CampColor[zy],CampShortName[zy],name)
+				System.broadcastTipmsg(tipmsg,ttScreenCenter)
+			end
+		end
+	end
+
+	local actors = LuaHelp.getAllActorList()
+	if actors == nil then return end
+	for i = 1,#actors do
+		local actor = actors[i]
+		local var = LActor.getStaticVar(actor)
+		var.CanFeast = nil
+	end
+end
+
+-- 处理争霸赛PK超时的
+ArenaFuncList.OnZbsPkTimeout = function(pkidx)
+	-- 处理还没有结束的
+	local var_sys = System.getStaticVar()
+	local pkidxs = var_sys.zbspkidxs
+	local maps = ArenaFuncList.ZbsPkMap[pkidx]
+	if maps == nil then return end
+
+	for i=1,#maps do -- 每组玩家
+		local pkinfo = maps[i]
+		if pkinfo ~= nil then
+			local ret = pkidxs[pkinfo[3]]
+			if ret == nil or ret == 0 then -- 未打的
+				ArenaFuncList.OnZbsPkResult(pkidx, i)
+			end
+		end
+	end
+end
+
+-- 争霸赛状态改变
+ArenaFuncList.ZbsStateChanged = function(npc, rd, st)
+	print("zbs state change:"..rd..","..st )
+	local var_sys = System.getStaticVar()
+	if var_sys.arenastate ~= nil and System.bitOPMask(var_sys.arenastate, 1) then return end
+
+	local infos = ArenaConf.zbsInfos
+	local count = #infos
+
+	local roundinfo = infos[rd]
+	if roundinfo == nil then
+		print("zbs states is nil")
+		return
+	end
+
+	local state = roundinfo.states[st]
+	if state == nil then
+		print("zbs state is nil")
+		return
+	end
+
+	local stype = state.stype
+	local nsub = state.sub
+	if nsub == nil then
+		nsub = 1 
+	end
+
+	if stype == 3 then
+		ArenaFuncList.OnZbsPkTimeout(state.pkidx)
+	end
+
+	local var_sys_d = System.getDyanmicVar()
+
+	local countdown = state.countdown
+	if countdown == nil then
+		countdown = 0
+	end
+
+	var_sys_d.zbsRound = rd
+	var_sys_d.zbsState = stype
+	var_sys_d.zbsSub = nsub
+	var_sys_d.zbsstatetime = System.getCurrMiniTime() + countdown -- 记录状态结束时间
+
+	-- 广播状态变更
+	local needsend = true
+	if roundinfo.nsub ~= nil and roundinfo.nsub > 1 then
+		if (nsub == 1 and stype == 3) or (nsub == 2 and stype == 2) then -- 第一场的结束状态和第二场的开始状态不发
+			needsend = false
+		end
+	end
+
+	if needsend then
+		local dp = LDataPack.allocPacket()
+		if dp == nil then return end
+
+		LDataPack.writeByte(dp, 147)
+		LDataPack.writeByte(dp, 10)
+		LDataPack.writeInt(dp, rd)
+		LDataPack.writeByte(dp, stype)
+		LDataPack.writeUInt(dp, var_sys_d.zbsstatetime)
+
+		System.broadcastData(dp)
+	end
+
+	if nsub > 1 then -- 场数切换
+		local dp = LDataPack.allocPacket()
+		if dp == nil then return end
+
+		LDataPack.writeByte(dp, 147)
+		LDataPack.writeByte(dp, 23)
+		LDataPack.writeInt(dp, rd)
+		LDataPack.writeInt(dp, nsub)
+
+		System.broadcastData(dp)
+	end
+
+	print("zbs round change:"..rd..":"..stype..":"..nsub )
+
+	-- 公告
+	local tips = state.tips
+	if tips ~= nil then
+		System.broadcastTipmsg(tips, ttScreenCenter)
+	end
+
+	if stype == 1 then -- 准备
+		-- 
+	elseif stype == 2 then -- 开始
+		local idxs = ArenaFuncList.ZbsPkMap[state.pkidx] -- 获取对战信息
+		for i=1,#idxs do -- 拉出去打
+			ArenaFuncList.OnZbsPkStart(state.pkidx, i)
+		end
+
+		-- 第一轮的开始把其他人传到擂台外面
+		if rd == 1 and nsub == 1 then
+			local zbsRank = ArenaFuncList.ZbsRank
+			if zbsRank ~= nil then
+				for i=9,16 do
+					local zbsItem = Ranking.getItemFromIndex(zbsRank, i-1)
+					if zbsItem ~= nil then
+						local aid = Ranking.getId(zbsItem)
+						local actor = System.getEntityPtrByActorID(aid)
+						if actor ~= nil then
+							local pxy = ArenaConf.zbsViewerPos[System.getRandomNumber(#ArenaConf.zbsViewerPos)+1]
+							LActor.enterScene(actor, ArenaConf.zbsSceneId, pxy[1], pxy[2])
+						end
+					end
+				end
+			end
+		end
+
+		if var_sys_d.zbshfb ~= nil then
+			local hscene = Fuben.getSceneHandleById(ArenaConf.zbsSceneId, var_sys_d.zbshfb)
+			if hscene ~= 0 then 
+				Fuben.sendCountDown(hscene, ArenaConf.zbsCountDown, 0)
+			end
+		end
+	elseif stype == 3 then -- 结束
+		local cnt = ArenaConf.zbsNPlayer
+		if nsub > 1 then
+			cnt = cnt / 2
+		end
+		local start = cnt * nsub + 1 -- 从哪个开始
+
+		local ncount = 0
+		var_sys_d.zbsplayers = {} -- 这轮对战的所有玩家
+		var_sys_d.zbsplayerids = {} -- 所有玩家ID
+		local rank = ArenaFuncList.ZbsRank
+		for i=start,start+cnt do
+			local pl = Ranking.getItemFromIndex(rank, i-1)
+			if rd == 1 or Ranking.getSub(pl, 5 + rd-1) == "1" then -- 取出上一轮赢的玩家
+				ncount = ncount + 1
+				var_sys_d.zbsplayers[ncount] = i -- 在排行榜的索引
+				var_sys_d.zbsplayerids[ncount] = Ranking.getId(pl) -- 玩家ID
+			end
+		end
+
+		if nsub == roundinfo.nsub and rd ~= 4 then
+			if var_sys_d.zbshfb ~= nil then
+				local hscene = Fuben.getSceneHandleById(ArenaConf.zbsSceneId, var_sys_d.zbshfb)
+				Fuben.postSceneTimeCall(hscene, TimerMsg.ZbsPkBetDelay, 3, 1, rd)
+				Fuben.postSceneTimeCall(hscene, TimerMsg.ZbsPkRefreshFeast, 60, 1, rd)
+			end
+		end
+
+		if var_sys.zbspkidxs ~= nil and nsub == roundinfo.nsub then
+			local list = {}
+			if rd == 1 then
+				for i=1,8 do
+					if var_sys.zbspkidxs[i+16] == nil then
+						list[i] = 0
+					else
+						list[i] = var_sys.zbspkidxs[i+16]
+					end
+				end
+			elseif rd == 2 then
+				for i=1,4 do
+					if var_sys.zbspkidxs[i+24] == nil then
+						list[i] = 0
+					else
+						list[i] = var_sys.zbspkidxs[i+24]
+					end
+				end
+			elseif rd == 3 then
+				for i=1,2 do
+					if var_sys.zbspkidxs[i+28] == nil then
+						list[i] = 0
+					else
+						list[i] = var_sys.zbspkidxs[i+28]
+					end
+				end
+			end
+			ArenaFuncList.BetSuccess(rd, list)
+		end
+	end
+
+	--if rd == #infos and st == #(infos[count].states) then -- 最后一轮结束
+		--LActor.callFunc(System.getGlobalNpc(), "OnMergeEvent", 2) -- 触发合服活动事件
+	--end
+end
+
+-- 离开自由赛报名场景
+ArenaFuncList.ExitSignupScene = function(sysarg)
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+
+	if var.zyssignscene == nil or var.zyssignposx == nil or  var.zyssignposy == nil or var.zyssignscene == ArenaConf.sceneId then
+		var.zyssignscene = TianYuanConfig.RETURNMAPID
+		var.zyssignposx = TianYuanConfig.RETURNMAPX
+		var.zyssignposy = TianYuanConfig.RETURNMAPY
+	end
+
+	LActor.enterScene(sysarg, var.zyssignscene, var.zyssignposx, var.zyssignposy)
+end
+
+-- 获取争霸赛PK玩家在排行榜中的位置和结果位置(不是排行榜中的)
+-- retval : 设置初始值
+ArenaFuncList.GetPkRankIdx = function(pkidx, ipos, retval)
+	local rank = ArenaFuncList.ZbsRank
+
+	local maps = ArenaFuncList.ZbsPkMap[pkidx]
+	if maps == nil then
+		print("maps is nil")
+		return nil
+	end
+	local pkinfo = maps[ipos]
+	if pkinfo == nil then
+		print("zbs pkidx is nil")
+		return nil
+	end
+
+	local var_sys = System.getStaticVar()
+	local pkidxs = var_sys.zbspkidxs
+	if pkidxs == nil then
+		print("pkidxs is nil")
+		return nil
+	end
+
+	if retval ~= nil then
+		pkidxs[pkinfo[3]] = retval
+	end
+
+	return pkidxs[pkinfo[1]], pkidxs[pkinfo[2]], pkinfo[3], pkidxs[pkinfo[3]]
+end
+
+-- 是否已经结束
+ArenaFuncList.ZbsIsEnd = function(pkidx, ipos)
+	local maps = ArenaFuncList.ZbsPkMap[pkidx]
+	if maps == nil then
+		print("maps is nil")
+		return false
+	end
+	local pkinfo = maps[ipos]
+	if pkinfo == nil then
+		print("zbs pkidx is nil")
+		return false
+	end
+
+	local var_sys = System.getStaticVar()
+	local pkidxs = var_sys.zbspkidxs
+	if pkidxs == nil then
+		print("pkidxs is nil")
+		return false
+	end
+
+	local ret = pkidxs[pkinfo[3]]
+	if ret ~= nil and ret ~= 0 then
+		return true
+	end
+	return false
+end
+
+-- 争霸赛PK
+-- pkidx : 哪一场
+-- ipos : 第几个擂台
+ArenaFuncList.OnZbsPkStart = function(pkidx, ipos)
+	print("zbs pk start:"..pkidx..","..ipos)
+	local pidx1, pidx2, retidx = ArenaFuncList.GetPkRankIdx(pkidx, ipos, 0)
+
+	if pidx1 == nil and pidx2 == nil then
+		print("GetPkRankIdx is nil")
+		return
+	end
+
+	if pidx1 == nil then -- 另一个人不在榜上，算你赢
+		ArenaFuncList.OnZbsPkResult(pkidx, ipos, 2)
+		return 
+	end
+	if pidx2 == nil then
+		ArenaFuncList.OnZbsPkResult(pkidx, ipos, 1)
+		return 
+	end
+
+	print("zbs pk idx:"..pidx1..","..pidx2)
+
+	local rank = ArenaFuncList.ZbsRank
+	local pitem1 = Ranking.getItemFromIndex(rank, pidx1-1)
+	local pitem2 = Ranking.getItemFromIndex(rank, pidx2-1)
+	if pitem1 == nil or pitem2 == nil then
+		print("zbs pk get item from index get nil")
+		return 
+	end
+
+	local aid1 = Ranking.getId(pitem1)
+	local aid2 = Ranking.getId(pitem2)
+
+	print("zbs pk id:"..aid1..","..aid2)
+
+	local et1 = ArenaFuncList.GetZbsActor(aid1)
+	local et2 = ArenaFuncList.GetZbsActor(aid2)
+	if et1 == nil or et2 == nil then -- 有人不在线或不在副本中，可以直接得出结果
+		print("zbs people offline")
+		ArenaFuncList.OnZbsPkResult(pkidx, ipos)
+		return 
+	end
+
+	-- 可以开打了
+	local var_d1 = LActor.getDyanmicVar(et1)
+	local var_d2 = LActor.getDyanmicVar(et2)
+	if var_d1 == nil or var_d2 == nil then
+		print("zbs var_d is nil")
+		return
+	end
+
+	-- 传到擂台位置
+	local allpos
+	if pkidx == #ArenaFuncList.ZbsPkMap then
+		allpos = ArenaConf.zbsPos[1] -- 最后的冠军赛在第一个擂台
+	else
+		allpos = ArenaConf.zbsPos[ipos+1] -- 位置是加1的
+	end
+
+	LActor.SetArenaPkFlag(et1, true)
+	LActor.SetArenaPkFlag(et2, true)
+	
+	ArenaFuncList.EnterZbsPk(et1, pkidx, ipos, 1, allpos[1])
+	ArenaFuncList.EnterZbsPk(et2, pkidx, ipos, 2, allpos[2])
+end
+
+-- 争霸赛进入PK处理
+ArenaFuncList.EnterZbsPk = function(sysarg, pkidx, pkpos, iorder, pos)
+	print("enter zbs pk:"..pkidx..","..pkpos)
+
+	local var_d = LActor.getDyanmicVar(sysarg)
+	if var_d == nil then return end
+
+	var_d.zbspking = 1 -- 标识正在PK
+
+	LActor.setPkMode(sysarg, fpPk)
+	LActor.clearSkillCd(sysarg) -- 清除技能CD时间
+	ArenaFuncList.addWaitState(sysarg)
+	--LActor.setDenyMove(sysarg, true)
+	--LActor.setDenyBeAttack(sysarg, true)
+	--LActor.addState(sysarg, esStateMoveForbid)
+	local zbsBuff = ArenaConf.zbsBuff
+	for i=1,#zbsBuff do
+		local buff = zbsBuff[i]
+		LActor.addBuff(sysarg, buff.type, ArenaConf.buffGroup, buff.value, buff.times, buff.interval, Lang.ScriptTips.jjc032)
+	end
+	local petPtr = LActor.petGetBattlePetPtr(sysarg)
+	if petPtr ~= nil then
+		--LActor.setDenyMove(petPtr, true)
+		--LActor.setDenyBeAttack(petPtr, true)
+		--LActor.addState(petPtr, esStateMoveForbid)
+		local zbsPetBuff = ArenaConf.zbsPetBuff
+		for i=1,#zbsPetBuff do
+			local buff = zbsPetBuff[i]
+			LActor.addBuff(petPtr, buff.type, ArenaConf.buffGroup, buff.value, buff.times, buff.interval, Lang.ScriptTips.jjc032)
+		end
+		LActor.petRefreshAttri(sysarg, LActor.petGetBattlePet(sysarg))
+	end
+
+	-- 保存对战相关信息
+	var_d.zbspkidx = pkidx
+	var_d.zbspos = pkpos
+	var_d.zbsorder = iorder -- 自己是第几个
+	var_d.zbswaiting = 1 -- 开始是等待状态
+
+	LActor.enterScene(sysarg, ArenaConf.zbsSceneId, pos[1], pos[2])
+
+	LActor.postEntityScriptCallbackMsg(sysarg, EntityCallbackMsg.ZbsCountDown, ArenaConf.zbsCountDown*1000) -- 倒计时
+	LActor.postEntityScriptCallbackMsg(sysarg, EntityCallbackMsg.ZbsPkStartDelay, 1000)
+
+	-- 通知pk开始
+	if sysarg ~= nil then
+		local npack = DataPack.allocPacket(sysarg,147,7)
+	    if npack ~= nil then
+	    	DataPack.writeByte(npack, 1)
+	    	DataPack.flush(npack)
+	    end
+	end
+end
+
+-- 争霸赛退出PK的处理
+ArenaFuncList.ExitZbsPk = function(sysarg)
+	local pos = ArenaConf.zbsViewerPos[System.getRandomNumber(#ArenaConf.zbsViewerPos)+1]
+	LActor.enterScene(sysarg, ArenaConf.zbsSceneId, pos[1], pos[2])
+	LActor.postEntityScriptCallbackMsg(sysarg, EntityCallbackMsg.ZbsPkEndDelay, 1000)
+
+	-- 删除BUFF
+	LActor.delBuffGroup(sysarg, ArenaConf.buffGroup)
+	local petPtr = LActor.petGetBattlePetPtr(sysarg)
+	if petPtr ~= nil then
+		LActor.delBuffGroup(petPtr, ArenaConf.buffGroup)
+		LActor.petRefreshAttri(sysarg, LActor.petGetBattlePet(sysarg))
+	end
+
+	-- PK模式
+	LActor.setPkMode(sysarg, fpPeaceful)
+
+	local var_d = LActor.getDyanmicVar(sysarg)
+	if var_d == nil then return end
+
+	var_d.zbspking = nil
+
+	-- 清除倒计时等待状态
+	if var_d.zbswaiting ~= nil and var_d.zbswaiting == 1 then
+		ArenaFuncList.ClearWaitState(sysarg)
+		--[[
+		LActor.setDenyMove(sysarg, false)
+		LActor.setDenyBeAttack(sysarg, false)
+		LActor.removeState(sysarg, esStateMoveForbid)
+		local petPtr = LActor.petGetBattlePetPtr(sysarg)
+		if petPtr ~= nil then
+			LActor.setDenyMove(petPtr, false)
+			LActor.setDenyBeAttack(petPtr, false)
+			LActor.removeState(petPtr, esStateMoveForbid)
+		end]]
+		var_d.zbswaiting = nil
+	end
+end
+
+-- 获取符合条件的争霸赛玩家
+ArenaFuncList.GetZbsActor = function(id)
+	local et = System.getEntityPtrByActorID(id)
+	if et == nil then
+		return nil
+	end
+	if LActor.getFubenId(et) ~= ArenaConf.zbsFubenId then
+		return nil
+	end
+	return et
+end
+
+-- 发送争霸赛PK结果
+ArenaFuncList.SendZbsResult = function(pkidx, pkpos, ret)
+	local var_sys_d = System.getDyanmicVar()
+	local rd = var_sys_d.zbsRound
+	local nsub = var_sys_d.zbsSub
+
+	if rd == nil then rd = 0 end
+
+	local info = ArenaConf.zbsInfos[rd]
+	if info == nil then
+		print("send zbs result get info error")
+		return 
+	end
+
+	local rpos = pkpos
+	if nsub > 1 then -- 处理一轮分多场的情况
+		rpos = rpos + info.nplayer / 2
+	end
+
+	local dp = LDataPack.allocPacket()
+	if dp ~= nil then
+		LDataPack.writeByte(dp, 147)
+		LDataPack.writeByte(dp, 22)
+		LDataPack.writeInt(dp, rd) -- 第几轮
+		LDataPack.writeInt(dp, rpos) -- 第几组
+		LDataPack.writeInt(dp, ret) -- 结果
+		System.broadcastData(dp)
+	end
+
+	-- print("zbs result:"..rd..","..rpos..","..ret)
+end
+
+-- 获取战力最强的伙伴
+ArenaFuncList.GetMaxFightPet = function(sysarg)
+	local ret = 0
+	local count = LActor.petGetCount(sysarg)
+	for i=1,count do
+		local val = LActor.petGetProp(sysarg, LActor.petGetId(sysarg, i-1), PI_FIGHT_VALUE)
+		if val > ret then
+			ret = val
+		end
+	end
+	return ret
+end
+
+-- 争霸赛结果
+ArenaFuncList.OnZbsPkResult = function(pkidx, pkpos, ret, et1, et2)
+	-- print("zbs pk result:"..pkidx..","..pkpos)
+	local rank = ArenaFuncList.ZbsRank
+	if rank == nil then return end
+
+	-- PK玩家在争霸赛排行榜中的位置，结果存放位置
+	local rankidx1, rankidx2, retidx = ArenaFuncList.GetPkRankIdx(pkidx, pkpos)
+	if rankidx1 == nil or rankidx2 == nil then
+		print("pk result:GetPkRankIdx is nil")
+		return 
+	end
+
+	local rankItem1 = Ranking.getItemFromIndex(rank, rankidx1 - 1)
+	local rankItem2 = Ranking.getItemFromIndex(rank, rankidx2 - 1)
+
+	if rankItem1 == nil or rankItem2 == nil then -- 两个都为空应该是不会去打的
+		print("zbs pk result error: rankitem is nil")
+		return 
+	end
+
+	local en1 = Ranking.getId(rankItem1)
+	local en2 = Ranking.getId(rankItem2)
+
+	-- 看看在不在线
+	if et1 == nil then
+		et1 = ArenaFuncList.GetZbsActor(en1)
+		LActor.SetArenaPkFlag(et1, false)
+	end
+	if et2 == nil then
+		et2 = ArenaFuncList.GetZbsActor(en2)
+		LActor.SetArenaPkFlag(et2, false)
+	end
+
+	if et1 ~= nil then
+		ArenaFuncList.ExitZbsPk(et1)
+	end
+	if et2 ~= nil then
+		ArenaFuncList.ExitZbsPk(et2)
+	end
+
+	-- 都离线，根据战力
+	if ret == nil then
+		if et1 == nil and et2 == nil then
+			local f1 = Ranking.getSubInt(rankItem1, 3)
+			local f2 = Ranking.getSubInt(rankItem2, 3)
+			if f1 > f2 then
+				ret = 1
+			else --if f1 < f2 then
+				ret = 2
+			end
+		end
+	end
+
+	-- 有一个离线
+	if ret == nil then
+		if et1 == nil then
+			ret = 2
+		elseif et2 == nil then
+			ret = 1
+		end
+	end
+
+	local hprate1, hprate2 = 0, 0
+
+	if et1 ~= nil then
+		local maxhp1 = LActor.getIntProperty(et1, PROP_MAXHP)
+		local hp1 = LActor.getIntProperty(et1, PROP_HP)
+		hprate1 = hp1 * 10000 / maxhp1
+	end
+	if et2 ~= nil then
+		local maxhp2 = LActor.getIntProperty(et2, PROP_MAXHP)
+		local hp2 = LActor.getIntProperty(et2, PROP_HP)
+		hprate2 = hp2 * 10000 / maxhp2
+	end
+
+	if ret == nil then
+		-- 两个都在线，根据剩余血量百分比
+		if hprate1 > hprate2 then
+			ret = 1
+		elseif hprate1 > hprate2 then
+			ret = 2
+		end
+	end
+
+	if ret == nil then
+		-- 根据战斗力
+		local f1 = LActor.getIntProperty(et1, PROP_ACTOR_FIGHT_VALUE)
+		local f2 = LActor.getIntProperty(et2, PROP_ACTOR_FIGHT_VALUE)
+		if f1 > f2 then
+			ret = 2
+		else --if f1 < f2 then
+			ret = 1
+		end
+	end
+
+	-- 结果出来了
+	local var_sys_d = System.getDyanmicVar()
+	local var_sys = System.getStaticVar()
+	local pkidxs = var_sys.zbspkidxs
+	if pkidxs ~= nil and retidx ~= nil then
+		local nidx
+		if ret == 1 and rankidx1 ~= nil then -- 保存起来
+			nidx = rankidx1
+			-- print("zbs ret1:"..retidx..","..rankidx1)
+		elseif rankidx2 ~= nil then
+			nidx = rankidx2
+			-- print("zbs ret1:"..retidx..","..rankidx2)
+		end
+		pkidxs[retidx] = nidx
+		var_sys_d.zbslastrank[nidx] = var_sys_d.zbslastrank[nidx] + var_sys_d.zbsRound -- 累计积分，第几轮就有多少积分
+		-- print("nidx:"..nidx..","..var_sys_d.zbslastrank[nidx])
+	end
+
+	-- 最后一轮, 记录仙王ID
+	if pkidx == #ArenaFuncList.ZbsPkMap then
+		if pkidxs ~= nil then
+			local ridx = pkidxs[31] -- 最后一个是冠军
+			if ridx ~= nil then
+				local zbsRank = ArenaFuncList.ZbsRank
+				local rankItem = Ranking.getItemFromIndex(zbsRank, ridx-1)
+				if rankItem ~= nil then
+					var_sys.arenaZBSChampion = Ranking.getId(rankItem)
+				end
+			end
+		end
+		local winner
+		if ret == 1 and et1 ~= nil then
+			winner = et1
+		elseif ret == 2 and et2 ~= nil then
+			winner = et2
+		end
+		if winner ~= nil then
+			var_sys.zbsxwpetfight = ArenaFuncList.GetMaxFightPet(winner) -- 争霸赛仙王伙伴的战斗力
+		end
+
+		if var_sys.zbspkidxs ~= nil then
+			local list = {}
+			if var_sys.zbspkidxs[31] == nil then
+				list[1] = 0
+			else
+				list[1] = var_sys.zbspkidxs[31]
+			end
+			ArenaFuncList.BetSuccess(4, list)
+		end
+		local lastrank = var_sys_d.zbslastrank
+		local ranks = {}
+		if lastrank ~= nil then
+			for i=1,ArenaConf.zbsNPlayer do
+				ranks[i] = {}
+				ranks[i].idx = i
+				ranks[i].score = lastrank[i]
+				if ranks[i].score == nil then
+					ranks[i].score = 0
+				end
+			end
+			table.sort(ranks, function(a,b) return (a.score > b.score) end) -- 按积分排序
+
+			var_sys.zbslastidxs = {}
+			local ts = var_sys.zbslastidxs
+			for i=1,#ranks do
+				ts[i] = ranks[i].idx
+				-- print("score:"..ts[i]..","..ranks[i].score)
+			end
+		end
+		--发送争霸赛排名奖励
+		for i=1,16 do
+			if var_sys.zbslastidxs[i] ~= nil then
+				local rankItem = Ranking.getItemFromIndex(ArenaFuncList.ZbsRank, var_sys.zbslastidxs[i] - 1)
+				if rankItem ~= nil then
+					local name = Ranking.getSub(rankItem,0)
+					local id = Ranking.getId(rankItem)
+					local rank = i
+					if rank >=3 and rank <= 4 then
+						rank = 4
+					elseif rank >=5 and rank <= 8 then
+						rank = 8
+					elseif rank >=9 and rank <= 16 then
+						rank = 16
+					end
+					local item, amount = ArenaFuncList.GetZbsAwardByRank(rank)
+					local year, month, day = 0, 0, 0
+					year, month, day = System.getDate(year, month, day)
+					local tipmsg 
+					if rank == 1 then
+						tipmsg = string.format(Lang.ScriptTips.jjc041,name,year,month,day,rank,amount)
+					else
+						tipmsg = string.format(Lang.ScriptTips.jjc045,name,year,month,day,rank,amount)
+					end
+					System.sendGmMailOffLine(id, tipmsg, 1, item, amount, 1)
+				end
+			end
+		end
+	end
+
+	-- 给在线玩家发送结果
+	ArenaFuncList.SendZbsResult(pkidx, pkpos, ret)
+
+	-- 从自由赛榜单中获取信息
+	local camp1, level1, job1, fight1, total1, aname1, guild1, sex1 = ArenaFuncList.GetInfoFromRank(en1)
+	local camp2, level2, job2, fight2, total2, aname2, guild2, sex2 = ArenaFuncList.GetInfoFromRank(en2)
+
+	if et1 ~= nil then -- 玩家在线，取正确的信息
+		level1 = LActor.getLevel(et1)
+		fight1 = LActor.getIntProperty(et1, PROP_ACTOR_FIGHT_VALUE)
+		guild1 = LActor.getGuildName(et1)
+
+		Ranking.setSubInt(rankItem1, 3, fight1) -- 更新下战力
+	end
+	if et2 ~= nil then
+		level2 = LActor.getLevel(et2)
+		fight2 = LActor.getIntProperty(et2, PROP_ACTOR_FIGHT_VALUE)
+		guild2 = LActor.getGuildName(et2)
+
+		Ranking.setSubInt(rankItem2, 3, fight2) -- 更新下战力
+	end
+
+	local wincamp, winname, losercamp, losername
+	local score1, score2, ry1, ry2 = 0, 0, 0, 0
+
+	local rdpos = 4 + var_sys_d.zbsRound -- 每轮在排行榜中位置
+	if ret == 1 then -- 累加胜利次数, 设置该轮胜利标识
+		Ranking.updateSubInt(rankItem1, 4, 1)
+		Ranking.setSubInt(rankItem1, rdpos, 1)
+		wincamp = camp1
+		winname = aname1
+		losercamp = camp2
+		losername = aname2
+	else
+		Ranking.updateSubInt(rankItem2, 4, 1)
+		Ranking.setSubInt(rankItem2, rdpos, 1)
+		wincamp = camp2
+		winname = aname2
+		losercamp = camp1
+		losername = aname1
+	end
+
+	-- 世界公告
+	local tipsfmt = { Lang.ScriptTips.jjc035, Lang.ScriptTips.jjc035, Lang.ScriptTips.jjc036, Lang.ScriptTips.jjc037, Lang.ScriptTips.jjc038 }
+	local tips = string.format( tipsfmt[pkidx], CampColor[wincamp], CampShortName[wincamp], winname, CampColor[losercamp], CampShortName[losercamp], losername )
+	System.broadcastTipmsg( tips, ttScreenCenter )
+
+	-- 给在线的人发消息
+	if et1 ~= nil then
+		local pkret = 0
+		if ret == 1 then
+			pkret = 1
+		end
+		local npack = DataPack.allocPacket(et1,147,8)
+	    if npack ~= nil then
+	    	DataPack.writeByte(npack, 1) -- 争霸赛
+	    	DataPack.writeByte(npack, pkret) -- 结果
+	    	DataPack.writeInt(npack, hprate1)
+	    	DataPack.writeInt(npack, score1)
+	    	DataPack.writeInt(npack, total1)
+	    	DataPack.writeInt(npack, ry1)
+
+	    	DataPack.writeByte(npack, camp2)
+	    	DataPack.writeInt(npack, en2)
+	    	DataPack.writeInt(npack, level2)
+	    	DataPack.writeInt(npack, sex2)
+	    	DataPack.writeByte(npack, job2)
+	    	DataPack.writeInt(npack, fight2)
+	    	DataPack.writeInt(npack, hprate2)
+	    	DataPack.writeInt(npack, score2)
+	    	DataPack.writeInt(npack, total2)
+	    	DataPack.writeInt(npack, ry2)
+	    	DataPack.writeString(npack, aname2)
+	    	DataPack.writeString(npack, guild2)
+	    	DataPack.flush(npack)
+	    end
+	end
+	if et2 ~= nil then
+		local pkret = 0
+		if ret == 2 then
+			pkret = 1
+		end
+		local npack = DataPack.allocPacket(et2,147,8)
+	    if npack ~= nil then
+	    	DataPack.writeByte(npack, 1) -- 争霸赛
+	    	DataPack.writeByte(npack, pkret) -- 结果
+	    	DataPack.writeInt(npack, hprate2)
+	    	DataPack.writeInt(npack, score2)
+	    	DataPack.writeInt(npack, total2)
+	    	DataPack.writeInt(npack, ry2)
+
+	    	DataPack.writeByte(npack, camp1)
+	    	DataPack.writeInt(npack, en1)
+	    	DataPack.writeInt(npack, level1)
+	    	DataPack.writeInt(npack, sex1)
+	    	DataPack.writeByte(npack, job1)
+	    	DataPack.writeInt(npack, fight1)
+	    	DataPack.writeInt(npack, hprate1)
+	    	DataPack.writeInt(npack, score1)
+	    	DataPack.writeInt(npack, total1)
+	    	DataPack.writeInt(npack, ry1)
+	    	DataPack.writeString(npack, aname1)
+	    	DataPack.writeString(npack, guild1)
+	    	DataPack.flush(npack)
+	    end
+	end
+
+	-- BI
+	local sret1, sret2
+	if ret == 1 then
+		sret1 = "success"
+		sret2 = "fail"
+	else
+		sret1 = "fail"
+		sret2 = "success"
+	end
+	if et1 ~= nil then
+		local genus
+		if pkidx == #ArenaFuncList.ZbsPkMap and ret == 1 then
+			genus = "1"
+		else
+			genus = "16"
+		end
+		System.logCounter(en1, LActor.getAccountName(et1), tostring(LActor.getLevel(et1)), "xian_dao", "", "", "zhengba", sret1, "", "", genus, lfBI)
+	end
+	if et2 ~= nil then
+		local genus
+		if pkidx == #ArenaFuncList.ZbsPkMap and ret == 2 then
+			genus = "1"
+		else
+			genus = "16"
+		end
+		System.logCounter(en2, LActor.getAccountName(et2), tostring(LActor.getLevel(et2)), "xiao_dao", "", "", "zhengba", sret2, "", "", "0", lfBI)
+	end
+end
+
+-- 自由赛结束
+ArenaFuncList.ZysStateChanged = function()
+	print("zys end")
+	local var_sys_d = System.getDyanmicVar()
+
+	if var_sys_d.zysstate ~= 1 then
+		print("zys has not start")
+		return
+	end
+
+	if var_sys_d.zysround ~= nil and var_sys_d.zysround == 2 then
+		ArenaFuncList.OnUpdateArenaAward()
+		local actors = LuaHelp.getAllActorList()
+		if actors ~= nil then 
+			for i = 1,#actors do
+				local actor = actors[i]
+				ArenaFuncList.NotifyGetHonor(actor)
+			end
+		end
+	end
+
+	var_sys_d.zysround = 0 -- 自由赛第几轮
+	var_sys_d.zysstate = 0 -- 结束状态
+
+	-- 匹配库中的所有人都出来
+	local rank = ArenaFuncList.SignRank
+	if rank ~= nil then
+		local count = Ranking.getRankItemCount(rank)
+		for i=1,count do
+		 	local rankItem = Ranking.getItemFromIndex(rank, i-1)
+		 	local id = Ranking.getId(rankItem)
+		 	local et = System.getEntityPtrByActorID(id)
+		 	if et ~= nil then
+		 		local var_d = LActor.getDyanmicVar(et)
+		 		var_d.arenamatch = nil -- 清除匹配状态
+		 	end
+		 end
+		 Ranking.clearRanking(rank)
+	end
+
+	-- 保存一下自由赛排行榜
+	if ArenaFuncList.ZysRank ~= nil then
+		Ranking.save(ArenaFuncList.ZysRank, ArenaFuncList.arenaFreeRankFile)
+	end
+
+	-- 所有人传出去
+	local actorList = LuaHelp.getSceneActorListById(ArenaConf.sceneId)
+	if actorList ~= nil then
+		for i = 1, #actorList do
+		local actor = actorList[i]
+			if actor ~= nil then
+				ArenaFuncList.ExitSignupScene(actor)
+			end
+		end
+	end
+
+	System.broadcastTipmsg(Lang.ScriptTips.jjc044, ttWarmTip)
+	-- 结束状态
+	ArenaFuncList.SendZysState(2)
+end
+
+-- 倒计时到了
+ArenaFuncList.ZysCountDown = function(sysarg)
+	if LActor.getFubenId(sysarg) ~= ArenaConf.fbId then return end -- TODO: 会不会不是这次的
+
+	-- 清空等待状态，可以打了
+	local var_d = LActor.getDyanmicVar(sysarg)
+	if var_d.zyswaiting ~= nil then
+		ArenaFuncList.ClearWaitState(sysarg)
+		var_d.zyswaiting = nil
+	end
+	--加满血，bug HLXX-4071,服务器繁忙的情况下可能1s之后加满血没有成功
+	LActor.changeHp(sysarg,LActor.getIntProperty(sysarg,PROP_MAXHP))
+end
+
+-- 争霸赛倒计时到了
+ArenaFuncList.ZbsCountDown = function(sysarg)
+	if LActor.getFubenId(sysarg) ~= ArenaConf.zbsFubenId then return end
+
+	-- 清空等待状态，可以打了
+	local var_d = LActor.getDyanmicVar(sysarg)
+	if var_d.zbswaiting ~= nil then
+		ArenaFuncList.ClearWaitState(sysarg)
+		var_d.zbswaiting = nil
+	end
+	--加满血，bug HLXX-4071,服务器繁忙的情况下可能1s之后加满血没有成功
+	LActor.changeHp(sysarg,LActor.getIntProperty(sysarg,PROP_MAXHP))
+end
+
+-- 争霸赛开始延时处理
+ArenaFuncList.ZbsPkStartDelay = function(sysarg)
+	LActor.changeHp(sysarg, LActor.getIntProperty(sysarg, PROP_MAXHP))
+	LActor.changeMp(sysarg, LActor.getIntProperty(sysarg, PROP_MAXMP))
+
+	local petid = LActor.petGetBattlePet(sysarg)
+	if petid > 0 then
+		LActor.petChangeHp(sysarg, petid, LActor.petGetProp(sysarg, petid, PI_TOTAL_MAX_HP))
+	end
+end
+
+-- 争霸赛结束延时处理
+ArenaFuncList.ZbsPkEndDelay = function(sysarg)
+	-- 满血满魔
+	LActor.changeHp(sysarg, LActor.getIntProperty(sysarg, PROP_MAXHP))
+	LActor.changeMp(sysarg, LActor.getIntProperty(sysarg, PROP_MAXMP))
+
+	local petid = LActor.petGetBattlePet(sysarg)
+	if petid > 0 then
+		LActor.petChangeHp(sysarg, petid, LActor.petGetProp(sysarg, petid, PI_TOTAL_MAX_HP))
+	end
+end
+
+-- 延时初始化，等处理完BUFF先
+ArenaFuncList.ZysPkDelay = function(sysarg)
+	LActor.changeHp(sysarg, LActor.getIntProperty(sysarg, PROP_MAXHP))
+	LActor.changeMp(sysarg, LActor.getIntProperty(sysarg, PROP_MAXMP))
+
+	local petid = LActor.petGetBattlePet(sysarg)
+	if petid > 0 then
+		LActor.petChangeHp(sysarg, petid, LActor.petGetProp(sysarg, petid, PI_TOTAL_MAX_HP))
+	end
+end
+
+--[[
+	0，未开始
+	1，自由赛开始
+	2，自由赛结束
+	3，擂台赛开始
+	4，擂台赛结束
+]]
+
+-- 自由赛开始
+function OnZysStart( rd )
+	local var_sys = System.getStaticVar()
+	if var_sys.arenastate ~= nil and System.bitOPMask(var_sys.arenastate, 0) then
+		--后台已经禁止开启了
+		print("ArenaFuncList.OnZbsStart error forbid state:"..var_sys.arenastate)
+		return
+	end
+	local var_sys_d = System.getDyanmicVar()
+	local cur_t = System.getCurrMiniTime()
+
+	if var_sys_d.arenaopentime == nil or cur_t < var_sys_d.arenaopentime then
+		-- 未到开启时间，不用处理
+		print("zys error: need 2st week")
+		return 
+	end
+
+	print("zys start")
+	if rd ~= nil then
+		rd = tonumber(rd)
+	end
+
+	-- 判断是自由赛的第几轮
+	if rd ~= nil and rd > 0 then
+		var_sys_d.zysround = rd
+	else
+		local week = System.getDayOfWeek()
+		if week == ArenaConf.zysWeekDays[1] then
+			var_sys_d.zysround = 1
+		elseif week == ArenaConf.zysWeekDays[2] then 
+			var_sys_d.zysround = 2
+		end
+	end
+
+	var_sys_d.zysstate = 1 -- 开始状态
+	var_sys.zysopentime = System.getCurrMiniTime() -- 记录自由赛开始时间
+
+
+	ArenaFuncList.SendZysState(var_sys_d.zysstate)
+
+	local npc = System.getGlobalNpc()
+	LActor.postEntityScriptCallbackMsg(npc, EntityCallbackMsg.ZysStateChanged, ArenaConf.zysTime*1000) -- 结束时间
+end
+
+-- 争霸赛开始
+function OnZbsStart()
+	ArenaFuncList.OnZbsStart()
+end
+
+-- 争霸赛重置，清除数据
+function OnZbsReset()
+	local zysRank = ArenaFuncList.ZysRank
+	local zbsRank = ArenaFuncList.ZbsRank
+	if zbsRank == nil or zysRank == nil then
+		print("zbs reset zys rank is nil")
+		return
+	end
+
+	local var_sys = System.getStaticVar()
+
+	-- 上届16强
+	local prevRank = ArenaFuncList.PrevRank
+	if prevRank ~= nil then
+		Ranking.clearRanking(prevRank)
+		local count = Ranking.getRankItemCount(zbsRank)
+		if count > 16 then
+			count = 16
+		end
+		local idxs = var_sys.zbslastidxs
+		if idxs == nil then
+			idxs = {}
+		end
+		for i=1,count do
+			local idx = idxs[i]
+			if idx == nil then idx = -1 end
+			local rankItem = Ranking.getItemFromIndex(zbsRank, idx-1)
+			if rankItem ~= nil then
+				local newItem = Ranking.addItem(prevRank, Ranking.getId(rankItem), count-i)
+				if newItem ~= nil then
+					Ranking.setSub(newItem, 0, Ranking.getSub(rankItem, 0))
+					Ranking.setSub(newItem, 1, Ranking.getSub(rankItem, 11))
+					Ranking.setSub(newItem, 2, Ranking.getSub(rankItem, 9))
+					Ranking.setSub(newItem, 3, Ranking.getSub(rankItem, 3))
+					Ranking.setSub(newItem, 4, Ranking.getSub(rankItem, 4))
+					Ranking.setSub(newItem, 5, Ranking.getSub(rankItem, 10))
+					Ranking.setSub(newItem, 6, Ranking.getSub(rankItem, 12))
+				end
+			end
+		end
+		Ranking.save(prevRank, nil)
+	end
+
+	-- 历届仙王
+	local hisRank = ArenaFuncList.HisRank
+	if hisRank ~= nil then
+		local var_sys = System.getStaticVar()
+		local xwid = var_sys.arenaZBSChampion
+		if xwid ~= nil then -- 添加到历届仙王中
+			local petfight = var_sys.zbsxwpetfight
+			if petfight == nil then petfight = 0 end
+			local start_t = var_sys.zbsstart_t
+			if start_t == nil then start_t = 0 end
+			local rankItem = Ranking.getItemPtrFromId(zbsRank, xwid)
+			if rankItem ~= nil then
+				local rcount = Ranking.getRankItemCount(hisRank)
+				local lastItem = Ranking.getItemFromIndex(hisRank, ArenaConf.ljxwCount-1) -- 删除超过最大数的
+				if lastItem ~= nil then
+					Ranking.removeId(hisRank, Ranking.getId(lastItem))
+				end
+				local newItem = Ranking.addItem(hisRank, rcount+1, rcount+1) -- 添加到最前面
+				if newItem ~= nil then
+					Ranking.setSub(newItem, 0, Ranking.getSub(rankItem, 0))
+					Ranking.setSub(newItem, 1, Ranking.getSub(rankItem, 11))
+					Ranking.setSub(newItem, 2, Ranking.getSub(rankItem, 12))
+					Ranking.setSub(newItem, 3, Ranking.getSub(rankItem, 3))
+					Ranking.setSubInt(newItem, 4, petfight)
+					Ranking.setSubInt(newItem, 5, start_t)
+					Ranking.setSubInt(newItem, 6, xwid)
+				end
+			end
+			Ranking.save(hisRank, nil)
+		end
+	end
+
+	Ranking.clearRanking(zbsRank)
+	Ranking.clearRanking(zysRank)
+	local  rankPrice = Ranking.getRanking(ArenaFuncList.arenaPriceRankName)
+	if rankPrice ~= nil then
+		print("clear rankPrice")
+		Ranking.clearRanking(rankPrice)
+		Ranking.save(rankPrice, nil)
+	end
+	local  rankBet = Ranking.getRanking(ArenaFuncList.arenaBetRankName)
+	if rankBet ~= nil then
+		print("clear rankBet")
+		Ranking.clearRanking(rankBet)
+		Ranking.save(rankBet, nil)
+	end
+
+	var_sys.zbspkidxs = {}
+	for i=1,ArenaFuncList.ZbsPkMapCount do
+		var_sys.zbspkidxs[i] = 0
+	end
+
+	local dp = LDataPack.allocPacket()
+	if dp == nil then return end
+
+	LDataPack.writeByte(dp, 147)
+	LDataPack.writeByte(dp, 19)
+
+	System.broadcastData(dp)
+end
+
+-- 检查系统开启时间，根据开服时间
+ArenaFuncList.SetArenaOpenTime = function()
+	local var_sys_d = System.getDyanmicVar()
+
+	if var_sys_d.arenaopentime ~= nil then return end
+
+	local openserver_t = System.getOpenServerTime()
+	local year, month, day, hour, minute, sec = 0, 0, 0, 0, 0, 0
+	year, month, day, hour, minute, sec = System.timeDecode(openserver_t, year, month, day, hour, minute, sec)
+	local timestr = string.format("%d-%d-%d  %d:%d:%d", year, month, day, hour, minute, sec)
+	local openweek = System.getWeekDataTime(timestr)
+
+	local conf = ArenaConf.openWeek -- 开启时间，第几周，周几
+
+	var_sys_d.arenaopentime = System.timeEncode(year, month, day, 0, 0, 0) - openweek * 3600 * 24 + 3600*24*7*(conf[1]-1) + 3600*24*conf[2]
+
+	year, month, day, hour, minute, sec = System.timeDecode(var_sys_d.arenaopentime, year, month, day, hour, minute, sec)
+	timestr = string.format("%d-%d-%d  %d:%d:%d", year, month, day, hour, minute, sec)
+	print("open arena time:"..timestr)
+end
+
+-- 系统初始化
+OnArenaInit = function()
+	print("arena system init")
+	-- 自由赛排行榜
+
+	ArenaFuncList.ZysRank = ArenaFuncList.InitRank(ArenaFuncList.arenaFreeRankName, ArenaFuncList.arenaFreeRankFile, 3000, 
+		{ "aname", "job", "fight", "total", "win", "camp", "level", "guild", "sex", "icon" })
+	if ArenaFuncList.ZysRank == nil then
+		print("can not create arena free rank")
+	end
+	-- 争霸赛排行榜
+	ArenaFuncList.ZbsRank = ArenaFuncList.InitRank(ArenaFuncList.arenaFightRankName, ArenaFuncList.arenaFightRankFile, 16, 
+		{ "aname", "sex", "icon", "fight", "total", "ret1", "ret2", "ret3", "ret4", "score", "win", "job", "guild" })
+	-- 16强
+	ArenaFuncList.PrevRank = ArenaFuncList.InitRank(ArenaFuncList.arenaPrevRankName, ArenaFuncList.arenaPrevRankFile, 16, { "aname", "job", "score", "fight", "total", "win", "guild" })
+	-- 历届仙王
+	ArenaFuncList.HisRank = ArenaFuncList.InitRank(ArenaFuncList.arenaHisRankName, ArenaFuncList.arenaHisRankFile, 50, { "aname", "job", "guild", "fight", "petfight", "time" })
+	if ArenaFuncList.HisRank ~= nil then
+		local rank = ArenaFuncList.HisRank
+		if Ranking.getColumnCount(rank) == 6 then -- 后面添加的一列
+			Ranking.addColumn(rank, "actorid")
+		end
+	end
+
+	-- 自由赛报名排行
+	ArenaFuncList.SignRank = ArenaFuncList.InitRank(ArenaFuncList.SignRankName, ArenaFuncList.SignRankFile, 250, {})
+	if ArenaFuncList.SignRank ~= nil then
+		--Ranking.setAutoSave(ArenaFuncList.SignRank, false)
+	end
+
+	-- 身价排行榜
+	ArenaFuncList.arenaPriceRank = ArenaFuncList.InitRank(ArenaFuncList.arenaPriceRankName, ArenaFuncList.arenaPriceRankFile, 16, {"aname","price","flower","egg"})
+	if ArenaFuncList.arenaPriceRank == nil then
+		print("can not create arena price rank")
+	end
+	-- 下注排行榜
+	ArenaFuncList.ArenaBetRank = ArenaFuncList.InitRank(ArenaFuncList.arenaBetRankName, ArenaFuncList.arenaBetRankFile, 5000, {"id","one1","one2","one3","one4","one5","one6","one7","one8","two1","two2","two3","two4","three1","three2","four1","aname"})
+	if ArenaFuncList.ArenaBetRank == nil then
+		print("can not create arena bet rank")
+	end
+
+	local sys_var = System.getStaticVar()
+	if sys_var.arenaHonorAward == nil then
+		sys_var.arenaHonorAward = 0
+	end
+
+	-- 重置状态
+	local var_sys_d = System.getDyanmicVar()
+	if var_sys_d.zbsRound == nil then
+		var_sys_d.zbsRound = 0
+	end
+	if var_sys_d.zbsState == nil then
+		var_sys_d.zbsState = 0
+	end
+	if var_sys_d.zbsSub == nil then
+		var_sys_d.zbsSub = 0
+	end
+	if var_sys_d.zbsstatetime == nil then
+		var_sys_d.zbsstatetime = 0
+	end
+	if var_sys_d.zysstate == nil then
+		var_sys_d.zysstate = 0
+	end
+
+	ArenaFuncList.SetArenaOpenTime()
+end
+
+function OnArenaFina()
+	-- 保存各个排行榜数据
+	print("save arena rank")
+	local ranknames = { ArenaFuncList.arenaPriceRankName, ArenaFuncList.arenaBetRankName, ArenaFuncList.arenaFreeRankName, ArenaFuncList.arenaFightRankName
+						, ArenaFuncList.arenaPrevRankName, ArenaFuncList.arenaHisRankName, ArenaFuncList.SignRankName }					 
+	for i=1,#ranknames do
+		local name = ranknames[i]
+		local rank = Ranking.getRanking(name)
+		if rank ~= nil then
+			Ranking.save(rank, nil)
+		end
+	end
+end
+
+-- 发送自由赛状态
+ArenaFuncList.SendZysState = function(state, sysarg)
+	if sysarg == nil then
+		local dp = LDataPack.allocPacket()
+		if dp == nil then return end
+
+		LDataPack.writeByte(dp, 147)
+		LDataPack.writeByte(dp, 12)
+		LDataPack.writeInt(dp, state)
+
+		System.broadcastData(dp)
+	else
+		local npack = DataPack.allocPacket(sysarg,147,12)
+	    if npack ~= nil then
+	    	DataPack.writeInt(npack, state)
+	    	DataPack.flush(npack)
+	    end
+	end
+end
+
+-- 自由赛开始PK:自己指针，对手ID
+ArenaFuncList.OnMatch = function(sysarg, en)
+	print("on match")
+	-- 找到了,开始拉出去PK
+	local signRank = ArenaFuncList.SignRank
+	Ranking.removeId(signRank, en)
+
+	local et = System.getEntityPtrByActorID(en)
+	if et == nil then -- 应该是不会的
+		return 
+	end
+	local envar_d = LActor.getDyanmicVar(et) -- 取消正在匹配标识
+	envar_d.arenamatch = nil
+
+	-- 通知pk开始
+	if sysarg ~= nil then
+		local npack = DataPack.allocPacket(sysarg,147,7)
+	    if npack ~= nil then
+	    	DataPack.writeByte(npack, 0)
+	    	DataPack.flush(npack)
+	    end
+	end
+	if et ~= nil then
+		local npack = DataPack.allocPacket(et,147,7)
+	    if npack ~= nil then
+	    	DataPack.writeByte(npack, 0)
+	    	DataPack.flush(npack)
+	    end
+	end
+
+	local hfb = Fuben.createFuBen(ArenaConf.fbId)
+	if hfb == 0 then
+		print("can not create arena fuben")
+		return
+	end
+
+	-- 设置副本相关信息
+	Fuben.SetFubenGameTime(hfb, ArenaConf.zysPkTime) -- 设置游戏时间
+	local pfb = Fuben.getFubenPtr(hfb)
+	if pfb ~= nil then
+		local var_fb = Fuben.getDyanmicVar(pfb)
+		var_fb.arenaen1 = LActor.getActorId(sysarg)
+		var_fb.arenaen2 = en
+	end
+
+	local scenes = ArenaConf.sid
+	local sid = scenes[System.getRandomNumber(#scenes)+1] -- 随机场景
+
+	local pos1 = ArenaConf.zysPkPos[1]
+	local pos2 = ArenaConf.zysPkPos[2]
+	LActor.enterFuBen(sysarg, hfb, sid, pos1[1], pos1[2])
+	LActor.enterFuBen(et, hfb, sid, pos2[1], pos2[2])
+end
+
+-- 获取玩家积分
+ArenaFuncList.GetScore = function(sysarg)
+	local rank = ArenaFuncList.ZysRank
+	local aid = LActor.getActorId(sysarg)
+	local rankItem = Ranking.getItemPtrFromId(rank, aid)
+	if rankItem == nil then
+		return 0 
+	end
+	return Ranking.getPoint(rankItem)
+end
+
+-- 报名
+function OnArenaSignUp(sysarg, param1, param2)
+	local rank = ArenaFuncList.SignRank
+	if rank == nil then return end
+	local var_d = LActor.getDyanmicVar(sysarg)
+	local var = LActor.getStaticVar(sysarg)
+	local var_sys_d = System.getDyanmicVar()
+	local mypoint = ArenaFuncList.GetScore(sysarg)
+
+	if var_sys_d.zysstate ~= 1 then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.jjc002, ttMessage) -- 自由赛还没有开始
+		return 
+	end
+	if var_d.arenamatch ~= nil then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.jjc001, ttMessage) -- 已经在匹配
+		return 
+	end
+
+	if var.zysunusualtime ~= nil and (System.getCurrMiniTime() - var.zysunusualtime < ArenaConf.zysUnusualTime) then
+		local tips = string.format(Lang.ScriptTips.jjc031, ArenaConf.zysUnusualTime)
+		LActor.sendTipmsg(sysarg, tips, ttMessage) -- 异常退出时间
+		return 
+	end
+
+	-- 查找合适的玩家
+	local aid = LActor.getActorId(sysarg)
+	local en = nil -- 对手
+	local count = Ranking.getRankItemCount(rank)
+	--print("match count:"..count)
+	for i=1,count do
+	 	local item = Ranking.getItemFromIndex(rank, i-1)
+	 	if item ~= nil then
+	 		local diff = Ranking.getPoint(item) - mypoint
+	 		--print("mypoint:"..mypoint)
+	 		--print("point:"..Ranking.getPoint(item))
+	 		--print("diff:"..diff)
+	 		if diff >= -ArenaConf.matchPoint and diff <= ArenaConf.matchPoint then
+	 			en = Ranking.getId(item) -- 获取玩家ID
+	 		end
+	 	end
+	end
+
+	if en == nil then -- 没找到，加入到匹配库中
+		Ranking.addItem(rank, aid, mypoint)
+		var_d.arenamatch = 1
+
+		local result = false
+		LActor.postEntityScriptDelayMsg(sysarg, ArenaConf.matchDelay * 1000, result, 22) -- 延时匹配，TODO：应该添加一个标识判断是否同一次
+
+		--print("start match")
+
+		-- 通知匹配中
+		local npack = DataPack.allocPacket(sysarg,147,6)
+	    if npack == nil then return end
+	    DataPack.flush(npack)
+		return 
+	end
+
+	-- 开始PK
+	ArenaFuncList.OnMatch(sysarg, en)
+end
+
+-- 自由赛延时匹配
+ArenaFuncList.OnDelayMatch = function(sysarg, arg)
+	-- 判断是否在匹配
+	if LActor.getSceneId(sysarg) ~= ArenaConf.sceneId then return end
+
+	local var_d = LActor.getDyanmicVar(sysarg)
+	if var_d.arenamatch == nil or var_d.arenamatch ~= 1 then -- 没有在匹配
+		print("not in match")
+		return 
+	end
+
+	local rank = ArenaFuncList.SignRank
+	if rank == nil then return end
+
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+
+	local mypoint = var.arenaPoint
+	if mypoint == nil then
+		mypoint = 0
+	end
+
+	local aid = LActor.getActorId(sysarg)
+	local en = nil -- 对手
+	local count = Ranking.getRankItemCount(rank)
+	local mindiff
+	for i=1,count do
+	 	local item = Ranking.getItemFromIndex(rank, i-1)
+	 	if item ~= nil then
+	 		local enid = Ranking.getId(item) -- 获取玩家ID
+	 		if enid ~= aid then -- 不能是自己
+		 		local diff = math.abs(Ranking.getPoint(item) - mypoint)
+		 		if mindiff == nil or diff < mindiff then
+		 			en = enid
+		 			mindiff = diff
+		 		end
+		 	end
+	 	end
+	end
+
+	if en == nil then -- 没找到
+		local result = false
+		LActor.postEntityScriptDelayMsg(sysarg, ArenaConf.matchDelay * 1000, result, 22)
+		return 
+	end
+
+	-- 匹配了，可以开始
+	ArenaFuncList.OnMatch(sysarg, en)
+
+	-- 从匹配库中把自己移除
+	Ranking.removeId(rank, aid)
+	var_d.arenamatch = nil
+end
+
+-- 发送玩家自由赛信息
+ArenaFuncList.SendZysInfo = function(sysarg)
+	local myrank, mypoint, mytotal, mywin = 0, 0, 0, 0
+
+	local aid = LActor.getActorId(sysarg)
+	local rank = ArenaFuncList.ZysRank
+	local rankItem = Ranking.getItemPtrFromId(rank, aid)
+	if rankItem ~= nil then
+		myrank = Ranking.getIndexFromPtr(rankItem) + 1
+		mypoint = Ranking.getPoint(rankItem)
+		mytotal = Ranking.getSubInt(rankItem, 3)
+		mywin = Ranking.getSubInt(rankItem, 4)
+	end
+
+	local npack = DataPack.allocPacket(sysarg,147,1)
+    if npack == nil then return end
+
+    DataPack.writeInt(npack, myrank)
+    DataPack.writeInt(npack, mypoint)
+    DataPack.writeInt(npack, mytotal)
+    DataPack.writeInt(npack, mywin)
+    DataPack.flush(npack)
+end
+
+-- 获取我的自由赛信息
+ArenaFuncList[1] = function(sysarg, dp)
+	ArenaFuncList.SendZysInfo(sysarg)
+end
+
+-- 发送自由赛排行榜
+ArenaFuncList[2] = function(sysarg, dp)
+	local idx = DataPack.readInt(dp)
+
+	local pcount = 10 -- 每页显示多少个
+	local totalcount = 50 -- 最多显示多少个
+	local rank = ArenaFuncList.ZysRank
+	local total = Ranking.getRankItemCount(rank)
+	if total > totalcount then
+		total = totalcount
+	end
+
+	--print("total:"..total)
+
+	local page = math.floor(total / pcount)
+	local rem = total % pcount
+
+	if rem > 0 then page = page + 1 end
+
+	local count = 0
+	if idx >0 and idx <= page then
+		if idx == page and rem > 0 then -- 最后一页
+			count = rem
+		else
+			count = pcount
+		end
+	end
+
+	local npack = DataPack.allocPacket(sysarg,147,2)
+    if npack == nil then return end
+
+    DataPack.writeInt(npack, page)
+    DataPack.writeInt(npack, idx)
+    DataPack.writeInt(npack, count)
+
+    -- print("page:"..page)
+    -- print("rank count:"..count)
+
+    if count > 0 then
+    	local start = pcount*(idx-1)
+    	for i=start, start + count do
+    		local rankItem = Ranking.getItemFromIndex(rank, i)
+    		DataPack.writeInt( npack, i + 1 ) -- 排名
+    		DataPack.writeString( npack, Ranking.getSub(rankItem, 0)) -- 姓名
+    		DataPack.writeByte( npack, Ranking.getSubInt(rankItem, 5)) -- 职业
+    		DataPack.writeInt( npack, Ranking.getPoint(rankItem)) -- 积分
+    		DataPack.writeInt( npack, Ranking.getSubInt(rankItem, 2)) -- 战力
+    		DataPack.writeInt( npack, Ranking.getSubInt(rankItem, 3)) -- 累计比赛
+    		DataPack.writeInt( npack, Ranking.getSubInt(rankItem, 4)) -- 累计胜利
+		end
+    end
+    DataPack.flush(npack)
+end
+
+-- 发送争霸赛对战排行
+ArenaFuncList.SendZbsRank = function(sysarg)
+	local rank = ArenaFuncList.ZbsRank
+	if rank == nil then return end
+	local priceRank = Ranking.getRanking(ArenaFuncList.arenaPriceRankName)
+	if priceRank == nil then return end
+
+	local var_sys_d = System.getDyanmicVar()
+	local var_sys = System.getStaticVar()
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+
+	local count = Ranking.getRankItemCount(rank)
+	if count > ArenaConf.zbsNPlayer then
+		count = ArenaConf.zbsNPlayer
+	end
+
+	local npack = DataPack.allocPacket(sysarg,147,3)
+
+	DataPack.writeInt(npack, var_sys_d.zbsRound)
+	DataPack.writeByte(npack, var_sys_d.zbsState)
+	DataPack.writeInt(npack, var_sys_d.zbsstatetime)
+	DataPack.writeInt(npack, count) -- 玩家数量
+	for i=1,count do
+		local rankItem = Ranking.getItemFromIndex(rank, i-1)
+		if rankItem ~= nil then
+			local id = Ranking.getId(rankItem)
+			DataPack.writeInt(npack, id)
+			DataPack.writeString(npack, Ranking.getSub(rankItem, 0))
+			DataPack.writeChar(npack, Ranking.getSubInt(rankItem, 1))
+			DataPack.writeShort(npack, Ranking.getSubInt(rankItem, 2))
+			DataPack.writeInt(npack, Ranking.getSubInt(rankItem, 3))
+			local price = 0
+			local priceItem = Ranking.getItemPtrFromId(priceRank, id)
+			if priceItem ~= nil then
+				price = Ranking.getSubInt(priceItem, 1)
+			end
+			DataPack.writeInt(npack, price)
+		end
+	end
+	DataPack.writeInt(npack, 15) -- 每一轮信息 8 + 4 + 2 + 1
+
+	if var.zbsBets == nil then
+		var.zbsBets = {}
+		for i=1,15 do
+			var.zbsBets[i] = 0
+		end
+	end
+
+	local zbsBets = var.zbsBets -- 下注情况，15个玩家ID
+	local vics = var_sys.zbspkidxs
+	for i=1,15 do
+		local vec
+		if vics ~= nil then
+			vec = vics[16+i]
+		end
+		if vec == nil then vec = 0 end
+		DataPack.writeByte(npack, vec) -- 胜利玩家的序号
+		if zbsBets ~= nil and zbsBets[i] ~= nil then
+			local bet = zbsBets[i]
+			if bet == nil then
+				bet = 0
+			end
+			DataPack.writeByte(npack, bet) -- 下注玩家的序号
+		else
+			DataPack.writeByte(npack, 0) -- 未下注
+		end
+	end
+
+	DataPack.flush(npack)
+end
+
+-- 发送争霸赛排行榜
+ArenaFuncList[3] = function(sysarg, dp)
+	ArenaFuncList.SendZbsRank(sysarg)
+end
+
+-- 发送上届16强排名
+ArenaFuncList[4] = function(sysarg, dp)
+	local rank = ArenaFuncList.PrevRank
+	if rank == nil then return end
+
+	local npack = DataPack.allocPacket(sysarg,147,4)
+
+	local count = Ranking.getRankItemCount(rank)
+
+	DataPack.writeInt(npack, count)
+	for i=1,count do
+		local rankItem = Ranking.getItemFromIndex(rank, i-1)
+		if rankItem ~= nil then
+			DataPack.writeInt(npack, Ranking.getId(rankItem)) -- ID
+			DataPack.writeString(npack, Ranking.getSub(rankItem, 0)) -- name
+			DataPack.writeByte(npack, Ranking.getSubInt(rankItem, 1)) -- job
+			DataPack.writeInt(npack, Ranking.getSubInt(rankItem, 2)) -- score
+			DataPack.writeInt(npack, Ranking.getSubInt(rankItem, 3)) -- fight
+			DataPack.writeInt(npack, Ranking.getSubInt(rankItem, 4)) -- total
+			DataPack.writeInt(npack, Ranking.getSubInt(rankItem, 5)) -- win
+			DataPack.writeString(npack, Ranking.getSub(rankItem, 6)) -- guild
+		end
+	end
+	DataPack.flush(npack)
+end
+
+-- 发送历届仙王
+ArenaFuncList[5] = function(sysarg, dp)
+	local rank = ArenaFuncList.HisRank
+	if rank == nil then return end
+
+	local npack = DataPack.allocPacket(sysarg,147,5)
+
+	local count = Ranking.getRankItemCount(rank)
+	--print("============================:::  "..count)
+	DataPack.writeInt(npack, count)
+	for i=1,count do
+		local rankItem = Ranking.getItemFromIndex(rank, i-1)
+		if rankItem ~= nil then
+			DataPack.writeInt(npack, count - i + 1) -- 第几届
+			DataPack.writeString(npack, Ranking.getSub(rankItem, 0)) -- name
+			DataPack.writeByte(npack, Ranking.getSubInt(rankItem, 1)) -- job
+			DataPack.writeString(npack, Ranking.getSub(rankItem, 2)) -- guild
+			DataPack.writeInt(npack, Ranking.getSubInt(rankItem, 3)) -- fight
+			DataPack.writeInt(npack, Ranking.getSubInt(rankItem, 4)) -- petfight
+			DataPack.writeInt(npack, Ranking.getSubInt(rankItem, 5)) -- time
+		end
+	end
+	DataPack.flush(npack)
+end
+
+-- 取消匹配
+ArenaFuncList[6] = function(sysarg, dp)
+	local var_d = LActor.getDyanmicVar(sysarg)
+
+	if var_d.arenamatch == nil then
+		--LActor.sendTipmsg(sysarg, Lang.ScriptTips.jjc003, ttMessage) -- 没有在匹配
+		return 
+	end
+
+	-- 从匹配库中删除
+	local aid = LActor.getActorId(sysarg)
+	local rank = ArenaFuncList.SignRank
+	if rank ~= nil then
+		Ranking.removeId(rank, aid)
+	end
+	var_d.arenamatch = nil
+end
+
+-- 进入争霸赛PK副本
+ArenaFuncList.OnEnterZbsFuben = function(sysarg, hfb, way)
+	local openservertTime = System.getServerOpenTime()	
+	local curTime = System.getCurrMiniTime()
+	if System.isSameWeek_new(openservertTime , curTime) then
+    	LActor.sendTipmsg(sysarg, Lang.ScriptTips.jjc050, ttMessage)
+    	return 
+  	end
+
+	local var_d = LActor.getDyanmicVar(sysarg)
+	var_d.arenaPKMode = LActor.getPkMode(sysarg)
+	LActor.setPkMode(sysarg, fpPeaceful)
+end
+
+-- 进入自由赛PK副本
+ArenaFuncList.OnEnterZysFuben = function(sysarg, hfb, way)
+	local var_d = LActor.getDyanmicVar(sysarg)
+	if var_d == nil then return end
+
+	-- 计算这轮自由赛的第几场PK
+	local var_sys = System.getStaticVar()
+	if var_sys.zysopentime ~= nil then
+		local var = LActor.getStaticVar(sysarg)
+		if var.zyspkcount == nil then
+			var.zyspkcount = 1
+		else
+			if var.zysroundtime ~= nil and System.isSameWeek_new(var.zysroundtime , var_sys.zysopentime) == false then
+				var.zyspkcount = 0
+			end
+			var.zyspkcount = var.zyspkcount + 1
+		end
+		var.zysroundtime = var_sys.zysopentime
+	end
+
+	var_d.zyswaiting = 1 -- 等待中
+	var_d.arenaPKMode = LActor.getPkMode(sysarg) -- 保存之前的PK模式
+	LActor.setPkMode(sysarg, fpPk)
+
+	LActor.clearSkillCd(sysarg)
+	ArenaFuncList.addWaitState(sysarg)
+	--LActor.setDenyMove(sysarg, true)
+	--LActor.setDenyBeAttack(sysarg, true)
+	--LActor.addState(sysarg, esStateMoveForbid)
+	local zysBuff = ArenaConf.zysBuff
+	for i=1,#zysBuff do
+		local buff = zysBuff[i]
+		LActor.addBuff(sysarg, buff.type, ArenaConf.buffGroup, buff.value, buff.times, buff.interval, Lang.ScriptTips.jjc032)
+	end
+	local petPtr = LActor.petGetBattlePetPtr(sysarg)
+	if petPtr ~= nil then
+		--LActor.setDenyMove(petPtr, true)
+		--LActor.setDenyBeAttack(petPtr, true)
+		--LActor.addState(petPtr, esStateMoveForbid)
+		local zysPetBuff = ArenaConf.zysPetBuff
+		for i=1,#zysPetBuff do
+			local buff = zysPetBuff[i]
+			LActor.addBuff(petPtr, buff.type, ArenaConf.buffGroup, buff.value, buff.times, buff.interval, Lang.ScriptTips.jjc032)
+		end
+	end
+
+	LActor.sendCountdown(sysarg, ArenaConf.zysCountDown, 0)
+	LActor.postEntityScriptCallbackMsg(sysarg, EntityCallbackMsg.ZysCountDown, ArenaConf.zysCountDown*1000) -- 倒计时
+	LActor.postEntityScriptCallbackMsg(sysarg, EntityCallbackMsg.ZysPkDelay, 1000)
+
+	LActor.SetArenaPkFlag(sysarg, false)
+end
+
+-- 添加等待状态
+ArenaFuncList.addWaitState = function(sysarg)
+	LActor.setDenyMove(sysarg, true)
+	LActor.setDenyBeAttack(sysarg, true) --注释掉的原因：防止屏蔽友方单位是看不到对方，bug HLXX-4325
+	LActor.setDenyAttackActor(sysarg, true)
+	LActor.addState(sysarg, esStateMoveForbid)
+	local petPtr = LActor.petGetBattlePetPtr(sysarg)
+	if petPtr ~= nil then
+		LActor.setDenyMove(petPtr, true)
+		LActor.setDenyBeAttack(petPtr, true)
+		LActor.setDenyAttackActor(petPtr, true)
+		LActor.addState(petPtr, esStateMoveForbid)
+	end
+end
+
+-- 清除自由赛等待状态
+ArenaFuncList.ClearWaitState = function(sysarg)
+	LActor.setDenyMove(sysarg, false)
+	LActor.setDenyBeAttack(sysarg, false)
+	LActor.setDenyAttackActor(sysarg, false)
+	LActor.removeState(sysarg, esStateMoveForbid)
+	local petPtr = LActor.petGetBattlePetPtr(sysarg)
+	if petPtr ~= nil then
+		LActor.setDenyMove(petPtr, false)
+		LActor.setDenyBeAttack(petPtr, false)
+		LActor.setDenyAttackActor(petPtr, false)
+		LActor.removeState(petPtr, esStateMoveForbid)
+	end
+end
+
+
+-- 退出争霸赛副本 如果在PK
+ArenaFuncList.OnExitZbsFuben = function(sysarg, hfb, way)
+	local var_d = LActor.getDyanmicVar(sysarg)
+	if var_d.zbspking ~= nil then
+		var_d.zbspking = nil
+		local ipos = var_d.zbspos
+		local pkidx = var_d.zbspkidx
+		local pkorder = var_d.zbsorder
+		if ipos == nil or pkidx == nil or pkorder == nil then
+			print("zbs actor pk info is nil")
+			return 
+		end
+		local ret
+		if pkorder == 1 then
+			ret = 2
+		else
+			ret = 1
+		end
+		ArenaFuncList.OnZbsPkResult(pkidx, ipos, ret)
+	end
+
+	local result = false
+	LActor.postEntityScriptDelayMsg(sysarg, 100, result, 24)
+
+	LActor.SetArenaPkFlag(sysarg, false)
+end
+
+-- 退出争霸赛副本延时处理
+ArenaFuncList.OnZbsDelayExit = function(sysarg, arg)
+	local var_d = LActor.getDyanmicVar(sysarg)
+	if var_d.arenaPKMode ~= nil then
+		LActor.setPkMode(sysarg, var_d.arenaPKMode)
+	end
+end
+
+-- 退出自由赛PK场景后的延时处理
+ArenaFuncList.OnZysDelayExit = function(sysarg, arg)
+	-- 满血满魔
+	LActor.changeHp(sysarg, LActor.getIntProperty(sysarg, PROP_MAXHP))
+	LActor.changeMp(sysarg, LActor.getIntProperty(sysarg, PROP_MAXMP))
+
+	local petid = LActor.petGetBattlePet(sysarg)
+	if petid > 0 then
+		local maxHp = LActor.petGetProp(sysarg, petid, PI_TOTAL_MAX_HP)
+		LActor.petChangeHp(sysarg, petid, maxHp)
+	end
+	-- 恢复之前PK模式
+	local var_d = LActor.getDyanmicVar(sysarg)
+	if var_d.arenaPKMode ~= nil then
+		LActor.setPkMode(sysarg, var_d.arenaPKMode)
+	end
+
+	-- 如果活动已经结束，退出报名场景
+	local var_sys_d = System.getDyanmicVar()
+	if var_sys_d.zysstate == nil or var_sys_d.zysstate ~= 1 then
+		ArenaFuncList.ExitSignupScene(sysarg)
+	end
+end
+
+-- 退出自由赛PK副本
+ArenaFuncList.OnExitZysFuben = function(sysarg, hfb, way)
+	print("exit zys fuben")
+	local pfb = Fuben.getFubenPtr(hfb)
+	if pfb == nil then return end
+
+	local var_d = LActor.getDyanmicVar(sysarg)
+	if var_d == nil then return end
+
+	if Fuben.getFubenProgress(pfb) ~= 100 then -- 副本进度没到100，客户端点退出的情况
+		local var_fb = Fuben.getDyanmicVar(pfb)
+		local ret
+		if var_fb.arenaen1 == LActor.getActorId(sysarg) then -- 我是第一个玩家
+			ret = 2
+		else
+			ret = 1
+		end
+		ArenaFuncList.OnZysPkResult(hfb, ret) -- 表示其他人胜利
+
+		-- 记录非正常退出时间
+		local var = LActor.getStaticVar(sysarg)
+		if var ~= nil then
+			var.zysunusualtime = System.getCurrMiniTime()
+		end
+	end
+
+	-- 清除等待状态
+	if var_d.zyswaiting ~= nil then
+		ArenaFuncList.ClearWaitState(sysarg)
+		var_d.zyswaiting = nil
+	end
+
+	-- 删除BUFF
+	LActor.delBuffGroup(sysarg, ArenaConf.buffGroup)
+	local petPtr = LActor.petGetBattlePetPtr(sysarg)
+	if petPtr ~= nil then
+		LActor.delBuffGroup(petPtr, ArenaConf.buffGroup)
+		LActor.petRefreshAttri(sysarg, LActor.petGetBattlePet(sysarg))
+	end
+
+	local result = false
+	LActor.postEntityScriptDelayMsg(sysarg, 100, result, 23)
+end
+
+-- 玩家死亡
+ArenaFuncList.OnDeath = function (sysarg, arg)
+	local fbid = LActor.getFubenId(sysarg)
+	if fbid == ArenaConf.fbId then -- 在自由赛PK副本
+		local hfb = LActor.getFubenHandle(sysarg)
+		local pfb = Fuben.getFubenPtr(hfb)
+		if pfb == nil then return end
+		if Fuben.getFubenProgress(pfb) ~= 100 then
+			local var_fb = Fuben.getDyanmicVar(pfb)
+			local ret
+			if var_fb.arenaen1 == LActor.getActorId(sysarg) then -- 我是第一个玩家
+				ret = 2
+			else
+				ret = 1
+			end
+			ArenaFuncList.OnZysPkResult(hfb, ret)
+		end
+	elseif fbid == ArenaConf.zbsFubenId then
+		local var_d = LActor.getDyanmicVar(sysarg)
+		if var_d.zbspking ~= nil then
+			var_d.zbspking = nil
+			local ipos = var_d.zbspos
+			local pkidx = var_d.zbspkidx
+			local pkorder = var_d.zbsorder
+			if ipos == nil or pkidx == nil or pkorder == nil then
+				print("zbs actor pk info is nil")
+				return 
+			end
+			local ret
+			if pkorder == 1 then
+				ret = 2
+			else
+				ret = 1
+			end
+			ArenaFuncList.OnZbsPkResult(pkidx, ipos, ret)
+			return 
+		end
+	end
+end
+
+--round 争霸赛第几轮
+--arg 	该轮比赛获胜者ID数组
+ArenaFuncList.BetSuccess = function (round, arg)
+	local num = 0
+	local start = 0 
+	if round == 1 then
+		num = 8
+		start = 0
+		if #arg ~= 8 then
+			return
+		end
+	elseif round == 2 then
+		num = 4
+		start = 8
+		if #arg ~= 4 then
+			return
+		end
+	elseif round == 3 then
+		num = 2
+		start = 12
+		if #arg ~= 2 then
+			return
+		end
+	else
+		num = 1
+		start = 14
+		if #arg ~= 1 then
+			return
+		end
+	end
+
+	local RankNameList = Ranking.getRanking(ArenaFuncList.arenaBetRankName) --通过排行名称获取排行对象
+	if RankNameList ~= nil then
+		local rankTbl = LuaHelp.getRankingItemList(RankNameList, 5000)
+		if rankTbl and #rankTbl > 0 then
+			for i = 1, #rankTbl do
+				local name = Ranking.getSub(rankTbl[i],16)
+				local id = Ranking.getId(rankTbl[i])
+				local n = 0
+				for j=1,num do
+					if start+j <= 15 and start+j >= 1 then
+						if tonumber(Ranking.getSub(rankTbl[i],start+j)) > 0 and
+							arg[j] >0 and
+							tonumber(Ranking.getSub(rankTbl[i],start+j)) == arg[j] then
+							n = n + 1
+						end
+					end
+				end
+
+				if n > 0 then
+					local year, month, day = 0, 0, 0
+					year, month, day = System.getDate(year, month, day)
+					local tipmsg = string.format(Lang.ScriptTips.jjc030,name,year,month,day,num*2,n,ArenaConf.Bet[round].award *n)
+					System.sendGmMailOffLine(id, tipmsg, 2, 0, ArenaConf.Bet[round].award *n, 1)
+				end
+			end
+		end
+	end
+end
+
+ArenaFuncList[9] = function (sysarg, packet)
+	local group = DataPack.readInt(packet)
+	local index = DataPack.readInt(packet)
+
+	if LActor.getSceneId(sysarg) ~= ArenaConf.zbsSceneId then
+		LActor.sendTipmsg(sysarg,Lang.ScriptTips.jjc010,ttMessage)
+		--LActor.sendDcApiProtoLog(sysarg, 147, 9, 1, 1)
+		return 
+	end
+
+	local var_sys_d = System.getDyanmicVar(sysarg)
+	if var_sys_d.zbsState == nil or var_sys_d.zbsState ~= 1 then
+		LActor.sendTipmsg(sysarg,Lang.ScriptTips.jjc039,ttMessage)
+		--LActor.sendDcApiProtoLog(sysarg, 147, 9, 1, 1)
+		return 
+	end
+
+	if group < 1 or group > 4 then
+		LActor.sendTipmsg(sysarg,Lang.ScriptTips.jjc011,ttMessage)
+		--LActor.sendDcApiProtoLog(sysarg, 147, 9, 1, 1)
+		return 
+	end
+
+	if index < 1 or index > 16 then
+		LActor.sendTipmsg(sysarg,Lang.ScriptTips.jjc012,ttMessage)
+		--LActor.sendDcApiProtoLog(sysarg, 147, 9, 1, 1)
+		return 
+	end
+
+	if LActor.getMoneyCount(sysarg, 0) < ArenaConf.Bet[group].cost then 
+		LActor.sendTipmsg(sysarg,Lang.ScriptTips.jjc013,ttMessage)
+		--LActor.sendDcApiProtoLog(sysarg, 147, 9, 1, 3)
+		return
+	end
+
+	local Item = Ranking.getItemFromIndex(ArenaFuncList.ZbsRank, index-1)
+	if Item == nil then
+		return
+	end
+
+	-- 扣除金钱
+	LActor.changeMoney( sysarg, 0, -ArenaConf.Bet[group].cost, 1, true, "arena", "bet")
+
+	local var = LActor.getStaticVar(sysarg)
+	if var.zbsBets == nil then
+		var.zbsBets = {}
+		for i=1,15 do
+			var.zbsBets[i] = 0
+		end
+	end
+
+	local targetId = Ranking.getId(Item)
+	local actorid = LActor.getActorId(sysarg)
+	local name = Ranking.getSub(Item,0) 
+	local rankList = Ranking.getRanking(ArenaFuncList.arenaBetRankName)
+	local rankItem = Ranking.getItemPtrFromId(rankList, actorid)
+	if rankItem == nil then
+		rankItem = Ranking.addItem(rankList, actorid, 0)
+		Ranking.setSub(rankItem, 0, tostring(index))
+		for i=1,15 do
+			Ranking.setSub(rankItem, i, "0")
+		end
+		Ranking.setSub(rankItem, 16, LActor.getName(sysarg))
+	end
+
+	if group == 1 then
+		local num = math.floor ((index-1)/2)
+		Ranking.setSubInt(rankItem, 1+ num, index)
+		var.zbsBets[1+num] = index
+	elseif group == 2 then
+		local num = math.floor ((index-1)/4)
+		Ranking.setSubInt(rankItem, 9+num, index)
+		var.zbsBets[9+num] = index
+	elseif group == 3 then
+		local num = math.floor ((index-1)/8)
+		Ranking.setSubInt(rankItem, 13+num, index)
+		var.zbsBets[13+num] = index
+	else
+		Ranking.setSubInt(rankItem, 15, index)
+		var.zbsBets[15] = index
+	end
+
+	local total = ArenaFuncList.NotifyPriceRank(sysarg, name, 1, ArenaConf.Bet[group].award)
+	if total < 0 then
+		local rankList = Ranking.getRanking(ArenaFuncList.arenaPriceRankName)
+		local newItem = Ranking.getItemPtrFromId(rankList, targetId)
+		total = tonumber(Ranking.getSub(newItem,1)) 
+	end
+
+	local npack = DataPack.allocPacket(sysarg,147,9)  --申请一个数据包
+	if npack == nil then return end
+	DataPack.writeInt(npack, group)
+	DataPack.writeInt(npack, index)
+	DataPack.flush(npack)
+
+	local actors = LuaHelp.getAllActorList()
+	if actors ~= nil then 
+		for i = 1,#actors do
+			local actor = actors[i]
+			local npack = DataPack.allocPacket(actor,147,21)  --申请一个数据包
+			if npack == nil then return end
+			DataPack.writeInt(npack, index)
+			DataPack.writeInt(npack, total)
+			DataPack.flush(npack)
+		end
+	end
+
+	--LActor.sendDcApiProtoLog(sysarg, 147, 9, 1, 0)
+end
+
+-- 自由赛PK游戏时间到了
+EventCallDispatcher.OnZysGameOver = function(pfb)
+	if Fuben.getFubenProgress(pfb) == 100 then return end -- 胜负已分出，不用再处理
+
+	local hfb = Fuben.getFubenHandle(pfb)
+	ArenaFuncList.OnZysPkResult(hfb)
+end
+
+-- 从自由赛排行榜中取出玩家信息
+-- 5camp, 6level, 1job, 2fight, 3total, 0aname, 7guild
+ArenaFuncList.GetInfoFromRank = function(aid, rankItem)
+	if rankItem == nil and aid ~= nil then
+		rankItem = Ranking.getItemPtrFromId(ArenaFuncList.ZysRank, aid)
+	end
+	if rankItem == nil then
+		return 0, 0, 0, 0, 0, "", ""
+	end
+
+	return Ranking.getSubInt(rankItem,5), Ranking.getSubInt(rankItem,6), Ranking.getSubInt(rankItem,1)
+	, Ranking.getSubInt(rankItem,2), Ranking.getPoint(rankItem), Ranking.getSub(rankItem, 0)
+	, Ranking.getSub(rankItem,7), Ranking.getSub(rankItem,8)
+end
+
+-- 添加自由赛排行榜选项
+ArenaFuncList.AddZysRankItem = function(rank, sysarg)
+	if rank == nil or sysarg == nil then return nil end
+	local aid = LActor.getActorId(sysarg)
+	local rankItem = Ranking.addItem(rank, aid, 0)
+	if rankItem == nil then
+		return nil
+	end
+	Ranking.setSub(rankItem, 0, LActor.getName(sysarg))
+	Ranking.setSub(rankItem, 1, tostring(LActor.getIntProperty(sysarg, PROP_VOCATION)))
+	Ranking.setSub(rankItem, 2, tostring(LActor.getIntProperty(sysarg, PROP_ACTOR_FIGHT_VALUE)))
+	Ranking.setSub(rankItem, 3, "0")
+	Ranking.setSub(rankItem, 4, "0")
+	Ranking.setSub(rankItem, 5, tostring(LActor.getCampId(sysarg)))
+	Ranking.setSub(rankItem, 6, tostring(LActor.getLevel(sysarg)))
+	Ranking.setSub(rankItem, 7, LActor.getGuildName(sysarg))
+	Ranking.setSub(rankItem, 8, tostring(LActor.getIntProperty(sysarg, PROP_SEX)))
+	Ranking.setSub(rankItem, 9, tostring(LActor.getIntProperty(sysarg, PROP_ICON)))
+
+	return rankItem
+end
+
+-- 处理自由赛结果
+-- ret : 1表示第一个玩家胜，2表示第二个玩家胜
+ArenaFuncList.OnZysPkResult = function(hfb, ret)
+	-- print("zys pk result")
+	-- 设置副本进度为完成
+	local pfb = Fuben.getFubenPtr(hfb)
+	Fuben.setFubenProgress(pfb, 100)
+
+	local var_fb = Fuben.getDyanmicVar(pfb)
+	if var_fb == nil then return end
+
+	local en1 = var_fb.arenaen1
+	local en2 = var_fb.arenaen2
+	if en1 == nil or en2 == nil then
+		print("zys pk result error actorid is nil")
+		return 
+	end
+
+	local et1 = System.getEntityPtrByActorID(en1)
+	local et2 = System.getEntityPtrByActorID(en2)
+	if et1 == nil or et2 == nil then -- 都掉线了，一般不会
+		print("zys pk result error: all actor offline")
+		return
+	end
+
+	local hprate1 = LActor.getIntProperty(et1, PROP_HP) * 10000 / LActor.getIntProperty(et1, PROP_MAXHP)
+	local hprate2 = LActor.getIntProperty(et2, PROP_HP) * 10000 / LActor.getIntProperty(et2, PROP_MAXHP)
+	local fight1 = LActor.getIntProperty(et1, PROP_ACTOR_FIGHT_VALUE)
+	local fight2 = LActor.getIntProperty(et2, PROP_ACTOR_FIGHT_VALUE)
+
+	-- 1.先判断是否有玩家掉线, 在外面判断了
+
+	-- 2.判断血量
+	if ret == nil then
+		if hprate1 > hprate2 then
+			ret = 1
+		elseif hprate1 < hprate2 then
+			ret = 2
+		end
+	end
+
+	-- 3.判断战斗力，少的那个赢
+	if ret == nil then
+		if fight1 < fight2 then
+			ret = 1
+		else
+			ret = 2
+		end
+	end
+
+	-- 根据胜负判断奖励
+	local score1, score2, ry1, ry2 = 0, 0, 0, 0
+	if ret == 1 then
+		local var1 = LActor.getStaticVar(et1)
+		if var1.zyspkcount == nil or var1.zyspkcount <= ArenaConf.zysRyLimit then
+			ry1 = ArenaConf.zysRyAward[1]
+		end
+		local var2 = LActor.getStaticVar(et2)
+		if var2.zyspkcount == nil or var2.zyspkcount <= ArenaConf.zysRyLimit then
+			ry2 = ArenaConf.zysRyAward[2]
+		end
+		score1 = ArenaConf.zysJfAward[1]
+		score2 = ArenaConf.zysJfAward[2]
+	else
+		local var1 = LActor.getStaticVar(et1)
+		if var1.zyspkcount == nil or var1.zyspkcount <= ArenaConf.zysRyLimit then
+			ry1 = ArenaConf.zysRyAward[2]
+		end
+		local var2 = LActor.getStaticVar(et2)
+		if var2.zyspkcount == nil or var2.zyspkcount <= ArenaConf.zysRyLimit then
+			ry2 = ArenaConf.zysRyAward[1]
+		end
+		score1 = ArenaConf.zysJfAward[2]
+		score2 = ArenaConf.zysJfAward[1]
+	end
+
+	local rank = ArenaFuncList.ZysRank
+	local rankItem1 = Ranking.getItemPtrFromId(rank, en1)
+	local rankItem2 = Ranking.getItemPtrFromId(rank, en2)
+	if rankItem1 == nil then
+		rankItem1 = ArenaFuncList.AddZysRankItem(rank, et1)
+	end
+	if rankItem2 == nil then
+		rankItem2 = ArenaFuncList.AddZysRankItem(rank, et2)
+	end
+	if rankItem1 == nil or rankItem2 == nil then
+		print("zys pk result error: rankitem is nil:"..en1..","..en2)
+		return 
+	end
+
+	-- 累加积分
+
+	if ry2 > 0 then
+		LActor.giveAward(et2,qatHonor,ry2)
+	end
+	if ry1 > 0 then
+		LActor.giveAward(et1,qatHonor,ry1)
+	end
+	if score1 > 0 then
+		Ranking.updateItem(rank, en1, score1)
+	end
+	if score2 > 0 then
+		Ranking.updateItem(rank, en2, score2)
+	end
+
+	-- 累计总次数
+	Ranking.updateSubInt(rankItem1, 3, 1)
+	Ranking.updateSubInt(rankItem2, 3, 1)
+
+	Ranking.setSubInt(rankItem1, 2, LActor.getIntProperty(et1, PROP_ACTOR_FIGHT_VALUE))
+	Ranking.setSubInt(rankItem2, 2, LActor.getIntProperty(et2, PROP_ACTOR_FIGHT_VALUE))
+
+	if ret == 1 then -- 累加胜利次数
+		Ranking.updateSubInt(rankItem1, 4, 1)
+	else
+		Ranking.updateSubInt(rankItem2, 4, 1)
+	end
+
+	-- 调整积分相同的项
+	ArenaFuncList.AdjustItem(rank, rankItem1)
+	ArenaFuncList.AdjustItem(rank, rankItem2)
+
+	local camp1 = LActor.getCampId(et1)
+	local camp2 = LActor.getCampId(et2)
+	local level1 = LActor.getLevel(et1)
+	local level2 = LActor.getLevel(et2)
+	local sex1 = LActor.getIntProperty(et1, PROP_SEX)
+	local sex2 = LActor.getIntProperty(et2, PROP_SEX)
+	local job1 = LActor.getIntProperty(et1, PROP_VOCATION)
+	local job2 = LActor.getIntProperty(et2, PROP_VOCATION)
+	local aname1 = LActor.getName(et1)
+	local aname2 = LActor.getName(et2)
+	local guild1 = LActor.getGuildName(et1)
+	local guild2 = LActor.getGuildName(et2)
+
+	local total1 = Ranking.getPoint(rankItem1) -- 总积分
+	local total2 = Ranking.getPoint(rankItem2)
+
+	-- 给在线的人发消息
+	if et1 ~= nil then
+		local pkret = 0
+		if ret == 1 then
+			pkret = 1
+		end
+		local npack = DataPack.allocPacket(et1,147,8)
+	    if npack ~= nil then
+	    	DataPack.writeByte(npack, 0) -- 自由赛
+	    	DataPack.writeByte(npack, pkret) -- 结果
+	    	DataPack.writeInt(npack, hprate1)
+	    	DataPack.writeInt(npack, score1)
+	    	DataPack.writeInt(npack, total1)
+	    	DataPack.writeInt(npack, ry1)
+
+	    	DataPack.writeByte(npack, camp2)
+	    	DataPack.writeInt(npack, en2)
+	    	DataPack.writeInt(npack, level2)
+	    	DataPack.writeInt(npack, sex2)
+	    	DataPack.writeByte(npack, job2)
+	    	DataPack.writeInt(npack, fight2)
+	    	DataPack.writeInt(npack, hprate2)
+	    	DataPack.writeInt(npack, score2)
+	    	DataPack.writeInt(npack, total2)
+	    	DataPack.writeInt(npack, ry2)
+	    	DataPack.writeString(npack, aname2)
+	    	DataPack.writeString(npack, guild2)
+	    	DataPack.flush(npack)
+	    end
+
+	    -- ArenaFuncList.SendZysInfo(et1)
+	end
+	if et2 ~= nil then
+		local pkret = 0
+		if ret == 2 then
+			pkret = 1
+		end
+		local npack = DataPack.allocPacket(et2,147,8)
+	    if npack ~= nil then
+	    	DataPack.writeByte(npack, 0) -- 自由赛
+	    	DataPack.writeByte(npack, pkret) -- 结果
+	    	DataPack.writeInt(npack, hprate2)
+	    	DataPack.writeInt(npack, score2)
+	    	DataPack.writeInt(npack, total2)
+	    	DataPack.writeInt(npack, ry2)
+
+	    	DataPack.writeByte(npack, camp1)
+	    	DataPack.writeInt(npack, en2)
+	    	DataPack.writeInt(npack, level1)
+	    	DataPack.writeInt(npack, sex1)
+	    	DataPack.writeByte(npack, job1)
+	    	DataPack.writeInt(npack, fight1)
+	    	DataPack.writeInt(npack, hprate1)
+	    	DataPack.writeInt(npack, score1)
+	    	DataPack.writeInt(npack, total1)
+	    	DataPack.writeInt(npack, ry1)
+	    	DataPack.writeString(npack, aname1)
+	    	DataPack.writeString(npack, guild1)
+	    	DataPack.flush(npack)
+	    end
+
+	    -- ArenaFuncList.SendZysInfo(et1)
+	end
+
+	-- BI
+	local sret1, sret2
+	if ret == 1 then
+		sret1 = "success"
+		sret2 = "fail"
+	else
+		sret1 = "fail"
+		sret2 = "success"
+	end
+	System.logCounter(en1, LActor.getAccountName(et1), tostring(LActor.getLevel(et1)), "xian_dao", "", "", "ziyou", sret1, "", "", "0", lfBI)
+	System.logCounter(en2, LActor.getAccountName(et2), tostring(LActor.getLevel(et2)), "xiao_dao", "", "", "ziyou", sret2, "", "", "0", lfBI)
+end
+
+ArenaFuncList.addArenaExp = function (sysarg)
+	if sysarg == nil then return nil end
+	local level = LActor.getLevel(sysarg)
+	if level == nil then return nil end
+	local val = ArenaConf.addExp / 10000.0
+	local addexp = (400 * level * level + level * 200 + 1000000) * val
+	LActor.addExp(sysarg, addexp, 670, 0)
+	LActor.addRootExp(sysarg, ArenaConf.addRootExp, 672) -- 类型按区域加领取，用于统计
+	return addexp
+end
+
+ArenaFuncList.CheckTarget = function (sysarg, name)
+	if sysarg == nil then
+		return nil
+	end
+	
+	local ActorPtr = System.getActorPtr(name)
+	if ActorPtr == nil then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.jjc014, ttMessage)
+		return nil
+	end
+
+	if ActorPtr == sysarg then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.jjc014, ttMessage)
+		return nil
+	end
+
+	if LActor.getSceneId(sysarg) ~= ArenaConf.zbsSceneId then 
+		LActor.sendTipmsg(sysarg,Lang.ScriptTips.jjc010,ttMessage)
+		return nil
+	end
+
+	local rankTbl = LuaHelp.getRankingItemList(ArenaFuncList.arenaPriceRank, ArenaFuncList.ArenaPriceRankCount)
+	local flag = false
+	if rankTbl and #rankTbl > 0 then
+		for i = 1, #rankTbl do
+			if Ranking.getSub(rankTbl[i],0) == name then 
+				flag = true
+				break
+			end
+		end
+	end
+	if flag == false then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.jjc014, ttMessage)
+		return nil
+	end
+
+	return ActorPtr
+end
+
+ArenaFuncList.TellPriceRank = function (sysarg)
+	local rankTbl = LuaHelp.getRankingItemList(ArenaFuncList.arenaPriceRank, ArenaFuncList.ArenaPriceRankCount)
+	if rankTbl == nil then
+		return 
+	end
+	local count = #rankTbl
+	local npack = DataPack.allocPacket(sysarg,147,16)  --申请一个数据包
+	if npack == nil then return end
+	DataPack.writeInt(npack, count)
+	for i = 1, count do
+		DataPack.writeString(npack, Ranking.getSub(rankTbl[i],0))
+		DataPack.writeInt(npack, GetRankNum(Ranking.getSub(rankTbl[i],1)))
+		DataPack.writeInt(npack, GetRankNum(Ranking.getSub(rankTbl[i],2)))
+		DataPack.writeInt(npack, GetRankNum(Ranking.getSub(rankTbl[i],3)))
+		local id = Ranking.getId(rankTbl[i])
+		local item = Ranking.getItemPtrFromId(ArenaFuncList.ZysRank, id) 
+		DataPack.writeInt(npack, GetRankNum(Ranking.getSub(item,5)))
+	end
+	DataPack.flush(npack)
+end
+
+ArenaFuncList.NotifyPriceRank = function (sysarg, name, sort, value)
+	if name == nil then
+		return -1
+	end
+	local  total_price = 0
+	local  rankList = Ranking.getRanking(ArenaFuncList.arenaPriceRankName)
+	if rankList ~= nil then
+		local rankTbl = LuaHelp.getRankingItemList(rankList, ArenaFuncList.ArenaPriceRankCount)
+		local flag = false
+		local index = 0
+		if rankTbl == nil then
+			return -1
+		end
+		local count = #rankTbl
+		if rankTbl and count > 0 then
+			for i = 1, count do
+				if Ranking.getSub(rankTbl[i],0) == name then 
+					flag = true
+					index = i
+					break
+				end
+			end
+			if flag == false then
+				return -1
+			end
+		end
+
+		local tmp = tonumber(Ranking.getSub(rankTbl[index],sort))
+		if sort > 0 and sort < 4 then
+			Ranking.setSub(rankTbl[index], sort, tostring(tmp+value))
+			if sort == 1 then
+				local rankId = Ranking.getId(rankTbl[index])
+				Ranking.updateItem(rankList, rankId, tmp+value)
+				total_price = tmp+value
+			end
+		end
+
+		local var_sys_d = System.getDyanmicVar()
+		if var_sys_d.zbshfb == nil then
+			print("error........................., var_sys_d.zbshfb is nil:")
+			return -1
+		end
+		local pfb = Fuben.getFubenPtr(var_sys_d.zbshfb)
+		if pfb == nil then
+			print("error........................., pfb is nil:")
+			return -1
+		end
+
+		local actors = LuaHelp.getFbActorList(pfb)
+		if actors ~= nil then 
+			for i = 1,#actors do
+				local actor = actors[i]
+				local npack = DataPack.allocPacket(actor,147,16)  --申请一个数据包
+				if npack == nil then return -1 end
+				DataPack.writeInt(npack, count)
+				for j=1,count do
+					DataPack.writeString(npack, Ranking.getSub(rankTbl[j],0))
+					DataPack.writeInt(npack, GetRankNum(Ranking.getSub(rankTbl[j],1)))
+					DataPack.writeInt(npack, GetRankNum(Ranking.getSub(rankTbl[j],2)))
+					DataPack.writeInt(npack, GetRankNum(Ranking.getSub(rankTbl[j],3)))
+					local id = Ranking.getId(rankTbl[j])
+					local item = Ranking.getItemPtrFromId(ArenaFuncList.ZysRank, id) 
+					DataPack.writeInt(npack, GetRankNum(Ranking.getSub(item,5)))
+				end
+				DataPack.flush(npack)
+			end
+		end
+	end
+	return total_price
+end
+
+ArenaFuncList.Flower = function (sysarg,name)
+	local ActorPtr = ArenaFuncList.CheckTarget(sysarg, name)
+	if ActorPtr == nil then 
+		return 
+	end
+
+	local  var = LActor.getStaticVar(sysarg)
+	local  targetVar = LActor.getStaticVar(ActorPtr)
+	if var == nil or targetVar == nil then return  -1 end
+
+	if var.FlowerTimes == nil then
+		var.FlowerTimes = 0
+	end
+	if var.EggTimes == nil then
+		var.EggTimes = 0
+	end
+	if  var.FlowerTimes >= ArenaConf.flowerTimes then	--用了多少次
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.jjc004, ttMessage)
+		return 
+	end
+	
+	local now_t = System.getCurrMiniTime()
+	if var.ArenaFlowerTime ~= nil and now_t - var.ArenaFlowerTime < 0 then
+		var.ArenaFlowerTime = now_t
+	end
+	if var.ArenaFlowerTime ~= nil and now_t - var.ArenaFlowerTime <= ArenaConf.flowerCD then
+		--CD 中
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.jjc042, ttMessage)
+		return 
+	end
+
+	--自己加经验
+	local exp = ArenaFuncList.addArenaExp(sysarg)
+	if exp == nil then return -1 end
+	local str = string.format(Lang.ScriptTips.jjc005, name, exp, ArenaConf.addRootExp)
+	LActor.sendTipmsg(sysarg, str, ttMessage)
+
+	local ActorPtr = System.getActorPtr(name)
+	local meName = LActor.getName(sysarg)
+	local str1 = string.format(Lang.ScriptTips.jjc053, meName, exp, ArenaConf.addRootExp)
+	if ActorPtr == nil or ActorPtr == sysarg then
+		-- LActor.sendTipmsg(sysarg, Lang.ScriptTips.jjc014, ttMessage)
+	else
+		LActor.sendTipmsg(ActorPtr, str1, ttMessage)
+	end
+
+	var.ArenaFlowerTime = now_t
+	var.FlowerTimes = var.FlowerTimes + 1
+	ArenaFuncList.NotifyPriceRank(sysarg,name,2,1)
+
+	local npack = DataPack.allocPacket(sysarg,147,11)
+    if npack ~= nil then 
+	    DataPack.writeInt(npack, 0)
+	    DataPack.writeInt(npack, 0)
+	    DataPack.writeInt64(npack, LActor.getHandle(ActorPtr))
+	    DataPack.flush(npack)
+    end
+
+    local pack = DataPack.allocPacket(sysarg,147,20)
+    if pack ~= nil then 
+	    local flowerrest =  ArenaConf.flowerTimes - var.FlowerTimes
+	    if flowerrest < 0 then
+	    	flowerrest = 0
+	    end
+	    DataPack.writeInt(pack, flowerrest)
+	    local eggrest =  ArenaConf.eggTimes - var.EggTimes
+	    if eggrest < 0 then
+	    	eggrest = 0
+	    end
+	    DataPack.writeInt(pack, eggrest)
+	    DataPack.flush(pack)
+    end
+
+end
+
+ArenaFuncList.Egg = function (sysarg,name)
+	local ActorPtr = ArenaFuncList.CheckTarget(sysarg, name)
+	if ActorPtr == nil then 
+		return 
+	end
+
+	local  var = LActor.getStaticVar(sysarg)
+	local  targetVar = LActor.getStaticVar(ActorPtr)
+	if var == nil or targetVar == nil then return  -1 end
+
+	if var.FlowerTimes == nil then
+		var.FlowerTimes = 0
+	end
+	if var.EggTimes == nil then
+		var.EggTimes = 0
+	end
+	if  var.EggTimes >= ArenaConf.eggTimes then	--用了多少次
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.jjc006, ttMessage)
+		return 
+	end
+	
+	local now_t = System.getCurrMiniTime()
+	if var.ArenaEggTime ~= nil and now_t - var.ArenaEggTime < 0 then
+		var.ArenaEggTime = now_t
+	end
+	if var.ArenaEggTime ~= nil and now_t - var.ArenaEggTime <= ArenaConf.eggCD then
+		--CD 中
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.jjc043, ttMessage)
+		return 
+	end
+
+	--自己加经验
+	local exp = ArenaFuncList.addArenaExp(sysarg)
+	if exp == nil then return -1 end
+	local str = string.format(Lang.ScriptTips.jjc007, name, exp, ArenaConf.addRootExp)
+	LActor.sendTipmsg(sysarg, str, ttMessage)
+
+	local ActorPtr = System.getActorPtr(name)
+	local meName = LActor.getName(sysarg)
+	local str1 = string.format(Lang.ScriptTips.jjc052, meName, exp, ArenaConf.addRootExp)
+	if ActorPtr == nil or ActorPtr == sysarg then
+		-- LActor.sendTipmsg(sysarg, Lang.ScriptTips.jjc014, ttMessage)
+	else
+		LActor.sendTipmsg(ActorPtr, str1, ttMessage)
+	end
+
+    var.ArenaEggTime = now_t
+	var.EggTimes = var.EggTimes + 1
+
+	ArenaFuncList.NotifyPriceRank(sysarg,name,3,1)
+
+	local npack = DataPack.allocPacket(sysarg,147,11)
+    if npack ~= nil then  
+	    DataPack.writeInt(npack, 1)
+	    DataPack.writeInt(npack, 0)
+	    DataPack.writeInt64(npack, LActor.getHandle(ActorPtr))
+	    DataPack.flush(npack)
+    end
+
+    local pack = DataPack.allocPacket(sysarg,147,20)
+    if pack ~= nil then 
+	    local flowerrest =  ArenaConf.flowerTimes - var.FlowerTimes
+	    if flowerrest < 0 then
+	    	flowerrest = 0
+	    end
+	    DataPack.writeInt(pack, flowerrest)
+	    local eggrest =  ArenaConf.eggTimes - var.EggTimes
+	    if eggrest < 0 then
+	    	eggrest = 0
+	    end
+	    DataPack.writeInt(pack, eggrest)
+	    DataPack.flush(pack)
+    end
+end
+
+ArenaFuncList[11] = function (sysarg, packet)
+	local sort = DataPack.readInt(packet)
+	local name = DataPack.readString(packet)
+	if sort == 0 then
+		ArenaFuncList.Flower(sysarg,name)
+	elseif sort == 1 then
+		ArenaFuncList.Egg(sysarg,name)
+	end
+end
+
+ArenaFuncList[13] = function (sysarg, packet)
+	local sys_var = System.getStaticVar()
+	if sys_var == nil then return end
+
+	if sys_var.arenaHonorAwardTime == nil then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.fi00006, ttMessage)
+		return 
+	end
+
+	-- 还没到结算时间
+	if sys_var.arenaHonorAward == nil or sys_var.arenaHonorAward == 0 then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.fi00017, ttMessage)
+		return 
+	end
+
+	-- 是否领取过奖励
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	if var.arenaHonorAwardTime ~= nil and var.arenaHonorAwardTime == sys_var.arenaHonorAwardTime then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.fi00007, ttMessage)
+		return 
+	end
+
+	-- 获取结算时的排名
+	local id = LActor.getActorId(sysarg)
+	local rank = Ranking.getItemIndexFromId(ArenaFuncList.ZysRank, id)
+	if rank < 0 then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.jjc029, ttMessage)
+		return 	
+	end
+	rank = rank + 1
+	local levelStr = tostring(LActor.getLevel(sysarg))
+	local rankStr = tostring(rank)
+
+	-- 获取奖励
+	local moneyadd, honoradd = ArenaFuncList.GetAwardByRank(rank)
+	--[[if moneyadd > 0 then
+		LActor.changeMoney(sysarg, mtBindCoin, moneyadd, 1, true, "fight", "rankaward")
+		System.logCounter(id, "", levelStr, "arena", tostring(moneyadd), rankStr, "xb")
+	end]]
+
+	-- 奖励荣誉值
+	if honoradd > 0 then
+		LActor.giveAward(sysarg, qatHonor, honoradd)
+		System.logCounter(id, "", levelStr, "arena", tostring(honoradd), rankStr, "honor")
+	end
+
+	if moneyadd > 0 or honoradd > 0 then
+		local tips = string.format(Lang.ScriptTips.jjc008, honoradd)
+		LActor.sendTipmsg(sysarg, tips, ttMessage)
+	end
+
+	var.arenaHonorAwardTime = sys_var.arenaHonorAwardTime -- 保存领奖时间
+end
+
+-- 进入自由赛报名场景
+ArenaFuncList[14] = function(sysarg, packet)
+	local var_sys_d = System.getDyanmicVar()
+
+	if var_sys_d.zysstate ~= 1 then -- 还没开始
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.jjc002, ttMessage)
+		return
+	end
+
+	if LActor.getFubenId(sysarg) == ArenaConf.fbId then
+		LActor.sendTipmsg(sysarg,Lang.ScriptTips.jjc034,ttMessage)
+		return 
+	end
+
+	local sid = LActor.getSceneId(sysarg)
+	
+	if LActor.isInFuben(sysarg) or sid == TianYuanConfig.SCENEID or sid == ArenaConf.sceneId then --在其它副本不能渡劫，14是雁门关的场景ID，这里特殊处理
+		LActor.sendTipmsg(sysarg,Lang.ScriptTips.jjc033,ttMessage)
+		return
+	end
+
+	-- 保存进入前的位置
+	local var = LActor.getStaticVar(sysarg)
+	var.zyssignscene = sid
+	var.zyssignposx = LActor.getIntProperty(sysarg, PROP_ENTITY_POSX)
+	var.zyssignposy = LActor.getIntProperty(sysarg, PROP_ENTITY_POSY)
+
+	LActor.enterScene(sysarg, ArenaConf.sceneId, 0, 0) 
+end
+
+-- 进入争霸赛副本
+ArenaFuncList[15] = function(sysarg, packet)
+	if LActor.getLevel(sysarg) < ArenaConf.openLevel then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.jjc015, ttMessage)
+		return
+	end
+
+	-- 判断副本活动场景
+	if LActor.getFubenId(sysarg) > 0 then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.fb0001, ttMessage)
+		return
+	end
+
+	local var_sys_d = System.getDyanmicVar()
+	local hfb = var_sys_d.zbshfb
+
+	if hfb == nil or hfb == 0 then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.jjc009, ttMessage)
+		return
+	end
+
+	local rd = var_sys_d.zbsRound -- 争霸赛第几轮，从1开始
+	local st = var_sys_d.zbsState -- 争霸赛状态，从0开始 : 未开始，准备，开始，结束
+	local nsub = var_sys_d.zbsSub
+	if rd == nil or st == nil or nsub == nil then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.jjc009, ttMessage)
+		return
+	end
+
+	local rank = ArenaFuncList.ZbsRank
+	if rank == nil then return end
+
+	-- print("enter zbs fuben:"..rd..":"..st..":"..nsub)
+
+	local zbsPos = ArenaConf.zbsPos
+	local pos = nil --
+	if rd == 1 and st == 1 then -- 第一轮的准备阶段才有可能站在擂台上
+		local aid = LActor.getActorId(sysarg)
+		local pcount = Ranking.getRankItemCount(rank)
+		for i=1,pcount do
+			local item = Ranking.getItemFromIndex(rank, i-1)
+			if item ~= nil and Ranking.getId(item) == aid then
+				pos = 1
+				break
+			end
+		end
+	end
+
+	local pxy
+	if pos == nil then
+		-- 观众坐标随机一个位置
+		pxy = ArenaConf.zbsViewerPos[System.getRandomNumber(#ArenaConf.zbsViewerPos)+1]
+	else
+		pxy = zbsPos[pos][1] -- 取第一个位置
+	end
+
+	if pxy == nil then
+		print("zbs enter pos is nil")
+		return 
+	end
+
+	LActor.enterFuBen(sysarg, hfb, ArenaConf.zbsSceneId, pxy[1], pxy[2])
+
+	local  var = LActor.getStaticVar(sysarg)
+ 	if var.EggTimes == nil then
+ 		var.EggTimes = 0
+ 	end
+ 	if var.FlowerTimes == nil then
+ 		var.FlowerTimes = 0
+ 	end
+
+	local pack = DataPack.allocPacket(sysarg,147,20)
+    if pack ~= nil then 
+	    local flowerrest =  ArenaConf.flowerTimes - var.FlowerTimes
+	    if flowerrest < 0 then
+	    	flowerrest = 0
+	    end
+	    DataPack.writeInt(pack, flowerrest)
+	    local eggrest =  ArenaConf.eggTimes - var.EggTimes
+	    if eggrest < 0 then
+	    	eggrest = 0
+	    end
+	    DataPack.writeInt(pack, eggrest)
+	    DataPack.flush(pack)
+    end
+
+  	ArenaFuncList.TellPriceRank(sysarg)
+end
+
+-- 退出自由赛报名场景
+ArenaFuncList[17] = function(sysarg, packet)
+	ArenaFuncList.ExitSignupScene(sysarg)
+end
+
+-- 更新竞技场领奖状态
+ArenaFuncList.OnUpdateArenaAward = function ()
+	local var = System.getStaticVar()
+	if var == nil then return end
+
+	var.arenaHonorAwardTime = System.getCurrMiniTime()
+	var.arenaHonorAward = 1 
+end
+
+-- 自由赛根据排名获得奖励
+ArenaFuncList.GetAwardByRank = function(rank)
+	-- 获取奖励
+	local moneyadd = 0
+	local lilianadd = 0
+	-- 奖励贝币
+	--[[local moneys = ArenaConf.xbAwards
+	for i=1,#moneys do
+		local money = moneys[i]
+		if rank >= money[1] and rank <= money[2] then
+			moneyadd = money[3]
+			break
+		end
+	end]]
+
+	-- 奖励威望
+	local lilians = ArenaConf.swAwards
+	for i=1,#lilians do
+		local lilian = lilians[i]
+		if rank >= lilian[1] and rank <= lilian[2] then
+			lilianadd = lilian[3]
+			break
+		end 
+	end
+	return moneyadd, lilianadd
+end
+
+-- 争霸赛根据排名获得奖励
+ArenaFuncList.GetZbsAwardByRank = function(rank)
+	-- 获取奖励
+	local item, amount = 0, 0
+	for i=1,#ArenaConf.zbsAwards do
+		local config = ArenaConf.zbsAwards[i]
+		if rank >= config[1] and rank <= config[2] then
+			item = config[3]
+			amount = config[4]
+			break
+		end 
+	end
+	return item, amount
+end
+
+-- 发送自己的排名和领奖信息
+ArenaFuncList.SendArenaRanking = function(sysarg, rank, award)
+	local var = LActor.getStaticVar(sysarg)
+	if var.zyspkcount == nil then 
+		print("actor "..LActor.getName(sysarg).." zyspkcount == nil")
+		return
+	end
+
+	if var.zyspkcount < ArenaConf.freeTotalAward then
+		print("actor "..LActor.getName(sysarg).." zyspkcount == "..var.zyspkcount)
+		return
+	end
+
+	local npack = DataPack.allocPacket(sysarg,147,13)
+    if npack == nil then return end
+
+    local moneyadd, lilianadd = ArenaFuncList.GetAwardByRank(rank)
+
+    DataPack.writeInt(npack, rank)
+    DataPack.writeByte(npack, award)
+    DataPack.writeInt(npack, moneyadd)
+    DataPack.writeInt(npack, lilianadd)
+    DataPack.flush(npack)
+end
+
+-- 通知玩家领取荣誉值 (比赛结束后调用)
+ArenaFuncList.NotifyGetHonor = function(sysarg)
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+
+	-- 是否已经领奖
+	local sys_var = System.getStaticVar()
+	if sys_var == nil then return end
+	local award = 0
+	if sys_var.arenaHonorAward == 0 or (sys_var.arenaHonorAwardTime ~= nil and var.arenaHonorAwardTime ~= nil and sys_var.arenaHonorAwardTime == var.arenaHonorAwardTime) then
+		award = 1
+	end
+
+	local id = LActor.getActorId(sysarg)
+	local rank = Ranking.getItemIndexFromId(ArenaFuncList.ZysRank, id) 
+	if rank < 0 then
+		--print("actor "..LActor.getName(sysarg).." rank < 0 ")
+		return
+	end
+	rank = rank + 1
+
+	-- 排名
+	ArenaFuncList.SendArenaRanking(sysarg, rank, award)
+end
+
+ArenaFuncList.OnAreanaLogin = function (sysarg, arg)
+	local var = LActor.getStaticVar(sysarg)
+	local var_sys_d = System.getDyanmicVar()
+	if LActor.getLevel(sysarg) >= ArenaConf.openLevel then 
+		local weekDay = System.getDayOfWeek()
+		if weekDay == ArenaConf.zysWeekDays[2] then 
+			local year=0
+			local month =0
+			local day=0 
+			year,month,day=System.getDate(year,month,day) 
+			local endTime = System.timeEncode(year, month, day, 20, 40, 0)  --encode一个时间
+			if System.getCurrMiniTime() > endTime then
+				ArenaFuncList.NotifyGetHonor(sysarg)
+			end
+		elseif weekDay == 5 or weekDay == 6 then
+			ArenaFuncList.NotifyGetHonor(sysarg)
+		end
+		local var = LActor.getStaticVar(sysarg)
+		if var_sys_d.RefreshFeastTick == nil then
+			var_sys_d.RefreshFeastTick = 0
+		end
+		if var.CanFeastTick == nil then
+			var.CanFeastTick = 0
+		end
+		if  var.CanFeastTick < var_sys_d.RefreshFeastTick then
+			var.CanFeast = nil
+		end
+	end
+
+	if var_sys_d.arenaopentime ~= nil then
+		local open_t = var_sys_d.arenaopentime
+		if System.getCurrMiniTime() >= open_t then
+			open_t = 0
+		end
+		local pack = DataPack.allocPacket(sysarg,147,18)
+	    if pack ~= nil then
+	    	DataPack.writeUInt(pack, open_t)
+	    	DataPack.flush(pack)
+	    end
+	end
+
+	if LActor.getSceneId(sysarg) == ArenaConf.zbsSceneId then
+		ArenaFuncList.TellPriceRank(sysarg)
+
+		local pack = DataPack.allocPacket(sysarg,147,20)
+	    if pack ~= nil then 
+	    	if var.FlowerTimes == nil then
+	    		var.FlowerTimes = 0
+	    	end
+		    local flowerrest =  ArenaConf.flowerTimes - var.FlowerTimes
+		    if flowerrest < 0 then
+		    	flowerrest = 0
+		    end
+		    DataPack.writeInt(pack, flowerrest)
+		    if var.EggTimes == nil then
+	    		var.EggTimes = 0
+	    	end
+		    local eggrest =  ArenaConf.eggTimes - var.EggTimes
+		    if eggrest < 0 then
+		    	eggrest = 0
+		    end
+		    DataPack.writeInt(pack, eggrest)
+		    DataPack.flush(pack)
+	    end
+	end
+
+
+	if var_sys_d.zysstate ~= nil then
+		ArenaFuncList.SendZysState(var_sys_d.zysstate, sysarg)
+	end
+
+	if LActor.getSceneId(sysarg) == ArenaConf.sceneId and  var_sys_d.zysstate ~= 1 then
+		ArenaFuncList.ExitSignupScene(sysarg)
+	end
+end
+
+ArenaFuncList.newDayLogin = function (sysarg)
+	local  var = LActor.getStaticVar(sysarg)
+ 	var.EggTimes = nil
+ 	var.FlowerTimes = nil
+ 	var.zbsBets = nil
+ 	--var.zyspkcount = 0
+end
+
+-- 伙伴重新出战后的处理
+ArenaFuncList.OnPetBattle = function(sysarg, arg)
+	local fbid = LActor.getFubenId(sysarg)
+	if fbid == ArenaConf.fbId then
+		local petPtr = arg[1]
+		if petPtr ~= nil then
+			local zysPetBuff = ArenaConf.zysPetBuff
+			for i=1,#zysPetBuff do
+				local buff = zysPetBuff[i]
+				LActor.addBuff(petPtr, buff.type, ArenaConf.buffGroup, buff.value, buff.times, buff.interval, Lang.ScriptTips.jjc032)
+			end
+		end
+	elseif fbid == ArenaConf.zbsFubenId then
+		local var_d = LActor.getDyanmicVar(sysarg)
+		if var_d == nil then return end
+
+		if var_d.zbspking ~= nil and var_d.zbspking == 1 then
+			local petPtr = arg[1]
+			if petPtr ~= nil then
+				local zbsPetBuff = ArenaConf.zbsPetBuff
+				for i=1,#zbsPetBuff do
+					local buff = zbsPetBuff[i]
+					LActor.addBuff(petPtr, buff.type, ArenaConf.buffGroup, buff.value, buff.times, buff.interval, Lang.ScriptTips.jjc032)
+				end
+			end
+		end
+	end
+end
+
+-- 争霸赛副本结束
+ArenaFuncList.OnZbsFubenTimeout = function(pfb)
+	-- 弹出提示
+	System.broadcastTipmsg(Lang.ScriptTips.jjc046, ttWarmTip)
+end
+
+ArenaFuncList.HandlerArenaOp = function (sysarg, systemid, msgid, packet)
+  local func = ArenaFuncList[msgid]
+  if func ~= nil then
+    func(sysarg, packet) 
+  end
+end
+
+-- 更改争霸赛状态
+ArenaFuncList.GmZbsState = function(sysarg, args)
+	local rd = tonumber(args[1])
+	local st = tonumber(args[2])
+	if rd == nil or st == nil then
+		print("param error")
+		return 
+	end
+	ArenaFuncList.ZbsStateChanged(nil, rd, st)
+end
+
+-- 开始自由赛
+ArenaFuncList.GmZysStart = function(sysarg, args)
+	local rd = args[1]
+	if rd ~= nil then
+		rd = tonumber(rd)
+	end
+	OnZysStart(rd)
+end
+
+-- 结束自由赛
+ArenaFuncList.GmZysStop = function(sysarg, args)
+	ArenaFuncList.ZysStateChanged()
+end
+
+-- GM下注
+ArenaFuncList.GmXiazhu = function(sysarg, args)
+	ArenaFuncList.test(sysarg, args)
+end
+
+ArenaFuncList.ZbsBetDelay = function (msgId, hs, round)
+	local var_sys_d = System.getDyanmicVar()
+	if var_sys_d.zbshfb == nil then
+		return
+	end
+	local count = 0
+	local  hScene = Fuben.getSceneHandleById( ArenaConf.zbsSceneId, var_sys_d.zbshfb)
+	if round == 1 then
+		local tipmsg = string.format(Lang.ScriptTips.jjc040,8)
+	elseif round == 2 then
+			local tipmsg = string.format(Lang.ScriptTips.jjc040,4)
+	elseif round == 3 then
+			local tipmsg = string.format(Lang.ScriptTips.jjc040,2)
+	end
+	System.broadcastTipmsg(tipmsg,ttScreenCenter)
+end
+
+ArenaFuncList.GmClearBet = function (sysarg)
+	local  var = LActor.getStaticVar(sysarg)
+ 	var.zbsBets = nil
+end
+
+ArenaFuncList.GmResetRank = function (sysarg)
+	OnZbsReset()
+end
+
+-- 进入匹配场景
+ArenaFuncList.EnterMatchScene = function(sysarg, hdl)
+	local openservertTime = System.getServerOpenTime()	
+	local curTime = System.getCurrMiniTime()
+	if System.isSameWeek_new(openservertTime , curTime) then
+    	LActor.sendTipmsg(sysarg, Lang.ScriptTips.jjc049, ttMessage)
+    	return 
+  	end
+end
+
+EventCallDispatcher.registerFubenTimeout(ArenaConf.zbsFubenId,  ArenaFuncList.OnZbsFubenTimeout)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, ArenaFuncList.newDayLogin)
+-- EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, ArenaFuncList.OnAreanaLogin) --- 有冲突通天路
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aePetBattle, ArenaFuncList.OnPetBattle)
+SystemHandlerDispatcher.registerSystemHander(BaseTypes.SystemId.arenaSystem, ArenaFuncList.HandlerArenaOp)
+TimerMsgFunc.register(TimerMsg.ZbsPkBetDelay, ArenaFuncList.ZbsBetDelay)
+TimerMsgFunc.register(TimerMsg.ZbsPkRefreshFeast, ArenaFuncList.RefreshFeast)
+EventCallDispatcher.regEntityCallbackMsg(EntityCallbackMsg.ZbsStateChanged, ArenaFuncList.ZbsStateChanged)
+EventCallDispatcher.regEntityCallbackMsg(EntityCallbackMsg.ZysStateChanged, ArenaFuncList.ZysStateChanged)
+EventCallDispatcher.regEntityCallbackMsg(EntityCallbackMsg.ZysCountDown, ArenaFuncList.ZysCountDown)
+EventCallDispatcher.regEntityCallbackMsg(EntityCallbackMsg.ZysPkDelay, ArenaFuncList.ZysPkDelay)
+EventCallDispatcher.regEntityCallbackMsg(EntityCallbackMsg.ZbsCountDown, ArenaFuncList.ZbsCountDown)
+EventCallDispatcher.regEntityCallbackMsg(EntityCallbackMsg.ZbsPkStartDelay, ArenaFuncList.ZbsPkStartDelay)
+EventCallDispatcher.regEntityCallbackMsg(EntityCallbackMsg.ZbsPkEndDelay, ArenaFuncList.ZbsPkEndDelay)
+EventCallDispatcher.registerFubenEnter(ArenaConf.fbId, ArenaFuncList.OnEnterZysFuben)
+EventCallDispatcher.registerFubenExit(ArenaConf.fbId, ArenaFuncList.OnExitZysFuben)
+EventCallDispatcher.registerFubenEnter(ArenaConf.zbsFubenId, ArenaFuncList.OnEnterZbsFuben)
+EventCallDispatcher.registerFubenExit(ArenaConf.zbsFubenId, ArenaFuncList.OnExitZbsFuben)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeOnActorDeath, ArenaFuncList.OnDeath)
+EventCallDispatcher.registerFubenGameOver(ArenaConf.fbId,  EventCallDispatcher.OnZysGameOver)
+EventCallDispatcher.registerSceneEnter(ArenaConf.sceneId, ArenaFuncList.EnterMatchScene)
+--[[
+table.insert(InitFnTable,OnArenaInit)
+table.insert(FinaFnTable,OnArenaFina)
+]]
+table.insert(LocalDT.ScriptDelayConfig[22], ArenaFuncList.OnDelayMatch)
+table.insert(LocalDT.ScriptDelayConfig[23], ArenaFuncList.OnZysDelayExit)
+table.insert(LocalDT.ScriptDelayConfig[24], ArenaFuncList.OnZbsDelayExit)
+
+
+GmEventFuncList.register( "zbsstate", ArenaFuncList.GmZbsState, 1)
+GmEventFuncList.register( "zysstart", ArenaFuncList.GmZysStart, 1)
+GmEventFuncList.register( "zysstop", ArenaFuncList.GmZysStop, 1)
+GmEventFuncList.register( "xiazhu", ArenaFuncList.GmXiazhu, 1)
+GmEventFuncList.register( "clearbet", ArenaFuncList.GmClearBet, 1)
+GmEventFuncList.register( "resetrank", ArenaFuncList.GmResetRank, 1)
+
+-- 调整积分相同的项
+ArenaFuncList.AdjustItem = function(rank, rankItem)
+	local idx = Ranking.getIndexFromPtr(rankItem)
+	local point = Ranking.getPoint(rankItem)
+
+	-- 向上移
+	local swap = false
+	local pos = idx -1
+	while pos >= 0 do
+		local item = Ranking.getItemFromIndex(rank, pos)
+		if item == nil or Ranking.getPoint(item) ~= point then break end
+		if CompareZysRankItem(rankItem, item) > 0 then
+			Ranking.swapEqualItem(rank, rankItem, item) -- 交换
+			-- print("swap up")
+			swap = true
+		else
+			break
+		end
+		pos = pos - 1
+	end
+
+	-- 向下移
+	if not swap then
+		for pos = idx+1,16 do
+			local item = Ranking.getItemFromIndex(rank, pos)
+			if item == nil or Ranking.getPoint(item) ~= point then break end
+			if CompareZysRankItem(rankItem, item) < 0 then
+				Ranking.swapEqualItem(rank, rankItem, item) -- 交换
+				-- print("swap down")
+			else
+				break
+			end
+		end
+	end
+end
+
+function CompareZysRankItem(item1, item2)
+	--[[
+	{ "aname", "job", "fight", "total", "win", "camp", "level", "guild", "sex", "icon" })
+	]]
+
+	-- 胜率，场次，战力
+
+	local t1 = Ranking.getSubInt(item1, 3)
+	local t2 = Ranking.getSubInt(item2, 3)
+
+	local rate1, rate2
+	if t1 > 0 then
+		rate1 = Ranking.getSubInt(item1, 4) / t1
+	else
+		rate1 = 0
+	end
+	if t2 > 0 then
+		rate2 = Ranking.getSubInt(item2, 4) / t2
+	else
+		rate2 = 0
+	end
+
+	if rate1 > rate2 then
+		return 1
+	elseif rate1 < rate2 then
+		return -1
+	end
+
+	if t1 > t2 then
+		return 1
+	elseif t1 < t2 then
+		return -1
+	end
+
+	local f1 = Ranking.getSubInt(item1, 2)
+	local f2 = Ranking.getSubInt(item2, 2)
+
+	if f1 > f2 then
+		return 1
+	elseif f1 < f2 then
+		return -1
+	end
+
+	return 0
+end
+
+-- 合服后处理仙道会数据
+function ClearMergeArena(sysarg)
+	print("ClearMergeArena")
+	-- 历届仙王
+	local rank = Ranking.getRanking(ArenaFuncList.arenaHisRankName)
+	if rank ~= nil then
+		Ranking.clearRanking(rank)
+		Ranking.save(rank, nil)
+	end
+	-- 清理上届16强数据
+	rank = Ranking.getRanking(ArenaFuncList.arenaPrevRankName)
+	if rank ~= nil then
+		Ranking.clearRanking(rank)
+		Ranking.save(rank, nil)
+	end
+end
+
+
+function testmail(sysarg)
+	local name = LActor.getName(sysarg)
+	local year, month, day = 0, 0, 0
+	System.getDate(year, month, day)
+	local tipmsg = string.format(Lang.ScriptTips.jjc030,name,year,month,day,100)
+	System.sendGmMailOffLine(name, tipmsg, 2, 0, 100, 1)
+end
+
+function enterzbs(sysarg)
+	print("testarena")
+	ArenaFuncList[15](sysarg)
+end
+
+function zysstop(sysarg)
+	print("zys stop")
+	ArenaFuncList.ZysStateChanged()
+end
+
+function testzbs(sysarg)
+	ArenaFuncList[4](sysarg)
+end
+
+-- 清除自由赛CD时间
+function testzystime(sysarg)
+	local var = LActor.getStaticVar(sysarg)
+	var.zysunusualtime = nil
+end
+
+function testarena(sysarg)
+    ArenaFuncList[14](sysarg)
+	--[[local petPtr = LActor.petGetBattlePetPtr(sysarg)
+	if petPtr ~= nil then
+		local zysPetBuff = ArenaConf.zysPetBuff
+		for i=1,#zysPetBuff do
+			local buff = zysPetBuff[i]
+			LActor.addBuff(petPtr, buff.type, ArenaConf.buffGroup, buff.value, buff.times, buff.interval, Lang.ScriptTips.jjc032)
+		end
+	end]]
+end

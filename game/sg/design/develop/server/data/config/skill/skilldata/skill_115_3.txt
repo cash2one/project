@@ -1,0 +1,53 @@
+{
+	actions=
+	{
+		{act=6,effect=20056,},	
+	},
+	
+	desc=Lang.Skill.s115L3Desc,
+	
+	iconID=115,
+	
+	actRange=
+	{
+		{
+			xStart=0,
+			xEnd=0,
+			yStart=0,
+			yEnd=0,
+			
+			rangeType=0,
+			rangeCenter=0,	
+			acts=
+			{
+				{
+					conds=
+					{
+						{cond=11,value=400},--10000/10000,配置1万就是100%
+						{cond=3,value=false},
+						{cond=12,value=false},
+					},
+
+					results=
+					{
+						{mj=0,timeParam=1,type=27,delay=0,value={id=100,rate=6700,type=3,value=0}},
+					},
+					specialEffects=
+					{
+						{type=4,mj=0,id=20058,keepTime=0,delay=0,always=false,targetpos=true},
+					},
+				},
+			},
+		},
+	},
+	trainConds=
+	{
+	},
+	
+	spellConds=
+	{
+	},
+	singTime=0,
+
+	cooldownTime=30000,
+},

@@ -1,0 +1,505 @@
+--#include "data\functions\basedef\systemid.txt" once
+--#include "data\language\LangCode.txt" once
+--#include "data\functions\gamestartevent.txt" once
+--#include "data\functions\miscfunc.txt" once
+--#include "data\config\activity\zhounianfanpaiconf.txt" once
+
+ZNFP = {}
+
+ZNFP.sendCardInfo = function ( sysarg )
+
+	local state = ONLINEREWARD.GetActivityState(znfpConf.activityId)
+	if state == 0 then return  end
+
+	-- body
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then
+		--print("getStaticVar = nil ")
+		return
+	end
+
+	local sign = 0
+
+
+	if var.ZhouNianFanPai == nil then
+		var.ZhouNianFanPai = {}
+		var.ZhouNianFanPai.drawMaxCount = znfpConf.MaxFanPaiNum  --最多修复次数
+		var.ZhouNianFanPai.drawFreeCount = 1
+		var.ZhouNianFanPai.drawcount = 0
+		var.ZhouNianFanPai.accuPoint = 0
+		var.ZhouNianFanPai.giftGet = 1
+		var.ZhouNianFanPai.reward = 0
+		var.ZhouNianFanPai.cardArry = {}
+		for i=1,znfpConf.MaxCardNum do
+			var.ZhouNianFanPai.cardArry[i] = {}
+			var.ZhouNianFanPai.cardArry[i].id = -1
+			var.ZhouNianFanPai.cardArry[i].num = 0
+		end
+		--print("ZNFP.sendCardInfo var.ZhouNianFanPai == nil")
+	end
+
+	if  #var.ZhouNianFanPai.cardArry < 1 then
+		for i=1,znfpConf.MaxCardNum do
+			var.ZhouNianFanPai.cardArry[i] = {}
+			var.ZhouNianFanPai.cardArry[i].id = -1
+			var.ZhouNianFanPai.cardArry[i].num = 0
+		end
+	end
+
+	if var.ZhouNianFanPai.accuPoint >= znfpConf.jifenAward[var.ZhouNianFanPai.giftGet].jifen then
+		sign = 1
+	end
+
+	local temp = var.ZhouNianFanPai.drawcount
+	if temp ~= 0 then
+		temp = temp -1
+	end
+
+	local npack = DataPack.allocPacket(sysarg, BaseTypes.SystemId.miscsSystem, 150)
+	if npack == nil then return end
+
+	DataPack.writeShort(npack, var.ZhouNianFanPai.drawMaxCount) --最大修补次数
+	DataPack.writeShort(npack, var.ZhouNianFanPai.drawFreeCount) --免费修补次数
+	DataPack.writeShort(npack, temp) --已修补次数
+	DataPack.writeShort(npack, znfpConf.jifenAward[var.ZhouNianFanPai.giftGet].jifen) --积分段
+	--print("积分段==================:"..znfpConf.jifenAward[var.ZhouNianFanPai.giftGet].jifen)
+	DataPack.writeUInt(npack, var.ZhouNianFanPai.accuPoint) --积分数
+	--print("积分数=====================:"..var.ZhouNianFanPai.accuPoint)
+	DataPack.writeUInt(npack, sign) --礼包领取状态
+	DataPack.writeUInt(npack, var.ZhouNianFanPai.reward) --领取积分礼包数
+	
+	DataPack.flush(npack)
+end
+
+
+----------------------------下发卡牌信息
+ZNFP.GetCardInfo = function (sysarg)
+	-- body
+	local state = ONLINEREWARD.GetActivityState(znfpConf.activityId)
+	if state == 0 then return  end
+	
+	ZNFP.sendCardInfo(sysarg)
+
+end
+
+--根据输入一组概率，概率之和为100%,键值组
+ZNFP.pget_only_one_group_lotty = function (rate_goup)
+	
+	local total_num = 0
+	for k,v in pairs(rate_goup) do
+		total_num = total_num + v.rate
+	end
+	local randnum = System.getRandomNumber(total_num)
+
+	total_num = 0
+	for k,v in pairs(rate_goup) do
+		if randnum >= total_num and randnum < (total_num + v.rate) then
+			return v
+		end
+		total_num = total_num + v.rate
+	end
+end
+
+ZNFP.DrawCardReply = function ( sysarg, resArry )
+	-- body
+	-- body
+	local state = ONLINEREWARD.GetActivityState(znfpConf.activityId)
+	if state == 0 then return  end
+
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then
+		--print("getStaticVar = nil ")
+		return
+	end
+
+	local sign = 0 
+
+	if var.ZhouNianFanPai == nil then
+		var.ZhouNianFanPai = {}
+		var.ZhouNianFanPai.drawcount = 0
+		var.ZhouNianFanPai.drawMaxCount = znfpConf.MaxFanPaiNum
+		var.ZhouNianFanPai.drawFreeCount = 1
+		var.ZhouNianFanPai.accuPoint = 0
+		var.ZhouNianFanPai.giftGet = 1
+		var.ZhouNianFanPai.reward = 0
+		var.ZhouNianFanPai.cardArry = {}
+		for i=1,znfpConf.MaxCardNum do
+			var.ZhouNianFanPai.cardArry[i] = {}
+			var.ZhouNianFanPai.cardArry[i].id = -1
+			var.ZhouNianFanPai.cardArry[i].num = 0
+		end
+
+	end
+
+	if  #var.ZhouNianFanPai.cardArry < 1 then
+		for i=1,znfpConf.MaxCardNum do
+			var.ZhouNianFanPai.cardArry[i] = {}
+			var.ZhouNianFanPai.cardArry[i].id = -1
+			var.ZhouNianFanPai.cardArry[i].num = 0
+		end
+	end
+
+	if var.ZhouNianFanPai.accuPoint >= znfpConf.jifenAward[var.ZhouNianFanPai.giftGet].jifen then
+		sign = 1
+	end
+
+
+	local npack = DataPack.allocPacket(sysarg, BaseTypes.SystemId.miscsSystem, 151)
+	if npack == nil then return end
+
+	DataPack.writeShort(npack, var.ZhouNianFanPai.drawMaxCount)
+	--print("剩余最大修补次数:"..var.ZhouNianFanPai.drawMaxCount)
+	DataPack.writeShort(npack, var.ZhouNianFanPai.drawFreeCount)
+	--print("免费修补次数:"..var.ZhouNianFanPai.drawFreeCount)
+	DataPack.writeShort(npack, var.ZhouNianFanPai.drawcount-1)
+	--print("已修补次数:"..(var.ZhouNianFanPai.drawcount - 1))
+	DataPack.writeUInt(npack, var.ZhouNianFanPai.accuPoint)
+	--print("已获得积分:"..var.ZhouNianFanPai.accuPoint)
+	DataPack.writeUInt(npack, sign)
+	--print("积分礼包领取标志:"..sign)
+	DataPack.writeUInt(npack, var.ZhouNianFanPai.reward)
+	--print("已领取积分礼包数:"..var.ZhouNianFanPai.reward)
+
+	DataPack.flush(npack)
+end
+
+
+
+--------------------------------翻牌
+ZNFP.DrawCard = function (sysarg, msgid, datapack )
+	-- body
+	local state = ONLINEREWARD.GetActivityState(znfpConf.activityId)
+	if state == 0 then return  end
+
+	local cardNum = 1
+
+	local state = DataPack.readByte(datapack) 
+
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then
+		--print("getStaticVar = nil ")
+		return
+	end
+
+
+	if var.ZhouNianFanPai == nil then
+		--print("ZNFP.DrawCard  var.ZhouNianFanPai == nil ")
+		return	
+	end
+
+	if var.ZhouNianFanPai.drawMaxCount == 0 then
+		LActor.sendTipmsg(sysarg, "今日修复次数已用完", ttMessage)
+		return
+	end
+
+	if var.ZhouNianFanPai.drawcount - 1 == znfpConf.MaxCardNum then
+		LActor.sendTipmsg(sysarg, "该墙已修复完毕，少侠真乃神人。尝试修复下一堵墙吧！", ttMessage)
+		return
+	end
+
+	if  var.ZhouNianFanPai.drawcount == nil then 
+		var.ZhouNianFanPai.drawcount = 0
+	end
+
+
+	if state == 0 then
+		cardNum = 1
+	elseif state == 1 then
+		if var.ZhouNianFanPai.drawcount == 0 then
+			cardNum = znfpConf.MaxCardNum - var.ZhouNianFanPai.drawcount
+		else
+			cardNum = znfpConf.MaxCardNum - var.ZhouNianFanPai.drawcount + 1
+		end
+	end
+
+	if var.ZhouNianFanPai.drawMaxCount < cardNum then
+		cardNum = var.ZhouNianFanPai.drawMaxCount
+	end
+
+	local allCost = 0
+	for i=1,cardNum do
+		local cost = 0
+		if var.ZhouNianFanPai.drawFreeCount == 1 then
+
+			if var.ZhouNianFanPai.drawcount == 0 then
+				cost = znfpConf.DrowCardCost[var.ZhouNianFanPai.drawcount + i]
+			else
+				cost = znfpConf.DrowCardCost[var.ZhouNianFanPai.drawcount + i - 1]
+			end
+
+			if i == 1 then
+				cost = 0 --第一张免费
+			end	
+		else
+			if var.ZhouNianFanPai.drawcount == 0 then
+				cost = znfpConf.DrowCardCost[var.ZhouNianFanPai.drawcount + i]
+			else
+				cost = znfpConf.DrowCardCost[var.ZhouNianFanPai.drawcount + i - 1]
+			end
+
+		end
+
+		if cost == nil then return end 
+
+		allCost = allCost + cost
+	end
+
+
+	if LActor.getMoneyCount( sysarg, mtYuanbao) < allCost then -- 是否有足够的金钱
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.znfp003, ttMessage)
+		return 
+	end
+
+  	if Item.getBagEmptyGridCount(sysarg) < cardNum then
+    	LActor.sendTipmsg( sysarg, Lang.ScriptTips.znfp004, ttMessage )
+    	return
+  	end
+
+  	if allCost ~= 0 then
+  		LActor.changeMoney( sysarg, mtYuanbao, -allCost, 192, true, "ZhouNianFanPai", "drawCard" )
+  	end
+
+  	local awardArry = {}
+	for i = 1,cardNum do
+
+		local j = 1
+		if var.ZhouNianFanPai.drawcount ~= 0 then
+			j = var.ZhouNianFanPai.drawcount 
+		else
+			var.ZhouNianFanPai.drawcount = 1
+		end
+
+		local award = ZNFP.pget_only_one_group_lotty(znfpConf.award[j])
+		awardArry[i] = {}
+		--awardArry[i].pos = v
+		awardArry[i].id  = award.id
+		awardArry[i].num   = award.count
+		var.ZhouNianFanPai.drawcount = var.ZhouNianFanPai.drawcount + 1 --已修补的数量
+		var.ZhouNianFanPai.drawMaxCount = var.ZhouNianFanPai.drawMaxCount - 1
+		var.ZhouNianFanPai.accuPoint = var.ZhouNianFanPai.accuPoint + 1
+		var.ZhouNianFanPai.cardArry[i].id = award.id
+		var.ZhouNianFanPai.cardArry[i].num = award.count
+		LActor.addItem(sysarg, award.id, 0, 0, award.count, 1, "GlobalNPC ")
+		local effects = {}
+		local effect = {}
+		effect.type = 1  -- 1为物品,暂时只支持发物品所以写死
+		effect.id = award.id
+		effect.count = award.count
+		effects[#effects+1] = effect
+		-- 播放特效
+		if #effects > 0 then
+			MiscFunc.PlayItemEffect(sysarg, 7, effects)
+		end
+
+	end
+
+	if var.ZhouNianFanPai.drawFreeCount == 1 then
+		var.ZhouNianFanPai.drawFreeCount = 0
+	end
+
+	--ZNFP.sendCardInfo (sysarg)
+	ZNFP.DrawCardReply(sysarg, awardArry)
+end
+
+-----------------------------------领取礼包
+ZNFP.GetPoitGift = function (sysarg)
+
+	local state = ONLINEREWARD.GetActivityState(znfpConf.activityId)
+	if state == 0 then return  end
+
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then
+		--print("getStaticVar = nil ")
+		return
+	end
+
+	if var.ZhouNianFanPai == nil then
+		--print("var.ZhouNianFanPai == nil ")
+		return	
+	end
+
+	if var.ZhouNianFanPai.giftGet == nil then 
+		var.ZhouNianFanPai.giftGet = 1
+	end
+
+	if var.ZhouNianFanPai.accuPoint >= znfpConf.jifenAward[var.ZhouNianFanPai.giftGet].jifen then
+
+		if Item.getBagEmptyGridCount(sysarg) < 1 then
+	    	LActor.sendTipmsg( sysarg, Lang.ScriptTips.znfp004, ttMessage )
+	    	return
+	  	end
+
+		local itemid = znfpConf.jifenAward[var.ZhouNianFanPai.giftGet].item.id
+		local itemcout = znfpConf.jifenAward[var.ZhouNianFanPai.giftGet].item.count
+		LActor.addItem(sysarg, itemid, 0, 0, itemcout, 1, "fanpaigift")
+		local effects = {}
+		local effect = {}
+		effect.type = 1  -- 1为物品,暂时只支持发物品所以写死
+		effect.id = itemid
+		effect.count = itemcout
+		effects[#effects+1] = effect
+		-- 播放特效
+		if #effects > 0 then
+			MiscFunc.PlayItemEffect(sysarg, 7, effects)
+		end
+
+		var.ZhouNianFanPai.giftGet = var.ZhouNianFanPai.giftGet + 1
+		var.ZhouNianFanPai.reward = var.ZhouNianFanPai.reward + 1
+
+		local broadcastmsg = LActor.getName(sysarg)..",吉星高照在修补城墙中获得了%s"
+		local broadcastmsg = string.format(broadcastmsg, Item.getColorName(itemid))
+		System.broadcastTipmsg(broadcastmsg, ttScreenCenter)
+		--System.broadcastTipmsg(broadcastmsg..",##textbutton,#c2cab0a#u1修补城墙#u0#info,@@showSysWin,47,%d##", ttHearsay)
+
+	end
+
+	ZNFP.sendCardInfo(sysarg)
+end
+
+ZNFP.RefreshCard = function ( sysarg, flag)
+	-- body
+	local state = ONLINEREWARD.GetActivityState(znfpConf.activityId)
+	if state == 0 then return  end
+
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then
+		--print("getStaticVar = nil ")
+		return
+	end
+
+	local sign = 0
+
+	if var.ZhouNianFanPai.accuPoint >= znfpConf.jifenAward[var.ZhouNianFanPai.giftGet].jifen then
+		sign = 1
+	end
+
+	if sign == 1 then
+		LActor.sendTipmsg(sysarg, "请先领取左则积分礼包奖励再点下一城墙", ttMessage)
+		return
+	end
+
+	if var.ZhouNianFanPai == nil then
+		--print("var.ZhouNianFanPai == nil")
+		return
+	else
+
+		if flag == 1 then --免费重置
+			--var.ZhouNianFanPai.drawMaxCount = znfpConf.MaxFanPaiNum
+			--var.ZhouNianFanPai.drawFreeCount = 1
+			var.ZhouNianFanPai.drawcount = 0
+
+		elseif flag == 2 then --有费重置
+			if LActor.getMoneyCount( sysarg, mtYuanbao) < znfpConf.CostRefreshCard then -- 是否有足够的金钱
+				LActor.sendTipmsg(sysarg, Lang.ScriptTips.znfp003, ttMessage)
+				return
+			end
+			LActor.changeMoney( sysarg, mtYuanbao, -znfpConf.CostRefreshCard, 192, true, "ZhouNianFanPai", "refreshCard" )
+
+			--var.ZhouNianFanPai.drawMaxCount = znfpConf.MaxFanPaiNum
+			--var.ZhouNianFanPai.drawFreeCount = 1
+			var.ZhouNianFanPai.drawcount = 0
+
+		end
+
+	end
+
+	ZNFP.GetCardInfo(sysarg)
+end
+
+
+-----------------------------------换牌
+ZNFP.RefreshCardClient = function (sysarg, msgid, datapack)
+
+	local state = ONLINEREWARD.GetActivityState(znfpConf.activityId)
+	if state == 0 then return  end
+
+	local flag_refresh =  DataPack.readByte(datapack)
+	if flag_refresh == 0 then
+		ZNFP.RefreshCard(sysarg, 2)
+	else
+		ZNFP.RefreshCard(sysarg, 1)
+	end
+
+	ZNFP.sendCardInfo(sysarg)
+end
+
+
+ZNFP.OnNewDay = function ( sysarg )
+
+	local state = ONLINEREWARD.GetActivityState(znfpConf.activityId)
+	if state == 0 then return  end
+
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then
+		return
+	end
+
+
+	if var.ZhouNianFanPai == nil then
+		return	
+	end
+
+	if var.ZhouNianFanPai.giftGet == nil then 
+		var.ZhouNianFanPai.giftGet = 1
+	end
+	
+	if var.ZhouNianFanPai.accuPoint >= znfpConf.jifenAward[var.ZhouNianFanPai.giftGet].jifen then
+		local actorid = LActor.getActorId(sysarg)
+		System.sendGmMailOffLine(actorid, "修复城墙积分礼包奖励" , 1, znfpConf.jifenAward[var.ZhouNianFanPai.giftGet].item.id, 1, 1)
+		var.ZhouNianFanPai.giftGet = var.ZhouNianFanPai.giftGet + 1
+		var.ZhouNianFanPai.reward = var.ZhouNianFanPai.reward + 1
+	end
+
+	var.ZhouNianFanPai.drawMaxCount = znfpConf.MaxFanPaiNum
+	var.ZhouNianFanPai.drawFreeCount = 1
+	
+	ZNFP.RefreshCard(sysarg, 1)
+
+end
+
+--下发邮件
+ZNFP.activityend = function(sysarg)
+
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end 
+	local actorid = LActor.getActorId(sysarg)
+
+	if var.ZhouNianFanPai == nil then
+		return	
+	end
+
+	if var.ZhouNianFanPai.giftGet == nil then 
+		var.ZhouNianFanPai.giftGet = 1
+	end
+
+	local nowtime = System.getCurrMiniTime()
+
+	local state,_,endtime = ONLINEREWARD.GetActivityState(znfpConf.activityId)
+
+	if nowtime > endtime then
+
+		if var.ZhouNianFanPai.accuPoint >= znfpConf.jifenAward[var.ZhouNianFanPai.giftGet].jifen then
+			local actorid = LActor.getActorId(sysarg)
+			System.sendGmMailOffLine(actorid, "修复城墙积分礼包奖励" , 1, znfpConf.jifenAward[var.ZhouNianFanPai.giftGet].item.id, 1, 1)
+			var.ZhouNianFanPai.giftGet = var.ZhouNianFanPai.giftGet + 1
+			var.ZhouNianFanPai.reward = var.ZhouNianFanPai.reward + 1
+		end
+
+		var.ZhouNianFanPai = nil
+
+	end
+
+end
+
+table.insert(ActorTimeFnTable, ZNFP.activityend)
+
+
+MiscsImplement.registerMsgHandler(150, ZNFP.GetCardInfo)
+--MiscsImplement.registerMsgHandler(LogicCmd.miscSys.sub.cYuLeWuQiongEnter, ZNFP.GetCardInfo)
+MiscsImplement.registerMsgHandler(151, ZNFP.DrawCard)
+MiscsImplement.registerMsgHandler(152, ZNFP.GetPoitGift)
+MiscsImplement.registerMsgHandler(153, ZNFP.RefreshCardClient)
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, ZNFP.OnNewDay)
+
+table.insert(TimeFnTable, ZNFP.CheckStateTimer)

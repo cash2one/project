@@ -1,0 +1,32 @@
+﻿{
+	id = 60108,
+	name = Lang.Item.n60108,
+	desc = Lang.Item.i60108,
+	type = 16,
+	sellType = 33,
+	icon = 640,
+	shape = {01002,01002,02102,02102,03102,03102,04002,04002},
+	color = 3,
+	dura = 0,
+	dup = 0,
+	colGroup = 0,
+	dealType = 0,
+	dealPrice = 0,
+	time = 0,
+	suitId = 0,
+	staitcAttrs = { 
+		{ type = 27, value = 50, }, 
+                { type = 17, value = 500, },
+                { type = 23, value = 50, },
+		{ type = 33, value = 50, }, 
+	},
+	strongAttrs = {  
+	},
+	flags = { 
+		recordLog = true, 
+	},
+	conds = { 
+		{ cond = 1, value = 1, },	
+        { cond = 2, value = 1, },		
+	},
+},

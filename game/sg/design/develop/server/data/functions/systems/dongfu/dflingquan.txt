@@ -1,0 +1,182 @@
+
+
+DongfuManager.runLingquan = function(dfData, curTime)
+	local info = dfData.info
+	if info.lingquanEnd ~= nil then
+		if info.lingquanEnd <= curTime then
+			info.lingquanEnd = nil
+
+			if info.lingquanValue < DongfuConf.maxLingquanValue[info.level or 1] then
+				DongfuManager.setStateFlag(dfData, 0, true)
+			end
+		end
+		return true
+	end
+	return false
+end
+
+DongfuManager.lingquanAdd = function(pChar)
+	local atDongfu, ownerId = DongfuManager.isAtDongfu(pChar)
+	if not atDongfu then return end
+	local dfData = DongfuManager.getDongfuData(ownerId)
+	local info = dfData.info
+	local lvl = info.level or 1
+	local lqValue = info.lingquanValue or 0
+	local mxLqValue = DongfuConf.maxLingquanValue[lvl]
+	
+	if lqValue >= mxLqValue then
+		return LActor.sendTipmsg(pChar, Lang.ScriptTips.df003, ttMessage)
+	end
+
+	local curTime = System.getCurrMiniTime()
+	if info.lingquanEnd ~= nil and info.lingquanEnd >= curTime then
+		return LActor.sendTipmsg(pChar, Lang.ScriptTips.df002, ttMessage)
+	end
+
+	if DongfuManager.isAtHome(pChar) then
+		if (info.selfLingquanCount or 0) >= DongfuConf.lingquanSelfCount then
+			return LActor.sendTipmsg(pChar, Lang.ScriptTips.df005, ttMessage)
+		end
+		info.selfLingquanCount = (info.selfLingquanCount or 0) + 1
+		DongfuManager.normalEvent(pChar, dfData, 3)
+		----------------
+		DongfuManager.operatingEvent(pChar, dfData, 3)
+		----------------
+		local count = DongfuConf.lqAddAward.count
+		LActor.giveAward(pChar, DongfuConf.lqAddAward.type, count)
+		--LActor.sendTipmsg(pChar, string.format(Lang.ScriptTips.df012, count), ttMessage)
+
+		local dp = DataPack.allocPacket(pChar, 139, 68)
+		DataPack.writeInt(dp, count)
+		DataPack.flush(dp)
+
+		DongfuManager.notiInfoToSelf(dfData)
+	else
+		local sId = LActor.getActorId(pChar)
+		local sData = DongfuManager.getDongfuData(sId)
+		local sInfo = sData.info
+		sInfo.otherLingquanCount = (sInfo.otherLingquanCount or 0) + 1
+		DongfuManager.onChanged(sId)
+
+		if sInfo.otherLingquanCount <= DongfuConf.lingquanAwardCount then
+			-- 帮好友充能
+			DongfuManager.normalEvent(pChar, dfData, 3)
+			DongfuManager.specEvent(pChar, dfData, 3)
+			-------------------------
+			DongfuManager.operatingEvent(pChar, dfData, 3)
+			-------------------------
+			local count = DongfuConf.lqAddAward.count
+			LActor.giveAward(pChar, DongfuConf.lqAddAward.type, count)
+			--LActor.sendTipmsg(pChar, string.format(Lang.ScriptTips.df012, count), ttMessage)
+
+			local dp = DataPack.allocPacket(pChar, 139, 68)
+			DataPack.writeInt(dp, count)
+			DataPack.flush(dp)
+		else
+			LActor.sendTipmsg(pChar, Lang.ScriptTips.df006, ttMessage)
+		end
+	end
+	local endTime = curTime + DongfuConf.lingquanCD
+	info.lingquanEnd = endTime
+	info.lingquanValue = lqValue + 1
+	-- 灵泉不可充能状态
+	DongfuManager.setStateFlag(dfData, 0, false)
+	DongfuManager.onChanged(ownerId)
+
+	local lqAddNoti = function(pChar)
+		local dp = DataPack.allocPacket(pChar, 157, 4)
+		DataPack.writeInt(dp, ownerId)
+		DataPack.writeShort(dp, info.lingquanValue)
+		DataPack.writeUInt(dp, endTime)
+		DataPack.flush(dp)
+	end
+	DongfuManager.broadcast(dfData.playerSet, lqAddNoti)
+end
+
+DongfuManager.lingquanAward = function(pChar)
+	local atHome, ownerId = DongfuManager.isAtHome(pChar)
+	if not atHome then return end
+
+	local dfData = DongfuManager.getDongfuData(ownerId)
+	local info = dfData.info
+	local lvl = info.level or 1
+	if info.lingquanValue < DongfuConf.maxLingquanValue[lvl] then return end
+
+	if info.lingquanAward == 1 then
+		return LActor.sendTipmsg(pChar, Lang.ScriptTips.df010, ttMessage)
+	end
+
+	--local type = DongfuConf.lingquanAwardType
+	--local count = DongfuConf.lingquanAward[lvl]
+	--LActor.giveAward(pChar, type, count)
+
+	local awards = DongfuConf.lingquanAward[lvl]
+	if Item.getBagEmptyGridCount(pChar) < awards.item_count then
+		LActor.sendTipmsg( pChar, Lang.ScriptTips.df015, ttMessage )
+		return
+	end
+
+	local effects = {}
+	--local effect = {}
+	for i=1, #awards.content do
+		local effect = {}
+
+		if awards.content[i].type == 0 then
+			--LActor.giveAward(pChar, awards.content[i].id, awards.content[i].count)
+			LActor.addItem(pChar, awards.content[i].id, awards.content[i].quality, awards.content[i].strong, awards.content[i].count, 1, "lingquanaward",1)
+
+			effect.type = 1  -- 1为物品,暂时只支持发物品所以写死
+			effect.id = awards.content[i].id
+			effect.count = awards.content[i].count
+			effects[#effects+1] = effect
+
+		elseif awards.content[i].type == 5 then
+			--LActor.giveAward(pChar, awards.content[i].type, awards.content[i].count)
+			LActor.changeMoney(pChar, 0, awards.content[i].count, 1, true, "dongfu", "lingquanaward")
+
+			effect.type = 2  -- 1为物品,暂时只支持发物品所以写死
+			effect.id = 0
+			effect.count = awards.content[i].count
+			effects[#effects+1] = effect
+		elseif awards.content[i].type == 6 then
+			--LActor.giveAward(pChar, awards.content[i].type, awards.content[i].count)
+			LActor.changeMoney(pChar, 1, awards.content[i].count, 1, true, "dongfu", "lingquanaward")
+
+			effect.type = 2  -- 1为物品,暂时只支持发物品所以写死
+			effect.id = 1
+			effect.count = awards.content[i].count
+			effects[#effects+1] = effect
+		elseif awards.content[i].type == 7 then
+			--LActor.giveAward(pChar, awards.content[i].type, awards.content[i].count)
+			LActor.changeMoney(pChar, 2, awards.content[i].count, 1, true, "dongfu", "lingquanaward")
+
+			effect.type = 2  -- 1为物品,暂时只支持发物品所以写死
+			effect.id = 2
+			effect.count = awards.content[i].count
+			effects[#effects+1] = effect
+		end
+	end
+
+	info.lingquanAward = 1
+
+	DongfuManager.notiInfoToSelf(dfData)
+
+	-- 播放特效
+	if #effects > 0 then
+		MiscFunc.PlayItemEffect(pChar, 7, effects)
+	end
+
+	--[[
+	LActor.sendTipmsg(pChar, string.format(Lang.ScriptTips.df013, count), ttMessage)
+	if type == 7 then
+		-- 绑定天珠
+		local dp = DataPack.allocPacket(pChar, 139, 67)
+		DataPack.writeInt(dp, 2)
+		DataPack.writeInt(dp, 1)
+		DataPack.writeInt(dp, 2)
+		DataPack.writeInt(dp, 2)
+		DataPack.writeInt(dp, count)
+		DataPack.flush(dp)
+	end
+	--]]
+end

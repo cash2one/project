@@ -1,0 +1,66 @@
+-- 五子连珠副本怪物处理
+--#include "data\functions\globaldefine.txt" once
+--#include "data\config\task\chessconfig.txt" once
+--#include "data\functions\tasks\teamfuben\chessfunc.txt" once
+
+ChessMon = {}
+
+ChessMon.ChessMonsterDie = function (monster,sysarg,monId)
+	local fbPtr = LActor.getFubenPrt(sysarg)
+	local hfb = Fuben.getFubenHandle(fbPtr)
+	local var = Fuben.getDyanmicVar(fbPtr)
+	if var.KillChess == nil then
+		var.KillChess = 0
+	end	
+	local x = LActor.getIntProperty(monster, PROP_ENTITY_POSX)
+	local y = LActor.getIntProperty(monster, PROP_ENTITY_POSY)
+	for i=1,#ChessConfig.pos do
+		local flag = false
+		for j=1,#ChessConfig.pos[i] do
+			if x == ChessConfig.pos[i][j].posx and y == ChessConfig.pos[i][j].posy then
+				x = i
+				y = j
+				flag = true
+				break
+			end
+		end
+		if flag then
+			break
+		end
+	end
+	local num = 0
+	if monId == ChessConfig.red then
+ 		num = ChessFunc.RedDieChange(hfb, x, y) + 1
+ 		var.KillChess = var.KillChess + num 
+	else
+		ChessFunc.KillOneChess(hfb, x, y, var.Board[x][y])
+		var.KillChess = var.KillChess + 1
+		num = 1
+
+		local actors = LuaHelp.getFbActorList(fbPtr)
+		if actors == nil then return end
+		for i = 1,#actors do
+			local actor = actors[i]
+			LActor.addSceneEffectByPix(actor, ChessConfig.chesseffect.id, ChessConfig.chesseffect.type, ChessConfig.chesseffect.time, 0, ChessConfig.pos[x][y].pixx, ChessConfig.pos[x][y].pixy)
+		end
+	end
+
+	local exp = 0
+	if ChessConfig.awardSet ~= nil then
+		if ChessConfig.awardSet[monId] ~= nil then
+			exp  = ChessConfig.awardSet[monId]
+		end
+	end
+
+	local actors = LuaHelp.getFbActorList(fbPtr)
+	if actors == nil then return end
+	for i = 1,#actors do
+		local actor = actors[i]
+		LActor.addExp(actor, exp, 202, 0)
+		LActor.SendAndChangeCaleValue(actor,caleOther2,num,true)	--现有积分
+	end
+end
+
+MonDieDispatcher.register( ChessConfig.white, ChessMon.ChessMonsterDie )
+MonDieDispatcher.register( ChessConfig.black, ChessMon.ChessMonsterDie )
+MonDieDispatcher.register( ChessConfig.red, ChessMon.ChessMonsterDie )

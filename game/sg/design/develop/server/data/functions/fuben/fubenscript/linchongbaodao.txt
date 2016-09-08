@@ -1,0 +1,355 @@
+
+
+LCBDhandle = {}
+
+LCBDhandle.OnEnterLCBD = function( sysarg, hfb, way )
+	-- print("===========LCBDhandle.OnEnterLCBD")
+
+	local hsc = LActor.getSceneHandle(sysarg)
+	if hsc == nil then return end
+	local pfb = Fuben.getFubenPtr( hfb )
+	local fbid = Fuben.getFubenIdbyFuBenPtr(pfb)
+
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	local var_fb = Fuben.getDyanmicVar(pfb)
+	if var_fb == nil then return end
+
+	if var_fb.lcbd_fbidx == nil then
+		-- local fbidx = 0 -- 副本难度
+		-- for i=1,#linchongbaodaoconfig.fbid do
+		-- 	if linchongbaodaoconfig.fbid[i] == fbid then
+		-- 		fbidx = i
+		-- 		break
+		-- 	end
+		-- end
+		-- if fbidx == 0 then
+		-- 	print("===========LCBDhandle.OnEnterLCBD error")
+		-- 	return
+		-- end
+		-- var_fb.lcbd_fbidx = fbidx
+		var_fb.lcbd_fbidx = Fuben.getFubenDifficulty(hfb) -- 副本难度
+		if var_fb.lcbd_fbidx == nil then return end
+	end
+
+	LActor.OnQuestEvent(49, 0, 1, true, sysarg)
+	LActor.OnQuestEvent(qtTianjiQiyuan, 0, 1, true, sysarg)
+	-- 初始化
+	fubenbase.Init( sysarg , fbid , linchongbaodaoconfig.sceneid[1])
+
+	if var_fb.lcbd_pro == nil then -- 已击杀多少波目标怪
+		var_fb.lcbd_pro = 0
+	end
+
+	local isfirst = 0
+
+	if var_fb.lcbd_monlist == nil then -- 洗牌
+		if var.lcbd_first == 1 then -- 非新手指引
+			var_fb.lcbd_monlist = {}
+			local tmp_list = {}
+			for i=1,#linchongbaodaoconfig.refresh[var_fb.lcbd_fbidx] do
+				tmp_list[i] = i
+			end
+			for i=1,#linchongbaodaoconfig.refresh[var_fb.lcbd_fbidx] do
+				local rand = System.getRandomNumber(#tmp_list)+1
+				var_fb.lcbd_monlist[i] = {}
+				var_fb.lcbd_monlist[i].ref_idx = tmp_list[rand]
+				var_fb.lcbd_monlist[i].has_ref = 0
+				table.remove(tmp_list,rand)
+			end
+		else -- 新手指引，全都是目标怪
+			isfirst = 1
+			var_fb.lcbd_monlist = {}
+			for i=1,#linchongbaodaoconfig.refresh[var_fb.lcbd_fbidx] do -- 找到一个目标怪
+				if linchongbaodaoconfig.refresh[var_fb.lcbd_fbidx][i].istarget == 1 then
+					for j=1,#linchongbaodaoconfig.refresh[var_fb.lcbd_fbidx] do -- 全部设成目标
+						var_fb.lcbd_monlist[j] = {}
+						var_fb.lcbd_monlist[j].ref_idx = i
+						var_fb.lcbd_monlist[j].has_ref = 0
+					end
+					break
+				end
+			end
+			var.lcbd_first = 1
+		end
+	end
+
+	if var_fb.lcbd_pro < linchongbaodaoconfig.target_num[var_fb.lcbd_fbidx] then
+		if Fuben.isKillAllMonster(hsc) then
+			LCBDhandle.CallSelectCard(sysarg, fbid, var_fb, isfirst)
+		end
+	-- else
+	end
+
+	Fuben.postSceneTimeCall(hsc, TimerMsg.LCBDcheck, 23, 1)
+end
+
+--(1) 通知客户端可以选择怪物卡牌 s-c
+LCBDhandle.CallSelectCard = function( sysarg, fbid, var_fb, isfirst )
+	-- print("----------LCBDhandle.CallSelectCard----------")
+	
+	local npack = DataPack.allocPacket(sysarg, 167, 11)
+	DataPack.writeInt(npack, 122) -- 副本id
+	DataPack.writeInt(npack, 1) -- 协议号
+	DataPack.writeInt(npack,var_fb.lcbd_pro) -- 已击杀多少波目标怪
+	DataPack.writeInt(npack,linchongbaodaoconfig.target_num[var_fb.lcbd_fbidx])
+	DataPack.writeInt(npack,#var_fb.lcbd_monlist)
+	for i=1,#var_fb.lcbd_monlist do
+		if var_fb.lcbd_monlist[i].has_ref == 0 then --已刷
+			DataPack.writeInt(npack,0)
+		else -- 未刷
+			DataPack.writeInt(npack,linchongbaodaoconfig.refresh[var_fb.lcbd_fbidx][var_fb.lcbd_monlist[i].ref_idx][1].monsterId)
+		end
+		DataPack.writeInt(npack,linchongbaodaoconfig.refresh[var_fb.lcbd_fbidx][var_fb.lcbd_monlist[i].ref_idx].istarget)
+	end
+	DataPack.writeByte(npack, isfirst or 0) -- 1第一次 0非第一次
+
+	DataPack.flush(npack)
+end
+
+--(2) 客户端发送选择的怪物卡牌 c-s
+LCBDhandle.SelectCard = function( sysarg, packet )
+	-- print("----------LCBDhandle.SelectCard----------")
+	local hsc = LActor.getSceneHandle(sysarg)
+	if hsc == nil then return end
+	if not Fuben.isKillAllMonster(hsc) then
+		print("linchongbaodao SelectCard error, still has monster")
+		return
+	end
+
+	local arg = DataPack.readInt(packet)
+
+	local pfb = LActor.getFubenPrt(sysarg)
+	if pfb == nil then return end
+	local fbid = Fuben.getFubenIdbyFuBenPtr(pfb)
+	local var_fb = Fuben.getDyanmicVar(pfb)
+	if var_fb == nil or var_fb.lcbd_monlist == nil or var_fb.lcbd_fbidx == nil or var_fb.lcbd_pro == nil then return end
+	var_fb.need_check = 0
+
+	if var_fb.lcbd_pro >= linchongbaodaoconfig.target_num[var_fb.lcbd_fbidx] then return end -- 击杀两波就可以
+	if var_fb.lcbd_monlist[arg] == nil or var_fb.lcbd_monlist[arg].has_ref == 1 then return end -- 是否已刷过
+	-- 是否杀死所以怪物
+
+	--[[ 刷怪
+	local idx = var_fb.lcbd_monlist[arg].ref_idx
+	local conf = linchongbaodaoconfig.refresh[var_fb.lcbd_fbidx]
+	var_fb.lcbd_monlist[arg].has_ref = 1
+	Fuben.createMonsters(hsc, conf[idx].monsterId, conf[idx].posX1, conf[idx].posX2, conf[idx].posY1, conf[idx].posY2, conf[idx].num, 0)
+
+	if conf[idx].istarget == 1 then 
+		var_fb.lcbd_pro = var_fb.lcbd_pro + 1
+	end]]
+	Fuben.postSceneTimeCall(hsc, TimerMsg.LCBDMosterRefresh, 3, 1, arg)
+
+	--回调客户端
+	LCBDhandle.SelectCallback(sysarg, fbid, arg, var_fb)
+end
+
+--(2) 选择完回调客户端 s-c
+LCBDhandle.SelectCallback = function( sysarg, fbid, arg, var_fb )
+	-- print("----------LCBDhandle.SelectCallback----------")
+	
+	local npack = DataPack.allocPacket(sysarg, 167, 11)
+	DataPack.writeInt(npack, 122) -- 副本id
+	DataPack.writeInt(npack, 2) -- 协议号
+	DataPack.writeInt(npack, arg) -- 选择的索引
+	local idx = var_fb.lcbd_monlist[arg].ref_idx
+	DataPack.writeInt(npack, linchongbaodaoconfig.refresh[var_fb.lcbd_fbidx][idx][1].monsterId) -- 怪物id
+	DataPack.writeInt(npack, linchongbaodaoconfig.refresh[var_fb.lcbd_fbidx][idx].istarget) -- 是否目标怪
+
+	DataPack.flush(npack)
+end
+
+--(3) 请求扫荡 c-s
+LCBDhandle.RequireSweep = function( sysarg, packet )
+	local index = DataPack.readInt(packet) -- 
+
+	local hsc = LActor.getSceneHandle(sysarg)
+	if hsc == nil then return end
+	local pfb = LActor.getFubenPrt(sysarg)
+	if pfb == nil then return end
+	local fbid = Fuben.getFubenIdbyFuBenPtr(pfb)
+	local var_fb = Fuben.getDyanmicVar(pfb)
+	if var_fb == nil or var_fb.lcbd_monlist == nil or var_fb.lcbd_fbidx == nil or var_fb.lcbd_pro == nil then return end
+	if var_fb.lcbd_pro >= linchongbaodaoconfig.target_num[var_fb.lcbd_fbidx] then return end -- 击杀两波就可以
+	-- 检查消耗 
+	local enough = LActor.CheckMoneyEnough(sysarg, mtYuanbao, linchongbaodaoconfig.sd_cost, true)
+    if enough == nil or enough == false then
+        return
+    end
+    
+	-- 扫荡
+	if var_fb.lcbd_monlist[index] == nil or var_fb.lcbd_monlist[index].has_ref == 1 then return end
+
+	LActor.changeMoney(sysarg,mtYuanbao,-linchongbaodaoconfig.sd_cost, 1, true, "linchongbaodao_shaodan")
+	local idx = var_fb.lcbd_monlist[index].ref_idx
+	local conf = linchongbaodaoconfig.refresh[var_fb.lcbd_fbidx]
+	var_fb.lcbd_monlist[index].has_ref = 1
+	if conf[idx].istarget == 1 then 
+		var_fb.lcbd_pro = var_fb.lcbd_pro + 1
+	end
+	-- 回调
+	LCBDhandle.SweepResult(sysarg, index, conf[idx][1].monsterId, conf[idx].istarget)
+	-- 判断是否结束副本
+	if var_fb.lcbd_pro >= linchongbaodaoconfig.target_num[var_fb.lcbd_fbidx] then
+		LCBDhandle.CallSelectCard(sysarg ,fbid ,var_fb)
+		var_fb.IsTongguan = 1
+		-- 副本结算
+		-- print("------副本结算------")
+		LActor.OnQuestEvent(49, 1, 1, true, sysarg)
+		fubenjiesuan.GameOver( sysarg )
+	else
+		-- 通知客户端可以选择怪物卡牌
+		-- LCBDhandle.CallSelectCard(sysarg ,fbid ,var_fb)
+	end
+end
+
+--(3) 扫荡结果 s-c
+LCBDhandle.SweepResult = function( sysarg, index, monsterId, istarget )
+	local npack = DataPack.allocPacket(sysarg, 167, 11)
+	DataPack.writeInt(npack, 122) -- 副本id
+	DataPack.writeInt(npack, 3) -- 协议号
+	DataPack.writeInt(npack, index) 
+	DataPack.writeInt(npack, monsterId) 
+	DataPack.writeInt(npack, istarget) 
+	DataPack.flush(npack)
+end
+
+-- 延迟刷怪
+LCBDhandle.DelayRefreshMonster = function( msgid, pscene, arg)
+	local hsc = Fuben.getSceneHandleByPtr(pscene)
+	if hsc == nil then return end
+	if not Fuben.isKillAllMonster(hsc) then
+		print("linchongbaodao DelayRefreshMonster error, still has monster")
+		return
+	end
+	local pfb = Fuben.getSceneFuben(pscene)
+	if pfb == nil then return end
+	local fbid = Fuben.getFubenIdbyFuBenPtr(pfb)
+	local var_fb = Fuben.getDyanmicVar(pfb)
+	if var_fb == nil or var_fb.lcbd_monlist == nil or var_fb.lcbd_fbidx == nil or var_fb.lcbd_pro == nil then return end
+	-- 刷怪
+	local idx = var_fb.lcbd_monlist[arg].ref_idx
+	local conf = linchongbaodaoconfig.refresh[var_fb.lcbd_fbidx]
+	var_fb.lcbd_monlist[arg].has_ref = 1
+	if conf[idx] then
+		for i=1,#conf[idx] do
+			Fuben.createMonsters(hsc, conf[idx][i].monsterId, conf[idx][i].posX1, conf[idx][i].posX2, conf[idx][i].posY1, conf[idx][i].posY2, conf[idx][i].num, 0)
+		end
+
+		if conf[idx].istarget == 1 then 
+			var_fb.lcbd_pro = var_fb.lcbd_pro + 1
+		end
+	end
+end
+
+-- 所有怪物死亡方法
+LCBDhandle.OnMonAllKilled = function( sceneId, scenePtr, flag, et )
+	local pfb = LActor.getFubenPrt(et)
+	local fbid = Fuben.getFubenIdbyFuBenPtr(pfb)
+	if pfb == nil then return end
+	local var_fb = Fuben.getDyanmicVar(pfb)
+	if var_fb == nil or var_fb.lcbd_monlist == nil or var_fb.lcbd_fbidx == nil or var_fb.lcbd_pro == nil then return end
+
+	local actor_list = LuaHelp.getFbActorList(pfb)
+	if var_fb.lcbd_pro >= linchongbaodaoconfig.target_num[var_fb.lcbd_fbidx] then
+		Fuben.SetFubenTime(LActor.getFubenHandle(et), 15)
+
+		var_fb.IsTongguan = 1
+		-- 副本结算
+		-- print("------副本结算------")
+		for i=1,#actor_list do
+			LActor.OnQuestEvent(49, 1, 1, true, actor_list[i])
+			fubenjiesuan.GameOver( actor_list[i] )
+		end
+	else
+		-- 通知客户端可以选择怪物卡牌
+		for i=1,#actor_list do
+			LCBDhandle.CallSelectCard(actor_list[i] ,fbid ,var_fb)
+		end
+	end
+end
+
+LCBDhandle.NetworkDispatch = function( sysarg, dp )
+	local cmdid = DataPack.readInt(dp)
+	if cmdid == 2 then
+		LCBDhandle.SelectCard(sysarg,dp)
+	elseif cmdid == 3 then
+		LCBDhandle.RequireSweep(sysarg,dp)
+	end
+end
+
+LCBDhandle.OnExitLCBD = function( sysarg, hfb, way )
+	if not way or way ~= 1 or not sysarg or not hfb then
+		-- print(" ---------退出副本--------"..tostring(way))
+		return
+	end
+	fubenbase.ExitFubenRestore( sysarg )
+end
+
+LCBDhandle.CheckRequire = function( msgid, psc )
+	local pfb = Fuben.getSceneFuben(psc)
+	if pfb == nil then return end
+	local fbid = Fuben.getFubenIdbyFuBenPtr(pfb)
+	local var_fb = Fuben.getDyanmicVar(pfb)
+	if var_fb == nil or var_fb.lcbd_monlist == nil or var_fb.lcbd_fbidx == nil or var_fb.lcbd_pro == nil then return end
+	if var_fb.need_check == 0 then return end
+	local arg = 1
+
+	if var_fb.lcbd_pro >= linchongbaodaoconfig.target_num[var_fb.lcbd_fbidx] then return end -- 击杀两波就可以
+	if var_fb.lcbd_monlist[arg] == nil or var_fb.lcbd_monlist[arg].has_ref == 1 then return end -- 是否已刷过
+
+	LCBDhandle.DelayRefreshMonster( TimerMsg.LCBDMosterRefresh, psc, arg)
+end
+
+-- 注册进入副本，杀死所以怪物方法
+for i=1,#linchongbaodaoconfig.fbid do
+	fubenbase.registerEnterFuben(linchongbaodaoconfig.fbid[i], nil)
+	EventCallDispatcher.registerFubenEnter(linchongbaodaoconfig.fbid[i],LCBDhandle.OnEnterLCBD)
+	-- 退出副本处理
+	EventCallDispatcher.registerFubenExit(linchongbaodaoconfig.fbid[i], LCBDhandle.OnExitLCBD)
+end
+for i=1,#linchongbaodaoconfig.sceneid do
+	MonAllKilledDispatcher.register( linchongbaodaoconfig.sceneid[i], LCBDhandle.OnMonAllKilled )
+end
+FubenMsgHandle.registerMsgHandler(122,LCBDhandle.NetworkDispatch)
+TimerMsgFunc.register(TimerMsg.LCBDMosterRefresh, LCBDhandle.DelayRefreshMonster)
+TimerMsgFunc.register(TimerMsg.LCBDcheck, LCBDhandle.CheckRequire)
+
+-- GM
+function lcbdfb( sysarg, arg )
+	fubenenter(sysarg,122)
+end
+
+function lcbd_refresh( sysarg, args )
+	local arg = tonumber(args[1])
+
+	local hsc = LActor.getSceneHandle(sysarg)
+	if hsc == nil then return end
+	local pfb = LActor.getFubenPrt(sysarg)
+	if pfb == nil then return end
+	local fbid = Fuben.getFubenIdbyFuBenPtr(pfb)
+	local var_fb = Fuben.getDyanmicVar(pfb)
+	if var_fb == nil or var_fb.lcbd_monlist == nil or var_fb.lcbd_fbidx == nil or var_fb.lcbd_pro == nil then return end
+
+	if var_fb.lcbd_pro >= linchongbaodaoconfig.target_num[var_fb.lcbd_fbidx] then return end -- 击杀两波就可以
+	if var_fb.lcbd_monlist[arg] == nil or var_fb.lcbd_monlist[arg].has_ref == 1 then return end -- 是否已刷过
+	-- 是否杀死所以怪物
+
+	--[[ 刷怪
+	local idx = var_fb.lcbd_monlist[arg].ref_idx
+	local conf = linchongbaodaoconfig.refresh[var_fb.lcbd_fbidx]
+	var_fb.lcbd_monlist[arg].has_ref = 1
+	Fuben.createMonsters(hsc, conf[idx].monsterId, conf[idx].posX1, conf[idx].posX2, conf[idx].posY1, conf[idx].posY2, conf[idx].num, 0)
+
+	if conf[idx].istarget == 1 then 
+		var_fb.lcbd_pro = var_fb.lcbd_pro + 1
+	end]]
+	Fuben.postSceneTimeCall(hsc, TimerMsg.LCBDMosterRefresh, 3, 1, arg)
+
+	--回调客户端
+	LCBDhandle.SelectCallback(sysarg, fbid, arg, var_fb)
+end
+
+GmEventFuncList.register( "myfb", lcbdfb, 1)
+GmEventFuncList.register( "lcbdrf", lcbd_refresh, 1)

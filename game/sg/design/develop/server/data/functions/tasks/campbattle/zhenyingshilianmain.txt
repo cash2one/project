@@ -1,0 +1,105 @@
+﻿-- 阵营之战NPC
+
+--#include "data\config\camp\campbattleconf.txt" once
+--#include "data\functions\mergepublic.txt" once
+
+-- 获取阵营之战奖励
+function GetCampBattleAward(sysarg)
+	-- 是否活动期间
+	--if Camp.isBattleState() then
+		--LActor.sendTipmsg(sysarg, Lang.TaskTalk.zy019, ttMessage)
+		--return 
+	--end
+	-- 战场是否存在
+	local bid = Camp.getBattleId(sysarg)
+	if bid < 1 or bid > CampBattleConf.maxBattle then
+		print("not in battle")
+		LActor.sendTipmsg(sysarg, Lang.TaskTalk.zy016, ttMessage)
+		return
+	end
+
+	-- 获取排行榜信息
+	local rankList = Camp.getRanking(0)
+	if rankList == nil then
+		print("rank list not exist")
+		LActor.sendTipmsg(sysarg, Lang.TaskTalk.zy016, ttMessage)
+		return
+	end
+
+	local id = LActor.getIntProperty(sysarg,PROP_ENTITY_ID)
+	local rankItem = Ranking.getItemPtrFromId(rankList, id)
+	if rankItem == nil then
+		LActor.sendTipmsg(sysarg, Lang.TaskTalk.zy017, ttMessage)
+		return 
+	end
+
+
+	if Ranking.getSub(rankItem, 8) == "1" then -- 是否领奖
+		LActor.sendTipmsg(sysarg, Lang.TaskTalk.zy018, ttMessage)
+		return
+	end
+
+	local rank = Ranking.getIndexFromPtr(rankItem) + 1
+
+	local moneyadd = 0
+	local expadd = 0
+	local levelStr = tostring(LActor.getLevel(sysarg))
+	local rankStr = tostring(rank)
+	local aname = LActor.getAccountName(sysarg)
+	local var_sys_d = System.getDyanmicVar()
+	-- 奖励经验
+	local exps = CampBattleConf.expAwards
+	for i=1,#exps do
+		local exp = exps[i]
+		if rank >= exp[1] and rank <= exp[2] then
+			local factor = exp[3]
+			local oldexp = factor
+			if var_sys_d.ZhongqiuDoubleExpThree ~= nil and var_sys_d.ZhongqiuDoubleExpThree == 1 then -- 中秋双倍经验活动期间经验翻倍
+				factor = factor + oldexp
+			end
+			expadd = LActor.addExpByLevel(sysarg, factor, 0, 0)
+			System.logCounter(id, aname, levelStr, "campbattle", tostring(expadd), rankStr, "exp", tostring(LActor.getIntProperty(sysarg, PROP_HP)))
+			break
+		end 
+	end
+	-- 奖励仙币
+	local moneys = CampBattleConf.moneyAwards
+	for i=1,#moneys do
+		local money = moneys[i]
+		if rank >= money[1] and rank <= money[2] then
+			moneyadd = money[3]
+			LActor.changeMoney(sysarg, mtBindCoin, moneyadd)
+			System.logCounter(id, aname, levelStr, "campbattle", tostring(moneyadd), rankStr, "xb")
+			break
+		end
+	end
+
+	if moneyadd > 0 or expadd > 0 then
+		local tips = string.format(Lang.TaskTalk.zy020, moneyadd, expadd)
+		LActor.sendTipmsg(sysarg, tips, ttMessage)
+	end
+
+	if expadd > 0 then -- 播放经验特效
+		LActor.playExpEffect(sysarg, expadd)
+	end
+
+	Ranking.setSub(rankItem, 8, "1") -- 已经领奖
+
+	Ranking.save(rankList, NULL)
+
+	-- BI记录玩家领取奖励
+	System.logCounter(id, LActor.getAccountName(sysarg), levelStr, "", "", "", "shi_lian_award", "", "", "", "", lfBI)
+end
+
+function CampBattle_Main(sysarg, str)
+	-- LActor.openDialogs(sysarg, diCampBattle)
+	-- 判断等级条件
+	if LActor.getLevel(sysarg) < CampBattleConf.levelLimit then
+		return str
+	end
+
+	str = str.."\\"..Lang.TaskTalk.zy015.."/@GetCampBattleAward"
+	return str
+end
+
+table.insert(MainFnTable,CampBattle_Main)

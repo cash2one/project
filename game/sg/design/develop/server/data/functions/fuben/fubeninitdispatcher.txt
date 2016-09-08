@@ -1,0 +1,26 @@
+--说明 副本初始化分发
+
+EventCallDispatcher.FubenInitDispatcher = {}
+
+
+-- 初始化副本
+-- 参数 fbId：副本id
+-- 参数 hfb：副本的句柄
+function OnInitFuben(fbId,  hfb)
+	--print("OnInitFuben:" .. fbId)
+	if fbId == 0 then return end -- 不处理静态副本
+
+	local handlers = EventCallDispatcher.FubenInitDispatcher
+	if handlers[fbId] ~= nil then
+		handlers[fbId](hfb)
+	end
+end
+
+-- 注册初始化副本函数
+EventCallDispatcher.registerFubenInit = function (fbId, func)
+	if EventCallDispatcher.FubenInitDispatcher[fbId] ~= nil then
+		print( "fuben init handle has register:"..fbId )
+		return
+	end
+	EventCallDispatcher.FubenInitDispatcher[fbId] = func 		--一个副本Id只能注册一个函数
+end

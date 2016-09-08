@@ -1,0 +1,55 @@
+
+
+--#include "data\functions\actorevent\mounthandle.txt" once
+--#include "data\config\mounts\mounts.txt" once
+function xuanguanshiliaoItemFunc(sysarg,itemIdx,itemPtr,ItemTable)
+	--判断系统是否开启
+	if not LActor.isActorSystemOpen(sysarg, siMount) then 
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.mount001, ttMessage)
+		return false
+	end
+
+
+	--debug_print("-----xuanguanitemFunc itemidx:"..itemIdx)
+ 
+	if ItemTable == nil then return end 
+ 
+
+	local mustHadMountIndex = ItemTable.mustHadMountIndex
+	if  mustHadMountIndex == nil then debug_print("hasindex is nil")return end 
+
+	local var = LActor.getStaticVar(sysarg)
+
+    local mengmengJiId=Mounts.stagesOther[mustHadMountIndex].openItemId
+     
+	local mengmengJiCount=LActor.getItemCount(sysarg,mengmengJiId)
+	--debug_print("count:"..mengmengJiCount)
+	--如果为空或不为(1)
+	if var.specialModelOpened==nil or var.specialModelOpened[mustHadMountIndex]~=1 then 
+		if mengmengJiCount < 1 then  --背包里没有萌萌鸡道具,直接返回,否则炫光试料可以使用
+			--debug_print("must before have")
+			LActor.sendTipmsg(sysarg, Lang.Mount.t29, ttMessage)
+			return false
+		end
+	end 
+	local useTime=0
+ 	if MountOpFuncList.openSpecialMount(sysarg,ItemTable.GetMountIndex, useTime) == true then
+			--debug_print("remove item")
+			LActor.sendTipmsg(sysarg,Lang.Mount.t30, ttMessage)
+			--删除道具 
+			LActor.removeItemByPtr(sysarg, itemPtr, 1, true, "useSpecialMountItem", 2)
+	end
+	--debug_print("last end")
+
+end
+function xuanguanshiliaoItemsInit(sysarg)
+	--debug_print("------------------xuanguanshiliaoItemsInit")
+	for i = 1 ,table.getn(xuanGuanShiLiaoItem) do 
+		local itemInfo=xuanGuanShiLiaoItem[i]
+		--debug_print("-----"..itemInfo.item_id)
+		GlobalItemFn[itemInfo.item_id] = { func = xuanguanshiliaoItemFunc, params = itemInfo }
+
+	end
+end
+
+table.insert(InitFnTable,xuanguanshiliaoItemsInit)

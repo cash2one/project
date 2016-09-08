@@ -1,0 +1,39 @@
+﻿--群体伤害-远程-魔法箭特效
+{
+	desc=Lang.Skill.s40L1Desc,
+	iconID=1,
+	actRange=
+	{
+		{
+			angleRadius=3,
+			rangeType=3,
+			rangeCenter=0,
+			acts=
+			{
+				{
+					conds=
+					{
+						{cond=13,value=true},
+					},
+					results=
+					{
+						{mj=0,timeParam=1,type=27,delay=0,value={rate=30000,value=0}},
+					},
+					specialEffects=
+					{
+						{type=2,mj=0,id=0,keepTime=0,delay=200,always=false},
+					},
+				},
+			},
+		},
+	},
+	trainConds=
+	{
+	},	
+	spellConds=
+	{
+		{cond=13,value=6,consume=false},
+	},
+	singTime=0,
+	cooldownTime=1000,
+},

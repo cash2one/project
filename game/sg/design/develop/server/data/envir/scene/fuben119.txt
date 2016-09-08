@@ -1,0 +1,23 @@
+﻿{   --5-2 昆仑山-玉珠峰
+	--副本id
+  	fbid = 119,
+	--副本的适合等级(推荐等级)，
+	recommandLevel = 1,
+	--副本中怪物与玩家等级是否一致,不填默认是true,  填true是一致,false是不一致
+	monsterDynProp = false, 
+	--副本需要统计那些数据,0为经验,1为绑定天珠
+	caleType = {6,7,8,10,14},
+	--统计相关信息
+	caleInfo = 
+	{
+		expType = { 202 }, -- 杀怪获得经验
+		lilianType = {},
+	},
+	monsterDynProp = false,
+	--这个副本需要用到的场景列表
+	
+	scenes =
+	{
+--#include "scene119.txt"
+	},
+},

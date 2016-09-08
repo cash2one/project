@@ -1,0 +1,52 @@
+ --全天：洞窟静修
+   {
+       --活动的名字
+       name =Lang.ActivityName.name00011,
+       --活动的描述
+       desc=Lang.ActivityName.desc00011,
+       timeDesc = Lang.ActivityName.timeDesc00001,
+       level =20, --活动的等级
+       icon =5,
+       --活动的开启时间
+       openTimes=
+       {
+            {
+                 months={}, 
+                 days ={}, 
+                 weeks={0}, 
+                 minutes=  --时和分，使用起始和结束的时间格式,这个一定要填，	全天开放使用00:00-33:59
+                 {
+                    "00:00-23:59",
+                  }
+             },
+        },
+       awards=
+       {
+            {type=2,id=0,count=2,bind=0,strong=0,quality=0}, -- 奖励2经验值，表示双倍经验
+       },
+       npc= 
+       {
+		--1无忌，2逍遥，3日月
+           {
+               sceneId=120,name=Lang.EntityName.n00383, --无忌城 莫正羽
+               conds=
+	       {
+		{condType=1,values={1}}
+               },
+	    },
+           {
+               sceneId=122,name=Lang.EntityName.n00401, --逍遥城 凌云志
+               conds=
+	       {
+		{condType=1,values={2}}
+               },
+	    },
+           {
+               sceneId=124,name=Lang.EntityName.n00417, --日月城 张九烈
+               conds=
+	       {
+		{condType=1,values={3}}
+               },
+	    },
+       },
+   }, 

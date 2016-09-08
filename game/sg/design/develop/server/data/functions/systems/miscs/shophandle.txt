@@ -1,0 +1,208 @@
+-- 神秘商店处理,几个商店用同一条协议
+
+--#include "data\config\store\liudaoshop.txt" once
+--#include "data\functions\systems\miscs\tongtiantahandle.txt" once
+
+--六道神秘商人,购买物品
+MiscsImplement.LiuDaoBuyItem = function(sysarg, sid, id, num)
+	if sysarg == nil then return end
+	if num <= 0 then return end
+
+	local var = LActor.getStaticVar(sysarg)
+	local canshop = false
+	if var.newentrust ~= nil and var.newentrust[LiudaoShop[1].fblistid] ~= nil and var.newentrust[LiudaoShop[1].fblistid].state ~= 0 then
+		canshop = true
+	end
+
+	local fbid = LActor.getFubenId(sysarg)
+	if fbid ~= LiudaoShop[1].fbid and (not canshop) then return end
+	
+	local items = LiudaoShop[1].items
+
+	if var.LiuDaoTrader == nil then
+		--初始化次数
+		var.LiuDaoTrader = {}
+		for i=1, #items do   		--商店表
+			var.LiuDaoTrader[items[i].id] = items[i].singleBuyLimit
+			if var.LiuDaoTrader[items[i].id] == 0 then
+				var.LiuDaoTrader[items[i].id] = 10000
+			end
+		end
+	end
+
+	local itemDetail = nil
+	for j = 1, #items do
+		if items[j].id == id then 
+			itemDetail = items[j]
+			break
+		end
+	end
+
+	if itemDetail == nil then
+		LActor.sendTipmsg(sysarg, Lang.LiuDao.t01, ttMessage) --物品不存在
+		return
+	end
+	local itemid = itemDetail.item
+	if var.LiuDaoTrader[id] - num < 0 then
+		LActor.sendTipmsg(sysarg, Lang.LiuDao.t02, ttMessage) --超过了限购数
+		return			
+	end
+
+	if not LActor.canAddItem(sysarg, itemid, num, 0, itemDetail.strong, itemDetail.price[1].bind) then
+   		-- LActor.sendTipmsg(sysarg, Lang.ScriptTips.n00006,ttTipmsgWindow) --背包已满
+   		LActor.SendGeneralTips(sysarg, 7, 0, 0)
+   		return
+   	end
+
+	local price = itemDetail.price[1].price * num
+	local ret = false
+	if itemDetail.price[1].type == mtYuanbao then 
+		if LActor.CheckMoneyEnough( sysarg, mtYuanbao, price, true ) == false then
+			--LActor.sendTipmsg( sysarg, Lang.LiuDao.t03, ttMessage )
+			return
+		else
+			-- 扣除天珠
+			ret = LActor.changeMoney( sysarg, mtYuanbao, -price, 1, true, "ybliudao", "", "", tostring(itemid) )
+		end
+	elseif itemDetail.price[1].type == mtBindYuanbao then
+		if LActor.CheckMoneyEnough( sysarg, mtBindYuanbao, price, true ) == false then
+			--LActor.sendTipmsg( sysarg, Lang.LiuDao.t04, ttMessage )
+			return
+		else
+			-- 扣除绑定天珠
+			ret = LActor.changeMoney( sysarg, mtBindYuanbao, -price, 1, true, "bdliudao", "", "", tostring(itemid) )
+		end
+	end
+	if not ret then 
+		LActor.sendTipmsg( sysarg, Lang.LiuDao.t05, ttMessage )
+		return
+	end 
+	
+	local bind = 0
+	if itemDetail.price[1].bind then
+		bind = 1
+	end
+
+	LActor.addItem(sysarg, itemid, 0 , itemDetail.strong, num, bind,"",23)
+	
+	-- 播放特效
+   	local effects = {}
+	local effect = {}
+	effect.type = 1  -- 1为物品,暂时只支持发物品所以写死
+    effect.id = itemid
+    effect.count = num
+    print("NPCTradeBuy effect.id:"..effect.id.."count:"..effect.count)
+    effects[#effects+1] = effect
+	if #effects > 0 then
+		MiscFunc.PlayItemEffect(sysarg, 12, effects)
+	end
+	var.LiuDaoTrader[id] = var.LiuDaoTrader[id] - num
+	return
+end
+
+-- 神秘商店购买东西
+MiscsImplement.ShopBuyItem = function(sysarg, msgid, packet)
+	local sid = DataPack.readInt(packet) -- 商店ID
+	local id = DataPack.readInt(packet)
+	local num = DataPack.readInt(packet)
+	local moneytype = DataPack.readByte(packet)
+	if sid == nil or id == nil or num == nil or num <= 0 then return end
+
+	if sid == 1 and MiscsImplement.LiuDaoBuyItem ~= nil then -- 六道商店按以前的处理
+		MiscsImplement.LiuDaoBuyItem(sysarg, sid, id, num, moneytype)
+		return 
+	end
+
+	if sid == 5 and TongTianTaFunc.TongTianTaBuyItem ~= nil then -- 过关斩将商店的处理
+		TongTianTaFunc.TongTianTaBuyItem(sysarg, sid, id, num)
+		return 
+	end
+
+	-- 其它商店通用处理,后面再做
+	--[[
+	local fbid = LActor.getFubenId(sysarg) -- 密宗佛塔副本也调用这个商店的函数
+	
+	if LiudaoShop[sid] == nil then
+		print("shop id error:"..sid)
+		return
+	end
+
+	local items = LiudaoShop[sid].items
+
+	local itemDetail = nil
+	local itemIdx = 0
+	for j = 1, #items do
+		if items[j].id == id then 
+			itemDetail = items[j]
+			itemIdx = j
+			break
+		end
+	end
+
+	if itemDetail == nil then
+		LActor.sendTipmsg(sysarg, Lang.LiuDao.t01, ttMessage) --物品不存在
+		return
+	end
+
+	-- 限购
+	local var = LActor.getStaticVar(sysarg)
+	if var.ShopBuyCounts == nil then
+		var.ShopBuyCounts = {}
+	end
+	local var_shop = var.ShopBuyCounts[sid]
+	if var_shop == nil then
+		var_shop = {}
+		var.ShopBuyCounts[sid] = var_shop
+	end
+	if var_shop[itemIdx] == nil then
+		var_shop[itemIdx] = 0
+	end
+	local var_count = var_shop[itemIdx]
+
+	local itemid = itemDetail.item
+	if var_count + num > itemDetail.singleBuyLimit then
+		LActor.sendTipmsg(sysarg, Lang.LiuDao.t02, ttMessage) --超过了限购数
+		return			
+	end
+
+	if not LActor.canAddItem(sysarg, itemid, num, 0, itemDetail.strong, itemDetail.price[1].bind) then
+   		LActor.sendTipmsg(sysarg, Lang.ScriptTips.n00006,ttTipmsgWindow) --背包已满
+   		return
+   	end
+
+	local price = itemDetail.price[1].price * num
+	local ret = false
+	if itemDetail.price[1].type == mtYuanbao then 
+		if LActor.getMoneyCount( sysarg, mtYuanbao ) < price then
+			LActor.sendTipmsg( sysarg, Lang.LiuDao.t03, ttMessage )
+			return
+		else
+			-- 扣除天珠
+			ret = LActor.changeMoney( sysarg, mtYuanbao, -price, 1, true, "shenmishopyb", tostring(sid), "", tostring(itemid) )
+		end
+	elseif itemDetail.price[1].type == mtBindYuanbao then
+		if LActor.getMoneyCount( sysarg, mtBindYuanbao ) < price then
+			LActor.sendTipmsg( sysarg, Lang.LiuDao.t04, ttMessage )
+			return
+		else
+			-- 扣除绑定天珠
+			ret = LActor.changeMoney( sysarg, mtBindYuanbao, -price, 1, true, "shenmishopbindyb", tostring(sid), "", tostring(itemid) )
+		end
+	end
+	if not ret then 
+		LActor.sendTipmsg( sysarg, Lang.LiuDao.t05, ttMessage )
+		return
+	end 
+	
+	local bind = 0
+	if itemDetail.price[1].bind then
+		bind = 1
+	end
+
+	LActor.addItem(sysarg, itemid, 0 , itemDetail.strong, num, bind)
+	var_shop[itemIdx] = var_shop[itemIdx] + num
+	]]
+end
+
+
+MiscsImplement.registerMsgHandler(LogicCmd.miscSys.sub.cLiuDaoBuyItem, MiscsImplement.ShopBuyItem)

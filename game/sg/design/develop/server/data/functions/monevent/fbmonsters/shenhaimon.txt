@@ -1,0 +1,135 @@
+--#include "data\config\task\ShenHaiConf.txt" once
+--#include "data\functions\GlobalDefine.txt"
+--深海之恋boss相关脚本
+
+
+MonAllKilledDispatcher.SHKillAllMonster = function( sceneId, scenePtr, flag, et )
+	if scenePtr == nil then return end
+	local fbPtr = Fuben.getSceneFuben( scenePtr )
+	if fbPtr == nil then return end
+	--print( "flag:"..flag )
+	if flag == 0 then
+		LActor.registerKillAllMonster( et, true, 1 )
+		--刷怪
+		local hScene = LActor.getSceneHandle( et )
+		for i=1,#ShenHaiConf.refresh2 do
+			local mon = ShenHaiConf.refresh2[i]
+			Fuben.createMonsters( hScene, mon.id, mon.mapx1, mon.mapx2, mon.mapy1, mon.mapy2, mon.count, 0 )
+		end
+	elseif flag == 1 then		--创建boss冰魂
+		local  hScene = Fuben.getSceneHandleByPtr( scenePtr )
+		Fuben.createMonster(hScene, ShenHaiConf.binhunId, ShenHaiConf.binhunPos[1], ShenHaiConf.binhunPos[2], 3600)
+		Fuben.sendMsgToScene(hScene, Lang.ScriptTips.sh004, ttScreenCenter) -- 公告
+	elseif flag == 2 then	--创建冰封的紫霞
+		local  hScene = Fuben.getSceneHandleByPtr( scenePtr )
+		local monsterPtr = Fuben.createMonster( hScene, ShenHaiConf.bfzxxzId, ShenHaiConf.bfzxxzPos[1], ShenHaiConf.bfzxxzPos[2], 3600 )
+		if monsterPtr ~= nil then
+			LActor.registerKillAllMonster( monsterPtr, false )	--不再监听杀死所有怪物事件
+		end
+	end
+end
+
+--冰魂die
+MonDieDispatcher.OnBingHunDie = function( monster, sysarg, monId )
+	local fbPtr = LActor.getFubenPrt( monster )
+	if fbPtr == nil then return end
+
+	LActor.registerKillAllMonster( sysarg, true, 2 )	--注册杀死所有怪物时间，同时将标志位设为2
+end
+
+--冰封的紫霞仙子die
+MonDieDispatcher.OnBfSxxzDie = function( monster, sysarg, monId )
+	local fbPtr = LActor.getFubenPrt( monster )
+	if fbPtr == nil then return end
+
+	local var = Fuben.getDyanmicVar( fbPtr )
+	if var ~= nil then
+		var.zxxzIsKilled = true		--杀死冰封的紫霞仙子
+	end
+
+	local hScene = LActor.getSceneHandle( monster )
+	--删除场景所有其它怪物
+	Fuben.clearMonsterExcept( hScene, ShenHaiConf.bfzxxzId )
+	--召唤紫霞仙子
+	Fuben.createMonster( hScene, ShenHaiConf.zxxzId, ShenHaiConf.zxxzPos[1], ShenHaiConf.zxxzPos[2], 3600 )
+end
+
+
+--第三次刷怪
+MonsterActionFunc["shzlRefresh3"] = function( monster, monId, param, item )
+	local hScene = LActor.getSceneHandle( monster )
+	for i=1,#ShenHaiConf.refresh3 do
+		local mon = ShenHaiConf.refresh3[i]
+		Fuben.createMonsters( hScene, mon.id, mon.mapx1, mon.mapx2, mon.mapy1, mon.mapy2, mon.count, 0 )
+	end
+end
+
+--第四次刷怪
+MonsterActionFunc["shzlRefresh4"] = function( monster, monId, param, item )
+	local hScene = LActor.getSceneHandle( monster )
+	for i=1,#ShenHaiConf.refresh4 do
+		local mon = ShenHaiConf.refresh4[i]
+		Fuben.createMonsters( hScene, mon.id, mon.mapx1, mon.mapx2, mon.mapy1, mon.mapy2, mon.count, 0 )
+	end
+end
+
+--同心树
+MonsterActionFunc["callTongXinShu"] = function( monster, monId, param, item )
+	--召唤同心树
+	print("++++++++++++++++++++++++++++++++++++++tongxinshu ")
+	local hScene = LActor.getSceneHandle( monster )
+	local txsMonster = Fuben.createMonster( hScene, ShenHaiConf.tongxinId, ShenHaiConf.tongxinPos[1], ShenHaiConf.tongxinPos[2], 3600 )
+
+	--同心树作用下的经验加成
+	local expAdd = 0
+	local fbPtr = LActor.getFubenPrt( monster )
+	if fbPtr ~= nil then
+		local var = Fuben.getDyanmicVar( fbPtr )
+		if var ~= nil and var.diffsex then
+			expAdd = ShenHaiConf.txsExpAdd[2]
+		else
+			expAdd = ShenHaiConf.txsExpAdd[1]
+		end
+	end
+	local var_sys_d = System.getDyanmicVar()
+	--副本双倍
+	if var_sys_d.FubenDoubelReward ~= nil and var_sys_d.FubenDoubelReward == ShenHaiConf.fubenId then
+		expAdd = expAdd * 2
+	end
+	if expAdd > 0 then
+		local addstr = string.format( "%d", expAdd )
+		Fuben.setSceneAreaAttri( hScene, ShenHaiConf.txsArea, 65, addstr )	--自动加经验
+	end
+
+	local fbTime = Fuben.getFbTime(fbPtr) -- 副本剩余时间
+
+	--注册同心树倒计时
+	local liveTime = ShenHaiConf.tongxinLiveTime --同心树显示时间，秒
+	local tipsTime = ( liveTime - 10 ) * 1000 -- 倒计时出现时间，毫秒
+	--LActor.regScriptCallback( txsMonster, nil, 1, 1, liveTime, "OnTXSTimer", 0)
+	LActor.postEntityScriptCallbackMsg(txsMonster, EntityCallbackMsg.TxsCountDown, tipsTime)
+	--在统计面板上显示
+	local Fhandle = LActor.getFubenHandle( monster )
+	local actors = LuaHelp.getFbActorList( fbPtr )
+	if actors ~= nil then
+		for i = 1, #actors do
+			print("--------liveTime:  "..liveTime)
+			local actor = actors[i]
+			--LActor.ChangeCaleValue(actor,caleFubenTime,fbTime,false) -- 副本剩余时间
+			--LActor.ChangeCaleValue(actor, caleMonTime, liveTime )	-- 同心树倒计时
+			Fuben.SetFubenMonTime( Fhandle, liveTime)
+			Fuben.SetFubenTime( Fhandle, liveTime)
+			--LActor.SendAllCaleValue( actor )
+			LActor.SendAndChangeCaleValue(actor, caleFubenTime, liveTime, false)
+			EntrustFunc.SetFubenValue(actor, ShenHaiConf.fubenId, 1) -- 设置副本委托相关值
+		end
+	end
+	
+	local hMonster = LActor.getHandle( monster )
+	Fuben.clearMonster( hMonster, true )	--删除紫霞仙子自己
+end
+
+
+MonAllKilledDispatcher.register( ShenHaiConf.sceneId, MonAllKilledDispatcher.SHKillAllMonster )
+MonDieDispatcher.register( ShenHaiConf.binhunId, MonDieDispatcher.OnBingHunDie )
+MonDieDispatcher.register( ShenHaiConf.bfzxxzId, MonDieDispatcher.OnBfSxxzDie )

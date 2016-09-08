@@ -1,0 +1,43 @@
+﻿{
+	quickFinish = false,
+	cangiveup = true,
+	nextacceptqid = 0,
+	timelimit = 0,
+	conds = {
+		{
+			id = 0,
+			type = 0,
+			count = 50,
+		},
+	},
+	target = {
+		{
+			type = 0,
+			count = 5,
+			location = {
+				y = 0,
+				x = 0,
+				sceneid = 4,
+				entityName = Lang.MonsterName.m31,
+				hideFastTransfer = false,
+			},
+			id = 31,
+			tarTips = Lang.Quest.t128_1,
+		},
+	},
+	autofinish = false,
+	excludetree = true,
+	timeoutcleardata = false,
+	awards = {
+	},
+	id = 22093,
+	commitjuqingkey = "none",
+	maxcount = 0,
+	acceptjuqingkey = "none",
+	name = Lang.Quest.n22093,
+	parentid = -1,
+	type = 3,
+	finishNext = false,
+	content = Lang.Quest.d22093,
+	interval = 0,
+},

@@ -1,0 +1,15 @@
+﻿--皇陵秘境副本怪物技能：酒仙斩
+{
+	id = 93,
+	name = Lang.Skill.s93Name,
+	desc = Lang.Skill.s93Desc,
+	vocation = 9,
+	skillType = 0,
+	skillSpellType = 3,
+	skillClass = 9,
+	commonCd = 0,
+	specialBuffCond = 0,
+	skillSubLevel = { 
+--#include "Skill_93_1.txt"
+	},
+},

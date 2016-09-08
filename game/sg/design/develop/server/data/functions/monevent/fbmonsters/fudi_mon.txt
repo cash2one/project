@@ -1,0 +1,189 @@
+
+--#include "data\language\LangCode.txt" once
+--#include "data\config\task\fudi_conf.txt" once
+--#include "data\language\zh-cn\scripttips.txt" once
+
+FudiMon = {}
+
+FudiMon.onEnd = function(pFudi, flag)
+	local fvar = Fuben.getDyanmicVar(pFudi)
+	if fvar.isEnd then return end
+	fvar.isEnd = true
+
+	local pGuild = LGuild.getGuildById(fvar.guildId)
+	if pGuild == nil then return end
+
+	-- 广播活动结束
+	-- local dp = LDataPack.allocPacket()
+	-- if dp == nil then return end
+	-- LDataPack.writeByte(dp, 26)
+	-- LDataPack.writeByte(dp, 36)
+	-- LDataPack.writeInt(dp, 1)
+	-- LDataPack.writeInt(dp, 19)
+	-- LDataPack.writeInt(dp, 3)
+	-- LDataPack.writeInt(dp, Fuben.getFbTime(pFudi))
+	-- LGuild.broadcastData(pGuild, dp)
+
+	-- 广播副本关闭
+	local dp = LDataPack.allocPacket()
+	if dp == nil then return end
+	LDataPack.writeByte(dp, 10)
+	LDataPack.writeByte(dp, 39)
+	LDataPack.writeByte(dp, 0)
+	LGuild.broadcastData(pGuild, dp)
+
+	local noti = flag == 1 and Lang.GuildLang.t17 or Lang.GuildLang.t16	
+	System.broadcastGuildTipmsg(fvar.guildId, noti, ttScreenCenter)
+	-- 副本延时10s
+	Fuben.SetFubenTime(Fuben.getFubenHandle(pFudi), 10)
+
+	-- 军团事件
+	if fvar.totalstone ~= nil then
+		LGuild.addGuildLog(pGuild, 10, fvar.guildId, "", "", fvar.totalstone, 0, 0)
+	end
+
+	print("fudi end:"..fvar.guildId..","..flag)
+end
+
+FudiMon.onFailed = function(pFudi)
+	FudiMon.onEnd(pFudi, 0)
+end
+
+FudiMon.onSucceed = function(pFudi)
+	local fvar = Fuben.getDyanmicVar(pFudi)
+	if fvar.isEnd then return end
+
+	--领地通关公告
+	local guildName = LGuild.getGuildName(fvar.guildId)
+	local config = FudiConf[fvar.fudi_level]
+	local tipmsg = string.format(Lang.ScriptTips.fdzz004, guildName, config.fdHard)
+	System.broadcastTipmsg(tipmsg, ttScreenCenter)
+	FudiMon.onEnd(pFudi, 1)
+end
+
+FudiMon.onNpcEnter = function(pNpc, npcId)
+	LActor.addState(pNpc, esStateAttackedForbid)
+end
+
+FudiMon.onNpcKilled = function(pMon, pChar, monId)
+	FudiMon.onFailed(LActor.getFubenPrt(pMon))
+end
+
+FudiMon.onNpcHpChanged = function(index)
+	local cIndex = index + 13
+	return function(pMon, rate, monId)
+		local pFudi = LActor.getFubenPrt(pMon)
+		local var = Fuben.getDyanmicVar(pFudi)
+		var["fudi_hp"..cIndex] = rate
+		local list = LuaHelp.getFbActorList(pFudi) or {}
+		for _, pChar in ipairs(list) do
+			LActor.SendAndChangeCaleValue(pChar, cIndex, rate, false)
+		end
+	end
+end
+
+FudiMon.onAllMonsterKilled = function(pFudi)
+	FudiMon.onSucceed(pFudi)
+	print("FudiMon.onAllMonsterKilled")
+end
+
+FudiMon.onBossEntered = function(pMon, monId)
+	local pFudi = LActor.getFubenPrt(pMon)
+	local var = Fuben.getDyanmicVar(pFudi)
+	local config = FudiConf[var.fudi_level]
+
+	local hlScene = LActor.getSceneHandle(pMon)
+	Fuben.sendMsgToScene(hlScene, config.bossNotify[monId], ttScreenCenter)
+end
+
+FudiMon.onBossKilled = function(pMon, pChar, monId)
+	local pFudi = LActor.getFubenPrt(pMon)
+	local var = Fuben.getDyanmicVar(pFudi)
+	local config = FudiConf[var.fudi_level]
+
+	local pFudi = LActor.getFubenPrt(pChar)
+	local list = LuaHelp.getFbActorList(pFudi)
+	for _, pChar in ipairs(list) do
+		LActor.addQuestValue(pChar, config.taskId, monId, 1)
+	end
+
+	local aConfig = config.awardSet[monId]
+	if aConfig ~= nil then
+		FudiMon.giveMonsterAward(pChar, aConfig)
+	end
+end
+
+FudiMon.onMonsterEnter = function(bornPointList, npcList)
+	return function(pMon, monId)
+		local x = LActor.getIntProperty(pMon, PROP_ENTITY_POSX)
+		local y = LActor.getIntProperty(pMon, PROP_ENTITY_POSY)
+		for way, point in ipairs(bornPointList) do
+			if point[1] == x and point[2] == y then
+				local hlScene = LActor.getSceneHandle(pMon)
+				local pNpc = Fuben.getMonsterPtrById(hlScene, npcList[way])
+				LActor.setMonsterFinalTarget(pMon, pNpc)
+				return
+			end
+		end
+	end
+end
+
+FudiMon.giveMonsterAward = function(pChar, aConfig)
+	local exp = aConfig[1] or 0
+	local stone = aConfig[2] or 0
+	local contri = aConfig[3] or 0
+	local guildId = LActor.getGuildId(pChar)
+	LGuild.addStonebyGuildid(guildId, stone)
+
+	local pFudi = LActor.getFubenPrt(pChar)
+	local fvar = Fuben.getDyanmicVar(pFudi)
+	fvar.fudi_remaindMonster = fvar.fudi_remaindMonster - 1
+
+	-- 累计灵石的数量
+	fvar.totalstone = fvar.totalstone + stone
+	
+	local remaindTime = Fuben.getFbTime(pFudi)
+
+	local list = LuaHelp.getSceneActorList(pChar)
+	for _, pActor in ipairs(list) do
+		LActor.addExp(pActor, exp, 202, 0)
+		LActor.addGuildContrib(pActor, contri)
+		LActor.SendAndChangeCaleValue(pActor, 6, stone)
+		LActor.SendAndChangeCaleValue(pActor, 7, contri)
+		LActor.SendAndChangeCaleValue(pActor, 8, fvar.fudi_remaindMonster, false)
+	end
+
+	if fvar.fudi_remaindMonster == 0 then
+		FudiMon.onAllMonsterKilled(pFudi)
+		print("FudiMon.onAllMonsterKilled")
+	end
+end
+
+FudiMon.onMonsterKilled = function(awardSet)
+	return function(pMon, pChar, monId)
+		if awardSet[monId] == nil then return end
+		FudiMon.giveMonsterAward(pChar, awardSet[monId])
+	end
+end
+
+-- 注册副本通用事件
+for level, config in ipairs(FudiConf) do
+	if config.fbid == nil then break end
+
+	for _, npcId in ipairs(config.npcList) do
+		MonMobDispatcher.register(npcId, FudiMon.onNpcEnter)
+		MonDieDispatcher.register(npcId, FudiMon.onNpcKilled)
+		MonHpChangedDispatcher.register(npcId, FudiMon.onNpcHpChanged(_))
+	end
+
+	for _, bossId in ipairs(config.bossList) do
+		MonMobDispatcher.register(bossId, FudiMon.onBossEntered)
+		MonDieDispatcher.register(bossId, FudiMon.onBossKilled)
+	end
+
+	for _, monId in ipairs(config.monsterList) do
+		MonMobDispatcher.register(monId, FudiMon.onMonsterEnter(config.monsterBornPointList, config.npcList))
+		MonDieDispatcher.register(monId, FudiMon.onMonsterKilled(config.awardSet))
+	end
+end
+

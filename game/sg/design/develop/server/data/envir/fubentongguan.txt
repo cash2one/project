@@ -1,0 +1,18 @@
+﻿--lua script
+
+--type :条件的类型，1 为杀死某个BOSS，2 为清除所有的怪物。 ..
+--monsterid :怪物ID，amount = 数量，也可作为存活的时间数（单位为秒）
+
+--type=1表示杀死怪物311即可通关，如果type = 2，则表示杀死所有怪物，则不能出现type=1的条件，因为这两个有矛盾
+--如果type=2，monsterid不用配置
+TongGuanCondition =
+{
+	--[[
+	[1] = {   --玄天洞队伍
+		{type = 1 , monsterid = 311,amount = 0 },		
+	},]]
+	
+	[4] = { -- 历练副本
+		{ type = 2, sceneId = 1058 },
+	},
+}

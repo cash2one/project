@@ -1,0 +1,59 @@
+﻿--邀请好友和分享配置
+--#include "..\..\language\LangCode.txt"
+
+
+YqhyConf = {
+	lottery = { -- 抽奖奖励配置
+		{ type = 0, id = 18601, count = 3},
+		{ type = 0, id = 18600, count = 1},		
+		{ type = 0, id = 18613, count = 3},		
+		{ type = 0, id = 18210, count = 1},		
+		{ type = 0, id = 18608, count = 1},
+		{ type = 0, id = 18710, count = 1},		
+		{ type = 0, id = 18621, count = 2},		
+		{ type = 0, id = 48280, count = 3},				
+		{ type = 0, id = 48279, count = 2},		
+		{ type = 0, id = 18227, count = 1},					
+		-- 其它按上面配置
+	},
+	invites = { -- 邀请好友事件
+		-- type: 类型，1：邀请，2，邀请好友登录游戏，3：当天充值，4：升级
+		-- param: 参数，没有则填0，如果是升级类型就填等级
+		-- count: 满足条件的邀请好友个数
+		-- desc: 描述，配在语言包
+		{ id = 1, type = 1,  param = 0, count = 1, desc = Lang.ScriptTips.yq016 }, -- 自己邀请好友
+		{ id = 2, type = 2, param = 0, count = 2, desc = Lang.ScriptTips.yq017 }, -- 邀请好友登录
+		{ id = 3, type = 2, param = 0, count = 5, desc = Lang.ScriptTips.yq018 },
+		{ id = 4, type = 2, param = 0, count = 10, desc = Lang.ScriptTips.yq019} ,
+		{ id = 5, type = 2, param = 0, count = 20, desc = Lang.ScriptTips.yq020 },
+		{ id = 6, type = 3, param = 0, count = 1, desc = Lang.ScriptTips.yq021 }, -- 充值
+		{ id = 7, type = 3, param = 0, count = 2, desc = Lang.ScriptTips.yq022 },
+		{ id = 8, type = 3, param = 0, count = 5, desc = Lang.ScriptTips.yq023 },
+		{ id = 9, type = 4, param = 35, count = 2, desc = Lang.ScriptTips.yq024 } , -- 升级
+		{ id = 10, type = 4, param = 43, count = 2, desc = Lang.ScriptTips.yq025 },
+		{ id = 11, type = 4, param = 50, count = 2, desc = Lang.ScriptTips.yq026 },
+	},
+
+	shares = { -- 分享配置
+		-- id : 要连续，group：分组ID， desc: 描述,配在语言包中, dayclear: 每天是否清除进度
+		-- title:分享标题，summary:故事摘要，msg:分享的提示信息, img:分享图标id(不填则使用分享的id)
+		{ id = 1, group = 1, desc = Lang.ScriptTips.yq004, title = Lang.ScriptTips.yq004, msg = Lang.ScriptTips.fx001, summary = Lang.ScriptTips.gs001, dayclear = true  }, 
+		{ id = 2, group = 2, desc = Lang.ScriptTips.yq005, title = Lang.ScriptTips.yq005, msg = Lang.ScriptTips.fx002, summary = Lang.ScriptTips.gs001,  },		
+		{ id = 3, group = 2, desc = Lang.ScriptTips.yq006, title = Lang.ScriptTips.yq006, msg = Lang.ScriptTips.fx003, summary = Lang.ScriptTips.gs001,  },		
+		{ id = 4, group = 2, desc = Lang.ScriptTips.yq007, title = Lang.ScriptTips.yq007, msg = Lang.ScriptTips.fx004, summary = Lang.ScriptTips.gs001,  },		
+		{ id = 5, group = 2, desc = Lang.ScriptTips.yq008, title = Lang.ScriptTips.yq008, msg = Lang.ScriptTips.fx005, summary = Lang.ScriptTips.gs001,  },		
+		{ id = 6, group = 2, desc = Lang.ScriptTips.yq009, title = Lang.ScriptTips.yq009, msg = Lang.ScriptTips.fx006, summary = Lang.ScriptTips.gs001,  },		
+		{ id = 7, group = 2, desc = Lang.ScriptTips.yq010, title = Lang.ScriptTips.yq010, msg = Lang.ScriptTips.fx007, summary = Lang.ScriptTips.gs001,  },		
+		{ id = 8, group = 2, desc = Lang.ScriptTips.yq011, title = Lang.ScriptTips.yq011, msg = Lang.ScriptTips.fx008, summary = Lang.ScriptTips.gs001,  },		
+		{ id = 9, group = 2, desc = Lang.ScriptTips.yq012, title = Lang.ScriptTips.yq012, msg = Lang.ScriptTips.fx009, summary = Lang.ScriptTips.gs001,  },		
+		{ id = 10, group = 2, desc = Lang.ScriptTips.yq013, title = Lang.ScriptTips.yq013, msg = Lang.ScriptTips.fx010, summary = Lang.ScriptTips.gs001, },		
+		{ id = 11, group = 2, desc = Lang.ScriptTips.yq014, title = Lang.ScriptTips.yq014, msg = Lang.ScriptTips.fx011, summary = Lang.ScriptTips.gs001, },		
+		{ id = 12, group = 2, desc = Lang.ScriptTips.yq015, title = Lang.ScriptTips.yq015, msg = Lang.ScriptTips.fx012, summary = Lang.ScriptTips.gs001, },		
+		-- 其它按上面配置
+	},
+	-- 分享组名称
+	shareGroupNames = {
+		"",
+		"",
+	},
+}

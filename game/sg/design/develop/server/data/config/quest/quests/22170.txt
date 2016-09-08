@@ -1,0 +1,57 @@
+﻿{
+	quickFinish = false,
+	cangiveup = true,
+	nextacceptqid = 0,
+	timelimit = 0,
+	conds = {
+		{
+			id = 0,
+			type = 0,
+			count = 60,
+		},
+	},
+	target = {
+		{
+			id = 523,
+			type = 2,
+			count = 1,
+			location = {
+				y = 0,
+				x = 0,
+				sceneid = 5,
+				entityName = Lang.EntityName.n523,
+				hideFastTransfer = false,
+			},
+		},
+		{
+			id = 527,
+			type = 2,
+			count = 1,
+			location = {
+				y = 0,
+				x = 0,
+				sceneid = 5,
+				entityName = Lang.EntityName.n527,
+				hideFastTransfer = false,
+			},
+		},
+	},
+	autofinish = false,
+	excludetree = true,
+	timeoutcleardata = false,
+	awards = {
+	},
+	finishNext = false,
+	playType = {
+		10,
+	},
+	commitjuqingkey = "none",
+	maxcount = 0,
+	acceptjuqingkey = "none",
+	name = Lang.Quest.n22170,
+	parentid = -1,
+	type = 3,
+	id = 22170,
+	content = Lang.Quest.d22170,
+	interval = 0,
+},

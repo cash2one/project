@@ -1,0 +1,50 @@
+﻿{
+	quickFinish = false,
+	comp = {
+		type = 1,
+		scene = Lang.SceneName.s9,
+		npc = Lang.EntityName.n920,
+	},
+	nextacceptqid = 230,
+	timelimit = 0,
+	conds = {
+		{
+			id = 0,
+			type = 0,
+			count = 60,
+		},
+	},
+	target = {
+		{
+			id = 127,
+			type = 55,
+			count = 1,
+		},
+	},
+	autofinish = false,
+	excludetree = true,
+	timeoutcleardata = false,
+	awards = {
+		{
+			id = 0,
+			type = 1,
+			count = 8000,
+		},
+		{
+			id = 0,
+			type = 4,
+			count = 668000,
+		},
+	},
+	id = 229,
+	commitjuqingkey = "none",
+	type = 0,
+	maxcount = 1,
+	acceptjuqingkey = "none",
+	name = Lang.Quest.n229,
+	parentid = 228,
+	cangiveup = false,
+	finishNext = true,
+	content = Lang.Quest.d229,
+	interval = 0,
+},

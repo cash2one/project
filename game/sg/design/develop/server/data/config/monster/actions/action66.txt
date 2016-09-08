@@ -1,0 +1,24 @@
+--玩法7，A怪物AI
+{
+	id = 66,	--行为ID
+	trigger = 1,	--触发类型，血量为1，时间为2
+	isInit = 1 , --是否执行initSequence的操作
+
+	--与sequence定义相同
+	initSequence =
+	{
+		{ type = 3, duration = 2, buffType=11, groupId=0, value=5000, times=-1,  interval=1, buffName="加血"},--添加buff
+		{ type = 24, duration = 2, addBuffConfigId = 18, } , --向怪物自身添加buff
+	},
+
+	infos =
+	{
+		{
+			sequId = 1,
+			param = 0,
+			sequence = 
+			{
+			}
+		},
+	},
+},

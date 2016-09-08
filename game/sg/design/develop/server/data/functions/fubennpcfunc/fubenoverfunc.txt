@@ -1,0 +1,261 @@
+﻿ --lua script
+--#include "data\functions\miscfunc.txt" once
+--#include "data\envir\fubenconfig.txt" once
+--#include "data\functions\config\FubenConfig\FubenCountConfig.txt" once
+--#include "data\functions\fubennpcfunc\commonfubenoverfunc.txt" once
+--#include "data\functions\systems\timereward\baoitemhandler.txt" once
+
+--#include "data\functions\fubennpcfunc\commonfuben.txt" once
+--副本结束时的结算
+EventCallDispatcher.onfubenOver = function (msgid, scenePtr, fbid)
+	--print("EventCallDispatcher.onfubenOver")
+	local ptr = Fuben.getSceneFuben(scenePtr)
+	local hfb = Fuben.getFubenHandle(ptr)
+	local fbdvar = Fuben.getDyanmicVar(ptr)
+	if fbdvar == nil or fbdvar.fbstarttime == nil then return end
+	local nowtime = System.getCurrMiniTime()
+	local usetime = nowtime - fbdvar.fbstarttime
+	if usetime < 0 then usetime = 0 end
+
+	local sysarg
+	local actors = LuaHelp.getFbActorList(ptr)
+	if actors ~= nil then
+		for i = 1,#actors do
+			sysarg = actors[i]
+		end
+	end
+
+	local fbindex
+	for i,v in ipairs(FuBenRewardConfig) do
+		if v.fbid == fbid then
+			fbindex = i
+			break
+		end
+	end
+
+	if fbindex == nil then return end
+
+	local conf = FuBenRewardConfig[fbindex]
+
+	--记录进度
+	local var = LActor.getStaticVar(sysarg)
+	if FuBenRewardConfig[fbindex].fblistid ~= nil then
+		local listid = FuBenRewardConfig[fbindex].fblistid
+		if var.fubenlistprocess == nil then var.fubenlistprocess = {} end
+		if var.fubenlistprocess[listid] == nil then var.fubenlistprocess[listid] = {} end
+		local fbtopprocess = var.fubenlistprocess[listid].topprocess
+		if fbtopprocess == nil or fbtopprocess < conf.listindex then
+			var.fubenlistprocess[listid].topprocess = conf.listindex
+		end
+		var.fubenlistprocess[listid].process = conf.listindex
+		if conf.listindex == 1 then
+			if var.fubenlistprocess[listid].enterCount == nil then 
+				var.fubenlistprocess[listid].enterCount = 1
+			else
+				var.fubenlistprocess[listid].enterCount = var.fubenlistprocess[listid].enterCount + 1
+			end
+		end
+		if conf.listindex == #FubenLinkConfig[listid] then
+			if var.fubenlistprocess ~= nil and var.fubenlistprocess[listid] ~= nil and var.fubenlistprocess[listid].process ~= nil then
+				var.fubenlistprocess[listid].process = nil
+			end
+		end
+	end
+
+	local moneyreward = {0,0,0,0,0,0}
+
+
+	local index
+	for i,v in ipairs(conf.gradelist) do
+		if v.time < usetime then
+			index = i
+			break
+		end
+	end
+
+	if index == nil then return end
+
+	for i,v in ipairs(conf.reward) do
+		--要计算经验丹的加成
+		if v.type == 5 and var.fubenjiesuandoubleexp ~= nil and var.fubenjiesuandoubleexp ~= 0 then
+			moneyreward[v.type + 1] = moneyreward[v.type + 1] + math.floor(v.count * (1 + var.fubenjiesuandoubleexp/100.0))
+		else
+			moneyreward[v.type + 1] = moneyreward[v.type + 1] + v.count
+		end
+	end
+
+	local mod = conf.gradelist[index].mod
+
+	for i,v in ipairs(conf.gradereward) do
+		moneyreward[v.type + 1] = moneyreward[v.type + 1] + math.floor(v.count * mod)
+	end
+
+	-- 播放特效
+	--local effects = {}
+	for i,v in ipairs(moneyreward) do
+		if v > 0 then
+			local moneytype = i - 1
+			--local effect = {}
+			if moneytype < 4 then
+				LActor.changeMoney(sysarg, moneytype, v, 1, true, "fuben", "jiesuan")
+				--effect.type = 2
+				--effect.id = moneytype
+				--effect.count = v
+				--effects[#effects+1] = effect
+			elseif moneytype == 4 then
+				LActor.giveAward(sysarg, qatRenown, v, 1, 0, "fuben_jiesuan")
+			elseif moneytype == 5 then
+				local exp = v
+				--要计算经验丹的加成
+				--if var.fubenjiesuandoubleexp ~= nil and var.fubenjiesuandoubleexp ~= 0 then
+					--exp =  math.floor(exp * (1 + var.fubenjiesuandoubleexp/100.0))
+				--end
+				LActor.addExp(sysarg, exp, 214, 0, true)
+				--LActor.playExpEffect(sysarg, exp)
+			end
+		end
+	end
+
+	local itemreward = {}
+	for i,v in ipairs(conf.itemreward) do
+		for p=1,v.randnum do
+			local randnum = System.getRandomNumber(10000)
+			if v.mob > randnum then
+				local finditem = false
+				for m,n in ipairs(itemreward) do
+					if n.itemid == v.itemid then
+						n.count = n.count + v.count
+						finditem = true
+						break
+					end
+				end
+				if not finditem then
+					table.insert(itemreward, {itemid = v.itemid, count = v.count, bind = v.bind})
+				end
+			end
+		end
+	end
+
+	for i,v in ipairs(itemreward) do
+		--背包满了怎么办
+		local ret_num = LActor.addItem(sysarg, v.itemid, 0, 0, v.count, v.bind, "fuben_jiesuan", 1)
+		--放入仓库
+		if ret_num < v.count then
+			local remainnum = v.count - ret_num
+			LActor.addEntrustItem(sysarg, v.itemid, remainnum, 0, 0, v.bind)
+		end
+
+		--if ret_num > 0 then
+			--local effect = {}
+			--effect.type = 1
+			--effect.id = v.itemid
+			--effect.count = ret_num
+			--effects[#effects+1] = effect
+		--end
+	end
+
+	--if #effects > 0 then
+	   --MiscFunc.PlayItemEffect(sysarg, 11, effects)
+	--end
+
+	local npack = DataPack.allocPacket(sysarg, 20, 9)
+	if npack == nil then return end
+	DataPack.writeInt(npack, index)
+	DataPack.writeInt(npack, fbid)
+	DataPack.writeInt(npack, usetime)
+	local double_exp = var.fubenjiesuandoubleexp or 0
+	DataPack.writeInt(npack, double_exp)
+
+	DataPack.writeInt(npack, #itemreward)
+	for i,v in ipairs(itemreward) do
+		--获得的道具要下发给客户端
+		DataPack.writeInt(npack, v.itemid)
+		DataPack.writeInt(npack, v.count)
+		DataPack.writeChar(npack, v.bind)
+	end
+
+	DataPack.flush(npack)
+
+	Fuben.SetFubenTime(hfb, 10)
+	Fuben.SetFubenGameTime(hfb, 0)
+
+
+	--print("EventCallDispatcher.onfubenOver fbid:"..fbid.."............end")
+end
+
+EventCallDispatcher.onrewardfbinit = function (hfb)
+	local fbPtr = Fuben.getFubenPtr(hfb)
+	local fbdvar = Fuben.getDyanmicVar(fbPtr)
+	local fbid = Fuben.getFubenIdbyFuBenPtr(fbPtr)
+	fbdvar.fbstarttime = System.getCurrMiniTime()
+
+	for i,v in ipairs(fubentimelist) do
+		if fbid == v[1] then
+			Fuben.SetFubenGameTime(hfb, v[2])
+			break
+		end
+	end
+end
+
+EventCallDispatcher.onrewardfbexit = function (sysarg, hfb, way)
+	local var = LActor.getStaticVar(sysarg)
+	var.fubenjiesuandoubleexp = nil
+	Fuben.SetFubenTime(hfb, 1)
+end
+
+
+EventCallDispatcher.OnNormalFubenGameOver = function(fbPtr)
+	--清除所有怪
+	--发送失败信息
+	local fbid = Fuben.getFubenIdbyFuBenPtr(fbPtr)
+	local hfb = Fuben.getFubenHandle(fbPtr)
+	local actor = Fuben.getFbActorPtr(hfb)
+	Fuben.SetFubenTime(hfb, 1)
+	LActor.sendTipmsg(actor, Lang.ScriptTips.f00086, ttDialog)
+	LActor.exitFuben(actor)
+end
+
+--[[EventCallDispatcher.onNirvafbexit = function (sysarg, hfb, way)
+	local fbPtr = Fuben.getFubenPtr(hfb) 
+	local var = Fuben.getDyanmicVar(fbPtr) 
+	var.fubenjiesuandoubleexp = nil
+	Fuben.SetFubenTime(hfb, 1)
+end
+
+EventCallDispatcher.OnNirvaFubenGameOver = function(fbPtr)
+	local fbid = Fuben.getFubenIdbyFuBenPtr(fbPtr)
+	local hfb = Fuben.getFubenHandle(fbPtr)
+	local actor = Fuben.getFbActorPtr(hfb)
+	Nirvarfunc.NirvanaFubenOver(actor,fbPtr)
+	LActor.sendTipmsg(actor, Lang.ScriptTips.f00086, ttDialog)
+end
+
+EventCallDispatcher.NirvanaOnLogin  = function(sysarg)
+	--yefeng add begin for 必杀技副本
+  	if LActor.isInFuben(sysarg)  then
+      local fbid =LActor.getFubenId(sysarg)
+      local ptr = LActor.getFubenPrt(sysarg)
+      if ptr == nil then return end 
+      local var = Fuben.getDyanmicVar(ptr)
+      if fbid == 11 and var.nirunique == 1 then 
+        LActor.exitFuben(sysarg)
+        return 
+      end
+    end
+  --yefeng add end for 必杀技副本
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, EventCallDispatcher.NirvanaOnLogin)]]
+TimerMsgFunc.register(TimerMsg.FbJieSuan, EventCallDispatcher.onfubenOver)
+-- for i,v in ipairs(FuBenRewardConfig) do
+-- 	EventCallDispatcher.registerFubenInit(v.fbid, EventCallDispatcher.onrewardfbinit)
+-- 	EventCallDispatcher.registerFubenExit(v.fbid, EventCallDispatcher.onrewardfbexit)
+-- end
+
+--EventCallDispatcher.registerFubenExit(11,EventCallDispatcher.onNirvafbexit)
+
+-- for i,v in ipairs(fubentimelist) do
+-- 	EventCallDispatcher.registerFubenGameOver( v[1],  EventCallDispatcher.OnNormalFubenGameOver )
+-- end
+
+--EventCallDispatcher.registerFubenGameOver(11,EventCallDispatcher.OnNirvaFubenGameOver)

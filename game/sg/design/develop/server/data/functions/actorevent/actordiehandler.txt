@@ -1,0 +1,179 @@
+﻿--lua script
+--本脚本实现了死亡后选择复活模式的功能
+ --#include "data\functions\Tasks\CrossSystem\CrossSet.txt"
+ --#include "data\functions\Tasks\ProectionFun\ProectionFun.txt" once
+ --#include "data\config\misc\arenaconfig.txt" once
+
+local RESURRECTTIME = 120 -- 设置玩家默认复活时间
+
+--local str1 = "后自动传送您至最近的复活点"
+EventCallDispatcher.defaultHandlerPlayerDie = function (sysarg, arg)
+	-- 收回伙伴
+	LActor.petCallBack(sysarg, true)
+	
+	--print("arg[1]"..arg[1])
+	local isinfb = false
+	local crosspos = 0
+	local fbprt
+	local fbid = LActor.getFubenId(sysarg)
+	for i = 1 ,#CrossSet  do 
+		if fbid == CrossSet[i].fbId then
+			isinfb = true
+			crosspos = i
+			fbprt = LActor.getFubenPrt(sysarg)
+			break
+		end
+	end
+	
+	if isinfb then
+		local hfb = Fuben.getFubenHandle(fbprt)
+
+		-- 记录渡劫失败
+		local var = LActor.getStaticVar(sysarg)
+		if var then
+			--print("渡劫副本人物死了++++++++++++")
+			var.crossfailed = 1
+
+			local allcount = LActor.GetCrossStarCount(sysarg)
+			local jingjie = allcount / 9
+			local jieduan = allcount % 9
+			jingjie = math.floor(jingjie)
+			jieduan = math.floor(jieduan)
+		
+			System.logCounter(LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), "dujie", "", "", "fight", "fail", tostring(jingjie), tostring(jieduan), "", lfBI)
+			
+		end
+		
+		
+		local hscene = Fuben.getSceneHandleById(CrossSet[crosspos].scene,hfb)
+		Fuben.clearAllMonster(hscene)
+		--Fuben.clearAllMonster()
+		local actor = Fuben.getFbActorPtr(hfb)
+		local npack = DataPack.allocPacket(actor,139,43)  --申请一个数据包
+		if npack == nil then return end
+		DataPack.flush(npack)
+		return
+	end
+
+
+	--过关斩将处理
+	local fbid = LActor.getFubenId(sysarg)
+	if LActor.isInFuben(sysarg) and fbid == TongTianTaConf.fbid then
+		--print("actor die handle tongtianta")
+		Fuben.SetFubenGameTime(LActor.getFubenHandle(sysarg),1)
+		return
+	end
+	
+	local killerprt = arg[1]  --获得杀死该玩家的对象的指针
+	
+	
+	--print("PlayerDie:-------")
+	local killerType = 0
+	
+	local ownername = ""	-- 如果是伙伴，这个就是伙伴主人的名字
+	local killername = ""
+	local camp = 0
+	local job = 0
+	local sex = 0
+	local actorid = 0
+	local petid = 0
+	local level = 0
+	if killerprt ~= nil then
+		--local killerprt = LActor.getEntity(killerHandle)
+		if LActor.isActor(killerprt) then 
+			camp = LActor.getCampId(killerprt)
+			actorid = LActor.getActorId(killerprt)
+			level = LActor.getIntProperty(killerprt,PROP_LEVEL)
+			sex =  LActor.getIntProperty(killerprt,PROP_SEX)
+			job =  LActor.getIntProperty(killerprt,PROP_VOCATION)
+		elseif LActor.isPet(killerprt) then -- 伙伴特殊处理
+			local owner = LActor.getMonsterOwner(killerprt)
+			if owner ~= nil then
+				camp = LActor.getCampId(owner)
+				actorid = LActor.getActorId(owner)
+				petid = LActor.petGetCurrId(owner)
+				level = LActor.getIntProperty(owner,PROP_LEVEL)
+				sex =  LActor.getIntProperty(owner,PROP_SEX)
+				job =  LActor.getIntProperty(owner,PROP_VOCATION)
+				ownername = LActor.getName(owner)
+			end
+		end
+		killername = LActor.getName(killerprt)
+	end
+
+	-- 如果在竞技场死亡就不显示复活窗口直接复活
+	if LActor.hasState(sysarg, esChallenge) or fbid == ArenaConf.fbId or fbid == ArenaConf.zbsFubenId or fubenbase.IsCanRelive( sysarg ) == false then
+		return 
+	end
+
+	--在剧情副本中直接return
+	if playFubenMon.CheckIsInPlayFuben(sysarg) then
+		return
+	end
+
+	if not LActor.hasMapAreaAttri(sysarg, aaNotRelive) then
+		local nSceneId = LActor.getSceneId( sysarg )
+		local nReliveTime = SpecialReliveTime[nSceneId]
+		if nReliveTime == nil then
+			nReliveTime = RESURRECTTIME
+		end
+		LActor.setReliveTimeOut(sysarg,nReliveTime)
+		if LActor.hasMapAreaAttri(sysarg,44) then		--要判断是否禁止原地复活
+			--LActor.messageBox(sysarg,0,0,Lang.ScriptTips.x00031,"安全复活/safeResurrection", NULL,NULL, RESURRECTTIME*1000)
+			--safeResurrection(sysarg)	--直接安全复活
+			--print("11111")
+			local npack = DataPack.allocPacket(sysarg,139,40)
+			if npack == nil then return end
+			DataPack.writeInt(npack,nReliveTime)  
+			DataPack.writeInt(npack,camp)
+			DataPack.writeInt(npack,actorid)
+			DataPack.writeInt(npack,petid)
+			DataPack.writeInt(npack,level)
+			DataPack.writeInt(npack,sex)
+			DataPack.writeInt(npack,job)
+			DataPack.writeString(npack,killername)
+			DataPack.writeString(npack,ownername)
+			DataPack.flush(npack)
+		else
+		--print("2222")
+			local npack = DataPack.allocPacket(sysarg,139,40)
+			if npack == nil then return end
+			DataPack.writeInt(npack,nReliveTime)  
+			DataPack.writeInt(npack,camp)
+			DataPack.writeInt(npack,actorid)
+			DataPack.writeInt(npack,petid)
+			DataPack.writeInt(npack,level)
+			DataPack.writeInt(npack,sex)
+			DataPack.writeInt(npack,job)
+			DataPack.writeString(npack,killername)
+			DataPack.writeString(npack,ownername)
+			DataPack.flush(npack)
+			--LActor.messageBox(sysarg,0,0,Lang.ScriptTips.x00031,Lang.ScriptTips.x00066.."/situResurrection",Lang.ScriptTips.x00067.."/safeResurrection", NULL, RESURRECTTIME*1000)		
+		end
+	end
+end
+
+--点击确定原地复活按钮
+
+--安全复活
+function safeResurrection(sysarg)
+	if LActor.getIntProperty(sysarg,PROP_HP) == 0 then   
+		if LActor.getIntProperty(sysarg,PROP_HP) == 0 then 
+			local maxhp = LActor.getIntProperty(sysarg,PROP_MAXHP)
+			LActor.changeHp(sysarg,maxhp*0.5)
+			local actorMp = LActor.getIntProperty(sysarg,PROP_MP)
+			local maxmp = LActor.getIntProperty(sysarg,PROP_MAXMP)
+			LActor.changeMp(sysarg,-(actorMp-maxmp*0.5))
+		end
+		LActor.relive(sysarg)
+		LActor.addBuff(sysarg,69,1,0,1,8,Lang.ScriptTips.b00009)
+		LActor.clearReliveTimeOut(sysarg)
+	end
+	
+end
+
+--购买复活石
+
+                                                     
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeOnActorDeath, EventCallDispatcher.defaultHandlerPlayerDie)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeReliveTimeOut, safeResurrection)

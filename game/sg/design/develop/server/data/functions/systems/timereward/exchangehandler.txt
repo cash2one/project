@@ -1,0 +1,96 @@
+﻿-- 红旗兑换活动
+--#include "exchangeconf.txt" once
+
+Exchangehandler = {}
+
+-- 请求兑换活动信息
+Exchangehandler.GetInfo = function(sysarg, packet)
+	if not sysarg then return end
+	local activityId = DataPack.readInt(packet)
+	if activityId == nil then return end
+	print("=====activityId:  "..activityId)
+	local exchangeconf = Exchangeconf[activityId]
+	if exchangeconf == nil then return end
+	local itemCount = LActor.getItemCount( sysarg, exchangeconf.itemId )
+	itemCount = itemCount or 0
+	if itemCount < 0 then itemCount = 0 end
+
+	local npack = DataPack.allocPacket(sysarg, 138, 225)
+	if npack == nil then return end 
+
+	DataPack.writeInt(npack, itemCount)					-- 当前拥有的数量
+	DataPack.writeInt(npack, exchangeconf.needCount)	-- 需要的数量	
+	DataPack.writeInt(npack, activityId)				-- 活动ID	
+
+	DataPack.flush(npack)
+end
+
+-- 返回数据
+Exchangehandler.SendInfo = function(sysarg, activityId)
+	if not sysarg then return end
+	local exchangeconf = Exchangeconf[activityId]
+	if exchangeconf == nil then return end
+	local itemCount = LActor.getItemCount( sysarg, exchangeconf.itemId )
+	itemCount = itemCount or 0
+	if itemCount < 0 then itemCount = 0 end
+
+	local npack = DataPack.allocPacket(sysarg, 138, 225)
+	if npack == nil then return end 
+
+	DataPack.writeInt(npack, itemCount)					-- 当前拥有的数量
+	DataPack.writeInt(npack, exchangeconf.needCount)	-- 需要的数量	
+	DataPack.writeInt(npack, activityId)				-- 活动ID	
+
+	DataPack.flush(npack)
+end
+
+-- 请求兑奖
+Exchangehandler.Exchange = function(sysarg, packet)
+	if not sysarg then return end
+
+	local index = DataPack.readChar(packet)
+	if index == nil then return end
+	print("===index:  "..index)
+	local activityId = DataPack.readInt(packet)
+	if activityId == nil then return end
+	print("activityId:  "..activityId)
+	local exchangeconf = Exchangeconf[activityId]
+	if exchangeconf == nil then return end
+
+	if index > #exchangeconf.itemPool or index < 1 then return end
+
+	local conf = exchangeconf.itemPool[index]
+	-- 判断是不是拥有足够的红旗
+	local itemCount = LActor.getItemCount( sysarg, exchangeconf.itemId )
+
+	if itemCount < conf.cost then
+		local msg = string.format(Lang.ScriptTips.exchange001,Item.getItemName(exchangeconf.itemId))
+		LActor.sendTipmsg(sysarg, msg, ttMessage)
+		return
+	end
+
+	-- 下发奖励
+	if not LActor.canAddItem(sysarg, exchangeconf.itemId, 1, 0, 0, true) then
+		-- LActor.sendTipmsg(sysarg, Lang.ScriptTips.exchange002, ttMessage)
+		LActor.SendGeneralTips(sysarg, 7, 0, 0)
+		return
+	end
+
+	-- 扣红旗
+	LActor.removeItem(sysarg, exchangeconf.itemId, conf.cost)
+	LActor.addItem(sysarg,conf.itemId,0,0,conf.itemCount,1)
+	-- 特效
+	local effects = {} -- 用于播放特效
+	local effect = {}
+	effect.type = 1  
+    effect.id = conf.itemId
+    effect.count = conf.itemCount
+    effects[#effects+1] = effect
+    MiscFunc.PlayItemEffect(sysarg, 7, effects)
+
+	-- 下发兑换信息
+	Exchangehandler.SendInfo(sysarg,activityId)
+end
+
+
+-- 注册协议

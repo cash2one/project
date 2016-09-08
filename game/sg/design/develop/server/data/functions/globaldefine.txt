@@ -1,0 +1,183 @@
+--lua script
+--#ifndef _GLOBAL_DEFINES_INCLUDED_
+--#define _GLOBAL_DEFINES_INCLUDED_
+
+--#include "data\language\LangCode.txt" once
+
+--这里定义全局的常量
+--这里定义和客户端的通信协议号
+
+--子系统消息号
+LogicCmd = 
+{
+	
+	miscSys = 
+	{
+		sysId = 139,		--misc子系统
+		sub = 
+		{
+			--客户端上传
+			cGetAward = 13,	--用户领取副本奖励（开箱）
+			cFlower = 21,	--客户端发送鲜花系统的信息
+			cTelCampKingNpc=26, -- 传送玩家到军团长NPC
+			cChangeIcon = 27,
+
+			
+			cSubYuanbao = 32, --消费2天珠来增加采集次数	
+			cShangJinOver = 34,
+			cTianYuanRank = 35,
+			cGuildTianYuan = 36,
+			cXuanYuanGetAward = 200,
+			cXuanYuanMyRank = 201,
+			cXuanYuanActyIsOpen = 202,
+			cResurrec = 40,
+			cGetCroessList = 41,
+			cMoveToCross = 42,
+			cLeaveCross = 43, --退出渡劫
+			cAgainCross = 44, --再次渡劫
+			cShangJinGameStart = 46,
+			cGetDropItem = 47,--掉落宝箱
+			cEnterBath = 58, --进入仙浴场景
+			cBathAction = 59, --仙浴打泡泡、戏水
+			cLiuDaoBuyItem =61, --六道神秘商人购买
+			cGetItemList = 63,	-- 玩家选择消耗某个物品，并获取到其中的一个物品
+
+			--服务器下发
+			sFbResult = 16,	--发送通关评价窗口的信息
+			sGetAward = 17,--广播玩家领取了奖励的消息
+			
+			sFlower = 22,	--通知赠花		
+			sChangeIcon = 27,	--修改头像结果
+			
+			sShangJinStart = 34,
+			sTianYuanRank = 35,
+			sGuildTianYuan = 36,
+			sResurrec = 40,
+			sGetCrossList = 41,
+			sLostCross = 42, --渡劫失败 
+			sShangJinGetMoney = 46,
+			sGetDropItem = 47, --掉落宝箱
+			sBathAction = 59, --仙浴打泡泡、戏水
+			sGetItemList = 63,	-- 玩家选择消耗某个物品，并获取到其中的一个物品
+		},
+	},
+	acuSys = 
+	{
+		sysId = 137,		--经脉子系统
+		sub = 
+		{
+			--客户端上传
+			cLevelUp = 1,	--经脉升级
+			cGetInfo = 2,	--获取经脉数据
+			
+			--服务器下发
+			sLevelUp = 1,	--经脉升级结果
+			sGetInfo = 2,	--经脉数据
+		},
+	},
+	
+}
+
+
+--MISSION_RTV_IDX开头的变量是代表保存在玩家任务系统里的100个整数的索引，每个整数存储不同的数据
+MISSION_RTV_IDX_MISSIONID   = 0   -- 任务ID的存储位置
+MISSION_RTV_IDX_MISSIONIDX  = 1   -- 人物在NPC当前表的索引位置
+MISSION_RTV_IDX_MISSIONSTEP = 2   -- 玩家对话的步骤存储的位置（初始值为 1）
+
+--货币的类型和属性的对应
+moneyTypeMap = 
+{
+    [0] = PROP_ACTOR_BIND_COIN,
+	[1] = PROP_ACTOR_NONBIND_COIN,
+	[2] = PROP_ACTOR_BIND_YUANBAO,
+	[3] = PROP_ACTOR_NONBIND_YUANBAO,
+	[4] = PROP_ACTOR_RENOWN,
+	[7] = PROP_HONOR,
+}
+
+--以下是副本相关的定义
+--这是副本的状态定义
+FB_FS_GETAWARD = 100			--领奖状态
+FB_BS_FINISHED = 99				--已完成
+
+--这是副本的存储的值的索引
+FB_FR_IDX_LEVEL = 1				--副本完成后的等级，发奖励要用
+FB_FR_IDX_BOX = 10				--保存箱子是否开启的值，1个int，记录10个箱子的开启情况，0-4位是银箱，5-9是金箱
+
+--阵营对应的中文名
+Zy_cn = 
+{
+    [zyXY] = "",
+    [zyXC] = "",
+    [zyYX] = "",
+}
+--职业对应的中文名
+Job_cn = 
+{
+	Lang.Misc.m000203,
+	Lang.Misc.m000204,
+	Lang.Misc.m000205,
+	Lang.Misc.m000206,
+	Lang.Misc.m000207,
+	Lang.Misc.m000208,
+	Lang.Misc.m000209,
+	Lang.Misc.m000210,
+}
+
+--金钱类型对应的名称
+MoneyName = 
+{
+	Lang.Misc.m000439,		--绑定金钱
+	Lang.Misc.m000440,		--非绑定金钱
+	Lang.Misc.m000441,		--绑定天珠
+	Lang.Misc.m000442,		--非绑定天珠
+}
+
+--延时回调消息
+EntityCallbackMsg = {
+  TxsCountDown = 1,     -- 同心树倒计时
+  TxsTimeout = 2,       -- 同心树超时
+  FightReady = 3,		-- 开始pk准备时间
+  FightRelive = 4,		-- 复活
+  TianYuanLog = 5,		-- 王城之战记录日志
+  TimeingSkill = 6,		-- 定时使用技能
+  TianMoTaDelayBuff = 7,	-- 密宗佛塔中延时延时使用buff
+  TianMoTaTakeEffect = 8,
+  XuanTianTakeEffect = 9,
+  BaguaRefreshBoss = 10,
+  BaguaTalkToNpc = 11,
+  ZbsStateChanged = 12, -- 争霸赛状态改变
+  ZysStateChanged = 13, -- 自由赛状态改变
+  ZysCountDown = 14, -- 自由赛倒计时
+  ZysPkDelay = 15, -- 自由赛延时初始化
+  ZbsCountDown = 16, -- 争霸赛PK倒计时
+  ZbsPkEndDelay = 17, -- 争霸赛PK结束延时处理
+  ZbsPkStartDelay = 18, -- 争霸赛PK开始延时处理
+     -- 结婚系统
+  MarryTime = 19,		-- 婚礼到期举行  
+  FudiEffect	= 20,   --领地副本
+  SlshRefresh = 21, -- 信使守护刷怪
+  CymkDelayBuff = 22,
+  CymkTakeEffect = 23,
+
+  MonsterTianhuoEffect = 24, --怪物天火效果
+  MonsterYunShiEffect = 25, --怪物陨石效果
+}
+
+--阵营对应颜色
+CampColor = {
+    [zyXY] = "ff66cc",
+    [zyXC] = "ff66cc",
+    [zyYX] = "ff66cc",
+}
+
+--阵营名字缩写
+CampShortName = {
+    [zyXY] = "",
+    [zyXC] = "",
+    [zyYX] = "",
+}
+
+tx_set_feed_url = "/set_feed.jsp"
+
+--#endif //end of _GLOBAL_DEFINES_INCLUDED_

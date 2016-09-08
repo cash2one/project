@@ -1,0 +1,47 @@
+﻿thisNPC = nil
+InitFnTable = {}
+FinaFnTable = {}
+MainFnTable = {}
+
+--#include "data\language\LangCode.txt" once
+--#include "data\functions\NormalFuncForQuest.txt" once
+
+PromMs = {
+--#include "data\config\quest\quests\5066.txt"
+--#include "data\config\quest\quests\5067.txt"
+--#include "data\config\quest\quests\5069.txt"
+}
+
+CompMs = {
+--#include "data\config\quest\quests\92.txt"
+--#include "data\config\quest\quests\100.txt"
+--#include "data\config\quest\quests\101.txt"
+--#include "data\config\quest\quests\5045.txt"
+--#include "data\config\quest\quests\5066.txt"
+--#include "data\config\quest\quests\5068.txt"
+}
+
+
+function main(sysarg)
+  return commonQuestNpcMain(sysarg)
+end
+
+function OnAbortMessions(sysarg, mission)
+  local messionid = tonumber(mission)
+end
+
+function initialization(npcobj)
+  local i
+  thisNPC = npcobj  
+  for i = 1, table.getn(InitFnTable) do
+    InitFnTable[i]( npcobj )
+  end
+end
+
+function finalization(npcobj)
+  local i
+  for i = 1, table.getn(FinaFnTable) do
+    FinaFnTable[i]( npcobj )
+  end
+  thisNPC = nil
+end

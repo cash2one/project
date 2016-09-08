@@ -1,0 +1,45 @@
+require 'config/lang'
+
+
+
+CallFriendConf = { 
+
+	activityId = 5,--活动id
+
+	limitcount = 6,--每天限制抽奖次数
+
+	recvcount = 30,--每天接受玩家赠送的最大次数
+
+	rewardcount = 5,--第七天玩家可以领取礼包最多个数
+
+	continousday = 7,--连续几天接受同一密友赠送次数可获得礼包
+
+	recordcount = 20,--获赠记录显示最大条数
+
+	rewarditem = 18230,--奖励礼包ID
+
+	itemList = 
+    {
+	--梦境1
+		{
+		-- 配置奖励的物品
+		{count = 1, itemid =38206, strong= 0, bind=1,present=2, broadcast=true,},
+		{count = 1, itemid =28249, strong= 0, bind=1,present=15, broadcast=true,},
+		{count = 1, itemid =28248, strong= 0, bind=1,present=83, broadcast=true,},
+		{count = 1, itemid =18710, strong= 0, bind=1,present=600, broadcast=false,},
+		{count = 1, itemid =18227, strong= 0, bind=1,present=600, broadcast=false,},
+		{count = 1, itemid =18612, strong= 0, bind=1,present=600, broadcast=false,},
+		{count = 1, itemid =18603, strong= 0, bind=1,present=600, broadcast=false,},
+		{count = 1, itemid =18211, strong= 0, bind=1,present=600, broadcast=false,},
+		{count = 1, itemid =18627, strong= 0, bind=1,present=600, broadcast=false,},
+		{count = 1, itemid =18600, strong= 0, bind=1,present=900, broadcast=false,},
+		{count = 1, itemid =18617, strong= 0, bind=1,present=900, broadcast=false,},
+		{count = 1, itemid =18613, strong= 0, bind=1,present=900, broadcast=false,},
+		{count = 1, itemid =18621, strong= 0, bind=1,present=900, broadcast=false,},
+		{count = 1, itemid =18609, strong= 0, bind=1,present=900, broadcast=false,},
+		{count = 1, itemid =48296, strong= 0, bind=1,present=900, broadcast=false,},
+		{count = 1, itemid =18606, strong= 0, bind=1,present=900, broadcast=false,},
+
+		},
+    }
+}

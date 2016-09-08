@@ -1,0 +1,56 @@
+-- 历练副本的怪物刷新处理
+--#include "data\functions\config\fubenconfig\lilianfubenconfig.txt" once	-- 历练副本配置
+
+
+--[[
+	----qatEquipment=0,             //物品或者装备----
+		qatXiuwei = 1,	            //修为
+		qatExp = 2,                	//角色经验值
+		qatGuildContribution = 3,	//帮派贡献值
+		qatZYContribution = 4,		//阵营贡献
+		qatBindMoney = 5,           //绑定银两
+		qatMoney = 6,	            //银两
+		qatLiJin = 7,	            //绑定元宝
+		qatTitle = 8,	            //称谓
+		qatSkill = 9,	            //技能-----
+		qatZhanhun = 10,	        //战魂
+		qatAchievePoint =11,        //成就点
+		qatRenown=12,                //历练
+	--qatCustomize = 127,		    //自定义奖励
+]]
+
+
+liLianFubenMon = {}
+-- 单个怪物杀死触发的事件
+liLianFubenMon.OnKillMonster = function(monster,sysarg,monsterid)
+	-- 判断副本
+	--print("monster killed1 : "..monsterid)
+	local fubenId = LActor.getFubenId(sysarg)
+	if fubenId ~= LilianFubenConfig.fubenId[1] then
+		return
+	end
+
+	--print("monster killed2 : "..monsterid)
+	local Fhandle = LActor.getFubenHandle(sysarg)
+	CommonFubenJiesuanConfig.OnKillMonster(Fhandle,fubenId,sysarg,monsterid)
+	--print("monster over")
+end
+
+-- 场景所有怪物死亡事件
+liLianFubenMon.OnMonsterAllDie = function(sceneId, scenePtr, flag, monster)
+	--print("-----all die")
+	local fubenId = LilianFubenConfig.fubenId[1]
+	CommonFubenJiesuanConfig.OnMonsterAllDie(fubenId,sceneId,monster)		-- 公用的杀死怪物处理，设置层数，结算
+	--print("-----do over")
+end
+
+-- 注册怪物
+for i=1,#LilianFubenConfig.monsterIdList do
+	MonDieDispatcher.register( LilianFubenConfig.monsterIdList[i],  liLianFubenMon.OnKillMonster)
+end
+
+-- 注册怪物全部杀死
+for i=1,#LilianFubenConfig.sceneId do
+	MonAllKilledDispatcher.register( LilianFubenConfig.sceneId[i], liLianFubenMon.OnMonsterAllDie )
+end
+

@@ -1,0 +1,41 @@
+{
+	id = 4,
+	name = Lang.Skill.s4Name,
+	desc = Lang.Skill.s4Desc,
+	vocation = 1,
+	skillType = 4,
+	skillSpellType = 0,
+	skillClass = 1,
+	commonCd = 0,
+	canbeDefault = false,
+	specialBuffCond = 0,
+	notAutoUse = false,
+ 	actions=
+{
+
+	{act=2,effect=1601,type=2},
+		
+},
+	skillSubLevel = { 
+--#include "Skill_4_1.txt"
+--#include "Skill_4_2.txt"
+--#include "Skill_4_3.txt"
+--#include "Skill_4_4.txt"
+--#include "Skill_4_5.txt"
+--#include "Skill_4_6.txt"
+--#include "Skill_4_7.txt"
+--#include "Skill_4_8.txt"
+--#include "Skill_4_9.txt"
+--#include "Skill_4_10.txt"
+--#include "Skill_4_11.txt"
+--#include "Skill_4_12.txt"
+--#include "Skill_4_13.txt"
+--#include "Skill_4_14.txt"
+--#include "Skill_4_15.txt"
+--#include "Skill_4_16.txt"
+--#include "Skill_4_17.txt"
+--#include "Skill_4_18.txt"
+--#include "Skill_4_19.txt"
+--#include "Skill_4_20.txt" 
+	},
+},

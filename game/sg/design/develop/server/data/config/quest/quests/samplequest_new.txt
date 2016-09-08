@@ -1,0 +1,192 @@
+﻿{
+	id = 0, --任务id，任务ID值是唯一的，不得重复 
+	name = "任务1", --任务名称, --注意将文字放到语言包中 
+	parentid = -1,--父任务ID，如果值为-1则表示没有父任务，否则必须在做完父任务后才能接此任务 
+	--[[
+        qtMain = 0, //主线任务
+        qtSub = 1,//支线任务
+        qtDay = 2,//日常任务
+        qtReward = 3,//悬赏任务
+        qtGuild = 4,//宗门任务
+        qtPartner = 5,//伙伴任务
+	]]
+	type = 0,	--参照上面编号
+    --[[
+        qptCatches = 1, --捕获类
+        qptTogather = 2, --并肩作战 NPC协助玩家类
+        qptDebt = 3, --讨债类
+        qptLatent = 4, --潜入 潜伏类
+        qptRescue = 5, --救援类
+        qptChase = 6, --追捕类
+        qptSummon = 7, --召唤类
+        qptTransform = 8, --变身类
+        qptProtect = 9, --护送类
+
+        qptGuildLoop = 100, -- 公会任务
+        qptGuildProtect = 101, -- 公会跑商
+    --]]
+    playType = {1, 2}, -- 特殊玩法配置 如果没有特殊玩法就不需要该字段
+	level = 5,	--任务品级, 普通、中级、高级、特级（品级越高，奖励越大）没卵用
+	cangiveup = false,	--是否可以放弃
+	automount = true, -- 是否接任务自动上坐骑，干掉。
+	content = "", 	--任务描述，用于再客户端的任务面板中显示的简短描述，可使用HTML语法、寻路指令, --注意将文字放到语言包中 
+	tips = "",	--任务提示，接任务后会显示在游戏界面下方的文本，如果不填，则接该任务后不会显示提示 无卵用
+	starid = 1, --刷星任务类型ID,填0或不填表示不是刷星任务 当前没有刷星级任务
+	finishAction = 1,	-- 任务完成动作，0-不处理，1-自动交任务，2-待机，默认值为0
+	finishNext = true,	-- 任务完成后是否自动弹出下个可接任务，不配置默认为false
+	acceptNext = true,	-- 接受任务后是否自动弹出下个可接任务，不配置默认为false
+	expEffect = true,	-- 完成任务后奖励经验是否播放特效，默认为false
+	--quickFinish = true,	--能否快速完成，默认不能
+	--finishYB = 20,	--立即完成需要的天珠数
+	--接任务NPC配置，如果值为nil则表示这个任务不需要通过NPC接受，在满足接受条件时自动接受
+	prom = 
+    { 
+        type = 0,--任务的接受和提交类型，0表示从NPC上接任务；1表示满足接受条件时自动接受；2表示由脚本系统动态发布 
+        scene = "发布任务的NPC所在场景名称",  --发布任务的NPC所在场景名称，当type值非0的时候必须配置为nil, --注意将文字放到语言包中 
+        npc = "发布任务的NPC名称", --发布任务的NPC名称，当type值非0的时候必须配置为nil, --注意将文字放到语言包中 
+    },         
+    --交任务NPC配置，如果值为nil则表示这个任务不需要通过NPC交任务，在满足需求条件时自动完成并获得奖励
+    comp = 
+    {                         
+        type = 0,--任务的接受和提交类型，0表示从NPC上交任务；1表示满足需求条件时自动完成并获得奖励；2表示由脚本系统动态处理
+        scene = "交任务的NPC所在的场景名称", --交任务的NPC所在的场景名称，当type值非0的时候必须配置为nil, --注意将文字放到语言包中
+        npc = "交任务的NPC名称",  --交任务的NPC名称，当type值非0的时候必须配置为nil, --注意将文字放到语言包中  
+    },
+	--目标列表
+    target = 
+    {
+        --一个任务需求的配置
+        --[[
+            qtMonster = 0, // 杀怪类
+            qtCollect = 1, // 收集类
+            qtTalk = 2, // 对话类
+            qtQuest = 3, // 子系列任务类
+            qtActorLevel = 4,//1）角色的等级达标
+
+            qtMountAdvance = 30,        //坐骑进阶
+            qtMountFoster = 31,         //坐骑培养
+            qtWingAdvance = 32,         //翅膀进阶
+            qtWingFoster = 33,          // 翅膀培养
+            qtWeaponFix = 34,           // 法宝修炼
+            qtPartnerAdvance = 35,      //伙伴培养
+            qtEquipStrength = 36,       //强化装备
+            qtEquipAdvance = 37,        // 装备进阶
+            qtEquipUpLevel = 38,        // 装备升级
+            qtEquipWashs = 39,          // 装备洗练
+            qtInsertGem = 40,           // 镶嵌宝石
+            qtSyntheticMaterial = 41,   //合成材料
+            qtXuanShangTask = 42,       // 完成悬赏任务
+            qtUpStar =43,               //任务升星
+            qtInJoinFigth =44,          //参与竞技场
+            qtInJoinWar = 45,           //参与竞战场
+            qtQinSao = 46,              //清扫
+        ]] 
+        { type = 0, id = 0, count = 0 },	--type对应上面的目标类型id值，比如杀怪的id是0，根据不同的type，后面的id和count会表示不同的意义，比如杀怪类，则id表示怪物的id，count表示数量
+        {
+            type = 127, id = 1000, count = 1, data = "与XX对话%d次", 
+            --任务目标地点，配置用于进行自动寻路
+            location = 
+            {
+                sceneid = 0, entityName = "", x = 0, y = 0, --如果entityName表示的是怪物或NPC名字则可以不配置x、y
+                --到达此location需要经过的前提地点列表，例如：在XX的YY出进入ZZ副本， 
+                pass = 
+                {
+                    {sceneid = 0, entityName = "", actionDesc = "行为描述", x = 0, y = 0, }, --如果entityName表示的是怪物或NPC名字则可以不配置x、y
+                },
+                hideFastTransfer = false,  --表示是否显示速传，默认不显示
+
+            },
+        }, --注意将文字放到语言包中
+    }, 
+  --奖励列表 
+	awards = 
+    {
+        --[[
+            qatEquipment=0,         //装备，道具
+        	qatExp = 1,             //角色经验值
+        	qatBindMoney = 2,       //仙币（贝币）
+        	qatMoney = 3,	        //银两（取消了）
+        	qatLiJin = 4,	        //绑定天珠 (绑定天珠)
+        	qatZhanhun = 5,	        //奖励威望
+        	aatAchievePoint =6,     //成就点
+            
+            127：自定义奖励，id必须为nil，count必须为nil，data为奖励描述字符串，用于客户端显示。自定义奖励的给予是通过脚本完成的；
+        ]]
+        --新增2个属性值，strong（强化值），quality（品质），这两个属性只对装备奖励有效，其他类型的奖励不需配置
+        { type = 0, id = 0, count = 0, group = 0, strong=10, quality=2},    --group表示是否可选，0表示不可选（必送），否则表示可选奖励
+        { type = 1, id = 1, count = 1,  bind = false, job = 1, sex = 0, group=0 },---bind为true，表示需要绑定，为false不需要绑定，job为-1表示不限制职业，sex=-1也是不限制性别，否则必须符合的玩家才能接收这个奖励
+        { type = 127, id = 0, count = 0, datastr = "<FONT COLOR='#00FF00'>隐身状态3分钟</FONT>",group=-1 }, --注意将文字放到语言包中 
+    }, 
+  --任务条件表 
+    conds = 
+    {
+        --[[
+            任务条件配置项
+            cond为条件类型，有如下值：
+            0：要求升到N级，id无意义，count为要求升到的等级,补充：如果id设置了一个比count大的值，表示这个任务限制等级低于id的才可以接
+              1：要求帮派等级，id无意义，count为要求的等级
+              2：要求职业，id为职业的编号，count无意义
+              3：要求门派,id为门派编号
+        				4、所在阵营,id和count为阵营编号，表示只要玩家阵营满足其中一个即可接受任务，如果限定只有一个阵营可接，只需要id或count其中任意一个填0，另外一个填阵营id即可
+        				5、杀戮值，id无意义，count为杀戮值
+        				6、战魂值，id无意义，count为战魂值
+        				--7、前置任务??
+        				8、身上携带物品,id为物品编号，，count为杀戮值
+        				9、物品数量,id为物品编号，count表示数量
+        				--10、对应道具ID,输入道具ID，玩家双击该道具后添加任务(zac:这种是通过物品获得任务）
+        	11、满足多个门派要求，id为门派的列表，id为int类型，4个字节，每个字节表示一个门派id，没有则为0
+        	如：{ type = 11,id = 516,count=0},就是门派2和4
+        	12、满足2个前置任务完成的条件，id和count分别表示前置任务的id，任意一个任务完成，这个条件都可通过
+        	13、性别限制，id表示性别，0男，1女
+        	如：{ type = 12,id = 102, count = 258},	--分别表示102或者258任务完成就可以达到这个任务的条件
+        ]]
+        { type = 0, id=12,count = 0 },
+    },
+    timelimit = 100,--任务时间限制，单位是秒钟，从接任务后开始计时，必须在时间归零前完成任务，否则任务自动注销，0表示不限制时间； 
+    interval = 0,--任务周期，单位是秒。0表示这个任务永远只能做一次。任务周期表示从当天0点开始，进行任务后的多长时间后才能再次接任务。
+    maxcount = 1,--每个任务周期内，可以做多少次，0表示不限制； 
+    timeoutcleardata = 1,--玩法任务 到时清除数据  默认不用配 ，1表示玩法 任务超时清除数据 ， 不是放弃任务
+	excludetree = true, --如果接了此任务的子任务，则不能再接此任务；
+
+    PromMsTalks = {                  -- 可接任务表
+                                   -- 可接任务的对话
+    },
+  
+    CompMsTalks = {                  -- 可完成任务表
+                                   -- 可完成任务对话
+    },
+  
+    CompMsTip = {                    -- 未完成任务表
+    },                               -- 未完成任务对话 
+
+    MyMsTalks = "艹尼玛",			   -- 主角的回应
+	
+	--问答类的任务需要配置的问题的答案，一般只有2条，正确的答案在最后一条
+	--注意如果是表示问答类的任务，这几行都不要存在了
+	AnswerTip = {
+		"刀剑是好玩的游戏",	--这只是个例子，具体要放到语言包
+		"刀剑是非常好玩的游戏",
+	},
+    --[[
+        PromCheck = function(sysarg,mission)      -- 玩家接受任务前的条件检查(按照需要进行使用可省略不写)
+          --return false,""                       -- 在判断限制条件后的需要显示的字符串
+        end,                                    --（内部需要做一些的逻辑的处理和判断）
+    --]]
+
+    --[[
+        PromCallBack = function(sysarg,mission)   -- 玩家接受任务前的条件检查，在添加任务时执行此函数(按照需要进行使用可省略不写)
+          --return false,""                       -- 在判断限制条件后的需要显示的字符串
+        end,
+    --]]
+
+    --[[
+        CompCheck = function(sysarg,mission)     -- 玩家接受任务前的条件检查(按照需要进行使用可省略不写)
+          --return false,""                       -- 在判断限制条件后的需要显示的字符串
+        end,
+    --]]
+
+    --[[如果是需要物品的任务，要加上此函数，用于任务完成之后从玩家身上去掉相关物品（脚本处理已经实现，可直接使用）
+        CompCallBack = function(sysarg)
+        end,
+    --]]
+},

@@ -1,0 +1,286 @@
+--#include "data\config\activity\fcactivityconf.txt" once
+--#include "data\functions\systems\SystemHandlerDispatcherImplement.txt" once
+
+FCActivityHandler = {}
+
+FCActivityHandler.GetFCActivityData = function ( sysarg )
+	local st = LActor.getStaticVar(sysarg)
+	if st == nil then return end
+
+	if st.fcreward == nil then
+ 		st.fcreward = {}
+ 		st.fcreward.meitilibao = 1
+ 		st.fcreward.onlinereward1 = 0
+ 		st.fcreward.onlinereward2 = 0
+ 		st.fcreward.activityaward = {}
+  		for i = 1, #FCActivityConf.activity do
+ 			st.fcreward.activityaward[i] = 0
+ 		end
+ 		st.fcreward.dailynum = 0
+ 		st.fcreward.dailyreward = {}
+  		for i = 1, #FCActivityConf.dailyReward do
+ 			st.fcreward.dailyreward[i] = 0
+ 		end
+ 		st.fcreward.keeploginaward = {}
+ 		for i = 1, #FCActivityConf.keeptime do
+ 			st.fcreward.keeploginaward[i] = 0
+ 		end
+ 		st.fcreward.levelupreward = {}
+ 		for i = 1, #FCActivityConf.uplevel do
+ 			st.fcreward.levelupreward[i] = 0
+ 		end
+ 	end
+
+ 	return st
+end
+
+-- 下发小有成就的信息
+FCActivityHandler.sendJuniorEffort = function (sysarg)
+	if FCActivityHandler.IsOpen() == 0 then return end
+
+	local st = LActor.getStaticVar(sysarg)
+	if st == nil then return end
+	local count = #FCActivityConf.JuniorEffort
+	if st.fcreward.juniorEffort == nil then
+		st.fcreward.juniorEffort = {}
+		for i=1,count do
+			st.fcreward.juniorEffort[i] = 0
+		end
+	end
+	local npack = DataPack.allocPacket(sysarg, 200, 7)
+	if npack == nil then return end
+	DataPack.writeInt(npack, count)
+	for i=1,count do
+		DataPack.writeInt(npack, i)
+		DataPack.writeInt(npack, st.fcreward.juniorEffort[i])
+	end
+	DataPack.flush(npack)
+end
+
+FCActivityHandler.NotifyActor = function (index, status)
+	if FCActivityHandler.IsOpen() == 0 then return end
+
+	local actors = LuaHelp.getAllActorList()
+	  if actors ~= nil then
+	    for i=1,#actors do
+	      local actor = actors[i]
+		  local st = FCActivityHandler.GetFCActivityData(actor)
+		  if st ~= nil then 
+		  	if index == 1 then
+		  		st.fcreward.onlinereward1 = status
+		  	else
+		  		st.fcreward.onlinereward2 = status
+		  	end
+			local pack = DataPack.allocPacket(actor, 200, 3)
+			if pack == nil then return end
+			DataPack.writeInt(pack, st.fcreward.onlinereward1)
+			DataPack.writeInt(pack, st.fcreward.onlinereward2)
+			DataPack.flush(pack)
+		  end
+	    end
+	 end
+end
+
+FCActivityHandler.NotifyActorKeepTime = function ()
+	if FCActivityHandler.IsOpen() == 0 then return end
+
+	local actors = LuaHelp.getAllActorList()
+	  if actors ~= nil then
+	    for i=1,#actors do
+	      local actor = actors[i]
+	      local keeptime = LActor.getOnlineTimePerDay(actor)
+ 		  local st = FCActivityHandler.GetFCActivityData(actor)
+	      if keeptime > 0 then
+	      	local pack = DataPack.allocPacket(actor, 200, 5)
+			if pack == nil then return end
+			local count = #st.fcreward.keeploginaward
+			DataPack.writeInt(pack, keeptime)
+			DataPack.writeInt(pack, count)
+			for i = 1, count do
+				if keeptime >= 3600*FCActivityConf.keeptime[i] and st.fcreward.keeploginaward[i] == 0 then
+					st.fcreward.keeploginaward[i] = 1
+				end
+				DataPack.writeInt(pack, FCActivityConf.keeptime[i])
+				DataPack.writeInt(pack, st.fcreward.keeploginaward[i])
+			end
+			DataPack.flush(pack)
+		  end
+	    end
+	 end
+end
+
+FCActivityHandler.DailyReward = function ( sysarg)
+	if FCActivityHandler.IsOpen() == 0 then return end
+
+ 	local st = FCActivityHandler.GetFCActivityData(sysarg)
+ 	if st == nil then return end
+
+ 	st.fcreward.dailynum = st.fcreward.dailynum + 1
+ 	for i=1,#st.fcreward.dailyreward do
+ 		if st.fcreward.dailynum >= i and st.fcreward.dailyreward[i] == 0 then
+			st.fcreward.dailyreward[i] = 1
+		end
+ 	end
+
+ 	local pack = DataPack.allocPacket(sysarg, 200, 2)
+	if pack == nil then return end
+	local count = #st.fcreward.dailyreward
+	DataPack.writeInt(pack, count)
+	for i = 1, count do
+		DataPack.writeInt(pack, i)
+		DataPack.writeInt(pack, st.fcreward.dailyreward[i])
+	end
+	DataPack.flush(pack)
+end
+
+FCActivityHandler.ActivityReward = function ( sysarg)
+	if FCActivityHandler.IsOpen() == 0 then return end
+
+ 	local st = FCActivityHandler.GetFCActivityData(sysarg)
+ 	if st == nil then return end
+
+ 	local count = LActor.getActivity(sysarg)
+ 	for i=1,#st.fcreward.activityaward do
+		if count >= FCActivityConf.activity[i] and st.fcreward.activityaward[i] == 0 then
+			st.fcreward.activityaward[i] = 1
+		end
+ 	end
+	local pack = DataPack.allocPacket(sysarg, 200, 4)
+	if pack == nil then return end
+	local count = #st.fcreward.activityaward
+	DataPack.writeInt(pack, count)
+	for i = 1, count do
+		DataPack.writeInt(pack, FCActivityConf.activity[i])
+		DataPack.writeInt(pack, st.fcreward.activityaward[i])
+	end
+	DataPack.flush(pack)
+end
+
+FCActivityHandler.NotifyOnlineReward = function ( sysarg )
+	if FCActivityHandler.IsOpen() == 0 then return end
+
+	local st = LActor.getStaticVar(sysarg)
+	if st == nil then return end
+
+	local cur_t = System.getCurrMiniTime()
+	local year = 0
+	local month = 0
+	local day = 0
+	year,month,day= System.getDate(year,month,day) 
+	local oneStart = System.timeEncode(year, month, day, FCActivityConf.onlineRewardTime[1].startHour, FCActivityConf.onlineRewardTime[1].startMin, FCActivityConf.onlineRewardTime[1].startSec)
+	local oneEnd = System.timeEncode(year, month, day,  FCActivityConf.onlineRewardTime[1].endHour, FCActivityConf.onlineRewardTime[1].endMin, FCActivityConf.onlineRewardTime[1].endSec)
+	local twoStart = System.timeEncode(year, month, day,  FCActivityConf.onlineRewardTime[2].startHour, FCActivityConf.onlineRewardTime[2].startMin, FCActivityConf.onlineRewardTime[2].startSec)
+	local twoEnd = System.timeEncode(year, month, day,  FCActivityConf.onlineRewardTime[2].endHour, FCActivityConf.onlineRewardTime[2].endMin, FCActivityConf.onlineRewardTime[2].endSec)
+
+	if cur_t > oneStart and cur_t < oneEnd then
+		local st = FCActivityHandler.GetFCActivityData(sysarg)
+		if st ~= nil then 
+			if st.fcreward.onlinereward1 == 0 then
+				st.fcreward.onlinereward1 = 1
+			end
+			st.fcreward.onlinereward2 = 0
+			local pack = DataPack.allocPacket(sysarg, 200, 3)
+			if pack == nil then return end
+			DataPack.writeInt(pack, st.fcreward.onlinereward1)
+			DataPack.writeInt(pack, st.fcreward.onlinereward2)
+			DataPack.flush(pack)
+		end
+	elseif cur_t > twoStart and cur_t < twoEnd then
+		local st = FCActivityHandler.GetFCActivityData(sysarg)
+		if st ~= nil then 
+			if st.fcreward.onlinereward2 == 0 then
+				st.fcreward.onlinereward2 = 1
+			end
+			st.fcreward.onlinereward1 = 0
+			local pack = DataPack.allocPacket(sysarg, 200, 3)
+			if pack == nil then return end
+			DataPack.writeInt(pack, st.fcreward.onlinereward1)
+			DataPack.writeInt(pack, st.fcreward.onlinereward2)
+			DataPack.flush(pack)
+		end
+	else
+		local st = FCActivityHandler.GetFCActivityData(sysarg)
+		if st ~= nil then 
+			st.fcreward.onlinereward1 = 0
+			st.fcreward.onlinereward2 = 0
+		end		
+	end
+end
+
+FCActivityHandler.SendKeepTimeInfo = function ( sysarg )
+	if FCActivityHandler.IsOpen() == 0 then return end
+
+	local keeptime = LActor.getOnlineTimePerDay(sysarg)
+	local st = FCActivityHandler.GetFCActivityData(sysarg)
+	if keeptime > 0 then
+		local pack = DataPack.allocPacket(sysarg, 200, 5)
+		if pack == nil then return end
+		local count = #st.fcreward.keeploginaward
+		local keeptime = LActor.getOnlineTimePerDay(sysarg)
+		DataPack.writeInt(pack, keeptime)
+		DataPack.writeInt(pack, count)
+		for i = 1, count do
+			if keeptime >= 3600*FCActivityConf.keeptime[i] and st.fcreward.keeploginaward[i] == 0 then
+				st.fcreward.keeploginaward[i] = 1
+			end
+			DataPack.writeInt(pack, FCActivityConf.keeptime[i])
+			DataPack.writeInt(pack, st.fcreward.keeploginaward[i])
+		end
+		DataPack.flush(pack)
+	end
+end
+
+FCActivityHandler.StartFC = function ( sysarg )
+	if FCActivityHandler.IsOpen() == 0 then return end
+
+	local pack = DataPack.allocPacket(sysarg, 200, 6)
+	if pack == nil then return end
+	DataPack.writeInt(pack, 1)
+	DataPack.flush(pack)
+end
+
+FCActivityHandler.Open = function ()
+	local var = System.getStaticVar()
+	if var == nil then return false end
+	
+	var.fcactivity = {}
+	var.fcactivity.isopen = 1
+	
+	FCActivityHandler.BroadActivityState(1)
+
+	return true
+end
+
+FCActivityHandler.Close = function ()
+	local var = System.getStaticVar()
+	if var == nil then return false end
+	if var.fcactivity == nil then
+		var.fcactivity = {}
+	end
+	var.fcactivity.isopen = 0
+	FCActivityHandler.BroadActivityState(0)
+	return true
+end
+
+FCActivityHandler.IsOpen = function ()
+	local var = System.getStaticVar()
+	if var == nil or var.fcactivity == nil then 
+		FCActivityHandler.Open()
+	end
+	return var.fcactivity.isopen
+end
+
+FCActivityHandler.BroadActivityState = function (state)
+	local dp = LDataPack.allocPacket()
+	if dp == nil then return end
+	LDataPack.writeByte(dp, 200)
+	LDataPack.writeByte(dp, 6)
+	LDataPack.writeInt(dp, state)
+	System.broadcastData(dp)
+end
+
+FCActivityHandler.ClearActorData = function ( sysarg )
+	local st = LActor.getStaticVar(sysarg)
+	if st == nil then return end
+	st.fcreward = nil
+end

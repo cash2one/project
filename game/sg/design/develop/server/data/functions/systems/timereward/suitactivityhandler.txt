@@ -1,0 +1,114 @@
+--开服活动，套装搜集
+
+--#include "suitactivityrewardconf.txt" once
+
+ONLINEREWARD.ServerActivityEvent[2] = function(sysarg, newItemId, param2)
+	local day7_t = System.getRestTimeFromOpenServer(7)
+	day7_t = day7_t - 7200	-- 计算距离开服7天22时的时间
+	if day7_t <= 0 then return end  --结束了，不再关注
+	local items = SuitActivityConf.suitItemId
+	for i=1,#items do
+		if newItemId == items[i] then
+			local var = LActor.getStaticVar(sysarg)
+			if var.suitActivityItemCount == nil then
+				var.suitActivityItemCount = 0
+			end
+
+			var.suitActivityItemCount = var.suitActivityItemCount + 1
+
+			if var.suitActivitySub == nil then
+			var.suitActivitySub = 0
+			end
+
+			local ret = var.suitActivitySub	
+			for i=1,#SuitActivityConf.canReward do
+				if var.suitActivityItemCount >= SuitActivityConf.canReward[i] then 
+					ret = System.bitOpSetMask(ret, i - 1, true)		--3个位分别标记3种奖励
+				end
+			end
+
+
+			--通知客户端
+			if ret ~= var.suitActivitySub then
+				var.suitActivitySub = ret
+				if var.suitActiveRecord == nil then		--纪录哪个领了
+					var.suitActiveRecord = 0
+				end
+				local npack = DataPack.allocPacket(sysarg, 138, 24)
+				if npack == nil then return end
+				DataPack.writeInt(npack, var.suitActivitySub)
+				DataPack.writeInt(npack, var.suitActiveRecord)
+				DataPack.flush(npack)
+			end
+			--print(var.suitActivityItemCount)
+			--print(var.suitActivitySub)
+			--print(var.suitActiveRecord)
+			return
+		end
+	end
+end
+
+--请求套装搜集奖励情况,搜集套装数
+ONLINEREWARD.getSuitActivityRewardInfo = function(sysarg)
+	local var = LActor.getStaticVar(sysarg)
+	if var.suitActivitySub == nil or var.suitActiveRecord == nil then
+		return
+	end
+	local npack = DataPack.allocPacket(sysarg, 138, 24)
+	if npack == nil then return end
+	DataPack.writeInt(npack, var.suitActivitySub)
+	DataPack.writeInt(npack, var.suitActiveRecord)
+	DataPack.flush(npack)
+end
+
+--25
+ONLINEREWARD.getSuitActivityReward = function(sysarg, packet)
+	print("25252525252525252525")	
+	local var = LActor.getStaticVar(sysarg)
+
+	local Pos = DataPack.readInt(packet)
+	if Pos < 0 or Pos > 2 then return end
+
+	if var.suitActivitySub == nil  or var.suitActiveRecord == nil then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.osa0004, ttMessage)
+		return
+	end
+
+	if not System.bitOPMask(var.suitActivitySub, Pos) then				--没纪录即没达成
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.osa0004, ttMessage)
+		return
+	end
+
+	if System.bitOPMask(var.suitActiveRecord, Pos) then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.osa0002, ttMessage)	--领过了
+		return
+	end
+
+	local items = SuitActivityConf.rewardInfo.item[Pos + 1]
+	if items == nil then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.osa0004, ttMessage)
+		return
+	end
+
+	--给奖励
+	local bagGrid =Item.getBagEmptyGridCount(sysarg)      --玩家身上有多少个格子
+  	local needGrid =0
+ 	for i=1, table.getn(items) do
+        needGrid= needGrid + Item.getAddItemNeedGridCount(sysarg,items[i].id,items[i].count,items[i].quality,items[i].strong,items[i].bind)
+  	end
+  	--提示玩家留出x个格子
+  	if(needGrid > bagGrid) then
+    	-- local tipMsg = string.format(Lang.ScriptTips.x00074,needGrid)
+    	-- LActor.sendTipmsg( sysarg,tipMsg,ttMessage )
+    	LActor.SendGeneralTips(sysarg, 7, 0, 0)
+    	return
+  	end
+
+  	--给物品
+  	for i=1,table.getn(items)  do
+		LActor.addItem(sysarg,items[i].id,items[i].quality,items[i].strong,items[i].count,items[i].bind,"compensate",1)
+	end
+
+	--设置已领取
+	var.suitActiveRecord = System.bitOpSetMask(var.suitActiveRecord, Pos, true)
+end

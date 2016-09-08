@@ -1,0 +1,23 @@
+-- 密宗佛塔副本函数
+
+--#include "data\functions\entrustfunc.txt" once
+
+XuanTianPublic = {}
+
+-- 通关处理
+XuanTianPublic.OnTongGuan = function(sysarg, layer, sconf)
+	-- 创建传送门
+	local teleportConf = sconf.teleport
+	if teleportConf ~= nil then
+		-- print("create transter:"..layer)
+		local comfirm
+		if teleportConf.comfirm == nil then
+			comfirm = 0
+		else
+			comfirm = teleportConf.comfirm
+		end
+		LActor.createTranster(sysarg, teleportConf.modelid, teleportConf.posx, teleportConf.posy, teleportConf.toPosx, teleportConf.toPosy, teleportConf.toSceneid, teleportConf.name, comfirm)
+	end
+
+	EntrustFunc.SetFubenValue(sysarg, XuanTianConf.fbid, layer) -- 设置副本委托相关值
+end

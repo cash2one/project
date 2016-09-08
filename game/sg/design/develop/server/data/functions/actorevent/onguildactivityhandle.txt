@@ -1,0 +1,32 @@
+﻿--lua script
+
+-- 帮派活动处理
+
+EventCallDispatcher.GuildActivityHandler = {}
+
+-- guild : 帮派指针
+-- aid : 活动ID
+-- pfb : 副本指针
+function OnGuildActivityStateChange(aid, guild, pfb, state)
+	local handlers = EventCallDispatcher.GuildActivityHandler
+	if handlers[aid] ~= nil then
+		handlers[aid](guild, pfb, state)
+	end
+end
+
+
+-- 注册帮派活动状态改变
+EventCallDispatcher.registerGuildActivity = function (aid, func )
+	if EventCallDispatcher.GuildActivityHandler[aid] ~= nil then
+		print( "guild activity state register exist:"..aid )
+		return
+	end
+	EventCallDispatcher.GuildActivityHandler[aid] = func 		--一个活动只能注册一个函数
+end
+
+
+-- 帮派活动ID
+GuildActivityId = {
+	aPeach = 0,
+	aXianLing = 1,
+}

@@ -1,0 +1,57 @@
+﻿--光棍节活动 singledayconf.txt
+
+--主要配置
+Singledayconf1 = 
+{	
+	--活动ID
+	activityID = 8,
+	textbuttonID = 1001,
+	CharmRankName = "songhuapaihang1",--排行榜名称
+	charmcount = 3,	   --排行人数
+	-- 礼包列表
+	awards=
+	{
+		{ranklevel = 1, awardid = 60094, awardcount = 1},  --第一名的礼包
+		{ranklevel = 2, awardid = 60093, awardcount = 1},  --第二名的礼包
+		{ranklevel = 3, awardid = 60098, awardcount = 1},  --第三名的礼包
+	},
+	--累计送花可获得奖励
+	flowerRewards =
+	{
+		--{ count = 数量 , rewardID = 奖励ID，rewardCount：奖励数量
+		{count = 1000, rewardID  = 60084, rewardCount = 1},
+		{count = 5000, rewardID  = 60085, rewardCount = 1},
+		{count = 15000, rewardID = 60086, rewardCount = 1},
+		{count = 30000, rewardID = 60087, rewardCount = 1},
+	},
+	--开关，是否要拿完累计鲜花礼包后才能拿排行礼包
+	isTrue = false,
+}
+
+--主要配置（白色情人节）
+Singledayconf2 = 
+{	
+	--活动ID
+	activityID = 12,
+	textbuttonID = 1005,
+	CharmRankName = "songhuapaihang2",--排行榜名称
+	charmcount = 3,	   --排行人数
+	-- 礼包列表
+	awards=
+	{
+		{ranklevel = 1, awardid = 60094, awardcount = 1},  --第一名的礼包
+		{ranklevel = 2, awardid = 60093, awardcount = 1},  --第二名的礼包
+		{ranklevel = 3, awardid = 60098, awardcount = 1},  --第三名的礼包
+	},
+	--累计送花可获得奖励
+	flowerRewards =
+	{
+		--{ count = 数量 , rewardID = 奖励ID，rewardCount：奖励数量
+		{count = 1000, rewardID  = 60084, rewardCount = 1},
+		{count = 5000, rewardID  = 60085, rewardCount = 1},
+		{count = 15000, rewardID = 60086, rewardCount = 1},
+		{count = 30000, rewardID = 60087, rewardCount = 1},
+	},
+	--开关，是否要拿完累计鲜花礼包后才能拿排行礼包
+	isTrue = false,
+}

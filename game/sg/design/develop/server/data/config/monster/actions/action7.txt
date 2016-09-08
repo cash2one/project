@@ -1,0 +1,46 @@
+--历练副本BOSS
+{
+	id = 7,	--行为ID
+	trigger = 1,	--触发类型，血量为1，时间为2
+	infos = 
+	{
+		--血量99%
+		{
+			sequId = 1,
+			param = 99,
+			sequence = 
+			{
+				{ type = 1, duration = 4, talk=Lang.Actions.a000214, talkType=1 },	--对白
+			} 
+		},
+		--血量70%
+		{
+			sequId = 2,
+			param = 70,
+			sequence = 
+			{
+				{ type = 1, duration = 4, talk=Lang.Actions.a000211, talkType=1 },	--对白
+			} 
+		},
+
+		--血量30%
+		{
+			sequId = 3,
+			param = 20,
+			sequence = 
+			{
+				{ type = 1, duration = 3, talk=Lang.Actions.a000212, talkType=1 },	--对白
+			} 
+		},
+
+		--血量5%
+		{
+			sequId = 4,
+			param = 5,
+			sequence = 
+			{
+				{ type = 1, duration = 2, talk=Lang.Actions.a000213, talkType=1 },	--对白
+			} 
+		},
+	},
+},

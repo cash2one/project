@@ -1,0 +1,1042 @@
+﻿--目标成就的第二部分的 目标 的配置
+
+--[[
+	 --id =	66			加3个好友			
+	{ 							
+		id = 66,				
+		logicop = 1,  						
+		atomEventId = 28,  			
+		conds = 						
+		{						
+			{					
+				paramID = 1,   				
+				paramType = 	2	,   		
+				params =      	{	3	}	
+			},					
+		}						
+	},							
+	 --id = 67			加入一个帮派			
+	{ 							
+		id = 67,				
+		logicop = 2,						
+		atomEventId = 11,  			
+		conds = { }						
+	},	
+]]						
+	 --id = 68			挑战历练副本一次			
+	{ 							
+		id = 68,				
+		logicop = 3,						
+		atomEventId = 14,  			
+		conds = 						
+		{						
+			{					
+				paramID = 1,				
+				paramType = 1	,   		
+				params = { 4 }
+			},					
+		}						
+	},							
+	 --id =	69			等级达到30级			
+	{ 							
+		id = 69,				
+		logicop = 4,						
+		atomEventId = 2,  			
+		conds = 						
+		{						
+			{					
+				paramID = 1,				
+				paramType = 2,   		
+				params = {	30	}	
+			},					
+		}						
+	},							
+	 --id = 70			达到炼气一阶
+	{ 							
+		id = 70,				
+		logicop = 5,						
+		atomEventId = 10, 
+		conds = 						
+		{						
+			{					
+				paramID = 1,				
+				paramType = 1,   		
+				params = { 1 }	
+			},					
+		}						
+	},							
+	 --id = 72			挑战诛仙阵副本一次			
+	{ 							
+		id = 	72	,				
+		logicop = 6,						
+		atomEventId = 		14	,  			
+		conds = 						
+		{						
+			{					
+				paramID = 1,				
+				paramType = 1,   		
+				params = { 11 }	
+			},					
+		}						
+	},							
+	 --id = 73			将全身装备强化+2			
+	{ 							
+		id = 	73,				
+		logicop = 7,						
+		atomEventId = 51,  			
+		conds = 						
+		{						
+			{
+				paramID = 1,				
+				paramType = 2,   		
+				params = { 2 }	
+		    },	
+				
+		}						
+	},							
+	 --id = 75		等级达到40级				
+	{ 							
+		id = 75,				
+		logicop = 9,						
+		atomEventId = 2,  			
+		conds = 						
+		{						
+			{					
+				paramID = 1,				
+				paramType = 2,   		
+				params = { 40 }	
+			},					
+		}						
+	},							
+	 --id = 	71		达到筑基一阶			
+	{ 							
+		id = 	71	,				
+		logicop = 10,						
+		atomEventId = 10,  			
+		conds = 						
+		{						
+			{					
+				paramID = 1,				
+				paramType = 	1,   		
+				params =      	{ 10 }	
+			},					
+		}						
+	},							
+	 --id = 77		坐骑进阶为狼(2阶)				
+	{ 							
+		id =  77,				
+		logicop = 11,						
+		atomEventId = 63,  			
+		conds = 						
+		{						
+			{					
+				paramID = 1,				
+				paramType = 	1	,   		
+				params = { 2 }	
+			},					
+		}						
+	},							
+	 --id = 78		参加一次帮战				
+	{ 							
+		id = 78,				
+		logicop = 12,						
+		atomEventId = 52,  			
+		conds = { }						
+	},							
+	--[[
+	 --id =	79		灵器装备一个蓝色以上仙魂				
+	{ 							
+		id = 79,				
+		logicop = 13,						
+		atomEventId = 65,  			
+		conds = 						
+		{						
+			{					
+				paramID = 1,				
+				paramType = 2,   		
+				params = { 2,10 }	
+			},
+			{					
+				paramID = 2,				
+				paramType = 1,   		
+				params = { 1 }	
+			},						
+		}						
+	},		
+	  ]]					
+	 --id =	80		等级达到50级				
+	{ 							
+		id = 80,				
+		logicop = 14,						
+		atomEventId = 2,  			
+		conds = 						
+		{						
+			{					
+				paramID = 1,				
+				paramType = 2,   		
+				params = { 50 }	
+			},					
+		}						
+	},							
+	 --id = 	76		达到结丹一阶				
+	{ 							
+		id = 76,				
+		logicop = 15,						
+		atomEventId = 10,  			
+		conds = 						
+		{						
+			{					
+				paramID = 1,				
+				paramType = 1,   		
+				params = { 19 }	
+			},					
+		}						
+	},							
+	 --id = 82		坐骑穿上第一件装备				
+	{ 							
+		id = 	82	,				
+		logicop = 16,						
+		atomEventId = 45,  			
+		conds = { }						
+	},							
+	 --id =	83		装备一颗四级以上宝石				
+	{ 							
+		id = 83,				
+		logicop = 17,						
+		atomEventId = 		50	,  			
+		conds = 						
+		{						
+			    {					
+				paramID = 1,				
+				paramType = 	1	,   		
+				params =      	{	1	}
+				},
+				{
+				paramID = 2,				
+				paramType = 	2	,   		
+				params =      	{	4	}	
+			    },			
+				
+		}						
+	},							
+	 --id =	84		坐骑资质达到500				
+	{ 							
+		id = 84,				
+		logicop = 18,						
+		atomEventId = 58,  			
+		conds = 						
+		{						
+			{					
+				paramID = 1,				
+				paramType = 2,   		
+				params = {	500	}	
+			},					
+		}						
+	},							
+	 --id = 85		等级达到60级				
+	{ 							
+		id = 	85	,				
+		logicop = 19,						
+		atomEventId = 2,  			
+		conds = 						
+		{						
+			{					
+				paramID = 1,				
+				paramType = 2,   		
+				params = {	60	}	
+			},					
+		}						
+	},							
+	 --id =	81		达到元婴一阶				
+	{ 							
+		id = 81,				
+		logicop = 20,						
+		atomEventId = 10,  			
+		conds = 						
+		{						
+			{					
+				paramID = 1,				
+				paramType = 1,   		
+				params = { 28 }	
+			},					
+		}						
+	},							
+	 --id = 	87		装备洗炼属性全部激活				
+	{ 							
+		id = 	87	,				
+		logicop = 0,						
+		atomEventId = 		32	,  			
+		conds = { }						
+	},							
+	 --id = 	88		60级紫色攻击套装一套				
+	{ 							
+		id = 	88,				
+		logicop = 0,						
+		atomEventId = 41 ,  			
+		conds = 						
+		{						
+			{					
+				paramID = 1,				
+				paramType = 	1	,   		
+				params = {	5,11,17,23	}	--???这里要填60级紫色攻击套装
+			},	
+			{					
+				paramID = 2,				
+				paramType = 	2,   		
+				params = {	5	}	--???这里要填60级紫色攻击套装
+			},					
+		}						
+	},	
+
+	 --id = 	91		完美炼气				
+	{ 							
+		id = 	91,				
+		logicop = 0,						
+		atomEventId = 48,  			
+		conds = 						
+		{						
+			{					
+				paramID = 1,				
+				paramType = 	1	,   		
+				params = {	1	}
+			},					
+		}						
+	},	
+	 --id = 	92		完美筑基				
+	{ 							
+		id = 	92,				
+		logicop = 0,						
+		atomEventId = 48,  			
+		conds = 						
+		{						
+			{					
+				paramID = 1,				
+				paramType = 	1	,   		
+				params = {	2	}
+			},					
+		}						
+	},	
+	 --id = 	93		完美结丹				
+	{ 							
+		id = 	93,				
+		logicop = 0,						
+		atomEventId = 48,  			
+		conds = 						
+		{						
+			{					
+				paramID = 1,				
+				paramType = 	1	,   		
+				params = {	3	}
+			},					
+		}						
+	},	
+	 --id = 	94		完美元婴				
+	{ 							
+		id = 	94,				
+		logicop = 0,						
+		atomEventId = 48,  			
+		conds = 						
+		{						
+			{					
+				paramID = 1,				
+				paramType = 	1	,   		
+				params = {	4	}
+			},					
+		}						
+	},	
+	 --id = 	95		完美化神				
+	{ 							
+		id = 	95,				
+		logicop = 0,						
+		atomEventId = 48,  			
+		conds = 						
+		{						
+			{					
+				paramID = 1,				
+				paramType = 	1	,   		
+				params = {	5	}
+			},					
+		}						
+	},	
+	 --id = 	96		阿房废墟 (原:完美炼虚)				
+	{ 							
+		id = 	96,				
+		logicop = 0,						
+		atomEventId = 62,  			
+		conds = 						
+		{						
+			{					
+				paramID = 1,				
+				paramType = 	1	,   		
+				params = {	1	}
+			},					
+		}						
+	},	
+	 --id = 	97		西周遗冢（原：完美合体）				
+	{ 							
+		id = 	97,				
+		logicop = 0,						
+		atomEventId = 62,  			
+		conds = 						
+		{						
+			{					
+				paramID = 1,				
+				paramType = 	1	,   		
+				params = {	2	}
+			},					
+		}						
+	},	
+	 --id = 	98		魅力值达到5000（原：完美大乘）				
+	{ 							
+		id = 	98,				
+		logicop = 0,						
+		atomEventId = 13,  			
+		conds = 						
+		{						
+			{					
+				paramID = 1,				
+				paramType = 	2	,   		
+				params = {	5000	}
+			},					
+		}						
+	},	
+	 --id = 	99		点将台胜利（原：完美飞升）				
+	{ 							
+		id = 	99,				
+		logicop = 0,						
+		atomEventId = 18,  			
+		conds = 						
+		{						
+			{					
+				paramID = 1,				
+				paramType = 	1	,   		
+				params = {	1	}
+			},					
+		}						
+	},	
+		 --id = 	86		化神9阶				
+	{ 							
+		id = 	86,				
+		logicop = 0,						
+		atomEventId = 10,  			
+		conds = 						
+		{						
+			{					
+				paramID = 1,				
+				paramType = 	1	,   		
+				params = {	45	}
+			},					
+		}						
+	},	
+		 --id = 	89		60级紫色防御套装一套				
+	{ 							
+		id = 	89,				
+		logicop = 0,						
+		atomEventId = 41,  			
+		conds = 						
+		{						
+			{					
+				paramID = 1,				
+				paramType = 	1	,   		
+				params = {	6,12,18,24	}
+			},
+			{					
+				paramID = 2,				
+				paramType = 	2	,   		
+				params = {	5	}
+			},					
+		}						
+	},	
+		 --id = 	90		等级达到70级				
+	{ 							
+		id = 	90,				
+		logicop = 0,						
+		atomEventId = 2,  			
+		conds = 						
+		{						
+			{					
+				paramID = 1,				
+				paramType = 	2	,   		
+				params = {	70	}
+			},					
+		}						
+	},		
+		 --id = 	74		击杀其它阵营玩家一名				
+	{ 							
+		id = 	74,				
+		logicop = 0,						
+		atomEventId = 61,  			
+		conds = 						
+		{						
+			{					
+				paramID = 1,				
+				paramType = 	1	,   		
+				params = {	1	}
+			},					
+		}						
+	},		
+	
+    --id = 	100	点将台挑战				
+	{ 							
+		id = 	100,				
+		logicop = 1,						
+		atomEventId = 18,  			
+		conds = 						
+		{						
+			{					
+				paramID = 1,				
+				paramType = 1,   		
+				params = {0, 1}
+			},					
+		}												
+	},						
+		 --id = 101	灵泉互动					
+	{ 						
+		id = 	101	,			
+		logicop = 1,  					
+		atomEventId = 33,  		
+		conds =  { }					
+	},		
+		 --id = 102	蟠桃会吃桃子					
+	{ 						
+		id = 	102	,			
+		logicop = 1,  					
+		atomEventId = 36,  		
+		conds =  { }					
+	},		
+			 --id = 103 蟠桃顿悟天机					
+	{ 						
+		id = 	103	,			
+		logicop = 1,  					
+		atomEventId = 27,  		
+		conds =  { }					
+	},		
+	--在雁门关(破狱之战)副本中，打到第20层累计次数达到10次，即可完成该成就
+	{ 
+	id = 104,
+	logicop = 1,  	
+	atomEventId = 47,    --原子事件的ID，比如这里是完成任务事件
+	conds = 
+	{
+		{	
+			paramID = 1,     --触发事件第几个参数有效,比如第1个参数,第2个参数...这个程序配置，先全部添1
+			-- paramType参数的类型,与params配合使用
+			--0或不填表示任意参数
+			--1表示枚举,比如怪物的id如果为1,2,3,4,6,那么params ={1,2,3,4,6}
+			--2表示范围,比如20-30的话params就配置params ={20,30}
+			paramType = 1,   
+			params =		--该事件可接受的参数，比如是帮派任务，则应该填所有帮派任务的id   
+			{
+				60
+			}
+		},
+		{	
+			paramID = 2,     --触发事件第几个参数有效,比如第1个参数,第2个参数...这个程序配置，先全部添1
+			-- paramType参数的类型,与params配合使用
+			--0或不填表示任意参数
+			--1表示枚举,比如怪物的id如果为1,2,3,4,6,那么params ={1,2,3,4,6}
+			--2表示范围,比如20-30的话params就配置params ={20,30}
+			paramType = 1,   
+			params =		--该事件可接受的参数，比如是帮派任务，则应该填所有帮派任务的id   
+			{
+				20
+			}	
+			},				
+		}					
+	},		
+	--[[
+			 --id = 105 二阶翅膀				
+	{ 						
+		id = 	105	,			
+		logicop = 1,  					
+		atomEventId = 3,  		
+		conds =  { 
+				{	
+		    	paramID = 1,   			
+				paramType = 	2	,	
+				params = { 2 }
+				},
+		}					
+	},	
+				 --id = 106 五阶翅膀				
+	{ 						
+		id = 	106	,			
+		logicop = 1,  					
+		atomEventId = 3,  		
+		conds =  { 
+				{	
+		    	paramID = 1,   			
+				paramType = 	2	,	
+				params = { 5 }
+				},
+		}					
+	},	
+				 --id = 107 1个10级翅膀技能					
+	{ 						
+		id = 	107	,			
+		logicop = 1,  					
+		atomEventId = 8,  		
+		conds =  { 
+				{	
+		    	paramID = 1,   			
+				paramType = 	1	,	
+				params = { 10 }
+				},
+			    {	
+		    	paramID = 2,   			
+				paramType = 	2	,	
+				params = { 1 }
+				},
+		}					
+	},	
+					 --id = 108 4个10级翅膀技能					
+	{ 						
+		id = 	108	,			
+		logicop = 1,  					
+		atomEventId = 8,  		
+		conds =  { 
+				{	
+		    	paramID = 1,   			
+				paramType = 	1	,	
+				params = { 10 }
+				},
+			    {	
+		    	paramID = 2,   			
+				paramType = 	2	,	
+				params = { 4 }
+				},
+		}					
+	},	
+	 --id = 109	达到所有灵器翅膀成就					
+	{ 						
+		id = 	109	,			
+		logicop = 1,					
+		atomEventId = 		67	,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,			
+				paramType = 	1	,	
+				params =      	{101,57,58,59,60,61,62,102,103,104,105}
+			},				
+		}					
+	},		
+
+	]]	
+	
+		 --id = 110	出战伙伴悟性和成长都达到10级，			
+	{ 						
+		id = 	110	,			
+		logicop = 1,					
+		atomEventId = 		17	,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,			
+				paramType = 	2	,	
+				params =      	{1}
+			},			
+			{				
+				paramID = 2,			
+				paramType = 	2	,	
+				params =      	{10}
+			},			
+			{				
+				paramID = 3,			
+				paramType = 	2	,	
+				params =      	{10}
+			},						
+		}					
+	},			
+			 --id = 111	 出战伙伴悟性和成长都达到20级，			
+	{ 						
+		id = 	111	,			
+		logicop = 1,					
+		atomEventId = 		17	,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,			
+				paramType = 	2	,	
+				params =      	{1}
+			},			
+			{				
+				paramID = 2,			
+				paramType = 	2	,	
+				params =      	{20}
+			},			
+			{				
+				paramID = 3,			
+				paramType = 	2	,	
+				params =      	{20}
+			},						
+		}					
+	},			
+				 --id = 112	出战伙伴悟性和成长都达到30级，			
+	{ 						
+		id = 	112	,			
+		logicop = 1,					
+		atomEventId = 		17	,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,			
+				paramType = 	2	,	
+				params =      	{1}
+			},			
+			{				
+				paramID = 2,			
+				paramType = 	2	,	
+				params =      	{30}
+			},			
+			{				
+				paramID = 3,			
+				paramType = 	2	,	
+				params =      	{30}
+			},						
+		}					
+	},			
+					 --id = 113	出战伙伴悟性和成长都达到42级，			
+	{ 						
+		id = 	113	,			
+		logicop = 1,					
+		atomEventId = 		17	,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,			
+				paramType = 	2	,	
+				params =      	{1}
+			},			
+			{				
+				paramID = 2,			
+				paramType = 	2	,	
+				params =      	{42}
+			},			
+			{				
+				paramID = 3,			
+				paramType = 	2	,	
+				params =      	{42}
+			},						
+		}					
+	},			
+						 --id = 114	出战伙伴学习了6个任意等级技能。			
+	{ 						
+		id = 	114	,			
+		logicop = 1,					
+		atomEventId = 		40	,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,			
+				paramType = 	1	,	
+				params =      	{1}
+			},						
+		}					
+	},			
+							 --id = 115	出战伙伴学习了8个任意等级技能。			
+	{ 						
+		id = 	115	,			
+		logicop = 1,					
+		atomEventId = 		40	,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,			
+				paramType = 	1	,	
+				params =      	{2}
+			},					
+		}					
+	},			
+								 --id = 116 出战伙伴学习了8个高级或者顶级伙伴技能			
+	{ 						
+		id = 	116	,			
+		logicop = 1,					
+		atomEventId = 		40	,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,			
+				paramType = 	1	,	
+				params =      	{3}
+			},						
+		}					
+	},		
+									 --id = 117 出战伙伴学习了6个顶级伙伴技能			
+	{ 						
+		id = 	117	,			
+		logicop = 1,					
+		atomEventId = 		40	,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,			
+				paramType = 	1	,	
+				params =      	{4}
+			},		
+		}					
+	},				
+		 --id = 118	达成所有的伙伴坐骑成就					
+	{ 						
+		id = 	118	,			
+		logicop = 1,					
+		atomEventId = 		67	,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,			
+				paramType = 	1	,	
+				params =      	{106,107,108,109,110,111,112,113,43,44,45,46,47,55,56}
+			},				
+		}					
+	},		
+				 --id = 119	点将台获得威望					
+	{ 						
+		id = 	119	,			
+		logicop = 1,					
+		atomEventId = 		43	,		
+		conds = 					
+		{								
+		}					
+	},	
+					 --id = 120	在阵营之战或者天元城之战中，累计击杀敌对玩家				
+	{ 						
+		id = 	120	,			
+		logicop = 1,					
+		atomEventId = 		49	,		
+		conds = 					
+		{								
+		}					
+	},	
+						 --id = 121	伙伴出战					
+	{ 						
+		id = 	121	,			
+		logicop = 1,					
+		atomEventId = 		15	,		
+		conds = 					
+		{								
+		}					
+	},	
+							 --id = 122	装备翅膀					
+	{ 						
+		id = 	122	,			
+		logicop = 1,					
+		atomEventId = 		7	,		
+		conds = 					
+		{		
+			{	
+		    	paramID = 1,   			
+				paramType = 	2	,	
+				params = { 11400,11405 }
+		   },
+		}					
+	},	
+								 --id = 123	挑战破狱之战一次副本					
+	{ 						
+		id = 	123	,			
+		logicop = 1,					
+		atomEventId = 		14	,		
+		conds = 					
+		{
+           {		
+			paramID = 1,     --触发事件第几个参数有效,比如第1个参数,第2个参数...这个程序配置，先全部添1
+			-- paramType参数的类型,与params配合使用
+			--0或不填表示任意参数
+			--1表示枚举,比如怪物的id如果为1,2,3,4,6,那么params ={1,2,3,4,6}
+			--2表示范围,比如20-30的话params就配置params ={20,30}
+			paramType = 1,   
+			params =		--该事件可接受的参数，比如是帮派任务，则应该填所有帮派任务的id   
+			{
+				58
+				}	
+			},	
+		}			
+	},	
+								 --id = 124  炼魂达人					
+	{ 						
+		id = 	124	,			
+		logicop = 1,  					
+		atomEventId = 25,  		
+		conds =  
+		{ 
+		}					
+	},	
+							 --id = 125	挑战魔界入口一次					
+	{ 						
+		id = 	125	,			
+		logicop = 1,					
+		atomEventId = 		14	,		
+		conds = 					
+		{	
+		   {
+			paramID = 1,     --触发事件第几个参数有效,比如第1个参数,第2个参数...这个程序配置，先全部添1
+			-- paramType参数的类型,与params配合使用
+			--0或不填表示任意参数
+			--1表示枚举,比如怪物的id如果为1,2,3,4,6,那么params ={1,2,3,4,6}
+			--2表示范围,比如20-30的话params就配置params ={20,30}
+			paramType = 1,   
+			params =		--该事件可接受的参数，比如是帮派任务，则应该填所有帮派任务的id   
+			{60}
+			},
+		}				
+	},	
+					 --id = 126 翅膀技能达到5级				
+	{ 						
+		id = 	126	,			
+		logicop = 1,  					
+		atomEventId = 8,  		
+		conds =  { 
+				{	
+		    	paramID = 1,   			
+				paramType = 	2,	
+				params = { 5 }
+				},
+		}					
+	},	
+--[[	
+	--id = 127	出战的伙伴，达成40级初阶灵兽的要求。			
+	{ 						
+		id = 	127	,			
+		logicop = 1,					
+		atomEventId = 		17	,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,			
+				paramType = 	2	,	
+				params =      	{40}
+			},			
+			{				
+				paramID = 2,			
+				paramType = 	2	,	
+				params =      	{10}
+			},			
+			{				
+				paramID = 3,			
+				paramType = 	2	,	
+				params =      	{10}
+			},						
+		}					
+	},	
+
+--]]
+
+
+
+
+	--id = 62 完成第一章节任务成就
+	{ 						
+		id = 62,			
+		logicop = 50,				
+		atomEventId = 74,		
+		conds = 					
+		{
+			{				
+				paramID = 1,			
+				paramType = 1,	
+				params = {1} --第1章节
+			},				
+		}
+	},
+
+	--id = 63 完成第二章节任务成就
+	{ 						
+		id = 63,			
+		logicop = 50,				
+		atomEventId = 74,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,			
+				paramType = 1,
+				params = {2},
+			},				
+		}			
+	},
+	--id = 64 完成第三章节任务成就
+	{ 						
+		id = 64,			
+		logicop = 50,				
+		atomEventId = 74,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,			
+				paramType = 1,	
+				params = {3},
+			},				
+		}			
+	},
+	--id = 65 完成第四章节任务成就
+	{ 						
+		id = 65,			
+		logicop = 50,				
+		atomEventId = 74,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,			
+				paramType = 1,	
+				params = {4},
+			},				
+		}			
+	},
+
+	--id = 107 完成第五章节任务成就
+	{ 						
+		id = 107,			
+		logicop = 50,				
+		atomEventId = 74,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,			
+				paramType = 1,	
+				params = {5},
+			},				
+		}			
+	},
+	--id = 108 完成第六章节任务成就
+	{ 						
+		id = 108,			
+		logicop = 50,				
+		atomEventId = 74,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,			
+				paramType = 1,	
+				params = {6},
+			},				
+		}			
+	},
+	--id = 109 完成第七章节任务成就
+	{ 						
+		id = 109,			
+		logicop = 50,				
+		atomEventId = 74,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,			
+				paramType = 1,	
+				params = {7},
+			},				
+		}			
+	},
+	--id = 127 完成第八章节任务成就
+	{ 						
+		id = 127,			
+		logicop = 50,				
+		atomEventId = 74,		
+		conds = 					
+		{					
+			{				
+				paramID = 1,			
+				paramType = 1,	
+				params = {8},
+			},				
+		}			
+	},
+	
+

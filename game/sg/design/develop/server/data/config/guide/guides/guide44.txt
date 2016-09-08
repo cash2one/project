@@ -1,0 +1,57 @@
+﻿{
+  maxLevel = 40,
+  
+  --接受任务后引导渡劫
+  trigger = 
+  { 
+    type = 1,
+    value = 110,
+  },
+
+  --引导中锁定的窗口ID
+  lockUI = 
+  {
+    200,
+  },
+
+  --引导的步骤 
+  steps = 
+  {
+
+	--第1步 引导点击渡劫导航按钮
+    {
+      cond = { type = 1, helpId = 16, data = 0 },
+
+      action = { type = 1, helpId = 16, data = 0, desc = "" , showType = 2 },
+    },
+
+	--第2步 引导点击渡劫界面挑战
+    {
+      cond = { type = 1, helpId = 200, data = 0 },
+
+      action = { type = 18, helpId = 201, data = 0, desc = "" },
+
+      hideCond = { type = 2, helpId = 200, data = 0 },
+    },
+
+	--第3步 进入渡劫炼气一阶场景引导点击挂机
+    {
+      cond = { type = 27, helpId = 0, data = 1001 },
+
+      action = { type = 16, helpId = 0, data = Lang.GuideLang.func58 },
+    },
+
+    {
+      cond = { type = 2, helpId = 243, data = 0 },
+
+      action = { type = 0, helpId = 0, data = 0, desc = "" },
+    },
+
+	--第5步 引导交任务
+    {
+      cond = { type = 27, helpId = 0, data = 4 },
+
+      action = { type = 16, helpId = 0, data = Lang.GuideLang.func44, desc = "" },
+    },
+  } 
+}

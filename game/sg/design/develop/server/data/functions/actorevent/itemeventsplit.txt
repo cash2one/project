@@ -1,0 +1,35 @@
+--#include "data\config\itemsplit\itemsplitconf.txt"
+
+function OnActorBagItemSplit (actorobj, id)
+    local itemId = tonumber(id) -- 物品id
+    if not actorobj or not itemId or itemId <= 0 then
+        print("-------------> ERROR: [道具分解异常 actorobj = nil 或者 itemId = nil")
+        return false
+    end
+
+    local conf = ItemSplitConf[itemId]
+    if not conf then
+        LActor.sendTipmsg(actorobj, Lang.ScriptTips.split0001, ttMessage)
+        return false
+    end
+
+    -- 发放分解后的物品
+    for k, v in ipairs(conf) do
+        local tId = v.id
+        local num = v.count
+        local rate = v.rate
+        local rand = System.getRandomNumber(10000)
+        if rand < rate then
+            local more = LActor.addItem(actorobj, tId, 0, 0, num, 0, "itemsplit")
+            local needSendMailNum = v.count - more
+            if needSendMailNum > 0 then -- 需要发邮箱
+                System.sendGmMailOffLine(LActor.getActorId(actorobj), Lang.ScriptTips.split0002, 1, tId, needSendMailNum, 0, Lang.ScriptTips.split0003)
+            end
+        end
+    end
+
+    -- 任务事件触发
+    LActor.OnQuestEvent(qtEquipDestroy, 0, 1, true, actorobj) -- 任意
+    LActor.OnQuestEvent(qtEquipDestroy, id, 1, true, actorobj) -- 物品id
+    return true
+end

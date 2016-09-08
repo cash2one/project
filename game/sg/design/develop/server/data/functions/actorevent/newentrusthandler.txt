@@ -1,0 +1,434 @@
+﻿-- 新副本委托处理
+--#include "data\config\misc\newentrustconf.txt" once
+--#include "data\functions\gmevent.txt" once
+--#include "data\functions\config\FubenConfig\FubenCountConfig.txt" once
+
+newEntrustOpFuncList = {}
+
+
+newEntrustOpFuncList.HandlerEntrustOp = function (sysarg, args)
+  if args[1] == nil then return end
+  
+  local func = newEntrustOpFuncList[args[1]]
+  if func ~= nil then
+    func(sysarg, args[2]) 
+  end
+end
+
+-- 获取并初始化委托副本相关信息
+newEntrustOpFuncList.GetInfo = function(sysarg, fblistid)
+	local idx
+	for i,v in ipairs(NewEntrustConf) do
+		if v.fblistid == fblistid then
+			idx = i
+			break
+		end
+	end
+	if idx == nil then return end
+
+	local conf = NewEntrustConf[idx]
+
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+
+	if var.newentrust == nil then
+		var.newentrust = {}
+	end
+	if var.newentrust[fblistid] == nil then
+		var.newentrust[fblistid] = {}
+	end
+
+	local info = var.newentrust[fblistid]
+
+	if info.count == nil then info.count = 0 end
+	if info.state == nil then info.state = 0 end
+	if info.floor == nil then info.floor = 0 end
+	if info.endtime == nil then info.endtime = 0 end
+	if info.offline == nil then info.offline = 0 end
+
+	return idx, conf, info, var
+end
+
+-- 委托
+newEntrustOpFuncList[9] = function(sysarg, dp)
+	--print("newEntrustOpFuncList.9")
+	local fblistid = DataPack.readInt( dp )
+
+	if fblistid == nil then return end
+
+	local idx, conf, info, var = newEntrustOpFuncList.GetInfo(sysarg, fblistid)
+	if idx == nil then
+		print("can not get newentrust info:"..fblistid)
+		return 
+	end
+
+	if info.state == 1 then -- 已经在委托
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.wt012, ttMessage)
+		return 
+	end
+
+	if info.state == 2 then -- 奖励没领取
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.wt011, ttMessage)
+		return
+	end
+
+	-- 等级
+	if LActor.getLevel(sysarg) < conf.level then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.wt002, ttMessage)
+		return
+	end
+
+	-- 没通关记录
+	if var.fubenlistprocess == nil or var.fubenlistprocess[fblistid] == nil or var.fubenlistprocess[fblistid].topprocess == nil then
+		local tips = string.format(Lang.ScriptTips.wt005, conf.minfloor)
+		LActor.sendTipmsg(sysarg, tips, ttMessage)
+		return
+	end
+
+	--没有达到最低通关要求
+	if var.fubenlistprocess[fblistid].topprocess < conf.minfloor then
+		local tips = string.format(Lang.ScriptTips.wt005, conf.minfloor)
+		LActor.sendTipmsg(sysarg, tips, ttMessage)
+		return
+	end
+
+	-- 先清空昨天的仓库
+	local cur_t = System.getCurrMiniTime()
+	--if var.lastnewEntrust ~= nil and System.isSameDay(var.lastnewEntrust, cur_t) == false and LActor.getEntrustItemCount(sysarg) > 0 then
+	if LActor.getEntrustItemCount(sysarg) > 0 then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.wt001, ttMessage)
+		return 
+	end
+
+    local remainnum = speFubenDayNum[fblistid]
+    if var.fubenlistprocess[fblistid].addCount ~= nil then
+        remainnum = remainnum + var.fubenlistprocess[fblistid].addCount
+    end
+	if var.fubenlistprocess[fblistid].enterCount ~= nil then
+		remainnum = remainnum - var.fubenlistprocess[fblistid].enterCount
+	end
+
+
+
+	local if_extra = false
+
+	if var.fubenlistprocess[fblistid].process ~= nil and var.fubenlistprocess[fblistid].process < var.fubenlistprocess[fblistid].topprocess then
+		if_extra = true
+	end
+
+	if remainnum <= 0 and not if_extra then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.wt013, ttMessage)
+		return 
+	end
+
+	-- 开始委托，记录一些状态
+	local total_t = var.fubenlistprocess[fblistid].topprocess * conf.time * remainnum
+	info.floor = 0
+	if if_extra then
+		total_t = total_t + (var.fubenlistprocess[fblistid].topprocess - var.fubenlistprocess[fblistid].process) * conf.time
+		info.floor = var.fubenlistprocess[fblistid].process
+	end
+
+	info.state = 1
+	info.endtime = cur_t + total_t -- 结束时间
+	info.count = remainnum
+	info.offline = 0
+	info.msgFlag = newEntrustOpFuncList.msgFlag -- 加个标识
+	newEntrustOpFuncList.msgFlag = newEntrustOpFuncList.msgFlag + 1
+
+	--var.lastnewEntrust = cur_t-- 记录最后委托时间
+
+	--把奖励存储起来
+	info.rewards = {}
+	local moneyreward = {0,0,0,0,0,0}
+	for i=1,var.fubenlistprocess[fblistid].topprocess do
+		local times = info.count
+		if (info.floor ~= 0 and info.floor < i) then
+			times = times + 1
+		end
+		if times > 0 then
+			for p,k in ipairs(conf.fubens[i].rewards) do
+				moneyreward[k.type + 1] = moneyreward[k.type + 1] + k.count * times
+			end
+		end
+	end
+
+	local rewardnum = 0
+	for i,v in ipairs(moneyreward) do
+		if v ~= 0 then
+			info.rewards[i - 1] = v
+			rewardnum = rewardnum + 1
+		end
+	end
+	info.rewards.num = rewardnum
+
+	--委托完后的一些处理
+	var.fubenlistprocess[fblistid].process = nil
+	if var.fubenlistprocess[fblistid].enterCount == nil then var.fubenlistprocess[fblistid].enterCount = 0 end
+	var.fubenlistprocess[fblistid].enterCount = var.fubenlistprocess[fblistid].enterCount + remainnum
+	var.fubenlistprocess[fblistid].ifcant = 1
+
+
+	LActor.postEntityScriptDelayMsg(sysarg, total_t * 1000, result, 20, fblistid, info.msgFlag)
+
+    ShowFubenList(sysarg, fblistid)
+end
+
+-- 立即完成
+newEntrustOpFuncList[10] = function(sysarg, dp)
+	local fblistid = DataPack.readInt( dp )
+	local moneytype = DataPack.readByte(dp)
+	if moneytype == nil or moneytype ~= mtYuanbao and moneytype ~= mtBindYuanbao then return end
+
+	if fblistid == nil then return end
+
+	local idx, conf, info, var = newEntrustOpFuncList.GetInfo(sysarg, fblistid)
+	if idx == nil then
+		print("can not get newentrust info:"..fblistid)
+		return 
+	end
+
+	if info.state == 0 then -- 没开始
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.wt006, ttMessage)
+		return
+	end
+
+	if info.state == 2 then -- 已完成
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.wt014, ttMessage)
+		return
+	end
+
+	local left_t = info.endtime - System.getCurrMiniTime()
+    if left_t < 0 then left_t = 0 end
+
+	local yuanbaos = conf.ljyb
+	local moneyCount = math.ceil(left_t / 300) * conf.ljyb -- 每300秒需要多少天珠
+	if moneyCount <= 0 then
+		moneyCount = 1 -- 小于0天珠要1天珠
+	end
+
+	if not LActor.CheckMoneyEnough(sysarg, moneytype, moneyCount) then
+		return 
+	end
+	LActor.changeMoney( sysarg, moneytype, -moneyCount, 1, true, "newentrust", "lijiwancheng")
+
+	newEntrustOpFuncList.OnFinish(sysarg, fblistid)
+
+	ShowFubenList(sysarg, fblistid)
+end
+
+-- 获取奖励
+newEntrustOpFuncList[11] = function(sysarg, dp)
+	--print("newEntrustOpFuncList.11")
+	local fblistid = DataPack.readInt( dp )
+
+	if fblistid == nil then return end
+
+	local idx, conf, info, var = newEntrustOpFuncList.GetInfo(sysarg, fblistid)
+	if idx == nil then
+		print("can not get newentrust info:"..fblistid)
+		return 
+	end
+
+	if info.state == 0 then -- 未开始
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.wt015, ttMessage)
+		return
+	elseif info.state == 1 then -- 未完成
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.wt008, ttMessage)
+		return
+	end
+
+	if info.rewards == nil then return end
+
+	-- 没通关记录
+	--if var.fubenlistprocess == nil or var.fubenlistprocess[fblistid] == nil or var.fubenlistprocess[fblistid].topprocess == nil then
+		--return
+	--end
+
+	local gettip = ""
+	local moneytips = {Lang.ScriptTips.wt018,Lang.ScriptTips.wt017,Lang.ScriptTips.wt022,Lang.ScriptTips.wt023,Lang.ScriptTips.wt016,Lang.ScriptTips.wt021}
+	-- 播放特效
+	local effects = {}
+	for i=0,5 do
+		if info.rewards[i] ~= nil then
+			local effect = {}
+			if i < 4 then
+				LActor.changeMoney(sysarg, i, info.rewards[i], 1, true, "newentrust", "reward")
+				effect.type = 2
+				effect.id = i
+				effect.count = info.rewards[i]
+				effects[#effects+1] = effect
+			elseif i == 4 then
+				LActor.giveAward(sysarg, qatRenown, info.rewards[i], 1, 0, "newentrust")
+			elseif i == 5 then
+				local exp = info.rewards[i]
+				LActor.addExp(sysarg, exp, 213, 0, true)
+				LActor.playExpEffect(sysarg, exp)
+			end
+
+			if gettip ~= "" then
+				gettip = gettip..Lang.ScriptTips.wt024
+			end
+			gettip = gettip..moneytips[i + 1]..info.rewards[i]
+			--print("newEntrustOpFuncList.11 gettip:"..gettip)
+		end
+	end
+
+	if #effects > 0 then
+	   MiscFunc.PlayItemEffect(sysarg, 11, effects)
+	end
+
+	info.state = 0
+	info.rewards = nil
+
+	local fubenname = FubenLinkName[fblistid]
+	local tips = string.format(Lang.ScriptTips.wt020, fubenname, gettip)
+	LActor.sendTipmsg(sysarg, tips, ttMessage)
+
+	ShowFubenList(sysarg, fblistid)
+end
+
+-- 定时器通知委托完成
+newEntrustOpFuncList.OnFinishDelayMsg = function(sysarg, arg)
+	local fblistid = arg[2]
+	if fblistid == nil then return end
+
+	local msgFlag = arg[3]
+
+	newEntrustOpFuncList.OnFinish(sysarg, fblistid, msgFlag)
+end
+
+-- 委托完成
+newEntrustOpFuncList.OnFinish = function(sysarg, fblistid, msgFlag)
+	local idx, conf, info, var = newEntrustOpFuncList.GetInfo(sysarg, fblistid)
+	if idx == nil then
+		print("can not get newentrust info:"..fblistid)
+		return 
+	end
+
+	if msgFlag ~= nil and info.msgFlag ~= nil and msgFlag ~= info.msgFlag then return end -- 这条消息已经是过时的了
+
+	if info.state ~= 1 then -- 未开始
+		return 
+	end
+
+	-- 给物品
+	local itemreward = {}
+	for i=1,var.fubenlistprocess[fblistid].topprocess do
+		local times = info.count
+		if (info.floor ~= 0 and info.floor < i) then
+			times = times + 1
+		end
+		if times > 0 then
+			for p,k in ipairs(conf.fubens[i].items) do
+				for p=1,k.randnum do
+					local randnum = System.getRandomNumber(10000)
+					if k.mob > randnum then
+						local finditem = false
+						for m,n in ipairs(itemreward) do
+							if n.itemid == k.itemid then
+								n.count = n.count + k.count
+								finditem = true
+								break
+							end
+						end
+						if not finditem then
+							table.insert(itemreward, {itemid = k.itemid, count = k.count, bind = k.bind})
+						end
+					end
+				end
+			end
+
+			if conf.fubens[i].actid ~= nil then
+				LActor.triggerTarget(sysarg, conf.fubens[i].actid, times)
+			end
+		end
+	end
+
+	for i,v in ipairs(itemreward) do
+		LActor.addEntrustItem(sysarg, v.itemid, v.count, 0, 0, v.bind)
+	end
+
+	info.state = 2
+	info.endtime = 0
+
+	if msgFlag ~= nil then
+		-- 通知客户端
+		local npack = DataPack.allocPacket(sysarg,42,7)
+	    if npack == nil then return end
+	    DataPack.writeInt( npack, fblistid)
+	    DataPack.flush(npack)
+	end
+end
+
+-- 初始化
+newEntrustOpFuncList.OnInit = function()
+	local var_sys = System.getStaticVar()
+	if var_sys == nil then return end
+
+	newEntrustOpFuncList.msgFlag = 1 -- 自增的值，用来标识延时消息
+end
+
+-- 玩家登录
+newEntrustOpFuncList.OnLoginEntrust = function(sysarg, arg)
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+
+	if var.newentrust == nil then return end
+
+	local result = false
+	local cur_t = System.getCurrMiniTime()
+	for i,v in ipairs(NewEntrustConf) do
+		local info = var.newentrust[v.fblistid]
+		if info ~= nil then
+			local conf = v
+			if info.endtime ~= nil and info.state ~= nil and info.state == 1 then -- 上次未完成的委托
+				info.offline = 1 -- 下先后再上线的
+				local left_t = info.endtime - cur_t
+				if left_t > 0 then
+					LActor.postEntityScriptDelayMsg(sysarg, left_t * 1000, result, 20, conf.fblistid, info.msgFlag) -- 未完成，接着计时
+				else
+					newEntrustOpFuncList.OnFinish(sysarg, conf.fblistid) -- 已经完成
+				end
+			end
+		end
+	end
+end
+
+-- 清除副本委托
+GmEventFuncList.ClearnewEntrust = function(sysarg, args)
+	local fblistid = args[1]
+
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+
+	if fblistid == nil then
+		var.newentrust = nil
+	else
+		local conf, info = EntrustFunc.GetInfo(sysarg, fblistid)
+		if info ~= nil then
+			info[fblistid] = nil
+		end
+	end
+end
+
+-- 测试
+GmEventFuncList.testnewEntrust = function(sysarg, args)
+	local fblistid = tonumber(args[1])
+	local dotype = tonumber(args[2])
+
+	if fblistid == nil or dotype == nil then return end
+
+	print("GmEventFuncList.testnewEntrust fblistid:"..fblistid..",dotype:"..dotype)
+	if newEntrustOpFuncList[9] ~= nil then
+		newEntrustOpFuncList[dotype](sysarg)
+	end
+end
+
+
+--EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeEntrust, newEntrustOpFuncList.HandlerEntrustOp)
+--EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, newEntrustOpFuncList.OnLoginEntrust)
+--table.insert(InitFnTable,newEntrustOpFuncList.OnInit) 
+--table.insert(LocalDT.ScriptDelayConfig[20], newEntrustOpFuncList.OnFinishDelayMsg)
+--GmEventFuncList.register( "clearentrust", GmEventFuncList.ClearnewEntrust, 1)
+--GmEventFuncList.register( "testtrust", GmEventFuncList.testnewEntrust, 1)

@@ -1,0 +1,466 @@
+-- 公会祈福相关
+
+GuildBlessFun = {}
+
+-- 初始化数据
+GuildBlessFun.initguildblessdata = function(guild_var)
+	if guild_var.bless_data == nil then
+		guild_var.bless_data = {}
+	end
+	-- 正在祈福成员人数
+	-- if guild_var.bless_data.blessing_num == nil then
+	-- 	guild_var.bless_data.blessing_num = 0
+	-- end
+	-- 正在祈福成员列表
+	-- if guild_var.bless_data.blessing_actor == nil then
+	-- 	guild_var.bless_data.blessing_actor = {}
+	-- end
+	-- 当前福缘值
+	if guild_var.bless_data.fuyuan_num == nil then
+		guild_var.bless_data.fuyuan_num = 0
+	end
+end
+
+-- 初始化数据
+GuildBlessFun.initactorblessdata = function(actor_var)
+	if actor_var.guild_bless == nil then
+		actor_var.guild_bless = {}
+	end
+	-- 玩家祈福状态 0未祈福1已祈福2已祭天3已封禅
+	if actor_var.guild_bless.bless_state == nil then
+		actor_var.guild_bless.bless_state = 0
+	end
+	-- 玩家福缘奖励状态 0未领取2已领取
+	if actor_var.guild_bless.fuyuanaward_state == nil then
+		actor_var.guild_bless.fuyuanaward_state = {}
+		for i=1,#Guild.guildbless.fuyuan do
+			actor_var.guild_bless.fuyuanaward_state[i] = 0
+		end
+	end
+end
+
+-- 请求祈福数据
+GuildOpFuncList[57] = function(sysarg, dp)
+	local guild = LActor.getGuildPtr(sysarg)
+	if guild == nil then return end -- 为加入公会
+	local guild_var = LGuild.getStaticVar(guild)
+	if guild_var == nil then return end
+	local actor_var = LActor.getStaticVar(sysarg)
+	if actor_var == nil then return end
+	GuildBlessFun.initguildblessdata(guild_var)
+	GuildBlessFun.initactorblessdata(actor_var)
+
+	-- 下发数据
+	local npack = DataPack.allocPacket(sysarg, 10, 57)
+	if npack == nil then return end
+	-- DataPack.writeInt(npack, guild_var.bless_data.blessing_num) -- 祈福中的玩家
+	-- for i=1,guild_var.bless_data.blessing_num do
+	-- 	-- print("==============????"..i,guild_var.bless_data.blessing_actor[i])
+	-- 	DataPack.writeInt(npack, guild_var.bless_data.blessing_actor[i].aid or 0)
+	-- 	DataPack.writeInt(npack, guild_var.bless_data.blessing_actor[i].job or 1)
+	-- 	DataPack.writeInt(npack, guild_var.bless_data.blessing_actor[i].sex or 1)
+	-- 	DataPack.writeString(npack, guild_var.bless_data.blessing_actor[i].name or "")
+	-- end
+
+	DataPack.writeInt(npack, actor_var.guild_bless.bless_state) -- 祈福状态
+	DataPack.writeInt(npack, guild_var.bless_data.fuyuan_num) -- 福缘值
+	DataPack.writeInt(npack, #actor_var.guild_bless.fuyuanaward_state) -- 福源奖励状态数量
+	for i=1,#actor_var.guild_bless.fuyuanaward_state do
+		DataPack.writeInt(npack, actor_var.guild_bless.fuyuanaward_state[i]) -- 福缘奖励状态
+	end
+	DataPack.flush(npack)
+end
+
+-- 请求祈福
+GuildOpFuncList[69] = function(sysarg, dp)
+	local type = DataPack.readInt(dp) -- 祈福类型 1祈福2祭天3封禅
+	if type == nil or type <= 0 or type >= 4 then return end
+
+	local guild = LActor.getGuildPtr(sysarg)
+	if guild == nil then return end -- 为加入公会
+	local guild_var = LGuild.getStaticVar(guild)
+	if guild_var == nil then return end
+	local actor_var = LActor.getStaticVar(sysarg)
+	if actor_var == nil then return end
+	GuildBlessFun.initguildblessdata(guild_var)
+	GuildBlessFun.initactorblessdata(actor_var)
+
+	local aid = LActor.getActorId(sysarg)
+
+	-- 祈福列表已满
+	-- if guild_var.bless_data.blessing_num >= Guild.guildbless.maxblessnum then
+	-- 	LActor.sendTipmsg(sysarg, Lang.GuildLang.t231, ttMessage)
+	-- 	return
+	-- end
+	--[[
+	if ismoney == 0 then -- 正常祈福
+		-- 已在祈福列表中
+		for i=1,guild_var.bless_data.blessing_num do
+			if aid == guild_var.bless_data.blessing_actor[i].aid then
+				LActor.sendTipmsg(sysarg, Lang.GuildLang.t230, ttMessage)
+				return
+			end
+		end
+
+		-- 加入祈福列表
+		guild_var.bless_data.blessing_num = guild_var.bless_data.blessing_num + 1
+		guild_var.bless_data.blessing_actor[guild_var.bless_data.blessing_num] = {}
+		guild_var.bless_data.blessing_actor[guild_var.bless_data.blessing_num].aid = aid
+		guild_var.bless_data.blessing_actor[guild_var.bless_data.blessing_num].job = LActor.getActorjob(sysarg)
+		guild_var.bless_data.blessing_actor[guild_var.bless_data.blessing_num].sex = LActor.getIntProperty(sysarg,PROP_SEX)
+		guild_var.bless_data.blessing_actor[guild_var.bless_data.blessing_num].name = LActor.getName(sysarg)
+	elseif ismoney == 1 then -- 天珠招募
+		-- 是否在祈福列表中
+		local isblessing = false
+		for i=1,guild_var.bless_data.blessing_num do
+			if aid == guild_var.bless_data.blessing_actor[i].aid then
+				isblessing = true
+				break
+			end
+		end
+		if isblessing ~= true then
+			LActor.sendTipmsg(sysarg, Lang.GuildLang.t235, ttMessage)
+			return
+		end
+		-- 有没有足够的天珠
+		local enough = LActor.CheckMoneyEnough(sysarg, mtYuanbao, Guild.guildbless.zhaomu_cost, true)
+		if enough == false then return end
+		LActor.changeMoney(sysarg, mtYuanbao, -Guild.guildbless.zhaomu_cost, 1,  true, "guild", "guild_bless_zhaomu")
+
+		-- 加入祈福列表
+		guild_var.bless_data.blessing_num = guild_var.bless_data.blessing_num + 1
+		guild_var.bless_data.blessing_actor[guild_var.bless_data.blessing_num] = {}
+		guild_var.bless_data.blessing_actor[guild_var.bless_data.blessing_num].aid = 0
+		guild_var.bless_data.blessing_actor[guild_var.bless_data.blessing_num].job = System.getRandomNumber(4) + 1
+		guild_var.bless_data.blessing_actor[guild_var.bless_data.blessing_num].sex = 0
+		guild_var.bless_data.blessing_actor[guild_var.bless_data.blessing_num].name = 0
+	end]]
+
+	-- 已祈福
+	if actor_var.guild_bless.bless_state > 0 then
+		LActor.sendTipmsg(sysarg, Lang.GuildLang.t230, ttMessage)
+		return
+	end
+	-- 能否接受奖励
+	if Guild.guildbless.bless_award and Guild.guildbless.bless_award[type] then
+		local conf = Guild.guildbless.bless_award[type]
+		for i=1,#conf do
+			if conf[i].type == 1 then
+				if not LActor.canAddItem(sysarg, conf[i].id, conf[i].count) then
+					LActor.SendGeneralTips(sysarg, 7, 0, 0)
+					return
+				end
+			end
+		end
+	end
+	-- 消耗
+	if Guild.guildbless.bless_cost and Guild.guildbless.bless_cost[type] then
+		-- 有没有足够的天珠
+		local enough = LActor.CheckMoneyEnough(sysarg, Guild.guildbless.bless_cost[type].type, Guild.guildbless.bless_cost[type].count, true)
+		if enough == false then return end
+		LActor.changeMoney(sysarg, Guild.guildbless.bless_cost[type].type, -Guild.guildbless.bless_cost[type].count, 1,  true, "guild", string.format("guild_bless_%d", type))
+	end
+	-- 奖励
+	if Guild.guildbless.bless_award and Guild.guildbless.bless_award[type] then
+		local conf = Guild.guildbless.bless_award[type]
+		for i=1,#conf do
+			if conf[i].type == 1 then
+				LActor.addItem(sysarg, conf[i].id, 0, 0, conf[i].count, 0, "guild_bless")
+			elseif conf[i].type == 2 then
+				LActor.changeMoney(sysarg, conf[i].id, conf[i].count, 1,  true, "guild", "guild_bless")
+			elseif conf[i].type == 3 then
+
+			elseif conf[i].type == 4 then -- 公会财产
+				LGuild.addGuildProperty(guild, conf[i].count)
+			elseif conf[i].type == 5 then -- 公会繁荣度
+				LGuild.addGuildBuild(guild, conf[i].count)
+			elseif conf[i].type == 6 then -- 公会贡献
+				LActor.addGuildContrib(sysarg, conf[i].count)
+			elseif conf[i].type == 7 then -- 经验
+				LActor.addExp(sysarg, conf[i].count, 936, 0)
+			end
+		end
+		-- 设置
+		actor_var.guild_bless.bless_state = type
+		guild_var.bless_data.fuyuan_num = guild_var.bless_data.fuyuan_num + (Guild.guildbless.get_fuyuan[type] or 0)
+	end
+
+	-- 封禅公告
+	if type == 3 then
+		System.broadcastGuildTipmsg(LActor.getGuildId(sysarg), string.format(Lang.GuildLang.t236, LActor.getName(sysarg), Guild.guildbless.bless_cost[type].count, Guild.guildbless.get_fuyuan[type]), ttHearsay)
+	end
+
+	-- 返回领取成功
+	local npack = DataPack.allocPacket(sysarg, 10, 69)
+	if npack == nil then return end
+	DataPack.writeInt(npack, type)
+	DataPack.flush(npack)
+
+	-- 祈福日志
+	LGuild.addBeastLog(guild, 1, aid, LActor.getName(sysarg), type, 0)
+
+	-- 活跃度
+	ActivationTrigger(sysarg, 33)
+
+	-- 任务事件触发
+	LActor.OnQuestEvent(qtZongMenQiFu, 0, 1, true, sysarg)
+
+	--[[ 祈福完成
+	if guild_var.bless_data.blessing_num >= Guild.guildbless.maxblessnum then
+		-- 设置奖励状态
+		for i=1,guild_var.bless_data.blessing_num do
+			local aptr = LActor.getActorById(guild_var.bless_data.blessing_actor[i].aid)
+			local p_var = LActor.getStaticVar(aptr)
+			if aptr and p_var then
+				GuildBlessFun.initactorblessdata(p_var)
+				-- 设置祈福奖励状态
+				if p_var.guild_bless.blessaward_state == 0 then
+					-- 今天第一次祈福
+					p_var.guild_bless.blessaward_state = 1
+					-- 福源值增加
+					guild_var.bless_data.fuyuan_num = guild_var.bless_data.fuyuan_num + 1
+					-- 下发信息
+					local npack = DataPack.allocPacket(aptr, 10, 57)
+					if npack == nil then return end
+					DataPack.writeInt(npack, guild_var.bless_data.blessing_num) -- 祈福中的玩家
+					for i=1,guild_var.bless_data.blessing_num do
+						-- print("==============????"..i,guild_var.bless_data.blessing_actor[i])
+						DataPack.writeInt(npack, guild_var.bless_data.blessing_actor[i].aid or 0)
+						DataPack.writeInt(npack, guild_var.bless_data.blessing_actor[i].job or 1)
+						DataPack.writeInt(npack, guild_var.bless_data.blessing_actor[i].sex or 1)
+						DataPack.writeString(npack, guild_var.bless_data.blessing_actor[i].name or "")
+					end
+					DataPack.writeInt(npack, guild_var.bless_data.fuyuan_num) -- 福缘值
+					DataPack.writeInt(npack, p_var.guild_bless.blessaward_state) -- 祈福奖励状态
+					DataPack.writeInt(npack, #p_var.guild_bless.fuyuanaward_state) -- 福源奖励状态数量
+					for i=1,#p_var.guild_bless.fuyuanaward_state do
+						DataPack.writeInt(npack, p_var.guild_bless.fuyuanaward_state[i]) -- 福缘奖励状态
+					end
+					DataPack.flush(npack)
+					-- 任务事件触发
+					LActor.OnQuestEvent(qtZongMenQiFu, 0, 1, true, aptr)
+				end
+				
+			end
+		end
+		-- 清空祈福列表 
+		guild_var.bless_data.blessing_actor = {}
+		guild_var.bless_data.blessing_num = 0
+	end]]
+
+	-- 下发消息给在线的公会成员
+	local dp = LDataPack.allocPacket()
+	if dp == nil then return end
+	LDataPack.writeByte(dp, 10)
+	LDataPack.writeByte(dp, 58)
+	LGuild.broadcastData(guild, dp)
+end
+
+-- 请求祈福奖励
+GuildOpFuncList[70] = function(sysarg, dp)
+--[[
+	local guild = LActor.getGuildPtr(sysarg)
+	if guild == nil then return end -- 为加入公会
+	local actor_var = LActor.getStaticVar(sysarg)
+	if actor_var == nil then return end
+	GuildBlessFun.initactorblessdata(actor_var)
+
+	-- 领取状态
+	if actor_var.guild_bless.blessaward_state ~= 1 then
+		return
+	end
+
+	actor_var.guild_bless.blessaward_state = 2
+
+	-- 下发祈福奖励
+	local conf = Guild.guildbless.bless_award
+	for i=1,#conf do
+		if conf[i].type == 1 then
+
+		elseif conf[i].type == 2 then
+			LActor.changeMoney(sysarg, conf[i].id, conf[i].count, 1,  true, "guild", "guild_bless")
+		elseif conf[i].type == 3 then
+
+		elseif conf[i].type == 4 then -- 公会财产
+			LGuild.addGuildProperty(guild, conf[i].count)
+		elseif conf[i].type == 5 then -- 公会繁荣度
+			LGuild.addGuildBuild(guild, conf[i].count)
+		elseif conf[i].type == 6 then -- 公会贡献
+			LActor.addGuildContrib(sysarg, conf[i].count)
+		elseif conf[i].type == 7 then -- 经验
+			LActor.addExp(sysarg, conf[i].count, 936, 0)
+		end
+	end
+
+	-- 通知更新数据
+	local npack = DataPack.allocPacket(sysarg, 10, 58)
+	if npack == nil then return end
+	DataPack.flush(npack)
+]]	
+end
+
+-- 请求福源奖励
+GuildOpFuncList[59] = function(sysarg, dp)
+	local fy_idx = DataPack.readInt(dp) -- 福源奖励索引
+
+	local guild = LActor.getGuildPtr(sysarg)
+	if guild == nil then return end -- 为加入公会
+	local guild_var = LGuild.getStaticVar(guild)
+	if guild_var == nil then return end
+	local actor_var = LActor.getStaticVar(sysarg)
+	if actor_var == nil then return end
+	GuildBlessFun.initguildblessdata(guild_var)
+	GuildBlessFun.initactorblessdata(actor_var)
+
+	if fy_idx == nil or fy_idx < 0 or fy_idx > #Guild.guildbless.fuyuan then
+		return
+	end
+
+	-- 是否可领取
+	if guild_var.bless_data.fuyuan_num < Guild.guildbless.fuyuan[fy_idx].needfy then
+		LActor.sendTipmsg(sysarg, Lang.GuildLang.t232, ttMessage)
+		return
+	end
+
+	-- 是否已领取
+	if actor_var.guild_bless.fuyuanaward_state[fy_idx] == 2 then
+		LActor.sendTipmsg(sysarg, Lang.GuildLang.t233, ttMessage)
+		return
+	end
+
+	-- 能否接受奖励
+	if Guild.guildbless.fuyuan and Guild.guildbless.fuyuan[fy_idx] then
+		local conf = Guild.guildbless.fuyuan[fy_idx]
+		for i=1,#conf do
+			if conf[i].type == 1 then
+				if not LActor.canAddItem(sysarg, conf[i].id, conf[i].count) then
+					LActor.SendGeneralTips(sysarg, 7, 0, 0)
+					return
+				end
+			end
+		end
+	end
+
+	actor_var.guild_bless.fuyuanaward_state[fy_idx] = 2
+
+	-- 下发福源奖励
+	local conf = Guild.guildbless.fuyuan[fy_idx].award
+	for i=1,#conf do
+		if conf[i].type == 1 then
+			LActor.addItem(sysarg, conf[i].id, 0, 0, conf[i].count, 0, "guild_bless_fuyuan")
+		elseif conf[i].type == 2 then
+			LActor.changeMoney(sysarg, conf[i].id, conf[i].count, 1,  true, "guild", "guild_bless_fuyuan")
+		elseif conf[i].type == 3 then
+
+		elseif conf[i].type == 4 then -- 公会财产
+			LGuild.addGuildProperty(guild, conf[i].count)
+		elseif conf[i].type == 5 then -- 公会繁荣度
+			LGuild.addGuildBuild(guild, conf[i].count)
+		elseif conf[i].type == 6 then -- 公会贡献
+			LActor.addGuildContrib(sysarg, conf[i].count)
+		elseif conf[i].type == 7 then -- 经验
+			LActor.addExp(sysarg, conf[i].count, 936, 0)
+		end
+	end
+
+	-- 通知更新数据
+	local npack = DataPack.allocPacket(sysarg, 10, 58)
+	if npack == nil then return end
+	DataPack.flush(npack)
+end
+
+-- 离开公会
+-- 下线踢出
+GuildBlessFun.KickOutOfBless = function( sysarg )
+--[[
+	local guild = LActor.getGuildPtr(sysarg)
+	if guild == nil then return end -- 为加入公会
+	local guild_var = LGuild.getStaticVar(guild)
+	if guild_var == nil then return end
+	GuildBlessFun.initguildblessdata(guild_var)
+
+	local aid = LActor.getActorId(sysarg)
+
+	for i=1,guild_var.bless_data.blessing_num do
+		if guild_var.bless_data.blessing_actor[i].aid == aid then
+			-- table.remove(guild_var.bless_data.blessing_actor, i)
+			-- table.remove无法删除userdata
+			for j=(i+1),guild_var.bless_data.blessing_num do
+				guild_var.bless_data.blessing_actor[j-1].aid = guild_var.bless_data.blessing_actor[j].aid
+				guild_var.bless_data.blessing_actor[j-1].sex = guild_var.bless_data.blessing_actor[j].sex
+				guild_var.bless_data.blessing_actor[j-1].job = guild_var.bless_data.blessing_actor[j].job
+				guild_var.bless_data.blessing_actor[j-1].name = guild_var.bless_data.blessing_actor[j].name
+			end
+			guild_var.bless_data.blessing_actor[guild_var.bless_data.blessing_num] = {}
+			guild_var.bless_data.blessing_num = guild_var.bless_data.blessing_num - 1
+			break
+		end
+	end
+]]	
+end
+
+-- 玩家新的一天
+GuildBlessFun.OnActorNewDay = function(sysarg)
+	-- local guild = LActor.getGuildPtr(sysarg)
+	-- if guild == nil then return end -- 为加入公会
+	local actor_var = LActor.getStaticVar(sysarg)
+	if actor_var == nil then return end
+	GuildBlessFun.initactorblessdata(actor_var)
+
+	actor_var.guild_bless.bless_state = 0
+
+	for i=1,#actor_var.guild_bless.fuyuanaward_state do
+		actor_var.guild_bless.fuyuanaward_state[i] = 0
+	end
+end
+
+-- 公会新的一天
+function GuildBlessNewDay()
+	local guildlist = LGuild.getGuildList()
+	if guildlist == nil then return end
+	for i=1,#guildlist do
+		local guild_var = LGuild.getStaticVar(guildlist[i])
+		if guild_var then
+			GuildBlessFun.initguildblessdata( guild_var )
+			-- guild_var.bless_data.blessing_actor = {}
+			-- guild_var.bless_data.blessing_num = 0
+			guild_var.bless_data.fuyuan_num = 0
+		end
+	end
+end
+
+-- EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeLeftGuild, GuildBlessFun.KickOutOfBless)
+-- EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogout, GuildBlessFun.KickOutOfBless)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, GuildBlessFun.OnActorNewDay)
+
+function clearbless( sysarg )
+	-- local guild = LActor.getGuildPtr(sysarg)
+	-- if guild == nil then return end
+	-- local guild_var = LGuild.getStaticVar(guild)
+	-- if guild_var == nil then return end
+	-- GuildBlessFun.initguildblessdata(guild_var)
+	-- guild_var.bless_data.blessing_actor = {}
+	-- guild_var.bless_data.blessing_num = 0
+	System.broadcastTipmsg("broadcastmsg", ttGmTip)
+end
+GmEventFuncList.register( "clearbless", clearbless, 1)
+
+--返回剩余可完成次数（0没有次数）
+function GuildBlessFun.leftCount(sysarg)
+	local guild = LActor.getGuildPtr(sysarg)
+	if guild == nil then return 0 end
+
+	local guild_var = LGuild.getStaticVar(guild)
+	if guild_var == nil then return 0 end
+
+	local actor_var = LActor.getStaticVar(sysarg)
+	if actor_var == nil or actor_var.guild_bless == nil then return 0 end
+
+	-- 已祈福
+	if actor_var.guild_bless.bless_state and actor_var.guild_bless.bless_state > 0 then
+		return 0
+	end
+
+	return 1
+end
+GetQuestTargetCount.register(qtZongMenQiFu, GuildBlessFun.leftCount)

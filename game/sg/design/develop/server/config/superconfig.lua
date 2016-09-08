@@ -1,0 +1,325 @@
+require 'config/lang'
+
+
+--变身配置
+SuperConfig=
+{
+	--秘籍相关
+	--秘籍最高等级
+	maxMjlv = 10,
+	--秘籍升级所需的道具id
+	jinjieitem = 61001,
+	--每级所需道具数量
+	jinjieNeedNum = {1,2,3,4,5,5,5,5,6},
+	--进阶消耗贝币数量
+	jinjieconsume = 0,
+	--进阶道具所值天珠
+	jinjieyuanbao = 15,
+
+	--每次进阶失败加的祝福值
+	jinjieaddzhufu =
+	{
+		--1阶到2阶{增加祝福值,累加概率}
+		{
+			{5,  5000},
+			{6,  2500},
+			{7, 2500},
+		},
+
+		--2阶到3阶{增加祝福值,累加概率}
+		{
+			{5,  5000},
+			{6,  2500},
+			{7, 2500},
+		},
+
+	   --3阶到4阶{增加祝福值,累加概率}
+		{
+			{5,  5000},
+			{6,  2500},
+			{7, 2500},
+		},
+
+	   --4阶到5阶{增加祝福值,累加概率}
+		{
+			{5,  5000},
+			{6,  2500},
+			{7, 2500},
+		},
+
+	   --5阶到6阶{增加祝福值,累加概率}
+		{
+			{5,  5000},
+			{6,  2500},
+			{7, 2500},
+		},
+
+	   --6阶到7阶{增加祝福值,累加概率}
+		{
+			{5,  5000},
+			{6,  2500},
+			{7, 2500},
+		},
+
+	   --7阶到8阶{增加祝福值,累加概率}
+		{
+			{5,  5000},
+			{6,  2500},
+			{7, 2500},
+		},
+
+	   --8阶到9阶{增加祝福值,累加概率}
+		{
+			{5,  5000},
+			{6,  2500},
+			{7, 2500},
+		},
+
+	   --9阶到10阶{增加祝福值,累加概率}
+		{
+			{5,  5000},
+			{6,  2500},
+			{7, 2500},
+		},
+	},
+
+	--进阶基础成功率万分比
+	jinjiebasesucc = {3000,2000,1000,800,600,400,300,200,200},
+
+	--进阶成功率递增万分比,该值是会乘以祝福值,然后叠加到基础成功率上去
+	jinjieaddsucc = {17,17,17,17,8,8,6,3,2},
+
+	--进阶各种线
+	jinjiemod=
+	{
+	    {23,60},--1阶到2阶{有概率成功值,必成功值}
+		{40,106},--2阶到3阶
+	    {69,181},--3阶到4阶{有概率成功值,必成功值}
+		{109,287},--4阶到5阶
+	    {144,377},--5阶到6阶{有概率成功值,必成功值}
+		{190,498},--6阶到7阶
+	    {236,619},--7阶到8阶{有概率成功值,必成功值}
+		{288,755},--8阶到9阶
+		{345,906},--9阶到10阶
+
+	},
+
+	--变身开启倒计时时间(秒)
+	opentime = 1200,
+
+	--仙化每一级属性加成,万分比
+	xianhua =
+	{1,2,3,4,5,6,7,8,9,10},
+
+	--变身体验道具
+	--{道具id, 变身id, 持续时间(秒)}
+	tiyanitem = {
+		{60011, 1, 3600},
+		{60012, 1, 3600},
+	},
+
+	--副本体验变身{副本id, 变身id, 最大时间}
+	fubentiyansuper = {5, 1, 600},
+
+	--培养
+	SuperTrains =
+	{
+		stagelv = 8,
+		--万分比,每一阶的成功率
+		succrate = {7000,6000,5000,5000,5000,6000,5000,3000,2000,1000},
+		trains = 
+		{
+			--一阶
+			{
+				{expr = 4000, coin = 0,value = 102,},
+
+				{expr = 4500, coin = 0,value = 4,},
+
+				{expr = 5000, coin = 0,value = 10,},
+
+				{expr = 5500, coin = 0,value = 4,},
+
+				{expr = 6000, coin = 0,value = 10,},
+
+				{expr = 6500, coin = 0,value = 4,},
+
+				{expr = 7000, coin = 0,value = 4,},
+
+				{expr = 7500, coin = 0,value = 15,},
+			},
+
+			--二阶
+			{
+				{expr = 9800, coin = 0,value = 205,},
+
+				{expr = 10600, coin = 0,value = 8,},
+
+				{expr = 11400, coin = 0,value = 20,},
+
+				{expr = 12200, coin = 0,value = 8,},
+
+				{expr = 12900, coin = 0,value = 20,},
+
+				{expr = 13700, coin = 0,value = 8,},
+
+				{expr = 14500, coin = 0,value = 8,},
+
+				{expr = 15300, coin = 0,value = 30,},
+			},
+
+
+			--三阶
+			{
+				{expr = 18400, coin = 0,value = 307,},
+
+				{expr = 19100, coin = 0,value = 13,},
+
+				{expr = 19900, coin = 0,value = 30,},
+
+				{expr = 20600, coin = 0,value = 13,},
+
+				{expr = 21300, coin = 0,value = 30,},
+
+				{expr = 22100, coin = 0,value = 13,},
+
+				{expr = 22800, coin = 0,value = 13,},
+
+				{expr = 23600, coin = 0,value = 44,},
+			},
+
+			--四阶
+			{
+				{expr = 26000, coin = 0,value = 410,},
+
+				{expr = 27000, coin = 0,value = 17,},
+
+				{expr = 28100, coin = 0,value = 39,},
+
+				{expr = 29100, coin = 0,value = 17,},
+
+				{expr = 30200, coin = 0,value = 39,},
+
+				{expr = 31200, coin = 0,value = 17,},
+
+				{expr = 32200, coin = 0,value = 17,},
+
+				{expr = 33300, coin = 0,value = 59,},
+			},
+
+			--五阶
+			{
+				{expr = 34000, coin = 0,value = 512,},
+
+				{expr = 35400, coin = 0,value = 21,},
+
+				{expr = 36700, coin = 0,value = 49,},
+
+				{expr = 38100, coin = 0,value = 21,},
+
+				{expr = 39400, coin = 0,value = 49,},
+
+				{expr = 40800, coin = 0,value = 21,},
+
+				{expr = 42200, coin = 0,value = 21,},
+
+				{expr = 43500, coin = 0,value = 74,},
+			},
+
+
+			--六阶
+			{
+				{expr = 44400, coin = 0,value = 614,},
+
+				{expr = 45300, coin = 0,value = 25,},
+
+				{expr = 46200, coin = 0,value = 59,},
+
+				{expr = 47100, coin = 0,value = 25,},
+
+				{expr = 48000, coin = 0,value = 59,},
+
+				{expr = 48800, coin = 0,value = 25,},
+
+				{expr = 49700, coin = 0,value = 25,},
+
+				{expr = 50600, coin = 0,value = 89,},
+			},
+
+			--七阶
+			{
+				{expr = 51600, coin = 0,value = 717,},
+
+				{expr = 52600, coin = 0,value = 29,},
+
+				{expr = 53700, coin = 0,value = 69,},
+
+				{expr = 54700, coin = 0,value = 29,},
+
+				{expr = 55700, coin = 0,value = 69,},
+
+				{expr = 56800, coin = 0,value = 29,},
+
+				{expr = 57800, coin = 0,value = 29,},
+
+				{expr = 58800, coin = 0,value = 104,},
+			},
+
+			--八阶
+			{
+				{expr = 60000, coin = 0,value = 819,},
+
+				{expr = 61200, coin = 0,value = 34,},
+
+				{expr = 62400, coin = 0,value = 79,},
+
+				{expr = 63600, coin = 0,value = 34,},
+
+				{expr = 64800, coin = 0,value = 79,},
+
+				{expr = 66000, coin = 0,value = 34,},
+
+				{expr = 67200, coin = 0,value = 34,},
+
+				{expr = 68400, coin = 0,value = 118,},
+			},
+
+			--九阶
+			{
+				{expr = 69800, coin = 0,value = 922,},
+
+				{expr = 71200, coin = 0,value = 38,},
+
+				{expr = 72600, coin = 0,value = 89,},
+
+				{expr = 74000, coin = 0,value = 38,},
+
+				{expr = 75400, coin = 0,value = 89,},
+
+				{expr = 76800, coin = 0,value = 38,},
+
+				{expr = 78200, coin = 0,value = 38,},
+
+				{expr = 79600, coin = 0,value = 133,},
+			},
+
+			--十阶
+			{
+				{expr = 81200, coin = 0,value = 1024,},
+
+				{expr = 82800, coin = 0,value = 42,},
+
+				{expr = 84800, coin = 0,value = 99,},
+
+				{expr = 86100, coin = 0,value = 42,},
+
+				{expr = 87700, coin = 0,value = 99,},
+
+				{expr = 89300, coin = 0,value = 42,},
+
+				{expr = 90900, coin = 0,value = 42,},
+
+				{expr = 92600, coin = 0,value = 148,},
+			},
+		},
+	},
+}

@@ -1,0 +1,42 @@
+﻿--#include "..\..\language\LangCode.txt"
+-- 组队副本相关配置
+TeamFuben = {
+	openLevel = 45, -- 开放等级
+	countItem = 24400, -- 增加次数需要的物品ID
+	fubens = {
+		--add wupeng 组队副本之深海副本
+		-- {
+  --           fbid = 12,
+  --           fbname = Lang.FubenName.fname0010,  --副本名称，用语言包
+  --           daycount = 2, --每天进入的次数
+  --           level = 34,   --进入等级
+  --           recruitDesc = Lang.Talk.t10126, --招募说明   
+	 --    },
+		{
+
+			fbid = 81,
+			fbname = Lang.FubenName.fname0081, -- 副本名称，用语言包
+			daycount = 1, -- 每天进入的次数
+			level = 45, -- 进入等级
+			tokentype = 1, -- 副本产出的代币编号，0-玄币，1-地币，2-天币
+			recruitDesc = Lang.Talk.t10122, -- 招募说明
+		}, 
+		{
+			fbid = 82,
+			fbname = Lang.FubenName.fname0082, -- 副本名称，用语言包
+			daycount = 1, -- 每天进入的次数
+			level = 49, -- 进入等级
+			tokentype = 2, -- 副本产出的代币编号，0-玄币，1-地币，2-天币
+			recruitDesc = Lang.Talk.t10123, -- 招募说明
+		}, 
+	    {
+			fbid = 83,
+			fbname = Lang.FubenName.fname0083, -- 副本名称，用语言包
+			daycount = 1, -- 每天进入的次数
+			level = 52, -- 进入等级
+			tokentype = 2, -- 副本产出的代币编号，0-玄币，1-地币，2-天币
+			recruitDesc = Lang.Talk.t10124, -- 招募说明
+		}, 
+		-- 其它副本按下面配置
+	}, -- 各个副本的ID
+}

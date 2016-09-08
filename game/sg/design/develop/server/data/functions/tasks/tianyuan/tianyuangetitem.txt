@@ -1,0 +1,445 @@
+﻿-- 王城之战NPC
+
+--#include "data\config\task\TianYuanConfig.txt" once
+--#include "data\functions\Tasks\TianYuan\TianYuanSet.txt" once
+--#include "data\config\TasksConfig.inc" once	--活动开启配置
+--#include "data\config\task\TianYuanReardConfig.txt" once
+--#include "data\config\globalconfig.txt" once
+--#include "data\functions\mergepublic.txt" once
+
+function TianYuan_Main(sysarg)
+	local nExitTime = 0
+	local sVal = System.getDyanmicVar()
+	if sVal.TianYuanActing == 1 then
+		local nStaticVar = LActor.getStaticVar( sysarg )
+		if nStaticVar.XuanYuanZhiZhan_Exit_time ~= nil then
+			nExitTime =  TianYuanConfig.punishment_time - (System.getCurrMiniTime() - nStaticVar.XuanYuanZhiZhan_Exit_time)
+			if nExitTime < 0 then
+				nExitTime = 0
+			end
+		end
+	end
+	local str = ""
+	str= "13/@TianYuanenter"
+	str = str..string.format("/@%d",nExitTime)
+	return str 
+end
+
+function TianYuan_Fun(sysarg)
+	--屏蔽
+	if true then
+		return
+	end
+	local str = ""
+	str = str..Lang.TaskTalk.ty0003
+	--活动开始标志
+	local sVal = System.getDyanmicVar()
+	if sVal.TianYuanActing == 1 then
+		local guild = LActor.getGuildPtr(sysarg)
+		if guild~= nil then
+			--str = str..Lang.TaskTalk.ty0004
+
+			local nStaticVar = System.getStaticVar(sysarg)
+			if nStaticVar.XuanYuanZhiZhan_Exit_time == nil then
+				nStaticVar.XuanYuanZhiZhan_Exit_time = 0
+			end
+			local nExitTime =  TianYuanConfig.punishment_time - (System.getCurrMiniTime() - nStaticVar.XuanYuanZhiZhan_Exit_time)
+			if nExitTime < 0 then
+				nExitTime = 0
+			end
+
+			str = "13"
+			str= str.."/@TianYuanenter"
+			str = str..string.format("/@%d",nExitTime)
+		else
+			LActor.sendTipmsg(sysarg,Lang.TaskTalk.ty0033,ttMessage)
+			return
+		end
+	--end
+	else
+		LActor.sendTipmsg(sysarg,Lang.TaskTalk.ty0032,ttMessage)
+		return
+	end
+	print(str)
+  	return str
+end
+
+function TianYuanenter(sysarg)
+	local sVal = System.getDyanmicVar()
+	if sVal.TianYuanActing ~= 1 then
+		LActor.sendTipmsg(sysarg,Lang.TaskTalk.ty0032,ttMessage) 
+		return 
+	end
+
+	if sVal.TianYuanActing == 1 then
+		if LActor.getTeamId(sysarg) > 0 then
+			LActor.sendTipmsg(sysarg ,Lang.TaskTalk.ty0058,ttWarmTip)
+			LActor.closeNPCDialog( sysarg )
+			return
+		end
+	end
+
+	local guild = LActor.getGuildPtr(sysarg)
+	if guild~= nil then
+		local nStaticVar = LActor.getStaticVar(sysarg)
+		if nStaticVar.XuanYuanZhiZhan_Exit_time == nil then
+			nStaticVar.XuanYuanZhiZhan_Exit_time = 0
+		end
+
+		local nExitTime = System.getCurrMiniTime() - nStaticVar.XuanYuanZhiZhan_Exit_time
+
+		print("==TianYuanenternExitTime",nStaticVar.XuanYuanZhiZhan_Exit_time,nExitTime)
+		if  nExitTime < TianYuanConfig.punishment_time then
+			LActor.sendTipmsg(sysarg , Lang.TaskTalk.ty0059 , ttWarmTip)
+			return
+		end
+		if sVal.XuanYuanZhiZhan_FuBen_Handle == nil then
+			print("活动未开启")
+			return
+		end
+		local actlvl = LActor.getLevel(sysarg)
+		if actlvl < TianYuanConfig.LEVEL then
+			LActor.sendTipmsg(sysarg, string.format(Lang.TaskTalk.n00001, TianYuanConfig.LEVEL), ttMessage)
+			return
+		end
+		LActor.enterFuBen(sysarg, sVal.XuanYuanZhiZhan_FuBen_Handle, TianYuanConfig.SCENEID, TianYuanConfig.MAPX, TianYuanConfig.MAPY)
+		nStaticVar.XuanYuanZhiZhan_Exit_time,nExitTime = 0
+		--LActor.enterScene(sysarg,TianYuanConfig.SCENEID,10,10) 
+		--LActor.setExitSceneEvent( sysarg, true )
+		LActor.triggerAchieveEvent(sysarg, 52)-- 触发参与帮战目标
+		-- 活跃度
+		-- ActivationTrigger( sysarg, 19 )
+		----------------------------------------------------------log
+		System.logCounter(LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), "daily_act", "", "", "tianyuan", "", "", "", "", lfBI)
+	else
+		LActor.sendTipmsg(sysarg , Lang.TaskTalk.ty0033 , ttWarmTip)
+		----------------------------------------------------------
+	end
+end
+
+function TianYuanCancel(sysarg)
+end
+
+function TianYuan_Enter(sysarg)
+	if LActor.hasState(sysarg, esProtection) then
+    	LActor.sendTipmsg(sysarg, Lang.ScriptTips.sx019, ttMessage)
+    	return 
+  	end
+	  	
+	local sVal = System.getDyanmicVar()
+	if sVal.TianYuanActing ~= 1 then return "" end
+
+	local guild = LActor.getGuildPtr(sysarg)
+	if guild~= nil then
+		if LActor.getTeamId(sysarg) > 0 then
+			LActor.sendTipmsg(sysarg ,Lang.TaskTalk.ty0058,ttWarmTip)
+			LActor.closeNPCDialog( sysarg )
+			return
+		end
+		local nStaticVar = System.getStaticVar(sysarg)
+		if nStaticVar.XuanYuanZhiZhan_Exit_time == nil then
+			nStaticVar.XuanYuanZhiZhan_Exit_time = 0
+		end
+		local nExitTime = System.getCurrMiniTime() - nStaticVar.XuanYuanZhiZhan_Exit_time
+		if  nExitTime < TianYuanConfig.punishment_time then
+			LActor.sendTipmsg(sysarg , Lang.TaskTalk.ty0059 , ttWarmTip)
+			return
+		end
+		LActor.messageBox(sysarg,LActor.getNpc(sysarg),0,Lang.TaskTalk.ty0021,Lang.TaskTalk.ty0022.."/TianYuanenter",Lang.TaskTalk.ty0023.."/TianYuanCancel",nil)
+	else
+		LActor.sendTipmsg(sysarg,Lang.TaskTalk.ty0024,ttGmTip + ttTipmsgWindow)
+	end
+	LActor.closeNPCDialog( sysarg ) 
+end
+
+--[[查看排行榜]]--
+function TianYuanRoundRankFunc(sysarg)
+	local str = ""
+	local ranking = Ranking.getRanking(TianYuanGuildRankName) --通过排行名称获取排行对象
+	local userId = LActor.getIntProperty( sysarg, PROP_ENTITY_ID )    --获取角色ID
+	local RankSubIndex = 1      --ranksub 0为报名 1为领奖
+	if ranking ~= nil then
+		local applyCount = Ranking.getRankItemCount(ranking)   --获取本排行榜名单的数量
+		if applyCount < 0 then
+			return Lang.TaskTalk.ty0005..Lang.TaskTalk.ty0006  --需要自己加
+		end
+		--local itemPtr = Ranking.getItemPtrFromId(ranking, userId)
+		--local dayPoint = Ranking.getPoint(itemPtr)
+		--local dayRank = Ranking.getItemIndexFromId(ranking, userId)
+   
+	  --显示排行榜
+		str = str..Lang.TaskTalk.ty0007
+		local rankTbl = LuaHelp.getRankingItemList(ranking,10)
+		if rankTbl and #rankTbl > 0 then
+			local i
+			for i=1, #rankTbl do
+				local userName = Ranking.getSub(rankTbl[i],0)
+				local point = Ranking.getPoint(rankTbl[i])
+				str = str..string.format(Lang.TaskTalk.ty0008,i,userName,point)
+			end
+		else
+			str = str..Lang.TaskTalk.ty0009
+		end	
+	else
+		str = str..Lang.TaskTalk.ty0009
+	end
+		str = str..Lang.TaskTalk.ty0006
+	return str
+end
+--[[
+    函数名称:getTianYuanGuildLaderRankFunc
+	函数描述:帮主领取王城之战奖励
+	参数 sysarg 
+]]--
+
+--del wupeng 城主真龙之魂奖励以邮件方式发送 begin
+--[[function getTianYuanGuildLaderRankFunc(sysarg)
+	--王城之战正在进行中
+	local sVal = System.getDyanmicVar()
+	if sVal.TianYuanActing ~= nil then return end
+
+	local var = System.getStaticVar()
+	if var == nil then return end
+
+	local actor_id = LActor.getIntProperty(sysarg, PROP_ENTITY_ID)
+
+	-- 是否天元之主
+	local leaderId = LGuild.getTianYuanStaicLeaderId()
+	if leaderId ~= actor_id then
+		LActor.sendTipmsg(sysarg, Lang.TaskTalk.ty0039, ttMessage)
+		return
+	end
+
+	-- 是否已经领取过
+	if var.isGetTianYuanAward ~= nil and var.isGetTianYuanAward == 1 then
+		LActor.sendTipmsg(sysarg,Lang.TaskTalk.ty0036,ttMessage)
+		return 
+	end
+
+	-- 是否超过领奖时间
+	local ntime = System.getDiffweekTimeByDate(TianYuanConfig.GETTIME)
+	if ntime > TianYuanConfig.GETITEMDIFF then
+		LActor.sendTipmsg(sysarg, Lang.TaskTalk.ty0042, ttMessage)
+		return
+	end
+
+	--领取奖品
+	if Item.getBagEmptyGridCount(sysarg) < 1 then -- 背包是否有空位
+		LActor.sendTipmsg(sysarg,Lang.TaskTalk.a00035,ttMessage)
+		return
+	end
+
+	local itemId = GlobalConfig.masterEquipId
+	if LActor.addItem(sysarg, itemId, 0, 0, 1, 1,"TianYuanleander", 1) > 0 then
+		local tips = string.format(Lang.ScriptTips.q00037, Item.getItemName(itemId), 1)
+		LActor.sendTipmsg(sysarg, tips, ttMessage )
+	end
+
+	-- 设置为已经领取过奖励
+	var.isGetTianYuanAward = 1
+end]]
+--del wupeng 城主真龙之魂奖励以邮件方式发送 end
+
+--已废弃
+--[[
+	函数名称: getTianYuanGuildRankFunc
+	函数描述: 参加过的帮派领奖
+	参数 
+]]--
+
+function getTianYuanGuildRankFunc(sysarg)
+	local leaderId=LActor.getGuildLeaderId(sysarg)
+	local userId = LActor.getIntProperty( sysarg, PROP_ENTITY_ID )    --获取角色ID
+	if(leaderId ~= userId) then LActor.sendTipmsg(sysarg,Lang.TaskTalk.ty0037,ttMessage) return end
+	local guildid = LActor.getGuildId(sysarg)
+	local ranking = Ranking.getRanking(TianYuanGuildRankName) 
+	if ranking ~= nil then
+		local RankSubIndex = 2
+		local itemPtr = Ranking.getItemPtrFromId(ranking, guildid)
+		local Rank = tonumber(Ranking.getItemIndexFromId(ranking, guildid)+1)
+		if itemPtr ~= nil and Ranking.getSub(itemPtr,RankSubIndex) ~= "true" then   --判断角色ID是否在排行里
+			Ranking.setSub(itemPtr, RankSubIndex, "true")          
+			if TianYuanGuildReward ~= nil then 
+				local reward = TianYuanGuildReward
+				if Rank < #reward then
+					LGuild.addStonebyGuildid(guildid,reward[Rank])
+				else
+				    LGuild.addStonebyGuildid(guildid,reward[#reward])
+				end
+			end
+		else
+			LActor.sendTipmsg(sysarg,Lang.TaskTalk.ty0038,ttMessage) 
+		end
+	end
+end
+
+--[[
+	函数名称: getTianYuanGuildRankFunc
+	函数描述: 帮派各成员领奖
+	参数 
+]]--
+
+function getTianYuanGuildmemberRankFunc(sysarg)
+	--王城之战正在进行中
+	if true then
+		return
+	end
+	local sVal = System.getDyanmicVar()
+	if sVal.TianYuanActing ~= nil then return end
+
+	-- 查找所在的排行榜和排名
+	local ranking = Ranking.getRanking(TianYuanGuildRankName)
+	if ranking == nil then return end
+
+	local gid = LActor.getGuildId(sysarg)
+	local rank_pos = Ranking.getItemIndexFromId(ranking, gid)
+	if rank_pos ~= 0 then
+		LActor.sendTipmsg(sysarg,Lang.TaskTalk.ty0035,ttMessage)
+		return 
+	end
+
+	local st = LActor.getStaticVar(sysarg)
+	if st.guildsys == nil then st.guildsys = {} end
+
+	local nowtime = System.getCurrMiniTime()
+	if st.guildsys.gettianyuanaward ~= nil then
+		-- 是否是同一天
+		if System.isSameDay(st.guildsys.gettianyuanaward, nowtime) then
+			LActor.sendTipmsg(sysarg,Lang.TaskTalk.ty0036,ttMessage) 
+			return
+		end
+	end
+
+	-- 是否已经领取过奖励
+	if not LGuild.IsTianYuanTime(sysarg) then
+		LActor.sendTipmsg(sysarg,Lang.TaskTalk.ty0036,ttMessage) 
+		return
+	end
+
+	local pos = LActor.getGuildPos(sysarg)
+	local level = LActor.getLevel(sysarg)
+ 
+ 	local conf = nil
+	for i=1,#TianYuanGuildmemberReward do
+		if pos == TianYuanGuildmemberReward[i].pos then -- 军团职位
+			conf = TianYuanGuildmemberReward[i]
+			break
+		end
+	end
+
+	if conf == nil then -- 配置错误
+		print("TianYuanGuildmemberReward error")
+		return
+	end
+
+	if level < conf.ranklevel[1] or level > conf.ranklevel[2] then -- 等级段
+		local tips = string.format(Lang.TaskTalk.ty0047, conf.ranklevel[1], conf.ranklevel[2])
+		LActor.sendTipmsg(sysarg, tips, ttMessage)
+		return 
+	end
+
+	local coin = conf.yingliang
+	LActor.giveAward(sysarg, 5, coin, 205, 0, "TianYuanGuildGetRank") -- 奖励仙币
+	local tips = string.format(Lang.TaskTalk.ty0046, coin)
+	LActor.sendTipmsg(sysarg, tips, ttMessage)
+
+	-- 设置领奖时间，表示已经领过奖
+	LGuild.SetTianYuanTime(sysarg)
+	st.guildsys.gettianyuanaward = nowtime
+end
+
+--[[
+    函数名称：getTianYuanRoundRankFunc
+    函数描述：领取本轮王城之战奖励 个人领奖
+    参数 sysarg 的描述：
+]]
+
+function getTianYuanRoundRankFunc(sysarg)
+	--王城之战正在进行中
+	--屏蔽npc领取奖励
+	if true then
+		return
+	end
+	local sVal = System.getDyanmicVar()
+	if sVal.TianYuanActing ~= nil then 
+		LActor.sendTipmsg(sysarg,Lang.TaskTalk.ty0055,ttMessage)
+		return
+	end
+	
+	local ranking = Ranking.getRanking(TianYuanRankName) --通过排行名称获取排行对象
+	if ranking == nil then
+		LActor.sendTipmsg(sysarg,Lang.TaskTalk.ty0013,ttMessage)
+		return
+	end
+
+	local userId = LActor.getIntProperty( sysarg, PROP_ENTITY_ID )    --获取角色ID
+	--print("userId:"..userId)
+	local RankSubIndex = 1      --ranksub 0为报名 1为领奖
+	local rank_item = Ranking.getItemPtrFromId(ranking, userId)
+	if rank_item == nil then --不在排行榜里
+		LActor.sendTipmsg(sysarg,Lang.TaskTalk.ty0012,ttMessage)
+		return 
+	end
+
+	if Ranking.getSub(rank_item,RankSubIndex) == "true" then   --已领取奖励
+		LActor.sendTipmsg(sysarg,Lang.TaskTalk.ty0041,ttMessage)
+		return
+	end
+
+	-- 得分小于10
+	local dayPoint = Ranking.getPoint(rank_item)
+	--print("dayPoint:"..dayPoint)
+	if dayPoint < 10 then
+		LActor.sendTipmsg(sysarg,Lang.TaskTalk.ty0011,ttMessage)
+		return 
+	end
+
+	--根据名次获取奖励
+	local rank_pos = Ranking.getIndexFromPtr(rank_item) + 1 --名次
+	--print("rank_pos:"..rank_pos)
+
+	--LActor.triggerAchieveEvent(sysarg, 44, 3, rank_pos, 0) -- 触发成就事件
+	-- 奖励
+	local reward = nil
+	for i=1, #TianYuanReward do
+		if rank_pos >= TianYuanReward[i].rankRange[1] and rank_pos <= TianYuanReward[i].rankRange[2] then
+			reward = TianYuanReward[i]
+			break 
+		end
+	end
+
+	if reward == nil then
+		LActor.sendTipmsg(sysarg,Lang.TaskTalk.ty0012,ttMessage)
+		return 
+	end
+
+	local expAdd = 0
+	local gxAdd = 0
+
+	if reward.exp ~= nil then -- 经验
+		expAdd = LActor.addExpByLevel(sysarg, reward.exp, 0, 0) 
+	end
+
+	if reward.renown ~= nil then -- 军团贡献
+		gxAdd = reward.renown
+		LActor.addGuildContrib(sysarg, reward.renown)
+	end
+
+	local tips = string.format(Lang.TaskTalk.ty0045, expAdd, gxAdd) -- -- 提示
+	LActor.sendTipmsg(sysarg, tips, ttMessage)
+
+	if expAdd > 0 then -- 播放经验特效
+		LActor.playExpEffect(sysarg, expAdd)
+	end
+
+	Ranking.setSub(rank_item, RankSubIndex, "true")                         --将领奖后的列置1
+
+	System.logCounter(userId, LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), "", "", "", "tian_yuan_award", "", "", "", "", lfBI)
+end
+
+function getTianYuanInfo(sysarg)
+	LActor.openDialogs(sysarg, diTianYuanInfo)
+end
+
+
+--EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeExitScene, EventCallDispatcher.TianYuanExitScene)

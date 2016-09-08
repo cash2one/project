@@ -1,0 +1,339 @@
+--宠物道具
+
+{
+	name = Lang.Store.c00006, --分类名称
+	--该分类中的商品表
+ 	showAreaId =0,  --显示的区域ID,0表示商城普通区，1表示商城限量抢购区，2表示背包0元抢购区，3表示背包1元抢购区，4表示背包热销商品区
+	labelId =0,  --0表示是普通的商城，1表示背包限时抢购，2表示0元抢购,3表示1元抢购
+	totalBuyLimit =0,    --表示大类的数目的限制个数,0表示无限制，1表示限制一个
+	desc =Lang.Store.desc0001,   --分类的刷新描述
+	items = 
+	{	
+      	--	卓越的烈焰怒狮·宠物蛋					
+		{						
+			id =	90000	,			
+			item =	38207	,			
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	498	, bind = false,oldPrice=	996	 }, 
+			},					
+		},	
+		--	精良的精灵龙·宠物蛋					
+		{						
+			id =	90001	,			
+			item =	28248	,			
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	88	, bind = false,oldPrice=	196	 }, 
+			},					
+		},	
+	    --	精良的小龙女·宠物蛋				
+		{						
+			id =	90002	,			
+			item =	28249	,			
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	88	, bind = false,oldPrice=	196	 }, 
+			},					
+		},	 
+		 --	唤魂玉					
+		{						
+			id =	90003	,			
+			item =	28245	,			
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	25	, bind = false,oldPrice=	50	 }, 
+			},					
+		},				
+		--	初级宠物悟性丹					
+		{						
+			id =	90004	,			
+			item =	28220	,			
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	28	, bind = false,oldPrice=	56	 }, 
+			},					
+		},						
+		--	中级宠物悟性丹					
+		{						
+			id =	90005	,			
+			item =	28221	,			
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	48	, bind = false,oldPrice=	96	 }, 
+			},					
+		},	
+        --	高级宠物悟性丹					
+		{						
+			id =	90006	,
+            item =	28222	,			
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	88	, bind = false,oldPrice=	176	 }, 
+			},					
+		},	 
+       --	中级悟性保护珠						
+		{						
+			id =	90007   ,
+			item =	28226	,		
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	26	, bind = false,oldPrice=	52	 }, 
+			},					
+		},	 
+       --	高级悟性保护珠					
+		{						
+			id =	90008   ,
+            item =	28227	,	
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	78	, bind = false,oldPrice=	156	 }, 
+			},					
+		},	 	
+       --	初级成长丹					
+		{						
+			id =	90009   ,
+            item =	28230	,	
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	25	, bind = false,oldPrice=	50	 }, 
+			},					
+		},	 	
+       --	中级成长丹					
+		{						
+			id =	90010   ,
+            item =	28231	,	
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	45	, bind = false,oldPrice=	90	 }, 
+			},					
+		},	 
+
+		--	高级成长丹					
+		{						
+			id =	90011	,			
+			item =	28232	,			
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	85	, bind = false,oldPrice=	170	 }, 
+			},					
+		},	
+		--	中级成长保护珠					
+		{						
+			id =	90012	,			
+			item =	28236	,			
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	24	, bind = false,oldPrice=	48	 }, 
+			},					
+		},	
+		--	高级成长保护珠					
+		{						
+			id =	90013	,			
+			item =	28237	,			
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	72	, bind = false,oldPrice=	154	 }, 
+			},					
+		},	
+		--	初级蛮击·技能书					
+		{						
+			id =	90014	,			
+			item =	18920	,			
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	25	, bind = false,oldPrice=	60	 }, 
+			},					
+		},	
+		--	初级撕裂·技能书					
+		{						
+			id =	90015	,			
+			item =	18924	,			
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	25	, bind = false,oldPrice=	60	 }, 
+			},					
+		},	
+		--	初级培元·技能书					
+		{						
+			id =	90016	,			
+			item =	18944	,			
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	25	, bind = false,oldPrice=	60	 }, 
+			},					
+		},	
+		--	初级活泼·技能书					
+		{						
+			id =	90017	,			
+			item =	18948	,			
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	25	, bind = false,oldPrice=	60	 }, 
+			},					
+		},				
+		--	初级兽魂印					
+		{						
+			id =	90018	,			
+			item =	28241	,			
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	8	, bind = false,oldPrice=	16	 }, 
+			},					
+		},	
+		--	中级兽魂印					
+		{						
+			id =	90019	,			
+			item =	28242	,			
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	28	, bind = false,oldPrice=	56	 }, 
+			},					
+		},	
+		--	高级兽魂印					
+		{						
+			id =	90020	,			
+			item =	28243	,			
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	88	, bind = false,oldPrice=	176	 }, 
+			},					
+		},	
+		--	顶级兽魂印					
+		{						
+			id =	90021	,			
+			item =	28244	,			
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	258	, bind = false,oldPrice=	506	 }, 
+			},					
+		},	
+		--	遗忘之水					
+		{						
+			id =	90022	,			
+			item =	28240	,			
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	20	, bind = false,oldPrice=	40	 }, 
+			},					
+		},
+		--	宠物洗髓丹					
+		{						
+			id =	90023	,			
+			item =	28218	,			
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	10	, bind = false,oldPrice=	20	 }, 
+			},					
+		},	
+		--[[	神级兽魂印					
+		{						
+			id =	90024	,			
+			item =	34687	,			
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	388	, bind = false,oldPrice=	776	 }, 
+			},					
+		},]]			
+	},
+},

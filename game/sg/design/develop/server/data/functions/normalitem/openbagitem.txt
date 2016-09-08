@@ -1,0 +1,22 @@
+function OpenBagFunc(sysarg,itemidx,itemPtr,ItemTable)
+	--print("^^^^^^^^^^^^openbagfunction")
+
+	if ItemTable == nil then return end
+	local id = ItemTable.item_id
+
+	LActor.removeItemByPtr(sysarg,itemPtr,1,true,"useopenbagitem",5) 
+	local oldbagcount =  LActor.getIntProperty(sysarg,PROP_ACTOR_BAG_GRID_COUNT)
+	local newbagcount = oldbagcount + 5
+	LActor.setIntProperty(sysarg,PROP_ACTOR_BAG_GRID_COUNT, newbagcount)
+	
+end
+
+function  OpenBagItemsInit(sysarg)
+  for i = 1,table.getn(OpenBagItem) do
+	local x = OpenBagItem[i]
+	--print("^^^^^^^"..x.item_id)
+	GlobalItemFn[x.item_id] = { func = OpenBagFunc, params = x }
+  end
+end
+
+table.insert(InitFnTable,OpenBagItemsInit)

@@ -1,0 +1,232 @@
+-- 密宗佛塔副本处理脚本
+--#include "data\functions\globaldefine.txt" once
+--#include "data\config\misc\xuantianConf.txt" once
+--#include "data\functions\timermsgfunc.txt" once
+--#include "data\functions\systems\miscs\xuantianfunc.txt" once
+--#include "data\functions\tasks\fengcereward\fcactivefunc.txt" once
+
+XuanTianFunc = {}
+XuanTianFunc.OnEnterScene = {} -- 进入每一层的特殊处理
+XuanTianFunc.OnExitScene = {} -- 退出每一层的特殊处理
+XuanTianFunc.SceneFloors = {} -- 每个场景对应的层数
+
+-- 特殊进入某层场景的特殊处理
+
+
+-- 发送统计消息
+XuanTianFunc.XuanTianCalSend = function(sysarg, arg)
+	local floor = arg[2]
+
+	if floor == nil then return end
+	
+	local sconf = XuanTianConf.scenes[floor]
+	if sconf == nil then
+		print("XuanTian scene conf error"..floor)
+		return 
+	end
+
+	local pfb = LActor.getFubenPrt(sysarg)
+	if pfb == nil then
+		print("TianMoTaCalSend pfb == nil")
+		return
+	end
+
+	local fvar = Fuben.getDyanmicVar(pfb)
+	if fvar == nil then
+		print("TianMoTaCalSend fvar == nil")
+		return
+	end
+
+	LActor.ChangeCaleValue(sysarg, caleGameTime, Fuben.GetFubenGameTime(pfb), false)
+	LActor.ChangeCaleValue(sysarg, caleOther2, sconf.monster.total, false) -- 怪物总数
+	LActor.ChangeCaleValue(sysarg, caleOther3, floor, false)
+	LActor.ChangeCaleValue(sysarg, caleRemainMonster, fvar.fbRestMonster, false) -- 剩余怪物数
+	LActor.SendAllCaleValue(sysarg)
+end
+
+-- 进入玄天封印通用处理
+XuanTianFunc.OnEnterXuanTianScene = function (sysarg, hscene)
+	-- print("enter XuanTian scene")
+	local pfb = LActor.getFubenPrt(sysarg)
+	if pfb == nil then return end
+
+	local sid = LActor.getSceneId(sysarg)
+	local layer = XuanTianFunc.SceneFloors[sid]
+	if layer == nil or layer < 1 or layer > #XuanTianConf.scenes then
+		print("xuantian scene error:"..sid)
+		return 
+	end
+
+	Fuben.setFubenProgress(pfb, layer)
+
+	local sconf = XuanTianConf.scenes[layer]
+	if sconf == nil then
+		print("xuantian scene conf error"..layer)
+		return 
+	end
+
+	local fvar = Fuben.getDyanmicVar(pfb)
+	if fvar.lastscene == nil or fvar.lastscene ~= sid then -- 进入新的层
+		fvar.lastscene = sid
+
+		local hfb = Fuben.getFubenHandle(pfb)
+		if hfb ~= 0 then
+			Fuben.SetFubenGameTime(hfb, sconf.gametime)
+		end
+
+		-- 剩余怪物数
+		fvar.fbRestMonster = sconf.monster.total
+
+		-- 冰块，火球初始化
+		-- local effects = sconf.effects
+		-- if effects ~= nil then
+		-- 	for i=1,#effects do
+		-- 		local ef = effects[i]
+		-- 		Fuben.postSceneTimeCall(hscene, TimerMsg.XuanTianSkill, ef.interval, ef.times, layer, i)
+		-- 	end
+		-- end
+
+		-- 处理图腾怪物
+		-- local totems = sconf.totems
+		-- if totems ~= nil and #totems > 0 then
+		-- 	local monsters = LuaHelp.getSceneMonsterList(sysarg)
+		-- 	if monsters ~= nil then
+		-- 		for i=1,#monsters do
+		-- 			local mon = monsters[i]
+		-- 			for j=1,#totems do
+		-- 				if LActor.getIntProperty(mon, PROP_ENTITY_ID) == totems[i] then -- 图腾怪物
+		-- 					LActor.setTotemMonster(mon, true) -- 设置为图腾怪
+		-- 					break 
+		-- 				end
+		-- 			end
+		-- 		end
+		-- 	end
+		-- end
+	end
+
+	LActor.setExitSceneEvent( sysarg, true )
+
+	local result = false
+	LActor.postEntityScriptDelayMsg(sysarg, 1000, result, 18, layer)
+
+	-- 特殊场景处理
+	local func = XuanTianFunc.OnEnterScene[layer]
+	if func ~= nil then
+		func(sysarg, hscene, layer)
+	end
+
+	-- 进去就通关
+	-- if sconf.conds.type ~= nil and sconf.conds.type == 3 then
+	--	XuanTianPublic.OnTongGuan(sysarg, layer, sconf)
+	-- end
+end
+
+-- 退出场景
+XuanTianFunc.OnExitXuanTianScene = function (sysarg, hscene)
+	-- print("exit XuanTian scene")
+	local pfb = LActor.getFubenPrt(sysarg)
+	if pfb == nil then return end
+
+	local layer = Fuben.getFubenProgress(pfb) -- 第几层
+	if layer > #XuanTianConf.scenes then
+		print("max xuantian layer:"..layer)
+		return 
+	end
+
+	local sconf = XuanTianConf.scenes[layer]
+	if sconf == nil then
+		print("xuantian scene conf error"..layer)
+		return 
+	end
+
+	Fuben.clearSceneTimeCall(hscene)
+end
+
+
+-- 定时释放技能配置
+XuanTianFunc.OnTimeCallMsg = function(msgId, pscene, layer, eidx)
+	local pfb = Fuben.getSceneFuben(pscene)
+	if pfb == nil then return end
+
+	local actors = LuaHelp.getFbActorList(pfb)
+	if actors == nil then return end
+	local sysarg = actors[1]
+	if sysarg == nil then return end
+
+	local sconf = XuanTianConf.scenes[layer]
+	if sconf == nil then
+		print("XuanTian scene conf error"..layer)
+		return 
+	end
+end
+
+-- 特效作用
+XuanTianFunc.OnTakeEffect = function(sysarg, layer, eidx, posx, posy)
+	-- print("OnTakeEffect")
+	local pfb = LActor.getFubenPrt(sysarg)
+	if pfb == nil then print("pfb is nil") return end
+
+	local hscene = LActor.getSceneHandle(sysarg)
+	if hscene == 0 then print("hscene is nil") return end
+
+	if Fuben.getFubenProgress(pfb) ~= layer then
+		-- 玩家已经离开这层了
+		print("layer error")
+		return 
+	end
+
+	local myx = LActor.getIntProperty(sysarg, PROP_ENTITY_POSX)
+	local myy = LActor.getIntProperty(sysarg, PROP_ENTITY_POSY)
+
+	-- 击中
+	if myx == posx and myy == posy then
+		-- print("effect hit")
+		local sconf = XuanTianConf.scenes[layer]
+		if sconf == nil then return end
+
+		local results = sconf.effects[eidx].results -- 击中伤害结果
+		for i=1,#results do
+			local buff = results[i]
+			LActor.addBuff(sysarg, buff.bufftype, buff.group, buff.value, buff.times, buff.interval, buff.name, false)
+		end
+	end
+end
+
+-- 该层的游戏结束
+
+XuanTianFunc.OnGameOver = function(pfb)
+	local actors = LuaHelp.getFbActorList(pfb)
+	if actors == nil then return end
+	local sysarg = actors[1]
+	if sysarg == nil then return end
+
+	local layer = Fuben.getFubenProgress(pfb)
+
+	LActor.exitFuben(sysarg) -- 游戏结束，退出副本
+end
+
+-- 进入副本
+XuanTianFunc.OnEnterFuben = function(sysarg, hfb, way)
+	local pfb = Fuben.getFubenPtr(hfb)
+	if pfb ~= nil then
+		Fuben.setCaleRemainMon(pfb, false) -- 不自动发送剩余怪物数
+	end
+	LActor.triggerTarget( sysarg, enATXuanTian )
+	FCActivityHandler.ActivityReward (sysarg)
+end
+
+-- TimerMsgFunc.register(TimerMsg.XuanTianSkill, XuanTianFunc.OnTimeCallMsg)
+-- EventCallDispatcher.regEntityCallbackMsg(EntityCallbackMsg.XuanTianTakeEffect, XuanTianFunc.OnTakeEffect)
+EventCallDispatcher.registerFubenGameOver(XuanTianConf.fbid,  XuanTianFunc.OnGameOver)
+EventCallDispatcher.registerFubenEnter(XuanTianConf.fbid, XuanTianFunc.OnEnterFuben)
+
+-- 进入场景处理
+for i=1, #XuanTianConf.scenes do
+	local scene = XuanTianConf.scenes[i]
+	EventCallDispatcher.registerSceneEnter(scene.sceneid, XuanTianFunc.OnEnterXuanTianScene)
+	EventCallDispatcher.registerSceneExit(scene.sceneid, XuanTianFunc.OnExitXuanTianScene)
+
+	XuanTianFunc.SceneFloors[scene.sceneid] = i
+end
+
+table.insert(LocalDT.ScriptDelayConfig[18], XuanTianFunc.XuanTianCalSend)

@@ -1,0 +1,757 @@
+-- 功能性脚本
+--#include "data\functions\fubennpcfunc\onenterfubenfunc.txt" once
+--#include "data\functions\entrustfunc.txt" once
+--#include "data\functions\config\FubenConfig\FubenCountConfig.txt" once
+
+-- 配置文件的导入
+--#include "data\functions\config\fubenconfig\xinmohuanjingfubenconfig.txt" once	-- 仙魔幻境副本配置
+--#include "data\functions\config\fubenconfig\tianmotafubenconfig.txt" once				-- 天魔塔副本配置
+--#include "data\functions\config\fubenconfig\huantianmijingfubenconfig.txt" once		-- 幻天密境副本配置
+--#include "data\functions\config\fubenconfig\newpetfubenconfig.txt" once		-- 幻天密境副本配置
+
+
+
+CommonFubenJiesuanConfig = {
+	[58] = XinMoHuanJingFubenConfig,			-- 仙魔幻境
+	[98] = XinMoHuanJingFubenConfig,			-- 仙魔幻境
+	[99] = XinMoHuanJingFubenConfig,			-- 仙魔幻境
+	[100] = XinMoHuanJingFubenConfig,			-- 仙魔幻境
+	[101] = XinMoHuanJingFubenConfig,			-- 仙魔幻境
+	[102] = XinMoHuanJingFubenConfig,			-- 仙魔幻境
+	[64] = TianMoTaConfig,						-- 天魔塔1
+	[114] = TianMoTaConfig,						-- 天魔塔2
+	[115] = TianMoTaConfig,						-- 天魔塔3
+	[116] = TianMoTaConfig,						-- 天魔塔4
+	[117] = TianMoTaConfig,						-- 天魔塔5
+	[118] = TianMoTaConfig,						-- 天魔塔6
+	[65] = HuanTianMiJingFubenConfig,			-- 幻天副本1
+	[84] = HuanTianMiJingFubenConfig,			-- 幻天副本2
+	[85] = HuanTianMiJingFubenConfig,			-- 幻天副本3
+	[86] = HuanTianMiJingFubenConfig,			-- 幻天副本4
+	[87] = HuanTianMiJingFubenConfig,			-- 幻天副本5
+	[88] = HuanTianMiJingFubenConfig,			-- 幻天副本6
+	[63] = NewPetConfig,			 			-- 新宠物岛
+}
+
+CommonFubenJiesuanConfig.fubenList = {58,98,99,100,101,102,64,114,115,116,117,118,65,84,85,86,87,88}
+--整个结算过程耗费的时间
+CommonFubenJiesuanConfig.jieSuanTime = 50
+
+--随机值的范围
+CommonFubenJiesuanConfig.randRange = 10			
+
+--获取宝箱数据
+CommonFubenJiesuanConfig.getPrize = function(sysarg,fubenId)
+	-- 根据不同的副本加载配置
+	local BaoItemList = CommonFubenJiesuanConfig[fubenId].boxPool
+	local index = System.getRandomNumber(3) + 1
+
+	local Fhandle = LActor.getFubenHandle(sysarg)
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+
+	if fbVar.boxarray == nil then
+		fbVar.boxarray = {}
+	end
+
+	for h = 1, #BaoItemList do
+
+		local itemCount = table.getn(BaoItemList[h].itemList)
+		local temp = BaoItemList[h].itemList
+
+		local r = System.getRandomNumber(10000)
+		local total = 0
+		for j = 1, itemCount do
+			local itemConf = temp[j]
+			total = total + itemConf.present
+			if r < total then
+				if fbVar.boxarray[h] == nil then 
+					fbVar.boxarray[h] = {}
+				end
+				fbVar.boxarray[h][1] = itemConf.itemid
+				fbVar.boxarray[h][2] = itemConf.count
+				break
+			end
+		end
+	end
+
+	--将物品添加到消息队列中
+	--local num = #fbVar.itemDetails + 1
+	--fbVar.itemDetails[num] = {}
+	--fbVar.itemDetails[num][1] = fbVar.boxarray[index][1]
+	--fbVar.itemDetails[num][2] = fbVar.boxarray[index][2]
+    --
+	--print("---------------"..fbVar.boxarray[index][1]..","..fbVar.boxarray[index][2])
+
+	local grid = Item.getBagEmptyGridCount(sysarg)
+	if grid <  Item.getAddItemNeedGridCount(sysarg, fbVar.boxarray[index][1], fbVar.boxarray[index][2])  then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.osa0005, ttMessage)
+		System.sendGmMailOffLine(LActor.getActorId(sysarg), Lang.ScriptTips.js001, 1, fbVar.boxarray[index][1], fbVar.boxarray[index][2], 1)
+		--print("--------::  "..fbVar.boxarray[index][1].."---------"..fbVar.boxarray[index][2])
+	else
+		LActor.addItem(sysarg, fbVar.boxarray[index][1], 0, 0, fbVar.boxarray[index][2], 1, "Reward", 1)
+	end
+
+	fbVar.index = index
+	return index
+end
+
+--获取评分,输入时间或者层数获取奖励比例和评分等级
+CommonFubenJiesuanConfig.getGrade = function(sysarg,usetime,floor,fubenId)
+	--print(string.format("getGrade:  (%d, %d, %d)",usetime,floor,fubenId))
+	local gradeList = CommonFubenJiesuanConfig[fubenId].gradeList
+	local gradeType = CommonFubenJiesuanConfig[fubenId].gradeType
+
+	local Fhandle = LActor.getFubenHandle(sysarg)
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+
+	fbVar.grade = 1				-- 评分等级
+	fbVar.boxcount = #gradeList		-- 盒子的数量
+
+	-- 遍历整个列表，查找符合条件的评分等级
+	for i=1,fbVar.boxcount do
+		if (gradeType == 1 and gradeList[i].time >= usetime) or (gradeType == 2 and gradeList[i].floor <= floor) then
+			fbVar.grade = i
+			break
+		end
+	end
+	
+	-- 赋值额外奖励百分比
+	value = gradeList[fbVar.grade].value
+
+	-- 返回评分奖励百分比 
+	return value
+end
+
+-- 发放奖励
+CommonFubenJiesuanConfig.rechargeItemReal = function(sysarg,rechargeType,rechargeCount)
+	if rechargeType == 12 then		-- 历练
+		LActor.giveAward(sysarg, qatRenown, rechargeCount)
+	elseif rechargeType == 11 then	-- 经验
+		LActor.addExp(sysarg, rechargeCount, 214, 0)
+	elseif rechargeType == 0 then	-- 铜币 
+		LActor.changeMoney(sysarg, 0, rechargeCount, 1, true, "fuben", "reward")
+	elseif rechargeType == 1 then	-- 银币 
+		LActor.changeMoney(sysarg, 1, rechargeCount, 1, true, "fuben", "reward")
+	elseif rechargeType == 2 then	-- 礼券
+		LActor.changeMoney(sysarg, 2, rechargeCount, 1, true, "fuben", "reward")
+	elseif rechargeType == 3 then	-- 元宝 
+		LActor.changeMoney(sysarg, 3, rechargeCount, 1, true, "fuben", "reward") 
+	end
+end
+
+-- 发放物品
+CommonFubenJiesuanConfig.rechargeItemAdd = function(sysarg,fubenId,rechargeId,rechargeCount)
+	--print("-------CommonFubenJiesuanConfig.rechargeItemAdd     "..rechargeId)
+	if CommonFubenJiesuanConfig[fubenId] == nil then
+		return
+	end
+	local itemList = CommonFubenJiesuanConfig[fubenId].itemList
+	if itemList == nil then
+		return
+	end
+	local itemConf = itemList[rechargeId]
+	if itemConf == nil then
+		return
+	end
+
+	-- 发放物品
+	local grid = Item.getBagEmptyGridCount(sysarg)
+	if grid <  Item.getAddItemNeedGridCount(sysarg, itemConf.id, itemConf.count)  then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.osa0005, ttMessage)
+		System.sendGmMailOffLine(LActor.getActorId(sysarg), Lang.ScriptTips.js001, 1, itemConf.id, rechargeCount, 1)
+		--print(string.format("id: %d, count: %d",itemConf.id,itemConf.count))
+	else
+		LActor.addItem(sysarg,itemConf.id,itemConf.quality,itemConf.strong,rechargeCount,itemConf.bind,"fuben",1) 	-- 增加物品
+	end
+end
+
+-- 发放奖励
+CommonFubenJiesuanConfig.rechargeItem =  function(sysarg,Fhandle,fubenId)
+	--print("------------CommonFubenJiesuanConfig.rechargeItem")
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+
+	-- 实际属性
+	for i=1,fbVar.realcount do
+		CommonFubenJiesuanConfig.rechargeItemReal(sysarg,fbVar.realarray[i][1],fbVar.realarray[i][2])
+	end
+	-- 额外
+	for i=1,fbVar.extracount do
+		CommonFubenJiesuanConfig.rechargeItemReal(sysarg,fbVar.extraarray[i][1],fbVar.extraarray[i][2])
+	end
+	-- 药品奖励
+	for i=1,fbVar.medicount do
+		CommonFubenJiesuanConfig.rechargeItemReal(sysarg,fbVar.mediarray[i][1],fbVar.mediarray[i][2])
+	end
+
+	-- 发放物品
+	for i=1,fbVar.earnBoxCount do
+		CommonFubenJiesuanConfig.rechargeItemAdd(sysarg,fubenId,fbVar.itemDetails[i][1],fbVar.itemDetails[i][2])
+	end
+
+end
+
+-- 对消息队列中的数据进行分析
+CommonFubenJiesuanConfig.msgAnalyzeAndDo = function(sysarg,Fhandle,fubenId)
+	--print("--------------CommonFubenJiesuanConfig.msgAnalyzeAndDo")
+	-- 对掉落物品或者经验历练进行处理
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+    if fbVar.msgQueue ~= nil then
+    	for i=1, #fbVar.msgQueue do
+			local tmp_table = fbVar.msgQueue[i]
+			local rechargeId =  tmp_table[1]  
+			local rechargeType = tmp_table[2]
+			local rechargeCount = tmp_table[3]	
+			-- print(string.format("-msg---  %d  %d %d",rechargeId,rechargeType,rechargeCount))
+			CommonFubenJiesuanConfig.msgAnalyzeAndDoOne(sysarg,Fhandle,fubenId,rechargeId,rechargeType,rechargeCount)	-- 处理消息
+    	end
+    end
+
+	-- 获取评分等级数据
+	local value = CommonFubenJiesuanConfig.getGrade(sysarg,fbVar.costtime,fbVar.floor,fubenId)
+    -- 对汇总的数据进行处理
+    fbVar.realcount = #fbVar.realarray 
+    for i=1,fbVar.realcount do
+    	if fbVar.realarray[i][1] == 11 then		-- 经验
+    		if value ~= nil and value > 0 then
+    			-- 评分经验
+				if fbVar.extraarray == nil then
+					fbVar.extraarray = {}
+				end
+
+				local num = #fbVar.extraarray + 1
+				fbVar.extraarray[num] = {}
+				fbVar.extraarray[num][1] = fbVar.realarray[i][1]
+				fbVar.extraarray[num][2] = fbVar.realarray[i][2] * value/100
+    		end
+
+    		if fbVar.mediarray == nil then
+    			fbVar.mediarray = {}
+    		end
+
+    		for j=1,#FubenAddExpItems do
+    			local ExpItem = FubenAddExpItems[j]
+    			if LActor.hasBuff(sysarg,ExpItem.buffType,ExpItem.buffGroup) then
+    				local num = #fbVar.mediarray + 1
+		    		fbVar.mediarray[num] = {}
+		    		fbVar.mediarray[num][1] = fbVar.realarray[i][1]
+		    		fbVar.mediarray[num][2] = fbVar.realarray[i][2] * ExpItem.value
+    			end
+    		end
+    	end
+    end
+
+    fbVar.extracount = #fbVar.extraarray
+    fbVar.medicount = #fbVar.mediarray
+	fbVar.earnBoxCount = #fbVar.itemDetails
+
+	-- 奖励的分发
+    CommonFubenJiesuanConfig.rechargeItem(sysarg,Fhandle,fubenId)
+end
+
+CommonFubenJiesuanConfig.msgAnalyzeAndDoOne = function(sysarg,Fhandle,fubenId,rechargeId,rechargeType,rechargeCount)
+	--print("-------CommonFubenJiesuanConfig.msgAnalyzeAndDoOne")
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+	--print(string.format("--- %d  %d  %d",rechargeId,rechargeType,rechargeCount))
+	if rechargeType == 1 then			-- 角色属性
+		-- 加到实际的列表中
+		local hasItem = 0
+		for i=1,#fbVar.realarray do
+			if fbVar.realarray[i][1] == rechargeId then
+				fbVar.realarray[i][2] = fbVar.realarray[i][2] + rechargeCount
+				hasItem = 1
+			end
+		end
+		if hasItem == 0 then
+			local num = #fbVar.realarray + 1
+			fbVar.realarray[num] = {}
+			fbVar.realarray[num][1] = rechargeId
+			fbVar.realarray[num][2] = rechargeCount
+		end
+	elseif rechargeType == 2 then		-- 物品
+		local itemList = CommonFubenJiesuanConfig[fubenId].itemList
+		if itemList == nil then
+			return
+		end
+		local itemConf = itemList[rechargeId]
+		if itemConf == nil then
+			return
+		end
+
+		local hasItem = 0 
+
+		for i=1,#fbVar.itemDetails do
+			if fbVar.itemDetails[i][1] == itemConf.id then
+				fbVar.itemDetails[i][2] = fbVar.itemDetails[i][2] + itemConf.count
+				hasItem = 1
+			end
+		end
+
+		if hasItem == 0 then	
+			local num = #fbVar.itemDetails + 1
+			fbVar.itemDetails[num] = {}
+			fbVar.itemDetails[num][1] = itemConf.id
+			fbVar.itemDetails[num][2] = itemConf.count
+			--print("---------item:  "..itemConf.id..","..itemConf.count)
+		end
+	end
+end
+
+--发送数据
+CommonFubenJiesuanConfig.sendFubenOverData = function(sysarg)
+	-- 发送数据
+	--print("-----send data start")
+	--print("---------------------------------------")
+	--print("---------------------------------------")
+	local Fhandle = LActor.getFubenHandle(sysarg)
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+    local npack = DataPack.allocPacket(sysarg, 20, 14)				-- 结算数据包
+    if npack == nil then
+    	print("pack error")
+    	return
+    end
+
+    DataPack.writeInt(npack, fbVar.index)				--抽到哪个宝箱	
+    --print("index: "..fbVar.index)
+    DataPack.writeInt(npack, fbVar.boxcount)			--宝箱数量	
+    --print("boxcount: "..fbVar.boxcount)
+
+    -- 宝箱物品列表
+    for i=1,fbVar.boxcount do
+    	DataPack.writeInt(npack, fbVar.boxarray[i][1])
+    	DataPack.writeInt(npack, fbVar.boxarray[i][2])
+    	--print(string.format("%d %d %d",i,fbVar.boxarray[i][1],fbVar.boxarray[i][2]))
+    end
+
+    DataPack.writeInt(npack, fbVar.grade)				--评分等级
+    --print("grad:  "..fbVar.grade)
+    DataPack.writeInt(npack, fbVar.fubenId)				--副本ID
+    --print("fubenid:  "..fbVar.fubenId)
+    DataPack.writeInt(npack, fbVar.costtime)			--使用时间
+    --print("costtime:  "..fbVar.costtime)
+    DataPack.writeInt(npack, fbVar.realcount)			--实际
+    --print("realcount:  "..fbVar.realcount)
+    for i=1,fbVar.realcount do
+    	DataPack.writeInt(npack, fbVar.realarray[i][1])
+    	DataPack.writeInt(npack, fbVar.realarray[i][2])
+    	--print(string.format("%d %d %d",i,fbVar.realarray[i][1],fbVar.realarray[i][2]))
+    end
+    DataPack.writeInt(npack, fbVar.extracount)			--评级
+    --print("extracount:  "..fbVar.extracount)
+    for i=1,fbVar.extracount do
+    	DataPack.writeInt(npack, fbVar.extraarray[i][1])
+    	DataPack.writeInt(npack, fbVar.extraarray[i][2])
+    	--print(string.format("%d %d %d",i,fbVar.extraarray[i][1],fbVar.extraarray[i][2]))
+    end
+    DataPack.writeInt(npack, fbVar.medicount)			--药物
+    --print("medicount:  "..fbVar.medicount)
+    for i=1,fbVar.medicount do
+    	DataPack.writeInt(npack, fbVar.mediarray[i][1])
+    	DataPack.writeInt(npack, fbVar.mediarray[i][2])
+    	--print(string.format("%d %d %d",i,fbVar.mediarray[i][1],fbVar.mediarray[i][2]))
+    end
+   
+	DataPack.writeInt(npack, fbVar.earnBoxCount)		--获得物品个数
+	--print("earnBoxCount:  "..fbVar.earnBoxCount)
+    local id,count
+    for i=1,#fbVar.itemDetails do
+    	DataPack.writeInt(npack, fbVar.itemDetails[i][1])
+    	DataPack.writeInt(npack, fbVar.itemDetails[i][2])
+    	--print(string.format("%d %d %d",i,fbVar.itemDetails[i][1],fbVar.itemDetails[i][2]))
+    end
+
+    DataPack.flush(npack) -- 刷新数据	
+	--print("---------------------------------------")
+	--print("---------------------------------------")
+    --print("-----send data over")
+end
+
+--副本结算
+CommonFubenJiesuanConfig.onFubenOver = function(sysarg,Fhandle)
+--(20,11)
+	-- 检查是不是需要结算的副本
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fubenId = Fuben.getFubenIdbyFuBenPtr(fbPtr)
+	if CommonFubenJiesuanConfig[fubenId] == nil then
+		return	-- 如果不是，直接返回
+	end
+
+	--print(string.format("--3---fhandle:  %d",Fhandle))
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+
+	-- 判断玩家是不是在副本里面
+	local onFhandle = LActor.getFubenHandle(sysarg)
+	if onFhandle ~= Fhandle then
+		--print(string.format("handle not equal  (%d   %d)",Fhandle,onFhandle))
+		return 
+	end
+	-- 判断是不是在结算
+	if fbVar.inJieSuan == nil and  fbVar.inJieSuan == 1 then		-- 正在结算或者不是结算的副本 不进行处理
+		--print("----- exit fuben")
+		--LActor.exitFuben(sysarg) 	-- 二次结算，直接退出副本，否则等待客户端退出，或者副本时间到了退出
+		return 
+	end
+	fbVar.inJieSuan = 1  
+	-- 检查是否符合副本最小结算时间限制
+	local nowtime = System.getCurrMiniTime()
+	if fbVar.fbstarttime == nil then
+		fbVar.fbstarttime = 0
+	end
+	fbVar.costtime = nowtime - fbVar.fbstarttime
+	fbVar.fubenId = fubenId
+	if fbVar.hasTongGuan == 0 and CommonFubenJiesuanConfig[fubenId].limitTime ~= nil and fbVar.costtime < CommonFubenJiesuanConfig[fubenId].limitTime then
+		LActor.exitFuben(sysarg)
+		return -- 直接返回
+	end
+
+	-- 设置层数，标识已通关
+	local sId = LActor.getSceneId(sysarg)
+	if sId ~= nil then
+		CommonFubenJiesuanConfig.setFubenFloor(sysarg,Fhandle,sId)
+	end
+
+	--print("-----------------jiesuan start")
+	-- 整个的处理时间设置为35秒
+	Fuben.SetFubenTime(Fhandle, CommonFubenJiesuanConfig.jieSuanTime)
+	fbVar.inJiesuan = nil		-- 为了超时直接退出
+
+	-- 获取宝箱数据
+	CommonFubenJiesuanConfig.getPrize(sysarg,fubenId)
+	-- 分析整理数据
+	CommonFubenJiesuanConfig.msgAnalyzeAndDo(sysarg,Fhandle,fubenId)
+	
+	-- 清除怪物处理
+	local sceneid = LActor.getSceneId(sysarg)
+    local hscene = Fuben.getSceneHandleById(sceneid,Fhandle)
+    Fuben.clearMonster(hscene,0)	-- 清楚全部的怪物
+
+	-- 发送结算数据
+	CommonFubenJiesuanConfig.sendFubenOverData(sysarg)
+    --print("-----------------jiesuan end")
+end
+
+-- 随机函数
+CommonFubenJiesuanConfig.getRandomNumber = function(probability)
+	local r = System.getRandomNumber(CommonFubenJiesuanConfig.randRange)/CommonFubenJiesuanConfig.randRange
+	if probability > r then
+		return 1
+	end
+
+	return 0
+end
+
+-- 增加到消息队列
+CommonFubenJiesuanConfig.MsgToQueue = function(sysarg,msgId,msgType,msgCount)
+	--print("$$$$ "..msgId..","..msgType..","..msgCount)
+
+	local Fhandle = LActor.getFubenHandle(sysarg)
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+
+	local num  = #fbVar.msgQueue + 1
+	fbVar.msgQueue[num] = {}
+	fbVar.msgQueue[num][1] = msgId
+	fbVar.msgQueue[num][2] = msgType
+	fbVar.msgQueue[num][3] = msgCount
+
+
+	-- local npack = DataPack.allocPacket(sysarg, 20, 13)						-- 统计数据包
+	-- DataPack.writeChar(npack,msgType)										-- 类型
+	-- DataPack.writeInt(npack,msgId)											-- ID
+	-- DataPack.writeInt(npack,msgCount)										-- 数量
+	-- DataPack.flush(npack)		-- 发送数据	
+
+	--print(string.format("====(%d,%d,%d)",msgType,msgId,msgCount))
+end
+
+-- 怪物被杀死
+CommonFubenJiesuanConfig.OnKillMonster = function(Fhandle,fubenId,sysarg,monsterid)
+	if true then--屏蔽
+		return
+	end	
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+
+	if fbVar.msgQueue == nil then
+		fbVar.msgQueue = {}
+	end
+
+	-- 配置
+	local monsterList = CommonFubenJiesuanConfig[fubenId].monsterList
+	if monsterList == nil then return end
+	if monsterList[monsterid] == nil then return end
+
+	-- 随机一个数值
+	for i=1,#monsterList[monsterid] do
+		local probability = monsterList[monsterid][i][4]
+		if 1==CommonFubenJiesuanConfig.getRandomNumber(probability) then
+			-- 先将结果插入到itemDetails中
+			--table.insert(fbVar.msgQueue,monsterList[monsterid][i])
+			local num = #fbVar.msgQueue + 1
+			fbVar.msgQueue[num] = {}
+			fbVar.msgQueue[num][1] = monsterList[monsterid][i][1]
+			fbVar.msgQueue[num][2] = monsterList[monsterid][i][2]
+			fbVar.msgQueue[num][3] = monsterList[monsterid][i][3]
+			-- 然后把结果发到客户端
+			--print("------monsterid:  "..monsterid)
+			--local npack = DataPack.allocPacket(sysarg, 20, 13)						-- 统计数据包
+			--DataPack.writeChar(npack,monsterList[monsterid][i][2])					-- 类型
+			--DataPack.writeInt(npack,monsterList[monsterid][i][1])					-- ID
+			--DataPack.writeInt(npack,monsterList[monsterid][i][3])					-- 数量
+
+			--DataPack.flush(npack)		-- 发送数据	
+			-- 结算面板改变
+			if monsterList[monsterid][i][1] == 12 then		-- 历练						
+				LActor.SendAndChangeCaleValue(sysarg, 11, monsterList[monsterid][i][3], true)
+			elseif monsterList[monsterid][i][1] == 11 then	-- 经验
+				LActor.SendAndChangeCaleValue(sysarg, caleSceneExp, monsterList[monsterid][i][3], true)
+				LActor.SendAndChangeCaleValue(sysarg, caleExp, monsterList[monsterid][i][3], true)
+			end
+
+			
+			--print(string.format("(20,13) -- %d  %d  %d",monsterList[monsterid][i][2],monsterList[monsterid][i][1],monsterList[monsterid][i][3]))
+		end 	
+	end 
+end
+
+-- 所有怪物杀死，要进行层数的设定和结算
+CommonFubenJiesuanConfig.OnMonsterAllDie = function(fubenId,sceneId,monster)
+	if nil == CommonFubenJiesuanConfig[fubenId] then
+		return
+	end	
+	
+	local players = LuaHelp.getSceneActorList(monster)
+	if players == nil or #players < 1 then return end
+	local sysarg = players[1]
+	if sysarg == nil then return end
+
+	local pfb = LActor.getFubenPrt(sysarg)
+	if pfb == nil then return end
+	local fbVar = Fuben.getDyanmicVar(pfb)
+
+	-- 最后一层进行结算
+	for i=1,#CommonFubenJiesuanConfig[fubenId].sceneJieSuan do
+		if CommonFubenJiesuanConfig[fubenId].sceneJieSuan[i] == sceneId then
+			local onFhandle = LActor.getFubenHandle(sysarg)
+			fbVar.hasTongGuan = 1		-- 已经通关
+			CommonFubenJiesuanConfig.onFubenOver(sysarg,onFhandle)	-- 结算
+			break		-- 通关结算也只需处理一次
+		end
+	end
+
+	-- 设置层数
+	for i=1,#CommonFubenJiesuanConfig[fubenId].sceneId do
+		if CommonFubenJiesuanConfig[fubenId].sceneId[i] == sceneId then
+			fbVar.floor = i -- 设置层数
+			-- 增加到下一层的传送阵
+			if fbVar.hasTongGuan ~= 1 then
+				if CommonFubenJiesuanConfig[fubenId].toNextTeleport ~= nil then
+					local teleportConf = CommonFubenJiesuanConfig[fubenId].toNextTeleport[i]
+					if teleportConf ~= nil then
+						LActor.createTranster(monster, teleportConf.modelid, teleportConf.posx, teleportConf.posy, 
+							teleportConf.toPosx, teleportConf.toPosy, teleportConf.toSceneid, teleportConf.name, teleportConf.comfirm)
+						--print(string.format("!!!!!!!!(%d,%s)",teleportConf.toSceneid,teleportConf.name))
+					end
+				end
+			end
+			
+			break		-- 一次只处理一层
+		end
+	end
+	-- 委托的处理
+	local fbid = CommonFubenJiesuanConfig[fubenId].fubenId[1]	-- 始终都是64
+	EntrustFunc.SetFubenValue(sysarg,fbid,fbVar.floor)
+end
+
+-- 进入场景时检查是否能够进入场景
+CommonFubenJiesuanConfig.OnEnTerFuben = function(sysarg,inIndex,fubenId)
+	-- 检查是否当前入口是否能够进入
+	local var = LActor.getStaticVar(sysarg)
+	if CommonFubenJiesuanConfig[fubenId] == nil then
+		print("1111 fubenId:  "..fubenId)
+		return 0
+	end
+
+	if CommonFubenJiesuanConfig[fubenId].sceneId == nil then
+		print("2222 fubenId:  "..fubenId)
+		return 0
+	end
+
+	local fbId = CommonFubenJiesuanConfig[fubenId].fubenId[1]
+
+	if var.tgData == nil then
+		var.tgData = {}
+	end
+
+	if var.tgData[fbId] == nil then
+		var.tgData[fbId] = 0
+	end
+
+	local hasTongGuan = 0
+	for i=1,inIndex do
+		if System.bitOPMask(var.tgData[fbId], i-1) then
+			hasTongGuan = hasTongGuan + 1
+		end
+	end
+	if hasTongGuan >= inIndex -1 then
+		--print("-------has tongguan")
+		return 1
+	end
+	--print("--------333333")
+	return 0
+end
+
+-- 设置副本层数
+CommonFubenJiesuanConfig.setFubenFloor = function(sysarg,fHandle,sId)
+	local fbPtr = Fuben.getFubenPtr( fHandle )
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+	local fbid = LActor.getFubenId(sysarg)
+
+
+	-- 通关数据
+	local rs = CommonFubenJiesuanConfig.setTongGuanData(sysarg,fbid,sId)
+	if rs ~= 1 then  -- 如果结算的时候没有通关，则不设置层数
+		return 
+	end
+
+	-- 层数设置
+	local index = 0
+	if CommonFubenJiesuanConfig[fbid] ~= nil then
+		for i=1,#CommonFubenJiesuanConfig[fbid].sceneId do
+			if CommonFubenJiesuanConfig[fbid].sceneId[i] == sId then
+				index = i
+				break
+			end
+		end
+	end
+	local fubenId = CommonFubenJiesuanConfig[fbid].fubenId[1]	
+	EntrustFunc.SetFubenValue(sysarg,fubenId,fbVar.floor)
+	--print(string.format("floor:   %d",fbVar.floor))
+end
+
+-- 结算的时候设置通关数据
+-- hScene 场景handle
+CommonFubenJiesuanConfig.setTongGuanData = function(sysarg,fubenId,sId)
+	if CommonFubenJiesuanConfig[fubenId] == nil then
+		return 0
+	end
+
+	local fbId = CommonFubenJiesuanConfig[fubenId].fubenId[1]
+
+	if CommonFubenJiesuanConfig[fbId] == nil then
+		return 0 --- 什么都不处理
+	end
+	local var = LActor.getStaticVar(sysarg)
+	local index = 0
+
+	for i=1 ,#CommonFubenJiesuanConfig[fbId].sceneJieSuan do
+		if CommonFubenJiesuanConfig[fbId].sceneJieSuan[i] == sId then
+			index = i
+		end
+	end
+	if index == 0 then
+		return 0 -- 如果没有,直接返回 
+	end
+
+	local hScene = LActor.getSceneHandle(sysarg)
+	if hScene == nil then
+		return 0
+	end
+	-- 所有怪物杀死的处理
+	if Fuben.isKillAllMonster(hScene) then
+		if var.tgData == nil then
+			var.tgData = {}
+		end
+		if var.tgData[fbId] == nil then
+			var.tgData[fbId] = 0
+		end
+
+		var.tgData[fbId] = System.bitOpSetMask(var.tgData[fbId], index-1,true)
+		--print(string.format("fubenId: %d  index: %d  tgData: %d",fbId,index-1,var.tgData[fbId]))
+	end
+
+	CommonFubenJiesuanConfig.getTongGuanData(sysarg,fbId)
+
+	return 1
+end
+
+-- 获取通关数据
+CommonFubenJiesuanConfig.getTongGuanData = function(sysarg,fubenId)
+	local tgData = 0
+	local var = LActor.getStaticVar(sysarg)
+	if var.tgData ~= nil and var.tgData[fubenId] ~= nil then
+		tgData = var.tgData[fubenId]
+	end
+
+	--print("====================================")
+	--print(string.format("tgData::::  %d",tgData))
+	--print("====================================")
+	return tgData  -- 通关数据，按位标记
+end
+
+-- 安装结算处理
+CommonFubenJiesuanConfig.install = function(Fhandle)
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+
+	fbVar.index = 0				-- 抽到的宝箱
+
+	fbVar.boxcount = 0			-- 宝箱数量
+	fbVar.boxarray = {}			-- 宝箱列表
+
+	fbVar.grade = 0				-- 评级
+	fbVar.fubenId = 0			-- 副本ID
+	fbVar.costtime = 0			-- 使用时间
+
+	fbVar.realcount = 0			-- 实际数量
+	fbVar.realarray = {}		-- 实际列表
+	fbVar.extracount = 0		-- 评级数量
+	fbVar.extraarray = {}		-- 评级列表
+	fbVar.medicount = 0			-- 药物数量
+	fbVar.mediarray = {}		-- 药物列表
+	fbVar.earnBoxCount = 0		-- 物品个数
+	fbVar.itemDetails = {}		-- 物品奖励
+	
+	fbVar.fbstarttime = System.getCurrMiniTime()
+
+	fbVar.msgQueue = {}			-- 消息队列
+	fbVar.floor = 0				-- 楼层
+	fbVar.hasTongGuan = 0		-- 通关标志	
+	fbVar.inJieSuan = 0			-- 结算标志
+end
+
+-- 卸载结算处理
+CommonFubenJiesuanConfig.uninstall = function(Fhandle)
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+	ffbVar.index = nil			-- 抽到的宝箱
+
+	fbVar.boxcount = nil		-- 宝箱数量
+	fbVar.boxarray = nil		-- 宝箱列表
+
+	fbVar.grade = nil			-- 评级
+	fbVar.fubenId = nil			-- 副本ID
+	fbVar.costtime = nil		-- 使用时间
+
+	fbVar.realcount = nil		-- 实际数量
+	fbVar.realarray = nil		-- 实际列表
+	fbVar.extracount = nil		-- 评级数量
+	fbVar.extraarray = nil		-- 评级列表
+	fbVar.medicount = nil		-- 药物数量
+	fbVar.mediarray = nil		-- 药物列表
+	fbVar.earnBoxCount = nil	-- 物品个数
+	fbVar.itemDetails = nil		-- 物品奖励
+	
+	fbVar.fbstarttime = nil
+
+	fbVar.msgQueue = nil		-- 消息队列
+	fbVar.floor = nil			-- 楼层
+	fbVar.hasTongGuan = nil		-- 通关标志	
+	fbVar.inJieSuan = nil		-- 结算标志
+end
+

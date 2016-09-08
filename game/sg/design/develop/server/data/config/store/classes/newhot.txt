@@ -1,0 +1,110 @@
+﻿{
+    name = Lang.Store.c00001, --分类名称
+    --该分类中的商品表
+    showAreaId =0,  --显示的区域ID,0表示商城普通区，1表示商城限量抢购区，2表示背包0元抢购区，3表示背包1元抢购区，4表示背包热销商品区
+    labelId =1,  --0表示是普通的商城，1表示背包限时抢购，2表示0元抢购,3表示1元抢购
+    totalBuyLimit =0,    --表示大类的数目的限制个数,0表示无限制，1表示限制一个
+    desc = Lang.Store.desc0001,   --分类的刷新描述
+
+
+items = 
+{
+{
+	id = 1001,
+	item = 26304,
+	quality = 0,
+	strong = 0,
+	singleBuyLimit = 1,
+	price = 
+	{
+		{ spid = "*", type = 3, price = 888, bind = false, oldPrice = 998 }, 
+	},
+},
+
+{
+	id = 1002,
+	item = 26303,
+	quality = 0,
+	strong = 0,
+	singleBuyLimit = 1,
+	price = 
+	{
+		{ spid = "*", type = 3, price = 118, bind = false, oldPrice = 128 }, 
+	},
+},
+
+{
+	id = 1003,
+	item = 26112,
+	quality = 0,
+	strong = 0,
+	singleBuyLimit = 5,
+	price = 
+	{
+		{ spid = "*", type = 3, price = 18, bind = false, oldPrice = 20 }, 
+	},
+},
+
+{
+	id = 1004,
+	item = 26152,
+	quality = 0,
+	strong = 0,
+	singleBuyLimit = 5,
+	price = 
+	{
+		{ spid = "*", type = 3, price = 18, bind = false, oldPrice = 20 }, 
+	},
+},
+
+{
+	id = 1005,
+	item = 26103,
+	quality = 0,
+	strong = 0,
+	singleBuyLimit = 2,
+	price = 
+	{
+		{ spid = "*", type = 3, price = 45, bind = false, oldPrice = 50 }, 
+	},
+},
+
+{
+	id = 1006,
+	item = 30104,
+	quality = 0,
+	strong = 0,
+	singleBuyLimit = 2,
+	price = 
+	{
+		{ spid = "*", type = 3, price = 480, bind = false, oldPrice = 500 }, 
+	},
+},
+
+{
+	id = 1007,
+	item = 26121,
+	quality = 0,
+	strong = 0,
+	singleBuyLimit = 5,
+	price = 
+	{
+		{ spid = "*", type = 3, price = 20, bind = false, oldPrice = 25 }, 
+	},
+},
+
+{
+	id = 1008,
+	item = 26131,
+	quality = 0,
+	strong = 0,
+	singleBuyLimit = 3,
+	price = 
+	{
+		{ spid = "*", type = 3, price = 200, bind = false, oldPrice = 250 }, 
+	},
+},
+
+
+},
+},

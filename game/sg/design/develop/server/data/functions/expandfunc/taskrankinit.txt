@@ -1,0 +1,39 @@
+﻿--lua script
+--活动 排行榜名单初始化
+
+--#include "data\config\TasksConfig.inc" once --活动开启状态设置
+--#include "data\functions\ExpandFunc\TaskCommonFunc.txt"	once	--活动通用函数
+
+function TaskRanking_Init(npcobj)
+	--判断活动是否开启
+  if TasksConfig ~= nil and TasksConfig.HolyFlameDefend == true then 	--圣火保卫战
+		local tbColumn = {Lang.TaskTalk.t00590,Lang.TaskTalk.t00591}	--排行榜列标题表
+		RankingInit(HolyFlameRankName, HolyFlameRankFile, tbColumn, 1000, 0)
+	end
+end
+
+function TaskRanking_Fina(npcobj)
+	--判断活动是否开启
+  if TasksConfig ~= nil and TasksConfig.HolyFlameDefend == true then	--圣火保卫战
+		RankingFina(HolyFlameRankName, HolyFlameRankFile)
+	end
+  
+end
+
+table.insert(InitFnTable,TaskRanking_Init)
+table.insert(FinaFnTable,TaskRanking_Fina)
+
+--[[
+	--排行榜初始化函数
+	--sRankName:排行榜的名称
+	--sRankFile:排行榜保存文件
+	--tbColumn:排行榜列 表 tbColumn = {column0, column1, column2, ...}
+	--nMax:发给客户端最多的行数
+	--boDisplay:是否在客户端显示，默认是0，不显示，1显示
+	function RankingInit(sRankName, sRankFile, tbColumn, nMax, boDisplay)
+	
+	--排行榜销毁函数
+	--sRankName:排行榜的名称
+	--sRankFile:排行榜保存文件
+	function RankingFina(sRankName, sRankFile)
+--]]

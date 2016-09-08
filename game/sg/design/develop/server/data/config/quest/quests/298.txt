@@ -1,0 +1,61 @@
+﻿{
+	quickFinish = false,
+	comp = {
+		type = 1,
+		scene = Lang.SceneName.s6,
+		npc = Lang.EntityName.n618,
+	},
+	nextacceptqid = 299,
+	timelimit = 0,
+	conds = {
+		{
+			id = 0,
+			type = 0,
+			count = 69,
+		},
+	},
+	target = {
+		{
+			id = 618,
+			type = 2,
+			count = 1,
+			location = {
+				y = 0,
+				x = 0,
+				sceneid = 6,
+				entityName = Lang.EntityName.n618,
+				protectMonId = 69,
+				hideFastTransfer = false,
+			},
+		},
+	},
+	autofinish = false,
+	excludetree = true,
+	type = 0,
+	awards = {
+		{
+			id = 0,
+			type = 1,
+			count = 8000,
+		},
+		{
+			id = 0,
+			type = 4,
+			count = 337650,
+		},
+	},
+	finishNext = true,
+	commitjuqingkey = "none",
+	playType = {
+		9,
+	},
+	timeoutcleardata = false,
+	maxcount = 1,
+	acceptjuqingkey = "none",
+	name = Lang.Quest.n298,
+	parentid = 297,
+	cangiveup = false,
+	id = 298,
+	content = Lang.Quest.d298,
+	interval = 0,
+},

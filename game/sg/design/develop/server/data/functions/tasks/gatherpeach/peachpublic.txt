@@ -1,0 +1,10 @@
+﻿
+
+-- 发送增加采集蟠桃次数需要的天珠
+function SendAddPeachCountYB(sysarg, count, yb)
+	local npack = DataPack.allocPacket(sysarg,139,62)
+	if npack == nil then return end
+	DataPack.writeInt(npack,count)
+	DataPack.writeInt(npack,yb)
+	DataPack.flush(npack)
+end

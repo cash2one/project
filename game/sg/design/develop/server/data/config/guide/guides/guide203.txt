@@ -1,0 +1,44 @@
+﻿{
+  maxLevel = 40,
+  
+  --接受任务后引导自动寻路打怪，自动寻路提交任务
+  trigger = 
+  { 
+    type = 1,
+    value = 31,
+  },
+
+  --引导中锁定的窗口ID
+  lockUI = 
+  {
+  },
+
+  --引导的步骤 
+  steps = 
+  {
+
+	--第1步 引导点击速传
+    {
+      cond = { type = 1, helpId = 53, data = 0 },
+
+      action = { type = 5, helpId = 31, data = Lang.GuideLang.npc20, desc = Lang.GuideLang.desc102, showType = 1 },
+
+      hideCond = { type = 2, helpId = 53, data = 0 },
+    },
+
+    {
+      cond = { type = 30, helpId = 0, data = 31 },
+
+      action = { type = 5, helpId = 31, data = Lang.GuideLang.npc19, desc = Lang.GuideLang.desc130, showType = 1 },
+	  
+	  hideCond = { type = 2, helpId = 53, data = 0 },
+    },
+
+	--第2步 引导结束
+    {
+      cond = { type = 17, helpId = 0, data = 31 },
+
+      action = { type = 0, helpId = 0, data = 0, desc = "" },
+    },
+  } 
+}

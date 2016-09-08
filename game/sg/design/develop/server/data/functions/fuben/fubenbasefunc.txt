@@ -1,0 +1,227 @@
+
+fubenbase = {}
+
+fubenbase.OnEnterCopy = {}
+fubenbase.OnEnterCheck = {} --进入副本的额外判断
+
+--进入副本初始化副本数据
+fubenbase.Init = function ( sysarg , nFubenId , nSceneId)
+	-- body
+	debug_print("-------------Init---------------",nFubenId,nSceneId)
+	local Fhandle = LActor.getFubenHandle(sysarg)
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+
+	fbVar.fubenid = nFubenId
+	fbVar.fubenSceneId = nSceneId
+	fbVar.fbAwardList = {}
+	fbVar.nStart = 0
+	fbVar.IsTongguan = 0
+	fbVar.MonsterWave = 1
+	fbVar.EnteryCopytime = System.getCurrMiniTime()
+
+	players = LuaHelp.getTeamMemberList(sysarg)   --获取队伍玩家列表
+            if players == nil then
+                        --LActor.sendTipmsg(sysarg,Lang.ScriptTips.f00010,ttDialog)
+              	local nActorId = LActor.getActorId(sysarg)
+        		fbVar.fbAwardList[nActorId] = {}
+        		local nActorVar = LActor.getStaticVar(sysarg)
+            	if nActorVar.fuben_exp == nil then
+            		nActorVar.fuben_exp = 0
+            	end
+            	nActorVar.fuben_exp = LActor.getIntProperty(sysarg,PROP_ACTOR_EXP)
+                        nActorVar.fuben_coin = LActor.getMoneyCount(sysarg, mtBindCoin)
+                        nActorVar.fuben_hp = LActor.getIntProperty( sysarg , PROP_HP)
+                        nActorVar.fuben_mp = LActor.getIntProperty( sysarg , PROP_MP)
+                        debug_print("-----------初始化副本-------",nActorVar.fuben_exp,nActorVar.fuben_coin,nActorVar.fuben_hp)
+             	return 
+            end
+
+
+            for i= 1 ,#players do
+            	local nActorId = LActor.getActorId(players[i])
+            	fbVar.fbAwardList[nActorId] = {}
+            	local nActorVar = LActor.getStaticVar(players[i])
+            	if nActorVar.fuben_exp == nil then
+            		nActorVar.fuben_exp = 0
+            	end
+            	if nActorVar.fuben_coin == nil then
+            		nActorVar.fuben_coin = 0
+            	end
+            	nActorVar.fuben_exp = LActor.getIntProperty(players[i],PROP_ACTOR_EXP)
+            	nActorVar.fuben_coin = LActor.getMoneyCount(sysarg, mtBindCoin)
+                        nActorVar.fuben_hp = LActor.getIntProperty( sysarg , PROP_HP)
+                        nActorVar.fuben_mp = LActor.getIntProperty( sysarg , PROP_MP)
+            end
+end
+
+--退出副本清空数据
+fubenbase.clearfubenDyamicData = function ( fbptr )
+	if fbptr == nil then
+		return
+	end 
+	local fbVar = Fuben.getDyanmicVar(fbptr)
+	fbVar.fubenid = nil
+	fbVar.fubenSceneId = nil
+	fbVar.fbAwardList = nil
+	fbVar.fbDropAwardList = nil
+	fbVar.nStart = nil
+	fbVar.IsTongguan = nil
+end
+
+fubenbase.registerEnterFuben = function(msgid, proc)
+    if fubenbase.OnEnterCopy[msgid] then
+        return false
+    else
+        fubenbase.OnEnterCopy[msgid] = proc
+        return true
+    end
+end
+
+--注册进入副本的额外判断
+fubenbase.registerCheckEnterFuben = function(fbid, proc)
+    if fubenbase.OnEnterCheck[fbid] then
+        print("has register this fubenid       "..fbid)
+        return false
+    else
+        fubenbase.OnEnterCheck[fbid] = proc
+        return true
+    end
+end
+
+fubenbase.IsCanRelive = function ( actorobj )
+    -- body
+    if actorobj == nil then
+        return
+    end
+
+    local nFubenid = LActor.getFubenId( actorobj )
+    if nFubenid > 0 then
+        local nFubenData = FuBen[nFubenid]
+        if nFubenData ~= nil and nFubenData.canRelive ~= nil and  nFubenData.canRelive == 0 then
+            --在某些特定的副本中不能复活
+            return false
+        end
+    end 
+    return true
+end
+
+fubenbase.ExitFubenRestore = function ( actorobj )
+    -- body
+    debug_print("---------退出副本 恢复雪兰---------")
+    local nVar = LActor.getStaticVar( actorobj )
+    if nVar.fuben_hp == nil then
+        debug_print("-----------血为空。。。。------------")
+        nVar.fuben_hp = 1
+    end
+    if nVar.fuben_mp == nil then
+        nVar.fuben_mp = 1
+    end
+    LActor.setIntProperty( actorobj , PROP_HP , nVar.fuben_hp)
+    LActor.setIntProperty( actorobj , PROP_MP, nVar.fuben_mp)
+    nVar.fuben_hp = nil
+    local nFubenid = LActor.getFubenId( actorobj )
+    local nfbdata = FuBen[nFubenid]
+    if nfbdata == nil then
+        return
+    end
+    LActor.partnerOnActorRelive( actorobj )
+    BiFunc.LogExitCopy( actorobj , nFubenid , nfbdata.fbname )
+end
+
+fubenbase.OnFubenActorDie = function ( actorobj )
+    local nFubenid = LActor.getFubenId( actorobj )
+    local nFubenHandle = LActor.getFubenHandle(actorobj)
+    if nFubenid <= 0 or not nFubenHandle then
+        return
+    end
+    local nfbdata =  FuBen[nFubenid]
+    if nfbdata == nil then
+        return
+    end
+    if nfbdata.dailycopy ~= 1 then
+        return
+    end
+    -- 这个副本另外处理 
+    if nfbdata.fbid == longmaizhenbaoconfig.fubenId[1] then
+        return
+    end
+
+    if nfbdata.maxPlayCount > 1 then
+        fubenbase.OnMulPlayeCopy(actorobj , nfbdata)
+        return
+    end
+    fubenjiesuan.GameOver(actorobj)
+
+    Fuben.SetFubenTime(nFubenHandle, 15)
+end
+
+fubenbase.OnMulPlayeCopy = function ( sysarg , nfbdata)
+    local nteamid = LActor.getTeamId( sysarg )
+    if nteamid > 0 then
+        local teamptr = TeamFun.getTeam( nteamid )
+        if teamptr ~= nil then
+           -- if 
+           local fptr = LActor.getFubenPrt( sysarg )
+           local fbActorList = LuaHelp.getFbActorList( fptr )
+           if fbActorList == nil then
+                print("多人副本中 玩家死亡时候 获取副本玩家数量为空 fubenid = "..tostring(nfbdata.fbid))
+                return
+           end
+           local isAllDie = true
+           for i = 1 , #fbActorList do
+                if LActor.ActorIsDie(fbActorList[i]) == true then
+                    isAllDie = false
+                end
+           end
+            if isAllDie == true then
+                if nfbdata.fbid == wujinmicangconfig.fubenId[1] or nfbdata.fbid == ShouhuXuanNvConfig.fubenId[1] then
+                    local fbVar = Fuben.getDyanmicVar(fptr)
+                    fbVar.IsTongguan = 1
+                end 
+                Fuben.setStopMonsterRunOne(sysarg)
+                fubenjiesuan.OnMonsterAllDie(sceneId, scenePtr, 1, sysarg)
+                Fuben.SetFubenTime(Fuben.getFubenHandle(fptr), 15)
+            end
+        end
+    else
+        if nfbdata.fbid == wujinmicangconfig.fubenId[1] or nfbdata.fbid == ShouhuXuanNvConfig.fubenId[1] then
+            local fubenptr = LActor.getFubenPrt( sysarg )
+            local fbVar = Fuben.getDyanmicVar(fubenptr)
+            fbVar.IsTongguan = 1
+        end 
+        
+        local sceneId = LActor.getSceneId( sysarg )
+        local scenePtr = LActor.getScenePtr( sysarg )
+        Fuben.setStopMonsterRunOne(sysarg)
+        fubenjiesuan.OnMonsterAllDie(sceneId, scenePtr, 1, sysarg)
+        Fuben.SetFubenTime(Fuben.getFubenHandle(fptr), 15)
+    end
+end
+
+
+fubenbase.OnFubenLogin = function ( sysarg )
+    -- body
+    local nFubenId = LActor.getFubenId( sysarg)
+    if nFubenId == 0 then
+        return
+    end
+    local fbData = FuBen[nFubenId]
+    if fbData == nil then
+        return
+    end
+    if fbData.dailycopy ~= 1 then
+        return
+    end
+    local hFbHandle = LActor.getFubenHandle( sysarg )
+    local IsAccount = Fuben.getFBAccout( hFbHandle )
+    if IsAccount == false then
+        return
+    end
+    -- 退出到原有的场景
+    LActor.exitFuben( sysarg )
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, fubenbase.OnFubenLogin)
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeOnActorDeath, fubenbase.OnFubenActorDie)

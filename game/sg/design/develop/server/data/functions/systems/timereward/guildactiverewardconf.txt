@@ -1,0 +1,99 @@
+--军团开服活动配置表
+LocalDT.GuildActivityRewardCfg = {
+	CanRewardLevel = {			--可以奖励的军团等级
+		[2] = 
+		{
+			MemberRewardItem = 
+			{ 	--普通成员奖励物品
+				item = 
+				{
+					{id = 28260, count = 1, quality=0, strong=0, bind = 1},     --物品id， 
+
+ 
+				},
+				money = 					
+				{					
+					
+							
+				},
+			},
+
+			LeaderRewardItem = 
+			{ 	----宗主奖励物品
+				item = 
+				{
+					{id = 28261, count = 1, quality=0, strong=0, bind = 1},     --物品id， 
+					
+				},
+				money = 					
+				{					
+				 --钱币类型、数量、 
+							
+				},
+			},
+		},
+	[3] = 
+		{
+			MemberRewardItem = 
+			{ 	--普通成员奖励物品
+				item = 
+				{
+					{id = 28262, count = 1, quality=0, strong=0, bind = 1},     --物品id， 
+
+		
+					
+				},
+				money = 					
+				{					
+							
+				},
+			},
+
+			LeaderRewardItem = 
+			{ 	----宗主奖励物品
+				item = 
+				{
+					{id = 28263, count = 1, quality=0, strong=0, bind = 1},     --物品id， 
+					
+					 
+				},
+				money = 					
+				{					
+					 --钱币类型、数量、 
+							
+				},
+			},
+		},
+	[4] = 
+		{
+			MemberRewardItem = 
+			{ 	--普通成员奖励物品
+				item = 
+				{
+					{id = 28264, count = 1, quality=0, strong=0, bind = 1},     --物品id， 
+					
+					 
+				},
+				money = 					
+				{					
+		
+				},
+			},
+
+			LeaderRewardItem =
+			{ 	----宗主奖励物品
+				item = 
+				{
+					{id = 28265, count = 1, quality=0, strong=0, bind = 1},     --物品id， 
+				
+					
+				},
+				money = 					
+				{					
+					 --钱币类型、数量、 
+						
+				},
+			},
+		},
+	}
+}

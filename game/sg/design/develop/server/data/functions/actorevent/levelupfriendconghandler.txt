@@ -1,0 +1,48 @@
+--lua script
+
+--#include "data\config\item\OnActorLevelUp\LevelUpExpConfig.txt"
+
+function EventCallDispatcher.sendCongratulation(sysarg, arg)
+	-- friendPtr是被祝贺的人
+	local friendPtr = arg[1]
+	if (friendPtr == nil) then
+	 	return 
+	end
+
+	local level = arg[2]
+
+	local addexp = LevelUp[level]
+	if addexp == nil then 
+		return 
+	end
+	local send_count = arg[3]
+	local acc_count = arg[4]
+	if send_count > 40 then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.x0024, ttScreenCenter)
+		return
+	end
+
+	if acc_count > 120 then return end
+
+ 	local name = LActor.getName(sysarg)
+	local Conlmsg = string.format(Lang.ScriptTips.x00023, name, addexp)
+	LActor.sendTipmsg(friendPtr, Conlmsg, ttScreenCenter)
+
+	local allmsg = string.format(Lang.ScriptTips.x00024, addexp)
+	LActor.sendTipmsg(sysarg, allmsg, ttScreenCenter)
+
+	LActor.addExp(friendPtr, addexp, 671, 0)
+	LActor.addExp(sysarg, addexp, 671, 0)
+end
+
+EventCallDispatcher.handlerLevelUpFriendCong = function (sysarg, arg)
+	local level = arg[1]
+	if LevelUp[level] == nil then return end
+
+	LActor.sendFriendLevelCongra(sysarg, LevelUp[level], 120, 40)
+end
+--[[
+--取消
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeLevel, EventCallDispatcher.handlerLevelUpFriendCong)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeSendFriendCongra, EventCallDispatcher.sendCongratulation)
+--]]

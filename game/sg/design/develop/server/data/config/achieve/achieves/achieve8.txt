@@ -1,0 +1,19 @@
+﻿{
+	groupId = 8,   --成就的分组ID
+	groupname = Lang.AchieveName.groupName0008,
+    id = 8,
+	broadcast = false,        --是否进行全服播报。true为全服可见,false为自己可见。
+	name = Lang.AchieveName.name0008,  --成就名字
+	
+	conds = 
+	{ 
+		{ eventId = 0, count = 500 },
+	},
+		
+	awards=
+	{
+		{ type = 11, id = 0, count = 20 },
+		{ type = 11, id = 0, count = 20 },
+		{ type = 11, id = 0, count = 20 },
+	},
+},

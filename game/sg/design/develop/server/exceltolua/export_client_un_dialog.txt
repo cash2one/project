@@ -1,0 +1,189 @@
+local UnDialogFuncs = {}
+UnDialogFuncs.TalkModel = nil
+
+-- 裁切函数 sep裁切依据
+function UnDialogFuncs.Split(str, sep)
+    local sep, fields = sep or "\t", {}
+    local pattern = string.format("([^%s]+)", sep)
+    str:gsub(pattern, function(c)
+        if tonumber(c) ~= nil then
+            c = tonumber(c)
+        end
+        fields[#fields + 1] = c
+    end)
+    return fields
+end
+
+function UnDialogFuncs.splitUnfinishTalkContent(content, qid)
+    qid = tonumber(qid) or 0
+    forwhat = forwhat or "解析未完成任务对白"
+    local talkTables = {}
+    if not content or type(content) ~= "string" then
+        return nil
+    end
+    local rowStr = UnDialogFuncs.Split(content, ";")
+    if #rowStr == 0 then
+        return nil
+    end
+    for k, v in ipairs(rowStr) do
+        local talks = UnDialogFuncs.Split(v, ":")
+        if #talks == 2 then
+            local choseT = UnDialogFuncs.Split(talks[2], "|")
+            if #choseT >= 1 and #choseT <= 2 then
+                local chose = 0
+                if #choseT == 2 then
+                    chose = tonumber(choseT[2]) or 0
+                    if chose > 1 or chose < 0 then
+                        print(string.format("= WARNNING => 警告 任务编号[%d]执行[%s]中对应<未完成对白>中解析第[%d]句对白时出现<非法讨债选项参数[%d]>", qid, forwhat, k, chose))
+                    end
+                end
+                local npcid = tonumber(talks[1]) or 0
+                if npcid > 0 then
+                    local t = UnDialogFuncs.TalkModel[npcid]
+                    if t ~= nil then
+                        if talkTables[npcid] == nil then
+                            talkTables[npcid] = {}
+                        end
+                        local tab = {}
+                        tab.face = t.face
+                        tab.name = t.name
+                        tab.dir = t.dir
+                        if chose > 0 then
+                            tab.talk = choseT[1]
+                            tab.chose = true
+                        else
+                            tab.talk = talks[2]
+                        end
+                        table.insert(talkTables[npcid], tab)
+                    else
+                        print(string.format("= WARNNING => 警告 任务编号[%d]执行[%s]中对应<未完成对白>中无此NPCID[%d]", qid, forwhat, npcid))
+                    end
+                else
+                    print(string.format("= ERROR => 警告 任务编号[%d]执行[%s]中对应<未完成对白>中解析第[%d]句对白时出现非法NPCID", qid, forwhat, k))
+                end
+            else
+                print(string.format("= ERROR => [%s] -> 无效的冒号[|]解析 任务编号[%d] 第[%d]句异常", forwhat, qid, k))
+            end
+        else
+            print(string.format("= ERROR => [%s] -> 无效的冒号[:]解析 任务编号[%d] 第[%d]句异常", forwhat, qid, k))
+        end
+    end
+    return talkTables
+end
+
+-- =====================================================================
+
+-- npcID
+function UnDialogFuncs.readTalkModel(objexcel)
+    local TalkModel = {}
+    if not objexcel then
+        return TalkModel
+    end
+
+    local cCount = objexcel:GetCurrentSheetColCount()
+    local rCount = objexcel:GetCurrentSheetRowCount()
+
+    for i = 2, rCount do
+        local id = tonumber(objexcel:ReadCellAsString(i, 1))
+        if id ~= nil and id > 0 then
+            local npcid = tonumber(objexcel:ReadCellAsString(i, 2)) or 0
+            if npcid > 0 then
+                if TalkModel[npcid] ~= nil then
+                    print(string.format("= WARNNING => 警告 配置文件<npcID>第%d行出现重名NPCID", i))
+                else
+                    local name = objexcel:ReadCellAsString(i, 3)
+                    local face = tonumber(objexcel:ReadCellAsString(i, 4)) or 0
+                    local dir = tonumber(objexcel:ReadCellAsString(i, 5)) or 1
+                    TalkModel[npcid] = {}
+                    TalkModel[npcid].npcid = npcid
+                    TalkModel[npcid].name = name
+                    TalkModel[npcid].face = face
+                    TalkModel[npcid].dir = dir
+                end
+            else
+                print(string.format("= WARNNING => 警告 配置文件<npcID>第%d行出现无效NPCID=0", i))
+            end
+        else
+            print(string.format("= WARNNING => 警告 配置文件<npcID>第%d行出现空编号", i))
+        end
+    end
+    return TalkModel
+end
+
+-- 未完成对白
+function UnDialogFuncs.readUnfinishDialog(objexcel)
+    local unfinished_task_dialog = {}
+    if not objexcel then
+        return unfinished_task_dialog
+    end
+
+    local cCount = objexcel:GetCurrentSheetColCount()
+    local rCount = objexcel:GetCurrentSheetRowCount()
+
+    for i = 2, rCount do
+        local qid = tonumber(objexcel:ReadCellAsString(i, 1))
+        if qid ~= nil and qid > 0 then
+            if unfinished_task_dialog[qid] == nil then
+                local content = objexcel:ReadCellAsString(i, 2)
+                unfinished_task_dialog[qid] = UnDialogFuncs.splitUnfinishTalkContent(content, qid)
+            else
+                print(string.format("= WARNNING => 警告 配置文件<未完成对白>第%d行出现重复任务id配置", i))
+            end
+        else
+            print(string.format("= WARNNING => 警告 配置文件<未完成对白>第%d行出现空任务id", i))
+        end
+    end
+    return unfinished_task_dialog
+end
+
+function ReadClientUnDialog()
+    local unfinished_task_dialog = {}
+
+    local objexcel = CExcelReader:new()
+    if not objexcel then
+        print("objexcel is null")
+        return
+    end
+
+    objexcel:Init_App()
+    objexcel:OpenRead()
+
+    print("=============>>>>>> npcID配置开始读取...")
+
+    local obj = objexcel:LoadSheetByIndex(2)
+    if not obj then
+        print("LoadSheetByIndex失败!")
+        objexcel:Close()
+        objexcel:Quit_App()
+        return
+    end
+    UnDialogFuncs.TalkModel = UnDialogFuncs.readTalkModel(objexcel)
+
+    print("=============>>>>>> npcID配置完成读取...\n")
+
+    print("=============>>>>>> 未完成对白配置开始读取...\n")
+
+    local obj = objexcel:LoadSheetByIndex(1)
+    if not obj then
+        print("LoadSheetByIndex失败!")
+        objexcel:Close()
+        objexcel:Quit_App()
+        return
+    end
+    unfinished_task_dialog = UnDialogFuncs.readUnfinishDialog(objexcel)
+
+    print("=============>>>>>> 未完成对白配置完成读取...\n")
+
+    print("=============>>>>>> 未完成对白配置开始写入...")
+
+    local str = string.format("unfinished_task_dialog = \n%s", dump(unfinished_task_dialog, true))
+    objexcel:WriteFileWithUTF8("unfinished_task_dialog.lua", str)
+
+    print("=============>>>>>> 未完成对白配置完成写入...\n")
+
+    print("============>>> 导出未完成对白成功")
+
+    objexcel:Close()
+    objexcel:Quit_App()
+    objexcel:delete()
+end

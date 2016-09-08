@@ -1,0 +1,41 @@
+{
+    
+    aiType=2, --ai类型,1表示被动ai,2表示主动ai, 3表示护送怪, 4表示乱跑怪,5表示中立怪，6表示NPC，7表示伙伴AI,8竞技场怪,9巡游怪
+    
+    --怪物的技能列表，分别表示技能的ID和等级
+    skills=
+    {
+       --id表示技能id,level表示技能等级,autoCD 表示是否自动进入技能CD。如果配置为true，该技能会在进入战斗之后马上进入CD。
+       -- 主要用于避免高级技能在一开始就使用出来。
+       --event 表示在什么事件下释放，默认是0可以不配置,1表示死亡的时候触发,
+       -- cd：正常的cd时间
+       -- firstDelay: 第一次使用延迟的时间，以上两个时间单位都是毫秒
+       -- 另外，配在前面的表示优先级比后面的高，所以注意下配置的顺序
+      {id=600,level=1,interval=760}, 
+
+    },
+    
+    patrolRadius =0, --运动半径,将在这个半径里动来动去。对于逃跑怪，用这个设置每次逃跑的运动半径
+    
+    pursuitDistance=200, --追击范围，与目标的距离超过这个距离就回归
+
+    watchDistance =400,  --可视范围，主动怪进入这个返回就将攻击,被动怪可以不配置
+    
+    leftHomeMaxDistance =200, --离开巢位的最大的距离，一旦离开出生点超过这个距离就回归
+ 
+    returnHomeRenewRate =100,  --怪物回归的时候，将按什么比例恢复自己的HP,MP,这里填百分数，100就是100%,0就是0%
+   
+    stopMinTime =1,      --怪物停留的最小时间，单位是秒，怪物计算停留时间的时候是在 stopMinTime和stopMaxTime随机选一个
+
+    stopMaxTime =2,      --怪物停留的最大时间，单位是秒
+
+    checkenemyInterval=2000, -- 主动怪战斗中检测敌人间隔时间, 最低2秒，不需太频繁
+
+    priorityHatred = true, -- 是否仇恨值优先，检测时间为checkenemyInterval
+
+    optionals={},       --针对一些特殊的ai使用key,value的格式配置,到时候扩展
+    neverReturn = true,    -- 从不回归, 不配就为false，即回归
+    priorityDist = false,   -- 是否攻击最近的目标，默认是false（不配置），只有个别特殊需求才需要配置这个为true，以免对性能有影响
+    selfSkill = true,   -- 是否使用怪物自身的技能，默认是false(不配置)，false时使用ai配置的技能
+    attackCD = 1, -- CD时间(秒)，点将台伙伴配置，其它可以不配置
+},

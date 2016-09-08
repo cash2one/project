@@ -1,0 +1,157 @@
+-- 大乱斗（尤乌战场）
+--#include "..\..\language\LangCode.txt" once
+daluandouconfig = {
+	fbid = 14,
+	sceneid = 94,
+	level = 31,
+	enterlimittime = 60,
+
+	killScore = 5, -- 击杀得分
+	deathScore = 1, --被击杀得分
+	zhuGongScore = 2, -- 助攻玩家获得的积分
+
+	-- buff点
+	buff = {
+		[1] = {cd = 120, pos = {15,18}},
+		[2] = {cd = 120, pos = {108,15}},
+		[3] = {cd = 120, pos = {61,32}},
+		[4] = {cd = 120, pos = {14,67}},
+		[5] = {cd = 120, pos = {105,69}},
+	},
+
+	-- 随机生成在buff点上的buff
+	bufflist = {
+	    {
+			list = {
+				{type=43,id=80,rate=0,value=10000,interval=20,vt=0,buffRate=10000, name="恢复"},
+			},
+			modelId = 1,
+	    },
+	    {
+		    list = {
+		    	{type=16,id=80,rate=0,value=-2308,interval=20,vt=1,buffRate=10000, name="加速"},
+		    },
+		    modelId = 2,
+		},
+		{
+		    list = {
+		    	{type=28,id=80,rate=0,value=2000,interval=20,vt=1,buffRate=10000, name="嗜血"},
+		    },
+		    modelId = 3,
+		},
+		{
+		    list = {
+		    	{type=24,id=80,rate=0,value=5000,interval=20,vt=1,buffRate=10000, name="护甲"},
+				{type=34,id=80,rate=0,value=5000,interval=20,vt=1,buffRate=10000, name="护甲"},
+			},
+			modelId = 4,
+		},
+	},
+
+	-- 排名奖励
+	rank_award = 
+	{
+		{
+rank = { 1,1 } , 
+item = { 
+{type = 2, id = 0, count = 200000,  bind = 0},--铜币
+{type = 1, id = 26181, count = 80,  bind = 0},--将魂命珠
+{type = 1, id = 26183, count = 50,  bind = 0},--武将真元
+ }, 
+ }, 
+{
+rank = { 2,2 } , 
+item = { 
+{type = 2, id = 0, count = 150000,  bind = 0},--铜币
+{type = 1, id = 26181, count = 70,  bind = 0},--将魂命珠
+{type = 1, id = 26183, count = 45,  bind = 0},--武将真元
+ }, 
+ }, 
+{
+rank = { 3,3 } , 
+item = { 
+{type = 2, id = 0, count = 130000,  bind = 0},--铜币
+{type = 1, id = 26181, count = 60,  bind = 0},--将魂命珠
+{type = 1, id = 26183, count = 40,  bind = 0},--武将真元
+ }, 
+ }, 
+{
+rank = { 4,5 } , 
+item = { 
+{type = 2, id = 0, count = 120000,  bind = 0},--铜币
+{type = 1, id = 26181, count = 50,  bind = 0},--将魂命珠
+{type = 1, id = 26183, count = 35,  bind = 0},--武将真元
+ }, 
+ }, 
+{
+rank = { 6,10 } , 
+item = { 
+{type = 2, id = 0, count = 110000,  bind = 0},--铜币
+{type = 1, id = 26181, count = 45,  bind = 0},--将魂命珠
+{type = 1, id = 26183, count = 30,  bind = 0},--武将真元
+ }, 
+ }, 
+{
+rank = { 11,20 } , 
+item = { 
+{type = 2, id = 0, count = 100000,  bind = 0},--铜币
+{type = 1, id = 26181, count = 40,  bind = 0},--将魂命珠
+{type = 1, id = 26183, count = 25,  bind = 0},--武将真元
+ }, 
+ }, 
+{
+rank = { 21,30 } , 
+item = { 
+{type = 2, id = 0, count = 90000,  bind = 0},--铜币
+{type = 1, id = 26181, count = 35,  bind = 0},--将魂命珠
+{type = 1, id = 26183, count = 20,  bind = 0},--武将真元
+ }, 
+ }, 
+{
+rank = { 31,50 } , 
+item = { 
+{type = 2, id = 0, count = 80000,  bind = 0},--铜币
+{type = 1, id = 26181, count = 30,  bind = 0},--将魂命珠
+{type = 1, id = 26183, count = 15,  bind = 0},--武将真元
+ }, 
+ }, 
+{
+rank = { 51,100 } , 
+item = { 
+{type = 2, id = 0, count = 70000,  bind = 0},--铜币
+{type = 1, id = 26181, count = 25,  bind = 0},--将魂命珠
+{type = 1, id = 26183, count = 12,  bind = 0},--武将真元
+ }, 
+ }, 
+{
+rank = { 101,150 } , 
+item = { 
+{type = 2, id = 0, count = 70000,  bind = 0},--铜币
+{type = 1, id = 26181, count = 25,  bind = 0},--将魂命珠
+{type = 1, id = 26183, count = 10,  bind = 0},--武将真元
+ }, 
+ }, 
+{
+rank = { 151,200 } , 
+item = { 
+{type = 2, id = 0, count = 70000,  bind = 0},--铜币
+{type = 1, id = 26181, count = 20,  bind = 0},--将魂命珠
+{type = 1, id = 26183, count = 8,  bind = 0},--武将真元
+ }, 
+ }, 
+{
+rank = { 201,10000 } , 
+item = { 
+{type = 2, id = 0, count = 70000,  bind = 0},--铜币
+{type = 1, id = 26181, count = 20,  bind = 0},--将魂命珠
+{type = 1, id = 26183, count = 6,  bind = 0},--武将真元
+ }, 
+ }, 
+
+				
+
+	},
+
+	-- 积分低于多少没有奖励
+	lowest = 10,
+}

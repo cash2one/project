@@ -1,0 +1,527 @@
+--x元夺宝活动
+--#include "data\functions\systems\timereward\activityconf.txt" once
+
+DuobaoActivity = {}
+
+function DuobaoActivity.getActorVar(actor, id)
+	if not actor or not id then return end
+	local var = LActor.getStaticVar(actor)
+	if not var then return end
+
+	if not var.duobaoActivity then var.duobaoActivity = {} end
+	if not var.duobaoActivity[id] then var.duobaoActivity[id] = {} end
+
+	return var.duobaoActivity[id]
+end
+
+function DuobaoActivity.getSystemVar(id)
+	local sysVar = System.getStaticVar()
+	if not sysVar then return end
+
+	if not sysVar.duobaoActivity then sysVar.duobaoActivity = {} end
+	if not sysVar.duobaoActivity[id] then sysVar.duobaoActivity[id] = {} end
+	return sysVar.duobaoActivity[id]
+end
+
+function DuobaoActivity.getDuobaoConfig(id)
+	if not activityConf[id] then
+		print("error duobaoActivity sendInfo id        "..id)
+		print(type(id))
+		return
+	end
+	if not activityConf[id].activities[40] or not activityConf[id].activities[40].id then return end
+	local config = activityConf[id].activities[40]
+
+	local state,starttime,endtime = ONLINEREWARD.GetActivityState(id)
+	if state == 0 then
+		print("duobao not open  "..id)
+		return
+	end
+
+	return config
+end
+
+function DuobaoActivity.sendInfo(actor, id)
+	local config = DuobaoActivity.getDuobaoConfig(id)
+	if not config then return end
+
+	local sysVar = DuobaoActivity.getSystemVar(id)
+	if not sysVar or not sysVar.duobaoItemIdx then return end
+	if not sysVar.items or not sysVar.items[sysVar.duobaoItemIdx] or not config.items[sysVar.items[sysVar.duobaoItemIdx]] then return end
+
+	local duobaoItemIdx = sysVar.items[sysVar.duobaoItemIdx]
+	if actor then
+		local pack = DataPack.allocPacket(actor, BaseTypes.SystemId.timeRewardSystem, 144)
+		if pack == nil then return end
+
+		DataPack.writeInt(pack, id)
+		DataPack.writeInt(pack, duobaoItemIdx)
+		DataPack.writeByte(pack, sysVar.state)
+
+		local remainTime = sysVar.endtime - System.getCurrMiniTime()
+		if remainTime < 0 then remainTime = 0 end
+
+		DataPack.writeInt(pack, remainTime)
+
+		if sysVar.state == 1 then
+			if sysVar.actorCount then
+				DataPack.writeInt(pack, sysVar.actorCount)
+				for i = 1, sysVar.actorCount do
+					if not sysVar.actorList[i] then return end
+					DataPack.writeString(pack, sysVar.actorList[i].name)
+				end
+			else
+				DataPack.writeInt(pack, 0)
+			end
+		else
+			if sysVar.duobaoResult and sysVar.duobaoResult.actorid then
+				DataPack.writeInt(pack, 1)
+				DataPack.writeString(pack, sysVar.duobaoResult.name)
+				DataPack.writeInt(pack, sysVar.duobaoResult.level)
+				DataPack.writeByte(pack, sysVar.duobaoResult.job)
+				DataPack.writeByte(pack, sysVar.duobaoResult.sex)
+			else
+				DataPack.writeByte(pack, 0)
+			end
+		end
+
+		DataPack.flush(pack)
+	else
+		local pack = LDataPack.allocPacket()
+		if pack == nil then return end
+
+		LDataPack.writeByte(pack, BaseTypes.SystemId.timeRewardSystem)
+		LDataPack.writeByte(pack, 144)
+
+		LDataPack.writeInt(pack, id)
+		LDataPack.writeInt(pack, duobaoItemIdx)
+		LDataPack.writeByte(pack, sysVar.state)
+
+		local remainTime = sysVar.endtime - System.getCurrMiniTime()
+		if remainTime < 0 then remainTime = 0 end
+
+		LDataPack.writeInt(pack, remainTime)
+
+		if sysVar.state == 1 then
+			if sysVar.actorCount then
+				LDataPack.writeInt(pack, sysVar.actorCount)
+				for i = 1, sysVar.actorCount do
+					if not sysVar.actorList[i] then return end
+					LDataPack.writeString(pack, sysVar.actorList[i].name)
+				end
+			else
+				LDataPack.writeInt(pack, 0)
+			end
+		else
+			if sysVar.duobaoResult and sysVar.duobaoResult.actorid then
+				LDataPack.writeInt(pack, 1)
+				LDataPack.writeString(pack, sysVar.duobaoResult.name)
+				LDataPack.writeInt(pack, sysVar.duobaoResult.level)
+				LDataPack.writeByte(pack, sysVar.duobaoResult.job)
+				LDataPack.writeByte(pack, sysVar.duobaoResult.sex)
+			else
+				LDataPack.writeInt(pack, 0)
+			end
+		end
+
+		System.broadcastData(pack)
+	end
+end
+
+function DuobaoActivity.sendActorInfo(actor, id)
+	local var = DuobaoActivity.getActorVar(actor, id)
+	if not var then return end
+
+	local sysVar = DuobaoActivity.getSystemVar(id)
+	if not sysVar or not sysVar.duobaoItemIdx then return end
+
+	if not var.hasBuyItem then var.hasBuyItem = 0 end
+
+	local now = System.getCurrMiniTime()
+	if not var.activityTime or var.activityTime ~= sysVar.activityTime then
+		var.activityTime = sysVar.activityTime
+		var.hasBuyItem = 0
+	end
+
+	local pack = DataPack.allocPacket(actor, BaseTypes.SystemId.timeRewardSystem, 145)
+	if pack == nil then return end
+
+	DataPack.writeInt(pack, id)
+	DataPack.writeByte(pack, var.hasBuyItem)
+
+	DataPack.flush(pack)
+end
+
+--随机今天抢夺的物品idx
+function DuobaoActivity.randDuobaoItem(id)
+	if not activityConf[id] or not activityConf[id].activities[40] or not activityConf[id].activities[40].id then return end
+
+	local config = activityConf[id].activities[40]
+	local sysVar = DuobaoActivity.getSystemVar(id)
+	if not sysVar then return end
+
+	local today = System.getToday()
+	if sysVar.today and sysVar.today == today then return end
+
+	sysVar.duobaoItemIdx = 1
+	sysVar.today = today
+	sysVar.items = {}
+	local items = {}
+	for i = 1, #config.items do
+		table.insert(items, i)
+	end
+
+	for i = 1, config.maxItemCount do
+		local rand = System.getRandomNumber(#items)+1
+		sysVar.items[i] = items[rand]
+		table.remove(items, rand)
+	end
+end
+
+--开始抢夺物品
+function duobaoNextItem(entity, id)
+	id = tonumber(id)
+	local config = DuobaoActivity.getDuobaoConfig(id)
+	if not config then return end
+
+	local sysVar = DuobaoActivity.getSystemVar(id)
+	if not sysVar then return end
+
+	local now = System.getCurrMiniTime()
+	sysVar.duobaoItemIdx = (sysVar.duobaoItemIdx or 0) + 1
+	sysVar.actorCount = 0
+	sysVar.actorList = {}
+	sysVar.duobaoResult = nil
+	
+	-- local tmp = math.ceil((now-sysVar.endtime)/config.everyTime)
+	sysVar.endtime = sysVar.endtime + config.everyItemTime
+	sysVar.state = 1 	--正在抢夺物品
+	sysVar.activityTime = now 	--当前物品的抢夺开始时间
+
+	local npc = System.getGlobalNpc()
+	LActor.unregScriptCallback(npc, "duobaoNextItem")
+	LActor.unregScriptCallback(npc, "readyDuobaoNextItem")
+	LActor.regScriptCallback(npc, nil, (sysVar.endtime-now)*1000, 0, 1, "readyDuobaoNextItem", id)
+
+	DuobaoActivity.sendInfo(nil, id)
+
+	local actors = LuaHelp.getAllActorList()
+	if not actors then return end
+	for _, actor in pairs(actors) do
+		DuobaoActivity.sendActorInfo(actor, id)
+	end
+end
+
+--准备下一个物品
+function readyDuobaoNextItem(entity, id)
+	id = tonumber(id)
+	local config = DuobaoActivity.getDuobaoConfig(id)
+	if not config then return end
+
+	local sysVar = DuobaoActivity.getSystemVar(id)
+	if not sysVar or not sysVar.duobaoItemIdx then return end
+
+	DuobaoActivity.randomActor(id)
+
+	local npc = System.getGlobalNpc()
+	LActor.unregScriptCallback(npc, "duobaoNextItem")
+	LActor.unregScriptCallback(npc, "readyDuobaoNextItem")
+
+	local now = System.getCurrMiniTime()
+	-- local tmp = math.ceil((now-sysVar.endtime)/config.everyTime)
+	sysVar.endtime = sysVar.endtime + config.nextItemTime
+	sysVar.state = 2 	--准备下一个物品
+	LActor.regScriptCallback(npc, nil, (sysVar.endtime-now)*1000, 0, 1, "duobaoNextItem", id)
+
+	DuobaoActivity.randDuobaoItem(id)
+	DuobaoActivity.sendInfo(nil, id)
+end
+
+--随机给玩家物品
+function DuobaoActivity.randomActor(id)
+	local config = DuobaoActivity.getDuobaoConfig(id)
+	if not config then return end
+
+	local sysVar = DuobaoActivity.getSystemVar(id)
+	if not sysVar or not sysVar.duobaoItemIdx then return end
+	if not sysVar.items or not sysVar.items[sysVar.duobaoItemIdx] or not config.items[sysVar.items[sysVar.duobaoItemIdx]] then return end
+
+	if sysVar.actorCount ~= 0 then
+		local itemConfig = config.items[sysVar.items[sysVar.duobaoItemIdx]]
+		--随机给玩家 物品
+		if sysVar.actorList and sysVar.actorCount then
+			local itemName = Item.getColorName(itemConfig.itemid)
+			local rand = System.getRandomNumber(sysVar.actorCount) + 1
+			if not sysVar.actorList[rand] or not sysVar.actorList[rand].actorid then
+				print("duobao data error")
+				for i = 1, sysVar.actorCount do
+					if not sysVar.actorList[i] then
+						print("which data, idx =      "..i)
+					end
+				end
+				print("-----------------")
+			else
+				local context = string.format(Lang.ScriptTips.duobao001, Item.getColorName(itemConfig.itemid))
+				System.sendGmMailOffLine(sysVar.actorList[rand].actorid, context, 1, itemConfig.itemid, 1, 0, Lang.ScriptTips.duobao002)
+
+				local tips1 = string.format(Lang.ScriptTips.duobao003, sysVar.actorList[rand].name, itemName)
+				System.broadcastTipmsg(tips1, ttGmTip)
+				local tips2 = string.format(Lang.ScriptTips.duobao007, sysVar.actorList[rand].name, itemName)
+				System.broadcastTipmsg(tips2, ttChatWindow)
+
+				sysVar.duobaoResult = {}
+				sysVar.duobaoResult.actorid = sysVar.actorList[rand].actorid
+				sysVar.duobaoResult.level = sysVar.actorList[rand].level
+				sysVar.duobaoResult.name = sysVar.actorList[rand].name
+				sysVar.duobaoResult.job = sysVar.actorList[rand].job
+				sysVar.duobaoResult.sex = sysVar.actorList[rand].sex
+
+				System.logCounter(sysVar.actorList[rand].actorid, "", tostring(sysVar.actorList[rand].level), "duobaoActivity", tonumber(sysVar.duobaoItemIdx), "duobaoResult", "", "", sysVar.actorList[rand].name)
+
+			end
+
+			local context = string.format(Lang.ScriptTips.duobao004, itemName, sysVar.actorList[rand].name)
+			for i = 1, sysVar.actorCount do
+				if i ~= rand then
+					System.sendGmMailOffLine(sysVar.actorList[i].actorid, context, 0, 0, 0, 0, Lang.ScriptTips.duobao002)
+				end
+			end
+		end
+	end
+end
+
+--抢夺物品
+function DuobaoActivity.duobao(actor, id)
+	local config = DuobaoActivity.getDuobaoConfig(id)
+	if not config then return end
+
+	local sysVar = DuobaoActivity.getSystemVar(id)
+	if not sysVar or not sysVar.duobaoItemIdx then return end
+	if not sysVar.items or not sysVar.items[sysVar.duobaoItemIdx] or not config.items[sysVar.items[sysVar.duobaoItemIdx]] then return end
+
+	local itemConfig = config.items[sysVar.items[sysVar.duobaoItemIdx]]
+	local var = DuobaoActivity.getActorVar(actor, id)
+	if not var then return end
+
+	if not var.activityTime or var.activityTime ~= sysVar.activityTime then
+		var.activityTime = sysVar.activityTime
+		var.hasBuyItem = 0
+	end
+
+	if var.hasBuyItem and var.hasBuyItem == 1 then
+		LActor.sendTipmsg(actor, Lang.ScriptTips.duobao005, ttMessage)
+		return
+	end
+
+	local hasMoney = LActor.getMoneyCount(actor, itemConfig.moneyType)
+	if hasMoney < itemConfig.price then
+		LActor.SendGeneralTips(actor, 1, itemConfig.moneyType, hasMoney-itemConfig.price)
+		return
+	end
+
+	LActor.changeMoney(actor, itemConfig.moneyType, -itemConfig.price, 1, true, "duobaoActivity")
+
+	var.hasBuyItem = 1
+	DuobaoActivity.sendActorInfo(actor, id)
+
+	System.logCounter(LActor.getActorId(actor), LActor.getAccountName(actor), tostring(LActor.getLevel(actor)), "duobaoActivity", tonumber(itemConfig.itemid), "", "", "", LActor.getName(actor))
+
+	--记录系统
+	if not sysVar.actorList then sysVar.actorList = {} end
+	if not sysVar.actorCount then sysVar.actorCount = 0 end
+
+	sysVar.actorCount = sysVar.actorCount + 1
+	sysVar.actorList[sysVar.actorCount] = {}
+	sysVar.actorList[sysVar.actorCount].actorid = LActor.getActorId(actor)
+	sysVar.actorList[sysVar.actorCount].name = LActor.getName(actor)
+	sysVar.actorList[sysVar.actorCount].level = LActor.getLevel(actor)
+	sysVar.actorList[sysVar.actorCount].job = LActor.getIntProperty(actor, PROP_VOCATION)
+	sysVar.actorList[sysVar.actorCount].sex = LActor.getIntProperty(actor, PROP_SEX)
+
+	DuobaoActivity.sendInfo(nil, id)
+end
+
+function DuobaoActivity.onLogin(actor)
+	for _, conf in pairs(ActivityControl) do
+		if ONLINEREWARD.GetActivityState(conf.id) ~= 0 then
+			if activityConf[conf.id] and activityConf[conf.id].activities[40] and activityConf[conf.id].activities[40].id then
+				DuobaoActivity.sendActorInfo(actor, conf.id)
+				DuobaoActivity.sendInfo(actor, conf.id)
+				return
+			end
+		end
+	end
+end
+
+--零点开启活动时触发
+function DuobaoNewActivity()
+	local now = System.getCurrMiniTime()
+	for _, conf in pairs(ActivityControl) do
+		if activityConf[conf.id] and activityConf[conf.id].activities[40] and activityConf[conf.id].activities[40].id then
+			local state, starttime, endtime = ONLINEREWARD.GetActivityState(conf.id)
+			if state ~= 0 and starttime > now-60 and starttime < now+60 then
+				--新开启的活动
+				local sysVar = DuobaoActivity.getSystemVar(conf.id)
+				if not sysVar then return end
+
+				DuobaoActivity.randDuobaoItem(conf.id)
+				sysVar.duobaoItemIdx = 1 	--当前抢夺第几个物品
+				sysVar.actorCount = 0 		--参与抢夺的玩家个数
+				sysVar.actorList = {}		--参与抢夺物品的玩家
+				sysVar.duobaoResult = {} 	--夺宝的结果
+				sysVar.state = 1		--状态，1正在抢夺，2倒计时下一个
+				sysVar.endtime = System.getToday() + activityConf[conf.id].activities[40].everyItemTime 	--结束时间
+				sysVar.activityTime = now 	--当前物品的抢夺开始时间
+
+				local npc = System.getGlobalNpc()
+				LActor.unregScriptCallback(npc, "duobaoNextItem")
+				LActor.unregScriptCallback(npc, "readyDuobaoNextItem")
+				LActor.regScriptCallback(npc, nil, (sysVar.endtime-now)*1000, 0, 1, "readyDuobaoNextItem", conf.id)
+
+				DuobaoActivity.sendInfo(nil, conf.id)
+				break
+			end
+		end
+	end
+end
+
+--开启夺宝活动
+function DuobaoActivity.onServerStart()
+	local now = System.getCurrMiniTime()
+	local today = System.getToday()
+	local npc = System.getGlobalNpc()
+
+	for _, conf in pairs(ActivityControl) do
+		if activityConf[conf.id] and activityConf[conf.id].activities[40] and activityConf[conf.id].activities[40].id then
+			local state, starttime, endtime = ONLINEREWARD.GetActivityState(conf.id)
+			if state ~= 0 then
+				local sysVar = DuobaoActivity.getSystemVar(conf.id)
+				if not sysVar then return end
+
+				local oneConfig = activityConf[conf.id].activities[40]
+				if not sysVar.duobaoItemIdx then
+					--还没有初始化这个活动
+					local everyTime = oneConfig.everyItemTime + oneConfig.nextItemTime
+
+					local Itemendtime = today
+					for i = 0, oneConfig.maxItemCount do 	--最多循环查找1天的时间
+						Itemendtime = Itemendtime + everyTime
+						if now < Itemendtime then break end
+					end
+					if not Itemendtime then return end
+
+					DuobaoActivity.randDuobaoItem(conf.id)
+					sysVar.duobaoItemIdx = 1 	--当前抢夺第几个物品
+					sysVar.actorCount = 0 		--参与抢夺的玩家个数
+					sysVar.actorList = {}		--参与抢夺物品的玩家
+					sysVar.duobaoResult = {} 	--夺宝的结果
+					sysVar.state = 2		--状态，1正在抢夺，2倒计时下一个
+					sysVar.endtime = Itemendtime 	--结束时间
+
+					LActor.unregScriptCallback(npc, "duobaoNextItem")
+					LActor.regScriptCallback(npc, nil, (Itemendtime-now)*1000, 0, 1, "duobaoNextItem", conf.id)
+					break
+				else
+					--已初始化活动，开服后再处理下定时器
+					if now >= sysVar.endtime then
+						if sysVar.state == 1 then
+							DuobaoActivity.randomActor(conf.id)
+						end
+						sysVar.duobaoItemIdx = (sysVar.duobaoItemIdx or 0) + 1
+						sysVar.actorCount = 0
+						sysVar.actorList = {}
+						sysVar.duobaoResult = nil
+						sysVar.activityTime = now 	--当前物品的抢夺开始时间
+						DuobaoActivity.randDuobaoItem(conf.id)
+						local Itemendtime = today
+						for i = 0, oneConfig.maxItemCount do 	--最多循环查找1天的时间
+							Itemendtime = Itemendtime + oneConfig.everyItemTime
+							if now < Itemendtime then
+								sysVar.state = 1
+								sysVar.endtime = Itemendtime
+							
+								LActor.regScriptCallback(npc, nil, (sysVar.endtime-now)*1000, 0, 1, "readyDuobaoNextItem", conf.id)
+								return
+							end
+							Itemendtime = Itemendtime + oneConfig.nextItemTime
+							if now < Itemendtime then
+								sysVar.state = 2
+								sysVar.endtime = Itemendtime
+
+								LActor.regScriptCallback(npc, nil, (sysVar.endtime-now)*1000, 0, 1, "duobaoNextItem", conf.id)
+								return
+							end
+						end
+
+						print("查找时间错误            "..Itemendtime)
+					else
+						if sysVar.state == 1 then
+							LActor.regScriptCallback(npc, nil, (sysVar.endtime-now)*1000, 0, 1, "readyDuobaoNextItem", conf.id)
+						elseif sysVar.state == 2 then
+							LActor.regScriptCallback(npc, nil, (sysVar.endtime-now)*1000, 0, 1, "duobaoNextItem", conf.id)
+						end
+					end
+				end
+			end
+		end
+	end
+end
+
+GameStartEventList.registerEvent(DuobaoActivity.onServerStart)
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, DuobaoActivity.onLogin)
+
+function DuobaoActivity.check(actor, args)
+	local tmp1 = tonumber(args[1])
+	if tmp1 == 1 then
+		DuobaoActivity.onLogin(actor)
+	elseif tmp1 == 2 then
+		DuobaoActivity.duobao(actor, 1)
+	elseif tmp1 == 3 then
+		BeginDuobaoActivity(nil, tonumber(args[2]))
+	elseif tmp1 == 4 then
+		Fuben.clearAllMonster(LActor.getSceneHandle(actor))
+	elseif tmp1 == 5 then
+		DuobaoActivity.onServerStart()
+	elseif tmp1 == 6 then
+		if args[2] == nil or args[3] == nil then return end
+
+		local otherActor = LActor.getActorByName(args[2])
+		if not otherActor then return end
+
+		LActor.GiveUpQuest(otherActor, tonumber(args[3]))
+	elseif tmp1 == 7 then
+		if args[2] == nil then return end
+
+		local otherActor = LActor.getActorByName(args[2])
+		if not otherActor then return end
+
+		local var = LActor.getStaticVar(otherActor)
+		if not var or not var.XuanShangRenWu_Accept_List then return end
+
+		local acceptList = LActor.getAcceptTypeQuestId(otherActor , qtReward)
+		if not acceptList then return end
+
+		for i, qid in pairs(acceptList) do
+			local flag = false
+			print("----------------")
+			for i = 1, #var.XuanShangRenWu_Accept_List do
+				if var.XuanShangRenWu_Accept_List[i] then
+					print(i.." "..var.XuanShangRenWu_Accept_List[i].qid)
+				end
+				
+				if var.XuanShangRenWu_Accept_List[i] and var.XuanShangRenWu_Accept_List[i].qid == qid then
+					flag = true
+					break
+				end
+			end
+			print("------------------")
+			if flag ~= true then
+				LActor.GiveUpQuest(otherActor, qid)
+			end
+		end
+	end
+end
+
+GmEventFuncList.register( "duobao", DuobaoActivity.check, 1)
+

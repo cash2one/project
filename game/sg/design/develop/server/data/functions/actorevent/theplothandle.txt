@@ -1,0 +1,1319 @@
+-- 剧情副本handle
+-- Add LiaoYuDong 2016-03-19
+
+--#include "data\config\plot\theplotconfig.txt" once
+--#include "data\config\plot\theplotchapterconfig.txt" once
+
+ThePlotHandleFuncs = {}
+
+ThePlotHandleFuncs.systemId = 53
+
+-- 剧情状态切换函数集
+ThePlotHandleFuncs.juQingStateFuncs = {}
+
+ThePlotHandleFuncs.netMsgs = {
+    viewPlotInfo = 1, -- 请求剧情副本详情
+    enterPlotFuben = 2, -- 请求进入剧情副本
+    -- successCrossFuben = 3, -- 返回服务器通关成功后更新的数据
+    quickCrossFuben = 4, -- 请求扫荡
+    changeJuQingState = 101, -- 改变剧情状态
+}
+
+ThePlotHandleFuncs.difficulType = {
+	normal_type = 1, -- 普通难度
+	advance_type = 2, -- 困难难度
+}
+
+ThePlotHandleFuncs.checkEnterFailEnum = {
+	noError = { -- 成功
+		ret = 0,
+		tip = "成功",
+	},
+	failConfig = { -- 缺配置
+		ret = 1,
+		tip = Lang.ThePlotLang.tp001,
+	},
+	failTotalCnt = { -- 总次数不足
+		ret = 2,
+		tip = Lang.ThePlotLang.tp002,
+	},
+	failDayCnt = { -- 每日次数不足
+		ret = 3,
+		tip = Lang.ThePlotLang.tp003,
+	},
+	failLevel = { -- 等级不足
+		ret = 4,
+		tip = Lang.ThePlotLang.tp004,
+	},
+	failQuest = { -- 任务限制
+		ret = 5,
+		tip = Lang.ThePlotLang.tp005,
+	},
+	failHasInFuben= { -- 已经在其他副本了
+		ret = 6,
+		tip = Lang.ThePlotLang.tp006,
+	},
+	failQuickCrossItem= { -- 扫荡道具不足
+		ret = 7,
+		tip = nil,
+	},
+	failWithTeam = { -- 不允许组队进入
+		ret = 8,
+		tip = Lang.ScriptTips.f00100,
+	},
+}
+
+ThePlotHandleFuncs.starConditions = {
+	crossTime = 1, -- 通关时间低于xx秒
+	totalHp = 2, -- 全程血量不低于xx%
+	maxHurt = 3, -- 全程最高伤害超过xx
+	timeTokill = 4, -- x秒内击杀x只怪物
+	crossFuben = 5, -- 通关副本
+}
+
+-- 扫荡检查函数使用这个type来区分扣除的方式
+ThePlotHandleFuncs.quickCrossSucType = {
+	successCrossCount = 1, -- 扫荡次数足够
+	successCrossItem = 2, -- 扫荡道具足够
+}
+
+--[[
+SendGeneralTips
+
+1 钱 id：0贝币 2绑定天珠 3天珠
+2 物品 id：物品id
+3 宗门贡献
+4 宗门财产
+5 威望
+6 荣誉
+7 背包不足
+--]]
+
+ThePlotHandleFuncs.processNetData = function (actorobj, params)
+	if actorobj == nil or params == nil or type(params) ~= "table" then return end
+	local nCmd = tonumber(params[1]) or 0
+	local packet = params[2]
+	if ThePlotHandleFuncs[nCmd] ~= nil and type(ThePlotHandleFuncs[nCmd]) == "function" then
+		ThePlotHandleFuncs[nCmd](actorobj, packet)
+	end
+end
+
+--是否处于退出剧情副本的过程中 切记切记 一定需要标记退出了副本 不然伙伴系统会检测为未推出副本
+function IsIningExitPlayfuben(actorobj)
+	local fbPtr = LActor.getFubenPrt(actorobj)
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+	if nil == fbVar then
+		return false
+	end
+	local ret = true
+	if fbVar.theplot_var == nil or fbVar.theplot_var.not_in_fuben == 1 then
+	  ret = false
+	end
+	return ret
+end
+
+
+ThePlotHandleFuncs.initStaticVarData = function (actorobj)
+	local sVar = LActor.getStaticVar(actorobj)
+	if sVar == nil then
+		return false
+	end
+	if sVar.theplot_var == nil then
+		sVar.theplot_var = {}
+		sVar.theplot_var.everyday_count = 0 -- 每日总次数
+		sVar.theplot_var.everyday_quick_count = 0 -- 每日扫荡总次数
+	end
+	-- 临时加入
+	if sVar.theplot_var.everyday_quick_count == nil then
+		sVar.theplot_var.everyday_quick_count = 0
+	end
+	if sVar.theplot_var[ThePlotHandleFuncs.difficulType.normal_type] == nil then
+		sVar.theplot_var[ThePlotHandleFuncs.difficulType.normal_type] = {}
+		sVar.theplot_var[ThePlotHandleFuncs.difficulType.normal_type].process = 1 -- 进度
+		sVar.theplot_var[ThePlotHandleFuncs.difficulType.normal_type].total_cross_star = {} -- 记录每个关卡通关星级
+		sVar.theplot_var[ThePlotHandleFuncs.difficulType.normal_type].total_cross_count = {} -- 记录每个关卡总通关次数
+		sVar.theplot_var[ThePlotHandleFuncs.difficulType.normal_type].today_cross_count = {} -- 记录每个关卡今日通关次数
+	end
+	-- 临时加入
+	if sVar.theplot_var.normal_star_check == nil then
+		sVar.theplot_var.normal_star_check = 1
+		sVar.theplot_var[ThePlotHandleFuncs.difficulType.normal_type].total_cross_star = nil
+		sVar.theplot_var[ThePlotHandleFuncs.difficulType.normal_type].total_cross_star = {}
+	end
+	if sVar.theplot_var[ThePlotHandleFuncs.difficulType.advance_type] == nil then
+		sVar.theplot_var[ThePlotHandleFuncs.difficulType.advance_type] = {}
+		sVar.theplot_var[ThePlotHandleFuncs.difficulType.advance_type].process = 0 -- 进度
+		sVar.theplot_var[ThePlotHandleFuncs.difficulType.advance_type].total_cross_star = {} -- 记录每个关卡通关星级
+		sVar.theplot_var[ThePlotHandleFuncs.difficulType.advance_type].total_cross_count = {} -- 记录每个关卡总通关次数
+		sVar.theplot_var[ThePlotHandleFuncs.difficulType.advance_type].today_cross_count = {} -- 记录每个关卡今日通关次数
+	end
+	-- 临时加入
+	if sVar.theplot_var.advance_star_check == nil then
+		sVar.theplot_var.advance_star_check = 1
+		sVar.theplot_var[ThePlotHandleFuncs.difficulType.advance_type].total_cross_star = nil
+		sVar.theplot_var[ThePlotHandleFuncs.difficulType.advance_type].total_cross_star = {}
+	end
+	return true
+end
+
+-- 公共检查是否可以进入剧情副本某难度某关卡
+ThePlotHandleFuncs.checkEnterResult = function (actorobj, enterId, difficul, quickCross)
+	enterId = tonumber(enterId) or 0
+	difficul = tonumber(difficul) or 0
+	local quick_suc_type = ThePlotHandleFuncs.quickCrossSucType.successCrossCount -- 默认扫荡次数足
+	local currConfig = ThePlotConfig.Story[enterId]
+	if currConfig == nil then
+		return ThePlotHandleFuncs.checkEnterFailEnum.failConfig
+	end
+	if ThePlotHandleFuncs.initStaticVarData(actorobj) then
+		local sVar = LActor.getStaticVar(actorobj)
+		local dataVar = sVar.theplot_var[difficul]
+		if dataVar == nil then
+			return ThePlotHandleFuncs.checkEnterFailEnum.failConfig
+		end
+
+		-- 检查是否已经在其他副本中了
+		if LActor.isInFuben(actorobj) == true then
+			return ThePlotHandleFuncs.checkEnterFailEnum.failHasInFuben
+		end
+
+		if LActor.getTeamId(actorobj) > 0 then
+			return ThePlotHandleFuncs.checkEnterFailEnum.failWithTeam
+		end
+
+		local vipLevel = LActor.getVIPLevel(actorobj)
+		local vipAddTotalNum = 0
+		if VIPConfig.storyFuBenTotalAdd ~= nil then
+			vipAddTotalNum = (VIPConfig.storyFuBenTotalAdd[vipLevel] or 0)
+		end
+		local maxTotalNum = ThePlotConfig.EveryDayTotalCnt + vipAddTotalNum
+		-- 检查总次数够不够
+		if sVar.theplot_var.everyday_count >= maxTotalNum then -- 总次数已经用尽
+			return ThePlotHandleFuncs.checkEnterFailEnum.failTotalCnt
+		end
+		-- 检查当日该关卡次数
+		local currFubenConfig = FuBen[currConfig.fid]
+		if currFubenConfig == nil then
+			debug_print("=============> 未配置对应的剧情副本!")
+			return ThePlotHandleFuncs.checkEnterFailEnum.failConfig
+		end
+		local vipAddDayNum = (VIPConfig.stroryFubenAdd[vipLevel] or 0)
+		local maxDayNum = currFubenConfig.daycount + vipAddDayNum
+		if dataVar.today_cross_count[enterId] == nil then
+			dataVar.today_cross_count[enterId] = 0
+		end
+		if dataVar.today_cross_count[enterId] >= maxDayNum then
+			return ThePlotHandleFuncs.checkEnterFailEnum.failDayCnt
+		end
+		-- 检查等级限制
+		local level = LActor.getLevel(actorobj)
+		if currConfig.level_difficul > level then
+			return ThePlotHandleFuncs.checkEnterFailEnum.failLevel
+		end
+		-- 检查任务限制
+		if difficul == ThePlotHandleFuncs.difficulType.normal_type then
+			if LActor.isFinishQuest(actorobj, currConfig.taskId) == false then
+				if dataVar.total_cross_count[enterId] == nil and not LActor.hasQuest(actorobj, currConfig.taskId) then
+					return ThePlotHandleFuncs.checkEnterFailEnum.failQuest
+				end
+			end
+		end
+
+		-- 检查扫荡的判断
+		if quickCross ~= nil then			
+			local vipAddQuickCrossNum = 0
+			if VIPConfig.sweepFuBenTotalAdd ~= nil then
+				vipAddQuickCrossNum = (VIPConfig.sweepFuBenTotalAdd[vipLevel] or 0)
+			end
+			local maxQuickCrossNum = ThePlotConfig.EveryDayQuickCrossCnt + vipAddQuickCrossNum
+			debug_print("===================> everyday_quick_count:" .. tostring(sVar.theplot_var.everyday_quick_count) .. " maxQuickCrossNum:" .. maxQuickCrossNum)
+			-- 检查总次数够不够
+			if sVar.theplot_var.everyday_quick_count >= maxQuickCrossNum then -- 总扫荡次数已经用尽 那么检查道具是否足够
+				local itemNum = LActor.getItemCount(actorobj, ThePlotConfig.quickCrossItemId)
+				if itemNum < 1 then
+					return ThePlotHandleFuncs.checkEnterFailEnum.failQuickCrossItem
+				end
+				quick_suc_type = ThePlotHandleFuncs.quickCrossSucType.successCrossItem -- 道具足够
+			end
+		end
+
+		return ThePlotHandleFuncs.checkEnterFailEnum.noError, quick_suc_type
+	end
+	return ThePlotHandleFuncs.checkEnterFailEnum.failConfig
+end
+
+-- 创建怪物
+ThePlotHandleFuncs.createFubenMonsters = function (fubenHandle, enterId, difficul, monsterStage)
+	if fubenHandle == nil or tonumber(enterId) == nil or tonumber(difficul) == nil then
+		debug_print("======================> 创建怪物参数错误!")
+		return
+	end
+	enterId = tonumber(enterId) or 0
+	difficul = tonumber(difficul) or 0
+	local currConfig = ThePlotConfig.Story[enterId]
+	local chapterConfig = ThePlotChapterConfig[currConfig.fid]
+	if currConfig == nil or chapterConfig == nil then
+		debug_print("======================> 无对应配置!")
+		return
+	end
+
+	local createMonsterList = nil
+	if difficul == ThePlotHandleFuncs.difficulType.normal_type then
+		createMonsterList = chapterConfig.monsterList.normal
+	elseif difficul == ThePlotHandleFuncs.difficulType.advance_type then
+		createMonsterList = chapterConfig.monsterList.advance
+	else
+		debug_print("======================> 无效难度")
+		return
+	end
+
+	if createMonsterList[monsterStage] == nil then
+		debug_print("======================> 副本动态变量出现异常怪物波数")
+		return
+	end
+
+	local sceneId = Fuben.getSceneHandleById(currConfig.sid, fubenHandle)
+	for k, v in pairs(createMonsterList[monsterStage]) do
+		Fuben.createMonsters(sceneId, v.monsterId, v.position[1], v.position[2], v.position[3], v.position[4], v.monsterNum, 0, true)
+	end
+end
+
+--剧情副本结算
+ThePlotHandleFuncs.JieSuan = function(actorobj, fubenId , left_t , ext_give_root, difficul, star)
+	local GiveItem = {}
+	local give_Coin = 0  --获得的贝币
+	local give_exp = 0   --获得的经验
+	local give_root = 0  --获得的星魂
+
+	if ThePlotHandleFuncs.initStaticVarData (actorobj) then
+		debug_print("=============> 进行剧情副本结算 ==============")
+
+		local sVar = LActor.getStaticVar(actorobj)
+		local dataVar = sVar.theplot_var[difficul]
+		if dataVar == nil then
+			debug_print("======================> 无效难度!")
+			return
+		end
+
+		ext_give_root = ext_give_root or 0
+		give_root = give_root + ext_give_root
+
+		local currConfig = ThePlotHandleFuncs.getTheplotConfigByfubenId(fubenId)
+		if currConfig == nil then
+			debug_print("非剧情副本调用了剧情副本的结算:" .. tostring(fubenId))
+			return
+		end
+
+		local crossAwards = nil
+		if difficul == ThePlotHandleFuncs.difficulType.normal_type then
+			crossAwards = currConfig.crossAwards.normal
+		elseif difficul == ThePlotHandleFuncs.difficulType.advance_type then
+			crossAwards = currConfig.crossAwards.advance
+		else
+			debug_print("剧情副本无有效的结算奖励:" .. tostring(fubenId))
+			return
+		end
+
+		fubenjiesuan.FanpaiAward(actorobj, fubenId, star, GiveItem)
+		if nil == GiveItem then
+			debug_print("fubenjiesuan.NormalAward 获得的奖励为nil")
+			return
+		end
+
+		local sendAward = {}
+		for i , v in pairs(GiveItem) do
+			-- if 2 == v[2] then
+			-- 	if 0 == v[1] then
+			-- 		give_Coin = give_Coin + v[3]
+			-- 	end
+			-- elseif 5 == v[2] then -- 星魂
+			-- 	give_root = give_root + v[3]
+			-- elseif 6 == v[2] then
+			-- 	give_exp = give_exp + v[3]
+			-- else
+			if 1 == v[2] then
+				table.insert(sendAward , v) 
+			end
+		end
+		-- 取经验等奖励
+		give_exp = give_exp + (crossAwards.exp or 0)
+		give_Coin = give_Coin + (crossAwards.coin or 0)
+		give_root = give_root + (crossAwards.root or 0)
+
+
+    	if give_Coin > 0 then
+			LActor.changeMoney(actorobj, mtBindCoin, give_Coin, 1, true, "pack money", "gamereward")
+		end
+		if give_exp > 0 then
+			LActor.giveAward(actorobj, 4 , give_exp)
+		end
+		if give_root > 0 then
+			LActor.giveAward(actorobj, 9 , give_root, 0, 0, "theplothandle.txt", 1, false, "ThePlotHandleFuncs.JieSuan", string.format("fuben_%d", fubenId))
+		end
+
+		local npack = DataPack.allocPacket(actorobj, 168, 7)
+		DataPack.writeInt(npack , fubenId)  --副本id
+		DataPack.writeInt(npack , sVar.theplot_var.everyday_count)  --剧情副本总使用次数
+		DataPack.writeInt(npack , difficul)  --剧情难度
+		DataPack.writeInt(npack , currConfig.id)--剧情关卡id
+		DataPack.writeInt(npack , dataVar.total_cross_count[currConfig.id] or 0)
+		DataPack.writeChar(npack , 1)       --成功通关
+		DataPack.writeInt(npack , dataVar.today_cross_count[currConfig.id] or 0)
+		DataPack.writeInt(npack , give_exp) --副本获得经验
+		DataPack.writeInt(npack , give_Coin)--获得的贝币
+		DataPack.writeInt(npack , give_root)--获得的星魂
+		DataPack.writeInt(npack , left_t or 0)  --副本花费的时间
+
+		local nAwardSize = #sendAward
+		DataPack.writeInt(npack , nAwardSize)
+		for k , v in pairs (sendAward) do
+			DataPack.writeWord(npack, v[1])
+			DataPack.writeInt(npack, v[3])
+			DataPack.writeChar(npack, v[2])
+		end
+		DataPack.writeInt(npack , star or 0)  -- 星级
+		DataPack.flush(npack)
+	end
+end
+
+-- 失败
+ThePlotHandleFuncs.failReport = function (actorobj)
+   --获取当前在副本中的事件，若客户端十秒后不将玩家踢出去，服务器就主动踢
+	local fubenHandle = LActor.getFubenHandle(actorobj)
+	local fbPtr = Fuben.getFubenPtr(fubenHandle)
+	if fbPtr == nil then
+		return
+	end
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+	if fbVar == nil or fbVar.theplot_var == nil then
+		return
+	end
+	debug_print(string.format("================= 玩家剧情副本死亡 fubenHandle[%u]", fubenHandle))
+	if ThePlotHandleFuncs.initStaticVarData(actorobj) == true then
+		local fubenId = Fuben.getFubenIdbyFuBenPtr(fbPtr)
+		local difficul = fbVar.theplot_var.difficul
+
+		local sVar = LActor.getStaticVar(actorobj)
+		local dataVar = sVar.theplot_var[difficul]
+		if dataVar == nil then
+			return
+		end
+		
+		local currConfig = ThePlotHandleFuncs.getTheplotConfigByfubenId(fubenId)
+		if currConfig == nil then
+			return
+		end
+		debug_print(string.format("================= 玩家剧情副本死亡 fubenId[%d], difficul[%d]", fubenId, difficul))
+
+		local npack = DataPack.allocPacket(actorobj, 168, 7)
+		DataPack.writeInt(npack , fubenId)  --副本id
+		DataPack.writeInt(npack , sVar.theplot_var.everyday_count)  --剧情副本总使用次数
+		DataPack.writeInt(npack , difficul)  --剧情难度
+		DataPack.writeInt(npack , currConfig.id)--剧情关卡id
+		DataPack.writeChar(npack , 0)       --通关失败
+		DataPack.flush(npack)
+
+		Fuben.SetFubenTime(fubenHandle, 15) --本来应该是10秒后踢出的（这里多加五秒）
+
+		-- 记录进入日志
+		local actorId = LActor.getActorId(actorobj)
+		local actorName = LActor.getAccountName(actorobj)
+		local actorLevel = LActor.getLevel(actorobj)
+		local guanQia = string.format("%d_%d", currConfig.FirstId, currConfig.SecondId)
+		System.logCounter(actorId, actorName, tostring(actorLevel), "fuben", guanQia, tostring(difficul), "plot", "", tostring(currConfig.fid), "end", "fail")
+	end
+end
+
+ThePlotHandleFuncs.exitJuQingFuben = function (actorobj, fubenHandle, exitWay)
+	local fbPtr = Fuben.getFubenPtr(fubenHandle)
+	if fbPtr then
+		local fubenId = Fuben.getFubenIdbyFuBenPtr(fbPtr)
+		local fbConf = ThePlotHandleFuncs.getTheplotConfigByfubenId(fubenId)
+		if fbConf == nil then
+			return
+		end
+		local sceneHandle = LActor.getSceneHandle(actorobj)
+		-- 清除副本场景定时器
+		Fuben.clearSceneTimeCall(sceneHandle)
+		local fbVar = Fuben.getDyanmicVar(fbPtr)
+		if fbVar ~= nil and fbVar.theplot_var ~= nil then
+			-- 保留原有的变身变回来接口
+			local npack = DataPack.allocPacket(actorobj,139, 185)
+			DataPack.writeInt(npack, 0)
+			DataPack.flush(npack)
+
+			local oldHP = fbVar.theplot_var.oldHP
+			local oldMP = fbVar.theplot_var.oldMP
+
+			debug_print(string.format("=================> 玩家退出剧情副本 HP:%d, MP:%d", oldHP, oldMP))
+
+			if LActor.isDeath(actorobj) then
+				LActor.relive(actorobj)
+			end
+
+			LActor.setIntProperty(actorobj, PROP_HP, oldHP)
+			LActor.setIntProperty(actorobj, PROP_MP, oldMP)
+
+			fbVar.theplot_var.not_in_fuben = 1 -- 切记切记 一定需要标记退出了副本 不然伙伴系统会检测为未推出副本 切记需要全局函数 IsIningExitPlayfuben
+
+			if fbVar.theplot_var.fight_partner ~= nil then
+				-- LActor.FubenResetNorPartner(actorobj, fbVar.theplot_var.fight_partner)
+			end
+		end
+	end
+end
+
+ThePlotHandleFuncs.getTheplotConfigByEnterId = function (enterId)
+	for k, v in ipairs(ThePlotConfig.Story) do
+		if v.id == enterId then
+			return v
+		end
+	end
+	return nil
+end
+
+ThePlotHandleFuncs.getTheplotConfigByfubenId = function (fubenId)
+	for k, v in ipairs(ThePlotConfig.Story) do
+		if v.fid == fubenId then
+			return v
+		end
+	end
+	return nil
+end
+
+ThePlotHandleFuncs.isJuQingScene = function (sceneId)
+	for k, v in ipairs(ThePlotConfig.Story) do
+		if v.sid == sceneId then
+			return true, v
+		end
+	end
+	return false, nil
+end
+
+ThePlotHandleFuncs.isJuQingEndedKey = function (key)
+	for k, v in pairs(ThePlotChapterConfig) do
+		if v.endedJuQingKey == key then
+			return true, v
+		end
+	end
+	return false, nil
+end
+
+ThePlotHandleFuncs.onMonsterAllDie = function (sceneId, scenePtr, flag, monsterEntity)
+	local ret, currConfig = ThePlotHandleFuncs.isJuQingScene(sceneId)
+	local chapterConfig = ThePlotChapterConfig[currConfig.fid]
+	if ret == true and chapterConfig ~= nil then
+		debug_print("======================== 剧情副本怪物都死亡了 ========================")
+		local fbPtr = LActor.getFubenPrt(monsterEntity)
+		local scenePtr = LActor.getScenePtr(monsterEntity)
+		local fubenId = LActor.getFubenId(monsterEntity)
+		local fubenHandle = Fuben.getFubenHandle(fbPtr)
+		local fbVar = Fuben.getDyanmicVar(fbPtr)
+		if fbVar and fbVar.theplot_var ~= nil then
+			fbVar.theplot_var.monsterStage = fbVar.theplot_var.monsterStage + 1
+			local monsterStage = fbVar.theplot_var.monsterStage
+			local difficul = fbVar.theplot_var.difficul
+			local monsterList = nil
+			if difficul == ThePlotHandleFuncs.difficulType.normal_type then
+				monsterList = chapterConfig.monsterList.normal
+			elseif difficul == ThePlotHandleFuncs.difficulType.advance_type then
+				monsterList = chapterConfig.monsterList.advance
+			else
+				debug_print("======================== 剧情副本无效动态difficul变量 ========================")
+				return
+			end
+			local actorobj = Fuben.getActorListbySceneInPlayFuben(scenePtr)
+			-- 是否是最后一波已经打完
+			if monsterList[monsterStage] == nil then
+				if chapterConfig.endedJuQingKey ~= nil and chapterConfig.endedJuQingKey ~= "none" and fbVar.theplot_var.startPlot == nil then
+					debug_print("======================== 需要播放结尾剧情 ========================", actorobj, fubenId)
+					fbVar.theplot_var.startPlot = 1
+					LActor.setActorGoJuQing(actorobj, chapterConfig.endedJuQingKey)
+					-- 暂停定时器
+					local sceneHandle = LActor.getSceneHandle(actorobj)
+					Fuben.clearSceneTimeCall(sceneHandle)
+					fbVar.theplot_var.endTime = System.getCurrMiniTime()
+					-- 推送计时
+					ThePlotHandleFuncs.sendTimeStatistics(actorobj, 3)
+				else
+					debug_print("======================== 不需要播放结尾剧情 ========================", actorobj, fubenId)
+					fbVar.theplot_var.endTime = System.getCurrMiniTime()
+					-- 推送计时
+					ThePlotHandleFuncs.sendTimeStatistics(actorobj, 3)
+					ThePlotHandleFuncs.successCrossFuben(actorobj, fubenId)
+				end
+			else
+				ThePlotHandleFuncs.createFubenMonsters(fubenHandle, currConfig.id, difficul, monsterStage)
+				ThePlotHandleFuncs.sendJuQingStage(actorobj, currConfig.id, fubenId, difficul, monsterStage)
+			end
+		end
+	end
+end
+
+ThePlotHandleFuncs.registerAllMonsterKill = function ()
+	for k, v in ipairs(ThePlotConfig.Story) do
+		MonAllKilledDispatcher.register(v.sid, ThePlotHandleFuncs.onMonsterAllDie)
+		EventCallDispatcher.registerFubenExit(v.fid, ThePlotHandleFuncs.exitJuQingFuben)
+	end
+	for k, v in pairs(ThePlotChapterConfig) do
+		for n, m in pairs(v.monsterList.normal) do
+			for j, k in pairs(m) do
+				MonsterDamageDispatch.register(k.monsterId, ThePlotHandleFuncs.monsterDamage)
+				MonDieDispatcher.register(k.monsterId,  ThePlotHandleFuncs.onKillMonster)
+			end
+		end
+		for n, m in pairs(v.monsterList.advance) do
+			for j, k in pairs(m) do
+				MonsterDamageDispatch.register(k.monsterId, ThePlotHandleFuncs.monsterDamage)
+				MonDieDispatcher.register(k.monsterId,  ThePlotHandleFuncs.onKillMonster)
+			end
+		end
+	end
+end
+
+ThePlotHandleFuncs.isExitFuben = function (actorobj)
+	local fbPtr = LActor.getFubenPrt(actorobj)
+	local fubenId = Fuben.getFubenIdbyFuBenPtr(fbPtr)
+	if FuBen[fubenId] and 2 == FuBen[fubenId].type then
+    	LActor.exitFuben(actorobj)
+    end
+end
+
+ThePlotHandleFuncs.actorLogout = function (actorobj)
+	local fubenHandle = LActor.getFubenHandle(actorobj)
+	ThePlotHandleFuncs.exitJuQingFuben(actorobj, fubenHandle)
+	ThePlotHandleFuncs.isExitFuben(actorobj)
+end
+
+ThePlotHandleFuncs.onNewDayArrive = function (actorobj)
+	debug_print("=========== 每日剧情副本重置次数 =============")
+	if ThePlotHandleFuncs.initStaticVarData(actorobj) == true then
+		debug_print("=========== 每日剧情副本重置次数 start =============")
+		local sVar = LActor.getStaticVar(actorobj)
+		sVar.theplot_var.everyday_count = 0
+		sVar.theplot_var.everyday_quick_count = 0
+		local dataNormal = sVar.theplot_var[ThePlotHandleFuncs.difficulType.normal_type]
+		for i = 1, dataNormal.process do
+			dataNormal.today_cross_count[i] = 0
+		end
+		local dataAdvance = sVar.theplot_var[ThePlotHandleFuncs.difficulType.advance_type]
+		for i = 1, dataAdvance.process do
+			dataAdvance.today_cross_count[i] = 0
+		end
+		debug_print("=========== 每日剧情副本重置次数 ended =============")
+	end
+end
+
+-- ThePlotHandleFuncs.starConditions = {
+-- 	crossTime = 1, -- 通关时间低于xx秒
+-- 	totalHp = 2, -- 全程血量不低于xx%
+-- 	maxHurt = 3, -- 全程最高伤害超过xx
+-- 	timeTokill = 4, -- x秒内击杀x只怪物
+-- 	crossFuben = 5, -- 通关副本
+-- }
+
+-- 定时器
+ThePlotHandleFuncs.onTimeCall = function (msgId, scenePtr)
+	if msgId ~= TimerMsg.JuQingFubenTimeMsg then
+		return
+	end
+	local fbPtr = Fuben.getSceneFuben(scenePtr)
+	if fbPtr ~= nil then
+		local fbVar = Fuben.getDyanmicVar(fbPtr)
+		if fbVar == nil or fbVar.theplot_var == nil or fbVar.theplot_var.star_conds == nil then
+			return
+		end
+		debug_print("==============> 触发剧情副本场景定时器检查")
+		local fubenId = Fuben.getFubenIdbyFuBenPtr(fbPtr)
+		local currConfig = ThePlotHandleFuncs.getTheplotConfigByfubenId(fubenId)
+		if currConfig == nil then
+			debug_print("======================> 无对应副本id的有效配置!")
+			return
+		end
+
+		local costTime = System.getCurrMiniTime() - fbVar.theplot_var.startTime
+		local actorobj = Fuben.getActorListbySceneInPlayFuben(scenePtr)
+		local currHP = LActor.getIntProperty(actorobj, PROP_HP)
+		local maxHP = LActor.getIntProperty(actorobj, PROP_MAXHP)
+		local rateHP = currHP * 100 / maxHP
+		debug_print(string.format("=============> costTime:%d, currHP:%d", costTime, currHP) .. ", rateHP:" .. tostring(rateHP))
+		for k, v in pairs(currConfig.starConds) do
+			if v.condId == ThePlotHandleFuncs.starConditions.crossTime then
+				if costTime > v.count and fbVar.theplot_var.star_conds[v.index] ~= 0 then
+					fbVar.theplot_var.star_conds[v.index] = 0 -- 失败
+					ThePlotHandleFuncs.sendStarResult(actorobj, v.index, 0)
+					debug_print("==============> 触发剧情副本场景定时器检查--通关时间失败")
+				end
+			elseif v.condId == ThePlotHandleFuncs.starConditions.totalHp then
+				if rateHP < v.count and fbVar.theplot_var.star_conds[v.index] ~= 0 then
+					fbVar.theplot_var.star_conds[v.index] = 0 -- 失败
+					ThePlotHandleFuncs.sendStarResult(actorobj, v.index, 0)
+					debug_print("==============> 触发剧情副本场景定时器检查--全程血量失败")
+				end
+			elseif v.condId == ThePlotHandleFuncs.starConditions.timeTokill then
+				if costTime >= v.sec then
+					if fbVar.theplot_var.fubenKills < v.count then
+						if fbVar.theplot_var.star_conds[v.index] ~= 0 then
+							fbVar.theplot_var.star_conds[v.index] = 0 -- 失败
+							ThePlotHandleFuncs.sendStarResult(actorobj, v.index, 0)
+							debug_print("==============> 触发剧情副本场景定时器检查--N秒内击杀M只怪物失败")
+						end
+					else
+						if fbVar.theplot_var.star_conds[v.index] ~= 1 then
+							fbVar.theplot_var.star_conds[v.index] = 1 -- 成功
+							ThePlotHandleFuncs.sendStarResult(actorobj, v.index, 1)
+							debug_print("==============> 触发剧情副本场景定时器检查--N秒内击杀M只怪物成功")
+						end
+					end
+				end
+			else
+			end
+		end
+
+		for k, v in pairs(currConfig.starConds) do
+			if fbVar.theplot_var.star_conds[v.index] ~= nil then
+				if v.condId == ThePlotHandleFuncs.starConditions.timeTokill then
+					debug_print(string.format("========> index:%d, 条件:%s, 结果:%d", v.index, string.format(ThePlotConfig.starTranslate[v.condId], v.sec, v.count), fbVar.theplot_var.star_conds[v.index]))
+				elseif v.condId == ThePlotHandleFuncs.starConditions.crossFuben then
+					debug_print(string.format("========> index:%d, 条件:%s, 结果:%d", v.index, ThePlotConfig.starTranslate[v.condId], fbVar.theplot_var.star_conds[v.index]))
+				else
+					debug_print(string.format("========> index:%d, 条件:%s, 结果:%d", v.index, string.format(ThePlotConfig.starTranslate[v.condId], v.count), fbVar.theplot_var.star_conds[v.index]))
+				end
+			end
+		end
+	end 
+end
+
+ThePlotHandleFuncs.monsterDamage = function (monster, monsterId, hurt, killer)
+	local fbPtr = LActor.getFubenPrt(monster)
+	if fbPtr ~= nil then
+		local fubenId = Fuben.getFubenIdbyFuBenPtr(fbPtr)
+		local currConfig = ThePlotHandleFuncs.getTheplotConfigByfubenId(fubenId)
+		if currConfig == nil then
+			return
+		end
+		local fbVar = Fuben.getDyanmicVar(fbPtr)
+		if fbVar == nil or fbVar.theplot_var == nil or fbVar.theplot_var.star_conds == nil then
+			return
+		end
+		debug_print("==============> 触发剧情副本场景怪物受伤害检查")
+		for k, v in pairs(currConfig.starConds) do
+			if v.condId == ThePlotHandleFuncs.starConditions.maxHurt then
+				if hurt >= v.count and fbVar.theplot_var.star_conds[v.index] ~= 1 then
+					fbVar.theplot_var.star_conds[v.index] = 1 -- 成功
+					ThePlotHandleFuncs.sendStarResult(killer, v.index, 1)
+					debug_print("==============> 触发剧情副本场景定时器检查--最高伤害成功")
+				end
+				break
+			end
+		end
+	end
+end
+
+ThePlotHandleFuncs.onKillMonster = function (monster, killer, monsterId)
+	local fbPtr = LActor.getFubenPrt(monster)
+	if fbPtr ~= nil then
+		local fubenId = Fuben.getFubenIdbyFuBenPtr(fbPtr)
+		local scenePtr = Fuben.get
+		local currConfig = ThePlotHandleFuncs.getTheplotConfigByfubenId(fubenId)
+		if currConfig == nil then
+			return
+		end
+		local fbVar = Fuben.getDyanmicVar(fbPtr)
+		if fbVar == nil or fbVar.theplot_var == nil or fbVar.theplot_var.star_conds == nil then
+			return
+		end
+		debug_print("==============> 触发剧情副本场景怪物死亡检查")
+		local scenePtr = LActor.getScenePtr(killer)
+		local actorobj = Fuben.getActorListbySceneInPlayFuben(scenePtr)
+		if actorobj ~= killer then
+			debug_print("===> killer 和 actorobj 不一致 不是副本玩家杀死的怪")
+			return
+		end
+		fbVar.theplot_var.fubenKills = fbVar.theplot_var.fubenKills + 1
+		debug_print("==============> 触发剧情副本场景怪物死亡检查--击杀成功")
+	end
+end
+
+-- 把关卡获得的星级压缩成二进制位存储
+ThePlotHandleFuncs.calAllEnterIdStarToByte = function (actorobj, difficul)
+	if ThePlotHandleFuncs.initStaticVarData(actorobj) == true then
+		local sVar = LActor.getStaticVar(actorobj)
+		local dataVar = sVar.theplot_var[difficul]
+		if dataVar == nil then
+			return {}
+		end
+		local allByte = {}
+		for i = 1, dataVar.process do
+			local allStar = 0
+			if dataVar.total_cross_star[i] ~= nil then -- 第i关卡星级结构存储
+				local currConfig = ThePlotHandleFuncs.getTheplotConfigByEnterId(i)
+				if currConfig ~= nil then
+					for k, v in ipairs(currConfig.starConds) do
+						if dataVar.total_cross_star[i][v.index] ~= nil and dataVar.total_cross_star[i][v.index] == 1 then
+							allStar = System.bitOpSetMask(allStar, k - 1, true)
+						end
+					end
+				end
+			end
+			table.insert(allByte, allStar)
+		end
+		return allByte
+	end
+	return {}
+end
+
+-- ============================================================================
+
+-- 请求剧情副本详情
+-- 难度: 1为普通 2为困难
+ThePlotHandleFuncs[ThePlotHandleFuncs.netMsgs.viewPlotInfo] = function (actorobj, packet, ispacket)
+	local difficul = tonumber(DataPack.readInt(packet)) or ThePlotHandleFuncs.difficulType.normal_type
+	if difficul <= 0 then difficul = ThePlotHandleFuncs.difficulType.normal_type end
+	debug_print(string.format("========================== 长歌行剧情副本-难度[%d] ==========================", difficul))
+	if ThePlotHandleFuncs.initStaticVarData (actorobj) then
+		local sVar = LActor.getStaticVar(actorobj)
+		local dataVar = sVar.theplot_var[difficul]
+		if dataVar == nil then
+			debug_print("======================> 无效难度!")
+			return
+		end
+
+		-- 计算所有的剧情副本星级
+		local allByte = ThePlotHandleFuncs.calAllEnterIdStarToByte(actorobj, difficul)
+		-- debug_print("=========================>allByte = " .. dump(allByte))
+
+		local npack = DataPack.allocPacket(actorobj, ThePlotHandleFuncs.systemId, ThePlotHandleFuncs.netMsgs.viewPlotInfo)
+		DataPack.writeInt(npack, sVar.theplot_var.everyday_count)
+		DataPack.writeInt(npack, sVar.theplot_var.everyday_quick_count)
+		DataPack.writeInt(npack, difficul)
+		DataPack.writeInt(npack, dataVar.process)
+		for i = 1, dataVar.process do
+			DataPack.writeInt(npack, dataVar.total_cross_count[i] or 0)
+			DataPack.writeInt(npack, dataVar.today_cross_count[i] or 0)
+			DataPack.writeInt(npack, allByte[i])
+		end
+		DataPack.flush(npack)
+		debug_print(string.format("===========> everyday_count[%d], difficul[%d], process[%d]", sVar.theplot_var.everyday_count, difficul, dataVar.process))
+	end
+end
+
+-- 请求进入副本
+ThePlotHandleFuncs[ThePlotHandleFuncs.netMsgs.enterPlotFuben] = function (actorobj, packet)
+	local enterId = tonumber(DataPack.readInt(packet)) or 0
+	local difficul = tonumber(DataPack.readInt(packet)) or 0
+	debug_print("======================== actorobj ========================", actorobj, enterId, difficul)
+	if difficul == ThePlotHandleFuncs.difficulType.advance_type then
+		LActor.OnQuestEvent(qtJingying, 0, 1, true, actorobj)
+	end
+	if LActor.isDeath(actorobj) == true then
+		LActor.sendTipmsg(actorobj, Lang.ScriptTips.ttt009, ttMessage)
+		return
+	end
+	if difficul <= 0 then difficul = ThePlotHandleFuncs.difficulType.normal_type end
+	-- 检查
+	local retEnum = ThePlotHandleFuncs.checkEnterResult(actorobj, enterId, difficul)
+	if retEnum.ret == 0 then -- 成功通过检查
+		local currConfig = ThePlotConfig.Story[enterId]
+		local chapterConfig = ThePlotChapterConfig[currConfig.fid]
+		if currConfig ~= nil and chapterConfig ~= nil then
+			local fbHandle = Fuben.createFuBen(currConfig.fid, difficul)
+			ThePlotHandleFuncs.createFubenMonsters(fbHandle, enterId, difficul, 1)
+			if LActor.enterFuBen(actorobj, fbHandle, currConfig.sid, currConfig.pos[1], currConfig.pos[2]) == true then
+				local scenePtr = LActor.getScenePtr(actorobj)
+				local sceneHandle = LActor.getSceneHandle(actorobj)
+				local fbPtr = Fuben.getFubenPtr(fbHandle)
+				if fbPtr ~= nil then
+					local fbVar = Fuben.getDyanmicVar(fbPtr)
+					fbVar.theplot_var = {}
+
+					if chapterConfig.beganJuQingKey ~= nil and chapterConfig.beganJuQingKey ~= "none" then
+						LActor.setActorGoJuQing(actorobj, chapterConfig.beganJuQingKey)
+					else					
+						-- 启用定时器
+						Fuben.postSceneTimeCall(sceneHandle, TimerMsg.JuQingFubenTimeMsg, 1, -1)
+						-- 没有剧情的直接就设定时间
+						fbVar.theplot_var.startTime = System.getCurrMiniTime()
+						-- 推送计时
+						ThePlotHandleFuncs.sendTimeStatistics(actorobj, 1)
+					end
+					-- 设置结界区域
+					Fuben.initDyanmicObstacleData(sceneHandle)
+					Fuben.setDyanmicObstacleDataBySquare(scenePtr , -1, chapterConfig.blockArea)
+
+
+
+         			-- fbVar.theplot_var.fight_partner = (LActor.FubenDropNorPartner(actorobj) or -1)
+					-- 记录难度
+					fbVar.theplot_var.difficul = difficul
+					fbVar.theplot_var.monsterStage = 1
+					-- 记录HP和MP
+					fbVar.theplot_var.oldHP = LActor.getIntProperty(actorobj, PROP_HP)
+					fbVar.theplot_var.oldMP = LActor.getIntProperty(actorobj, PROP_MP)
+
+					ThePlotHandleFuncs.sendJuQingStage(actorobj, currConfig.id, currConfig.fid, difficul, 1)
+
+					-- 先检查初始化目标
+					if fbVar.theplot_var.star_conds == nil then
+						fbVar.theplot_var.star_conds = {}
+						for k, v in pairs(currConfig.starConds) do
+							fbVar.theplot_var.star_conds[v.index] = 1
+							if v.condId == ThePlotHandleFuncs.starConditions.crossFuben or v.condId == ThePlotHandleFuncs.starConditions.timeTokill or v.condId == ThePlotHandleFuncs.starConditions.maxHurt then -- 通关副本和满足时间内杀怪目标一开始肯定是不满足的
+								fbVar.theplot_var.star_conds[v.index] = 0
+							end
+							ThePlotHandleFuncs.sendStarResult(actorobj, v.index, fbVar.theplot_var.star_conds[v.index])
+						end
+						fbVar.theplot_var.fubenKills = 0 -- 击杀的怪物数量
+					end
+
+					-- 记录进入日志
+					local actorId = LActor.getActorId(actorobj)
+					local actorName = LActor.getAccountName(actorobj)
+					local actorLevel = LActor.getLevel(actorobj)
+					local guanQia = string.format("%d_%d", currConfig.FirstId, currConfig.SecondId)
+					System.logCounter(actorId, actorName, tostring(actorLevel), "fuben", guanQia, tostring(difficul), "plot", "", tostring(currConfig.fid), "start")
+				end
+			else -- 销毁副本
+				Fuben.closeFuben(fbHandle)
+			end
+		end
+	else
+		LActor.sendTipmsg(actorobj, retEnum.tip, ttMessage)
+	end
+end
+
+-- 完成通关
+ThePlotHandleFuncs.successCrossFuben = function (actorobj, fubenId)
+	-- local fubenId = LActor.getFubenId(actorobj)
+	local chapterConfig = ThePlotChapterConfig[fubenId]
+	local currConfig = ThePlotHandleFuncs.getTheplotConfigByfubenId(fubenId)
+	if chapterConfig ~= nil and currConfig ~= nil and ThePlotHandleFuncs.initStaticVarData(actorobj) == true then
+		local fbPtr = LActor.getFubenPrt(actorobj)
+		local fbVar = Fuben.getDyanmicVar(fbPtr)
+		local difficul = fbVar.theplot_var.difficul
+		local fubenHandle = Fuben.getFubenHandle(fbPtr)
+		local currId = currConfig.id
+
+		local sVar = LActor.getStaticVar(actorobj)
+		local dataVar = sVar.theplot_var[difficul]
+		if dataVar == nil then
+			debug_print(string.format("======================> 通关-无效难度! %s", dump(difficul)))
+			return
+		end
+
+		local norDataVar = sVar.theplot_var[ThePlotHandleFuncs.difficulType.normal_type]
+		local advDataVar = sVar.theplot_var[ThePlotHandleFuncs.difficulType.advance_type]
+
+		if difficul == ThePlotHandleFuncs.difficulType.normal_type then
+			local nowNormalConfig = ThePlotHandleFuncs.getTheplotConfigByEnterId(currId)
+			local nextNormalConfig = ThePlotHandleFuncs.getTheplotConfigByEnterId(currId + 1)
+			if nextNormalConfig == nil or nowNormalConfig.FirstId < nextNormalConfig.FirstId then
+				debug_print("===============> 触发通关普通难度第" .. dump(nowNormalConfig.FirstId) .. "章成就")
+				LActor.SetAchieveProcessByType(actorobj, 116, 2, nowNormalConfig.FirstId); -- aAchieveEventChiYingChapter 通关普通难度第N章
+			end
+			-- 判断自身的开放
+			if currId >= norDataVar.process then -- 可开放下一个关卡
+				-- 再检查是否需要同步开启困难难度
+				if norDataVar.process >= advDataVar.process then
+					if advDataVar.process == 0 then
+						advDataVar.process = 1
+					end
+					if advDataVar.total_cross_count[advDataVar.process] ~= nil and advDataVar.total_cross_count[advDataVar.process] > 0 then -- 有通关过
+						advDataVar.process = advDataVar.process + 1
+					end
+				end
+				norDataVar.process = norDataVar.process + 1
+			end
+		elseif difficul == ThePlotHandleFuncs.difficulType.advance_type then
+			local nowDifficulConfig = ThePlotHandleFuncs.getTheplotConfigByEnterId(currId)
+			local nextDifficulConfig = ThePlotHandleFuncs.getTheplotConfigByEnterId(currId + 1)
+			if nextDifficulConfig == nil or nowDifficulConfig.FirstId < nextDifficulConfig.FirstId then
+				debug_print("===============> 触发通关困难难度第" .. dump(nowDifficulConfig.FirstId) .. "章成就")
+				LActor.SetAchieveProcessByType(actorobj, 112, 2, nowDifficulConfig.FirstId); -- aAchieveEventChiYingChapter 通关困难难度第N章
+			end
+			if currId >= advDataVar.process then -- 尝试开放困难下一关卡
+				if (advDataVar.process + 1) < norDataVar.process then -- 能开启 普通难度通关那个关卡
+					advDataVar.process = advDataVar.process + 1
+				end
+			end
+		else
+		end
+
+		-- 判断是否首次
+		local ext_give_root = 0
+		if dataVar.total_cross_count[currId] == nil then
+			dataVar.total_cross_count[currId] = 0
+			if difficul == ThePlotHandleFuncs.difficulType.normal_type then
+				ext_give_root = currConfig.firstSucXinghun
+			elseif difficul == ThePlotHandleFuncs.difficulType.advance_type then
+				ext_give_root = currConfig.firstSucXinghunDifficul
+			else
+			end
+		end
+
+		-- 次数结算
+		sVar.theplot_var.everyday_count = sVar.theplot_var.everyday_count + 1
+		dataVar.total_cross_count[currId] = dataVar.total_cross_count[currId] + 1
+		dataVar.today_cross_count[currId] = dataVar.today_cross_count[currId] + 1
+
+		if dataVar.total_cross_star[currId] == nil then
+			-- dataVar.total_cross_star[currId] = 0 -- 当前星级默认0星
+			dataVar.total_cross_star[currId] = {}
+		end
+
+		local star = 0 -- 默认0星
+		local allStar = 0 -- 二进制方式的star
+		-- 触发通关条件
+		for k, v in pairs(currConfig.starConds) do
+			if v.condId == ThePlotHandleFuncs.starConditions.crossFuben then
+				fbVar.theplot_var.star_conds[v.index] = 1
+				ThePlotHandleFuncs.sendStarResult(actorobj, v.index, 1)
+			end
+			if dataVar.total_cross_star[currId][v.index] ~= 1 then
+				dataVar.total_cross_star[currId][v.index] = fbVar.theplot_var.star_conds[v.index]
+			end
+			-- 计算星级
+			if fbVar.theplot_var.star_conds[v.index] == 1 then
+				star = star + 1
+				allStar = System.bitOpSetMask(allStar, k - 1, true)
+			end
+		end
+		
+		if star > 3 then
+			star = 3
+		end
+		debug_print("====================> 星级:" .. star .. " , " .. allStar)
+
+		-- 停掉定时器
+		local sceneHandle = LActor.getSceneHandle(actorobj)
+		Fuben.clearSceneTimeCall(sceneHandle)
+
+		if fbVar.theplot_var.endTime == nil then
+			fbVar.theplot_var.endTime = System.getCurrMiniTime()
+		end
+
+		-- 结算
+		ThePlotHandleFuncs.JieSuan(actorobj, fubenId , fbVar.theplot_var.endTime - fbVar.theplot_var.startTime , ext_give_root, difficul, star)
+
+		local sendId = dataVar.process -- 进度
+		if sendId > #(ThePlotConfig.Story) then
+			sendId = #(ThePlotConfig.Story)
+		end
+
+		local npack = DataPack.allocPacket(actorobj, 53, 3)
+		DataPack.writeInt(npack, sVar.theplot_var.everyday_count)
+		DataPack.writeInt(npack, fbVar.theplot_var.difficul)
+		DataPack.writeInt(npack, sendId)
+		DataPack.writeInt(npack, currId)
+		DataPack.writeInt(npack, dataVar.total_cross_count[currId] or 0)
+		DataPack.writeInt(npack, dataVar.today_cross_count[currId] or 0)
+		DataPack.writeInt(npack, allStar)
+		local rootnum = LActor.getIntProperty(actorobj, PROP_ROOT_EXP) or 0
+		DataPack.writeInt(npack , rootnum)
+		DataPack.flush(npack)
+
+		Fuben.SetFubenTime(fubenHandle, 35)
+
+		-- 触发任务事件
+		LActor.OnQuestEvent(qtJuQingFuBen, 0, 1, true, actorobj, false) -- 任意
+		LActor.OnQuestEvent(qtJuQingFuBen, fubenId, 1, true, actorobj, false)
+
+		-- 记录进入日志
+		local actorId = LActor.getActorId(actorobj)
+		local actorName = LActor.getAccountName(actorobj)
+		local actorLevel = LActor.getLevel(actorobj)
+		local guanQia = string.format("%d_%d", currConfig.FirstId, currConfig.SecondId)
+		System.logCounter(actorId, actorName, tostring(actorLevel), "fuben", guanQia, tostring(difficul), "plot", "", tostring(currConfig.fid), "end", "win")
+
+		-- 停止一切怪物
+		Fuben.setStopMonsterRunOne(actorobj)
+	end
+end
+
+-- 请求扫荡
+ThePlotHandleFuncs[ThePlotHandleFuncs.netMsgs.quickCrossFuben] = function (actorobj, packet)
+	local enterId = tonumber(DataPack.readInt(packet)) or 0
+	local difficul = tonumber(DataPack.readInt(packet)) or 0
+	local currConfig = ThePlotHandleFuncs.getTheplotConfigByEnterId(enterId)
+	if currConfig == nil then
+		debug_print("================= 无效扫荡请求 ================")
+		return
+	end
+	if ThePlotHandleFuncs.initStaticVarData(actorobj) == true then
+		local sVar = LActor.getStaticVar(actorobj)
+		local dataVar = sVar.theplot_var[difficul]
+		if dataVar == nil then
+			debug_print("============= 无效扫荡难度 ==============")
+			return
+		end
+
+		if dataVar.total_cross_star[enterId] == nil then
+			debug_print("============= 未达到3星 无法扫荡 ==============")
+			LActor.sendTipmsg(actorobj, Lang.ThePlotLang.tp007, ttMessage)
+			return
+		end
+
+		local star = 0
+		for k, v in pairs(currConfig.starConds) do
+			-- 计算星级
+			if dataVar.total_cross_star[enterId][v.index] == 1 then
+				star = star + 1
+			end
+		end
+
+		if star < 3 then
+			debug_print("============= 未达到3星 无法扫荡 ==============")
+			LActor.sendTipmsg(actorobj, Lang.ThePlotLang.tp007, ttMessage)
+			return
+		end
+		local loop = 0
+		local allAward = {}
+		local failEnum = nil
+		while true do
+			local retEnum = nil
+			local sucType = nil
+			retEnum, sucType = ThePlotHandleFuncs.checkEnterResult(actorobj, enterId, difficul, 1)
+			if retEnum.ret == 0 then -- 表示通过
+				local GiveItem = {}
+				local give_Coin = 0  --获得的贝币
+				local give_exp = 0   --获得的经验
+				local give_root = 0  --获得的星魂
+				fubenjiesuan.FanpaiAward(actorobj, currConfig.fid, 3, GiveItem)
+				local sendAward = {}
+				if GiveItem then
+					for i , v in pairs(GiveItem) do
+						if 2 == v[2] then
+							if 0 == v[1] then
+								give_Coin = give_Coin + v[3]
+							end
+						elseif 5 == v[2] then -- 星魂
+							give_root = give_root + v[3]
+						elseif 6 == v[2] then
+							give_exp = give_exp + v[3]
+						else
+							table.insert(sendAward , v) 
+						end
+					end
+				end
+
+				local crossAwards = nil
+				if difficul == ThePlotHandleFuncs.difficulType.normal_type then
+					crossAwards = currConfig.crossAwards.normal
+				elseif difficul == ThePlotHandleFuncs.difficulType.advance_type then
+					crossAwards = currConfig.crossAwards.advance
+				end
+
+				-- 取经验等奖励
+				give_exp = give_exp + (crossAwards.exp or 0)
+				give_Coin = give_Coin + (crossAwards.coin or 0)
+				give_root = give_root + (crossAwards.root or 0)
+
+	        	if give_Coin > 0 then
+					LActor.changeMoney(actorobj, mtBindCoin, give_Coin, 1, true, "pack money", "gamereward")
+				end
+				if give_exp > 0 then
+					LActor.giveAward(actorobj, 4 , give_exp)
+				end
+				if give_root > 0 then
+					LActor.giveAward(actorobj, 9 , give_root, 0, 0, "theplothandle.txt", 1, false, "ThePlotHandleFuncs.quickCrossFuben", string.format("fuben_%d", currConfig.fid))
+				end
+
+				table.insert(allAward , { give_Coin = give_Coin ,give_exp = give_exp , give_root = give_root, sendAward = sendAward })
+
+				sVar.theplot_var.everyday_count = sVar.theplot_var.everyday_count + 1
+				dataVar.today_cross_count[enterId] = dataVar.today_cross_count[enterId] + 1
+				if sucType == ThePlotHandleFuncs.quickCrossSucType.successCrossItem then
+					-- 扣道具
+					LActor.removeItem(actorobj, ThePlotConfig.quickCrossItemId, 1, -1, -1, -1, "TheplotSystem_QuickCrossFuben")
+				elseif sucType == ThePlotHandleFuncs.quickCrossSucType.successCrossCount then
+					sVar.theplot_var.everyday_quick_count = sVar.theplot_var.everyday_quick_count + 1
+				end
+			else
+				failEnum = retEnum
+				break
+			end
+		end
+		debug_print(string.format("=============> 扫荡次数[%d]", #allAward))
+		if #allAward > 0 then
+			local npack = DataPack.allocPacket(actorobj, 53, 4)
+			DataPack.writeInt(npack, difficul)
+			DataPack.writeInt(npack , #allAward)
+
+		    for i = 1 , #allAward do
+		    	local tmp = allAward[i]
+	        	DataPack.writeInt(npack , tmp.give_Coin)   --铜钱
+	        	DataPack.writeInt(npack , tmp.give_root)    --星魂
+	        	DataPack.writeInt(npack , tmp.give_exp)    --经验
+	        	DataPack.writeInt(npack , #(tmp.sendAward))  --获得的其他道具数量
+	        	if tmp.sendAward then
+	        	   	for k, v in pairs (tmp.sendAward) do
+	        	   	   DataPack.writeWord(npack, v[1] or 0)
+	        	   	   DataPack.writeInt(npack, v[3] or 0)
+	        	   	   DataPack.writeChar(npack, v[2] or 0)
+	        	   	end
+	        	end
+			end
+			DataPack.flush(npack)
+
+			local npack2 = DataPack.allocPacket(actorobj, 53, 2)
+			DataPack.writeChar(npack2, 0)
+			DataPack.writeInt(npack2, sVar.theplot_var.everyday_count)
+			DataPack.writeInt(npack2, sVar.theplot_var.everyday_quick_count)
+			DataPack.writeInt(npack2, difficul)
+			DataPack.writeInt(npack2, enterId)
+			DataPack.writeInt(npack2, dataVar.today_cross_count[enterId])
+			DataPack.flush(npack2)
+
+			-- 触发任务事件
+			LActor.OnQuestEvent(qtJuQingFuBen, 0, 1, true, actorobj, false) -- 任意
+			LActor.OnQuestEvent(qtJuQingFuBen, currConfig.fid, 1, true, actorobj, false)
+		else
+			if failEnum ~= nil then
+				if failEnum.ret == 7 then -- 特殊的 扫荡道具不足 注意
+					LActor.SendGeneralTips(actorobj, 2, ThePlotConfig.quickCrossItemId, 1)
+				else
+					LActor.sendTipmsg(actorobj, failEnum.tip, ttMessage)
+				end
+			end
+		end
+	end
+end
+
+-- 服务的通知客户的剧情目标结果
+ThePlotHandleFuncs.sendStarResult = function (actorobj, index, ret)
+	local npack = DataPack.allocPacket(actorobj, 53, 5)
+	DataPack.writeUInt(npack, index)
+	DataPack.writeUInt(npack, ret)
+	DataPack.flush(npack)
+end
+
+-- 通知前端当前剧情副本到了第几波
+ThePlotHandleFuncs.sendJuQingStage = function (actorobj, enterId, fubenId, difficul, stage)
+	local npack = DataPack.allocPacket(actorobj, 53, 6)
+	DataPack.writeInt(npack, enterId)
+	DataPack.writeInt(npack, fubenId)
+	DataPack.writeInt(npack, difficul)
+	DataPack.writeInt(npack, stage)
+	DataPack.flush(npack)
+end
+
+-- 服务器通知前端进行时间显示
+-- state: 1：重新计时 2：恢复计时 3：停止计时
+ThePlotHandleFuncs.sendTimeStatistics = function (actorobj, state)
+	state = state or 1 -- 默认重新计时
+	local npack = DataPack.allocPacket(actorobj, 53, 7)
+	DataPack.writeUInt(npack, state)
+	DataPack.flush(npack)
+end
+
+-- 注册剧情副本状态切换函数
+ThePlotHandleFuncs.registerJuQingStateFunc = function (func)
+	if func == nil or type(func) ~= "function" then
+		return
+	end
+	for k, v in ipairs(ThePlotHandleFuncs.juQingStateFuncs) do
+		if v == func then
+			debug_print("=========> 注册剧情副本状态切换函数重复")
+			return
+		end
+	end
+	table.insert(ThePlotHandleFuncs.juQingStateFuncs, func)
+end
+
+ThePlotHandleFuncs[ThePlotHandleFuncs.netMsgs.changeJuQingState] = function (actorobj, packet)
+	local key = DataPack.readString(packet)
+	debug_print("===============> 剧情副本播放剧情状态改变,剧情key[" .. dump(key) .. "]")
+	if key ~= nil and key ~= "none" then
+		for k, v in ipairs(ThePlotHandleFuncs.juQingStateFuncs) do
+			if type(v) == "function" then
+				v(actorobj, key)
+			end
+		end
+		LActor.setJuQingState(actorobj, false)
+	end
+end
+
+ThePlotHandleFuncs.doJuQingStateChangeFunc = function (actorobj, key)
+	if key ~= nil and key ~= "none" then
+		local fubenId = LActor.getFubenId(actorobj)
+		if fubenId > 0 then
+			local fbPtr = LActor.getFubenPrt(actorobj)
+			local fbVar = Fuben.getDyanmicVar(fbPtr)
+			if fbVar.theplot_var and fbVar.theplot_var.monsterStage == 1 then
+				local sceneHandle = LActor.getSceneHandle(actorobj)
+				-- 启用定时器
+				Fuben.postSceneTimeCall(sceneHandle, TimerMsg.JuQingFubenTimeMsg, 1, -1)
+				-- 有剧情的播完后就设定时间
+				fbVar.theplot_var.startTime = System.getCurrMiniTime()
+				-- 推送计时
+				ThePlotHandleFuncs.sendTimeStatistics(actorobj, 1)
+			end
+			if ThePlotHandleFuncs.isJuQingEndedKey(key) == true then
+				-- 播完剧情才进行结算
+				if fbVar ~= nil and fbVar.theplot_var ~= nil and fbVar.theplot_var.startPlot == 1 then
+					fbVar.theplot_var.startPlot = 0
+					ThePlotHandleFuncs.successCrossFuben(actorobj, fubenId)
+				end
+			end
+		end
+	end
+end
+
+ThePlotHandleFuncs.registerAllMonsterKill()
+ThePlotHandleFuncs.registerJuQingStateFunc(ThePlotHandleFuncs.doJuQingStateChangeFunc)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeCiYing, ThePlotHandleFuncs.processNetData)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeOnActorDeath, ThePlotHandleFuncs.failReport)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogout, ThePlotHandleFuncs.actorLogout)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, ThePlotHandleFuncs.onNewDayArrive)
+TimerMsgFunc.register(TimerMsg.JuQingFubenTimeMsg, ThePlotHandleFuncs.onTimeCall) -- 定时器
+
+function ThePlotHandleFuncs.leftCount(actorobj, fbid)
+	if not fbid or fbid == 0 then
+		local sVar = LActor.getStaticVar(actorobj)
+		if sVar == nil or sVar.theplot_var == nil or sVar.theplot_var[1] == nil or sVar.theplot_var[1].process == nil then return 0 end
+
+		for  i = 1, sVar.theplot_var[1].process do
+			local retTable = ThePlotHandleFuncs.checkEnterResult(actorobj, i, 1)
+			if retTable.ret == 0 then
+				return 1
+			end
+		end
+	else
+		local fbConf = ThePlotHandleFuncs.getTheplotConfigByfubenId(fbid)
+		if not fbConf then return 0 end
+
+		local retTable = ThePlotHandleFuncs.checkEnterResult(actorobj, fbConf.id, 1)
+		if retTable.ret == 0 then
+			return 1
+		else
+			return 0
+		end
+	end
+end
+GetQuestTargetCount.register(qtJuQingFuBen, ThePlotHandleFuncs.leftCount)
+
+function ThePlotHandleFuncs.jingyingLeftCount(actorobj, fbid)
+	if fbid == 0 then
+		local sVar = LActor.getStaticVar(actorobj)
+		if sVar == nil or sVar.theplot_var == nil or sVar.theplot_var[2] == nil or sVar.theplot_var[2].process == nil then return 0 end
+
+		for  i = 1, sVar.theplot_var[2].process do
+			local retTable = ThePlotHandleFuncs.checkEnterResult(actorobj, i, 2)
+			if retTable.ret == 0 then
+				return 1
+			end
+		end
+	else
+		local fbConf = ThePlotHandleFuncs.getTheplotConfigByfubenId(fbid)
+		if not fbConf then return 0 end
+
+		local retTable = ThePlotHandleFuncs.checkEnterResult(actorobj, fbConf.id, 2)
+		if retTable.ret == 0 then
+			return 1
+		else
+			return 0
+		end
+	end
+end
+GetQuestTargetCount.register(qtCorssJingYingJuQing, ThePlotHandleFuncs.jingyingLeftCount)
+

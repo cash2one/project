@@ -1,0 +1,180 @@
+﻿--lua script
+--活动：仙灵封印
+--NPC: 仙灵封印
+
+--#include "data\language\LangCode.txt" once
+--#include "data\config\task\SLFYConf.txt" once
+----#include "data\functions\MonsterFunction.txt" once --注册怪物死亡时间
+
+--检查活动周
+function CheckActivityDayOfWeek()
+	local days = SLFYConf.dayOfWeek
+	if not days or #days==0 then return true end
+	local nday = System.getDayOfWeek()
+	for i=1, #days do
+		if nday == days[i] then
+			return true
+		end
+	end
+	return false
+end
+
+function SLFY_Main( sysarg, str )
+	--判断是否在活动期间，1表示仙灵封印活动
+	if LGuild.getActivityId() ~= 1 then
+		return Lang.TaskTalk.slfy0009
+	end
+	--是否加入帮派
+	local guildPtr = LActor.getGuildPtr(sysarg)
+	if guildPtr == nil then
+		print("no join a guild")
+		return str;
+	end
+	local guildPos = LActor.getGuildPos(sysarg)	--只有副宗主和宗主才能召唤仙灵
+	if (guildPos ~= 3) and (guildPos ~= 4) then
+		return Lang.TaskTalk.slfy0001
+	end
+	--根据仙灵封印建筑等级生成召唤菜单
+	local stage = LGuild.getGuildLevel(sysarg, 2)
+	if stage > 0 and stage <= #SLFYConf.stages then
+		for i=1, stage do
+			local nlingshi = SLFYConf.stages[i].lingShiCount
+			local menuStr = string.format(Lang.TaskTalk.slfy0005,i,nlingshi,i)
+			str = str..menuStr
+		end
+	end
+	
+	return str
+end
+
+--前往军团领地
+--stage: 仙灵的阶值
+function CallBoss(sysarg, stage)
+	LActor.closeNPCDialog( sysarg )	--先关闭原来那个对话框
+	local bossStage = tonumber(stage)
+	--条件判断
+	if bossStage<1 or bossStage > #SLFYConf.stages then
+		print( "no shouling in stage:"..bossStage )
+		return
+	end
+	local fbPtr = Fuben.getGuildFuBenPtr(sysarg)
+	if fbPtr==nil then
+		print( "fbPtr is null" )
+		return
+	end
+	local var = Fuben.getDyanmicVar(fbPtr)
+	if var==nil then
+		print( "fuben var is null" )
+		return
+	end
+
+	local today = System.getToday()
+	local last = LGuild.getValue(sysarg, gvLastCallSL)
+	if System.isSameDay(today,last) then	--是否已经召唤过boss
+		LActor.sendTipmsg(sysarg,Lang.TaskTalk.slfy0006, ttMessage)
+		return
+	end
+	
+	-- 记录帮派相关信息
+	var.bossStage = bossStage
+	var.guildid = LActor.getGuildId(sysarg)
+	
+	--是否有足够的军团灵石
+	local nGuildStone = SLFYConf.stages[bossStage].lingShiCount
+	if LActor.getGuildStone(sysarg) < nGuildStone then	--判断是否有足够的灵石
+		LActor.sendTipmsg(sysarg,Lang.ScriptTips.slfy0005, ttMessage)
+		return 
+	end
+	
+	--弹窗确认框
+	local tipMsg = string.format(Lang.ScriptTips.slfy0004,nGuildStone,stage)
+	LActor.messageBox(sysarg,LActor.getNpc(sysarg),0,tipMsg,Lang.ScriptTips.x00050.."/confirmCallBoss",Lang.ScriptTips.x00051.."/cancelCallBoss", NULL, 0)
+end
+
+--确认召唤仙灵
+function confirmCallBoss(sysarg)
+	local fbPtr = Fuben.getGuildFuBenPtr(sysarg)
+	if fbPtr==nil then
+		print("can't find fuben ptr")
+		return 
+	end
+	local var = Fuben.getDyanmicVar(fbPtr)
+	if var == nil then
+		print("can't find fuben var")
+		return
+	end
+	
+	local stage = var.bossStage
+	if stage == nil then
+		print( "boss stage is null while confirm call shouling" )
+		return 
+	end
+
+	local today = System.getToday()
+	local last = LGuild.getValue(sysarg, gvLastCallSL)
+	if System.isSameDay(today,last) then	--是否已经确认过
+		return 
+	end
+	
+	local talkNpc = LActor.getNpcPtr(sysarg)	-- 获取正在谈话的NPC，用来发送实体消息
+	if talkNpc == nil then return end
+	
+	--扣除灵石
+	local nGuildStone = SLFYConf.stages[stage].lingShiCount
+	LActor.addGuildStone(sysarg, -nGuildStone)	--扣除军团灵石，军团灵石个数配置单位为万
+	
+	--延时创建仙灵
+	local monsterId = SLFYConf.stages[stage].monsterId
+	local guildId = LActor.getGuildId(sysarg)	--创建函数
+	if guildId == 0 then return end	--这个应该不可能
+
+	LGuild.setValue(sysarg, gvLastCallSL, today) --保存最后召唤仙灵的日期，防止重复召唤
+
+	local pos = SLFYConf.ShouLingPos
+	local showTime = SLFYConf.showShouLingTime
+	Fuben.postDelayCreateMonsters(talkNpc,showTime*1000,monsterId,pos[1],pos[1],pos[2],pos[2],1,100000,true,guildId)	--时间转成毫秒
+	var.bossIsKilled = false
+	var.hasCallBoss = true
+	--发送帮派公告
+	local noticeMsg = string.format( Lang.TaskTalk.slfy0007, stage, showTime )
+	LGuild.sendChannelMsg( guildId,noticeMsg,ttChatWindow)
+
+	-- 在仙灵即将出现的位置显示特效
+	local showEffect = SLFYConf.showEffect
+	if showEffect ~= nil then
+		local hscene = LActor.getSceneHandle(sysarg)
+		Fuben.sendSceneEffect(sysarg, hscene, showEffect[1], showEffect[2], showEffect[3] * 1000, pos[1], pos[2])
+	end
+end
+
+-- 创建了仙灵怪物
+function OnCreateMonsters( monsterId, guildId )
+	local fbPtr = Fuben.getGuildFuBenById(guildId)
+	if fbPtr==nil then
+		print("can't find fuben ptr")
+		return 
+	end
+	local var = Fuben.getDyanmicVar(fbPtr)
+	if var == nil then
+		print("can't find fuben var")
+		return
+	end
+	-- 保存怪物ID
+	var.monsterId = monsterId
+
+	local stage = var.bossStage
+	if stage == nil then
+		print( "boss stage is null while confirm call shouling" )
+		return 
+	end
+	if guildId > 0 then
+		local noticeMsg = string.format(Lang.TaskTalk.slfy0008,stage)	--发送帮派消息
+		LGuild.sendChannelMsg(guildId,noticeMsg,ttChatWindow)
+	end
+end
+
+--取消召唤仙灵
+function cancelCallBoss(sysarg)
+end
+
+-- table.insert(MainFnTable,SLFY_Main)

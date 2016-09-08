@@ -1,0 +1,1372 @@
+-- 新剧情副本配置文件
+--#include "..\..\language\langCode.txt" once
+ThePlotConfig = {
+	quickCrossItemId = 28111, -- 快速扫荡消耗道具
+	starTranslate = { -- 通关星级条件的文案
+		Lang.ScriptTips.tplot001,
+		Lang.ScriptTips.tplot002,
+		Lang.ScriptTips.tplot003,
+		Lang.ScriptTips.tplot004,
+		Lang.ScriptTips.tplot005,
+	},
+	EveryDayTotalCnt = 30;
+	EveryDayQuickCrossCnt = 0, -- 每天的总扫荡次数
+	Story = {
+
+	--=====第一章剧情副本====-------
+		-- {
+		-- 	id = 1, -- 关卡id
+		-- 	FirstId = 1,  -- 关卡章节
+		-- 	SecondId = 1, -- 关卡回合
+		-- 	fid = 101, -- 关卡副本id
+		-- 	sid = 101, -- 关卡场景id
+		-- 	taskId = 12, -- 任务限制
+		-- 	-- taskId = 0, -- 任务限制
+		-- 	level_difficul = 1, -- 等级限制
+		-- 	tuijianZl = 1000, -- 普通难度推荐战力
+		-- 	tuijianzl_difficul = 35000, --  困难难度推荐战力
+		-- 	firstSucXinghun = 1000, -- 普通难度首次通过奖励
+		-- 	firstSucXinghunDifficul = 2000, -- 困难难度首次通过奖励
+		-- 	pos = { -- 进入的坐标
+		-- 		18, 79,
+		-- 	},
+		-- 	starConds = { -- 1.通关时间 2.全程血量不低于百分之几 1-100 3.全程最高伤害高于 4.x秒内击杀x只怪 5.通关
+		-- 		{
+		-- 			index = 1,
+		-- 			condId = 1,
+		-- 			count = 120,
+		-- 		},
+		-- 		{
+		-- 			index = 2,
+		-- 			condId = 3,
+		-- 			count = 100,
+		-- 		},
+		-- 		{
+		-- 			index = 3,
+		-- 			condId = 5,
+		-- 		},
+		-- 	},
+		-- 	crossAwards = { -- 通关奖励
+		-- 		normal = {
+		-- 			exp = 1000,
+		-- 			coin = 0,
+		-- 			root = 0,
+		-- 		},
+		-- 		advance = {					
+		-- 			exp = 8000,
+		-- 			coin = 0,
+		-- 			root = 0,
+		-- 		},
+		-- 	},
+		-- },
+		{
+			id = 1, -- 关卡id
+			FirstId = 1,  -- 关卡章节
+			SecondId = 1, -- 关卡回合
+			fid = 102, -- 关卡副本id
+			sid = 102, -- 关卡场景id
+			taskId = 21, -- 任务限制
+			-- taskId = 0, -- 任务限制
+			level_difficul = 1, -- 等级限制
+			tuijianZl = 1200, -- 普通难度推荐战力
+			tuijianzl_difficul = 38000, --  困难难度推荐战力
+			firstSucXinghun = 1000, -- 普通难度首次通过奖励
+			firstSucXinghunDifficul = 2000, -- 困难难度首次通过奖励
+			pos = { -- 进入的坐标
+				156, 43,
+			},
+			starConds = { -- 1.通关时间 2.全程血量不低于 3.全程最高伤害高于 4.x秒内击杀x只怪 5.通关
+				{
+					index = 1,
+					condId = 1,
+					count = 120,
+				},
+				{
+					index = 2,
+					condId = 1,
+					count = 90,
+				},
+				{
+					index = 3,
+					condId = 5,
+				},
+			},
+			crossAwards = { -- 通关奖励
+				normal = {
+					exp = 1000,
+					coin = 0,
+					root = 0,
+				},
+				advance = {					
+					exp = 10000,
+					coin = 0,
+					root = 0,
+				},
+			},
+		},
+		{
+			id = 2, -- 关卡id
+			FirstId = 1,  -- 关卡章节
+			SecondId = 2, -- 关卡回合
+			fid = 103, -- 关卡副本id
+			sid = 103, -- 关卡场景id
+			taskId = 35, -- 任务限制
+			-- taskId = 0, -- 任务限制
+			level_difficul = 1, -- 等级限制
+			tuijianZl = 2000, -- 普通难度推荐战力
+			tuijianzl_difficul = 40000, --  困难难度推荐战力
+			firstSucXinghun = 1000, -- 普通难度首次通过奖励
+			firstSucXinghunDifficul = 2000, -- 困难难度首次通过奖励
+			pos = {72,73},
+			starConds = { -- 1.通关时间 2.全程血量不低于 3.全程最高伤害高于 4.x秒内击杀x只怪 5.通关
+				{
+					index = 1,
+					condId = 1,
+					count = 100,
+				},
+				{
+					index = 2,
+					condId = 1,
+					count = 90,
+				},
+				{
+					index = 3,
+					condId = 5,
+				},
+			},
+			crossAwards = { -- 通关奖励
+				normal = {
+					exp = 1000,
+					coin = 0,
+					root = 0,
+				},
+				advance = {					
+					exp = 12000,
+					coin = 0,
+					root = 0,
+				},
+			},
+		},
+		{
+			id = 3, -- 关卡id
+			FirstId = 1,  -- 关卡章节
+			SecondId = 3, -- 关卡回合
+			fid = 104, -- 关卡副本id
+			sid = 104, -- 关卡场景id
+			taskId = 48, -- 任务限制
+			-- taskId = 0, -- 任务限制
+			level_difficul = 1, -- 等级限制
+			tuijianZl = 4000, -- 普通难度推荐战力
+			tuijianzl_difficul = 47000, --  困难难度推荐战力
+			firstSucXinghun = 1000, -- 普通难度首次通过奖励
+			firstSucXinghunDifficul = 2000, -- 困难难度首次通过奖励
+			pos = { -- 进入的坐标
+				79, 68,
+			},
+			starConds = { -- 1.通关时间 2.全程血量不低于 3.全程最高伤害高于 4.x秒内击杀x只怪 5.通关
+				{
+					index = 1,
+					condId = 1,
+					count = 120,
+				},
+				{
+					index = 2,
+					condId = 2,
+					count = 70,
+				},
+				{
+					index = 3,
+					condId = 5,
+				},
+			},
+			crossAwards = { -- 通关奖励
+				normal = {
+					exp = 1000,
+					coin = 0,
+					root = 0,
+				},
+				advance = {					
+					exp = 13000,
+					coin = 0,
+					root = 0,
+				},
+			},
+		},
+		{
+			id = 4, -- 关卡id
+			FirstId = 1,  -- 关卡章节
+			SecondId = 4, -- 关卡回合
+			fid = 105, -- 关卡副本id
+			sid = 105, -- 关卡场景id
+			taskId = 64, -- 任务限制
+			-- taskId = 0, -- 任务限制
+			level_difficul = 1, -- 等级限制
+			tuijianZl = 9000, -- 普通难度推荐战力
+			tuijianzl_difficul = 57000, --  困难难度推荐战力
+			firstSucXinghun = 1000, -- 普通难度首次通过奖励
+			firstSucXinghunDifficul = 2000, -- 困难难度首次通过奖励
+			pos = { -- 进入的坐标
+				7, 43,
+			},
+			starConds = { -- 1.通关时间 2.全程血量不低于 3.全程最高伤害高于 4.x秒内击杀x只怪 5.通关
+				{
+					index = 1,
+					condId = 1,
+					count = 120,
+				},
+				{
+					index = 2,
+					condId = 1,
+					count = 90,
+				},
+				{
+					index = 3,
+					condId = 5,
+				},
+			},
+			crossAwards = { -- 通关奖励
+				normal = {
+					exp = 1500,
+					coin = 0,
+					root = 0,
+				},
+				advance = {					
+					exp = 14000,
+					coin = 0,
+					root = 0,
+				},
+			},
+		},
+		{
+			id = 5, -- 关卡id
+			FirstId = 1,  -- 关卡章节
+			SecondId = 5, -- 关卡回合
+			fid = 106, -- 关卡副本id
+			sid = 106, -- 关卡场景id
+			taskId = 76, -- 任务限制
+			-- taskId = 0, -- 任务限制
+			level_difficul = 1, -- 等级限制
+			tuijianZl = 15000, -- 普通难度推荐战力
+			tuijianzl_difficul = 60000, --  困难难度推荐战力
+			firstSucXinghun = 1000, -- 普通难度首次通过奖励
+			firstSucXinghunDifficul = 2000, -- 困难难度首次通过奖励
+			pos = { 111,55},
+			starConds = { -- 1.通关时间 2.全程血量不低于 3.全程最高伤害高于 4.x秒内击杀x只怪 5.通关
+				{
+					index = 1,
+					condId = 1,
+					count = 90,
+				},
+				{
+					index = 2,
+					condId = 2,
+					count = 75,
+				},
+				{
+					index = 3,
+					condId = 5,
+				},
+			},
+			crossAwards = { -- 通关奖励
+				normal = {
+					exp = 4000,
+					coin = 0,
+					root = 0,
+				},
+				advance = {					
+					exp = 15000,
+					coin = 0,
+					root = 0,
+				},
+			},
+		},
+	--=====第一章剧情副本====-------
+
+
+	--=====第二章剧情副本====-------
+	--2-1
+	{
+			id = 6, -- 关卡id 
+			FirstId = 2,  -- 关卡章节
+			SecondId = 1, -- 关卡回合
+			fid = 107, -- 关卡副本id
+			sid = 107, -- 关卡场景id
+			taskId = 90, -- 任务限制
+			-- taskId = 0, -- 任务限制
+			level_difficul = 1, -- 等级限制
+			tuijianZl = 18000, -- 普通难度推荐战力
+			tuijianzl_difficul = 70000, --  困难难度推荐战力
+			firstSucXinghun = 1000, -- 普通难度首次通过奖励
+			firstSucXinghunDifficul = 2000, -- 困难难度首次通过奖励
+			pos = { 12, 81,},-- 进入的坐标
+			starConds = { -- 1.通关时间 2.全程血量不低于 3.全程最高伤害高于 4.x秒内击杀x只怪 5.通关
+				{
+					index = 1,				
+					condId = 1,
+					count = 90,
+				},
+				{
+					index = 2,
+					condId = 2,
+					count = 50,
+				},
+				{
+					index = 3,
+					condId = 5,
+				},
+			},
+			crossAwards = { -- 通关奖励
+				normal = {
+					exp = 5000,
+					coin = 0,
+					root = 0,
+				},
+				advance = {					
+					exp = 15100,
+					coin = 0,
+					root = 0,
+				},
+			},
+		},
+		--2-2
+		{
+			id = 7, -- 关卡id
+			FirstId = 2,  -- 关卡章节
+			SecondId = 2, -- 关卡回合
+			fid = 108, -- 关卡副本id
+			sid = 108, -- 关卡场景id
+			taskId = 103, -- 任务限制
+			-- taskId = 0, -- 任务限制
+			level_difficul = 1, -- 等级限制
+			tuijianZl = 28000, -- 普通难度推荐战力
+			tuijianzl_difficul = 78000, --  困难难度推荐战力
+			firstSucXinghun = 1000, -- 普通难度首次通过奖励
+			firstSucXinghunDifficul = 2000, -- 困难难度首次通过奖励
+			pos = { 12, 81,},-- 进入的坐标
+			starConds = { -- 1.通关时间 2.全程血量不低于 3.全程最高伤害高于 4.x秒内击杀x只怪 5.通关
+				{
+					index = 1,				
+					condId = 1,
+					count = 80,
+				},
+				{
+					index = 2,
+					condId = 1,
+					count = 60,
+				},
+				{
+					index = 3,
+					condId = 5,
+				},
+			},
+			crossAwards = { -- 通关奖励
+				normal = {
+					exp = 6000,
+					coin = 0,
+					root = 0,
+				},
+				advance = {					
+					exp = 15100,
+					coin = 0,
+					root = 0,
+				},
+			},
+		},
+		{
+			id = 8, -- 关卡id
+			FirstId = 2,  -- 关卡章节
+			SecondId = 3, -- 关卡回合
+			fid = 109, -- 关卡副本id
+			sid = 109, -- 关卡场景id
+			taskId = 109, -- 任务限制
+			-- taskId = 0, -- 任务限制
+			level_difficul = 1, -- 等级限制
+			tuijianZl = 38000, -- 普通难度推荐战力
+			tuijianzl_difficul = 120000, --  困难难度推荐战力
+			firstSucXinghun = 1000, -- 普通难度首次通过奖励
+			firstSucXinghunDifficul = 2000, -- 困难难度首次通过奖励
+			pos = {17,42},
+			starConds = { -- 1.通关时间 2.全程血量不低于 3.全程最高伤害高于 4.x秒内击杀x只怪 5.通关
+				{
+					index = 1,				
+					condId = 1,
+					count = 60,
+				},
+				{
+					index = 2,
+					condId = 1,
+					count = 50,
+				},
+				{
+					index = 3,
+					condId = 5,
+				},
+			},
+			crossAwards = { -- 通关奖励
+				normal = {
+					exp = 8000,
+					coin = 0,
+					root = 0,
+				},
+				advance = {					
+					exp = 15100,
+					coin = 0,
+					root = 0,
+				},
+			},
+		},
+		{
+			id = 9, -- 关卡id
+			FirstId = 2,  -- 关卡章节
+			SecondId = 4, -- 关卡回合
+			fid = 110, -- 关卡副本id
+			sid = 110, -- 关卡场景id
+			taskId = 114, -- 任务限制
+			-- taskId = 0, -- 任务限制
+			level_difficul = 1, -- 等级限制
+			tuijianZl = 40000, -- 普通难度推荐战力
+			tuijianzl_difficul = 130000, --  困难难度推荐战力
+			firstSucXinghun = 1500, -- 普通难度首次通过奖励
+			firstSucXinghunDifficul = 3000, -- 困难难度首次通过奖励
+			pos = { 127,111},
+			starConds = { -- 1.通关时间 2.全程血量不低于 3.全程最高伤害高于 4.x秒内击杀x只怪 5.通关
+				{
+					index = 1,				
+					condId = 1,
+					count = 75,
+				},
+				{
+					index = 2,
+					condId = 1,
+					count = 60,
+				},
+				{
+					index = 3,
+					condId = 5,
+				},
+			},
+			crossAwards = { -- 通关奖励
+				normal = {
+					exp = 9000,
+					coin = 0,
+					root = 0,
+				},
+				advance = {					
+					exp = 15100,
+					coin = 0,
+					root = 0,
+				},
+			},
+		},
+		{
+			id = 10, -- 关卡id
+			FirstId = 2,  -- 关卡章节
+			SecondId = 5, -- 关卡回合
+			fid = 111, -- 关卡副本id
+			sid = 111, -- 关卡场景id
+			taskId = 120, -- 任务限制
+			-- taskId = 0, -- 任务限制
+			level_difficul = 1, -- 等级限制
+			tuijianZl = 50000, -- 普通难度推荐战力
+			tuijianzl_difficul = 140000, --  困难难度推荐战力
+			firstSucXinghun = 1500, -- 普通难度首次通过奖励
+			firstSucXinghunDifficul = 3000, -- 困难难度首次通过奖励
+			pos = { -- 进入的坐标
+				79, 68,
+			},
+			starConds = { -- 1.通关时间 2.全程血量不低于 3.全程最高伤害高于 4.x秒内击杀x只怪 5.通关
+				{
+					index = 1,				
+					condId = 1,
+					count = 75,
+				},
+				{
+					index = 2,
+					condId = 1,
+					count = 60,
+				},
+				{
+					index = 3,
+					condId = 5,
+				},
+			},
+			crossAwards = { -- 通关奖励
+				normal = {
+					exp = 15100,
+					coin = 0,
+					root = 0,
+				},
+				advance = {					
+					exp = 33200,
+					coin = 0,
+					root = 0,
+				},
+			},
+		},
+		{
+			id = 11, -- 关卡id
+			FirstId = 2,  -- 关卡章节
+			SecondId = 6, -- 关卡回合
+			fid = 112, -- 关卡副本id
+			sid = 112, -- 关卡场景id
+			taskId = 126, -- 任务限制
+			-- taskId = 0, -- 任务限制
+			level_difficul = 1, -- 等级限制
+			tuijianZl = 56600, -- 普通难度推荐战力
+			tuijianzl_difficul = 155000, --  困难难度推荐战力
+			firstSucXinghun = 1500, -- 普通难度首次通过奖励
+			firstSucXinghunDifficul = 3000, -- 困难难度首次通过奖励
+			pos = { -- 进入的坐标
+				80,33,
+			},
+			starConds = { -- 1.通关时间 2.全程血量不低于 3.全程最高伤害高于 4.x秒内击杀x只怪 5.通关
+				{
+					index = 1,				
+					condId = 1,
+					count = 75,
+				},
+				{
+					index = 2,
+					condId = 1,
+					count = 60,
+				},
+				{
+					index = 3,
+					condId = 5,
+				},
+			},
+			crossAwards = { -- 通关奖励
+				normal = {
+					exp = 15100,
+					coin = 0,
+					root = 0,
+				},
+				advance = {					
+					exp = 33200,
+					coin = 0,
+					root = 0,
+				},
+			},
+		},
+	--=====第二章剧情副本====-------
+
+	--=====第三章剧情副本====-------
+
+	{
+			id = 12, -- 关卡id 
+			FirstId = 3,  -- 关卡章节
+			SecondId = 1, -- 关卡回合
+			fid = 113, -- 关卡副本id
+			sid = 113, -- 关卡场景id
+			taskId = 137, -- 任务限制
+			-- taskId = 0, -- 任务限制
+			level_difficul = 1, -- 等级限制
+			tuijianZl = 64000, -- 普通难度推荐战力
+			tuijianzl_difficul = 180000, --  困难难度推荐战力
+			firstSucXinghun = 1500, -- 普通难度首次通过奖励
+			firstSucXinghunDifficul = 3000, -- 困难难度首次通过奖励
+			pos = { 80, 44,},-- 进入的坐标
+			starConds = { -- 1.通关时间 2.全程血量不低于 3.全程最高伤害高于 4.x秒内击杀x只怪 5.通关
+				{
+					index = 1,				
+					condId = 1,
+					count = 75,
+				},
+				{
+					index = 2,
+					condId = 1,
+					count = 60,
+				},
+				{
+					index = 3,
+					condId = 5,
+				},
+			},
+			crossAwards = { -- 通关奖励
+				normal = {
+					exp = 15100,
+					coin = 0,
+					root = 0,
+				},
+				advance = {					
+					exp = 33200,
+					coin = 0,
+					root = 0,
+				},
+			},
+		},
+
+		{
+			id = 13, -- 关卡id
+			FirstId = 3,  -- 关卡章节
+			SecondId = 2, -- 关卡回合
+			fid = 114, -- 关卡副本id
+			sid = 114, -- 关卡场景id
+			taskId = 144, -- 任务限制
+			-- taskId = 0, -- 任务限制
+			level_difficul = 1, -- 等级限制
+			tuijianZl = 72000, -- 普通难度推荐战力
+			tuijianzl_difficul = 190000, --  困难难度推荐战力
+			firstSucXinghun = 2000, -- 普通难度首次通过奖励
+			firstSucXinghunDifficul = 4000, -- 困难难度首次通过奖励
+			pos = { 21, 47,},-- 进入的坐标
+			starConds = { -- 1.通关时间 2.全程血量不低于 3.全程最高伤害高于 4.x秒内击杀x只怪 5.通关
+				{
+					index = 1,				
+					condId = 1,
+					count = 75,
+				},
+				{
+					index = 2,
+					condId = 1,
+					count = 60,
+				},
+				{
+					index = 3,
+					condId = 5,
+				},
+			},
+			crossAwards = { -- 通关奖励
+				normal = {
+					exp = 15100,
+					coin = 0,
+					root = 0,
+				},
+				advance = {					
+					exp = 33200,
+					coin = 0,
+					root = 0,
+				},
+			},
+		},
+
+
+		{
+			id = 14, -- 关卡id
+			FirstId = 3,  -- 关卡章节
+			SecondId = 3, -- 关卡回合
+			fid = 115, -- 关卡副本id
+			sid = 115, -- 关卡场景id
+			taskId = 151, -- 任务限制
+			-- taskId = 0, -- 任务限制
+			level_difficul = 1, -- 等级限制
+			tuijianZl = 78000, -- 普通难度推荐战力
+			tuijianzl_difficul = 210000, --  困难难度推荐战力
+			firstSucXinghun = 2000, -- 普通难度首次通过奖励
+			firstSucXinghunDifficul = 4000, -- 困难难度首次通过奖励
+			pos = {53,50},
+			starConds = { -- 1.通关时间 2.全程血量不低于 3.全程最高伤害高于 4.x秒内击杀x只怪 5.通关
+				{
+					index = 1,				
+					condId = 1,
+					count = 75,
+				},
+				{
+					index = 2,
+					condId = 1,
+					count = 60,
+				},
+				{
+					index = 3,
+					condId = 5,
+				},
+			},
+			crossAwards = { -- 通关奖励
+				normal = {
+					exp = 15100,
+					coin = 0,
+					root = 0,
+				},
+				advance = {					
+					exp = 33000,
+					coin = 0,
+					root = 0,
+				},
+			},
+		},
+		{
+			id = 15, -- 关卡id
+			FirstId = 3,  -- 关卡章节
+			SecondId = 4, -- 关卡回合
+			fid = 116, -- 关卡副本id
+			sid = 116, -- 关卡场景id
+			taskId = 152, -- 任务限制
+			-- taskId = 0, -- 任务限制
+			level_difficul = 1, -- 等级限制
+			tuijianZl = 79000, -- 普通难度推荐战力
+			tuijianzl_difficul = 230000, --  困难难度推荐战力
+			firstSucXinghun = 2000, -- 普通难度首次通过奖励
+			firstSucXinghunDifficul = 4000, -- 困难难度首次通过奖励
+			pos = { -- 进入的坐标
+				12,44
+			},
+			starConds = { -- 1.通关时间 2.全程血量不低于 3.全程最高伤害高于 4.x秒内击杀x只怪 5.通关
+				{
+					index = 1,				
+					condId = 1,
+					count = 75,
+				},
+				{
+					index = 2,
+					condId = 1,
+					count = 60,
+				},
+				{
+					index = 3,
+					condId = 5,
+				},
+			},
+			crossAwards = { -- 通关奖励
+				normal = {
+					exp = 15100,
+					coin = 0,
+					root = 0,
+				},
+				advance = {					
+					exp = 33000,
+					coin = 0,
+					root = 0,
+				},
+			},
+		},
+		--3-5
+		{
+			id = 16, -- 关卡id
+			FirstId = 3,  -- 关卡章节
+			SecondId = 5, -- 关卡回合
+			fid = 117, -- 关卡副本id
+			sid = 117, -- 关卡场景id
+			taskId = 164, -- 任务限制
+			-- taskId = 0, -- 任务限制
+			level_difficul = 1, -- 等级限制
+			tuijianZl = 83000, -- 普通难度推荐战力
+			tuijianzl_difficul = 270000, --  困难难度推荐战力
+			firstSucXinghun = 2000, -- 普通难度首次通过奖励
+			firstSucXinghunDifficul = 4000, -- 困难难度首次通过奖励
+			pos = { -- 进入的坐标
+				8, 17,
+			},
+			starConds = { -- 1.通关时间 2.全程血量不低于 3.全程最高伤害高于 4.x秒内击杀x只怪 5.通关
+				{
+					index = 1,				
+					condId = 1,
+					count = 75,
+				},
+				{
+					index = 2,
+					condId = 1,
+					count = 60,
+				},
+				{
+					index = 3,
+					condId = 5,
+				},
+			},
+			crossAwards = { -- 通关奖励
+				normal = {
+					exp = 15100,
+					coin = 0,
+					root = 0,
+				},
+				advance = {					
+					exp = 33000,
+					coin = 0,
+					root = 0,
+				},
+			},
+		},
+		--3-6
+		{
+			id = 17, -- 关卡id
+			FirstId = 3,  -- 关卡章节
+			SecondId = 6, -- 关卡回合
+			fid = 118, -- 关卡副本id
+			sid = 118, -- 关卡场景id
+			taskId = 176, -- 任务限制
+			-- taskId = 0, -- 任务限制
+			level_difficul = 1, -- 等级限制
+			tuijianZl = 95000, -- 普通难度推荐战力
+			tuijianzl_difficul = 290000, --  困难难度推荐战力
+			firstSucXinghun = 2500, -- 普通难度首次通过奖励
+			firstSucXinghunDifficul = 5000, -- 困难难度首次通过奖励
+			pos = { -- 进入的坐标
+				44,27,
+			},
+			starConds = { -- 1.通关时间 2.全程血量不低于 3.全程最高伤害高于 4.x秒内击杀x只怪 5.通关
+				{
+					index = 1,				
+					condId = 1,
+					count = 75,
+				},
+				{
+					index = 2,
+					condId = 1,
+					count = 60,
+				},
+				{
+					index = 3,
+					condId = 5,
+				},
+			},
+			crossAwards = { -- 通关奖励
+				normal = {
+					exp = 22400,
+					coin = 0,
+					root = 0,
+				},
+				advance = {					
+					exp = 33000,
+					coin = 0,
+					root = 0,
+				},
+			},
+		},
+
+	--=====第三章剧情副本====-------
+
+	--=====第四章剧情副本====-------
+
+	{
+			id = 18, -- 关卡id 
+			FirstId = 4,  -- 关卡章节
+			SecondId = 1, -- 关卡回合
+			fid = 119, -- 关卡副本id
+			sid = 119, -- 关卡场景id
+			taskId = 187, -- 任务限制
+			-- taskId = 0, -- 任务限制
+			level_difficul = 1, -- 等级限制
+			tuijianZl = 100000, -- 普通难度推荐战力
+			tuijianzl_difficul = 330000, --  困难难度推荐战力
+			firstSucXinghun = 2500, -- 普通难度首次通过奖励
+			firstSucXinghunDifficul = 5000, -- 困难难度首次通过奖励
+			pos = { 44, 28,},-- 进入的坐标
+			starConds = { -- 1.通关时间 2.全程血量不低于 3.全程最高伤害高于 4.x秒内击杀x只怪 5.通关
+				{
+					index = 1,				
+					condId = 1,
+					count = 75,
+				},
+				{
+					index = 2,
+					condId = 1,
+					count = 60,
+				},
+				{
+					index = 3,
+					condId = 5,
+				},
+			},
+			crossAwards = { -- 通关奖励
+				normal = {
+					exp = 22400,
+					coin = 0,
+					root = 0,
+				},
+				advance = {					
+					exp = 44200,
+					coin = 0,
+					root = 0,
+				},
+			},
+		},
+
+		{
+			id = 19, -- 关卡id
+			FirstId = 4,  -- 关卡章节
+			SecondId = 2, -- 关卡回合
+			fid = 120, -- 关卡副本id
+			sid = 120, -- 关卡场景id
+			taskId = 192, -- 任务限制
+			-- taskId = 0, -- 任务限制
+			level_difficul = 1, -- 等级限制
+			tuijianZl = 110000, -- 普通难度推荐战力
+			tuijianzl_difficul = 410000, --  困难难度推荐战力
+			firstSucXinghun = 2500, -- 普通难度首次通过奖励
+			firstSucXinghunDifficul = 5000, -- 困难难度首次通过奖励
+			pos = { 44, 28,},-- 进入的坐标
+			starConds = { -- 1.通关时间 2.全程血量不低于 3.全程最高伤害高于 4.x秒内击杀x只怪 5.通关
+				{
+					index = 1,				
+					condId = 1,
+					count = 75,
+				},
+				{
+					index = 2,
+					condId = 1,
+					count = 60,
+				},
+				{
+					index = 3,
+					condId = 5,
+				},
+			},
+			crossAwards = { -- 通关奖励
+				normal = {
+					exp = 22400,
+					coin = 0,
+					root = 0,
+				},
+				advance = {					
+					exp = 44200,
+					coin = 0,
+					root = 0,
+				},
+			},
+		},
+
+
+		{
+			id = 20, -- 关卡id
+			FirstId = 4,  -- 关卡章节
+			SecondId = 3, -- 关卡回合
+			fid = 121, -- 关卡副本id
+			sid = 121, -- 关卡场景id
+			taskId = 197, -- 任务限制
+			-- taskId = 0, -- 任务限制
+			level_difficul = 1, -- 等级限制
+			tuijianZl = 60000, -- 普通难度推荐战力
+			tuijianzl_difficul = 420000, --  困难难度推荐战力
+			firstSucXinghun = 2500, -- 普通难度首次通过奖励
+			firstSucXinghunDifficul = 5000, -- 困难难度首次通过奖励
+			pos = {38,36},
+			starConds = { -- 1.通关时间 2.全程血量不低于 3.全程最高伤害高于 4.x秒内击杀x只怪 5.通关
+				{
+					index = 1,				
+					condId = 1,
+					count = 75,
+				},
+				{
+					index = 2,
+					condId = 1,
+					count = 60,
+				},
+				{
+					index = 3,
+					condId = 5,
+				},
+			},
+			crossAwards = { -- 通关奖励
+				normal = {
+					exp = 22400,
+					coin = 0,
+					root = 0,
+				},
+				advance = {					
+					exp = 44200,
+					coin = 0,
+					root = 0,
+				},
+			},
+		},
+		{
+			id = 21, -- 关卡id
+			FirstId = 4,  -- 关卡章节
+			SecondId = 4, -- 关卡回合
+			fid = 122, -- 关卡副本id
+			sid = 122, -- 关卡场景id
+			taskId = 202, -- 任务限制
+			-- taskId = 0, -- 任务限制
+			level_difficul = 1, -- 等级限制
+			tuijianZl = 65000, -- 普通难度推荐战力
+			tuijianzl_difficul = 430000, --  困难难度推荐战力
+			firstSucXinghun = 2500, -- 普通难度首次通过奖励
+			firstSucXinghunDifficul = 5000, -- 困难难度首次通过奖励
+			pos = { -- 进入的坐标
+				6,88,
+			},
+			starConds = { -- 1.通关时间 2.全程血量不低于 3.全程最高伤害高于 4.x秒内击杀x只怪 5.通关
+				{
+					index = 1,				
+					condId = 1,
+					count = 75,
+				},
+				{
+					index = 2,
+					condId = 1,
+					count = 60,
+				},
+				{
+					index = 3,
+					condId = 5,
+				},
+			},
+			crossAwards = { -- 通关奖励
+				normal = {
+					exp = 22400,
+					coin = 0,
+					root = 0,
+				},
+				advance = {					
+					exp = 44200,
+					coin = 0,
+					root = 0,
+				},
+			},
+		},
+		{
+			id = 22, -- 关卡id
+			FirstId = 4,  -- 关卡章节
+			SecondId = 5, -- 关卡回合
+			fid = 123, -- 关卡副本id
+			sid = 123, -- 关卡场景id
+			taskId = 206, -- 任务限制
+			-- taskId = 0, -- 任务限制
+			level_difficul = 1, -- 等级限制
+			tuijianZl = 70000, -- 普通难度推荐战力
+			tuijianzl_difficul = 460000, --  困难难度推荐战力
+			firstSucXinghun = 3000, -- 普通难度首次通过奖励
+			firstSucXinghunDifficul = 6000, -- 困难难度首次通过奖励
+			pos = { -- 进入的坐标
+				10, 44,
+			},
+			starConds = { -- 1.通关时间 2.全程血量不低于 3.全程最高伤害高于 4.x秒内击杀x只怪 5.通关
+				{
+					index = 1,				
+					condId = 1,
+					count = 75,
+				},
+				{
+					index = 2,
+					condId = 1,
+					count = 60,
+				},
+				{
+					index = 3,
+					condId = 5,
+				},
+			},
+			crossAwards = { -- 通关奖励
+				normal = {
+					exp = 22400,
+					coin = 0,
+					root = 0,
+				},
+				advance = {					
+					exp = 45800,
+					coin = 0,
+					root = 0,
+				},
+			},
+		},
+		{
+			id = 23, -- 关卡id
+			FirstId = 4,  -- 关卡章节
+			SecondId = 6, -- 关卡回合
+			fid = 124, -- 关卡副本id
+			sid = 124, -- 关卡场景id
+			taskId = 211, -- 任务限制
+			-- taskId = 0, -- 任务限制
+			level_difficul = 1, -- 等级限制
+			tuijianZl = 75000, -- 普通难度推荐战力
+			tuijianzl_difficul = 480000, --  困难难度推荐战力
+			firstSucXinghun = 3000, -- 普通难度首次通过奖励
+			firstSucXinghunDifficul = 6000, -- 困难难度首次通过奖励
+			pos = { -- 进入的坐标
+				111,48,
+			},
+			starConds = { -- 1.通关时间 2.全程血量不低于 3.全程最高伤害高于 4.x秒内击杀x只怪 5.通关
+				{
+					index = 1,				
+					condId = 1,
+					count = 75,
+				},
+				{
+					index = 2,
+					condId = 1,
+					count = 60,
+				},
+				{
+					index = 3,
+					condId = 5,
+				},
+			},
+			crossAwards = { -- 通关奖励
+				normal = {
+					exp = 22400,
+					coin = 0,
+					root = 0,
+				},
+				advance = {					
+					exp = 45800,
+					coin = 0,
+					root = 0,
+				},
+			},
+		},
+
+	--=====第四章剧情副本====-------
+
+	--=====第五章剧情副本====-------
+
+	{
+			id = 24, -- 关卡id 
+			FirstId = 5,  -- 关卡章节
+			SecondId = 1, -- 关卡回合
+			fid = 125, -- 关卡副本id
+			sid = 125, -- 关卡场景id
+			taskId = 215, -- 任务限制
+			-- taskId = 0, -- 任务限制
+			level_difficul = 1, -- 等级限制
+			tuijianZl = 52000, -- 普通难度推荐战力
+			tuijianzl_difficul = 540000, --  困难难度推荐战力
+			firstSucXinghun = 2500, -- 普通难度首次通过奖励
+			firstSucXinghunDifficul = 5000, -- 困难难度首次通过奖励
+			pos = { 81, 47,},-- 进入的坐标
+			starConds = { -- 1.通关时间 2.全程血量不低于 3.全程最高伤害高于 4.x秒内击杀x只怪 5.通关
+				{
+					index = 1,				
+					condId = 1,
+					count = 75,
+				},
+				{
+					index = 2,
+					condId = 1,
+					count = 60,
+				},
+				{
+					index = 3,
+					condId = 5,
+				},
+			},
+			crossAwards = { -- 通关奖励
+				normal = {
+					exp = 22400,
+					coin = 0,
+					root = 0,
+				},
+				advance = {					
+					exp = 45800,
+					coin = 0,
+					root = 0,
+				},
+			},
+		},
+
+		{
+			id = 25, -- 关卡id
+			FirstId = 5,  -- 关卡章节
+			SecondId = 2, -- 关卡回合
+			fid = 126, -- 关卡副本id
+			sid = 126, -- 关卡场景id
+			taskId = 219, -- 任务限制
+			-- taskId = 0, -- 任务限制
+			level_difficul = 1, -- 等级限制
+			tuijianZl = 54000, -- 普通难度推荐战力
+			tuijianzl_difficul = 550000, --  困难难度推荐战力
+			firstSucXinghun = 2500, -- 普通难度首次通过奖励
+			firstSucXinghunDifficul = 5000, -- 困难难度首次通过奖励
+			pos = { 37,35},-- 进入的坐标
+			starConds = { -- 1.通关时间 2.全程血量不低于 3.全程最高伤害高于 4.x秒内击杀x只怪 5.通关
+				{
+					index = 1,				
+					condId = 1,
+					count = 75,
+				},
+				{
+					index = 2,
+					condId = 1,
+					count = 60,
+				},
+				{
+					index = 3,
+					condId = 5,
+				},
+			},
+			crossAwards = { -- 通关奖励
+				normal = {
+					exp = 22400,
+					coin = 0,
+					root = 0,
+				},
+				advance = {					
+					exp = 45800,
+					coin = 0,
+					root = 0,
+				},
+			},
+		},
+
+
+		{
+			id = 26, -- 关卡id
+			FirstId = 5,  -- 关卡章节
+			SecondId = 3, -- 关卡回合
+			fid = 127, -- 关卡副本id
+			sid = 127, -- 关卡场景id
+			taskId = 229, -- 任务限制
+			-- taskId = 0, -- 任务限制
+			level_difficul = 1, -- 等级限制
+			tuijianZl = 60000, -- 普通难度推荐战力
+			tuijianzl_difficul = 570000, --  困难难度推荐战力
+			firstSucXinghun = 2500, -- 普通难度首次通过奖励
+			firstSucXinghunDifficul = 5000, -- 困难难度首次通过奖励
+			pos = {9,17},
+			starConds = { -- 1.通关时间 2.全程血量不低于 3.全程最高伤害高于 4.x秒内击杀x只怪 5.通关
+				{
+					index = 1,				
+					condId = 1,
+					count = 75,
+				},
+				{
+					index = 2,
+					condId = 1,
+					count = 60,
+				},
+				{
+					index = 3,
+					condId = 5,
+				},
+			},
+			crossAwards = { -- 通关奖励
+				normal = {
+					exp = 22400,
+					coin = 0,
+					root = 0,
+				},
+				advance = {					
+					exp = 62600,
+					coin = 0,
+					root = 0,
+				},
+			},
+		},
+		{
+			id = 27, -- 关卡id
+			FirstId = 5,  -- 关卡章节
+			SecondId = 4, -- 关卡回合
+			fid = 128, -- 关卡副本id
+			sid = 128, -- 关卡场景id
+			taskId = 245, -- 任务限制
+			-- taskId = 0, -- 任务限制
+			level_difficul = 1, -- 等级限制
+			tuijianZl = 65000, -- 普通难度推荐战力
+			tuijianzl_difficul = 620000, --  困难难度推荐战力
+			firstSucXinghun = 2500, -- 普通难度首次通过奖励
+			firstSucXinghunDifficul = 5000, -- 困难难度首次通过奖励
+			pos = { -- 进入的坐标
+				63,64,
+			},
+			starConds = { -- 1.通关时间 2.全程血量不低于 3.全程最高伤害高于 4.x秒内击杀x只怪 5.通关
+				{
+					index = 1,				
+					condId = 1,
+					count = 75,
+				},
+				{
+					index = 2,
+					condId = 1,
+					count = 60,
+				},
+				{
+					index = 3,
+					condId = 5,
+				},
+			},
+			crossAwards = { -- 通关奖励
+				normal = {
+					exp = 33000,
+					coin = 0,
+					root = 0,
+				},
+				advance = {					
+					exp = 62600,
+					coin = 0,
+					root = 0,
+				},
+			},
+		},
+		--5-5
+		{
+			id = 28, -- 关卡id
+			FirstId = 5,  -- 关卡章节
+			SecondId = 5, -- 关卡回合
+			fid = 129, -- 关卡副本id
+			sid = 129, -- 关卡场景id
+			taskId = 263, -- 任务限制
+			-- taskId = 0, -- 任务限制
+			level_difficul = 1, -- 等级限制
+			tuijianZl = 70000, -- 普通难度推荐战力
+			tuijianzl_difficul = 680000, --  困难难度推荐战力
+			firstSucXinghun = 3000, -- 普通难度首次通过奖励
+			firstSucXinghunDifficul = 6000, -- 困难难度首次通过奖励
+			pos = { -- 进入的坐标
+				100, 90,
+			},
+			starConds = { -- 1.通关时间 2.全程血量不低于 3.全程最高伤害高于 4.x秒内击杀x只怪 5.通关
+				{
+					index = 1,				
+					condId = 1,
+					count = 75,
+				},
+				{
+					index = 2,
+					condId = 1,
+					count = 60,
+				},
+				{
+					index = 3,
+					condId = 5,
+				},
+			},
+			crossAwards = { -- 通关奖励
+				normal = {
+					exp = 33000,
+					coin = 0,
+					root = 0,
+				},
+				advance = {					
+					exp = 62600,
+					coin = 0,
+					root = 0,
+				},
+			},
+		},
+		{
+			id = 29, -- 关卡id
+			FirstId = 5,  -- 关卡章节
+			SecondId = 6, -- 关卡回合
+			fid = 130, -- 关卡副本id
+			sid = 130, -- 关卡场景id
+			taskId = 295, -- 任务限制
+			-- taskId = 0, -- 任务限制
+			level_difficul = 1, -- 等级限制
+			tuijianZl = 75000, -- 普通难度推荐战力
+			tuijianzl_difficul = 780000, --  困难难度推荐战力
+			firstSucXinghun = 3000, -- 普通难度首次通过奖励
+			firstSucXinghunDifficul = 6000, -- 困难难度首次通过奖励
+			pos = { -- 进入的坐标
+				111,48,
+			},
+			starConds = { -- 1.通关时间 2.全程血量不低于 3.全程最高伤害高于 4.x秒内击杀x只怪 5.通关
+				{
+					index = 1,				
+					condId = 1,
+					count = 75,
+				},
+				{
+					index = 2,
+					condId = 1,
+					count = 60,
+				},
+				{
+					index = 3,
+					condId = 5,
+				},
+			},
+			crossAwards = { -- 通关奖励
+				normal = {
+					exp = 33000,
+					coin = 0,
+					root = 0,
+				},
+				advance = {					
+					exp = 62600,
+					coin = 0,
+					root = 0,
+				},
+			},
+		},
+
+	--=====第五章剧情副本====-------
+	},
+}

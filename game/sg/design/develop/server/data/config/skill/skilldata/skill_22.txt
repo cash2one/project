@@ -1,0 +1,42 @@
+{
+	id = 22,
+	name = Lang.Skill.s22Name,
+	desc = Lang.Skill.s22Desc,
+	vocation = 3,
+	skillType = 4,
+	skillSpellType = 0,
+	skillClass = 1,
+	commonCd = 0,
+	canbeDefault = false,
+	specialBuffCond = 0,
+	notAutoUse = false,
+	trainCondAddtions=
+{
+	{addtionsid=1,cond=1,value=8,consume=false},
+	{addtionsid=2,cond=1,value=14,consume=false},
+},
+	
+	trainCondAdddesc=
+{
+	{addtionid=1,iconid=304,name=Lang.Skill.s22_21Name,desc=Lang.Skill.s22_21Desc},
+	{addtionid=2,iconid=305,name=Lang.Skill.s22_22Name,desc=Lang.Skill.s22_22Desc},
+},
+ 	actions=
+{
+
+	{act=2,effect=1601,type=2},
+		
+},
+	skillSubLevel = { 
+--#include "Skill_22_1.txt"
+--#include "Skill_22_2.txt"
+--#include "Skill_22_3.txt"
+--#include "Skill_22_4.txt"
+--#include "Skill_22_5.txt"
+--#include "Skill_22_6.txt"
+--#include "Skill_22_7.txt"
+--#include "Skill_22_8.txt"
+--#include "Skill_22_9.txt"
+--#include "Skill_22_10.txt" 
+	},
+},

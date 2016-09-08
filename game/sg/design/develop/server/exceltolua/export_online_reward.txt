@@ -1,0 +1,133 @@
+--导出在线奖励配置表
+----------------------------------------------------------------------------------------
+--写文件
+function writeConfig(configname, concent)
+	if not concent then
+		print("concent is null")
+		return
+	end
+
+	if not configname then
+		print("configname is null")
+		return
+	end
+
+	local f = io.open(configname, "w")
+	f:write(concent)
+	f:close()
+end
+
+--number_index_flag 为true的时候加入数字下标(默认不加)
+local function sz_T2S(_t , number_index_flag)
+   local szRet = "{"
+    function doT2S(_i, _v)
+        if "number" == type(_i) then
+        	if number_index_flag then
+            	szRet = szRet .. "[" .. _i .. "] = "	--导表中是有坑的，在需要将配置导入C++的时候一定要将这行注释掉（但是只有当table为数组时才能这样做）
+            end
+            if "number" == type(_v) then
+                szRet = szRet .. _v .. ","
+            elseif "string" == type(_v) then
+                szRet = szRet .. '"' .. _v .. '"' .. ","
+            elseif "table" == type(_v) then
+                szRet = szRet .. sz_T2S(_v,number_index_flag) .. ","
+            else
+                szRet = szRet .. "nil,"
+            end
+        elseif "string" == type(_i) then
+            szRet = szRet .. _i..' = '
+            if "number" == type(_v) then
+                szRet = szRet .. _v .. ","
+            elseif "string" == type(_v) then
+                szRet = szRet .. '"' .. _v .. '"' .. ","
+            elseif "table" == type(_v) then
+                szRet = szRet .. sz_T2S(_v,number_index_flag) .. ","
+            else
+                szRet = szRet .. "nil,"
+            end
+        end
+    end
+    table.foreach(_t, doT2S,0)
+    szRet = szRet .. "}"
+    return szRet
+end
+
+
+--切割字符串
+local function split(str, splitChar)
+    local subStrTab = {};
+    while true do
+        local pos = string.find(str, splitChar);
+        if (not pos) then
+            subStrTab[#subStrTab + 1] = str;
+            break;
+        end
+        local subStr = string.sub(str, 1, pos - 1);
+        subStrTab[#subStrTab + 1] = subStr;
+        str = string.sub(str, pos + 1, #str);
+    end
+    return subStrTab;
+end
+
+
+function ReadOnlineReward()
+    local objexcel = CExcelReader:new()
+    if not objexcel then
+        print("objexcel is null")
+        return
+    end
+    print("start1")
+    objexcel:Init_App()
+    objexcel:OpenRead()
+    print("start2")
+    local obj = objexcel:LoadSheetByIndex(1)
+    print("start3")
+    if not obj then
+        print("LoadSheetByIndex失败!")
+        objexcel:Close()
+        objexcel:Quit_App()
+        return
+    end
+    local nCount = objexcel:GetCurrentSheetColCount()
+    local mCount = objexcel:GetCurrentSheetRowCount()
+
+
+    print("nCount", nCount)
+    print("mCount", mCount)
+
+    --在线时长
+    LOGINTIMEINTERVALS = {}
+    local reward_str = "OnlineReward = {\n"
+    for i = 2, mCount do
+        local curr_id = tonumber(objexcel:ReadCellAsString(i, 1))
+        local currReward = objexcel:ReadCellAsString(i, 3)
+
+        local curr_reward_str = string.format("{     id = %d,\n     reward = %s\n},\n",curr_id,currReward)
+        reward_str = reward_str..curr_reward_str
+
+        LOGINTIMEINTERVALS[i - 1] = tonumber(objexcel:ReadCellAsString(i, 2)) or 0
+    end
+    reward_str = reward_str.."\n}"
+
+
+    local str = '--OnlineReward_config\n--#include '..'"..\\..\\language\\langCode.txt" once\n\n'..reward_str.."\n\n".."LOGINTIMEINTERVALS = "..sz_T2S(LOGINTIMEINTERVALS)
+    objexcel:WriteFile("data/config/vip/online_reward.txt",str)
+
+    --print("here9")
+    --local str = format_vip_str(VIPConfig)
+    --print("here10")
+    --写文件
+    --[[
+    writeConfig(itemfile, str)
+    --print("here11")
+    objexcel:WriteFile("roots.txt",str)
+    print("here12")
+    print(str)
+    --]]
+
+    objexcel:Close()
+    objexcel:Quit_App()
+    objexcel:delete()
+
+
+end

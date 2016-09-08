@@ -1,0 +1,28 @@
+﻿{
+	id = 11700,
+	name = Lang.Item.n11700,
+	desc = Lang.Item.i11700,
+	type = 17,
+	sellType = 33,
+	icon = 602,
+	shape = {11241,11241,12241,12241,13241,13241,14241,14241},
+	color = 3,
+	dura = 0,
+	dup = 0,
+	colGroup = 0,
+	dealType = 0,
+	dealPrice = 0,
+	time = 1296000,
+	suitId = 0,
+	staitcAttrs = { 
+	},
+	strongAttrs = {  
+	},
+	flags = { 
+		recordLog = true,
+		autoStartTime = true,
+	},
+	conds = { 
+		{ cond = 1, value = 1, },
+	},
+},

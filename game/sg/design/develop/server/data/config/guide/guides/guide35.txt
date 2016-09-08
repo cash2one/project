@@ -1,0 +1,50 @@
+﻿{
+  maxLevel = 40,
+  
+  --抽奖引导
+  trigger = 
+  { 
+    type = 1,
+    value = 324,
+  },
+
+  --引导中锁定的窗口ID
+  lockUI = 
+  {
+    180,
+  },
+
+  --引导的步骤 
+  steps = 
+  {
+
+    --第1步 引导点击抽奖的导航按钮
+    {
+      cond = { type = 1,  helpId = 7, data = 0 },
+
+      action = { type = 1, helpId = 7, data = 0, desc = "",showType = 2 },
+    },
+
+    --第2步 点击抽奖
+    {
+      cond = { type = 1, helpId = 181, data = 0 },
+
+      action = { type = 1, helpId = 181, data = 0, desc = "" },
+    },
+
+    --第3步 点击点关闭按钮
+    {
+      cond = { type = 0, helpId = 0, data = 0 },
+
+      action = { type = 1, helpId = 182, data = 0, desc = "" },
+    },
+
+    --第4步 关闭结束引导
+    {
+      cond = { type = 2, helpId = 180, data = 0 },
+
+      action = { type = 16, helpId = 0, data = Lang.GuideLang.func35, desc = "" },
+    },
+
+  } 
+}

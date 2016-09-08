@@ -1,0 +1,108 @@
+--七夕兑换活动
+--#include "data\functions\systems\timereward\activityconf.txt" once
+
+QixiExchange = {}
+QixiExchange.id = 82	--活动id
+
+function QixiExchange.getActorVar(actor)
+	if not actor then return end
+
+	local var = LActor.getStaticVar(actor)
+	if not var then return end
+
+	if not var.qixiExchange then var.qixiExchange = {} end
+
+	return var.qixiExchange
+end
+
+--发送数据
+function QixiExchange.sendInfo(actor, id)
+	if not actor or not id then return end
+
+	if not activityConf[id] or not activityConf[id].activities[QixiExchange.id] or ONLINEREWARD.GetActivityState(id) == 0 then return end
+
+	local config = activityConf[id].activities[QixiExchange.id]
+	local var = QixiExchange.getActorVar(actor)
+	if not var then return end
+	if not var.exchangeItemCount then var.exchangeItemCount = {} end
+
+	local pack = DataPack.allocPacket(actor, BaseTypes.SystemId.timeRewardSystem, 162)
+	if not pack then return end
+
+	DataPack.writeInt(pack, id)
+	DataPack.writeByte(pack, #config.items)
+	for idx, _ in ipairs(config.items) do
+		DataPack.writeByte(pack, idx)
+		DataPack.writeInt(pack, var.exchangeItemCount[idx] or 0)
+	end
+
+	DataPack.flush(pack)
+end
+
+--兑换物品
+function QixiExchange.exchangeItem(actor, packet)
+	if not actor or not packet then return end
+
+	local id = DataPack.readInt(packet)
+	local idx = DataPack.readInt(packet)
+	local count = DataPack.readInt(packet)
+
+	if not activityConf[id] or ONLINEREWARD.GetActivityState(id) == 0 then return end
+
+	local config = activityConf[id].activities[QixiExchange.id]
+	if not config or not config.items[idx] then return end
+
+	local hasItem = LActor.getItemCount(actor, config.items[idx].needItem)
+	local needCount = config.items[idx].needCount * count
+	if needCount > hasItem then
+		LActor.sendTipmsg(actor, Lang.ScriptTips.qixiexchange001, ttMessage)
+		return
+	end
+
+	local var = QixiExchange.getActorVar(actor)
+	if not var then return end
+
+	if not var.exchangeItemCount then var.exchangeItemCount = {} end
+	if not var.exchangeItemCount[idx] then var.exchangeItemCount[idx] = 0 end
+	if var.exchangeItemCount[idx]+count > config.items[idx].maxExchange then
+		LActor.sendTipmsg(actor, Lang.ScriptTips.qixiexchange002, ttMessage)
+		return
+	end
+
+	var.exchangeItemCount[idx] = var.exchangeItemCount[idx] + count
+
+	if needCount ~= LActor.removeItem(actor, config.items[idx].needItem, needCount) then
+		LActor.sendTipmsg(actor, Lang.ScriptTips.qixiexchange003, ttMessage)
+		print("error qixiExchange, not remove enough item ---------  "..LActor.getActorId(actor))
+		return
+	end
+	LActor.addItem(actor, config.items[idx].itemId, 0, 0, count, 1, "qixiExchange")
+	if config.items[idx].type == 1 then
+		QixiTitleTriggerTarget( actor, 1, 1, count )
+	end
+
+	QixiExchange.sendInfo(actor, id)
+end
+
+function QixiExchange.onLogin(actor)
+	if not actor then return end
+
+	for _, conf in pairs(ActivityControl) do
+		if ONLINEREWARD.GetActivityState(conf.id) ~= 0 then
+			if activityConf[conf.id] and activityConf[conf.id].activities[QixiExchange.id] then
+				QixiExchange.sendInfo(actor, conf.id)
+				break
+			end
+		end
+	end
+end
+
+function QixiExchange.newDay(actor)
+	local var = QixiExchange.getActorVar(actor)
+	if not var then return end
+
+	var.exchangeItemCount = nil
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, QixiExchange.onLogin)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, QixiExchange.newDay)

@@ -1,0 +1,181 @@
+--每日限量购买
+--#include "data\functions\systems\timereward\activityconf.txt" once
+
+EveryDayLimitBuyActivity = {}
+
+function EveryDayLimitBuyActivity.getActorVar(actor, id)
+	if not actor or not id then return end
+	local var = LActor.getStaticVar(actor)
+	if not var then return end
+
+	if not var.everydayLimitBuyActivity then var.everydayLimitBuyActivity = {} end
+	if not var.everydayLimitBuyActivity[id] then var.everydayLimitBuyActivity[id] = {} end
+
+	return var.everydayLimitBuyActivity[id]
+end
+
+function EveryDayLimitBuyActivity.getSystemVar(id)
+	local sysVar = System.getStaticVar()
+	if not sysVar then return end
+
+	if not sysVar.everydayLimitBuyActivity then sysVar.everydayLimitBuyActivity = {} end
+	if not sysVar.everydayLimitBuyActivity[id] then sysVar.everydayLimitBuyActivity[id] = {} end
+	return sysVar.everydayLimitBuyActivity[id]
+end
+
+function EveryDayLimitBuyActivity.getItemsConfig(id)
+	if not activityConf[id] then
+		print("error EveryDayLimitBuyActivity buyItem id        "..id)
+		print(type(id))
+		return
+	end
+
+	local config = activityConf[id].activities[51]
+	if not config then return end
+
+	local state,starttime,endtime = ONLINEREWARD.GetActivityState(id)
+	if state == 0 then return end
+
+	local dayDiff = System.getDayDiff(System.getCurrMiniTime(), starttime) + 1
+
+	return config.items[dayDiff], dayDiff
+end
+
+function EveryDayLimitBuyActivity.sendInfo(actor, id)
+	if not actor then return end
+
+	local config, dayDiff = EveryDayLimitBuyActivity.getItemsConfig(id)
+	if not config then return end
+
+	local var = EveryDayLimitBuyActivity.getActorVar(actor, id)
+	if not var then return end
+	if not var.hasBuyItem then var.hasBuyItem = 0 end 	--玩家是否已购买物品
+
+	local sysVar = EveryDayLimitBuyActivity.getSystemVar(id)
+	if not sysVar then return end
+	if not sysVar.hasBuyItem then
+		sysVar.hasBuyItem = {}		--服务器总购买个数
+	end
+
+	local pack = DataPack.allocPacket(actor, BaseTypes.SystemId.timeRewardSystem, 152)
+	if not pack then return end
+
+	DataPack.writeInt(pack, id)
+	DataPack.writeInt(pack, dayDiff)
+	DataPack.writeByte(pack, #config)
+	for itemIdx, itemConfig in ipairs(config) do
+		DataPack.writeInt(pack, itemConfig.itemid)
+		DataPack.writeByte(pack, System.getIntBit(var.hasBuyItem, itemIdx))
+		DataPack.writeInt(pack, itemConfig.maxCount - (sysVar.hasBuyItem[itemIdx] or 0))
+	end
+
+	DataPack.flush(pack)
+end
+
+--购买物品
+function EveryDayLimitBuyActivity.buyItem(actor, id, itemid)
+	local config = EveryDayLimitBuyActivity.getItemsConfig(id)
+	if not config then return end
+
+	local itemConfig
+	local itemIdx
+	for tmp, conf in pairs(config) do
+		if conf.itemid == itemid then
+			itemConfig = conf
+			itemIdx = tmp
+			break
+		end
+	end
+	if not itemConfig or not itemIdx then return end
+
+	local var = EveryDayLimitBuyActivity.getActorVar(actor, id)
+	if not var then return end
+
+	if LActor.getMoneyCount(actor, itemConfig.moneyType) < itemConfig.price then
+		LActor.SendGeneralTips(actor, 1, itemConfig.moneyType, itemConfig.price)
+		return
+	end
+
+	if not var.hasBuyItem then var.hasBuyItem = 0 end
+	if System.getBitValue(var.hasBuyItem, itemIdx) == true then
+		LActor.sendTipmsg(actor, Lang.ScriptTips.limit002, ttMessage)
+		return
+	end
+
+	local sysVar = EveryDayLimitBuyActivity.getSystemVar(id)
+	if not sysVar then return end
+	if not sysVar.hasBuyItem then
+		sysVar.hasBuyItem = {}		--服务器总购买个数
+	end
+	if not sysVar.hasBuyItem[itemIdx] then sysVar.hasBuyItem[itemIdx]  = 0 end
+
+	if sysVar.hasBuyItem[itemIdx] >= itemConfig.maxCount then
+		LActor.sendTipmsg(actor, Lang.ScriptTips.limit003, ttMessage)
+		return
+	end
+
+	if Item.getBagEmptyGridCount(actor) < 1 then
+		LActor.SendGeneralTips(actor, 7, 0, 0)
+		return
+	end
+
+	var.hasBuyItem = System.setIntBit(var.hasBuyItem, itemIdx, true)
+	sysVar.hasBuyItem[itemIdx] = sysVar.hasBuyItem[itemIdx] + 1
+
+	LActor.changeMoney(actor, itemConfig.moneyType, -itemConfig.price, 1, true, "everydaylimitBuyActivity")
+
+	LActor.addItem(actor, itemConfig.itemid, 0, 0, 1, 0, "everydaylimitBuyActivity")
+
+	EveryDayLimitBuyActivity.sendInfo(actor, id)
+	
+	System.logCounter(LActor.getActorId(actor), LActor.getAccountName(actor), tostring(LActor.getLevel(actor)), "everydaylimitBuyActivity", tonumber(itemConfig.itemid), "", "", "", LActor.getName(actor))
+end
+
+function EveryDayLimitBuyActivity.onLogin(actor)
+	for _, conf in pairs(ActivityControl) do
+		local state,starttime,endtime = ONLINEREWARD.GetActivityState(conf.id)
+		if state ~= 0 then
+			if activityConf[conf.id] and activityConf[conf.id].activities[51] then
+				EveryDayLimitBuyActivity.sendInfo(actor, conf.id)
+			end
+		end
+	end
+end
+
+function EveryDayLimitBuyActivity.onNewday(actor)
+	for _, conf in pairs(ActivityControl) do
+		local state,starttime,endtime = ONLINEREWARD.GetActivityState(conf.id)
+		if state ~= 0 then
+			if activityConf[conf.id] and activityConf[conf.id].activities[51] then
+				local sysVar = EveryDayLimitBuyActivity.getSystemVar(conf.id)
+				if not sysVar then return end
+				local today = System.getToday()
+				if not sysVar.time or sysVar.time ~= today then
+					sysVar.time = today
+					sysVar.hasBuyItem = nil
+				end
+
+				local var = EveryDayLimitBuyActivity.getActorVar(actor, conf.id)
+				if not var then return end
+
+				var.hasBuyItem = nil
+			end
+		end
+	end
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, EveryDayLimitBuyActivity.onLogin)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, EveryDayLimitBuyActivity.onNewday)
+
+function EveryDayLimitBuyActivity.check(actor, args)
+	local tmp1 = tonumber(args[1])
+	if tmp1 == 1 then
+		EveryDayLimitBuyActivity.sendInfo(actor, 1)
+	elseif tmp1 == 2 then
+		local tmp2 = tonumber(args[2])
+		EveryDayLimitBuyActivity.buyItem(actor, 1, tmp2)
+	end
+end
+
+GmEventFuncList.register( "everylimit", EveryDayLimitBuyActivity.check, 1)
+

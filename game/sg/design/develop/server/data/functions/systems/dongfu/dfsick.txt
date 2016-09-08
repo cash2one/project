@@ -1,0 +1,119 @@
+
+
+DongfuManager.detectSick = function(ownerId, landId, lInfo, curTime)
+	if lInfo.sickFlag == 0 and lInfo.sickNextStep ~= 0 then
+		lInfo.sickNextStep = math.min(lInfo.sickNextStep or #DongfuConf.sickRate, #DongfuConf.sickRate)
+		local sConf = DongfuConf.sickRate[lInfo.sickNextStep]
+		if (lInfo.endTime - curTime) < sConf[1] then
+			local rate = System.getRandomNumber(100) + 1
+			if rate <= sConf[2] then
+				-- 长草、生虫
+				lInfo.sickFlag = System.getRandomNumber(2) + 1
+
+				local sickNoti = function(pChar)
+					local dp = DataPack.allocPacket(pChar, 157, 12)
+					DataPack.writeInt(dp, ownerId)
+					DataPack.writeByte(dp, landId)
+					DataPack.writeByte(dp, lInfo.sickFlag)
+					DataPack.flush(dp)
+				end
+				local dfData = DongfuManager.getDongfuData(ownerId)
+				DongfuManager.broadcast(dfData.playerSet, sickNoti)
+
+				-- 设置长草生虫状态
+				DongfuManager.setStateFlag(dfData, lInfo.sickFlag, true)
+
+				DongfuManager.onChanged(ownerId)
+			end
+			lInfo.sickNextStep = lInfo.sickNextStep - 1
+		end
+	end
+end
+
+DongfuManager.killSick = function(pChar, landId)
+	local atDongfu, ownerId = DongfuManager.isAtDongfu(pChar)
+	if not atDongfu then return end
+
+	local dfData = DongfuManager.getDongfuData(ownerId)
+	local info = dfData.info
+	if info == nil or info.list == nil or info.list[landId] == nil then return end
+
+	local lInfo = info.list[landId]
+	if lInfo.plantFlag ~= 1 or lInfo.sickFlag == 0 then return end
+
+	local isMax = false
+	local sId = LActor.getActorId(pChar)
+	local sData = DongfuManager.getDongfuData(sId)
+	local sInfo = sData.info
+	if (sInfo.killSickCount or 0) >= DongfuConf.sickCount then
+		isMax = true
+	else
+		sInfo.killSickCount = (sInfo.killSickCount or 0) + 1
+		DongfuManager.onChanged(sId)
+	end
+
+	-- 除草 杀虫
+	local flag = lInfo.sickFlag == 1 and 1 or 2
+	if DongfuManager.isAtHome(pChar) then
+		if isMax then
+			LActor.sendTipmsg(pChar, Lang.ScriptTips.df014, ttMessage)
+		else
+			DongfuManager.normalEvent(pChar, dfData, flag)
+			-------------------------
+			DongfuManager.operatingEvent(pChar, dfData, flag)
+			-------------------------
+		end
+	else
+		if isMax then
+			return LActor.sendTipmsg(pChar, Lang.ScriptTips.df007, ttMessage)
+		else
+			DongfuManager.normalEvent(pChar, dfData, flag)
+			DongfuManager.specEvent(pChar, dfData, flag)
+			-------------------------
+			DongfuManager.operatingEvent(pChar, dfData, flag)
+			-------------------------
+		end
+	end
+
+	lInfo.sickFlag = 0
+	DongfuManager.onKillSick(ownerId, dfData, landId)
+	DongfuManager.onChanged(ownerId)
+
+	if not isMax then
+		local aInfo = DongfuConf.sickAward[info.level or 1]
+		local count = aInfo.count
+		LActor.giveAward(pChar, aInfo.type, count)
+		--LActor.sendTipmsg(pChar, string.format(Lang.ScriptTips.df012, count), ttMessage)
+
+		local dp = DataPack.allocPacket(pChar, 139, 68)
+		DataPack.writeInt(dp, count)
+		DataPack.flush(dp)
+	end
+end
+
+DongfuManager.onKillSick = function(ownerId, dfData, landId)
+	local killSickNoti = function(pChar)
+		local dp = DataPack.allocPacket(pChar, 157, 12)
+		DataPack.writeInt(dp, ownerId)
+		DataPack.writeByte(dp, landId)
+		DataPack.writeByte(dp, 0)
+		DataPack.flush(dp)
+	end
+	DongfuManager.broadcast(dfData.playerSet, killSickNoti)	
+
+	local info = dfData.info
+	local hasSeek, hasBug = false, false
+	for i = 1, 9 do
+		local lInfo = info.list[i]
+		if lInfo ~= nil then
+			if lInfo.sickFlag == 1 then
+				hasSeek = true
+			elseif lInfo.sickFlag == 2 then
+				hasBug = true
+			end
+		end
+	end
+	-- 设置长草生虫状态
+	DongfuManager.setStateFlag(dfData, 1, hasSeek)
+	DongfuManager.setStateFlag(dfData, 2, hasBug)
+end

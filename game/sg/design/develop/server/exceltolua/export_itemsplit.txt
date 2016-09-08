@@ -1,0 +1,81 @@
+local ItemSplitFuncs = {}
+
+function ItemSplitFuncs.readItemSplit (objexcel)
+    local ItemSplitConf = {}
+    if not objexcel then
+        return ItemSplitConf
+    end
+
+    local cCount = objexcel:GetCurrentSheetColCount()
+    local rCount = objexcel:GetCurrentSheetRowCount()
+
+    local tmp = {}
+    for i = 2, rCount do
+        local itemId = tonumber(objexcel:ReadCellAsString(i, 1)) or 0
+        if itemId > 0 then
+            if ItemSplitConf[itemId] ~= nil then
+                print(string.format("= WARNNING => 警告 配置文件<分解配置>第%d行出现重复编号[%d]", i, itemId))
+            else
+                local num = tonumber(objexcel:ReadCellAsString(i, 2)) or 0
+                if num > 0 then
+                    local rowTable = {}
+                    for n = 1, num do
+                        local start = 3 + 3 * (n - 1)
+                        local tId = tonumber(objexcel:ReadCellAsString(i, start + 0)) or 0
+                        local tIdNum = tonumber(objexcel:ReadCellAsString(i, start + 1)) or 0
+                        local tIdRate = tonumber(objexcel:ReadCellAsString(i, start + 2)) or 0
+                        if tId > 0 and tIdNum > 0 and tIdRate then
+                            local t = {}
+                            t.id = tId
+                            t.count = tIdNum
+                            t.rate = tIdRate
+                            table.insert(rowTable, t)
+                        else
+                            print(string.format("= WARNNING => 警告 配置文件<分解配置>第%d行出现第[%d]个道具ID[%d]设置错误", i, n, tId))
+                        end
+                    end
+                    ItemSplitConf[itemId] = rowTable
+                else
+                    print(string.format("= WARNNING => 警告 配置文件<分解配置>第%d行出现无任何分解获得道具的问题 已过滤改行 注意检查", i))
+                end
+
+            end
+        end
+    end
+    return ItemSplitConf
+end
+
+-- 读取日常任务配置文件
+function ReadItemSplitConfig()
+    local ItemSplitConf = nil
+
+    local objexcel = CExcelReader:new()
+    if not objexcel then
+        print("objexcel is null")
+        return
+    end
+
+    objexcel:Init_App()
+    objexcel:OpenRead()
+
+    -- 读取<分解配置>
+    local obj = objexcel:LoadSheetByIndex(1)
+    if not obj then
+        print("读取<分解配置>失败!")
+        objexcel:Close()
+        objexcel:Quit_App()
+        objexcel:delete()
+        return
+    end
+    ItemSplitConf = ItemSplitFuncs.readItemSplit(objexcel)
+
+    local str = string.format("--lua script\n--#include \"..\\..\\language\\LangCode.txt\"\nItemSplitConf = %s", dump(ItemSplitConf, true))
+    objexcel:WriteFile("data\\config\\itemsplit\\itemsplitconf.txt", str)
+
+    print("========== 导出分解配置表完成! ==========")
+
+
+    objexcel:Close()
+    objexcel:Quit_App()
+    objexcel:delete()
+end

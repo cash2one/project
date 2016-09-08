@@ -1,0 +1,49 @@
+﻿--lua script
+--#include "data\config\item\ZhanZheKaReward.txt" once
+--[[键入'ss'并按分号即可按模板生成脚本]]--
+
+--[[
+    函数名称：getRewardCodeBag_Main
+    函数描述：
+    参数 sysarg 的描述：
+]]
+function getRewardCodeBag_Main(sysarg)
+  local str = ""
+  str = str.."\\<#BL"..Lang.ScriptTips.x00082.."/@@checkPlayerNumber4>"
+           --.."\\<#BL"..Lang.ScriptTips.x00083.."/@@checkPlayerNumber3>"
+  if System.getServerId() == 1 then
+    --str = str.."\\<#BL"..Lang.ScriptTips.x00084.."/@@checkPlayerNumber2>" --只开1服
+  end
+  return str 
+end     
+
+function checkPlayerNumber2(sysarg,number)
+  --设置动态变量 用于判断输入窗口类型
+  local sDvar = LActor.getDyanmicVar(sysarg)
+  sDvar.getRewardCodeBag = 2  --增值类型   此类型 与 增值卡的类型对应 
+  LActor.queryServicesAddCard(sysarg, number, true)
+end
+function checkPlayerNumber3(sysarg,number)
+  --设置动态变量 用于判断输入窗口类型
+  local sDvar = LActor.getDyanmicVar(sysarg)
+  sDvar.getRewardCodeBag = 3  --增值类型
+  LActor.queryServicesAddCard(sysarg, number, true)
+end
+function checkPlayerNumber4(sysarg,number)
+  --设置动态变量 用于判断输入窗口类型 
+  local sDvar = LActor.getDyanmicVar(sysarg)
+  sDvar.getRewardCodeBag = 4  --增值类型 
+  LActor.queryServicesAddCard(sysarg, number, true)
+end
+
+function checkPlayerNumber(sysarg,number,type)
+	if (not number) then return false end
+  --设置动态变量 用于判断输入窗口类型 
+  local sDvar = LActor.getDyanmicVar(sysarg)
+  --sDvar.getRewardCodeBag = tonumber(type)  --增值类型  用于限制每个按钮只能固定输入类型 
+	
+	sDvar.getRewardCodeBag = 0
+  LActor.queryServicesAddCard(sysarg, number, true)
+end
+
+table.insert(MainFnTable,getRewardCodeBag_Main)

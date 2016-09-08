@@ -1,0 +1,33 @@
+﻿--苍蓝
+    talk =
+    {
+
+        minInterval = 5, -- 下限间隔时间(只有空闲发言有效)
+        maxInterval = 10, -- 上限间隔时间(只有空闲发言有效)
+
+        -- type: 发言类型
+        -- type=0 空闲状态
+        -- type=1 发现目标
+        -- type=2 攻击。暂时不支持
+        -- type=3 被攻击
+        -- type=4 死亡
+        -- type=5 血量低于某个值
+        -- rate: 发言概率（百分比。例如50%就配置50）
+        -- param：针对type=5使用，用于指定血量低于百分比。例如type=5，param=20表明血量低于20%发言
+        -- bctype：发言广播类型。 1：附近  2：场景 3：副本  4：世界
+	info =
+	{
+
+		{
+			type=1, rate=100,
+			param=90,
+			bctype=1,
+			content=
+			{
+				Lang.Paopao.m00385t1,
+			},
+		},
+
+	},
+    },
+	

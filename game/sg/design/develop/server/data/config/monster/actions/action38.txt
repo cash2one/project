@@ -1,0 +1,35 @@
+{
+	id = 38,	--行为ID
+	trigger = 1,	--触发类型，血量为1，时间为2
+
+	isInit = 1 ,
+	--创建的时候会调用,和info里的sequence一样
+	initSequence =
+	{
+		{ type = 28, duration = 0, DenyBeAttack = false,setDenyAttackActor = true,} ,--设置是否攻击玩家和被攻击
+		{ type = 33, duration = 0, DenyMove = true, DenyBeMove = true}, --设置不能移动和被移动
+		{ type = 34, 
+		  duration = 0,
+		  --需要回调执行的东西
+		  interval = 10 ,
+		  times = 1 , 
+		  items = 
+		  {
+		  		{ type = 9, duration = 0, id = 3, value = 1208, settype = 0 }	,	--变身踏云狐,设置外观ID属性
+		  		{ type = 28, duration = 0, DenyBeAttack = false,setDenyAttackActor = false,},--设置是否攻击玩家和被攻击
+		  		{ type = 33, duration = 0, DenyMove = false, DenyBeMove = false}, --设置不能移动和被移动
+		  },
+		},
+	},
+
+	infos = 
+	{
+		{
+			sequId = 1,
+			param = 100 ,
+			sequence = {
+				
+			}
+		},
+	},
+},

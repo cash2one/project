@@ -1,0 +1,17 @@
+--#include "..\..\..\language\LangCode.txt"
+activity14Conf = {
+	activityId = 14,
+
+	activities =
+	{
+		[74] = {
+		--纸鸢再述深情
+		id = 74,
+		--纸鸢物品id
+		item_id = 27201,
+		total_count = 200,
+		target = { {20,39005}, {20,39006}, {30,39007}, {50,39008}, {80,39009}, },
+		context = "8月17日-8月21日",
+		}
+	},
+}

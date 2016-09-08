@@ -1,0 +1,30 @@
+--死亡炽翼
+{
+	id = 5,	--行为ID
+	trigger = 1,	--触发类型，血量为1，时间为2
+	infos = 
+	{
+		--血量50%
+		{
+			sequId = 1,
+			param = 50,
+			sequence = 
+			{
+				{ type = 1, duration = 2, talk=Lang.Actions.zd001, talkType=1 },	--对白
+				{ type = 9, duration = 2, id = 3, value = 657 },	--设置外观
+				{ type = 3, duration = 2, buffType=80, groupId=0, value=0.25, times=1200,  interval=1, buffName="" },	--添加buff
+				{ type = 3, duration = 2, buffType=81, groupId=0, value=0.25, times=1200,  interval=1, buffName="" },	--添加buff
+				{ type = 3, duration = 2, buffType=28, groupId=0, value=1.5, times=1200,  interval=1, buffName="" },	--添加buff
+			} 
+		},
+		--血量30%
+		{
+			sequId = 2,
+			param = 30,
+			sequence = 
+			{
+				{ type = 7, duration = 2, func = "callSwcyFenShen" },	--召唤死亡炽翼分身
+			} 
+		},
+	},
+},

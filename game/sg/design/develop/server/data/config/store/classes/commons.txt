@@ -1,0 +1,280 @@
+﻿--常用道具
+
+{
+	name = Lang.Store.c00002, --分类名称
+ 	showAreaId =0,  --显示的区域ID,0表示商城普通区，1表示商城限量抢购区，2表示背包0元抢购区，3表示背包1元抢购区，4表示背包热销商品区
+	labelId =0,  --0表示是普通的商城，1表示背包限时抢购，2表示0元抢购,3表示1元抢购
+	totalBuyLimit =0,    --表示大类的数目的限制个数,0表示无限制，1表示限制一个
+	desc =Lang.Store.desc0001,   --分类的刷新描述
+	--该分类中的商品表
+	items = 
+	{
+		--	初级经验丹					
+		{						
+			id =	20001	,			
+			item =	18210	,			
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 3, price = 5	, bind = false,oldPrice=	10	 }, 
+			},					
+		},						
+
+		--	复活石					
+		{						
+			id =	20002	,			
+			item =	18600	,			
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	10	, bind = false,oldPrice=	20	 }, 
+			},					
+		},						
+		--	筋斗云					
+		{						
+			id =	20003	,			
+			item =	18601	,			
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	3	, bind = false,oldPrice=	6	 }, 
+			},											
+		},
+		--精装生命药水			
+		{						
+			id =	20015	,			
+			item =	18403	,			
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	8	, bind = false,oldPrice=	16	 }, 
+			},					
+		},		
+		--至尊生命药水					
+		{						
+			id =	20016	,			
+			item =	18404	,			
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	28	, bind = false,oldPrice=	56	 }, 
+			},
+					
+		},				
+	
+				--	初级生命包					
+		{						
+			id =	20005	,			
+			item =	19300	,			
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	5	, bind = false,oldPrice=	10	 }, 
+			},					
+		},	
+				--	初级法力包					
+		{						
+			id =	20006	,			
+			item =	19200	,			
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	5	, bind = false,oldPrice=	10	 }, 
+			},	
+		},
+				--	中级生命包					
+		{						
+			id =	20007	,			
+			item =	19301	,			
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	10	, bind = false,oldPrice=	20	 }, 
+			},				
+		},	
+			   --	中级法力包					
+		{						
+			id =	20008	,			
+			item =	19201	,			
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	10	, bind = false,oldPrice=	20	 }, 
+			},	
+		},
+			--	初级伙伴长生丹					
+		{						
+			id =	20009	,			
+			item =	19100	,			
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	5	, bind = false,oldPrice=	10	 }, 
+			},					
+		},	
+			--	中级伙伴长生丹					
+		{						
+			id =	20010	,			
+			item =	19101	,			
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	10	, bind = false,oldPrice=	20	 }, 
+			},					
+		},
+				--	1朵玫瑰					
+		{						
+			id =	20011	,			
+			item =	18608	,			
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	2	, bind = false,oldPrice=	4	 }, 
+			},					
+		},			
+				--	9朵玫瑰					
+		{						
+			id =	20012	,			
+			item =	18609	,			
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	15	, bind = false,oldPrice=	30	 }, 
+			},					
+		},		
+		--	99朵玫瑰					
+		{						
+			id =	20013	,			
+			item =	18610	,			
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	120	, bind = false,oldPrice=	240	 }, 
+			},					
+		},		
+		--	999朵玫瑰					
+		{						
+			id =	20014	,			
+			item =	18611	,			
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	999	, bind = false,oldPrice=	1800	 }, 
+			},					
+		},	
+
+
+		--[[	神兵进阶丹					
+		{						
+			id =	20017	,			
+			item =	24842	,			
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	15	, bind = false,oldPrice=	28	 }, 
+			},					
+		},]]
+
+		--[[	技能秘匙					
+		{						
+			id =	20018	,			
+			item =	24886	,			
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	150	, bind = false,oldPrice=	200	 }, 
+			},					
+		},]]
+		--[[	技能秘匙					
+		{						
+			id =	20019	,			
+			item =	65355	,			
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	20	, bind = false,oldPrice=	40	 }, 
+			},					
+		},]]
+		--[[	技能秘匙					
+		{						
+			id =	20020	,			
+			item =	65356	,			
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	20	, bind = false,oldPrice=	40	 }, 
+			},					
+		},]]	
+		
+		--改名卡
+		{						
+			id =	20021	,			
+			item =	44965	,			
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	588	, bind = false,oldPrice=	998	 }, 
+			},
+		},
+	},
+},

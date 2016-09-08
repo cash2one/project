@@ -1,0 +1,38 @@
+﻿--灵器物品使用
+
+function GemItemUseHandler(sysarg, itemIdx, itemPtr, conf)
+	if conf == nil then return end
+
+	if LActor.isActorSystemOpen(sysarg, siGem) == false then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.it002,ttWarmTip)
+		return 
+	end
+
+	if LActor.getFreeGemSlotCount( sysarg, 1 ) <= 0 then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.it001,ttWarmTip)
+		return 
+	end
+
+	if LActor.removeItemByPtr(sysarg, itemPtr, 1, true, "use_gem_item", 1) ~= 1 then
+		print("remove gem item error")
+		return
+	end
+	
+	local sid = LActor.makeSoulUID( sysarg )
+	if sid <= 0 then
+		print( "make soul id error:"..sid )
+		return
+	end
+
+	LActor.addSoul(sysarg, 1, sid, conf.soultype, conf.quality, 1, conf.expr)
+end
+
+-- @brief: 注册灵器物品使用Handler
+function GemItemInit(sysarg)
+	for i = 1, table.getn(GemSoulItem) do
+		local conf = GemSoulItem[i]
+		GlobalItemFn[conf.item_id] = { func = GemItemUseHandler, params = conf, }
+	end
+end
+
+table.insert(InitFnTable, GemItemInit)

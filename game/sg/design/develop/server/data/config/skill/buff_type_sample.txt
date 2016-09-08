@@ -1,0 +1,176 @@
+#ifndef _BUFF_TYPE_H_
+#define _BUFF_TYPE_H_
+/************************************************************************
+*                             游戏属性类型定义文件
+*    游戏属性指游戏中物品、技能等能够作用产生的属性。属性由属性的类型和属性的值构成。属
+*  性类型表示属性作用的具体意义，例如物理攻击、体力上限、命中等；而属性值则表示此属性作
+*  用意义的量值，物理攻击+1，物理攻击+2是两个不同的属性，其属性的类型相同，但值不同。
+意，此枚举中的成员不能删除和插入成员，增加新属性请添加到末尾， ★★否则会造成灾难性的后果
+*  ▲对于Add类型的属性，支持使用负数作为减少属性值；
+*  ▲对于Power类型的属性，0.1表示增加10%，-0.2表示减少20%；
+************************************************************************/
+
+typedef enum tagGameAttributeType
+{
+    aUndefined = 0,				//未定义属性
+	aSilence = 1,				// 沉默
+	// 以下4种是用于宠物的特殊类型
+	aMasterAttack = 2,			// 宠物攻击时，一定概率给主人增加A%攻击，持续8S,这个值为增加的百分比，类型为整数，A% = 值 / 10000;,整数
+	aMasterDodge = 3,			// 宠物攻击时，一定概率给主人增加B%闪避，持续8S,这个值为增加的百分比，类型为整数，B% = 值 / 10000;,整数
+	aMasterStrike = 4,			// 宠物攻击时，一定概率给主人增加C%暴击值，持续8S,这个值为增加的百分比，类型为整数，C% = 值 / 10000;,整数
+	aPetDef = 5,				// 宠物受到攻击时，一定概率给宠物自己增加X%物理防御和法术防御，持续15S，类型为整数，X% = 值 / 10000;,整数
+	aThreat = 6,				// 宠物的恐吓属性
+	aThreatDef = 7,				// 宠物的反恐吓属性
+	aBangBangTangExp = 8,		//棒棒糖经验加成
+
+    aHpAdd = 11,					//血增加
+    aHpPower = 12,					//血倍率增加
+    aMpAdd = 13 ,					//蓝增加
+    aMpPower = 14,					//蓝倍率增加
+    aMoveSpeedAdd = 15 ,			//移动速度增加
+    aMoveSpeedPower = 16,			//移动速度倍率增加
+
+    aMaxHpAdd = 17,					//最大血增加(生命)
+    aMaxHpPower = 18,				//最大血倍率增加
+    aMaxMpAdd = 19,					//最大蓝增加
+    aMaxMpPower = 20,				//最大蓝倍率增加
+
+    aOutAttackAdd = 21,				//物理攻击增加
+    aOutAttackPower = 22,			//物理攻击倍率增加
+    aOutDefenceAdd = 23,			//物理防御增加
+    aOutDefencePower = 24,			//物理防御倍率增加
+
+    aAddDefStrike = 25,				//抗暴击值增加
+    aAddDefStrikePower = 26,		//抗暴击倍率增加
+
+    aAllAttackAdd = 27,				// 所有攻击力增加
+    aAllAttackPower = 28,			//所有攻击力倍率增加
+    aSubDef = 29,					//无视防御
+    aSubDefPower = 30,				//无视防御增加
+
+
+    aInnerAttackAdd = 31,			//法术攻击增加
+    aInnerAttackPower = 32,			//法术攻击倍率增加
+    aInnerDefenceAdd = 33,			//法术防御增加
+    aInnerDefencePower = 34,			//法术防御倍率增加
+
+    aCriticalStrikesValueAdd = 35,	//暴击值的增加
+    aCriticalStrikesValuePower = 36,	//暴击值倍率增加
+    aDodgeValueAdd = 37 ,			    //闪避值增加
+    aDodgeValuePower = 38,			//闪避值倍率增加
+    aHitValueAdd = 39,				//命中值增加
+    aHitValuePower = 40,				//命中值倍率增加
+
+    aAttackAppend = 41,			    // 伤害追加
+    aAttackAppendPower = 42,		// 伤害追加倍率增加/减低
+
+    aHpRenewAdd = 43,			        //HP恢复增加
+    aHpRenewPower = 44,			        //HP恢复倍率增加
+
+    aMpRenewAdd = 45,			        //MP恢复增加
+    aMpRenewPower = 46,			        //MP恢复倍率增加
+
+    aAttackSpeedAdd = 47,                //增加攻击速度
+    aAttackSpeedPower = 48,              //攻击速度增加比率
+
+    aInAttackDamageValueAdd = 49,          //承受法术伤害的数值提高
+    aInAttackDamageValueAddPower = 50,     //承受法术伤害的倍率提高
+
+    aOutAttackDamageValueAdd = 51,          //承受物理伤害的数值提高
+    aOutAttackDamageValueAddPower = 52,     //承受物理伤害的倍率提高
+
+    Level2PropertyEnd = aOutAttackDamageValueAddPower, //2级属性的结束
+
+    GamePropertyCount = 53,   //实体的属性个数,下面的这些不需要进行属性的计算
+
+    aDamageAbsorb = GamePropertyCount,  //伤害吸收,自己或队友施放护盾，吸收N点伤害
+    aDamageAbsorbRate = 54, //按比例吸收伤害,降低一定百分比的所受伤害
+    aDamage2Mp = 55, // 伤害转换为蓝的消耗,吸收N点伤害，每吸收一点伤害需要损耗m点内力值，内力不足时护盾消失
+
+    aMoveForbid = 56,     //禁止移动,不可移动，但可施放技能
+    aDizzy = 57,          //晕眩,不可移动，不可施放普通技能，眩晕状态下部分特殊技能可使用
+    aInnnerSkillForbid = 58, //封，禁止使用内攻攻击
+    aOutSkillForbid = 59,  //断，禁止使用外攻攻击
+    aInnerAttackImmune = 60, //免疫内攻攻击 （包括控制性法术技能：封、定身、减速）
+    aOutAttackImmune = 61, //免疫外攻攻击（包括控制性物理技能：断、定身、减速）
+    aControlSkillImmune = 62, //免疫各种控制技能
+
+    aActorAuxPropertyStart = 63, //
+    aCriticalStrikeDamageRateAdd = aActorAuxPropertyStart, //物理暴击伤害比率的提高，默认的是1.5倍的，可以提升
+    aDizzyRate = 64,             // 攻击打出晕眩的几率
+
+    aExpAdd = 65,                                  //经验增加一个数值
+    aDizzyDef = 66,                               // 眩晕免疫
+    aLargen = 67,                               //变大
+    aSuperMan = 68,                              //无敌,能攻击，不能被攻击
+    aReliveProtectState = 69,                   //复活保护状态
+    aRootPower = 70,							// 灵气的增加倍率
+    //aXiuweiRenewAdd = 71,                     //修为回复速度提升
+	aDamageRate = 71,                     // 技能伤害追加百分比，为10000的倍数，比如2000表示0.2,整数
+    aUseSkill = 72,                          //使用一个buff的效果是定时使用技能
+    aHide = 73,                               //隐身
+    aSilenceRate = 74,                       //让对方沉默3秒的概率，属性值为概率值
+    aExpPower = 75,                           //经验的增加的倍率
+    aXiuweiAdd = 76,                          //增加修为
+    aReboundAttack = 77,                         // 反弹内外功的伤害百分比，为10000的倍数，比如2000表示0.2,整数
+	aPetAddHp = 78,								// 宠物加血
+	aRefFeatureForbid = 79,					//禁止刷新外观
+    aKillMonsterDamagePower = 80,             //杀怪伤害的提升，在最后的伤害输出的时候计算，物理攻击或者法术攻击的伤害输出(dot无效)
+    aInnerAttackDamageRateAdd = 81,          //承受法术伤害的倍率提高
+    aOutAttackDamageRateAdd = 82,           //承受物理伤害的倍率提高
+    aInnerAttackDamageRebound = 83,          //承受法术攻击伤害将有多少比例反弹给对方
+    aOutAttackDamageRebound = 84,            //承受物理攻击伤害将有多少比例反弹给对方
+    aPkProtectState = 85,                    //pk保护状态
+    aSelfAttackAppend = 86,				 //技能攻击的时候 攻击伤害追加n点（以固定值的方式影响角色造成的法术与物理攻击伤害）
+    aSilenceDef = 87,				// 沉默免疫的概率
+    aSelfCSDamageDec = 88,				//受到暴击伤害减少n% (以百分比的形式，减少用户受到的暴击伤害)
+    aRenownAdd = 89,                    //威望增加 n (整型)
+    aDamage2Hp = 90,                   // 吸血的百分比（把给对方的伤害的一部分转换为自己的血），为10000的倍数，比如2000表示0.2
+    aRenowRateAdd = 91,                //威望的获取速度加成(浮点型),+%n
+    aBindYuanBaoAdd = 92,				//赏金活动需要新增一个加绑定天珠的buff (整型)
+	aNotUseMount	= 93,				//禁止上坐骑
+	aNotTeleport	= 94,			//禁止速传
+	aHonorAdd = 95,					// 荣誉增加
+
+	aKLJTime = 96,				// 昆仑镜持续时间，为10000的倍数，即2000表示0.2秒
+	aKLJHP = 97,				// 昆仑镜反弹的血量
+	aDHZVal = 98,				// 东皇钟提升自身物理免伤和法术免伤值A
+	aDHZTime = 99,				// 东皇钟持续时间，，为10000的倍数，比如2000表示0.2
+
+	aFTYRate = 100,				// 翻天印触发概率,,这个值为增加的百分比，类型为整数，B% = (值 / 100)%;,整数
+	aFTYVal = 101,				// 翻天印对目标造成额外A点伤害
+	aStrikeState = 102,			// 100%暴击状态
+	aTotalExpRate = 103,		// 总经验倍率增加，小数,暂时只算打怪经验
+
+	aImprison = 104,			// 禁锢效果(不可攻击和不可移动,禁锢状态不可被移除)
+
+	aActorExtraDamage = 105,		// 标记者造成的伤害造成额外的伤害，小数
+	aAbsorbRate = 106, // 吸血的百分比,如果是群攻技能只吸第一个玩家的血(暂时只能秘籍中用)
+	aActorExpress = 107,   //用于改变玩家一些特性，特定group表示改变颜色
+	aSkillDamageRate = 108, //关联的技能的buff，，，使用技能造成伤害,  华元斩
+	aAbsorbHp = 109, // 对目标造成伤害的百分比，并回复相应的血量给玩家 ,小数
+	aSkillDamageRate1 = 110, //关联技能buff，踏云
+	aTeamExp = 111, // 组队经验buff,小数
+	aSceneExpRate = 112, // 特殊场景经验加成,小数
+	aAoeDeBuff = 113, //附近3格玩家伤血
+	aRevenge = 114, // 复仇，对杀死的玩家损失自身攻击的额外血量,小数
+	aRestoredHealth = 115, //回复所受伤害相应百分比的血量,小数
+	aCurse = 116, //受到的伤害增加百分比,小数
+	aSleep = 117, //昏睡,类似晕眩
+	aGroupAttackImmune  = 118,	//群攻免伤率，百分比
+	aPanGuFu = 119,	//盘古斧，占位，前端用的，后端没有
+	aWeiYa = 120, //威压效果，类似沉默但不能用技能解除
+
+	aZhenYingBuffLv1	= 121, //95,		//一级阵营buff
+	aZhenYingBuffLv2	= 122,		//二级阵营buff
+	aZhenYingBuffLv3	= 123,		//三级阵营buff
+
+	aAttackMiss	= 124,		//本体攻击,miss概率，万分比
+
+    /* ★添加新的属性类型枚举成员请在GameAttributeCount前添加！★ */
+    GameAttributeCount,	//此枚举成员的值将会自动取值为已定义属性的数量
+    /* ★添加新的属性类型枚举成员请在GameAttributeCount前添加！★ */
+} GAMEATTRTYPE;
+
+#endif
+

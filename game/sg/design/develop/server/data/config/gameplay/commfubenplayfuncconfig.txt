@@ -1,0 +1,981 @@
+CommFubenPlayFuncConfig = {
+	[17] = { -- 副本17 (血战豫州)
+		sceneId = 97, -- 场景id
+		position = { 27, 2 }, -- 进入的坐标
+		blockArea = {{49,51,58,62},},
+		activationType = 26, -- 活跃度类型
+		monsterList = { -- 刷怪配置
+			[1] = {	--普通难度
+
+				--第一阶段：颍川外
+				[1] = { -- 第一波怪物
+					{ -- 怪物
+						monsterId = 3450,
+						monsterNum = 10,
+						position = { 29,35,8,12 }, -- x1, x2, y1, y2
+					},
+				},
+				[2] = { -- 第二波怪物
+					{ -- 怪物
+						monsterId = 3450,
+						monsterNum = 10,
+						position = { 37,43,8,13 }, -- x1, x2, y1, y2
+					},
+				},
+				[3] = { -- 第三波怪物
+					{ -- 怪物
+						monsterId = 3450,
+						monsterNum = 10,
+						position = { 44,50,8,13 }, -- x1, x2, y1, y2
+					},
+				},
+				[4] = { -- 第四波怪物
+					{ -- 怪物
+						monsterId = 3451,
+						monsterNum = 1,
+						position = { 51,51,8,8 }, -- x1, x2, y1, y2
+						isBoss = true,
+					},
+				},
+
+				--第二阶段：颍川台阶下
+				[5] = { -- 第五波怪物
+					{ -- 怪物
+						monsterId = 3452,
+						monsterNum = 10,
+						position = { 25,33,16,20 }, -- x1, x2, y1, y2
+					},
+				},
+				[6] = { -- 第六波怪物
+					{ -- 怪物
+						monsterId = 3452,
+						monsterNum = 10,
+						position = { 20,29,20,24 }, -- x1, x2, y1, y2
+					},
+				},
+				[7] = { -- 第七波怪物
+					{ -- 怪物
+						monsterId = 3452,
+						monsterNum = 10,
+						position = { 15,22,23,27 }, -- x1, x2, y1, y2
+					},
+				},
+				[8] = { -- 第八波怪物
+					{ -- 怪物
+						monsterId = 3453,
+						monsterNum = 1,
+						position = { 15,15,18,18 }, -- x1, x2, y1, y2
+						isBoss = true,
+					},
+				},
+
+				--第三阶段：峡谷中
+				[9] = { -- 第九波怪物
+					{ -- 怪物
+						monsterId = 3454,
+						monsterNum = 5,
+						position = { 38,41,33,36 }, -- x1, x2, y1, y2
+					},
+					{ -- 怪物
+						monsterId = 3454,
+						monsterNum = 5,
+						position = { 41,45,36,38 }, -- x1, x2, y1, y2
+					},
+				},
+				[10] = { -- 第十波怪物
+					{ -- 怪物
+						monsterId = 3454,
+						monsterNum = 10,
+						position = { 48,54,41,44 }, -- x1, x2, y1, y2
+					},
+				},
+				[11] = { -- 第十一波怪物
+					{ -- 怪物
+						monsterId = 3454,
+						monsterNum = 10,
+						position = { 49,55,46,52 }, -- x1, x2, y1, y2
+					},
+				},
+				[12] = { -- 第十二波怪物
+					{ -- 怪物
+						monsterId = 3455,
+						monsterNum = 1,
+						position = { 60,60,57,57 }, -- x1, x2, y1, y2
+						isBoss = true,
+					},
+				},
+
+				--第四阶段：宛城平台下
+				[13] = { -- 第十三波怪物
+					{ -- 怪物
+						monsterId = 3456,
+						monsterNum = 10,
+						position = { 58,67,72,77 }, -- x1, x2, y1, y2
+					},
+				},
+				[14] = { -- 第十四波怪物
+					{ -- 怪物
+						monsterId = 3456,
+						monsterNum = 10,
+						position = { 75,86,64,70 }, -- x1, x2, y1, y2
+					},
+				},
+				[15] = { -- 第十五波怪物
+					{ -- 怪物
+						monsterId = 3457,
+						monsterNum = 10,
+						position = { 80,89,57,63 }, -- x1, x2, y1, y2
+					},
+				},
+				[16] = { -- 第十六波怪物
+					{ -- 怪物
+						monsterId = 3458,
+						monsterNum = 1,
+						position = { 89,89,55,55 }, -- x1, x2, y1, y2
+						isBoss = true,
+					},
+				},
+
+				--第五阶段：宛城平台上
+				[17] = { -- 第十七波怪物
+					{ -- 怪物
+						monsterId = 3459,
+						monsterNum = 10,
+						position = { 81,89,37,41 }, -- x1, x2, y1, y2
+					},
+				},
+				[18] = { -- 第十八波怪物
+					{ -- 怪物
+						monsterId = 3459,
+						monsterNum = 10,
+						position = { 71,79,33,37 }, -- x1, x2, y1, y2
+					},
+				},
+				[19] = { -- 第十九波怪物
+					{ -- 怪物
+						monsterId = 3460,
+						monsterNum = 10,
+						position = { 71,80,28,31 }, -- x1, x2, y1, y2
+					},
+				},
+				[20] = { -- 第二十波怪物
+					{ -- 怪物
+						monsterId = 3461,
+						monsterNum = 1,
+						position = { 75,75,25,25 }, -- x1, x2, y1, y2
+						isBoss = true,
+					},
+				},
+			},
+
+			[2] = {	--困难难度
+
+				--第一阶段：颍川外
+				[1] = { -- 第一波怪物
+					{ -- 怪物
+						monsterId = 3462,
+						monsterNum = 10,
+						position = { 29,35,8,12 }, -- x1, x2, y1, y2
+					},
+				},
+				[2] = { -- 第二波怪物
+					{ -- 怪物
+						monsterId = 3462,
+						monsterNum = 10,
+						position = { 37,43,8,13 }, -- x1, x2, y1, y2
+					},
+				},
+				[3] = { -- 第三波怪物
+					{ -- 怪物
+						monsterId = 3462,
+						monsterNum = 10,
+						position = { 44,50,8,13 }, -- x1, x2, y1, y2
+					},
+				},
+				[4] = { -- 第四波怪物
+					{ -- 怪物
+						monsterId = 3463,
+						monsterNum = 1,
+						position = { 51,51,8,8 }, -- x1, x2, y1, y2
+						isBoss = true,
+					},
+				},
+
+				--第二阶段：颍川台阶下
+				[5] = { -- 第五波怪物
+					{ -- 怪物
+						monsterId = 3464,
+						monsterNum = 10,
+						position = { 25,33,16,20 }, -- x1, x2, y1, y2
+					},
+				},
+				[6] = { -- 第六波怪物
+					{ -- 怪物
+						monsterId = 3464,
+						monsterNum = 10,
+						position = { 20,29,20,24 }, -- x1, x2, y1, y2
+					},
+				},
+				[7] = { -- 第七波怪物
+					{ -- 怪物
+						monsterId = 3464,
+						monsterNum = 10,
+						position = { 15,22,23,27 }, -- x1, x2, y1, y2
+					},
+				},
+				[8] = { -- 第八波怪物
+					{ -- 怪物
+						monsterId = 3465,
+						monsterNum = 1,
+						position = { 15,15,18,18 }, -- x1, x2, y1, y2
+						isBoss = true,
+					},
+				},
+
+				--第三阶段：峡谷中
+				[9] = { -- 第九波怪物
+					{ -- 怪物
+						monsterId = 3466,
+						monsterNum = 5,
+						position = { 38,41,33,36 }, -- x1, x2, y1, y2
+					},
+					{ -- 怪物
+						monsterId = 3466,
+						monsterNum = 5,
+						position = { 41,45,36,38 }, -- x1, x2, y1, y2
+					},
+				},
+				[10] = { -- 第十波怪物
+					{ -- 怪物
+						monsterId = 3466,
+						monsterNum = 10,
+						position = { 48,54,41,44 }, -- x1, x2, y1, y2
+					},
+				},
+				[11] = { -- 第十一波怪物
+					{ -- 怪物
+						monsterId = 3466,
+						monsterNum = 10,
+						position = { 49,55,46,52 }, -- x1, x2, y1, y2
+					},
+				},
+				[12] = { -- 第十二波怪物
+					{ -- 怪物
+						monsterId = 3467,
+						monsterNum = 1,
+						position = { 60,60,57,57 }, -- x1, x2, y1, y2
+						isBoss = true,
+					},
+				},
+
+				--第四阶段：宛城平台下
+				[13] = { -- 第十三波怪物
+					{ -- 怪物
+						monsterId = 3468,
+						monsterNum = 10,
+						position = { 58,67,72,77 }, -- x1, x2, y1, y2
+					},
+				},
+				[14] = { -- 第十四波怪物
+					{ -- 怪物
+						monsterId = 3468,
+						monsterNum = 10,
+						position = { 75,86,64,70 }, -- x1, x2, y1, y2
+					},
+				},
+				[15] = { -- 第十五波怪物
+					{ -- 怪物
+						monsterId = 3469,
+						monsterNum = 10,
+						position = { 80,89,57,63 }, -- x1, x2, y1, y2
+					},
+				},
+				[16] = { -- 第十六波怪物
+					{ -- 怪物
+						monsterId = 3470,
+						monsterNum = 1,
+						position = { 89,89,55,55 }, -- x1, x2, y1, y2
+						isBoss = true,
+					},
+				},
+
+				--第五阶段：宛城平台上
+				[17] = { -- 第十七波怪物
+					{ -- 怪物
+						monsterId = 3471,
+						monsterNum = 10,
+						position = { 81,89,37,41 }, -- x1, x2, y1, y2
+					},
+				},
+				[18] = { -- 第十八波怪物
+					{ -- 怪物
+						monsterId = 3471,
+						monsterNum = 10,
+						position = { 71,79,33,37 }, -- x1, x2, y1, y2
+					},
+				},
+				[19] = { -- 第十九波怪物
+					{ -- 怪物
+						monsterId = 3472,
+						monsterNum = 10,
+						position = { 71,80,28,31 }, -- x1, x2, y1, y2
+					},
+				},
+				[20] = { -- 第二十波怪物
+					{ -- 怪物
+						monsterId = 3473,
+						monsterNum = 1,
+						position = { 75,75,25,25 }, -- x1, x2, y1, y2
+						isBoss = true,
+					},
+				},
+			},
+
+			[3] = {	--深渊难度
+
+				--第一阶段：颍川外
+				[1] = { -- 第一波怪物
+					{ -- 怪物
+						monsterId = 3474,
+						monsterNum = 10,
+						position = { 29,35,8,12 }, -- x1, x2, y1, y2
+					},
+				},
+				[2] = { -- 第二波怪物
+					{ -- 怪物
+						monsterId = 3474,
+						monsterNum = 10,
+						position = { 37,43,8,13 }, -- x1, x2, y1, y2
+					},
+				},
+				[3] = { -- 第三波怪物
+					{ -- 怪物
+						monsterId = 3474,
+						monsterNum = 10,
+						position = { 44,50,8,13 }, -- x1, x2, y1, y2
+					},
+				},
+				[4] = { -- 第四波怪物
+					{ -- 怪物
+						monsterId = 3475,
+						monsterNum = 1,
+						position = { 51,51,8,8 }, -- x1, x2, y1, y2
+						isBoss = true,
+					},
+				},
+
+				--第二阶段：颍川台阶下
+				[5] = { -- 第五波怪物
+					{ -- 怪物
+						monsterId = 3476,
+						monsterNum = 10,
+						position = { 25,33,16,20 }, -- x1, x2, y1, y2
+					},
+				},
+				[6] = { -- 第六波怪物
+					{ -- 怪物
+						monsterId = 3476,
+						monsterNum = 10,
+						position = { 20,29,20,24 }, -- x1, x2, y1, y2
+					},
+				},
+				[7] = { -- 第七波怪物
+					{ -- 怪物
+						monsterId = 3476,
+						monsterNum = 10,
+						position = { 15,22,23,27 }, -- x1, x2, y1, y2
+					},
+				},
+				[8] = { -- 第八波怪物
+					{ -- 怪物
+						monsterId = 3477,
+						monsterNum = 1,
+						position = { 15,15,18,18 }, -- x1, x2, y1, y2
+						isBoss = true,
+					},
+				},
+
+				--第三阶段：峡谷中
+				[9] = { -- 第九波怪物
+					{ -- 怪物
+						monsterId = 3478,
+						monsterNum = 5,
+						position = { 38,41,33,36 }, -- x1, x2, y1, y2
+					},
+					{ -- 怪物
+						monsterId = 3478,
+						monsterNum = 5,
+						position = { 41,45,36,38 }, -- x1, x2, y1, y2
+					},
+				},
+				[10] = { -- 第十波怪物
+					{ -- 怪物
+						monsterId = 3478,
+						monsterNum = 10,
+						position = { 48,54,41,44 }, -- x1, x2, y1, y2
+					},
+				},
+				[11] = { -- 第十一波怪物
+					{ -- 怪物
+						monsterId = 3478,
+						monsterNum = 10,
+						position = { 49,55,46,52 }, -- x1, x2, y1, y2
+					},
+				},
+				[12] = { -- 第十二波怪物
+					{ -- 怪物
+						monsterId = 3479,
+						monsterNum = 1,
+						position = { 60,60,57,57 }, -- x1, x2, y1, y2
+						isBoss = true,
+					},
+				},
+
+				--第四阶段：宛城平台下
+				[13] = { -- 第十三波怪物
+					{ -- 怪物
+						monsterId = 3480,
+						monsterNum = 10,
+						position = { 58,67,72,77 }, -- x1, x2, y1, y2
+					},
+				},
+				[14] = { -- 第十四波怪物
+					{ -- 怪物
+						monsterId = 3480,
+						monsterNum = 10,
+						position = { 75,86,64,70 }, -- x1, x2, y1, y2
+					},
+				},
+				[15] = { -- 第十五波怪物
+					{ -- 怪物
+						monsterId = 3481,
+						monsterNum = 10,
+						position = { 80,89,57,63 }, -- x1, x2, y1, y2
+					},
+				},
+				[16] = { -- 第十六波怪物
+					{ -- 怪物
+						monsterId = 3482,
+						monsterNum = 1,
+						position = { 89,89,55,55 }, -- x1, x2, y1, y2
+						isBoss = true,
+					},
+				},
+
+				--第五阶段：宛城平台上
+				[17] = { -- 第十七波怪物
+					{ -- 怪物
+						monsterId = 3483,
+						monsterNum = 10,
+						position = { 81,89,37,41 }, -- x1, x2, y1, y2
+					},
+				},
+				[18] = { -- 第十八波怪物
+					{ -- 怪物
+						monsterId = 3483,
+						monsterNum = 10,
+						position = { 71,79,33,37 }, -- x1, x2, y1, y2
+					},
+				},
+				[19] = { -- 第十九波怪物
+					{ -- 怪物
+						monsterId = 3484,
+						monsterNum = 10,
+						position = { 71,80,28,31 }, -- x1, x2, y1, y2
+					},
+				},
+				[20] = { -- 第二十波怪物
+					{ -- 怪物
+						monsterId = 3485,
+						monsterNum = 1,
+						position = { 75,75,25,25 }, -- x1, x2, y1, y2
+						isBoss = true,
+					},
+				},
+			},
+		},
+	},
+
+	[18] = { -- 副本18 (烽火长安)
+		sceneId = 98, -- 场景id
+		blockArea = {{62,70,45,48},{54,59,13,21}},
+		position = { 62, 95 }, -- 进入的坐标
+		activationType = 27, -- 活跃度类型
+		monsterList = { -- 刷怪配置
+			[1] = { -- 普通难度
+
+				--第一阶段：野外
+				[1] = { -- 第一波怪物
+					{ -- 怪物
+						monsterId = 3300,
+						monsterNum = 10,
+						position = { 61,70,86,90 }, -- x1, x2, y1, y2
+					},
+				},
+				[2] = { -- 第二波怪物
+					{ -- 怪物
+						monsterId = 3300,
+						monsterNum = 10,
+						position = { 71,78,82,86 }, -- x1, x2, y1, y2
+					},
+				},
+				[3] = { -- 第三波怪物
+					{ -- 怪物
+						monsterId = 3300,
+						monsterNum = 10,
+						position = { 77,86,78,83 }, -- x1, x2, y1, y2
+					},
+				},
+				[4] = { -- 第四波怪物（第一个BOSS，城墙下）
+					{ -- 怪物
+						monsterId = 3301,
+						monsterNum = 1,
+						position = { 85,85,74,74 }, -- x1, x2, y1, y2
+						isBoss = true,
+					},
+				},
+
+				--第二阶段：宫门外
+				[5] = { -- 第五波怪物
+					{ -- 怪物
+						monsterId = 3302,
+						monsterNum = 12,
+						position = { 60,70,62,67 }, -- x1, x2, y1, y2
+					},
+				},
+				[6] = { -- 第六波怪物
+					{ -- 怪物
+						monsterId = 3302,
+						monsterNum = 10,
+						position = { 52,60,56,62 }, -- x1, x2, y1, y2
+					},
+				},
+				[7] = { -- 第七波怪物
+					{ -- 怪物
+						monsterId = 3302,
+						monsterNum = 10,
+						position = { 52,60,56,62 }, -- x1, x2, y1, y2
+					},
+				},
+				[8] = { -- 第八波怪物（第二个BOSS，宫门外）
+					{ -- 怪物
+						monsterId = 3303,
+						monsterNum = 1,
+						position = { 49,49,55,55 }, -- x1, x2, y1, y2
+						isBoss = true,
+					},
+				},
+
+				--第三阶段：庭院内
+				[9] = { -- 第九波怪物
+					{ -- 怪物
+						monsterId = 3304,
+						monsterNum = 12,
+						position = { 30,40,69,72 }, -- x1, x2, y1, y2
+					},
+				},
+				[10] = { -- 第十波怪物
+					{ -- 怪物
+						monsterId = 3304,
+						monsterNum = 10,
+						position = { 26,36,71,75 }, -- x1, x2, y1, y2
+					},
+				},
+				[11] = { -- 第十一波怪物
+					{ -- 怪物
+						monsterId = 3304,
+						monsterNum = 10,
+						position = { 22,31,75,79 }, -- x1, x2, y1, y2
+					},
+				},
+				[12] = { -- 第十二波怪物（第三个BOSS，庭院内）
+					{ -- 怪物
+						monsterId = 3305,
+						monsterNum = 1,
+						position = { 22,22,80,80 }, -- x1, x2, y1, y2
+						isBoss = true,
+					},
+				},
+
+				--第四阶段：府邸口
+				[13] = { -- 第十三波怪物
+					{ -- 怪物
+						monsterId = 3306,
+						monsterNum = 12,
+						position = { 38,48,50,55 }, -- x1, x2, y1, y2
+					},
+				},
+				[14] = { -- 第十四波怪物
+					{ -- 怪物
+						monsterId = 3306,
+						monsterNum = 10,
+						position = { 25,35,49,53 }, -- x1, x2, y1, y2
+					},
+				},
+				[15] = { -- 第十五波怪物
+					{ -- 怪物
+						monsterId = 3307,
+						monsterNum = 10,
+						position = { 14,24,51,54 }, -- x1, x2, y1, y2
+					},
+				},
+				[16] = { -- 第十六波怪物（第一个BOSS，宫门外）
+					{ -- 怪物
+						monsterId = 3308,
+						monsterNum = 1,
+						position = { 13,13,46,46 }, -- x1, x2, y1, y2
+						isBoss = true,
+					},
+				},
+
+				--第五阶段：集市口
+				[17] = { -- 第十七波怪物
+					{ -- 怪物
+						monsterId = 3309,
+						monsterNum = 12,
+						position = { 30,39,38,43 }, -- x1, x2, y1, y2
+					},
+				},
+				[18] = { -- 第十八波怪物
+					{ -- 怪物
+						monsterId = 3309,
+						monsterNum = 10,
+						position = { 28,36,30,33 }, -- x1, x2, y1, y2
+					},
+				},
+				[19] = { -- 第十九波怪物
+					{ -- 怪物
+						monsterId = 3310,
+						monsterNum = 10,
+						position = { 33,42,24,28 }, -- x1, x2, y1, y2
+					},
+				},
+				[20] = { -- 第二十波怪物（第一个BOSS，宫门外）
+					{ -- 怪物
+						monsterId = 3311,
+						monsterNum = 1,
+						position = { 42,42,20,20 }, -- x1, x2, y1, y2
+						isBoss = true,
+					},
+				},
+			},
+
+			[2] = { -- 困难难度
+
+				--第一阶段：野外
+				[1] = { -- 第一波怪物
+					{ -- 怪物
+						monsterId = 3312,
+						monsterNum = 10,
+						position = { 61,70,86,90 }, -- x1, x2, y1, y2
+					},
+				},
+				[2] = { -- 第二波怪物
+					{ -- 怪物
+						monsterId = 3312,
+						monsterNum = 10,
+						position = { 71,78,82,86 }, -- x1, x2, y1, y2
+					},
+				},
+				[3] = { -- 第三波怪物
+					{ -- 怪物
+						monsterId = 3312,
+						monsterNum = 10,
+						position = { 77,86,78,83 }, -- x1, x2, y1, y2
+					},
+				},
+				[4] = { -- 第四波怪物（第一个BOSS，城墙下）
+					{ -- 怪物
+						monsterId = 3313,
+						monsterNum = 1,
+						position = { 85,85,74,74 }, -- x1, x2, y1, y2
+						isBoss = true,
+					},
+				},
+
+				--第二阶段：宫门外
+				[5] = { -- 第五波怪物
+					{ -- 怪物
+						monsterId = 3314,
+						monsterNum = 12,
+						position = { 60,70,62,67 }, -- x1, x2, y1, y2
+					},
+				},
+				[6] = { -- 第六波怪物
+					{ -- 怪物
+						monsterId = 3314,
+						monsterNum = 10,
+						position = { 52,60,56,62 }, -- x1, x2, y1, y2
+					},
+				},
+				[7] = { -- 第七波怪物
+					{ -- 怪物
+						monsterId = 3314,
+						monsterNum = 10,
+						position = { 52,60,56,62 }, -- x1, x2, y1, y2
+					},
+				},
+				[8] = { -- 第八波怪物（第二个BOSS，宫门外）
+					{ -- 怪物
+						monsterId = 3315,
+						monsterNum = 1,
+						position = { 49,49,55,55 }, -- x1, x2, y1, y2
+						isBoss = true,
+					},
+				},
+
+				--第三阶段：庭院内
+				[9] = { -- 第九波怪物
+					{ -- 怪物
+						monsterId = 3316,
+						monsterNum = 12,
+						position = { 30,40,69,72 }, -- x1, x2, y1, y2
+					},
+				},
+				[10] = { -- 第十波怪物
+					{ -- 怪物
+						monsterId = 3316,
+						monsterNum = 10,
+						position = { 26,36,71,75 }, -- x1, x2, y1, y2
+					},
+				},
+				[11] = { -- 第十一波怪物
+					{ -- 怪物
+						monsterId = 3316,
+						monsterNum = 10,
+						position = { 22,31,75,79 }, -- x1, x2, y1, y2
+					},
+				},
+				[12] = { -- 第十二波怪物（第三个BOSS，庭院内）
+					{ -- 怪物
+						monsterId = 3317,
+						monsterNum = 1,
+						position = { 22,22,80,80 }, -- x1, x2, y1, y2
+						isBoss = true,
+					},
+				},
+
+				--第四阶段：府邸口
+				[13] = { -- 第十三波怪物
+					{ -- 怪物
+						monsterId = 3318,
+						monsterNum = 12,
+						position = { 38,48,50,55 }, -- x1, x2, y1, y2
+					},
+				},
+				[14] = { -- 第十四波怪物
+					{ -- 怪物
+						monsterId = 3318,
+						monsterNum = 10,
+						position = { 25,35,49,53 }, -- x1, x2, y1, y2
+					},
+				},
+				[15] = { -- 第十五波怪物
+					{ -- 怪物
+						monsterId = 3319,
+						monsterNum = 10,
+						position = { 14,24,51,54 }, -- x1, x2, y1, y2
+					},
+				},
+				[16] = { -- 第十六波怪物（第一个BOSS，宫门外）
+					{ -- 怪物
+						monsterId = 3320,
+						monsterNum = 1,
+						position = { 13,13,46,46 }, -- x1, x2, y1, y2
+						isBoss = true,
+					},
+				},
+
+				--第五阶段：集市口
+				[17] = { -- 第十七波怪物
+					{ -- 怪物
+						monsterId = 3321,
+						monsterNum = 12,
+						position = { 30,39,38,43 }, -- x1, x2, y1, y2
+					},
+				},
+				[18] = { -- 第十八波怪物
+					{ -- 怪物
+						monsterId = 3321,
+						monsterNum = 10,
+						position = { 28,36,30,33 }, -- x1, x2, y1, y2
+					},
+				},
+				[19] = { -- 第十九波怪物
+					{ -- 怪物
+						monsterId = 3322,
+						monsterNum = 10,
+						position = { 33,42,24,28 }, -- x1, x2, y1, y2
+					},
+				},
+				[20] = { -- 第二十波怪物（第一个BOSS，宫门外）
+					{ -- 怪物
+						monsterId = 3323,
+						monsterNum = 1,
+						position = { 42,42,20,20 }, -- x1, x2, y1, y2
+						isBoss = true,
+					},
+				},
+			},
+
+			[3] = { -- 深渊难度
+
+				--第一阶段：野外
+				[1] = { -- 第一波怪物
+					{ -- 怪物
+						monsterId = 3324,
+						monsterNum = 10,
+						position = { 61,70,86,90 }, -- x1, x2, y1, y2
+					},
+				},
+				[2] = { -- 第二波怪物
+					{ -- 怪物
+						monsterId = 3324,
+						monsterNum = 10,
+						position = { 71,78,82,86 }, -- x1, x2, y1, y2
+					},
+				},
+				[3] = { -- 第三波怪物
+					{ -- 怪物
+						monsterId = 3324,
+						monsterNum = 10,
+						position = { 77,86,78,83 }, -- x1, x2, y1, y2
+					},
+				},
+				[4] = { -- 第四波怪物（第一个BOSS，城墙下）
+					{ -- 怪物
+						monsterId = 3325,
+						monsterNum = 1,
+						position = { 85,85,74,74 }, -- x1, x2, y1, y2
+						isBoss = true,
+					},
+				},
+
+				--第二阶段：宫门外
+				[5] = { -- 第五波怪物
+					{ -- 怪物
+						monsterId = 3326,
+						monsterNum = 12,
+						position = { 60,70,62,67 }, -- x1, x2, y1, y2
+					},
+				},
+				[6] = { -- 第六波怪物
+					{ -- 怪物
+						monsterId = 3326,
+						monsterNum = 10,
+						position = { 52,60,56,62 }, -- x1, x2, y1, y2
+					},
+				},
+				[7] = { -- 第七波怪物
+					{ -- 怪物
+						monsterId = 3326,
+						monsterNum = 10,
+						position = { 52,60,56,62 }, -- x1, x2, y1, y2
+					},
+				},
+				[8] = { -- 第八波怪物（第二个BOSS，宫门外）
+					{ -- 怪物
+						monsterId = 3327,
+						monsterNum = 1,
+						position = { 49,49,55,55 }, -- x1, x2, y1, y2
+						isBoss = true,
+					},
+				},
+
+				--第三阶段：庭院内
+				[9] = { -- 第九波怪物
+					{ -- 怪物
+						monsterId = 3328,
+						monsterNum = 12,
+						position = { 30,40,69,72 }, -- x1, x2, y1, y2
+					},
+				},
+				[10] = { -- 第十波怪物
+					{ -- 怪物
+						monsterId = 3328,
+						monsterNum = 10,
+						position = { 26,36,71,75 }, -- x1, x2, y1, y2
+					},
+				},
+				[11] = { -- 第十一波怪物
+					{ -- 怪物
+						monsterId = 3328,
+						monsterNum = 10,
+						position = { 22,31,75,79 }, -- x1, x2, y1, y2
+					},
+				},
+				[12] = { -- 第十二波怪物（第三个BOSS，庭院内）
+					{ -- 怪物
+						monsterId = 3329,
+						monsterNum = 1,
+						position = { 22,22,80,80 }, -- x1, x2, y1, y2
+						isBoss = true,
+					},
+				},
+
+				--第四阶段：府邸口
+				[13] = { -- 第十三波怪物
+					{ -- 怪物
+						monsterId = 3330,
+						monsterNum = 12,
+						position = { 38,48,50,55 }, -- x1, x2, y1, y2
+					},
+				},
+				[14] = { -- 第十四波怪物
+					{ -- 怪物
+						monsterId = 3330,
+						monsterNum = 10,
+						position = { 25,35,49,53 }, -- x1, x2, y1, y2
+					},
+				},
+				[15] = { -- 第十五波怪物
+					{ -- 怪物
+						monsterId = 3331,
+						monsterNum = 10,
+						position = { 14,24,51,54 }, -- x1, x2, y1, y2
+					},
+				},
+				[16] = { -- 第十六波怪物（第一个BOSS，宫门外）
+					{ -- 怪物
+						monsterId = 3332,
+						monsterNum = 1,
+						position = { 13,13,46,46 }, -- x1, x2, y1, y2
+						isBoss = true,
+					},
+				},
+
+				--第五阶段：集市口
+				[17] = { -- 第十七波怪物
+					{ -- 怪物
+						monsterId = 3333,
+						monsterNum = 12,
+						position = { 30,39,38,43 }, -- x1, x2, y1, y2
+					},
+				},
+				[18] = { -- 第十八波怪物
+					{ -- 怪物
+						monsterId = 3333,
+						monsterNum = 10,
+						position = { 28,36,30,33 }, -- x1, x2, y1, y2
+					},
+				},
+				[19] = { -- 第十九波怪物
+					{ -- 怪物
+						monsterId = 3334,
+						monsterNum = 10,
+						position = { 33,42,24,28 }, -- x1, x2, y1, y2
+					},
+				},
+				[20] = { -- 第二十波怪物（第一个BOSS，宫门外）
+					{ -- 怪物
+						monsterId = 3335,
+						monsterNum = 1,
+						position = { 42,42,20,20 }, -- x1, x2, y1, y2
+						isBoss = true,
+					},
+				},
+			},
+		},
+	},
+	
+}

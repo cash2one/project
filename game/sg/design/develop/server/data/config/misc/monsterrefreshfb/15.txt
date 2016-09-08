@@ -1,0 +1,61 @@
+﻿-- 一骑当千
+ {
+	fbid = 106,
+
+	fubenlistid = 1,
+
+	sceneid = 1054, -- 场景ID
+
+	--初始化怒气值
+	initanger = 88,
+
+	--打死一波怪,是否要下发方向指引
+	ifgonext = false,
+
+	--怪物总数量
+	monsternum = 68,
+
+	monsters =
+	{
+		--第一波怪
+		[1] = {
+			{
+				monsterId = 436, --怪物id
+				posX1 = 24, --怪物x坐标范围
+				posX2 = 30,
+				posY1 = 18,
+				posY2 = 22,
+				anger = 4,
+				num = 21,
+			},
+	
+
+		},
+		--第二波怪
+		[2] = {
+			{
+				monsterId = 437, --怪物id
+				posX1 = 21, --怪物x坐标范围
+				posX2 = 44,
+				posY1 = 17,
+				posY2 = 24,
+				anger = 4,
+				num = 22,
+			},
+			
+		},
+        --第三波怪
+        [3] = {
+			{
+				monsterId = 438, --怪物id
+				posX1 = 21, --怪物x坐标范围
+				posX2 = 44,
+				posY1 = 17,
+				posY2 = 24,
+				anger = 4,
+				num = 25,
+			},
+
+		},
+	},
+}

@@ -1,0 +1,793 @@
+﻿--#include "..\..\language\LangCode.txt"
+
+RankConfig=
+{ 
+  -- 排行榜第一层树结构节点
+	{	-- 个人实力排行榜
+    typeName = Lang.Rank.f1,     -- 个人实力
+    -- 排行榜第二层树结构节点
+    subList=
+    {
+	    {-- 战力排行
+	      subName=Lang.Rank.r1,
+	      rankID=1,
+	      rankConfig=
+        {  				      
+		      {--角色名 
+		        name=Lang.Rank.i2,
+		        value="playerName",
+		        colWidth=120,
+		        -- 连接类型 默认0    0是不能连接 1是人名 2是物品  3是伙伴  4是宝物  5是角色id
+		        linkType=1,
+		      },-- end 角色名
+		      
+		      {--战力 
+		        name=Lang.Rank.i3,
+		        value="point",
+		        colWidth=90,
+		        -- 连接类型 默认0    0是不能连接 1是人名 2是物品  3是伙伴  4是宝物  5是角色id
+		        linkType=0,
+		      },-- end 战力
+		      
+		      {--阵营 
+		        name=Lang.Rank.i4,
+		        value="campName",
+		        colWidth=90,
+		        -- 连接类型 默认0    0是不能连接 1是人名 2是物品  3是伙伴  4是宝物  5是角色id
+		        linkType=0,
+		      },-- end 阵营
+		      
+		      {--军团 
+		        name=Lang.Rank.i5,
+		        value="guildName",
+		        colWidth=110,
+		        -- 连接类型 默认0    0是不能连接 1是人名 2是物品  3是伙伴  4是宝物  5是角色id
+		        linkType=0,
+          },-- end 军团
+	      },-- end rankConfig
+	       
+	    },-- end 战力排行
+	    
+	    {-- 等级排行
+        subName = Lang.Rank.r2,
+        rankID=2,        -- 服务器排行id
+        rankConfig=
+        {
+		      {--角色名
+		        name=Lang.Rank.i2,
+		        value="playerName",
+		        colWidth=120,
+		        -- 连接类型 默认0    0是不能连接 1是人名 2是物品  3是伙伴  4是宝物  5是角色id
+		        linkType=1,
+		      },-- end 角色名
+	
+		      {--等级 
+		        name=Lang.Rank.i6,
+		        value="point",
+		        colWidth=90,
+		        -- 连接类型 默认0    0是不能连接 1是人名 2是物品  3是伙伴  4是宝物  5是角色id
+		        linkType=0,
+		      },-- end 等级 
+	
+		      {--阵营
+		        name=Lang.Rank.i4,
+		        value="campName",
+		        colWidth=90,
+		        -- 连接类型 默认0    0是不能连接 1是人名 2是物品  3是伙伴  4是宝物  5是角色id
+		        linkType=0,
+		      },-- end 阵营
+	
+		      {--军团
+		        name=Lang.Rank.i5,
+		        value="guildName",
+		        colWidth=110,
+		        -- 连接类型 默认0    0是不能连接 1是人名 2是物品  3是伙伴  4是宝物  5是角色id
+		        linkType=0,
+	        },-- end 军团
+	      },-- end rankConfig
+
+	    },-- end 等级排行
+	    
+	    {-- 灵根排行
+	      subName = Lang.Rank.r3,
+	      rankID=3,           -- 服务器排行id
+	      rankConfig=
+        {
+		      {--角色名
+		        name=Lang.Rank.i2,
+		        value="playerName",
+		        colWidth=120,
+		        -- 连接类型 默认0    0是不能连接 1是人名 2是物品  3是伙伴  4是宝物  5是角色id
+		        linkType=1,
+		      },-- end 角色名
+
+		      {--灵根 
+		        name=Lang.Rank.i7,
+		        value="point",
+		        colWidth=90,
+		        -- 连接类型 默认0    0是不能连接 1是人名 2是物品  3是伙伴  4是宝物  5是角色id
+		        linkType=0,
+		      },-- end 灵根
+
+		      {--阵营
+		        name=Lang.Rank.i4,
+		        value="campName",
+		        colWidth=90,
+		        -- 连接类型 默认0    0是不能连接 1是人名 2是物品  3是伙伴  4是宝物  5是角色id
+		        linkType=0,
+		      },-- end 阵营
+
+		      {--军团
+		        name=Lang.Rank.i5,
+		        value="guildName",
+		        colWidth=110,
+		        -- 连接类型 默认0    0是不能连接 1是人名 2是物品  3是伙伴  4是宝物  5是角色id
+		        linkType=0,
+          },-- end 军团
+	      },-- end rankConfig
+	    },-- end 灵根排行 
+	    
+	    {-- 成就排行
+	      subName = Lang.Rank.r4,
+	      rankID=4,        -- 服务器排行id
+	      rankConfig=
+        {
+		      {--角色名
+		        name=Lang.Rank.i2,
+		        value="playerName",
+		        colWidth=120,
+		        -- 连接类型 默认0    0是不能连接 1是人名 2是物品  3是伙伴  4是宝物  5是角色id
+		        linkType=1,
+		      },-- end 角色名
+
+		      {--成就 
+		        name=Lang.Rank.i8,
+		        value="point",
+		        colWidth=90,
+		        -- 连接类型 默认0    0是不能连接 1是人名 2是物品  3是伙伴  4是宝物  5是角色id
+		        linkType=0,
+		      },-- end 成就
+
+		      {--阵营
+		        name=Lang.Rank.i4,
+		        value="campName",
+		        colWidth=90,
+		        -- 连接类型 默认0    0是不能连接 1是人名 2是物品  3是伙伴  4是宝物  5是角色id
+		        linkType=0,
+		      },-- end 阵营
+
+		      {--军团
+		        name=Lang.Rank.i5,
+		        value="guildName",
+		        colWidth=110,
+		        -- 连接类型 默认0    0是不能连接 1是人名 2是物品  3是伙伴  4是宝物  5是角色id
+		        linkType=0,
+          },-- end 军团
+	      },-- end rankConfig
+	    },-- end 灵根排行
+    },
+     
+  },-- end 个人实力排行榜
+
+  {-- 灵器翅膀排行榜
+    typeName = Lang.Rank.f2,     -- 灵器翅膀 
+    -- 排行榜第二层树结构节点
+    subList=
+    {
+	    {-- 式神排行
+	      subName = Lang.Rank.r5,
+	      rankID=6,        -- 服务器排行id
+	      rankConfig=
+        {
+		      {--灵器
+		        name=Lang.Rank.i9,
+		        value="gemName",
+		        colWidth=80,
+		        -- 连接类型 默认0    0是不能连接 1是人名 2是物品  3是伙伴  4是宝物  5是角色id
+		        linkType=0,
+		      },-- end 灵器
+	
+		      {--战力
+		        name=Lang.Rank.i3,
+		        value="point",
+		        colWidth=50,
+		        -- 连接类型 默认0    0是不能连接 1是人名 2是物品  3是伙伴  4是宝物  5是角色id
+		        linkType=0,
+		      },-- end 战力
+	
+	        {--主人
+	          name=Lang.Rank.i12,
+	          value="playerName",
+	          colWidth=120,
+	          linkType=1,
+	        },--主人
+	
+		      {--阵营
+		        name=Lang.Rank.i4,
+		        value="campName",
+		        colWidth=70,
+		        -- 连接类型 默认0    0是不能连接 1是人名 2是物品  3是伙伴  4是宝物  5是角色id
+		        linkType=0,
+		      },-- end 阵营
+	
+		      {--军团
+		        name=Lang.Rank.i5,
+		        value="guildName",
+		        colWidth=90,
+		        -- 连接类型 默认0    0是不能连接 1是人名 2是物品  3是伙伴  4是宝物  5是角色id
+		        linkType=0,
+	        },-- end 军团
+	      },-- end rankConfig
+
+	    },-- end 灵器排行
+
+    },
+  },-- end 坐骑灵器排行榜 
+
+  {-- 伙伴坐骑排行榜
+    typeName = Lang.Rank.f4,     -- 伙伴坐骑 
+    -- 排行榜第二层树结构节点
+    subList=
+    {
+	    {-- 伙伴排行
+	      subName = Lang.Rank.r9,
+	      rankID=10,        -- 服务器排行id
+	      rankConfig=
+        {
+		      {--伙伴
+		        name=Lang.Rank.i15,
+		        value="petName",
+		        colWidth=80,
+		        -- 连接类型 默认0    0是不能连接 1是人名 2是物品  3是伙伴  4是宝物  5是角色id
+		        linkType=3,
+		      },-- end 伙伴
+	
+		      {--战力
+		        name=Lang.Rank.i3,
+		        value="point",
+		        colWidth=50,
+		        -- 连接类型 默认0    0是不能连接 1是人名 2是物品  3是伙伴  4是宝物  5是角色id
+		        linkType=0,
+		      },-- end 战力
+	
+	        {--主人
+	          name=Lang.Rank.i12,
+	          value="playerName",
+	          colWidth=120,
+	          linkType=1,
+	        },--主人
+	
+		      {--阵营
+		        name=Lang.Rank.i4,
+		        value="campName",
+		        colWidth=70,
+		        -- 连接类型 默认0    0是不能连接 1是人名 2是物品  3是伙伴  4是宝物  5是角色id
+		        linkType=0,
+		      },-- end 阵营
+	
+		      {--军团
+		        name=Lang.Rank.i5,
+		        value="guildName",
+		        colWidth=90,
+		        -- 连接类型 默认0    0是不能连接 1是人名 2是物品  3是伙伴  4是宝物  5是角色id
+		        linkType=0,
+	        },-- end 军团
+	      },-- end rankConfig
+
+	    },-- end 伙伴排行
+
+	    {-- 坐骑排行
+	      subName = Lang.Rank.r10,
+	      rankID=5,        -- 服务器排行id
+	      rankConfig=
+        {
+		      {--坐骑
+		        name=Lang.Rank.i16,
+		        value="mountName",
+		        colWidth=80,
+		        -- 连接类型 默认0    0是不能连接 1是人名 2是物品  3是伙伴  4是宝物  5是角色id
+		        linkType=0,
+		      },-- end 坐骑
+
+		      {--战力
+		        name=Lang.Rank.i3,
+		        value="point",
+		        colWidth=50,
+		        -- 连接类型 默认0    0是不能连接 1是人名 2是物品  3是伙伴  4是宝物  5是角色id
+		        linkType=0,
+		      },-- end 战力
+
+          {--主人
+            name=Lang.Rank.i12,
+            value="playerName",
+            colWidth=120,
+            linkType=1,
+          },--主人
+
+		      {--阵营
+		        name=Lang.Rank.i4,
+		        value="campName",
+		        colWidth=70,
+		        -- 连接类型 默认0    0是不能连接 1是人名 2是物品  3是伙伴  4是宝物  5是角色id
+		        linkType=0,
+		      },-- end 阵营
+
+		      {--军团
+		        name=Lang.Rank.i5,
+		        value="guildName",
+		        colWidth=90,
+		        -- 连接类型 默认0    0是不能连接 1是人名 2是物品  3是伙伴  4是宝物  5是角色id
+		        linkType=0,
+          },-- end 军团
+	      },-- end rankConfig
+	    },-- end 坐骑排行
+    },
+  },-- end 伙伴坐骑排行榜 
+  
+  {-- 鲜花魅力排行榜
+    typeName=Lang.Rank.f3,     -- 鲜花魅力
+    -- 排行榜第二层树结构节点
+    subList=
+    {
+	    {-- 每周魅力排行
+	      subName=Lang.Rank.r8,
+	      rankID=8,        -- 服务器排行id
+	      rankConfig=
+        {
+		      {--角色名
+		        name=Lang.Rank.i2,
+		        value="playerName",
+		        colWidth=120,
+		        -- 连接类型 默认0    0是不能连接 1是人名 2是物品  3是伙伴  4是宝物  5是角色id
+		        linkType=1,
+		      },-- end 角色名
+
+		      {--魅力
+		        name=Lang.Rank.i14,
+		        value="point",
+		        colWidth=90,
+		        -- 连接类型 默认0    0是不能连接 1是人名 2是物品  3是伙伴  4是宝物  5是角色id
+		        linkType=0,
+		      },-- end 魅力
+
+		      {--阵营
+		        name=Lang.Rank.i4,
+		        value="campName",
+		        colWidth=90,
+		        -- 连接类型 默认0    0是不能连接 1是人名 2是物品  3是伙伴  4是宝物  5是角色id
+		        linkType=0,
+		      },-- end 阵营
+
+		      {--军团
+		        name=Lang.Rank.i5,
+		        value="guildName",
+		        colWidth=110,
+		        -- 连接类型 默认0    0是不能连接 1是人名 2是物品  3是伙伴  4是宝物  5是角色id
+		        linkType=0,
+          },-- end 军团
+	      },-- end rankConfig
+	    },-- end 每周魅力排行
+		
+	    {-- 魅力排行
+	      subName=Lang.Rank.r7,
+	      rankID=7,        -- 服务器排行id
+	      rankConfig=
+        {
+		      {--角色名
+		        name=Lang.Rank.i2,
+		        value="playerName",
+		        colWidth=120,
+		        -- 连接类型 默认0    0是不能连接 1是人名 2是物品  3是伙伴  4是宝物  5是角色id
+		        linkType=1,
+		      },-- end 角色名
+
+		      {--魅力
+		        name=Lang.Rank.i13,
+		        value="point",
+		        colWidth=90,
+		        -- 连接类型 默认0    0是不能连接 1是人名 2是物品  3是伙伴  4是宝物  5是角色id
+		        linkType=0,
+		      },-- end 魅力
+
+		      {--阵营
+		        name=Lang.Rank.i4,
+		        value="campName",
+		        colWidth=90,
+		        -- 连接类型 默认0    0是不能连接 1是人名 2是物品  3是伙伴  4是宝物  5是角色id
+		        linkType=0,
+		      },-- end 阵营
+
+		      {--军团
+		        name=Lang.Rank.i5,
+		        value="guildName",
+		        colWidth=110,
+		        -- 连接类型 默认0    0是不能连接 1是人名 2是物品  3是伙伴  4是宝物  5是角色id
+		        linkType=0,
+          },-- end 军团
+	      },-- end rankConfig
+	    },-- end 魅力排行
+    },  
+  },-- end 鲜花魅力排行榜
+        
+}
+
+
+
+
+
+
+--[[ 
+		desc = Lang.Rank.r12,
+		type = 12,
+		mapping =
+		{
+		
+			{
+				name = Lang.Rank.i1,
+				value = "data.order.actorname",
+                useld=false,
+				localdata=
+				{					
+				}
+			},
+			{
+				name = Lang.Rank.i17,
+				value = "data.order.equipscore",
+				useld=false,
+				localdata=
+				{					
+				}
+			},	
+			{
+				name = Lang.Rank.r14,
+				value = "data.order.title",
+                useld=true,				
+				localdata=
+				{
+					{min=1, max=10, desc=Lang.Rank.topRankDesc1,},
+				}				
+			},
+			{
+				name = Lang.Rank.i9,
+				value = "data.order.zy",
+				useld=false,
+				localdata=
+				{					
+				}
+			},
+		}
+	},
+	--等级排行榜
+	{
+		desc = Lang.Rank.r1,
+		type = 1,
+		mapping =
+		{
+			{
+				name = Lang.Rank.i1,
+				value = "data.order.actorname",
+				useld=false,
+				localdata=
+				{					
+				}
+			},
+			{
+				name = Lang.Rank.i4,
+				value = "data.order.level",
+				useld=false,
+				localdata=
+				{					
+				}
+			},		
+			{
+				name = Lang.Rank.r14,
+				value = "data.order.title",	
+                useld=true,				
+				localdata=
+				{
+					{min=1, max=10, desc=Lang.Rank.topRankDesc2,},
+				}						
+			},
+			{
+				name = Lang.Rank.i9,
+				value = "data.order.zy",
+				useld=false,
+				localdata=
+				{					
+				}
+			},
+				
+		}
+	},
+	-- 宝物排行榜
+	{
+		desc = Lang.Rank.r10,
+		type = 10,
+		mapping =
+		{
+			{
+				name = Lang.Rank.i19,
+				value = "data.order.actorname",
+				useld=false,
+				localdata=
+				{					
+				}
+			},
+			{
+				name = Lang.Rank.i15,
+				value = "data.order.gemscore",
+				useld=false,
+				localdata=
+				{					
+				}
+			},	
+			{
+				name = Lang.Rank.r14,
+				value = "data.order.title",	
+                useld=true,				
+				localdata=
+				{
+					{min=1, max=10, desc=Lang.Rank.topRankDesc3,},
+				}						
+			},
+			{
+				name = Lang.Rank.i9,
+				value = "data.order.zy",
+				useld=false,
+				localdata=
+				{					
+				}
+			},	
+			
+		}
+	},
+	-- 经脉排行榜
+	{
+		desc = Lang.Rank.r13,
+		type = 13,
+		mapping =
+		{
+			{
+				name = Lang.Rank.i1,
+				value = "data.order.actorname",
+				useld=false,
+				localdata=
+				{					
+				}
+			},
+			{
+				name = Lang.Rank.i18,
+				value = "data.order.acupoint",
+				useld=false,
+				localdata=
+				{					
+				}
+			},
+			{
+				name = Lang.Rank.r14,
+				value = "data.order.title",	
+                useld=true,				
+				localdata=
+				{
+					{min=1, max=10, desc=Lang.Rank.topRankDesc4,},
+				}						
+			},			
+			{
+				name = Lang.Rank.i9,
+				value = "data.order.zy",
+				useld=false,
+				localdata=
+				{					
+				}
+			},
+		}
+	},
+	--财富排行榜
+	{
+		desc = Lang.Rank.r2,
+		type = 2,
+		mapping =
+		{
+			{
+				name = Lang.Rank.i1,
+				value = "data.order.actorname",
+				useld=false,
+				localdata=
+				{					
+				}
+			},
+			{
+				name = Lang.Rank.i5,
+				value = "data.order.coin",
+				useld=false,
+				localdata=
+				{					
+				}
+			},
+			{
+				name = Lang.Rank.r14,
+				value = "data.order.title",	
+                useld=true,				
+				localdata=
+				{
+					{min=1, max=10, desc=Lang.Rank.topRankDesc5,},
+				}				
+			},	
+			{
+				name = Lang.Rank.i9,
+				value = "data.order.zy",
+				useld=false,
+				localdata=
+				{					
+				}
+			},
+			
+		}
+	},
+--战魂排行榜
+	{
+		desc = Lang.Rank.r3,
+		type = 3,
+		mapping =
+		{
+			{
+				name = Lang.Rank.i1,
+				value = "data.order.actorname",
+				useld=false,
+				localdata=
+				{					
+				}
+			},
+			{
+				name = Lang.Rank.i6,
+				value = "data.order.zhanhunvalue",
+				useld=false,
+				localdata=
+				{					
+				}
+			},		
+			{
+				name = Lang.Rank.r14,
+				value = "data.order.title",	
+                useld=true,				
+				localdata=
+				{
+					{min=1, max=10, desc=Lang.Rank.topRankDesc6,},
+				}					
+			},				
+			{
+				name = Lang.Rank.i9,
+				value = "data.order.zy",
+				useld=false,
+				localdata=
+				{					
+				}
+			},
+		}
+	},
+--擂台周排行榜	
+    {
+		desc = Lang.Rank.r9,
+		type = 9,
+		mapping =
+		{
+			{
+				name = Lang.Rank.i1,
+				value = "data.order.actorname",
+				useld=false,
+				localdata=
+				{					
+				}
+			},
+			{
+				name = Lang.Rank.i14,
+				value = "data.order.itdurvictimes",
+				useld=false,
+				localdata=
+				{					
+				}
+			},	
+			{
+				name = Lang.Rank.r14,
+				value = "data.order.title",	
+                useld=true,				
+				localdata=
+				{
+					{min=1, max=3, desc=Lang.Rank.topRankDesc7,},
+				}				
+			},			
+			{
+				name = Lang.Rank.i9,
+				value = "data.order.zy",
+				useld=false,
+				localdata=
+				{					
+				}
+			},		
+		}
+	},
+--帮派排行榜	
+	{
+		desc = Lang.Rank.r6,
+		type = 6,
+		mapping =
+		{
+			{
+				name = Lang.Rank.i9,
+				value = "data.order.guildname",
+				useld=false,
+				localdata=
+				{					
+				}
+			},
+			{
+				name = Lang.Rank.i20,
+				value = "data.order.level",
+				useld=false,
+				localdata=
+				{					
+				}
+			},			
+			{
+				name = Lang.Rank.i11,
+				value = "data.order.foundname",
+				useld=false,
+				localdata=
+				{					
+				}
+			},
+			{
+				name = Lang.Rank.i9,
+				value = "data.order.zy",
+				useld=false,
+				localdata=
+				{					
+				}
+			},
+		}
+	},
+--帮派战击杀排行榜
+	{
+		desc = Lang.Rank.r7,
+		type = 7,
+		mapping =
+		{
+			{
+				name = Lang.Rank.i9,
+				value = "data.order.guildname",
+				useld=false,
+				localdata=
+				{					
+				}
+			},
+			{
+				name = Lang.Rank.i12,
+				value = "data.order.pkcount",
+				useld=false,
+				localdata=
+				{					
+				}
+			},			
+			{
+				name = Lang.Rank.i11,
+				value = "data.order.foundname",
+				useld=false,
+				localdata=
+				{					
+				}
+			},
+			{
+				name = Lang.Rank.i9,
+				value = "data.order.zy",
+				useld=false,
+				localdata=
+				{					
+				}
+			},
+
+		}
+	},
+
+}
+
+--]]

@@ -1,0 +1,288 @@
+-- 变身玩法
+--#include "data\config\taskgameplayconfig\bianshenconfig.txt" once
+
+BianShenFuncs = {}
+
+-- 变身进度状态
+local bs_quest_state = {
+    not_vaild = 0, -- 无效
+    has_bianshen = 1, -- 已经变身
+}
+
+-- 查找qid所在的staticVal的位置
+function BianShenFuncs.findValIndexByQid (actorobj, qid)
+    qid = tonumber(qid) or 0
+    local nVal = LActor.getStaticVar(actorobj)
+    if not nVal or qid <= 0 then
+        return -1
+    end
+    if nVal.BianShen_Value == nil then
+        return -1
+    end
+    local len = #nVal.BianShen_Value
+    if len > 0 then
+        for i = 1, len do
+            if nVal.BianShen_Value[i].state ~= bs_quest_state.not_vaild and nVal.BianShen_Value[i].qid == qid then
+                return i
+            end
+        end
+    end
+    return 0
+end
+
+-- 查找staticVal可用的位置
+function BianShenFuncs.findCanUseValIndex (actorobj)
+    local nVal = LActor.getStaticVar(actorobj)
+    if not nVal then
+        return -1
+    end
+    if nVal.BianShen_Value == nil then
+        return -1
+    end
+    local len = #nVal.BianShen_Value
+    if len > 0 then
+        for i = 1, len do
+            if nVal.BianShen_Value[i].state == bs_quest_state.not_vaild then
+                return i
+            end
+        end
+    end
+    return len + 1
+end
+
+-- 是否存在变身任务
+function BianShenFuncs.isHasQuestVal (actorobj)
+    local nVal = LActor.getStaticVar(actorobj)
+    if not nVal or nVal.BianShen_Value == nil then
+        return false
+    end
+    local len = #nVal.BianShen_Value
+    if len > 0 then
+        for i = 1, len do
+            if nVal.BianShen_Value[i].state ~= bs_quest_state.not_vaild then
+                return true
+            end
+        end
+    end
+    return false
+end
+
+-- 接任务检查
+function BianShenFuncs.OnCheckAccept (actorobj, qid)
+    qid = tonumber(qid) or 0
+    debug_print(string.format("===>>> BianShenFuncs [check] qid[%d]", qid))
+    if not actorobj or qid <= 0 then return false end
+    local nVal = LActor.getStaticVar(actorobj)
+    if not nVal then return false end
+    if nVal.BianShen_Value == nil then
+        nVal.BianShen_Value = {}
+    end
+    if BianShen_Config[qid] == nil then
+        debug_print(string.format("===>>> BianShenFuncs [check] 变身任务qid[%d]并未配置到变身配置表里面!", qid))
+        return false
+    end
+    if BianShenFuncs.isHasQuestVal(actorobj) == true then
+        debug_print("===>>>[check] 不可接取多个变身任务!")
+        return false
+    end
+    debug_print(string.format("===>>> 通过变身任务检查 qid[%d]", qid))
+    return true
+end
+
+-- 接任务触发
+function BianShenFuncs.OnAcceptQuest (actorobj, qid)
+    qid = tonumber(qid) or 0
+    if not actorobj or qid <= 0 then return end
+    local nVal = LActor.getStaticVar(actorobj)
+    if not nVal then return end
+    if nVal.BianShen_Value == nil then
+        nVal.BianShen_Value = {}
+    end
+    local conf = BianShen_Config[qid]
+    if conf == nil then
+        debug_print(string.format("===>>> BianShenFuncs [accept] 变身任务qid[%d]并未配置到变身配置表里面!", qid))
+        return
+    end
+    if BianShenFuncs.isHasQuestVal(actorobj) == true then
+        debug_print("===>>>[accept] 不可接取多个变身任务!")
+        return
+    end
+    local index = BianShenFuncs.findCanUseValIndex(actorobj, qid)
+    if index == -1 then
+        return
+    end
+    debug_print(string.format("===>>> 接受变身任务 qid[%d], index[%d]", qid, index))
+
+    -- 设置人物的外观
+    local oldModelId = LActor.getIntProperty(actorobj, PROP_ENTITY_MODELID)
+    -- LActor.setIntProperty(actorobj, PROP_ENTITY_MODELID, conf.modelId)
+    -- 设置任务的临时技能
+    for k, v in ipairs(conf.skill_list) do
+        LActor.AddTempSkill(actorobj, v.skillId , v.skillLevel)
+    end
+    -- LActor.sendLearnSkill(actorobj)
+    -- LActor.addBuff( actorobj, 79, 0, 1, 20, 1, Lang.Actions.b002 )
+    -- LActor.refreshFeature(actorobj)
+    BianShenFuncs.noticeSkillList(actorobj, 0, qid, conf.skill_list)
+
+    nVal.BianShen_Value[index] = {}
+    nVal.BianShen_Value[index].qid = qid -- 设置qid
+    nVal.BianShen_Value[index].state = bs_quest_state.has_bianshen -- 标记未出现变身
+    nVal.BianShen_Value[index].oldModelId = oldModelId -- 原本的模型id
+    nVal.BianShen_Value[index].newModelId = conf.modelId -- 现在的模型id
+
+    debug_print(string.format("===>>> 接受变身任务 qid[%d], index[%d] state[%d]", qid, index, nVal.BianShen_Value[index].state))
+end
+
+-- 交任务触发
+function BianShenFuncs.OnCommitQuest (actorobj, qid)
+    qid = tonumber(qid) or 0
+    if qid > 0 then
+        BianShenFuncs.doInvalidVal(actorobj, qid, false)
+    end
+end
+
+-- 放弃任务触发
+function BianShenFuncs.OnGiveupQuest (actorobj, qid)
+    qid = tonumber(qid) or 0
+    if qid > 0 then
+        BianShenFuncs.doInvalidVal(actorobj, qid, false)
+    end
+end
+
+-- 任务超时 进入该函数说明配置文件已经有问题
+function BianShenFuncs.OnOverTime (actorobj, qid)
+    qid = tonumber(qid) or 0
+    if qid > 0 then
+        BianShenFuncs.doInvalidVal(actorobj, qid)
+    end
+end
+
+-- 重置所有目标数据 销毁
+function BianShenFuncs.OnDestoryTarget (actorobj)
+    local nVal = LActor.getStaticVar(actorobj)
+    if not nVal then return end
+    if nVal.BianShen_Value == nil then return end -- 完全没有召唤任务任何数据
+    local len = #nVal.BianShen_Value
+    if len > 0 then
+        for index = 1, len do
+            if nVal.BianShen_Value[index].state ~= bs_quest_state.not_vaild then
+                BianShenFuncs.doInvalidVal(actorobj, nVal.BianShen_Value[index].qid)
+            end
+        end
+    end
+end
+
+-- 进入场景
+function BianShenFuncs.OnEnterScene (actorobj)
+    BianShenFuncs.OnDestoryTarget(actorobj)
+end
+
+function BianShenFuncs.OnActorLogin (actorobj)
+    local nVal = LActor.getStaticVar(actorobj)
+    if not nVal or nVal.BianShen_Value == nil then
+        return
+    end
+    local len = #nVal.BianShen_Value
+    if len > 0 then
+        for i = 1, len do
+            if nVal.BianShen_Value[i].state ~= bs_quest_state.not_vaild then
+                local qid = nVal.BianShen_Value[i].qid
+                local conf = BianShen_Config[qid]
+                if conf ~= nil then
+                    -- 设置人物的外观
+                    local oldModelId = LActor.getIntProperty(actorobj, PROP_ENTITY_MODELID)
+                    -- LActor.setIntProperty(actorobj, PROP_ENTITY_MODELID, conf.modelId)
+                    -- 设置任务的临时技能
+                    for k, v in ipairs(conf.skill_list) do
+                        LActor.AddTempSkill(actorobj, v.skillId , v.skillLevel)
+                    end
+                    -- LActor.sendLearnSkill(actorobj)
+                    -- LActor.addBuff( actorobj, 79, 0, 1, 20, 1, Lang.Actions.b002 )
+                    -- LActor.refreshFeature(actorobj)
+                    BianShenFuncs.noticeSkillList(actorobj, 0, qid, conf.skill_list)
+                    break
+                end
+            end
+        end
+    end
+end
+
+-- 退出登录
+function BianShenFuncs.OnActorLogout (actorobj)
+    BianShenFuncs.OnDestoryTarget(actorobj)
+end
+
+-- 玩家死亡
+function BianShenFuncs.OnActorDie (actorobj)
+    BianShenFuncs.OnDestoryTarget(actorobj)
+end
+
+-- 把对应任务id的数据标记为无效了
+function BianShenFuncs.doInvalidVal (actorobj, qid, giveup)
+    local index = BianShenFuncs.findValIndexByQid(actorobj, qid)
+    if index <= 0 then return end
+    local nVal = LActor.getStaticVar(actorobj)
+    if nVal.BianShen_Value[index].state ~= bs_quest_state.not_vaild then
+        if LActor.canFinishQuest(actorobj, qid, LActor.isDeath(actorobj)) == true then
+            return
+        end
+        debug_print(string.format("变身任务qid[%d]配置已经出现了销毁数据!", qid))
+        LActor.sendTipmsg(actorobj, Lang.ScriptTips.quest0009, ttMessage)
+
+        -- 还原人物模型
+        -- LActor.setIntProperty(actorobj, PROP_ENTITY_MODELID, nVal.BianShen_Value[index].oldModelId)
+        -- 清除人物临时技能
+        LActor.ClearTempSkill(actorobj)
+        -- LActor.refreshFeature(actorobj)
+        -- 清除技能列表
+        BianShenFuncs.noticeSkillList(actorobj, 1, qid)
+
+        giveup = giveup or true
+        if giveup == true then
+            -- 放弃任务
+            LActor.GiveUpQuest(actorobj, nVal.BianShen_Value[index].qid)
+        end
+
+        nVal.BianShen_Value[index].qid = 0
+        nVal.BianShen_Value[index].oldModelId = 0
+        nVal.BianShen_Value[index].newModelId = 0
+        nVal.BianShen_Value[index].state = bs_quest_state.not_vaild -- 标记为无效
+    end
+end
+
+-- 通知前端变身任务变身后技能信息
+function BianShenFuncs.noticeSkillList (actorobj, clear, qid, skillList)
+    clear = tonumber(clear) or -1
+    qid = tonumber(qid) or 0
+    skillList = skillList or {}
+    if clear >= 0 and qid > 0 then
+        if clear > 1 then
+            clear = 1
+        end
+        local pack = DataPack.allocPacket(actorobj, 172, 10)
+        DataPack.writeUInt(pack, qid)
+        DataPack.writeByte(pack, clear)
+        if clear == 0 then
+            DataPack.writeByte(pack, #skillList)
+            if #skillList > 0 then
+                for i = 1, #skillList do
+                    DataPack.writeUInt(pack, skillList[i].skillId)
+                    DataPack.writeUInt(pack, skillList[i].skillLevel)
+                end
+            end
+        end
+        DataPack.flush(pack)
+    end
+end
+
+-- basequesttype.txt 定义类型
+ActorQuestCallDispatcher.registerCheck(BaseTypes.BaseQuestAction.qaAccept, BaseTypes.BaseQuestPlayType.qptTransform, BianShenFuncs.OnCheckAccept) -- 注册接受任务前检查
+ActorQuestCallDispatcher.registerPlayType(BaseTypes.BaseQuestAction.qaAccept, BaseTypes.BaseQuestPlayType.qptTransform, BianShenFuncs.OnAcceptQuest) -- 注册接受任务的侦听
+ActorQuestCallDispatcher.registerPlayType(BaseTypes.BaseQuestAction.qaCommit, BaseTypes.BaseQuestPlayType.qptTransform, BianShenFuncs.OnCommitQuest) -- 注册完成任务的侦听
+ActorQuestCallDispatcher.registerPlayType(BaseTypes.BaseQuestAction.qaGiveUp, BaseTypes.BaseQuestPlayType.qptTransform, BianShenFuncs.OnGiveupQuest) -- 注册放弃任务的侦听防止因配置任务配错了而导致数据异常
+ActorQuestCallDispatcher.registerPlayType(BaseTypes.BaseQuestAction.qaTimeOut, BaseTypes.BaseQuestPlayType.qptTransform, BianShenFuncs.OnOverTime) -- 注册任务超时的侦听
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeOnActorDeath, BianShenFuncs.OnActorDie) -- 注册玩家死亡
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, BianShenFuncs.OnActorLogin) -- 玩家下线事件
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogout, BianShenFuncs.OnActorLogout) -- 玩家下线事件

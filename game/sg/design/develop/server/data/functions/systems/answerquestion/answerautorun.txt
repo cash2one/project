@@ -1,0 +1,294 @@
+--lua script
+-- 答题处理
+--#include "data\language\LangCode.txt" once
+--#include "data\config\activity\answerquestions.txt" once
+--#include "data\functions\GlobalDefine.txt" once
+--#include "data\functions\\systems\answerquestion\answerhandler.txt" once
+
+LocalDT.AnswerAutoRunFunc ={}
+
+--[[每日的中午12:10-12:20
+LocalDT.AnswerAutoRunFunc.START1 = {
+
+  TIME = "2013-07-16 12:10:00",   --首次执行时间
+  CYCLE = 24*3600,     --自动执行周期(秒)
+}
+--每日的晚上11:10-11:20
+LocalDT.AnswerAutoRunFunc.START2 = {
+ 
+  TIME = "2013-07-16 23:10:00",   --首次执行时间
+  CYCLE = 24*3600,     --自动执行周期(秒)
+  
+}]]
+
+function answerInit()
+	print("answerInit start")
+	local sysvar = System.getStaticVar()
+	if sysvar.answerData == nil then sysvar.answerData = {} end
+	if sysvar.answerData.ranknum == nil then sysvar.answerData.ranknum = 0 end
+	--处理上一期没有拿到排行榜奖励的孩子
+	if sysvar.answerData.ranknum > 0 then
+		--print("answerInit ranknum:"..sysvar.answerData.ranknum)
+		for i = 1,sysvar.answerData.ranknum do
+			if sysvar.answerData.rank[i] ~= nil and sysvar.answerData.rank[i].flag ~= nil and sysvar.answerData.rank[i].flag == 0 and sysvar.answerData.rank[i].actorName ~= nil then
+				local actorName = sysvar.answerData.rank[i].actorName
+				local context = string.format(Lang.TaskTalk.aq011, i)
+				System.sendGmMailOffLine(actorName, context, 0, 0, 0, 0)
+			end
+		end
+	end
+	sysvar.answerData.state = 1	--活动开始了
+	sysvar.answerData.ranknum = 0
+	sysvar.answerData.rank = {}
+	sysvar.answerData.index = 1
+	sysvar.answerData.startTime = System.getCurrMiniTime()
+	sysvar.answerData.answer = {}
+	sysvar.answerData.answer[1] = 0
+	sysvar.answerData.answer[2] = 0
+	sysvar.answerData.answer[3] = 0
+	sysvar.answerData.answer[4] = 0
+	sysvar.answerData.questions = {}
+	--好吧,先把题目随机好
+	local totalNum = #answerConfig.questions
+	local numList = {}
+	for i = 1,totalNum do
+		numList[i] = i
+	end
+	for i = 1,answerConfig.questionTotalNum do
+		local randomNum =  System.getRandomNumber(totalNum) + 1
+		sysvar.answerData.questions[i] = answerConfig.questions[numList[randomNum]]
+		numList[randomNum]=numList[totalNum]
+		totalNum = totalNum - 1
+	end
+	sysvar.answerData.serial = sysvar.answerData.startTime
+	LActor.regScriptCallback( System.getGlobalNpc(), nil, answerConfig.answerTime*1000, answerConfig.answerTime*1000, answerConfig.questionTotalNum - 1, "NextQuestion", 0)
+	LActor.regScriptCallback( System.getGlobalNpc(), nil, (answerConfig.answerTime - answerConfig.nextTime)*1000, answerConfig.answerTime*1000, answerConfig.questionTotalNum, "TimerState", 0)
+	LActor.regScriptCallback( System.getGlobalNpc(), nil, answerConfig.totalTime*1000, answerConfig.totalTime*1000, 1, "answerExit", 0)
+	LActor.regScriptCallback( System.getGlobalNpc(), nil, (answerConfig.totalTime - answerConfig.nextTime)*1000, (answerConfig.totalTime - answerConfig.nextTime)*1000, 1, "answerNoticeExit", 0)
+	print("answerInit end")
+end
+
+function answerNotice(msgtype)
+	--print("answerNotice msgtype:"..msgtype)
+	local var_sys_d = System.getDyanmicVar()
+	local playerList = LuaHelp.getAllActorList()  --获取全服玩家对象列表
+	if playerList ~= nil then
+		local j
+		for j = 1, #playerList do
+		local player = playerList[j]
+			if player then
+				local actorVar = LActor.getStaticVar(player)
+				if actorVar.answerData ~= nil and actorVar.answerData.score ~= nil and actorVar.answerData.score ~= 0 then
+					if msgtype == 1 and actorVar.answerData.score > 0 then
+						local coin = answerConfig.awardNumList[1]*actorVar.answerData.score
+						local yl = answerConfig.awardNumList[2]*actorVar.answerData.score
+						if var_sys_d.AnswerQuestionDouble ~= nil and var_sys_d.AnswerQuestionDouble == 1 then
+							coin = coin * 2
+							yl = yl * 2
+						end
+						--给奖励
+						LActor.changeMoney(player, mtBindCoin, coin, 1, true, "answerqustions", "answerreward")
+						LActor.changeMoney(player, mtCoin, yl, 1, true, "answerqustions", "answerreward")
+
+						actorVar.answerData.score = 0
+						--通知
+						local msg = string.format(Lang.TaskTalk.aq004, actorVar.answerData.rightnum, coin, yl)
+						LActor.sendTipmsg(player, msg, ttMessage)
+					end
+					if msgtype == 2 and actorVar.answerData.IfOpen == 1 then
+						--通知
+						LActor.sendTipmsg(player, Lang.TaskTalk.aq003, ttMessage)
+					end
+				end
+			end
+		end
+	end
+end
+
+function answerNoticeExit()
+	--print("answerNoticeExit")
+	local sysvar = System.getStaticVar()
+	if sysvar.answerData == nil then return end
+	sysvar.answerData.state = 2	--活动timer状态
+	answerNotice(2)
+end
+
+function answerExit()
+	print("answerExit start")
+	local sysvar = System.getStaticVar()
+	if sysvar.answerData == nil then return end
+	sysvar.answerData.state = 0	--活动结束了
+	answerNotice(1)
+
+	--排行榜奖励
+	local rankdata = sysvar.answerData.rank
+	if sysvar.answerData.ranknum == 0 then return end
+	local var_sys_d = System.getDyanmicVar()
+	for i=1,sysvar.answerData.ranknum do
+		local actorName = rankdata[i].actorName
+		local sysarg = LActor.getActorByName(actorName)
+		if sysarg then
+			--给排名奖励
+			local rankAwardIndex = 1
+			for j=1,#answerConfig.rankAwardList do
+				if i <= answerConfig.rankAwardList[j][1] then 
+					rankAwardIndex = j
+					break
+				end
+			end
+			local addexp = answerConfig.rankAwardList[rankAwardIndex][2]
+			local addroot = answerConfig.rankAwardList[rankAwardIndex][3]
+			if var_sys_d.AnswerQuestionDouble ~= nil and var_sys_d.AnswerQuestionDouble == 1 then
+				addexp = addexp * 2
+				addroot = addroot * 2
+			end
+			LActor.addExp(sysarg, addexp, 0, 0)
+			LActor.playExpEffect(sysarg, addexp) -- 播放获取经验特效
+			LActor.addRootExp(sysarg, addroot, -1) -- 不能算真气丹的加成效果
+			--通知
+			local msg = string.format(Lang.TaskTalk.aq010, i, addexp, addroot)
+			LActor.sendTipmsg(sysarg, msg, ttMessage)
+
+			sysvar.answerData.rank[i].flag = 1
+		end
+	end
+	print("answerExit end")
+end
+
+function NextQuestion()
+	--print("NextQuestion")
+	local sysvar = System.getStaticVar()
+	if sysvar.answerData == nil then return end
+	sysvar.answerData.state = 1	--答题状态
+	if sysvar.answerData.index < answerConfig.questionTotalNum then
+		sysvar.answerData.index = sysvar.answerData.index + 1
+	end
+	sysvar.answerData.answer = {}
+	sysvar.answerData.answer[1] = 0
+	sysvar.answerData.answer[2] = 0
+	sysvar.answerData.answer[3] = 0
+	sysvar.answerData.answer[4] = 0
+	sysvar.answerData.startTime = System.getCurrMiniTime()
+
+	local playerList = LuaHelp.getAllActorList()  --获取全服玩家对象列表
+	if playerList ~= nil then
+		local j
+		for j = 1, #playerList do
+		local player = playerList[j]
+			if player then
+				local actorVar = LActor.getStaticVar(player)
+				if actorVar.answerData ~= nil and actorVar.answerData.serial == sysvar.answerData.serial and actorVar.answerData.index ~= 0 and actorVar.answerData.IfOpen == 1 then
+					actorVar.answerData.index = sysvar.answerData.index
+					actorVar.answerData.answer = 0
+					actorVar.answerData.usedHelp = 0
+					ANSWERSYSTEM.sendAnswerInfo(player, 0)
+					--print("NextQuestion player index:"..j)
+				end
+			end
+		end
+	end
+end
+
+function TimerState()
+	--print("TimerState")
+	local sysvar = System.getStaticVar()
+	if sysvar.answerData == nil then return end
+	sysvar.answerData.state = 2	--倒计时状态
+	sysvar.answerData.startTime = System.getCurrMiniTime()
+
+	local playerList = LuaHelp.getAllActorList()  --获取全服玩家对象列表
+	if playerList ~= nil then
+		local j
+		for j = 1, #playerList do
+		local player = playerList[j]
+			if player then
+				local actorVar = LActor.getStaticVar(player)
+				if actorVar.answerData ~= nil and actorVar.answerData.serial == sysvar.answerData.serial and actorVar.answerData.index ~= 0 and actorVar.answerData.IfOpen == 1 then
+					if actorVar.answerData.answer == 0 then
+						actorVar.answerData.count = 0
+						LActor.sendTipmsg(player, Lang.TaskTalk.aq009, ttMessage)
+					end
+					local questionId = sysvar.answerData.questions[sysvar.answerData.index]
+					local rightAnswer = answerConfig.rightAnswer[questionId]
+					if actorVar.answerData.answer ~= 0 and actorVar.answerData.answer ~= rightAnswer then
+						LActor.sendTipmsg(player, Lang.TaskTalk.aq009, ttMessage)
+					end
+					if actorVar.answerData.answer == rightAnswer then
+						LActor.sendTipmsg(player, Lang.TaskTalk.aq008, ttMessage)
+					end
+					ANSWERSYSTEM.sendAnswerInfo(player, 0)
+					--[[local npack = DataPack.allocPacket(player, 141, 4)
+					DataPack.writeInt(npack, 5)
+					DataPack.writeInt(npack, rightAnswer)
+					DataPack.flush(npack)]]
+					--print("TimerState player index:"..j..",rightAnswer:"..rightAnswer)
+				end
+			end
+		end
+	end
+end
+
+LocalDT.AnswerAutoRunFunc.AnswerAutoRun_Init = function (npcobj)
+  --print("........AnswerAutoRun_Init")
+  local sysvar = System.getStaticVar()
+  if sysvar.answerData ~= nil and sysvar.answerData.state ~= nil and sysvar.answerData.state ~= 0 then
+  	local hour = 0
+	local min = 0
+	local sec = 0
+	hour,min,sec = System.getTime(hour, min, sec)
+	--print("........AnswerAutoRun_Init hour:"..hour..",min:"..min..",sec:"..sec)
+  	--检测活动是否要结束,每日的中午12:10-12:20,晚上11:10-11:20
+  	if hour ~= 12 and hour ~= 23 then sysvar.answerData.state = 0 end
+  	if min < 10 or min > 20 then sysvar.answerData.state = 0 end
+  	if min == 20 and sec > 0 then sysvar.answerData.state = 0 end
+  end
+
+  --[[if answerConfig ~= nil and answerConfig.openFlag == false then return end  --活动开
+
+  local thisNPC = System.getGlobalNpc()
+
+  if LocalDT.AnswerAutoRunFunc.InitData1 == nil then
+    LocalDT.AnswerAutoRunFunc.InitData1 = System.registerTimeCall(thisNPC,"answerInit",LocalDT.AnswerAutoRunFunc.START1.TIME, LocalDT.AnswerAutoRunFunc.START1.CYCLE, true)
+  end
+
+  print("........AnswerAutoRun_Init2")
+  
+  if LocalDT.AnswerAutoRunFunc.InitData2 == nil then
+	LocalDT.AnswerAutoRunFunc.InitData2 = System.registerTimeCall(thisNPC,"answerInit",LocalDT.AnswerAutoRunFunc.START2.TIME, LocalDT.AnswerAutoRunFunc.START2.CYCLE, true)
+  end
+
+  if LocalDT.AnswerAutoRunFunc.ExitData1 == nil then
+    LocalDT.AnswerAutoRunFunc.ExitData1 = System.registerTimeCall(thisNPC,"answerExit",LocalDT.AnswerAutoRunFunc.START1.TIME + answerConfig.totalTime, LocalDT.AnswerAutoRunFunc.START1.CYCLE, true)
+  end
+  
+  if LocalDT.AnswerAutoRunFunc.ExitData2 == nil then
+	LocalDT.AnswerAutoRunFunc.ExitData2 = System.registerTimeCall(thisNPC,"answerExit",LocalDT.AnswerAutoRunFunc.START2.TIME + answerConfig.totalTime, LocalDT.AnswerAutoRunFunc.START2.CYCLE, true)
+  end]]
+end
+
+--[[LocalDT.AnswerAutoRunFunc.AnswerAutoRun_Fina = function (npcobj)
+	
+	if LocalDT.AnswerAutoRunFunc.InitData1  then
+		System.unregisterTimeCall(LocalDT.AnswerAutoRunFunc.InitData1)
+		LocalDT.AnswerAutoRunFunc.InitData1 = nil
+	end
+	
+	if LocalDT.AnswerAutoRunFunc.InitData2  then
+		System.unregisterTimeCall(LocalDT.AnswerAutoRunFunc.InitData2)
+		LocalDT.AnswerAutoRunFunc.InitData2 = nil
+	end
+
+	if LocalDT.AnswerAutoRunFunc.ExitData1  then
+		System.unregisterTimeCall(LocalDT.AnswerAutoRunFunc.ExitData1)
+		LocalDT.AnswerAutoRunFunc.ExitData1 = nil
+	end
+	
+	if LocalDT.AnswerAutoRunFunc.ExitData2  then
+		System.unregisterTimeCall(LocalDT.AnswerAutoRunFunc.ExitData2)
+		LocalDT.AnswerAutoRunFunc.ExitData2 = nil
+	end
+	
+end]]
+
+table.insert(InitFnTable, LocalDT.AnswerAutoRunFunc.AnswerAutoRun_Init)   
+--table.insert(FinaFnTable,LocalDT.AnswerAutoRunFunc.AnswerAutoRun_Fina)

@@ -1,0 +1,130 @@
+--活动，强者之路
+
+--#include "equipenactivityrewardconf.txt" once
+--#include "activitycontrolhandler.txt" once
+
+--请求强者之路奖励情况
+ONLINEREWARD.getEquipenActivityRewardInfo = function(sysarg)
+	local checklv = ONLINEREWARD.ActivityCheckLevel(sysarg, EquipenActivityConf.activityId)
+	if not checklv then return end
+
+	local var = LActor.getStaticVar(sysarg)
+
+	--是否重置
+	local ifreset = ONLINEREWARD.CheckResetActivityInfo(sysarg, EquipenActivityConf.activityId)
+	local state = ONLINEREWARD.GetActivityState(EquipenActivityConf.activityId)
+
+	if var.EquipenStrongLv == nil then
+		var.EquipenStrongLv = LActor.getEquipAllStrongLv(sysarg)
+	end
+
+	if ifreset and state == 1 then 
+		ONLINEREWARD.equipenactivitycheck(sysarg, nil)
+	end
+	local ifreward = ONLINEREWARD.CheckActivityRewardInfo[EquipenActivityConf.activityId](sysarg)
+	if state == 0 and ifreward == 0 then return end
+
+	--print("ONLINEREWARD.getEquipenActivityRewardInfo state:"..state..",ifreward:"..ifreward)
+	if var.EquipenActivity == nil then 
+		ONLINEREWARD.equipenactivitycheck(sysarg, nil) 
+	end
+	if var.EquipenActivity.Record == nil then var.EquipenActivity.Record = 0 end
+	if var.EquipenActivity.Reward == nil then var.EquipenActivity.Reward = 0 end
+	local stronglv = var.EquipenStrongLv
+
+	local npack = DataPack.allocPacket(sysarg, 138, 53)
+	if npack == nil then return end
+	DataPack.writeInt(npack, var.EquipenActivity.Record)
+	DataPack.writeInt(npack, var.EquipenActivity.Reward)
+	DataPack.writeInt(npack, stronglv)
+	DataPack.flush(npack)
+
+	--print("ONLINEREWARD.getEquipenActivityRewardInfo Record:"..var.EquipenActivity.Record..",Reward:"..var.EquipenActivity.Reward..",stronglv:"..stronglv)
+end
+
+--领取强者之路奖励
+ONLINEREWARD.getEquipenActivityReward = function(sysarg, packet)
+	--print("ONLINEREWARD.getEquipenActivityReward")	
+	local var = LActor.getStaticVar(sysarg)
+
+	local checklv = ONLINEREWARD.ActivityCheckLevel(sysarg, EquipenActivityConf.activityId)
+	if not checklv then return end
+
+	local Pos = DataPack.readInt(packet)
+	--local Pos = 1
+	if Pos <= 0 or Pos > #EquipenActivityConf.aimlevel then return end
+
+	Pos = Pos - 1
+
+	if var.EquipenActivity == nil  or var.EquipenActivity.Record == nil then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.osa0004, ttMessage)
+		return
+	end
+
+	if not System.bitOPMask(var.EquipenActivity.Record, Pos) then				--没纪录即没达成
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.osa0004, ttMessage)
+		return
+	end
+
+	if System.bitOPMask(var.EquipenActivity.Reward, Pos) then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.osa0002, ttMessage)	--领过了
+		return
+	end
+
+	local items = EquipenActivityConf.rewardlist[Pos + 1]
+	if items == nil then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.osa0004, ttMessage)
+		return
+	end
+
+	--给奖励
+	local bagGrid =Item.getBagEmptyGridCount(sysarg)      --玩家身上有多少个格子
+	if bagGrid == 0 then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.osa0005, ttMessage)
+		return
+	end
+
+	LActor.addItem(sysarg,items.id,items.quality,items.strong,items.count,items.bind,"compensate",1)
+
+	--设置已领取
+	var.EquipenActivity.Reward = System.bitOpSetMask(var.EquipenActivity.Reward, Pos, true)
+
+	--上报
+	System.logCounter(LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), "neice_act", "1", "", "act_12", "", "", "", tostring(items.id), lfBI)
+
+	ONLINEREWARD.getEquipenActivityRewardInfo(sysarg)
+end
+
+--请求强者之路奖励情况
+ONLINEREWARD.equipenactivitycheck = function(sysarg,arg)
+	local var = LActor.getStaticVar(sysarg)
+
+	if arg ~= nil and arg[1] ~= nil then
+		if var.EquipenStrongLv == nil then var.EquipenStrongLv = 0 end
+		if var.EquipenStrongLv >= arg[1] then return end
+		var.EquipenStrongLv = arg[1]
+	end
+
+	if var.EquipenStrongLv == nil then return end
+
+	--print("ONLINEREWARD.equipenactivitycheck EquipenStrongLv:"..var.EquipenStrongLv)
+
+	local state = ONLINEREWARD.GetActivityState(EquipenActivityConf.activityId)
+	if state == 0 then return end
+
+	local checklv = ONLINEREWARD.ActivityCheckLevel(sysarg, EquipenActivityConf.activityId)
+	if not checklv then return end
+
+	if var.EquipenActivity == nil then var.EquipenActivity = {} end
+	if var.EquipenActivity.Record == nil then var.EquipenActivity.Record = 0 end
+	if var.EquipenActivity.Reward == nil then var.EquipenActivity.Reward = 0 end
+
+	if var.EquipenStrongLv >= EquipenActivityConf.aimlevel[1] then
+		for i=1,#EquipenActivityConf.aimlevel do
+			if var.EquipenStrongLv < EquipenActivityConf.aimlevel[i] then break end
+			var.EquipenActivity.Record = System.bitOpSetMask(var.EquipenActivity.Record, i - 1, true)
+		end
+	end
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeAllEquipStrongLv, ONLINEREWARD.equipenactivitycheck)

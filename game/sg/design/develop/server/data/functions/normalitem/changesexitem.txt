@@ -1,0 +1,57 @@
+function DenaturationFunc(sysarg,itemidx,itemPtr,ItemTable)
+	if ItemTable == nil then return end
+
+	local st = LActor.getStaticVar(sysarg)	
+	if st.marry ~= nil and st.marry.actorid ~= nil and st.marry.actorid ~= 0 then
+		LActor.sendTipmsg( sysarg, Lang.ScriptTips.mry52, ttMessage )
+		return
+	end
+		
+	local id = ItemTable.item_id
+
+	LActor.removeItemByPtr(sysarg,itemPtr,1,true,"usedenaturationitem",5) 
+	local sex =  LActor.getIntProperty(sysarg,PROP_SEX)
+	if sex == 0 then
+		sex = 1
+	else
+		sex = 0
+	end
+	LActor.setIntProperty(sysarg,PROP_SEX, sex)
+	
+	local fashion = Item.getEquipByPos(sysarg, 15)
+	if fashion ~= nil then
+		local  gender = Item.getItemProperty(sysarg, fashion, Item.ipItemNeedSex, 0)
+		if gender < 2 and sex ~= gender then
+			if Item.getBagEmptyGridCount(sysarg) < 1 then
+				Item.removeEquip(sysarg, fashion, "denaturation", 98)
+				System.sendGmMailOffLine(LActor.getActorId(sysarg), Lang.ScriptTips.mry51, 1, Item.getItemId(fashion), 1, 1);
+			else
+				local guid = Item.getItemGuid(fashion)
+				LActor.takeoffequip(sysarg,guid)
+			end
+		end
+	end
+
+	LActor.refreshDenaturationFeature(sysarg)
+
+	local leadid = LGuild.getTianYuanStaicLeaderId()
+	if leadid == LActor.getActorId(sysarg) then
+		local job =  LActor.getIntProperty(sysarg,PROP_VOCATION)
+		local name =  LActor.getName(sysarg)
+		local scene = Fuben.getSceneHandleById(TianYuanConfig.STATUENPCSCENE,0)
+		for i=1,#TianYuanConfig.MODEL do
+			if  TianYuanConfig.MODEL[i].job == job and  TianYuanConfig.MODEL[i].sex == sex then
+				Fuben.setSceneNpcmodel(scene,TianYuanConfig.STATUENPCX,TianYuanConfig.STATUENPCY, TianYuanConfig.MODEL[i].modelid,name)
+			end
+		end
+	end
+end
+
+function  DenaturationItemsInit(sysarg)
+  for i = 1,table.getn(DenaturationItem) do
+	local x = DenaturationItem[i]
+	GlobalItemFn[x.item_id] = { func = DenaturationFunc, params = x }
+  end
+end
+
+table.insert(InitFnTable,DenaturationItemsInit)

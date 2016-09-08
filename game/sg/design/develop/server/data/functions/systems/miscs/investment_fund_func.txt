@@ -1,0 +1,295 @@
+--投资基金系统 logic
+--#include "data\config\misc\investment_fund_conf.txt" once
+--#include "data\language\LangCode.txt" once
+
+InvestmentFundFunc = {}
+
+--获取投资基金系统奖励信息
+InvestmentFundFunc.OnGetInvestmentFundInfo = function(sysarg, msgid, packet)
+	local var = LActor.getStaticVar( sysarg )
+	if var == nil then return end
+	if var.InvestmentFund == nil then return end
+	if var.InvestmentFund.AwardStatus == nil then return end
+	if var.InvestmentFund.BuyTime == nil then return end
+
+	local nowtime = System.getCurrMiniTime()
+	local days = System.getDayDiff(nowtime, var.InvestmentFund.BuyTime)
+	days = days + 1
+
+	if days <= 0 then
+		return
+	end
+
+	local conf = InvestmentFundConf
+	local status = 0
+	local npack = DataPack.allocPacket(sysarg, BaseTypes.SystemId.miscsSystem, 80)
+	DataPack.writeShort(npack, #conf.awards)
+	for i = 1, #conf.awards do
+		 if System.bitOPMask(var.InvestmentFund.AwardStatus, i) then
+		 	status = 1
+		 else
+		 	if days >= conf.awards[i].days then
+		 		status = 0
+		 	else
+		 		status = 2
+		 	end
+		 end
+		 DataPack.writeChar(npack, status)
+	end
+	DataPack.flush(npack)
+
+
+end
+
+--请求购买基金
+InvestmentFundFunc.OnBuyInvestmentFund = function(sysarg, msgid, packet)
+	local var = LActor.getStaticVar( sysarg )
+	if var == nil then return end
+	if var.InvestmentFund == nil then return end
+	if var.InvestmentFund.AwardStatus == nil then return end
+	if var.InvestmentFund.BuyTime ~= nil then return end
+		--已购买的不能重复购买
+
+	local conf = InvestmentFundConf
+
+	local cur_lv = LActor.getLevel(sysarg)
+	--判断等级限制
+	if cur_lv < conf.need_level then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.if003, ttMessage)
+	end
+
+	local yuanbao = LActor.getMoneyCount(sysarg, 3)	--天珠数量
+	if yuanbao >= conf.need_yuanbao then
+		if LActor.changeMoney(sysarg, 3, -conf.need_yuanbao, 1, true, "investmentfund", "buy") then
+			var.InvestmentFund.BuyTime = System.getCurrMiniTime()
+			--下发奖励信息
+
+			------------------------------
+			local nowtime = System.getCurrMiniTime()
+			local days = System.getDayDiff(nowtime, var.InvestmentFund.BuyTime)
+			days = days + 1
+			if days <= 0 then
+				return
+			end
+
+			local conf = InvestmentFundConf
+			local status = 0
+			local npack = DataPack.allocPacket(sysarg, BaseTypes.SystemId.miscsSystem, 80)
+			DataPack.writeShort(npack, #conf.awards)
+			for i = 1, #conf.awards do
+				 if System.bitOPMask(var.InvestmentFund.AwardStatus, i) then
+				 	status = 1
+				 else
+				 	if days >= conf.awards[i].days then
+				 		status = 0
+				 	else
+				 		status = 2
+				 	end
+				 end
+				 DataPack.writeChar(npack, status)
+			end
+			DataPack.flush(npack)
+
+			local annostr = string.format(Lang.ScriptTips.if004, LActor.getName(sysarg))
+			System.broadcastTipmsg(annostr, ttChatWindow)
+			annostr = string.format(Lang.ScriptTips.if005, LActor.getName(sysarg))
+			--System.broadcastTipmsg(annostr, ttGmTip)
+		end
+	else
+		--提示天珠不足
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.if001, ttMessage)
+	end
+end
+
+--请求领取基金奖励
+InvestmentFundFunc.OnGetInvestmentFundReward = function(sysarg, msgid, packet)
+	--local index = DataPack.readChar(packet)
+	local index = DataPack.readChar(packet)
+	if index == nil then return end
+
+	local conf = InvestmentFundConf
+	if index < 1 or index > #conf.awards then
+		--没有这个奖励项
+		return
+	end
+
+	local var = LActor.getStaticVar( sysarg )
+	if var == nil then return end
+	if var.InvestmentFund == nil then return end
+	if var.InvestmentFund.AwardStatus == nil then return end
+	if var.InvestmentFund.BuyTime == nil then return end
+
+	local nowtime = System.getCurrMiniTime()
+	local days = System.getDayDiff(nowtime, var.InvestmentFund.BuyTime)
+	days = days + 1
+	if days <= 0 then
+		--时间有问题
+		return
+	end
+
+	local award = conf.awards[index]
+	if not System.bitOPMask(var.InvestmentFund.AwardStatus, index) then
+		if days >= award.days then
+			local isChange = false
+			if award.money ~= nil then
+				if LActor.changeMoney(sysarg, award.money.type, award.money.count, 1, true, "investmentfund", "getaward") then
+					var.InvestmentFund.AwardStatus = System.bitOpSetMask(var.InvestmentFund.AwardStatus, index, true)
+					-----------------------------------------特效
+					local effects = {}
+					local effect = {}
+					effect.type = 2  -- 1为物品,暂时只支持发物品所以写死
+				    effect.id = award.money.type
+				    effect.count = award.money.count
+				    effects[#effects+1] = effect
+					-- 播放特效
+					if #effects > 0 then
+						MiscFunc.PlayItemEffect(sysarg, 7, effects)
+					end
+
+					-----------------------------------------
+					isChange = true
+				end
+			elseif award.item ~= nil then
+				if LActor.addItem(sysarg, award.item.id, 0, 0, 1, award.item.bind,"investmentfund",1) >= 1 then
+					var.InvestmentFund.AwardStatus = System.bitOpSetMask(var.InvestmentFund.AwardStatus, index, true)
+					-------------------------
+					local effects = {}
+					local effect = {}
+					effect.type = 1  -- 1为物品
+				    effect.id = award.item.id
+				    effect.count = 1
+				    effects[#effects+1] = effect
+					-- 播放特效
+					if #effects > 0 then
+						MiscFunc.PlayItemEffect(sysarg, 7, effects)
+					end
+					-------------------------
+					isChange = true
+				else
+					LActor.sendTipmsg(sysarg, Lang.ScriptTips.if002, ttMessage)
+				end
+			end
+
+			------------------------------
+			if isChange then
+				local status = 0
+				local npack = DataPack.allocPacket(sysarg, BaseTypes.SystemId.miscsSystem, 80)
+				DataPack.writeShort(npack, #conf.awards)
+				for i = 1, #conf.awards do
+					 if System.bitOPMask(var.InvestmentFund.AwardStatus, i) then
+					 	status = 1
+					 else
+					 	if days >= conf.awards[i].days then
+					 		status = 0
+					 	else
+					 		status = 2
+					 	end
+					 end
+					 DataPack.writeChar(npack, status)
+				end
+				DataPack.flush(npack)
+			end
+			------------------------------
+
+		end
+	end
+
+end
+
+--登录时触发(下发图标状态)
+InvestmentFundFunc.OnLoginTrigger = function(sysarg, arg)
+	local conf = InvestmentFundConf
+	local cur_lv = LActor.getLevel(sysarg)
+
+	--判断等级限制
+	if cur_lv >= conf.need_level then
+		local show_status = 1	--0=不显示,1=显示,2=闪烁
+		local var = LActor.getStaticVar( sysarg )
+		if var == nil then return end
+		if var.InvestmentFund == nil then
+			var.InvestmentFund = {}
+			show_status = 2
+		end
+		if var.InvestmentFund.AwardStatus == nil then
+			var.InvestmentFund.AwardStatus = 0	--利用位来记录领取状态,未领的位为0
+			show_status = 2
+		end
+
+		local isReceiveAll = false	-- 查看是否所有领取完
+		if var.InvestmentFund.BuyTime ~= nil then	--已购买基金的角色，购买时间才不会为空
+			--计算是否有可拿的，用于显示图标状态
+			local nowtime = System.getCurrMiniTime()
+			local days = System.getDayDiff(nowtime, var.InvestmentFund.BuyTime)
+			days = days + 1
+
+			for i=1, #conf.awards do
+				if not System.bitOPMask(var.InvestmentFund.AwardStatus, i) then
+					isReceiveAll = true	--有未领的(包括未到时间的)
+					break
+				end
+			end
+
+			if isReceiveAll then
+				for i=1, #conf.awards do
+					if not System.bitOPMask(var.InvestmentFund.AwardStatus, i) then
+						if days >= conf.awards[i].days then
+							show_status = 2
+							break
+						end
+					end
+				end
+
+				local npack = DataPack.allocPacket(sysarg, BaseTypes.SystemId.miscsSystem, 79)
+				DataPack.writeChar(npack, show_status)
+				DataPack.writeChar(npack, 1)
+				DataPack.flush(npack)
+			end
+		else
+			local npack = DataPack.allocPacket(sysarg, BaseTypes.SystemId.miscsSystem, 79)
+			DataPack.writeChar(npack, 1)
+			DataPack.writeChar(npack, 0)
+			DataPack.flush(npack)
+		end
+
+	end
+end
+
+--等级到达时触发(下发图标状态)
+InvestmentFundFunc.OnLevelTrigger = function(sysarg, arg)
+	local conf = InvestmentFundConf
+	local cur_lv = LActor.getLevel(sysarg)
+	--判断等级限制
+	if cur_lv >= conf.need_level then
+		local var = LActor.getStaticVar( sysarg )
+		if var == nil then return end
+		if var.InvestmentFund ~= nil then return end
+
+		--if var.InvestmentFund.AwardStatus ~= nil then return end
+		--if var.InvestmentFund.BuyTime ~= nil then return end
+		var.InvestmentFund = {}
+		var.InvestmentFund.AwardStatus = 0
+
+		local npack = DataPack.allocPacket(sysarg, BaseTypes.SystemId.miscsSystem, 79)
+		DataPack.writeChar(npack, 2)
+		DataPack.writeChar(npack, 0)
+		DataPack.flush(npack)
+
+	end
+end
+
+
+
+--登录时触发
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, InvestmentFundFunc.OnLoginTrigger)
+--角色升级触发
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeLevel, InvestmentFundFunc.OnLevelTrigger)
+
+
+
+
+--请求投资基金系统信息（已购买后才有效果）
+MiscsImplement.registerMsgHandler(80, InvestmentFundFunc.OnGetInvestmentFundInfo)
+--请求购买投资基金
+MiscsImplement.registerMsgHandler(81, InvestmentFundFunc.OnBuyInvestmentFund)
+--请求领取基金奖励
+MiscsImplement.registerMsgHandler(82, InvestmentFundFunc.OnGetInvestmentFundReward)

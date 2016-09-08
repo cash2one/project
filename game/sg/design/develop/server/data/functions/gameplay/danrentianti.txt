@@ -1,0 +1,1417 @@
+
+--#include "data\config\gameplay\danrentianticonfig.txt" once
+
+DanRenTianTi = {}
+DanRenTianTi.nIntegralRank = {}
+DanRenTianTi.AlreadyMember = {}
+DanRenTianTi.EnteryPos = {}
+CMD = {
+	QIN_QIU_PK_DUI_SHOU = 1, -- 返回匹配信息
+	QIN_QIU_MY_RANK	 = 2, -- 返回自己排行版数据
+	QIN_QIU_RANK_THREE = 3, -- 获取排行版前三的数据
+	QIN_QIU_QUXIAO_PIPEI = 4, --返回取消匹配
+	QIN_QIU_ENTRY_PK = 5, -- 请求进入副本
+	QIN_QIU_PK_RESULT = 6, -- 返回胜利结果
+	QIN_QIU_PERSION_RANK = 7,--请求个人排行版
+	QIN_QIU_IS_OPEN_ACTIVITY = 8,--活动是否开启
+	QIN_QIU_LEFT_COUNT = 10,	--请求剩余挑战次数
+	QIN_QIU_BUY_COUNT = 11,	--购买挑战次数
+}
+
+
+
+DanRenTianTi.CYCLE_TIME = 2 * 60 * 60
+--单人天梯
+
+local DRTTRankName = "DanRenTianTiRankName"
+local DRTTRank = "DanRenTianTiRank.txt"
+--初始化单人天梯
+function DanRenTianTi.Init( )
+	--debug_print("--------初始化 单人天梯----------")
+	DanRenTianTi.AddDanRenTianTiRank()
+	DanRenTianTi.InitData()
+end
+--释放单人天梯
+function DanRenTianTi.release()
+	--debug_print("--------释放 单人天梯----------")
+	--DanRenTianTiEndActivity( )
+	DanRenTianTi.Save( )
+end
+
+--加载排行版数据 
+function DanRenTianTi.AddDanRenTianTiRank()
+	local ranking = Ranking.getRanking(DRTTRankName) --通过排行名称获取排行对象
+	if ranking == nil then  --没有排行对象则创建并加载数据
+		ranking = Ranking.add(DRTTRankName,1500,0)	--创建排行榜
+		--加载排行榜，如果加载失败则表示没有此数据，此时进行标题初始化
+		if ranking ~= nil then
+			if Ranking.load(ranking,DRTTRank) == false then
+				Ranking.addColumn(ranking,Lang.TaskTalk.dr001) --添加一个标题列  --姓名
+				Ranking.addColumn(ranking,Lang.TaskTalk.dr002) --添加一个标题列  --actorid
+				Ranking.addColumn(ranking,Lang.TaskTalk.dr004) --添加多一列 --短时间
+			end
+		end
+	else
+		debug_print("排行已经存在")
+	end
+	Ranking.addRef(ranking) --增加对此排行对象的引用计数
+	return ranking
+end
+
+--保存排行版数据
+function DanRenTianTi.Save()
+	local RankNameList = Ranking.getRanking(DRTTRankName) --通过排行名称获取排行对象
+	if RankNameList ~= nil then
+		Ranking.save(RankNameList,DRTTRank)       --保存排行榜进文件
+		if Ranking.getRef(RankNameList) == 1 then
+			Ranking.removeRanking(DRTTRankName) 	--如果引用计数减少至0，则对象自动被销毁
+		else
+			Ranking.release(RankNameList)			--减少引用计数
+		end
+	end
+	RankNameList = nil
+end
+
+--战斗结算 增加积分
+function DanRenTianTi.AddRank(sysarg , score , time)
+	-- 活跃度
+	ActivationTrigger( sysarg, 20 )
+	
+	debug_print("--------增加个人积分-------",score , time)
+	local KillerId = LActor.getIntProperty( sysarg, PROP_ENTITY_ID )    --获取角色ID
+	local KillerName = LActor.getName(sysarg)
+	local dayRanking = Ranking.getRanking(DRTTRankName) --通过排行名称获取排行对象
+	if dayRanking ~= nil then
+		local killerItem = Ranking.getItemPtrFromId(dayRanking,KillerId) 
+		if killerItem ~= nil then
+			local tmppoint = Ranking.getPoint(killerItem)
+			if tmppoint + score < 0 then
+				score = 0
+			end
+			Ranking.updateItem(dayRanking,KillerId,score)        --如果存在名单则加分
+			Ranking.setSub(killerItem, 0, KillerName)
+			Ranking.setSub(killerItem, 2, tostring(time))
+			--local lookPoint = Ranking.getPoint(Ranking.getItemPtrFromId(dayRanking, KillerId))
+		else
+			if score < 0 then
+				score = 0
+				return
+			end                                                      --如果不存在则创建 
+			killerItem = Ranking.addItem(dayRanking,KillerId,score)         --如果不存在名单则初始化
+			if killerItem ~= nil then
+				DanRenTianTi.InitRankItem(killerItem, sysarg , time)
+			end
+		end
+	else
+		debug_print("单人天梯 排行榜为空")
+	end
+end
+
+-- 初始单人天梯排行榜项
+function DanRenTianTi.InitRankItem(rank_item, sysarg , time)
+	Ranking.setSub(rank_item, 0, LActor.getName(sysarg))
+	Ranking.setSub(rank_item, 1, tostring(LActor.getActorId(sysarg)))
+	Ranking.setSub(rank_item, 2, tostring(time))
+end
+
+
+--判断单人天梯是否在或动中
+function DanRenTianTiOpenActivity( )
+	-- body
+	debug_print("----------开启单人天梯活动----------")
+	System.broadcastTipmsg(Lang.DanRenTianTi.drti001,ttGmTip)
+	local nVar = System.getStaticVar()
+	if nVar.DanRenTianTi_IsOpenActivity == nil then
+		nVar.DanRenTianTi_IsOpenActivity = 1
+		DanRenTianTi.AlreadyMember = {}
+		local rank = Ranking.getRanking( DRTTRankName )
+		if  rank ~= nil then
+			Ranking.clearRanking( rank )
+		else
+			debug_print("======开启活动前 排行不存在=========")
+		end
+	else
+		debug_print("=================开启单人开启活动前已经被开启了================")
+	end
+end
+-- 单人天梯活动结算
+function DanRenTianTiEndActivity( )
+	debug_print("----------单人天梯活动结束----------")
+	local nVar = System.getStaticVar()
+	if nVar.DanRenTianTi_IsOpenActivity ~= nil then
+		--System.broadcastTipmsg(Lang.DanRenTianTi.drti017,ttGmTip)
+		nVar.DanRenTianTi_IsOpenActivity = nil
+		local AllList = LuaHelp.getAllActorList()
+		if AllList ~= nil then
+			for i = 1 , #AllList do
+				local npack = DataPack.allocPacket(AllList[i] , 170 , 9)
+				if npack ~= nil then
+					DataPack.flush(npack)
+				end
+			end
+		end
+		local nRank = Ranking.getRanking( DRTTRankName )
+		if nRank == nil then
+			debug_print("==========排行榜为空==========")
+			return
+		end
+		-- local nCout = Ranking.getRankItemCount(nRank)
+		-- if nCout == 0 then
+		-- 	System.broadcastTipmsg(Lang.DanRenTianTi.drti015,ttScreenCenter)
+		-- end
+		-- local nTable = LuaHelp.getRankingItemList(nRank,1)
+		-- if nTable == nil then
+		-- 	debug_print("==========排行榜为第一名失败==========")
+		-- 	return
+		-- end
+		-- local nFirstName = Ranking.getSub(nTable[1] , 0)
+		-- local nstr = string.format(Lang.DanRenTianTi.drti002, nFirstName)
+		-- System.broadcastTipmsg(nstr,ttScreenCenter)
+		
+		--发放奖励
+		--DanRenTianTi.RankAward()
+		--DanRenTianTi.Save()
+	else
+		debug_print("========单人天梯活动结束前已经把活动关闭了=========")
+	end
+
+	DanRenTianTi.AlreadyMember = {}
+end
+function DanRenTianTiRankWard( )
+	debug_print("----------下发单人天梯排行榜奖励----------")
+	DanRenTianTi.RankAward()
+end
+---活动结束后 发放排行奖励
+function DanRenTianTi.RankAward()
+	-- body
+	local rank = Ranking.getRanking(DRTTRankName)
+
+	if rank == nil then 
+		debug_print("=========活动结束后 发放排行奖励========")
+		return 
+	end
+	Ranking.save(rank,DRTTRank)
+	-- 发放排名奖励
+	local conf = DRTT_Config.rank_award
+	local count = Ranking.getRankItemCount(rank)
+	debug_print("=======排行版数量=====",count)
+	for k , v in pairs ( conf ) do
+		local nStarIndex , nEndIndex = 0,0
+		if count >= v.max_rank then
+			nStarIndex = v.min_rank
+			nEndIndex = v.max_rank
+		elseif v.min_rank <= count and v.max_rank >= count then
+			nStarIndex = v.min_rank
+			nEndIndex = count
+		end
+
+		if nStarIndex == 0 or nEndIndex == 0 then
+			debug_print("========nStarIndex=======",nStarIndex,nEndIndex)
+			return
+		end
+		debug_print("========nStarIndex==111=====",nStarIndex,nEndIndex)
+		for n = nStarIndex , nEndIndex do
+			local item = Ranking.getItemFromIndex(rank, n-1)
+			local aid = Ranking.getId(item)
+			local point = Ranking.getPoint(item)
+			debug_print("aid , point" , aid , point)
+			local award_config = v.award_list
+			if point >= DRTT_Config.lowest then -- 
+				-- for k , v in pairs ( award_config ) do
+				-- 	local context = string.format(Lang.TaskTalk.dr005,k)
+				-- 	System.sendGmMailOffLine(aid, context, v[2], v[1], v[3], v[4],Lang.TaskTalk.dr006)
+				-- end
+				local t = {}
+				for i , j in pairs ( award_config ) do
+					local mtp = { type = j[2], id = j[1], count = j[3], bind = 0}
+					table.insert( t , mtp )
+				end
+				local len = #t
+				local remainder = 5 - math.mod(len , 5)
+				for i = 1 , remainder do
+					local mtp = { type = 0, id = 0, count = 0 , bind = 0}
+					table.insert(t , mtp)
+				end
+				local AwardLen = math.floor(#t / 5)
+				local context = string.format(Lang.TaskTalk.dr005,n)
+				for i = 1 , AwardLen do
+					System.sendGmMailOffLine(aid, context , t[i].type, t[i].id, t[i].count, t[i].bind, Lang.DanRenTianTi.drti016, t[i+1].type, t[i+1].id, t[i+1].count, t[i+1].bind, t[i+2].type, t[i+2].id, t[i+2].count, t[i+2].bind, t[i+3].type, t[i+3].id, t[i+3].count, t[i+3].bind,t[i+4].type, t[i+4].id, t[i+4].count, t[i+4].bind)
+				end		
+			end
+			-- 第一名获得称号
+			if n == 1 then
+				local sys_s_var = System.getStaticVar()
+				if sys_s_var == nil then return end
+				local actor = LActor.getActorById(aid)
+				if actor then
+					LActor.GiveTitle(actor, titleway.DRTT_first)
+				else
+					sys_s_var.drtt_first_title = aid
+				end
+			end
+		end
+	end
+end
+
+-- 奖励
+function DanRenTianTi.AddAward( sysarg , award_config )
+	-- body
+	if award_config == nil then
+		debug_print("------奖励配置表为空------")
+		return
+	end
+	--{0,2,1000,1,10000},-- {奖励ID,类型,数量,是否绑定,概率}
+	for k , v in pairs ( award_config ) do
+		if v[2] == 1 then
+			--经验
+			LActor.addExp(sysarg,v[3],Lang.DanRenTianTi.drti005,1)
+		elseif v[2] == 2 then
+			--钱
+			LActor.changeMoney(sysarg,v[1],v[3],1,false,Lang.DanRenTianTi.drti005)
+		elseif v[2] == 3 then
+			--物品
+			local nQuality = Item.getItemPropertyById(v[1],ipItemQuality)
+			local nStrong = Item.getItemPropertyById(v[1],ipItemStrong)
+			local nNum = LActor.addItem(sysarg,v[1],nQuality,nStrong,v[3],v[4],Lang.DanRenTianTi.drti005)
+			if nNum < v[3] then
+				local title = Lang.DanRenTianTi.drti006
+				System.sendGmMailOffLine(LActor.getActorId(sysarg), Lang.DanRenTianTi.drti007 , 1, v[1], v[3], v[4], title)
+			end
+		end
+	end
+end
+
+--pk结束后 发放pk奖励
+function DanRenTianTi.RkWinAWard( winobj )
+	-- body
+	if winobj ~= nil then
+		local winner_award = DRTT_Config.pk_award_list[1]
+		DanRenTianTi.AddAward( winobj , winner_award )
+	end
+end
+-- pk 失败奖励
+function DanRenTianTi.PKFaildAward( faildobj , actorid )
+	-- body
+	local faild_award = DRTT_Config.pk_award_list[2]
+	if faildobj ~= nil then
+		DanRenTianTi.AddAward( faildobj , faild_award )
+	end
+end
+--平局
+function DanRenTianTi.PkGogfall(actorobj1 , actorobj2 )
+	-- body
+	if actorobj1 == nil or actorobj2 == nil then
+		return
+	end
+	local gogfall_award = DRTT_Config.pk_award_list[3]
+	DanRenTianTi.AddAward( actorobj1 , gogfall_award )
+	DanRenTianTi.AddAward( actorobj2 , gogfall_award )
+	-- local nVar = System.getStaticVar()
+	-- local nIsOpen = 0
+	-- if nVar.DanRenTianTi_IsOpenActivity == 1 then
+	-- 	nIsOpen = 1
+	-- end
+	-- local nOldRank =  DanRenTianTi.GetRankIndex( LActor.getActorId( actorobj1 ) )
+	-- local nOldPoint = DanRenTianTi.getMyPoint( LActor.getActorId( actorobj1 ) )
+	-- DanRenTianTi.AddAward( actorobj1 , faild_award )
+	-- local nCurRank =  DanRenTianTi.GetRankIndex( LActor.getActorId( actorobj1 ) )
+	-- local nCurPoint = DanRenTianTi.getMyPoint( LActor.getActorId( actorobj1 ) )
+	-- local npack = DataPack.allocPacket( actorobj1 , 170 , CMD.QIN_QIU_PK_RESULT)
+	-- if npack == nil then
+	-- 	return
+	-- end
+	-- debug_print("=======DanRenTianTi.PkGogfall=============",nOldPoint,nCurPoint)
+	-- DataPack.writeChar( npack, 2)
+	-- DataPack.writeInt( npack , 3)
+	-- DataPack.writeInt( npack , nOldRank+1)
+	-- DataPack.writeInt( npack , nOldPoint)
+	-- DataPack.writeInt( npack , nCurRank+1)
+	-- DataPack.writeInt( npack , nCurPoint)
+	-- DataPack.writeByte( npack , nIsOpen)
+	-- DataPack.flush( npack )
+
+	-- local nOldRank1 =  DanRenTianTi.GetRankIndex( LActor.getActorId( actorobj2 ) )
+	-- local nOldPoint1 = DanRenTianTi.getMyPoint( LActor.getActorId( actorobj2 ) )
+	-- DanRenTianTi.AddAward( actorobj2 , faild_award )
+	-- local nCurRank1 =  DanRenTianTi.GetRankIndex( LActor.getActorId( actorobj2 ) )
+	-- local nCurPoint1 = DanRenTianTi.getMyPoint( LActor.getActorId( actorobj2 ) )
+	-- local npack1 = DataPack.allocPacket( actorobj2 , 170 , CMD.QIN_QIU_PK_RESULT)
+	-- if npack1 == nil then
+	-- 	return
+	-- end
+	-- DataPack.writeChar( npack1, 2)
+	-- DataPack.writeInt( npack1 , 3)
+	-- DataPack.writeInt( npack1 , nOldRank1+1)
+	-- DataPack.writeInt( npack1 , nOldPoint1)
+	-- DataPack.writeInt( npack1 , nCurRank1+1)
+	-- DataPack.writeInt( npack1 , nCurPoint1)
+	-- DataPack.writeByte( npack1 , nIsOpen)
+	--DataPack.flush( npack1 )
+end
+--获取当天的秒
+function DanRenTianTi.GetCurSecond()
+	local hour,minute,second = 0,0,0
+    hour, minute, second = System.getTime(hour, minute, second)
+    return hour * 60 *60 + minute * 60 + second
+end
+--初始化 单人天梯数据
+function DanRenTianTi.InitData( )
+	-- body
+	local nWeekDay = System.getDayOfWeek()
+	debug_print("--------nWeekDay---------"..tostring(nWeekDay))
+	local nFlage = false
+	for k , v in pairs (DRTT_Config.weekday) do
+		if nWeekDay == v then
+			nFlage = true
+			break
+		end
+	end
+	if nFlage == false then
+		return
+	end
+	local nTimeString = DRTT_Config.openactivitytime
+	local Index = string.find(nTimeString,"~")
+	local openTimeString = string.sub(nTimeString , 1, Index-1)
+	local EndTimeString = string.sub(nTimeString, Index+1,-1)
+	local nOpenTiemIndex = string.find(openTimeString,":")
+	debug_print("------openTimeString----EndTimeString---nOpenTiemIndex---",openTimeString,EndTimeString,nOpenTiemIndex)
+	local OpenTime = tonumber(string.sub(openTimeString , 1 , nOpenTiemIndex - 1)) * 60 * 60 + tonumber(string.sub(openTimeString , nOpenTiemIndex + 1, -1)) * 60
+	local nEndTimeIndex = string.find(EndTimeString,":")
+	local EndTime = tonumber(string.sub(EndTimeString , 1 , nEndTimeIndex - 1)) * 60 * 60 + tonumber(string.sub(EndTimeString , nEndTimeIndex + 1, -1)) * 60
+	local nCurSecond = DanRenTianTi.GetCurSecond()
+
+	local nYear ,nMonth , nDay = 0,0,0
+	nYear , nMonth , nDay = System.getDate( nYear ,nMonth , nDay )
+	local nTMD = string.format("%d-%d-%d " , nYear , nMonth , nDay)
+	debug_print(string.format("-----nCurSecond = %d ---OpenTime = %d-- EndTime = %d--",nCurSecond,OpenTime,EndTime))
+	if nCurSecond <= OpenTime then
+		return
+	end
+	if nCurSecond <= EndTime and nCurSecond >= OpenTime then
+		DanRenTianTiOpenActivity()
+		return
+	end
+	if nCurSecond > EndTime then
+		DanRenTianTiEndActivity( )
+	end
+
+end
+-- 进入单人天梯
+function DanRenTianTi.EnteryTianTi( sysarg , dp)
+	-- body
+	local handle = DataPack.readUInt(dp)
+	local nActionId = DataPack.readInt(dp)
+
+	if DRTT_Config.entry_level > LActor.getLevel(sysarg) then
+		LActor.sendTipmsg( sysarg , "等级不足", ttWarmTip)
+		return
+	end
+	local nSysVar = System.getStaticVar()
+	if nSysVar.DanRenTianTi_IsOpenActivity ~= 1 then
+		local tips = Lang.DanRenTianTi.drti004
+		LActor.sendTipmsg(sysarg, tips, ttWarmTip)
+		return
+	end
+
+	if handle <= 0 or nActionId <= 0 then
+		LActor.sendTipmsg( sysarg , Lang.DanRenTianTi.drti008 , ttWarmTip)
+		return
+	end
+	local nVar = LActor.getStaticVar( sysarg )
+	if nVar.DanRenTianTi_fuben_handle == nil then
+		LActor.sendTipmsg( sysarg , Lang.DanRenTianTi.drti008 , ttWarmTip)
+		return
+	end
+	debug_print("===================="..tostring(handle))
+	-- if nVar.DanRenTianTi_fuben_handle ~= handle then
+	-- 	LActor.sendTipmsg( sysarg , "没有匹配对手 信息不正确" , ttWarmTip)
+	-- 	return
+	-- end
+
+	local nFubenptr = Fuben.getFubenPtr(nVar.DanRenTianTi_fuben_handle)
+	if nFubenptr == nil then
+		nVar.DanRenTianTi_fuben_handle = nil
+		LActor.sendTipmsg( sysarg , Lang.DanRenTianTi.drti009 , ttWarmTip)
+		return
+	end
+	local actorList = LuaHelp.getFbActorList(pfb)
+	if actors ~= nil then
+		if #actorList >= 2 then
+			LActor.sendTipmsg( sysarg , Lang.DanRenTianTi.drti010 , ttWarmTip)
+			return
+		end
+	end
+
+	local nFubenId = Fuben.getFubenIdbyFuBenPtr(nFubenptr)
+	if  DRTT_Config.fubenid ~= nFubenId then
+		LActor.sendTipmsg( sysarg , Lang.DanRenTianTi.drti011 , ttWarmTip)
+		return
+	end
+	
+	local nIndex = 1
+	if DanRenTianTi.EnteryPos[nActionId] ~= nil then
+		DanRenTianTi.EnteryPos[nActionId] = nil
+		nIndex = 2
+	else
+		local nMyActorId = LActor.getActorId(sysarg)
+		DanRenTianTi.EnteryPos[nMyActorId] = 1
+	end
+
+	if nIndex == 2 then
+		Fuben.setFbTriggerScript(nVar.DanRenTianTi_fuben_handle , false)
+		Fuben.setFbTriggerTime( nVar.DanRenTianTi_fuben_handle , 0)
+	end
+	nVar.fuben_hp = LActor.getIntProperty( sysarg , PROP_HP)
+	nVar.fuben_mp = LActor.getIntProperty( sysarg , PROP_MP)
+	local nBool = LActor.enterFuBen(sysarg, nVar.DanRenTianTi_fuben_handle, DRTT_Config.sceneid, DRTT_Config.enteryPos[nIndex][1], DRTT_Config.enteryPos[nIndex][2] )
+	if nBool == false then
+		LActor.sendTipmsg( sysarg , Lang.DanRenTianTi.drti012 , ttWarmTip)
+		nVar.DanRenTianTi_fuben_handle = nil
+		nVar.DanRenTianTi_Rival_actorid = nil
+		--return
+	else
+		nVar.DanRenTianTi_fuben_handle = nil
+		--return
+	end
+	local mMax_hp = LActor.getIntProperty( sysarg , PROP_MAXHP)
+	local mMax_mp = LActor.getIntProperty( sysarg , PROP_MAXMP)
+	debug_print("======mMax_hp========mMax_hp======",mMax_hp,mMax_mp)
+	LActor.setIntProperty(sysarg , PROP_HP , mMax_hp)
+	LActor.setIntProperty(sysarg , PROP_MP , mMax_mp)
+	LActor.clearSkillCd(sysarg)
+	DanRenTianTi.ChangeHpOrChangeMp( sysarg )
+	ActorChangeMpHp.dispatch(sysarg, DRTT_Config.sceneid)
+
+	nVar.DanRenTianTi_enter_count = (nVar.DanRenTianTi_enter_count or 0) + 1
+	DanRenTianTi.getEnterCountInfo(sysarg)
+end
+
+function DanRenTianTi.GetIntegralRecord( nActionId )
+	if nActionId <= 0 then
+		return
+	end
+
+	local sysarg = LActor.getActorById( nActionId)
+	if sysarg == nil then
+		return
+	end
+
+	local KillerId = LActor.getIntProperty( sysarg, PROP_ENTITY_ID )    --获取角色ID
+	local KillerName = LActor.getName(sysarg)
+	local dayRanking = Ranking.getRanking(DRTTRankName) --通过排行名称获取排行对象
+	if dayRanking ~= nil then
+		local killerItem = Ranking.getItemPtrFromId(dayRanking,KillerId) 
+		if killerItem ~= nil then
+			return Ranking.getPoint( killerItem )
+		end
+	end
+end
+function DanRenTianTi.GetRankIndex( nActorId )
+	if nActorId <= 0 then
+		return -1
+	end
+	local sysarg = LActor.getActorById( nActorId)
+	if sysarg == nil then
+		return -1
+	end
+	local KillerId = LActor.getIntProperty( sysarg, PROP_ENTITY_ID )    --获取角色ID
+	local dayRanking = Ranking.getRanking(DRTTRankName) --通过排行名称获取排行对象
+	if dayRanking ~= nil then
+		return Ranking.getItemIndexFromId(dayRanking,KillerId)
+	end
+
+	return -1
+end
+
+function DanRenTianTi.MatchingData( sysarg )
+	local nVar = System.getStaticVar()
+	if nVar.DanRenTianTi_IsOpenActivity ~= 1 then
+		local tips = Lang.DanRenTianTi.drti004
+		LActor.sendTipmsg(sysarg, tips, ttWarmTip)
+		return
+	end
+	-- body
+	if DRTT_Config.entry_level > LActor.getLevel( sysarg ) then
+		local tips = Lang.DanRenTianTi.drti013
+		LActor.sendTipmsg(sysarg , tips , ttWarmTip)
+		return
+	end
+	local nStaticActorVar = LActor.getStaticVar( sysarg )
+	if nStaticActorVar.DanRenTianTi_enter_count and nStaticActorVar.DanRenTianTi_enter_count >= ((nStaticActorVar.DanRenTianTi_buy_count or 0) + DRTT_Config.maxCount) then
+		print("超过最大次数了       "..nStaticActorVar.DanRenTianTi_enter_count)
+		return
+	end
+
+	if nStaticActorVar.DanRenTianTi_fuben_handle ~= nil then
+		debug_print("已经匹配到有玩家了")
+		return
+	end
+	local nActionId = LActor.getActorId( sysarg )
+
+	if DanRenTianTi.AlreadyMember[nActionId] ~= nil then
+		debug_print("已经在匹配中，请稍等")
+		return
+	end
+	local nPoint = DanRenTianTi.GetIntegralRecord(nActionId)
+	local nTime = System.getCurrMiniTime()
+	if nPoint == nil then
+		local nTemp = { nActionId , 0 , nTime }
+		DanRenTianTi.AlreadyMember[nActionId] = nTemp
+	else
+		local nTemp = { nActionId , nPoint , nTime}
+		DanRenTianTi.AlreadyMember[nActionId] = nTemp
+	end
+
+	--点匹配就退出队伍
+	local team = TeamFun.getTeam(LActor.getTeamId(sysarg))
+	if team then
+		TeamFun.delMember(team, LActor.getActorId(sysarg))
+	end
+
+	local nIntegral = DanRenTianTi.AlreadyMember[nActionId][2]
+	local nCount = 1
+	local nAutoId = 0
+	while ( nCount < DRTT_Config.RandCount )
+		do
+		for k , v in pairs ( DanRenTianTi.AlreadyMember ) do
+			if v[1] ~= nActionId and nIntegral + DRTT_Config.RandPion * nCount > v[2] and nIntegral - DRTT_Config.RandPion * nCount < v[2] then
+				nAutoId = v[1]
+				break
+			end
+		end
+		if nAutoId ~= 0 then
+			break
+		end
+		nCount = nCount + 1
+	end
+
+	if nAutoId ~= nil and nAutoId ~= 0 then
+		debug_print("匹配成功")
+		-- 发送数据
+		local nAutoActor = LActor.getActorById(nAutoId)
+		if nAutoActor == nil then
+			DanRenTianTi.AlreadyMember[nAutoId] = nil --匹配到的玩家id
+			return
+		end
+		local nStaticAutoVar = LActor.getStaticVar( nAutoActor )
+
+		if nStaticAutoVar.DanRenTianTi_fuben_handle ~= nil then
+			return
+		end
+		
+		local hFuben = Fuben.createFuBen(DRTT_Config.fubenid)
+		if hFuben == nil or hFuben == 0 then
+			debug_print("创建单人天梯失败")
+			return
+		end
+		Fuben.setFbCanRelive( hFuben , false)
+		Fuben.setFbTriggerScript(hFuben , true)
+		Fuben.setFbTriggerTime( hFuben , DRTT_Config.createfbtriggertiem)
+		Fuben.SetFubenTime(hFuben , DRTT_Config.limittime)
+		--自己
+		nStaticActorVar.DanRenTianTi_fuben_handle = hFuben
+		nStaticActorVar.DanRenTianTi_Rival_actorid = nAutoId
+		--对手
+		nStaticAutoVar.DanRenTianTi_Rival_actorid = nActionId
+		nStaticAutoVar.DanRenTianTi_fuben_handle = hFuben
+
+		local nActorRankIndex = DanRenTianTi.GetRankIndex( nActionId ) + 1
+		local nAutoRankIndex = DanRenTianTi.GetRankIndex( nAutoId ) + 1
+	
+		local nName = LActor.getName(sysarg)
+		if nName == nil then
+			return
+		end
+		local nAutoName = LActor.getName(nAutoActor)
+		if nAutoName == nil then
+			return
+		end
+		local nMyWeapID = LActor.getActorWeapId(sysarg) 
+		local nOtherWeapID = LActor.getActorWeapId(nAutoActor) 
+		local nMyWingID = LActor.getIntProperty( sysarg, PROP_ACTOR_VIPR_EXPIRETIME)
+		local nOtherWingID = LActor.getIntProperty( nAutoActor, PROP_ACTOR_VIPR_EXPIRETIME)
+		local nMyModeid = LActor.getIntProperty( sysarg, PROP_ENTITY_MODELID)
+		local nOtherModeid = LActor.getIntProperty( nAutoActor, PROP_ENTITY_MODELID)
+		local nMyCareer = LActor.getIntProperty(sysarg , PROP_VOCATION)
+		local nOtherCareer = LActor.getIntProperty(nAutoActor, PROP_VOCATION)
+
+		local npack = DataPack.allocPacket(sysarg , 170 , CMD.QIN_QIU_PK_DUI_SHOU)
+		if npack == nil then
+			debug_print("new packet error")
+			return
+		end
+		DataPack.writeInt( npack, 1)
+		DataPack.writeString(npack, nAutoName)
+		DataPack.writeInt( npack, nAutoRankIndex)
+		DataPack.writeInt( npack, LActor.getIntProperty(nAutoActor, PROP_ACTOR_FIGHT_VALUE))
+		DataPack.writeUInt( npack , hFuben )
+		DataPack.writeInt( npack , nOtherWeapID )
+		DataPack.writeInt( npack , nOtherWingID )
+		DataPack.writeInt( npack , nOtherModeid )
+		DataPack.writeInt( npack , nOtherCareer )
+		DataPack.writeInt( npack , nAutoId )
+		DataPack.flush( npack )
+
+		local nAutoPack = DataPack.allocPacket( nAutoActor , 170 , CMD.QIN_QIU_PK_DUI_SHOU )
+		if nAutoPack == nil then
+			debug_print("new packet error")
+			return
+		end
+		DataPack.writeInt( nAutoPack , 1)
+		DataPack.writeString(nAutoPack, nName)
+		DataPack.writeInt( nAutoPack, nActorRankIndex)
+		DataPack.writeInt( nAutoPack, LActor.getIntProperty(sysarg, PROP_ACTOR_FIGHT_VALUE))
+		DataPack.writeUInt( nAutoPack , hFuben )
+		DataPack.writeInt( nAutoPack , nMyWeapID )
+		DataPack.writeInt( nAutoPack , nMyWingID )
+		DataPack.writeInt( nAutoPack , nMyModeid )
+		DataPack.writeInt( nAutoPack , nMyCareer )
+		DataPack.writeInt( nAutoPack , nActionId )
+		DataPack.flush( nAutoPack )
+
+		DanRenTianTi.AlreadyMember[nActionId] = nil --匹配者id
+		DanRenTianTi.AlreadyMember[nAutoId] = nil --匹配到的玩家id
+
+		--记录2个玩家的信息，防止某个玩家没有进入副本，导致显示的内容错误
+		local nFubenptr = Fuben.getFubenPtr(hFuben)
+		local nFubenVar = Fuben.getDyanmicVar(nFubenptr)
+		if not nFubenVar then return end
+
+		if not nFubenVar.actorList then nFubenVar.actorList = {} end
+		nFubenVar.actorList[1] = {}
+		nFubenVar.actorList[1].actorid = nActionId
+		nFubenVar.actorList[1].handle = LActor.getHandle(sysarg)
+		nFubenVar.actorList[1].maxhp = LActor.getIntProperty(sysarg, PROP_MAXHP)
+		nFubenVar.actorList[1].hp = LActor.getIntProperty(sysarg, PROP_HP)
+		nFubenVar.actorList[1].maxmp = LActor.getIntProperty(sysarg, PROP_MAXMP)
+		nFubenVar.actorList[1].mp = LActor.getIntProperty(sysarg, PROP_MP)
+		nFubenVar.actorList[1].level = LActor.getLevel(sysarg)
+		nFubenVar.actorList[1].name = nName
+
+		nFubenVar.actorList[2] = {}
+		nFubenVar.actorList[2].actorid = nAutoId
+		nFubenVar.actorList[2].handle = LActor.getHandle(nAutoActor)
+		nFubenVar.actorList[2].maxhp = LActor.getIntProperty(nAutoActor, PROP_MAXHP)
+		nFubenVar.actorList[2].hp = LActor.getIntProperty(nAutoActor, PROP_HP)
+		nFubenVar.actorList[2].maxmp = LActor.getIntProperty(nAutoActor, PROP_MAXMP)
+		nFubenVar.actorList[2].mp = LActor.getIntProperty(nAutoActor, PROP_MP)
+		nFubenVar.actorList[2].level = LActor.getLevel(nAutoActor)
+		nFubenVar.actorList[2].name = nAutoName
+	else
+		debug_print("等待匹配。。。。")
+		local npack = DataPack.allocPacket(sysarg , 170 , CMD.QIN_QIU_PK_DUI_SHOU)
+		DataPack.writeInt( npack, 2)
+		DataPack.flush( npack )
+	end
+end
+
+
+-- 自动清除 超时匹配
+function DanRenTianTiDealMatchingData()
+	-- body
+	local nCurTime = System.getCurrMiniTime()
+	for k , v in pairs ( DanRenTianTi.AlreadyMember ) do
+		if nCurTime - v[3] >= DRTT_Config.toptime then
+			local npack = DataPack.allocPacket(sysarg , 170 , CMD.QIN_QIU_PK_DUI_SHOU)
+			DataPack.writeInt(npack , 3)
+			DataPack.flush( npack )
+			DanRenTianTi.AlreadyMember[k] = nil
+		end
+	end
+end
+
+--获取自己的排行信息
+function DanRenTianTi.GetMyRandData( sysarg )
+	local nIndex = DanRenTianTi.GetRankIndex( LActor.getActorId( sysarg ))
+	debug_print("-=---myrank-- = "..tostring(nIndex+1))
+	local npack = DataPack.allocPacket(sysarg , 170 , CMD.QIN_QIU_MY_RANK)
+	DataPack.writeInt(npack , nIndex+1)
+	DataPack.flush( npack )
+	-- body
+end
+
+--获取前三的排行版
+function DanRenTianTi.GetThreeRandData( sysarg )
+	-- body
+	local RankNameList = Ranking.getRanking(DRTTRankName) --通过排行名称获取排行对象
+	local rankTbl = LuaHelp.getRankingItemList(RankNameList,3)
+	local npack = DataPack.allocPacket( sysarg , 170 , CMD.QIN_QIU_RANK_THREE)
+	local nMyRankIndex = DanRenTianTi.GetRankIndex( LActor.getActorId( sysarg) )
+	DataPack.writeInt( npack , nMyRankIndex)
+	if rankTbl and #rankTbl > 0 then
+		DataPack.writeInt( npack , #rankTbl)
+		for i=1, #rankTbl do
+			local userName = Ranking.getSub(rankTbl[i],0)
+			local userpoint = Ranking.getPoint(rankTbl[i])
+			DataPack.writeInt( npack , i)
+			DataPack.writeString(npack,userName)
+			DataPack.writeInt(npack,userpoint)
+		end
+	end
+	DataPack.flush( npack )
+end
+
+--取消匹配对手
+function DanRenTianTi.CancelMatchingData ( sysarg )
+	local nActorId = LActor.getActorId( sysarg )
+	local npack = DataPack.allocPacket( sysarg , 170 , CMD.QIN_QIU_QUXIAO_PIPEI)
+	local nVar = LActor.getStaticVar( sysarg )
+	
+	-- if nVar.DanRenTianTi_Rival_actorid ~= nil and nVar.DanRenTianTi_fuben_handle ~= nil then
+	-- 	DataPack.writeChar( npack, 2)
+	-- 	DataPack.flush( npack )
+	-- 	return
+	-- end
+	if DanRenTianTi.AlreadyMember[nActorId] == nil then
+		DataPack.writeChar( npack, 0)
+	else
+		DanRenTianTi.AlreadyMember[nActorId] = nil
+		DataPack.writeChar( npack, 1)
+	end
+	DataPack.flush( npack )
+	
+	if nVar.DanRenTianTi_fuben_handle ~= nil then
+		nVar.DanRenTianTi_fuben_handle = nil
+	end
+	if nVar.DanRenTianTi_Rival_actorid ~= nil then
+		nVar.DanRenTianTi_Rival_actorid = nil
+	end
+end
+
+function DanRenTianTi.ActorDie( dieobj , arg )
+	-- body
+	debug_print("========== DanRenTianTi.ActorDie===========")
+	local killerobj = arg[1]
+	if dieobj == nil or killerobj == nil then
+		return
+	end
+	if LActor.isActor( killerobj ) == false then
+		killerobj = LActor.getMonsterOwner( killerobj )
+		debug_print("killer not is actor")
+	end
+	local nFubenId = LActor.getFubenId( dieobj )
+	if nFubenId <= 0 or nFubenId ~= DRTT_Config.fubenid then
+		debug_print("========== DanRenTianTi.ActorDie===========",nFubenId,DRTT_Config.fubenid)
+		return
+	end
+	DanRenTianTi.PKResult( killerobj , dieobj )
+	local nDieVar = LActor.getStaticVar( dieobj )
+	if nDieVar.DanRenTianTi_Rival_actorid ~= nil then
+		nDieVar.DanRenTianTi_Rival_actorid = nil
+	end
+	if nDieVar.DanRenTianTi_Connect_Win ~= nil then
+		nDieVar.DanRenTianTi_Connect_Win = nil
+	end
+end
+function DanRenTianTi.getMyPoint( nActorId )
+	-- body
+	if nActorId <= 0 then
+		return -1
+	end
+	local sysarg = LActor.getActorById( nActorId)
+	if sysarg == nil then
+		return -1
+	end
+	local KillerId = LActor.getIntProperty( sysarg, PROP_ENTITY_ID )    --获取角色ID
+	local dayRanking = Ranking.getRanking(DRTTRankName) --通过排行名称获取排行对象
+	if dayRanking ~= nil then
+		local rankItem =  Ranking.getItemPtrFromId(dayRanking,KillerId)
+		if rankItem ~= nil then
+			return Ranking.getPoint( rankItem )
+		end
+	end
+	return 0
+end
+
+function DanRenTianTi.PKResult( winact , faildact )
+	local nFubenptr = LActor.getFubenPrt(faildact)
+	local nFubenVar = Fuben.getDyanmicVar(nFubenptr)
+	if nFubenVar.DanRenTianTi_Result ~= nil then
+		return
+	end
+	nFubenVar.DanRenTianTi_Result = 1
+	local nVar = LActor.getStaticVar( faildact )
+	if nVar.DanRenTianTi_Connect_Win ~= nil then
+		nVar.DanRenTianTi_Connect_Win = nil
+	end
+	local ntime = System.getCurrMiniTime()
+	local nVar1 = System.getStaticVar()
+	local nIsOpen = 0
+	if nVar1.DanRenTianTi_IsOpenActivity == 1 then
+		nIsOpen = 1
+	end
+
+	local actorid1 = LActor.getActorId( faildact )
+	local actorid2 = LActor.getActorId( winact )
+	local nOldRank1 =  DanRenTianTi.GetRankIndex(actorid1)
+	local nOldPoint1 = DanRenTianTi.getMyPoint(actorid1)
+	local nOldRank2 = DanRenTianTi.GetRankIndex(actorid2)
+	local nOldPoint2 = DanRenTianTi.getMyPoint(actorid2)
+
+	if LActor.isActor( faildact ) == true then
+		DanRenTianTi.AddRank(faildact , DRTT_Config.diepoint , ntime)
+	end
+	if LActor.isActor( winact ) == true then
+		local nWinVar = LActor.getStaticVar( winact )
+		if nWinVar.DanRenTianTi_Connect_Win == nil then
+			nWinVar.DanRenTianTi_Connect_Win = 0
+		else
+			nWinVar.DanRenTianTi_Connect_Win = nWinVar.DanRenTianTi_Connect_Win + 1
+		end
+		local nWinExterPoint = DRTT_Config.connect_win_point_list[nWinVar.DanRenTianTi_Connect_Win]
+		if nWinExterPoint == nil then
+			nWinExterPoint = 0
+		end
+		debug_print("---------------",nWinVar.DanRenTianTi_Connect_Win,nWinExterPoint,DRTT_Config.winpoint)
+		DanRenTianTi.AddRank(winact , DRTT_Config.winpoint + nWinExterPoint , ntime)
+	end
+
+	if LActor.isActor( faildact ) == true then
+		local nCurRand = DanRenTianTi.GetRankIndex(actorid1)
+		local nCurPoint = DanRenTianTi.getMyPoint(actorid1)
+		DanRenTianTi.PKFaildAward(faildact)
+		
+		local npack = DataPack.allocPacket( faildact , 170 , CMD.QIN_QIU_PK_RESULT)
+		if not npack then return end
+
+		DataPack.writeChar( npack, 0)
+		DataPack.writeInt( npack , 3)
+		DataPack.writeInt( npack , nOldRank1 + 1)
+		DataPack.writeInt( npack , nOldPoint1)
+		DataPack.writeInt( npack , nCurRand + 1)
+		DataPack.writeInt( npack , nCurPoint)
+		DataPack.writeInt( npack , 0)
+		DataPack.writeByte( npack , nIsOpen)
+		DataPack.flush( npack )
+	end
+	if LActor.isActor( winact ) == true then
+		local nCurRand = DanRenTianTi.GetRankIndex(actorid2)
+		local nCurPoint = DanRenTianTi.getMyPoint(actorid2)
+		DanRenTianTi.RkWinAWard(winact)
+		local DanRenRanking = Ranking.getRanking(DRTTRankName) --通过排行名称获取排行对象
+		local nRankCount = Ranking.getRankItemCount(DanRenRanking)
+
+		local nActorPack = DataPack.allocPacket( winact , 170 , CMD.QIN_QIU_PK_RESULT)
+		if not nActorPack then return end
+
+		DataPack.writeChar( nActorPack, 1)
+		DataPack.writeInt( nActorPack , 3)
+		DataPack.writeInt( nActorPack , nOldRank2 + 1)
+		DataPack.writeInt( nActorPack , nOldPoint2)
+		DataPack.writeInt( nActorPack , nCurRand + 1)
+		DataPack.writeInt( nActorPack , nCurPoint)
+		DataPack.writeInt( nActorPack , nRankCount)
+		DataPack.writeByte( nActorPack , nIsOpen)
+		DataPack.flush( nActorPack )
+	end
+end
+
+function DanRenTianTi.GetPersionRank ( sysarg )
+	if sysarg == nil then
+		return
+	end
+	local dayRanking = Ranking.getRanking(DRTTRankName) --通过排行名称获取排行对象
+	if dayRanking == nil then
+		debug_print("=======DanRenTianTi.GetPersionRank========")
+		LActor.sendTipmsg(sysarg , Lang.DanRenTianTi.drti014, ttWarmTip)
+		return
+	end
+	local itemCount = Ranking.getRankItemCount(dayRanking)
+	if itemCount > 20 then
+		itemCount = 20
+	end
+	local rankTbl = LuaHelp.getRankingItemList(dayRanking,itemCount)
+	local nTemp = {}
+	for i = 1 , itemCount do
+		local nstrname = Ranking.getSub(rankTbl[i],0)
+		local npiont = Ranking.getPoint(rankTbl[i])
+		local temp = { name = nstrname , point = npiont}
+		table.insert(nTemp , temp)
+	end
+	local npcak = DataPack.allocPacket(sysarg , 170 , 7 )
+	if npcak == nil then
+		return
+	end
+	DataPack.writeInt(npcak , #nTemp)
+	for k , v in pairs (nTemp) do
+		DataPack.writeString(npcak , v.name)
+		DataPack.writeInt( npcak , v.point)
+		debug_print(v.name, v.point)
+	end
+	DataPack.flush( npcak )
+ end
+
+function DanRenTianTi.NetWorldDealWith(sysarg , sysid , cmd , dp )
+
+	local nVar = System.getStaticVar()
+	-- if nVar.DanRenTianTi_IsOpenActivity ~= 1 then
+	-- 	DanRenTianTi.IsOpenActity( sysarg )
+	-- 	return
+	-- end
+	debug_print(cmd )
+
+	local nCmd = tonumber( cmd )--DataPack.readInt( dp )
+	--debug_print(nVar.DanRenTianTi_IsOpenActivity , nCmd)
+	if nVar.DanRenTianTi_IsOpenActivity ~= 1 and ( nCmd ~= 2 and nCmd ~= 3 and nCmd ~= 7 and nCmd ~= 8) then
+		--local tips = "不在活动时间范围内"
+		--LActor.sendTipmsg(sysarg, tips, ttWarmTip)
+		DanRenTianTi.IsOpenActity( sysarg )
+		return
+	end
+	debug_print("-----------DanRenTianTi.NetWorldDealWith------------"..tostring(nCmd))
+	if CMD.QIN_QIU_PK_DUI_SHOU == nCmd then
+		DanRenTianTi.MatchingData(sysarg)
+	elseif CMD.QIN_QIU_MY_RANK == nCmd then
+		DanRenTianTi.GetMyRandData( sysarg )
+	elseif CMD.QIN_QIU_RANK_THREE == nCmd then 
+		DanRenTianTi.GetThreeRandData( sysarg )
+	elseif CMD.QIN_QIU_QUXIAO_PIPEI == nCmd then 
+		DanRenTianTi.CancelMatchingData( sysarg )
+	elseif CMD.QIN_QIU_ENTRY_PK == nCmd then
+		DanRenTianTi.EnteryTianTi( sysarg , dp)
+	elseif CMD.QIN_QIU_PERSION_RANK == nCmd then
+		DanRenTianTi.GetPersionRank ( sysarg )
+	elseif CMD.QIN_QIU_IS_OPEN_ACTIVITY == nCmd then
+		DanRenTianTi.IsOpenActity( sysarg )
+	elseif CMD.QIN_QIU_LEFT_COUNT == nCmd then
+		DanRenTianTi.getEnterCountInfo( sysarg )
+	elseif CMD.QIN_QIU_BUY_COUNT == nCmd then
+		DanRenTianTi.buyEnterCount( sysarg )
+	end
+end
+function DanRenTianTi.IsOpenActity( sysarg )
+	-- body
+	local npack = DataPack.allocPacket(sysarg , 170, 8)
+	local nVar = System.getStaticVar()
+	if nVar.DanRenTianTi_IsOpenActivity ~= 1 then
+		DataPack.writeByte(npack, 0)
+	else
+		DataPack.writeByte(npack, 1)
+	end
+	DataPack.flush(npack)
+end
+function DanRenTianTi.test( sysarg , arg )
+	-- body
+	debug_print(arg[1])
+	local cmd = tonumber(arg[1])
+	debug_print("-------DanRenTianTi cmd----------"..tostring(cmd))
+	if cmd == 1 then
+		debug_print("-------DanRenTianTi fadggghhtwsthhtw4eh5h4ew----------")
+		local time = System.getCurrMiniTime()
+		DanRenTianTi.AddRank(sysarg , 10 , time)
+	elseif cmd == 2 then
+		local npack = DataPack.allocPacket(sysarg , 170 , 8)
+		DataPack.writeInt(npack , 1)
+		DataPack.writeInt(npack , 0)
+		DataPack.writeInt(npack , 1)
+		DataPack.writeInt(npack , 2)
+		DataPack.flush(npack)
+	elseif cmd == 3 then
+		DanRenTianTiRankWard()
+	elseif cmd == 4 then
+		DanRenTianTiOpenActivity( )
+	elseif cmd == 5 then
+		DanRenTianTiEndActivity()
+	end
+end
+
+--玩家掉线
+function DanRenTianTi.outLogin( sysarg ,arg)
+	-- body
+	
+	local nFubenId = LActor.getFubenId( sysarg )
+	debug_print("------------DanRenTianTi.outLogin-------------",nFubenId,DRTT_Config.fubenid)
+	if nFubenId <= 0 or nFubenId ~= DRTT_Config.fubenid then
+		DanRenTianTi.CancelMatchingData(sysarg)
+	else
+		local nFubenptr = LActor.getFubenPrt(sysarg)
+		local nFubenVar = Fuben.getDyanmicVar(nFubenptr)
+		if nFubenVar.DanRenTianTi_Result ~= nil then
+			debug_print("==========已经结算过了=============")
+			LActor.exitFuben(sysarg)
+			return
+		end
+		local nAID = LActor.getActorId( sysarg )
+		if DanRenTianTi.AlreadyMember[nAID] ~= nil then
+			DanRenTianTi.AlreadyMember[nAID] = nil
+			debug_print("==========移除匹配列表=============") 
+			return
+		end
+		local nVar = LActor.getStaticVar( sysarg )
+		if nVar.DanRenTianTi_fuben_handle ~= nil or nVar.DanRenTianTi_Rival_actorid ~= nil then
+			debug_print("========进行结算========")
+			local nActor = LActor.getActorById( nVar.DanRenTianTi_Rival_actorid )
+			if nActor ~= nil then
+				local nRival_Var = LActor.getStaticVar( nActor )
+				nRival_Var.DanRenTianTi_fuben_handle = nil
+				nRival_Var.DanRenTianTi_Rival_actorid = nil
+			end
+			nVar.DanRenTianTi_fuben_handle = nil
+			nVar.DanRenTianTi_Rival_actorid = nil
+			--处理
+			local ntime = System.getCurrMiniTime()
+			DanRenTianTi.PKResult( nActor , sysarg )
+			LActor.exitFuben(sysarg)
+			return
+		end
+		if nFubenptr == nil then
+			debug_print("========副本为空========")
+			return
+		end
+		local nVar = LActor.getStaticVar( sysarg )
+		local actorList = LuaHelp.getFbActorList(nFubenptr)
+		if actorList ~= nil and #actorList == 2 then
+			debug_print("=======dfadfasdfsdf=========")
+			for i= 1 , #actorList do
+				if LActor.getActorId( actorList[i] ) ~= tonumber( arg[1] ) then
+					--断线
+					debug_print("=======dfadfasdfsdf=========",arg[1])
+					local ntime = System.getCurrMiniTime()
+					DanRenTianTi.PKResult( actorList[i] , sysarg )
+					LActor.exitFuben(sysarg)
+					return
+				end
+			end
+		end
+		LActor.exitFuben(sysarg)
+	end
+end
+
+function DanRenTianTi.InLogin( sysarg )
+	if not sysarg then
+		return
+	end
+	local nVar1 = System.getStaticVar()
+	if nVar1.DanRenTianTi_IsOpenActivity == nil then
+		local nVar = LActor.getStaticVar( sysarg )
+		if nVar.DanRenTianTi_fuben_handle ~= nil then
+			local nFubenptr = Fuben.getFubenPtr( nVar.DanRenTianTi_fuben_handle )
+			if nFubenptr == nil then
+				nVar.DanRenTianTi_fuben_handle = nil
+				nVar.DanRenTianTi_Rival_actorid = nil
+			end
+		end
+		if nVar.DanRenTianTi_Connect_Win ~= nil then
+			nVar.DanRenTianTi_Connect_Win = nil
+		end
+	end
+	-- local nWeekDay = System.getDayOfWeek()
+	-- debug_print("--------nWeekDay---------"..tostring(nWeekDay))
+	-- local nFlage = false
+	-- for k , v in pairs (DRTT_Config.weekday) do
+	-- 	if nWeekDay == v then
+	-- 		nFlage = true
+	-- 		break
+	-- 	end
+	-- end
+	-- if nFlage == true then
+	-- 	return
+	-- end
+	-- --不在星期一 三 清除连胜次数
+	-- if nVar.DanRenTianTi_Connect_Win ~= nil then
+	-- 	nVar.DanRenTianTi_Connect_Win = nil
+	-- end
+	-- body
+end
+
+function DanRenTianTi.specialAddRank( actorid , score )
+	-- body
+	local dayRanking = Ranking.getRanking(DRTTRankName) --通过排行名称获取排行对象
+	if dayRanking ~= nil then
+		local killerItem = Ranking.getItemPtrFromId(dayRanking,actorid) 
+		if killerItem ~= nil then
+			local tmppoint = Ranking.getPoint(killerItem)
+			if tmppoint + score < 0 then
+				score = tmppoint
+			end
+			Ranking.updateItem(dayRanking , actorid , score)        --如果存在名单则加分
+			Ranking.setSub(killerItem, 2, tostring(time))
+		end
+	else
+		debug_print("单人天梯 排行榜为空")
+	end
+end
+--10秒内没玩家进入场景的
+function DanRenTianTi.DealActorNotEntryPK( fubenptr , fubenid )
+	if fubenptr == nil or fubenid == nil or fubenid ~= DRTT_Config.fubenid then
+		return
+	end
+
+	local actorList = LuaHelp.getFbActorList( fubenptr)
+	if actorList == nil then
+		local hfb = Fuben.getFubenHandle(fubenptr)
+		if hfb > 0 then
+			Fuben.closeFuben(hfb)
+		end
+		return
+	end
+
+	if #actorList == 2 then
+		return
+	end
+
+	if #actorList == 1 then
+		local nVar = LActor.getStaticVar( actorList[1] )
+		if nVar == nil then return end
+		
+		local nFubenVar = Fuben.getDyanmicVar(fubenptr)
+		if not nFubenVar or not nFubenVar.actorList or not nFubenVar.actorList[1] or not nFubenVar.actorList[2] then return end
+
+		local actorid = LActor.getActorId(actorList[1])
+		local otherActorId = nFubenVar.actorList[1].actorid
+		if otherActorId == actorid then
+			otherActorId = nFubenVar.actorList[2].actorid
+			if otherActorId == actorid then
+				print("error DanRenTianTi, 2 actorid is the same   "..actorid)
+				return
+			end
+		end
+
+		DanRenTianTi.specialAddRank(actorid, DRTT_Config.diepoint )
+		if nVar.DanRenTianTi_Connect_Win == nil then
+			nVar.DanRenTianTi_Connect_Win = 0
+		else
+			nVar.DanRenTianTi_Connect_Win = nVar.DanRenTianTi_Connect_Win + 1
+		end
+		local temppoint = DRTT_Config.connect_win_point_list[nVar.DanRenTianTi_Connect_Win - 1]
+		if temppoint == nil then
+			temppoint = 0
+		end
+		local nVar1 = System.getStaticVar()
+		local nIsOpen = 0
+		if nVar1.DanRenTianTi_IsOpenActivity == 1 then
+			nIsOpen = 1
+		end
+		local nOldRank = DanRenTianTi.GetRankIndex(actorid)
+		local nOldPoint = DanRenTianTi.getMyPoint(actorid)
+
+		DanRenTianTi.AddRank(actorList[1] ,  DRTT_Config.winpoint + temppoint )
+
+		local nCurRank = DanRenTianTi.GetRankIndex(actorid)
+		local nCurPoint = DanRenTianTi.getMyPoint(actorid)
+		local DanRenRanking = Ranking.getRanking(DRTTRankName) --通过排行名称获取排行对象
+		local nRankCount = Ranking.getRankItemCount(DanRenRanking)
+		local npack = DataPack.allocPacket( actorList[1] , 170 , CMD.QIN_QIU_PK_RESULT)
+		DataPack.writeChar( npack , 1)
+		DataPack.writeInt( npack , 2)
+		DataPack.writeInt( npack , nOldRank + 1)
+		DataPack.writeInt( npack , nOldPoint)
+		DataPack.writeInt( npack , nCurRank + 1)
+		DataPack.writeInt( npack , nCurPoint)
+		DataPack.writeInt( npack , nRankCount)
+		DataPack.writeByte( npack , nIsOpen)
+		DataPack.flush(npack)
+		DanRenTianTi.RkWinAWard( actorList[1] )
+		local hfb = Fuben.getFubenHandle(fubenptr)
+		if hfb > 0 then
+			Fuben.SetFubenTime(hfb, 10)
+		end
+	end
+
+	if #actorList == 0 then
+		local hfb = Fuben.getFubenHandle(fubenptr)
+		if hfb > 0 then
+			Fuben.closeFuben(hfb)
+		end
+	end
+end
+
+function DanRenTianTi.FuBenTimeOut( fubenptr )
+	-- body
+	debug_print("-----qwerqwetgdfgvdsf--------------")
+	local actorList = LuaHelp.getFbActorList( fubenptr)
+	if actorList == nil then
+		debug_print("-----qwerqwetgdfgvdsf------22222--------")
+		return
+	end
+
+	if #actorList < 2 then
+		print("FuBenTimeOut danrentianti error,  "..#actorList)
+		return
+	end
+
+	local play1 = actorList[1]
+	local play2 = actorList[2]
+	--if play1 ~= nil then
+	local nVar1 = LActor.getStaticVar( play1 )
+	local nVar2 = LActor.getStaticVar( play2 )
+	if nVar1.DanRenTianTi_Connect_Win ~= nil then
+		nVar1.DanRenTianTi_Connect_Win = nil
+	end
+	if nVar2.DanRenTianTi_Connect_Win ~= nil then
+		nVar2.DanRenTianTi_Connect_Win = nil
+	end
+	local ntime = System.getCurrMiniTime()
+	local nVar = System.getStaticVar()
+	local nIsOpen = 0
+	if nVar.DanRenTianTi_IsOpenActivity == 1 then
+		nIsOpen = 1
+	end
+	local DanRenRanking = Ranking.getRanking(DRTTRankName) --通过排行名称获取排行对象
+	local nRankCount = Ranking.getRankItemCount(DanRenRanking)
+	local nOldRank =  DanRenTianTi.GetRankIndex( LActor.getActorId( play1 ) )
+	local nOldPoint = DanRenTianTi.getMyPoint( LActor.getActorId( play1 ) )
+	DanRenTianTi.AddRank(play1 , DRTT_Config.dogfall , ntime)
+	local nCurRank =  DanRenTianTi.GetRankIndex( LActor.getActorId( play1 ) )
+	local nCurPoint = DanRenTianTi.getMyPoint( LActor.getActorId( play1 ) )
+	local npack = DataPack.allocPacket( play1 , 170 , CMD.QIN_QIU_PK_RESULT)
+	if npack == nil then
+		return
+	end
+	debug_print("=======DanRenTianTi.PkGogfall=============",nOldPoint,nCurPoint)
+	DataPack.writeChar( npack, 2)
+	DataPack.writeInt( npack , 3)
+	DataPack.writeInt( npack , nOldRank+1)
+	DataPack.writeInt( npack , nOldPoint)
+	DataPack.writeInt( npack , nCurRank+1)
+	DataPack.writeInt( npack , nCurPoint)
+	DataPack.writeInt( npack , nRankCount)
+	DataPack.writeByte( npack , nIsOpen)
+	DataPack.flush( npack )
+
+	local nOldRank1 =  DanRenTianTi.GetRankIndex( LActor.getActorId( play2 ) )
+	local nOldPoint1 = DanRenTianTi.getMyPoint( LActor.getActorId( play2 ) )
+	DanRenTianTi.AddRank(play2 , DRTT_Config.dogfall , ntime)
+	local nCurRank1 =  DanRenTianTi.GetRankIndex( LActor.getActorId( play2 ) )
+	local nCurPoint1 = DanRenTianTi.getMyPoint( LActor.getActorId( play2 ) )
+	local npack1 = DataPack.allocPacket( play2 , 170 , CMD.QIN_QIU_PK_RESULT)
+	if npack1 == nil then
+		return
+	end
+	DataPack.writeChar( npack1, 2)
+	DataPack.writeInt( npack1 , 3)
+	DataPack.writeInt( npack1 , nOldRank1+1)
+	DataPack.writeInt( npack1 , nOldPoint1)
+	DataPack.writeInt( npack1 , nCurRank1+1)
+	DataPack.writeInt( npack1 , nCurPoint1)
+	DataPack.writeInt( npack1 , nRankCount)
+	DataPack.writeByte( npack1 , nIsOpen)
+	DataPack.flush( npack1 )
+	DanRenTianTi.PkGogfall(play1 , play2 )
+end
+
+
+function DanRenTianTi.ExitFubenRestore( sysarg, hfb, way )
+	-- body
+	if not way or way ~= 1 or not sysarg or not hfb then
+		debug_print(" ---------退出副本--------"..tostring(way))
+		return
+	end
+	local nVar = LActor.getStaticVar( sysarg )
+	if nVar.fuben_hp == nil then
+	    nVar.fuben_hp = 1
+	end
+	if nVar.fuben_mp == nil then
+		nVar.fuben_mp = 1
+	end
+
+	LActor.setIntProperty( sysarg , PROP_HP , nVar.fuben_hp)
+	LActor.setIntProperty( sysarg , PROP_MP , nVar.fuben_mp)
+	LActor.partnerOnActorRelive( sysarg )
+	nVar.fuben_hp = nil
+	nVar.fuben_mp = nil
+	nVar.DanRenTianTi_fuben_handle = nil
+	nVar.DanRenTianTi_Rival_actorid = nil
+
+	local nFubenid = LActor.getFubenId( sysarg )
+	local nfbdata = FuBen[nFubenid]
+	if nfbdata == nil then
+	    return
+	end
+	BiFunc.LogExitCopy( sysarg , nFubenid , nfbdata.fbname )
+end
+
+function DanRenTianTi.Newday( actorobj , nFlag )
+	-- body
+	debug_print("=============DanRenTianTi.Newday===============")
+	local nVar = LActor.getStaticVar( actorobj )
+	nVar.DanRenTianTi_Connect_Win = nil
+	nVar.DanRenTianTi_enter_count = 0
+	nVar.DanRenTianTi_buy_count = 0
+
+	DanRenTianTi.getEnterCountInfo(actorobj)
+end
+
+function DanRenTianTi.ChangeHpOrChangeMp( sysarg )
+	local fubenid = LActor.getFubenId(sysarg)
+	if fubenid ~= DRTT_Config.fubenid then
+		debug_print("============副本id错误=",fubenid,DRTT_Config.fubenid)
+		return
+	end
+	local fubenptr = LActor.getFubenPrt( sysarg )
+	local nFubenptr = LActor.getFubenPrt( sysarg )
+	local nFubenVar = Fuben.getDyanmicVar(nFubenptr)
+	if not nFubenVar or not nFubenVar.actorList then return end
+
+	for i = 1, 2 do
+		if not nFubenVar.actorList[i] or  not nFubenVar.actorList[i].handle then break end
+		local npack = DataPack.allocPacket(sysarg, 0, 55)
+		if npack ~= nil then
+			DataPack.writeInt64(npack, nFubenVar.actorList[i].handle)
+			DataPack.writeInt( npack, nFubenVar.actorList[i].level)
+			DataPack.writeInt( npack, nFubenVar.actorList[i].hp)
+			DataPack.writeInt( npack, nFubenVar.actorList[i].maxhp)
+			DataPack.writeInt( npack, nFubenVar.actorList[i].mp)
+			DataPack.writeInt( npack, nFubenVar.actorList[i].maxmp)
+			DataPack.writeString( npack, nFubenVar.actorList[i].name)
+			DataPack.flush( npack )
+		end
+	end
+end
+
+--请求剩余购买次数信息
+function DanRenTianTi.getEnterCountInfo(sysarg)
+	local nVar = LActor.getStaticVar( sysarg )
+	if not nVar then return end
+
+	local npack = DataPack.allocPacket(sysarg , 170 , CMD.QIN_QIU_LEFT_COUNT)
+	if not npack then return end
+
+	DataPack.writeByte(npack, (nVar.DanRenTianTi_enter_count or 0))
+	DataPack.writeByte(npack, (nVar.DanRenTianTi_buy_count or 0))
+	DataPack.flush(npack)
+end
+
+--购买挑战次数
+function DanRenTianTi.buyEnterCount(sysarg)
+	if not sysarg then return end
+
+	local hasMoney = LActor.getMoneyCount(sysarg, mtYuanbao)
+	if hasMoney < DRTT_Config.extraMoney then
+		LActor.SendGeneralTips(sysarg, 1, mtYuanbao, DRTT_Config.extraMoney-hasMoney)
+		return
+	end
+
+	local nVar = LActor.getStaticVar( sysarg )
+	if not nVar then return end
+
+	if nVar.DanRenTianTi_buy_count and nVar.DanRenTianTi_buy_count >= DRTT_Config.extraCount then
+		LActor.sendTipmsg(sysarg, Lang.DanRenTianTi.drti020, ttMessage)
+		return
+	end
+
+	LActor.changeMoney(sysarg, mtYuanbao, -DRTT_Config.extraMoney)
+
+	nVar.DanRenTianTi_buy_count = (nVar.DanRenTianTi_buy_count or 0) + 1
+
+	DanRenTianTi.getEnterCountInfo(sysarg)
+end
+
+table.insert(InitFnTable,DanRenTianTi.Init)
+table.insert(FinaFnTable,DanRenTianTiEndActivity)
+table.insert(PrecisionTimeFnTable , DanRenTianTiDealMatchingData)
+
+
+
+GmEventFuncList.register( "drtt",DanRenTianTi.test,1)
+
+EventCallDispatcher.registerFubenExit(DRTT_Config.fubenid, DanRenTianTi.ExitFubenRestore)
+FubenCreateSceMrg.registerMsgHandler(DRTT_Config.fubenid , DanRenTianTi.DealActorNotEntryPK)
+SystemHandlerDispatcher.registerSystemHander(BaseTypes.SystemId.cscy_DanRenTianTi , DanRenTianTi.NetWorldDealWith)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeOnActorDeath, DanRenTianTi.ActorDie)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogout, DanRenTianTi.outLogin)
+EventCallDispatcher.registerFubenGameOverBefore( DRTT_Config.fubenid , DanRenTianTi.FuBenTimeOut)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, DanRenTianTi.InLogin)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, DanRenTianTi.Newday)
+
+--EventCallDispatcher.registerFubenTimeout(DRTT_Config.fubenid , DanRenTianTi.FuBenTimeOut)

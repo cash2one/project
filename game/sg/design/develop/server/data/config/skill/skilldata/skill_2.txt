@@ -1,0 +1,52 @@
+{
+	id = 2,
+	name = Lang.Skill.s2Name,
+	desc = Lang.Skill.s2Desc,
+	vocation = 1,
+	skillType = 4,
+	skillSpellType = 0,
+	skillClass = 1,
+	commonCd = 0,
+	canbeDefault = false,
+	specialBuffCond = 0,
+	notAutoUse = false,
+	trainCondAddtions=
+{
+	{addtionsid=1,cond=1,value=8,consume=false},
+	{addtionsid=2,cond=1,value=14,consume=false},
+},
+	
+	trainCondAdddesc=
+{
+	{addtionid=1,iconid=104,name=Lang.Skill.s2_21Name,desc=Lang.Skill.s2_21Desc},
+	{addtionid=2,iconid=105,name=Lang.Skill.s2_22Name,desc=Lang.Skill.s2_22Desc},
+},
+ 	actions=
+{
+
+	{act=2,effect=1601,type=2},
+		
+},
+	skillSubLevel = { 
+--#include "Skill_2_1.txt"
+--#include "Skill_2_2.txt"
+--#include "Skill_2_3.txt"
+--#include "Skill_2_4.txt"
+--#include "Skill_2_5.txt"
+--#include "Skill_2_6.txt"
+--#include "Skill_2_7.txt"
+--#include "Skill_2_8.txt"
+--#include "Skill_2_9.txt"
+--#include "Skill_2_10.txt" 
+--#include "Skill_2_11.txt"
+--#include "Skill_2_12.txt"
+--#include "Skill_2_13.txt"
+--#include "Skill_2_14.txt"
+--#include "Skill_2_15.txt"
+--#include "Skill_2_16.txt"
+--#include "Skill_2_17.txt"
+--#include "Skill_2_18.txt"
+--#include "Skill_2_19.txt"
+--#include "Skill_2_20.txt" 
+	},
+},

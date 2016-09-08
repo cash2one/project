@@ -1,0 +1,190 @@
+--特价礼包处理
+--#include "data\functions\systems\timereward\foreveractivity_conf.txt" once
+
+MiscsImplement.getTejiaLibconf = function()	
+	return ForeverActivity_conf.activities[29]
+end
+MiscsImplement.iStejialibOpen = function()
+	local state = ONLINEREWARD.GetActivityState(ForeverActivity_conf.activityId)
+	local isOpen = true
+	if state == 0 then
+		isOpen = false
+	end
+	return isOpen
+end
+MiscsImplement.tejiaNewDay = function ( sysarg )
+	local nLast = LActor.getLastLogoutTime(sysarg)	--上次下线的时间
+	print("--上次下线时间： "..nLast.."目前时间："..System.getCurrMiniTime())
+	local diff = System.getDayDiff(System.getCurrMiniTime(), 192000000)
+	print("---间隔多少天："..diff)
+end
+MiscsImplement.getTejiaLibInfo = function(sysarg, msgid, packet)
+	--print("---获取特价礼包信息--")
+	if not MiscsImplement.iStejialibOpen() then
+		--LActor.sendTipmsg( sysarg, "活动还没开启！", ttMessage )
+		return 
+	end
+	local TejiaConf  = MiscsImplement.getTejiaLibconf()
+	if not TejiaConf then return end
+	local level = LActor.getLevel(sysarg)
+	if level < TejiaConf.level_limit then
+		local npack = DataPack.allocPacket(sysarg,139,216)  --申请一个数据包
+		if npack == nil then return end
+		DataPack.writeInt(npack,0)
+		DataPack.flush(npack)
+		return
+	end
+
+	local var = LActor.getStaticVar(sysarg)
+
+	if var == nil then
+		return
+	end
+	local cur_time = System.getCurrMiniTime()
+	if var.tejiaList == nil then
+		local npack = DataPack.allocPacket(sysarg,139,216)  --申请一个数据包
+		local end_time = 3600*24
+		if npack == nil then return end
+		DataPack.writeInt(npack,1)
+		DataPack.writeInt(npack,level)
+		DataPack.writeByte(npack,1) 
+		DataPack.writeInt(npack,end_time)
+		DataPack.flush(npack)
+		return
+	end 
+	local count = 0
+	local player_level = LActor.getLevel(sysarg)
+	for level,v in pairs(TejiaConf.libs) do
+		if player_level >= level and var.tejiaList[level] ~= nil and var.tejiaList[level].canbuy == 1 and var.tejiaList[level].end_time > cur_time then
+			count = count + 1
+		end
+	end
+	--print("--count:"..count)
+	if count == 0 then
+		local npack = DataPack.allocPacket(sysarg,139,216)  --申请一个数据包
+		if npack == nil then return end
+		DataPack.writeInt(npack,0)
+		DataPack.flush(npack)
+		return
+	end
+	
+	local npack = DataPack.allocPacket(sysarg,139,216)  --申请一个数据包
+	if npack == nil then return end
+	DataPack.writeInt(npack,count)
+	for level,v in pairs(TejiaConf.libs) do
+		if player_level >= level and var.tejiaList[level] ~= nil and  var.tejiaList[level].canbuy == 1 and var.tejiaList[level].end_time > cur_time then
+			DataPack.writeInt(npack,level)
+		 	DataPack.writeByte(npack,var.tejiaList[level].canbuy)
+		 	DataPack.writeInt(npack,var.tejiaList[level].end_time - cur_time)
+		end
+	end
+	DataPack.flush(npack)
+end
+MiscsImplement.tejiaUpLevel = function(sysarg)
+	--print("--玩家升级，调用特价礼包接口--")
+	if not MiscsImplement.iStejialibOpen() then
+		return 
+	end
+	local TejiaConf  = MiscsImplement.getTejiaLibconf()
+	if not TejiaConf then return end
+	local level = LActor.getLevel(sysarg)
+	if level < TejiaConf.level_limit then
+		--print("--等级不等于30级")
+		return
+	end
+	-- if TejiaConf.libs[level] == nil then
+	-- 	return
+	-- end
+
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then
+		return
+	end
+	if var.tejiaList == nil then
+		var.tejiaList = {}
+	end 
+	local time = System.getCurrMiniTime() + (3600*24)
+	local is_send = false
+	for _,v in pairs(TejiaConf.libs) do
+		if level >= v.lv and var.tejiaList[v.lv] == nil then
+			var.tejiaList[v.lv] = { canbuy = 1, end_time = time}
+			--var.tejiaList[v.lv].canbuy = 1
+			--var.tejiaList[v.lv].end_time = System.getCurrMiniTime() + (3600*24)
+			is_send = true
+		end 
+	end
+	if is_send then
+		MiscsImplement.getTejiaLibInfo(sysarg)
+	end
+end
+
+MiscsImplement.buyTejiaLib = function(sysarg,msgid,packet)
+	local  buy_level= DataPack.readInt(packet)
+	--print("---购买特价礼包 buy_level:"..buy_level)
+	--local buy_level = DataPack.readInt(packet)
+	--local buy_level = 30 
+	if not MiscsImplement.iStejialibOpen() then
+		--LActor.sendTipmsg( sysarg, "活动还没开启！", ttMessage )
+		return 
+	end
+	local TejiaConf  = MiscsImplement.getTejiaLibconf()
+	if not TejiaConf then 
+		return 
+	end
+	local level = LActor.getLevel(sysarg)
+	if buy_level > level then
+		LActor.sendTipmsg( sysarg, "等级不足！", ttMessage )
+		return
+	end
+	if buy_level < TejiaConf.level_limit or TejiaConf.libs[buy_level] == nil then
+		LActor.sendTipmsg( sysarg, "配置错误！", ttMessage )
+		return
+	end
+
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then
+		return
+	end
+	if var.tejiaList == nil or var.tejiaList[buy_level] == nil then
+		return
+	end 
+	if var.tejiaList[buy_level].canbuy == 2 then 
+		LActor.sendTipmsg( sysarg, "您已购买过了！", ttMessage )
+		return
+	end
+	if  var.tejiaList[buy_level].end_time < System.getCurrMiniTime() then
+		LActor.sendTipmsg( sysarg, "时间已过了！", ttMessage )
+		return
+	end
+	local price = TejiaConf.libs[buy_level].price
+	local user_yuanbao = LActor.getMoneyCount(sysarg, mtYuanbao)
+	--判断元宝是否足够
+	if price > user_yuanbao then
+   		LActor.sendTipmsg( sysarg, "天珠不足，购买失败!", ttMessage )
+      	print("天珠不足，购买失败!")
+	    return 
+	end
+	if Item.getBagEmptyGridCount( sysarg ) < 1 then --获取背包剩格子数
+        LActor.sendTipmsg(sysarg, Lang.ScriptTips.osa0005, ttMessage)
+		return
+     end
+    local itemid,itemnum = TejiaConf.libs[buy_level].lib[1],TejiaConf.libs[buy_level].lib[2]
+	--print("---itemid:"..itemid.."   itemnum:"..itemnum)
+	LActor.addItem(sysarg, itemid, 0, 0, itemnum, 1, "buytejialib", 1)
+	LActor.changeMoney(sysarg, 3, -price, 1, true, "buytejialib", "")
+	var.tejiaList[buy_level].canbuy = 2
+	local npack = DataPack.allocPacket(sysarg,139,217)  --申请一个数据包
+	if npack == nil then return end
+
+	DataPack.writeByte(npack,1) 
+	DataPack.writeInt(npack,buy_level)
+	DataPack.flush(npack)
+	--print("--购买特价礼包成功--buy_level:"..buy_level)
+end
+
+
+--EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, MiscsImplement.tejiaNewDay)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeLevel, MiscsImplement.tejiaUpLevel)
+
+MiscsImplement.registerMsgHandler(216, MiscsImplement.getTejiaLibInfo)
+MiscsImplement.registerMsgHandler(217, MiscsImplement.buyTejiaLib)

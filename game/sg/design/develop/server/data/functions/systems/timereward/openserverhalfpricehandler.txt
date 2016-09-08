@@ -1,0 +1,269 @@
+--【开服活动-创角7天】半价福利
+--#include "data\functions\systems\timereward\createactor_conf.txt" once
+--#include "data\functions\systems\timereward\createactor_conf.txt" once
+OpenServerHalfPriceHandler = {}
+
+OpenServerHalfPriceHandler.getConf=function()
+	return CreateActivity_conf.activities[62]
+end
+
+OpenServerHalfPriceHandler.isOpen=function(sysarg)
+	debug_print("activityId".. CreateActivity_conf.activityId)
+	local state= ONLINEREWARD.GetActivityState( CreateActivity_conf.activityId ,nil,sysarg)
+	local isOpen = true
+	if state == 0 then
+		isOpen = false
+	end
+	return isOpen
+end
+
+
+--客户端请求信息 的返回
+OpenServerHalfPriceHandler.sendInfo=function(sysarg,whichday)
+
+   debug_print("OpenServerHalfPriceHandler.sendInfo")
+   if not OpenServerHalfPriceHandler.isOpen(sysarg) then 
+		return 
+	end
+	local halfpriceconf=OpenServerHalfPriceHandler.getConf()
+	if not halfpriceconf then 
+		return 
+	end
+
+	local var=LActor.getStaticVar(sysarg)
+	if var == nil then 
+		return 
+	end
+
+	if whichday  ~=  0     then  --如果传过来【第x天】，只做下标记，（目的是为了小红点）不发包
+
+		local createday = ONLINEREWARD.getCreateActorDay( sysarg ) --创角第x天
+		if whichday > createday then return end 
+		
+		debug_print("不发包")
+		if var.openserverhalfprice.buy_item_info[whichday] ~= nil then 
+			var.openserverhalfprice.buy_item_info[whichday][1].is_clicked=1
+			var.openserverhalfprice.buy_item_info[whichday][2].is_clicked=1
+
+		end
+
+		return  --不发包,取决于客户端，要问下客户端
+
+	end
+
+
+	local pack=DataPack.allocPacket(sysarg,BaseTypes.SystemId.timeRewardSystem,150)
+	if pack == nil then return end
+
+ 
+	DataPack.writeInt(pack,62) --活动id,
+	DataPack.writeInt(pack,7) --数组大小，7天
+
+
+	local buy_item_info_arr=var.openserverhalfprice.buy_item_info
+	local buy_item_info_row
+	for i=1,7 do 
+		buy_item_info_row = buy_item_info_arr[i]
+
+		for oneOrTwo=1,2 do  --第x天的第1个和第二个
+			--[[LDataPack.writeInt(pack,buy_item_info_row[oneOrTwo].itemid)
+			DataPack.writeInt(pack,buy_item_info_row[oneOrTwo].price_origin)
+			DataPack.writeInt(pack,buy_item_info_row[oneOrTwo].discount_price)]]
+			DataPack.writeInt(pack,buy_item_info_row[oneOrTwo].buy_status)
+			DataPack.writeInt(pack,buy_item_info_row[oneOrTwo].is_clicked)
+			debug_print("buy_status:"..buy_item_info_row[oneOrTwo].buy_status..", is_clicked:"..buy_item_info_row[oneOrTwo].is_clicked)
+
+		end
+
+	end
+	DataPack.flush(pack)
+
+
+	 
+
+	debug_print("发包完毕")
+
+end
+
+--购买请求，whichday第几天， index，第几天的位置索引，1或1
+OpenServerHalfPriceHandler.buyitem=function(sysarg,whichday,index)
+	debug_print("OpenServerHalfPriceHandler.buyitem")
+	--为了测试，不测试去掉
+	--whichday =  1
+	--index = 1
+
+	if not OpenServerHalfPriceHandler.isOpen(sysarg) then 
+		return 
+	end
+	local halfpriceconf=OpenServerHalfPriceHandler.getConf()
+	if not halfpriceconf then 
+		return 
+	end
+
+	local var=LActor.getStaticVar(sysarg)
+	if var == nil then 
+		return 
+	end
+	if var.openserverhalfprice.buy_item_info[whichday] == nil then return end
+	if var.openserverhalfprice.buy_item_info[whichday][index] ==nil then return end 
+
+	--状态不为0（未购买状态）就返回
+	if var.openserverhalfprice.buy_item_info[whichday][index].buy_status ~=0 then 
+		debug_print("not 0")
+
+		return 
+
+	end
+
+	local itemid=halfpriceconf.config_sell[whichday][index].itemid
+	local discount_price=halfpriceconf.config_sell[whichday][index].discount_price
+
+ 	debug_print("discount_price"..discount_price)
+ 	local hasYuanBao =  LActor.getMoneyCount(sysarg,mtYuanbao ) 
+	if hasYuanBao < discount_price then --是否有足够金钱
+		debug_print("no money")
+ 		LActor.SendGeneralTips(obj, 1, mtYuanbao, discount_price - hasYuanBao)
+		return 
+	end
+
+
+	--背包是否放得下
+	if Item.getAddItemNeedGridCount(sysarg,itemid,1) > Item.getBagEmptyGridCount(sysarg)  then 
+		debug_print("no bag count")
+ 		LActor.SendGeneralTips(sysarg, 7, 0, 0)
+
+		return 
+	end
+
+
+	LActor.changeMoney( sysarg, mtYuanbao, -discount_price, 1, true, "openservercreateator7", "buyitem" )
+	 
+	local isBind = 0 --没有绑定
+      local quality = 0
+      local strong = 0
+
+	local itemCnt=1
+	 
+	--设置状态已买
+	var.openserverhalfprice.buy_item_info[whichday][index].buy_status = 1
+	 
+	LActor.addItem(sysarg, itemid, quality, strong, itemCnt, isBind, "openservercreateator7 ",56)
+	 
+	System.logCounter(
+		LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), 
+	  	"activityreward",tostring(5) , tostring(62), tostring(whichday), 
+	 	string.format("%s:%s:%s",itemid,itemCnt,index), tostring(LActor.getName(sysarg)), var.download_from, "", lfDB
+					 )
+	
+	-- 播放特效
+	local effects = {}
+	local effect = {}
+	effect.type = 1  -- 1为物品,暂时只支持发物品所以写死
+	effect.id = itemid
+	effect.count = 1
+	effects[#effects+1] = effect
+	if #effects > 0 then
+		MiscFunc.PlayItemEffect(sysarg, 11, effects)
+	end
+
+	--重新下发界面
+	OpenServerHalfPriceHandler.sendInfo(sysarg, 0) --whichday为0，发包
+
+
+
+end
+
+
+OpenServerHalfPriceHandler.read_conf_into_buy_item_info=function(halfpriceconf,buy_item_info)
+	
+	local  config_row  
+	for i=1,#halfpriceconf.config_sell do 
+		config_row=halfpriceconf.config_sell[i] --i表示第几天
+
+		if buy_item_info[i] == nil then 
+			buy_item_info[i]={}
+			buy_item_info[i][1]={}--第x天第一个物品
+			buy_item_info[i][2]={}--第x天第2个物品
+
+		end
+
+		for oneOrTwo=1, 2 do  --第1个第二个物品
+			--[[
+			for k,v in pairs(config_row[oneOrTwo])  do 
+				if buy_item_info[i][oneOrTwo][k] == nil then 
+					buy_item_info[i][oneOrTwo][k]=v
+
+				end
+			end]]
+
+			--几个字段
+			if buy_item_info[i][oneOrTwo].buy_status == nil then 
+				buy_item_info[i][oneOrTwo].buy_status = -1 --状态，-1不能买，0未购买，1买了，
+			end
+			--用户是否点击了【第x天】这个标签页，加这个字段是为了红点
+			if buy_item_info[i][oneOrTwo].is_clicked == nil then 
+				buy_item_info[i][oneOrTwo].is_clicked = 0
+			end
+
+
+		end
+		    
+	end
+
+
+end
+
+OpenServerHalfPriceHandler.login=function(sysarg)
+
+	debug_print("aOpenServerHalfPriceHandler.onLogin")
+	if not OpenServerHalfPriceHandler.isOpen(sysarg) then 
+		debug_print("no open")
+		return 
+	end
+	local halfpriceconf=OpenServerHalfPriceHandler.getConf()
+	if not halfpriceconf then 
+		debug_print("no conf")
+		return 
+	end
+
+	local var=LActor.getStaticVar(sysarg)
+	if var == nil then 
+		debug_print("var is nil")
+		return 
+	end
+
+	if var.openserverhalfprice==nil then 
+		var.openserverhalfprice = {} 
+	end
+
+	if var.openserverhalfprice.buy_item_info == nil then 
+		var.openserverhalfprice.buy_item_info={}
+	end
+
+	
+	OpenServerHalfPriceHandler.read_conf_into_buy_item_info(halfpriceconf, var.openserverhalfprice.buy_item_info)
+
+	
+	local createday = ONLINEREWARD.getCreateActorDay( sysarg ) --创角第x天
+	debug_print("half price createday"..createday)
+
+	for i=1,createday do 
+		for oneOrTwo=1, 2 do  --第1个第二个物品
+			if var.openserverhalfprice.buy_item_info[i]==nil then 
+				var.openserverhalfprice.buy_item_info[i]={}
+				var.openserverhalfprice.buy_item_info[i][1]={}
+				var.openserverhalfprice.buy_item_info[i][2]={}
+			end
+			if var.openserverhalfprice.buy_item_info[i][oneOrTwo].buy_status == -1 then  --把不能购买状态设置为可以购买
+				var.openserverhalfprice.buy_item_info[i][oneOrTwo].buy_status = 0
+			end
+		end
+
+	end
+	
+
+end
+
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, OpenServerHalfPriceHandler.login)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive,OpenServerHalfPriceHandler.login)--新一天的处理跟login处理一样

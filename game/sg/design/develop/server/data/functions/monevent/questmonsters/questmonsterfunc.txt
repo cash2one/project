@@ -1,0 +1,44 @@
+﻿--lua script
+--副本怪物通用的死亡处理函数，一般来说，所有以杀怪为目的的副本的怪物都注册成这个函数即可，包括boss和小怪
+--这里会判断副本的通关条件是否已经杀死要求的boss或小怪
+
+--
+--#include "data\config\quest\QuestMonster.txt" once
+
+MonDieDispatcher.QuestDieFunc = function (monster,sysarg,monId)
+	local actorList = LuaHelp.getVisiActorList(monster)
+	if actorList == nil then return end
+	local questlist = MonsterForQuest[monId]
+	if questlist == nil then return end
+
+	for i=1,#actorList do
+		for j=1,#questlist do
+			LActor.addQuestValue(actorList[i],questlist[j],monId,1)
+		end
+	end
+end
+
+MonDieDispatcher.WanjiancouDie = function (monster,sysarg,monId)
+	-- 万剑愁死亡后开启必杀技系统并刷一批怪
+	LActor.openActorSystem(sysarg, siSkill)
+	--del wupeng 新手副本修改代码回退 begin
+	--LActor.changeAnger(sysarg, 100) --把怒气加到满
+	--del wupeng 新手副本修改代码回退 end
+
+	local hscene = LActor.getSceneHandle(sysarg)
+	if hscene == nil or hscene == 0 then
+		return 
+	end
+
+	-- 刷怪,其中10是怪物id，100和110是xy坐标，0是固定的不用改，一行代码刷一个，多个的话照抄改怪物id和坐标即可
+	Fuben.createMonster(hscene, 255,30, 14, 0)
+	Fuben.createMonster(hscene, 255,31, 15, 0)
+	Fuben.createMonster(hscene, 255,31, 18, 0)
+	Fuben.createMonster(hscene, 255,29, 18, 0)
+	Fuben.createMonster(hscene, 255,26, 18, 0)
+	Fuben.createMonster(hscene, 255,26, 14, 0)
+	Fuben.createMonster(hscene, 255,24, 17, 0)
+end
+
+-- 17是万剑愁的怪物id
+--MonDieDispatcher.register(17, MonDieDispatcher.WanjiancouDie)

@@ -1,0 +1,15 @@
+﻿--BOSS自身爆发
+{
+	id=82,
+	name=Lang.Skill.s82Name,
+	desc=Lang.Skill.s82Desc,
+	vocation=0,	
+	skillClass =9,
+	skillType=2,
+	skillSpellType=0,
+	commonCd=0,
+	specialBuffCond =0,
+	skillSubLevel = { 
+--#include "Skill_82_1.txt"
+	},
+},

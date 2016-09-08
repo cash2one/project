@@ -1,0 +1,15 @@
+﻿--皇陵秘境副本怪物技能：太虚灵盾
+{
+	id = 91,
+	name = Lang.Skill.s91Name,
+	desc = Lang.Skill.s91Desc,
+	vocation = 9,
+	skillType = 0,
+	skillSpellType = 3,
+	skillClass = 9,
+	commonCd = 0,
+	specialBuffCond = 3,
+	skillSubLevel = { 
+--#include "Skill_91_1.txt"
+	},
+},

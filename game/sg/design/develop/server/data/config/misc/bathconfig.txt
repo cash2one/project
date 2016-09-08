@@ -1,0 +1,56 @@
+--灵泉仙浴配置
+
+--#include "..\..\language\LangCode.txt" once
+
+BathConfig = {
+	fubenId = 61, -- 副本id
+	sceneId = 1077, -- 场景id 
+	level = 25,	--等级限制
+
+	movespeed = 700, --移动速度
+
+	startTime = {12,30,00},	--活动开始时间(时分秒) 提前一分钟开启
+	keepTime = 30 * 60,		--活动持续时间(分钟) 延后一分钟结束
+	
+	paopaoCD = 30,	--打泡泡cd时间
+	xishuiCD = 30,	--戏水cd时间
+	paopaoTimes = 5, --打泡泡的次数
+	acceptPaopaoTimes = 10, --最多接受打泡泡的次数
+	xishuiTimes = 5, -- 戏水的次数
+	acceptXishuiTimes = 10, ----最多接受戏水的次数
+	addExp = 150, --增加经验的系数，这个系数要和场景里配的一致
+	addRootExp = 500, --增加真气，这个系数要和场景里配的一致
+
+	matchDelay = 10,
+	matchCoin = 2000,
+	moraDelay = 9,
+	
+	--进入位置
+	enterPos = {
+		{
+			PosX = 13,
+			PosY =  9,
+		},
+		{
+			PosX = 20,
+			PosY =  9,
+		},
+		{
+			PosX = 17,
+			PosY = 15,
+		},
+		{
+			PosX = 20,
+			PosY = 19,
+		},
+		{
+			PosX = 31,
+			PosY = 11,
+		},
+		{
+			PosX = 32,
+			PosY = 20,
+		},
+	},
+	modleId = {{1000, 1100},{2000,2100},{3000,3100},{4000,4100}},
+}

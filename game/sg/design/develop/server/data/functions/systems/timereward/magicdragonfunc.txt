@@ -1,0 +1,198 @@
+--神龙密塔的逻辑处理文件
+
+--#include "data\functions\systems\timereward\magicdragonconf.txt" once
+
+MagicTragonFunc = {}
+
+--获取神龙密塔奖励状态
+MagicTragonFunc.getMagicTragonInfo = function(sysarg, dp)
+	local activityId = DataPack.readInt(dp) -- 活动ID
+	MagicTragonFunc.getMagicTragonInfo1(sysarg, activityId)
+end
+
+MagicTragonFunc.getMagicTragonInfo1 = function(sysarg, activityId)
+	local var = LActor.getStaticVar(sysarg)
+	if var.magictragon == nil then 
+		var.magictragon = {} 
+		var.magictragon.item = {}
+		var.magictragon.reward = {}
+	end
+	local npack = DataPack.allocPacket(sysarg,MagicDragonProto.SYSId,MagicDragonProto.DRAGONINFO)
+
+	print(string.format("*****activityId:  %d",activityId))
+	print(string.format("*****#MagicDragonConf.collectItem:  %d",#MagicDragonConf.collectItem))
+
+	DataPack.writeInt(npack,activityId)
+	DataPack.writeInt(npack,#MagicDragonConf.collectItem)
+	for i=1, #MagicDragonConf.collectItem do
+		local satisfied = 0
+		local msk = 0
+		print(string.format("*****#MagicDragonConf.collectItem[i]:  %d",#MagicDragonConf.collectItem[i]))
+		for j=1, #MagicDragonConf.collectItem[i] do
+			if var.magictragon.item[MagicDragonConf.collectItem[i][j][1]]~=nil and var.magictragon.item[MagicDragonConf.collectItem[i][j][1]] >= MagicDragonConf.collectItem[i][j][2] then
+				satisfied = satisfied + 1
+			end
+		end
+		print(string.format("*****satisfied:  %d",satisfied))
+		if satisfied == #MagicDragonConf.collectItem[i] then
+			if var.magictragon.reward[i] == 1 then
+				msk = 2
+			else
+				msk = 1
+			end
+		else
+			msk = 0
+		end
+		DataPack.writeByte(npack,msk)
+		print(string.format("*****msk:  %d",msk))
+	end
+
+	DataPack.writeInt(npack,#MagicDragonConf.itemActivityId)
+	print(string.format("*****#MagicDragonConf.itemActivityId:  %d",#MagicDragonConf.itemActivityId))
+	for i=1, #MagicDragonConf.itemActivityId do
+		local itemCount = 0
+		local itemId = MagicDragonConf.itemActivityId[i][3]
+		if var.magictragon.item[itemId] ~= nil then
+			itemCount = var.magictragon.item[itemId]
+		end
+		DataPack.writeInt(npack,itemId)
+		DataPack.writeInt(npack,itemCount)
+		print(string.format("*****itemId:  %d",itemId))
+		print(string.format("*****itemCount:  %d",itemCount))
+	end
+
+	DataPack.flush(npack)
+end
+
+--领取神龙密塔奖励
+MagicTragonFunc.getMagicTragonReward = function(sysarg, dp)
+	local activityId = DataPack.readInt(dp) -- 活动ID
+	local index = DataPack.readInt(dp) -- 奖励序列号
+
+	print(string.format("*****index:  %d",index))
+
+	if index <= 0 or index > #MagicDragonConf.collectItem then
+		return
+	end
+	local var = LActor.getStaticVar(sysarg)
+	if var.magictragon == nil then 
+		var.magictragon = {} 
+		var.magictragon.item = {}
+		var.magictragon.reward = {}
+	end
+
+	local satisfied = 0
+	local msk = 0
+	for j=1, #MagicDragonConf.collectItem[index] do
+		if var.magictragon.item[MagicDragonConf.collectItem[index][j][1]] ~= nil and var.magictragon.item[MagicDragonConf.collectItem[index][j][1]] >= MagicDragonConf.collectItem[index][j][2] then
+			satisfied = satisfied + 1
+		end
+	end
+	if satisfied == #MagicDragonConf.collectItem[index] then
+		if var.magictragon.reward[index] == 1 then
+			-- 表示已经领过了
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.slmt001, ttMessage)
+		else
+			-- 表示还没领过
+			if ( LActor.canAddItem( sysarg, MagicDragonConf.rewards[index][1], MagicDragonConf.rewards[index][2] ) == false ) then
+			  	-- LActor.sendTipmsg( sysarg,Lang.ScriptTips.slmt004,ttMessage )
+			  	LActor.SendGeneralTips(sysarg, 7, 0, 0)
+				return
+			end
+
+			--给道具
+   			LActor.addItem(sysarg, MagicDragonConf.rewards[index][1], 0, 0, MagicDragonConf.rewards[index][2] , 1, "magictragon", 23)
+			
+   			-- 播放特效
+		   	local effects = {}
+			local effect = {}
+			effect.type = 1  -- 1为物品,暂时只支持发物品所以写死
+		    effect.id = MagicDragonConf.rewards[index][1]
+		    effect.count = MagicDragonConf.rewards[index][2]
+		    effects[#effects+1] = effect
+				if #effects > 0 then
+				MiscFunc.PlayItemEffect(sysarg, 11, effects)
+			end
+			var.magictragon.reward[index] = 1
+
+		end
+	else
+		-- 表示不能领
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.slmt002, ttMessage)
+	end
+
+	MagicTragonFunc.getMagicTragonInfo1(sysarg, activityId)
+end
+
+--添加数量
+MagicTragonFunc.addMagicTragonItem = function(sysarg,activityId,itemId,itemcount)
+	print(string.format("*****addMagicTragonItem:  %d  %d  %d",activityId,itemId,itemcount))
+	local state = ONLINEREWARD.GetActivityState(MagicDragonConf.activityId)
+	if state == 0 then return  end
+
+	local var = LActor.getStaticVar(sysarg)
+	if var.magictragon == nil then 
+		var.magictragon = {} 
+		var.magictragon.item = {}
+		var.magictragon.reward = {}
+	end
+
+	for i=1,#MagicDragonConf.itemActivityId do
+		local iId = MagicDragonConf.itemActivityId[i][1]  -- 物品ID
+		local aId = MagicDragonConf.itemActivityId[i][2]  -- 活动ID
+		local dId = MagicDragonConf.itemActivityId[i][3]  -- 对应ID
+
+		if iId == itemId and aId == activityId then
+			if var.magictragon.item[dId] == nil then
+				var.magictragon.item[dId] = itemcount
+			else
+				var.magictragon.item[dId] = var.magictragon.item[dId] + itemcount
+			end 
+
+			print(string.format("*****addMagicTragonItem: has (%d  %d %d)",aId,dId,var.magictragon.item[dId]))
+		end
+	end
+end
+
+--清除数据
+MagicTragonFunc.cleanMagicTragon = function(sysarg,activityId,itemId,itemcount)
+	local var = LActor.getStaticVar(sysarg)
+	var.magictragon = nil
+end
+
+MagicTragonFunc.NewDayAcrrive = function( sysarg, arg )
+	local var = LActor.getStaticVar(sysarg)
+	-- 检查是否有奖励没有领取，没领取邮件下发
+	if var.magictragon == nil then return end
+	if var.magictragon.item == nil then return end
+	for i=1, #MagicDragonConf.collectItem do
+		local satisfied = 0
+		local msk = 0
+		print(string.format("*****#MagicDragonConf.collectItem[i]:  %d",#MagicDragonConf.collectItem[i]))
+		for j=1, #MagicDragonConf.collectItem[i] do
+			if var.magictragon.item[MagicDragonConf.collectItem[i][j][1]]~=nil and var.magictragon.item[MagicDragonConf.collectItem[i][j][1]] >= MagicDragonConf.collectItem[i][j][2] then
+				satisfied = satisfied + 1
+			end
+		end
+		print(string.format("*****satisfied:  %d",satisfied))
+		if satisfied == #MagicDragonConf.collectItem[i] then
+			if var.magictragon.reward[i] == 1 then
+				msk = 2
+			else
+				msk = 1
+			end
+		else
+			msk = 0
+		end
+		print(string.format("*****msk:  %d",msk))
+		if msk == 1 then
+			System.sendGmMailOffLine(LActor.getActorId(sysarg), Lang.ScriptTips.slmt005, 1, MagicDragonConf.rewards[i][1], MagicDragonConf.rewards[i][2], 1)
+		end
+	end
+
+	--print("======================================init")
+	-- 初始化数据
+	var.magictragon = nil
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, MagicTragonFunc.NewDayAcrrive)

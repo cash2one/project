@@ -1,0 +1,55 @@
+﻿--阵营活动配置表 
+--[[
+ id：活动id
+ name：活动名称
+ desc：活动描述
+ dura：活动时长，单位为秒
+ enableLevel：活动限制等级 
+ pubInterval：发布活动的时间间隔，单位为秒 
+ maxPubCount：活动可发布的次数
+ enableDayDesc：可发布日描述，优化考虑，由人工输入，比如“每天”、“星期一、三、五” 
+ enableDays：可发布日，0表示星期天可发布，1表示星期一可发布，其他的同理
+ enableTime：活动可发布的时间段，共6个数值，每3个表示一个时间（时，分，秒），前3个表示起始时间，后3个表示结束时间 
+ awards：活动奖励，结构跟任务奖励一致 
+]]
+    --[[
+        qatEquipment=0,//0、装备，道具
+		qatXiuwei = 1,	//1、修为
+		qatExp = 2,	//2、角色经验值
+		qatGuildContribution = 3,	//3、帮派贡献值
+		qatZYContribution = 4,//4、阵营贡献
+		qatBindMoney = 5,	//5、绑定银两
+		qatMoney = 6,	//6、银两
+		qatLiJin = 7,	//7、礼金
+		qatTitle = 8,	//8、称谓
+		qatSkill = 9,	//9奖励技能
+		qatZhanhun = 10,	//10奖励战魂
+		aatAchievePoint =11,    //11成就点
+                aatRenown =12,    //12历练
+          127：自定义奖励，id必须为nil，count必须为nil，data为奖励描述字符串，用于客户端显示。自定义奖励的给予是通过脚本完成的；
+    ]]
+--#include "..\..\language\LangCode.txt"
+CampActivities = 
+{
+ --第一个活动 
+ {
+  id = 1,
+  name = Lang.Camp.an1,
+  desc = Lang.Camp.adf1,
+  dura = 5400,
+  apply = 1800,     --领取阵营运镖时间持续(秒) 
+  enableLevel = 40,
+  pubInterval = 7200,
+  maxPubCount = 2,
+  openTitle = 3,  --开启运镖所需的最低职位  0为普通老百姓
+  enableDayDesc = Lang.Camp.ed1, 
+  enableDays = {0,1,2,3,4,5,6},
+  enableTime = {6,0,0,22,0,0},
+  awards = 
+  {
+   { type = 6, id = 1, count = 1 },
+   { type = 4, id = 1, count = 1 },
+  }
+ },
+ --第二个活动 
+}

@@ -1,0 +1,20 @@
+﻿-- 竞技场事件处理
+
+--#include "data\config\fight\fightconf.txt" once
+
+
+FightPublicOp = {}
+
+-- 捕捉
+FightPublicOp.doCatch = nil -- (sysarg, pid, slaveId, type)
+
+-- 捕捉回调
+FightPublicOp.catchCallback = nil -- (sysarg, pid, slaveId, type, result) : result - PK结果：0表示输，1表示赢
+
+-- 竞技场挑战结果
+FightPublicOp.fightResult = nil -- (sysarg, pid, retult) : result - PK结果：0表示输，1表示赢
+
+-- 玩家退出排行榜通知
+FightPublicOp.exitRankCallback = nil -- (玩家id)
+
+FightPublicOp.AwardInterval = 48 * 3600

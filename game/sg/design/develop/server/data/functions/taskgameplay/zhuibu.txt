@@ -1,0 +1,376 @@
+-- 追捕玩法
+--#include "data\config\taskgameplayconfig\zhuibuconfig.txt" once
+
+ZhuiBuFuncs = {}
+
+-- 追捕进度状态
+local zb_quest_state = {
+    not_vaild = 0, -- 无效
+    not_appear = 1, -- 等待出现
+    has_appear = 2, -- 已经出现
+}
+
+-- 查找staticVal可用的位置
+function ZhuiBuFuncs.findCanUseValIndex (actorobj)
+    local nVal = LActor.getStaticVar(actorobj)
+    if not nVal then
+        return 0
+    end
+    if nVal.ZhuiBu_Value == nil then
+        return 0
+    end
+    local len = #nVal.ZhuiBu_Value
+    if len > 0 then
+        for i = 1, len do
+            if nVal.ZhuiBu_Value[i].state == zb_quest_state.not_vaild then
+                return i
+            end
+        end
+    end
+    return len + 1
+end
+
+-- 查找qid所在的staticVal的位置
+function ZhuiBuFuncs.findValIndexByQid (actorobj, qid)
+    qid = tonumber(qid) or 0
+    local nVal = LActor.getStaticVar(actorobj)
+    if not nVal or qid <= 0 then
+        return -1
+    end
+    if nVal.ZhuiBu_Value == nil then
+        return -1
+    end
+    local len = #nVal.ZhuiBu_Value
+    if len > 0 then
+        for i = 1, len do
+            if nVal.ZhuiBu_Value[i].state ~= zb_quest_state.not_vaild and nVal.ZhuiBu_Value[i].qid == qid then
+                return i
+            end
+        end
+    end
+    return 0
+end
+
+-- 接任务检查
+function ZhuiBuFuncs.OnCheckAccept (actorobj, qid)
+    qid = tonumber(qid) or 0
+    debug_print(string.format("===>>> ZhuiBuFuncs [check] qid[%d]", qid))
+    if not actorobj or qid <= 0 then return false end
+    local nVal = LActor.getStaticVar(actorobj)
+    if not nVal then return false end
+    if nVal.ZhuiBu_Value == nil then
+        nVal.ZhuiBu_Value = {}
+    end
+    if ZhuiBu_Config[qid] == nil then
+        debug_print(string.format("===>>> ZhuiBuFuncs [check] 追捕任务qid[%d]并未配置到召唤配置表里面!", qid))
+        return false
+    end
+    local index = ZhuiBuFuncs.findValIndexByQid(actorobj, qid)
+    if index == -1 then
+        return false
+    end
+    if index > 0 then
+        debug_print(string.format("===>>> [check] qid[%d], index[%d] state[%d]", qid, index, nVal.ZhuiBu_Value[index].state))
+        if nVal.ZhuiBu_Value[index].state ~= zh_quest_state.not_vaild then
+            debug_print("===>>>[check] 不可多次接取相同追捕任务!")
+            return false
+        end
+    end
+    -- 随机一个配置的目标target id
+    local targets = LActor.getQuestAllTargetConf(qid)
+    if #targets == 0 then
+        debug_print("===>>>[check] 追捕任务无目标!")
+        return false
+    end
+    debug_print(string.format("===>>> 通过追捕任务检查 qid[%d]", qid))
+    return true
+end
+
+-- 接任务触发
+function ZhuiBuFuncs.OnAcceptQuest (actorobj, qid)
+    qid = tonumber(qid) or 0
+    if not actorobj or qid <= 0 then return end
+    local nVal = LActor.getStaticVar(actorobj)
+    if not nVal then return end
+    if nVal.ZhuiBu_Value == nil then
+        nVal.ZhuiBu_Value = {}
+    end
+    local index = ZhuiBuFuncs.findValIndexByQid(actorobj, qid)
+    if index == -1 then
+        return
+    end
+    if index > 0 and nVal.ZhuiBu_Value[index].state ~= zh_quest_state.not_vaild then
+        debug_print("===>>>[accept] 不可多次接取相同追捕任务!")
+        return
+    end
+    index = ZhuiBuFuncs.findCanUseValIndex(actorobj)
+    debug_print(string.format("===>>> 接受追捕任务 qid[%d], index[%d]", qid, index))
+
+    local targets = LActor.getQuestAllTargetConf(qid)
+    local len = #targets
+    if len == 0 then
+        debug_print("===>>>[accept] 追捕任务无目标! 已经出现异常")
+        return
+    end
+    local rand = System.getRandomNumber(len - 1) + 1
+    nVal.ZhuiBu_Value[index] = {}
+    nVal.ZhuiBu_Value[index].qid = qid -- 设置qid
+    nVal.ZhuiBu_Value[index].state = zh_quest_state.not_appear -- 标记未出现
+    nVal.ZhuiBu_Value[index].monsterid = 0 -- 怪物的id
+    nVal.ZhuiBu_Value[index].monHandle = 0 -- 怪物的handle
+    nVal.ZhuiBu_Value[index].npcid = targets[rand].id -- 随机的目标npcid
+
+    ZhuiBuFuncs.NoticeNpcId(actorobj, qid, nVal.ZhuiBu_Value[index].npcid) -- 通知前端
+    debug_print(string.format("===>>> 接受追捕任务 qid[%d], index[%d] state[%d], npcid[%d]", qid, index, nVal.ZhuiBu_Value[index].state, nVal.ZhuiBu_Value[index].npcid))
+end
+
+-- 交任务触发
+function ZhuiBuFuncs.OnCommitQuest (actorobj, qid)
+    qid = tonumber(qid) or 0
+    if qid > 0 then
+        ZhuiBuFuncs.doInvalidVal(actorobj, qid)
+    end
+end
+
+-- 放弃任务触发
+function ZhuiBuFuncs.OnGiveupQuest (actorobj, qid)
+    qid = tonumber(qid) or 0
+    if qid > 0 then
+        ZhuiBuFuncs.doInvalidVal(actorobj, qid)
+    end
+end
+
+-- 任务超时 进入该函数说明配置文件已经有问题
+function ZhuiBuFuncs.OnOverTime (actorobj, qid)
+    qid = tonumber(qid) or 0
+    if qid > 0 then
+        ZhuiBuFuncs.OnResetVal(actorobj, qid, true)
+    end
+end
+
+-- 重置任务的数据
+function ZhuiBuFuncs.OnResetVal (actorobj, qid, needNotice)
+    local index = ZhuiBuFuncs.findValIndexByQid(actorobj, qid)
+    if index <= 0 then return end
+    local nVal = LActor.getStaticVar(actorobj)
+    if nVal.ZhuiBu_Value[index].state ~= zh_quest_state.not_vaild then
+        debug_print(string.format("追捕任务qid[%d]配置已经出现了超时清数据!", qid))
+        LActor.sendTipmsg(actorobj, Lang.ScriptTips.quest0007, ttMessage)
+        -- 删除怪物实体
+        Fuben.clearMonster(nVal.ZhuiBu_Value[index].monHandle)
+        nVal.ZhuiBu_Value[index].monHandle = 0
+        nVal.ZhuiBu_Value[index].monsterid = 0
+        nVal.ZhuiBu_Value[index].state = zh_quest_state.not_appear -- 标记为未出现
+
+        -- 重置任务其他任务已达成目标的数据
+        local targets = LActor.getQuestAllTargetConf(nVal.ZhuiBu_Value[index].qid)
+        for k, v in ipairs(targets) do
+            LActor.setQuestValue(actorobj, nVal.ZhuiBu_Value[index].qid, v.id, 0, false, true)
+        end
+        local rand = System.getRandomNumber(#targets - 1) + 1 -- 重新随机NPCID
+        nVal.ZhuiBu_Value[index].npcid = targets[rand].id
+
+        if needNotice then
+            ZhuiBuFuncs.NoticeNpcId(actorobj, nVal.ZhuiBu_Value[index].qid, nVal.ZhuiBu_Value[index].npcid)
+        end
+    end
+end
+
+-- 通知前端追捕任务产生了对应的npcid
+function ZhuiBuFuncs.NoticeNpcId (actorobj, qid, npcid)
+    qid = tonumber(qid) or 0
+    npcid = tonumber(npcid) or 0
+    if qid <= 0 or npcid <= 0 then
+        debug_print("===>>> 无效的qid 或者npcid 导致无法发送<通知前端产生了追捕npcid>!")
+        return
+    end
+    local pack = DataPack.allocPacket(actorobj, 172, 8)
+    DataPack.writeUInt(pack, qid)
+    DataPack.writeUInt(pack, npcid)
+    DataPack.flush(pack)
+end
+
+-- 通知前端追捕对象需要冒泡
+function ZhuiBuFuncs.NoticeNpcTalk(actorobj, qid, npcid, handle)
+    qid = tonumber(qid) or 0
+    npcid = tonumber(npcid) or 0
+    if qid <= 0 or npcid <= 0 then
+        debug_print("===>>> 无效的qid 或者npcid 导致无法发送<通知前端追捕对象需要冒泡>!")
+        return
+    end
+    local pack = DataPack.allocPacket(actorobj, 172, 9)
+    DataPack.writeUInt(pack, qid)
+    DataPack.writeUInt(pack, npcid)
+    DataPack.writeInt64(pack, handle)
+    DataPack.flush(pack)
+end
+
+-- 前端通知已经找到了追捕对象
+function ZhuiBuFuncs.ReceiveClientNotice (actorobj, packet)
+    local qid = DataPack.readUInt(packet)
+    local npcid = DataPack.readUInt(packet)
+
+    if qid == 0 or npcid == 0 then
+        debug_print("===>>> 无效的qid 或者npcid 导致无法发送<前端通知后端无效>!")
+        return
+    end
+    local conf = ZhuiBu_Config[qid]
+    if conf == nil then
+        debug_print(string.format("===>>> 并不是追捕任务的qid[%d]!", qid))
+        return
+    end
+    local index = ZhuiBuFuncs.findValIndexByQid(actorobj, qid)
+    if index <= 0 then
+        debug_print(string.format("===>>> 并未接取追捕任务的qid[%d]!", qid))
+        return
+    end
+    local nVal = LActor.getStaticVar(actorobj)
+    if nVal.ZhuiBu_Value[index].state ~= zb_quest_state.not_appear then -- 已经出现了还发这个请求
+        debug_print(string.format("===>>> 追捕任务的qid[%d]已经出现了追捕对象 不需要重复请求!", qid))
+        return
+    end
+    if nVal.ZhuiBu_Value[index].npcid ~= npcid then
+        debug_print(string.format("===>>> 追捕任务的qid[%d]所需的追捕对象npcid[存储<%d> -- <前端>%d]不一致!", qid, nVal.ZhuiBu_Value[index].npcid, npcid))
+        return
+    end
+
+    -- 把其他目标都标记完成
+    local targets = LActor.getQuestAllTargetConf(qid)
+    for k, v in ipairs(targets) do
+        if v.type == BaseTypes.BaseQuestTargetType.qtTalk then
+            LActor.setQuestValue(actorobj, qid, v.id, 1)
+        end
+    end
+
+    local actor_x = LActor.getIntProperty(actorobj, PROP_ENTITY_POSX)
+    local actor_y = LActor.getIntProperty(actorobj, PROP_ENTITY_POSY)
+
+    nVal.ZhuiBu_Value[index].qid = qid
+    nVal.ZhuiBu_Value[index].state = zb_quest_state.has_appear
+    nVal.ZhuiBu_Value[index].monsterid = conf.monsterid
+    nVal.ZhuiBu_Value[index].monHandle = ZhuiBuFuncs.OnCreateTarget(actorobj, conf.monsterid, actor_x, actor_y, conf.monsterlivetime)
+
+    -- 通知前端怪物冒泡对白
+    ZhuiBuFuncs.NoticeNpcTalk(actorobj, qid, npcid, nVal.ZhuiBu_Value[index].monHandle)
+end
+
+-- 创建追捕怪物
+function ZhuiBuFuncs.OnCreateTarget (actorobj, monsterid, x, y, livetime)
+    local monster = LActor.createMonster(actorobj, monsterid, x, y, livetime , false)
+    if monster == nil then
+        debug_print("===>>> 创建追捕怪物失败 注意查找原因!")
+        return 0
+    end
+    LActor.setMonsterAttackTarget(monster, actorobj)
+    return LActor.getHandle(monster)
+end
+
+-- 重置所有目标数据 销毁怪物
+function ZhuiBuFuncs.OnDestoryTarget (actorobj, needNotice)
+    local nVal = LActor.getStaticVar(actorobj)
+    if not nVal then return end
+    if nVal.ZhuiBu_Value == nil then return end -- 完全没有召唤任务任何数据
+    local len = #nVal.ZhuiBu_Value
+    if len > 0 then
+        for index = 1, len do
+            if nVal.ZhuiBu_Value[index].state ~= zb_quest_state.not_vaild then
+                local isDeath = LActor.ActorIsDie(actorobj)
+                if LActor.canFinishQuest(actorobj, nVal.ZhuiBu_Value[index].qid, isDeath) ~= true then
+                    debug_print(string.format("===>>> 执行重置追捕任务数据 qid[%d]", nVal.ZhuiBu_Value[index].qid))
+                    ZhuiBuFuncs.OnResetVal(actorobj, nVal.ZhuiBu_Value[index].qid, needNotice)
+                end
+            end
+        end
+    end
+end
+
+-- 进入场景
+function ZhuiBuFuncs.OnEnterScene (actorobj)
+    ZhuiBuFuncs.OnDestoryTarget(actorobj, true)
+end
+
+-- 退出登录
+function ZhuiBuFuncs.OnActorLogout (actorobj)
+    debug_print("===>>> 追捕任务玩家下线检查")
+    ZhuiBuFuncs.OnDestoryTarget(actorobj)
+end
+
+-- 玩家死亡
+function ZhuiBuFuncs.OnActorDie (actorobj)
+    ZhuiBuFuncs.OnDestoryTarget(actorobj, true)
+end
+
+-- 把对应任务id的数据标记为无效了
+function ZhuiBuFuncs.doInvalidVal (actorobj, qid)
+    qid = tonumber(qid) or 0
+    if not actorobj or qid <= 0 then return end
+    local index = ZhuiBuFuncs.findValIndexByQid(actorobj, qid)
+    if index <= 0 then
+        return
+    end
+    local nVal = LActor.getStaticVar(actorobj)
+    if nVal.ZhuiBu_Value[index].state ~= zh_quest_state.not_vaild then
+        nVal.ZhuiBu_Value[index].state = zh_quest_state.not_vaild -- 清空 标记为无效
+        if nVal.ZhuiBu_Value[index].monHandle ~= 0 then
+            Fuben.clearMonster(nVal.ZhuiBu_Value[index].monHandle)
+        end
+        nVal.ZhuiBu_Value[index].qid = 0
+        nVal.ZhuiBu_Value[index].monsterid = 0
+        nVal.ZhuiBu_Value[index].monHandle = 0
+        nVal.ZhuiBu_Value[index].npcid = 0
+    end
+end
+
+-- 通知前端任务(讨债、召唤、追捕等）这类任务已经击杀了对应handle的怪 可以提交任务了
+function ZhuiBuFuncs.NoticeMonsterHasDeath (actorobj, qid)
+    local pack = DataPack.allocPacket(actorobj, 172, 11)
+    DataPack.writeUInt(pack, qid)
+    DataPack.flush(pack)
+end
+
+function ZhuiBuFuncs.onMonsterDeath (monsterEntity, killerEntity, monsterId)
+    if LActor.isActor(killerEntity) and LActor.isMonster(monsterEntity) and monsterId ~= nil then
+        local nVal = LActor.getStaticVar(killerEntity)
+        if nVal == nil or nVal.ZhuiBu_Value == nil then
+            return
+        end
+        local len = #nVal.ZhuiBu_Value
+        if len > 0 then
+            for i = 1, len do
+                if nVal.ZhuiBu_Value[i].state ~= zh_quest_state.not_vaild then -- 不是无效标记
+                    if nVal.ZhuiBu_Value[i].monsterid == monsterId then
+                        -- 发送
+                        ZhuiBuFuncs.NoticeMonsterHasDeath(killerEntity, nVal.ZhuiBu_Value[i].qid)
+                    end
+                end
+            end
+        end
+    end
+end
+
+function ZhuiBuFuncs.registerMonsters ()
+    for k, v in pairs(ZhuiBu_Config) do
+        MonDieDispatcher.register(v.monsterid, ZhuiBuFuncs.onMonsterDeath)
+    end
+end
+
+-- basequesttype.txt 定义类型
+ZhuiBuFuncs.registerMonsters()
+ActorQuestCallDispatcher.registerCheck(BaseTypes.BaseQuestAction.qaAccept, BaseTypes.BaseQuestPlayType.qptChase, ZhuiBuFuncs.OnCheckAccept) -- 注册接受任务前检查
+ActorQuestCallDispatcher.registerPlayType(BaseTypes.BaseQuestAction.qaAccept, BaseTypes.BaseQuestPlayType.qptChase, ZhuiBuFuncs.OnAcceptQuest) -- 注册接受任务的侦听
+ActorQuestCallDispatcher.registerPlayType(BaseTypes.BaseQuestAction.qaCommit, BaseTypes.BaseQuestPlayType.qptChase, ZhuiBuFuncs.OnCommitQuest) -- 注册完成任务的侦听
+ActorQuestCallDispatcher.registerPlayType(BaseTypes.BaseQuestAction.qaGiveUp, BaseTypes.BaseQuestPlayType.qptChase, ZhuiBuFuncs.OnGiveupQuest) -- 注册放弃任务的侦听防止因配置任务配错了而导致数据异常
+ActorQuestTimeOutClearData.register(BaseTypes.BaseQuestPlayType.qptChase, ZhuiBuFuncs.OnOverTime) -- 注册任务超时自动清理数据
+lua_quest_system.Register(Lua_Quest_CMD.ZhuiBu_Start_Kill, ZhuiBuFuncs.ReceiveClientNotice) -- 注册171,8事件处理
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeOnActorDeath, ZhuiBuFuncs.OnActorDie) -- 注册玩家死亡
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogout, ZhuiBuFuncs.OnActorLogout) -- 玩家下线事件
+
+GmEventFuncList.register("clearzb", function (actorobj, arg)
+    if arg[1] == nil or tonumber(arg[1]) == nil then
+        LActor.sendTipmsg(actorobj, "请输入需要清除数据的任务ID", ttMessage)
+        return
+    end
+    ZhuiBuFuncs.doInvalidVal(actorobj, tonumber(arg[1]))
+    LActor.sendTipmsg(actorobj, string.format("清除任务[%d]数据成功", tonumber(arg[1])), ttMessage)
+end, 1)

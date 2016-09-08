@@ -1,0 +1,14 @@
+--开服后续活动灵器等级配置表
+
+GemActivityConf = {
+	activityId = 13,	--和activitycontrol.txt里应该一致
+	
+	--活动期间,灵器的目标等级
+	aimlevel ={10,20,30,40},
+	rewardlist={
+		{id = 44444, count = 1, quality=0, strong=0, bind = 1},     --物品id，
+		{id = 44445, count = 1, quality=0, strong=0, bind = 1},     --物品id，
+		{id = 44446, count = 1, quality=0, strong=0, bind = 1},     --物品id，
+		{id = 44447, count = 1, quality=0, strong=0, bind = 1},     --物品id，
+	},
+}

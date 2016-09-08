@@ -1,0 +1,323 @@
+﻿-- 炽翼秘窟副本配置
+
+--#include "..\..\language\LangCode.txt" once
+
+CymkConf = {
+	fbid = 83, -- 副本ID
+	award = 1000, -- 总共可以获得的奖励数量
+	awardType = 2, -- 奖励的代币类型
+
+	awardSet = {
+		[645] = 20869,
+		[646] = 20869,
+		[650] = 20869,
+		[651] = 20869,
+		[653] = 240000,
+		[655] = 240000,
+		[656] = 240000,		
+	},
+	refreshMonster = 
+	{
+		645,
+		646,
+		650,
+		651,
+		653,
+		655,
+		656,
+	},
+
+	-- 第一层
+	killbuff = { type = 77, group = 0 }, -- 
+	xuanwuMon = 653, -- 玄武结界怪物ID
+	jieJingMon = { 647, 648, 649 }, -- 结晶怪物的ID
+	jieJingBuff = { -- 三个结晶给玄武结界加的buff，要用不同的groupid
+		{ { type = 50, group = 0, value = 0.25 }, {type = 52, group = 0, value = 0.25} },
+		{ { type = 50, group = 1, value = 0.25 }, {type = 52, group = 1, value = 0.25} },
+		{ { type = 50, group = 2, value = 0.25 }, {type = 52, group = 2, value = 0.25} },
+	},
+
+
+	-- 第二层
+	xlmsMon = 655, -- 修罗魔煞怪物ID
+	xbjjMon = 652, -- 玄冰结晶怪物ID
+	xbjjBuff = { type = 57, group = 0, value = 5, times = 10, interval = 1, name="" },	--禁止攻击
+	xbjjEffs = {
+		{type=5,id=10101,time=10000,delay=200}, --脚下持续
+		{type=6,id=10102,time=10000,delay=200}, --持续
+	},
+	xbjjSkill = { id = 101, level = 1 }, -- 修罗魔煞冰冻技能
+
+
+	-- 第三层
+	-- 死亡炽翼
+	swcyId = 656, -- 死亡炽翼怪物ID
+	swcyNewId = 657, -- 死亡炽翼分身怪物ID
+	swcySkill = { skillId = 100, posX = 0, posY = 0, level = 1 },
+	swcyNewBuff = { -- 给分身加的几个BUFF
+		{ type = 81, group = 0, value = 0.25, times = 1200, interval = 1, name="" },
+		{ type = 82, group = 0, value = 0.25, times = 1200, interval = 1, name="" },
+		{ type = 28, group = 0, value = 1.5, times = 1200, interval = 1, name="" },
+	},
+
+
+	passEffect = { id = 20024, time = 1 }, -- 通关特效(id,持续时间(秒))
+    failEffect = { id = 20023, time = 1 }, -- 失败特效(id,持续时间(秒))
+    finalEffect = { id = 20022, time = 1 }, -- 最后通关特效
+
+	-- 特效配置
+	effect = 
+	{
+		-- 冰块, 特效列表
+		-- id, 时间(毫秒), 延时(毫秒)
+		{
+			{ id = 72, type = 6, time = 800, delay = 0 },
+			{ id = 73, type = 6, time = 800, delay = 2000 },
+			{ id = 3701, type = 6, time = 1500, delay = 2050 },
+		},
+		-- 火球, 特效列表
+		{
+			{ id = 75, type = 6, time = 800, delay = 0 },
+			{ id = 74, type = 6, time = 800, delay = 2000 },
+			-- { id = 6, type = 6, time = 2, delay = 4 },
+		},
+	},
+
+	scenes = { -- 每一层的场景配置
+		{
+			-- 第1层
+			sceneid = 1141, -- 场景ID
+			gametime = 6 * 60,       --本层游戏时间
+			--[[
+			传送门信息
+			posx和posy : 表示传送门出现的位置
+			toSceneid : 表示要传送的目的场景id
+			toPosx和toPosy : 分别要传送的目的坐标，此坐标必须是位于toSceneid场景里的
+		 	modelid : 表示外观模型的id
+		 	name : 传送门名称
+		 	]]
+			teleport = { posx = 50, posy = 7,toSceneid = 1142,toPosx = 9, toPosy = 25,modelid = 50000,name = Lang.SceneName.s1142 },
+
+			conds = { type = 2, mid = 653 }, -- 通关条件:默认是0，表示脚本自己实现，1表示杀死全部怪物，2表示杀死某个怪物,mid为怪物ID
+			
+			award = 300, -- 本层奖励
+
+			effects = -- 定时释放特效配置
+			{
+				-- type : 1表示冰块，2表示火球
+				-- hittype : 1表示专砸玩家，2表示随机一个范围
+				-- range : 范围(x1,y1,x2,y2)
+				-- interval : 时间间隔(秒)
+				-- times : 次数，-1表示不限制
+				-- results : 砸中对玩家造成的伤害
+				{
+					type = 2,
+					hittype = 1,
+					interval = 15,
+					times = -1,
+					results = 
+					{
+						{ bufftype = 12, group = 0, value = -0.2, times = 1, interval = 1, name = Lang.Actions.b003, timeOverlay = false },
+					},
+				},
+				{
+					type = 2,
+					hittype = 1,
+					interval = 15,
+					times = -1,
+					results = 
+					{
+						{ bufftype = 12, group = 0, value = -0.2, times = 1, interval = 1, name = Lang.Actions.b003, timeOverlay = false },
+					},
+				},
+				{
+					type = 2,
+					hittype = 1,
+					interval = 15,
+					times = -1,
+					results = 
+					{
+						{ bufftype = 12, group = 0, value = -0.2, times = 1, interval = 1, name = Lang.Actions.b003, timeOverlay = false },
+					},
+				},
+			},
+
+			monster = -- 本层怪物信息，
+			{
+				total = 1, -- 总共多少只怪物(只算需要杀死的怪物)
+				ids = { 653 }, -- 怪物ID
+			},
+
+			-- mid : 需要加buff的怪物ID
+			buffs =  {
+				{ mid = 649, bufftype = 77, group = 0, value = 5000, times = 1800, interval = 1, name = Lang.Actions.b003, timeOverlay = false }, -- 给某个怪物加的buff
+			},
+
+		},
+		-- 其它层的场景按上面配置
+		
+		{ -- 第2层
+			sceneid = 1142, -- 场景ID
+			gametime = 6 * 60,       --本层游戏时间
+			--[[
+			传送门信息
+			posx和posy : 表示传送门出现的位置
+			toSceneid : 表示要传送的目的场景id
+			toPosx和toPosy : 分别要传送的目的坐标，此坐标必须是位于toSceneid场景里的
+		 	modelid : 表示外观模型的id
+		 	name : 传送门名称
+		 	]]
+			teleport = { posx = 49, posy = 10,toSceneid = 1143,toPosx = 6, toPosy = 26,modelid = 50000,name = Lang.SceneName.s1143 },
+
+			conds = { type = 2, mid = 655 }, -- 通关条件:默认是0，表示脚本自己实现，1表示杀死全部怪物，2表示杀死某个怪物,mid为怪物ID
+			
+			award = 300, -- 本层奖励
+			
+			effects = -- 定时释放特效配置
+			{
+				-- type : 1表示冰块，2表示火球
+				-- hittype : 1表示专砸玩家，2表示随机一个范围
+				-- range : 范围(x1,y1,x2,y2)
+				-- interval : 时间间隔(秒)
+				-- times : 次数，-1表示不限制
+				-- results : 砸中对玩家造成的伤害
+				{
+					type = 2,
+					hittype = 1,
+					interval = 15,
+					times = -1,
+					results = 
+					{
+						{ bufftype = 12, group = 0, value = -0.2, times = 1, interval = 1, name = Lang.Actions.b003, timeOverlay = false },
+					},
+				},
+				{
+					type = 2,
+					hittype = 1,
+					interval = 15,
+					times = -1,
+					results = 
+					{
+						{ bufftype = 12, group = 0, value = -0.2, times = 1, interval = 1, name = Lang.Actions.b003, timeOverlay = false },
+					},
+				},
+				{
+					type = 2,
+					hittype = 1,
+					interval = 15,
+					times = -1,
+					results = 
+					{
+						{ bufftype = 12, group = 0, value = -0.2, times = 1, interval = 1, name = Lang.Actions.b003, timeOverlay = false },
+					},
+				},
+			},
+
+			monster = -- 本层怪物信息，
+			{
+				total = 1, -- 总共多少只怪物(只算需要杀死的怪物)
+				ids = {655}, -- 怪物ID
+			},
+
+			skills = -- 定时释放技能配置
+			{
+				-- interval : 时间间隔(秒)
+				-- times : 次数，-1表示不限制
+				-- 释放技能的怪物ID
+				-- skillId : 技能ID
+				-- posX,posY : 作用位置
+				-- level : 技能等级
+				-- talk : 同时说话
+				-- talkType : 说话类型
+				{
+					interval = 60,
+					times = -1,
+					mid = 655,
+					skillId = 98,
+					posX = 0, 
+					posY = 0, 
+					level = 1,
+					talk = Lang.ScriptTips.zd021,
+					talkType = 1,
+				},
+
+				{
+					interval = 45,
+					times = -1,
+					mid = 655,
+					skillId = 99,
+					posX = 0, 
+					posY = 0, 
+					level = 1,
+				},
+			},
+
+		},
+		-- 其它层的场景按上面配置
+		
+		{ -- 第3层
+			sceneid = 1143, -- 场景ID
+			gametime = 6 * 60,       --本层游戏时间
+			--[[
+			传送门信息
+			posx和posy : 表示传送门出现的位置
+			toSceneid : 表示要传送的目的场景id
+			toPosx和toPosy : 分别要传送的目的坐标，此坐标必须是位于toSceneid场景里的
+		 	modelid : 表示外观模型的id
+		 	name : 传送门名称
+		 	]]
+			teleport = { posx = 47, posy = 7,toSceneid = 11,toPosx = 95, toPosy = 71,modelid = 50000,name = Lang.SceneName.s10000 },
+
+			conds = { type = 2, mid = 656 }, -- 通关条件:默认是0，表示脚本自己实现，1表示杀死全部怪物，2表示杀死某个怪物,mid为怪物ID
+			
+			award = 400, -- 本层奖励
+
+			effects = -- 定时释放特效配置
+			{
+				-- type : 1表示冰块，2表示火球
+				-- hittype : 1表示专砸玩家，2表示随机一个范围
+				-- range : 范围(x1,y1,x2,y2)
+				-- interval : 时间间隔(秒)
+				-- times : 次数，-1表示不限制
+				-- results : 砸中对玩家造成的伤害
+				{
+					type = 2,
+					hittype = 1,
+					interval = 15,
+					times = -1,
+					results = 
+					{
+						{ bufftype = 12, group = 0, value = -0.2, times = 1, interval = 1, name = Lang.Actions.b003, timeOverlay = false },
+					},
+				},
+				{
+					type = 2,
+					hittype = 1,
+					interval = 15,
+					times = -1,
+					results = 
+					{
+						{ bufftype = 12, group = 0, value = -0.2, times = 1, interval = 1, name = Lang.Actions.b003, timeOverlay = false },
+					},
+				},
+				{
+					type = 2,
+					hittype = 1,
+					interval = 15,
+					times = -1,
+					results = 
+					{
+						{ bufftype = 12, group = 0, value = -0.2, times = 1, interval = 1, name = Lang.Actions.b003, timeOverlay = false },
+					},
+				},
+			},
+
+			monster = -- 本层怪物信息，
+			{
+				total = 1, -- 总共多少只怪物(只算需要杀死的怪物)
+				ids = { 656 }, -- 怪物ID
+			},
+
+		},
+	}
+}

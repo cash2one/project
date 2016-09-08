@@ -1,0 +1,28 @@
+﻿--刷星任务物品使用
+--#include "data\functions\refreshstarfunc.txt" once
+
+--[[
+--刷星任务物品使用处理函数
+--sysarg:实体的指针
+--itemidx: 物品的ID
+--itemPtr: 物品的指针
+--ItemTable: 配置的参数列表
+--]]
+
+
+
+function RefreshItemUseHandler(sysarg, itemIdx, itemPtr, conf)
+	if conf == nil then return end
+	
+	RefreshFunc.OpenRefreshDialog(sysarg, conf.quest_id)
+end
+
+-- @brief: 注册刷星任务物品使用Handler
+function RefreshItemInit(sysarg)
+	for i = 1, table.getn(RefreshItem) do
+		local conf = RefreshItem[i]
+		GlobalItemFn[conf.item_id] = { func = RefreshItemUseHandler, params = conf, }
+	end
+end
+
+table.insert(InitFnTable, RefreshItemInit)

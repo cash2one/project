@@ -1,0 +1,45 @@
+﻿--     caleExp = 0,   //经验值增加
+--     caleCoin = 1, //银两增加
+--     caleBindCoin = 2, //仙币 即是贝币
+--     calelingli = 3, //灵力值,只适合在外部增加
+--     caleFubenTime = 4,//副本时间
+--     caleMonTime = 5,//刷怪剩余时间
+--     caleOther1 = 6, //其它 如采集蟠桃上限值
+--     caleOther2 = 7, //其它
+--     caleOther3 = 8, //其它
+--     caleRemainMonster = 9, //剩余怪物数
+--     caleGameTime = 10,//副本游戏时间
+--     caleLiLiang = 11, // 历练
+-- 	caleSceneExp = 12, // 本场景获得的经验
+-- 	caleHonor = 13, //荣誉值
+-- 	caleOther4 = 14, //其它
+-- 	caleOther5 = 15, //其它
+-- 	caleOther6 = 16, //其它
+-- 	caleOther7 = 17, //其它
+-- 	caleOther8 = 18, //其它
+-- 	caleOther9 = 19, //其它
+-- 	caleOther10 = 20, //其它
+--     caleMax,
+
+
+
+{   --通天试炼
+	--副本id
+  	fbid = 6,
+	--副本的适合等级(推荐等级)，
+	recommandLevel = 1,
+	--副本需要统计那些数据,0为经验,1为绑定天珠
+	caleType = {0,2},
+    caleInfo = {
+                  expType = {202},--杀怪获得经验
+               },
+
+	--副本不动态调整
+	monsterDynProp = false, 
+	--这个副本需要用到的场景列表
+	
+	scenes =
+	{   
+--#include "scene86.txt"
+	},
+},

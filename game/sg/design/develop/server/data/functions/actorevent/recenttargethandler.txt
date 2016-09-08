@@ -1,0 +1,149 @@
+--lua script
+--短期目标相关逻辑
+
+--#include "data\config\achieve\recenttargetconfig.txt" once
+
+RecentTargetFunc = {}
+
+RecentTargetFunc.main = function (sysarg, systemid, msgid, packet)
+  if RecentTargetFunc[msgid] then
+    RecentTargetFunc[msgid](sysarg, packet)
+  end
+end
+
+--================= 辅助函数 及结构 ======================
+RecentTargetFunc.isClose = function()
+	if recentTargetConfig.SYSTEM_SWITCH ~= 1 then
+		return true
+	else
+		return false
+	end
+end
+--=============== end 辅助函数 ======================
+
+
+--======================协议=======================
+RecentTargetFunc.sendRecentTargetStatus = function(sysarg)
+	if RecentTargetFunc.isClose() then
+		return
+	end
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	local actorLevel = LActor.getIntProperty( sysarg, PROP_LEVEL )
+	if actorLevel < recentTargetConfig.showMinLv then
+		return
+	end
+
+	-- var.gotPrizeRecentTargetId 最后一个已领奖的短期目标ID，为 nil 即从未领过
+	local retrievableRecentTargetId = 0
+	if var.gotPrizeRecentTargetId == nil then
+		retrievableRecentTargetId = 1
+	else
+		retrievableRecentTargetId = var.gotPrizeRecentTargetId + 1
+	end
+
+	local targetStatus = 0
+	local targetPrize = recentTargetConfig.target[retrievableRecentTargetId]
+	if targetPrize == nil then
+		targetStatus = 0
+	else
+		if actorLevel >= targetPrize.showLv then
+			targetStatus = 1
+		end
+		if actorLevel >= targetPrize.getLv then
+			targetStatus = 2
+		end
+	end
+
+	local npack = DataPack.allocPacket(sysarg,145,1)
+	if npack == nil then return end
+	DataPack.writeByte(npack, targetStatus)
+
+	if targetPrize then
+		DataPack.writeInt(npack, targetPrize.getLv)
+		DataPack.writeInt(npack, #targetPrize.itemList)
+		for i=1, #targetPrize.itemList do
+			DataPack.writeInt(npack, targetPrize.itemList[i].itemid)
+			DataPack.writeInt(npack, targetPrize.itemList[i].amount)
+		end
+	end
+	DataPack.flush(npack)
+end
+
+
+--  获取消息列表
+RecentTargetFunc[2] = function ( sysarg )
+	if RecentTargetFunc.isClose( sysarg ) then
+		LActor.sendTipmsg( sysarg, Lang.RecentTarget.t001, ttMessage ) 
+		return
+	end
+
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+
+	-- var.gotPrizeRecentTargetId 最后一个已领奖的短期目标ID，为 nil 即从未领过
+	local retrievableRecentTargetId = 0
+	if var.gotPrizeRecentTargetId == nil then
+		retrievableRecentTargetId = 1
+	else
+		retrievableRecentTargetId = var.gotPrizeRecentTargetId + 1
+	end
+
+	local targetPrize = recentTargetConfig.target[retrievableRecentTargetId]
+	if targetPrize == nil then
+		return
+	end
+	local actorLevel = LActor.getIntProperty( sysarg, PROP_LEVEL )
+	if actorLevel < targetPrize.getLv then
+		LActor.sendTipmsg( sysarg, Lang.RecentTarget.t002, ttMessage )
+		return
+	end
+
+	-- 检查背包够不够空间
+	local needspace = 0  --物品所需空格
+	for i,c in ipairs(targetPrize.itemList) do
+		needspace = needspace + Item.getAddItemNeedGridCount( sysarg, c.itemid, c.amount, c.quality, c.strong, c.bind )
+	end
+	if needspace > Item.getBagEmptyGridCount( sysarg ) then
+		-- local str = string.format(Lang.ScriptTips.f00016,needspace)
+		-- LActor.sendTipmsg( sysarg, str,ttDialog )
+		LActor.SendGeneralTips(sysarg, 7, 0, 0)
+		return
+	end
+
+	-- 最后一个已领奖的短期目标ID , 置为下一个
+	if var.gotPrizeRecentTargetId == nil then
+		var.gotPrizeRecentTargetId = 1
+	else
+		var.gotPrizeRecentTargetId = var.gotPrizeRecentTargetId + 1
+	end
+
+	local effects = {} -- 用于播放特效
+	for i,c in ipairs(targetPrize.itemList) do
+		LActor.addItem(sysarg, c.itemid, c.quality, c.strong, c.amount, c.bind,"recenttarget",1)
+
+		local effect = {}
+		effect.type = 1  -- 1为物品,暂时只支持发物品所以写死
+	    effect.id = c.itemid
+	    effect.count = c.amount
+	    effects[#effects+1] = effect
+	end
+
+	-- 播放特效
+	if #effects > 0 then
+		MiscFunc.PlayItemEffect(sysarg, 7, effects)
+	end
+	RecentTargetFunc.sendRecentTargetStatus(sysarg)
+end
+--=================== end 协议=====================
+
+EventCallDispatcher.handlerLoginforRecentTaget = function (sysarg)
+	RecentTargetFunc.sendRecentTargetStatus(sysarg)
+end
+
+EventCallDispatcher.handlerLevelUpforRecentTaget = function (sysarg)
+	RecentTargetFunc.sendRecentTargetStatus(sysarg)
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeLevel, EventCallDispatcher.handlerLevelUpforRecentTaget)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, EventCallDispatcher.handlerLoginforRecentTaget)

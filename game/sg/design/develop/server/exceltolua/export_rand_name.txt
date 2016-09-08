@@ -1,0 +1,108 @@
+--导出在线奖励配置表
+----------------------------------------------------------------------------------------
+--写文件
+function writeConfig(configname, concent)
+	if not concent then
+		print("concent is null")
+		return
+	end
+
+	if not configname then
+		print("configname is null")
+		return
+	end
+
+	local f = io.open(configname, "w")
+	f:write(concent)
+	f:close()
+end
+
+
+
+function ReadRandomName()
+    local objexcel = CExcelReader:new()
+    if not objexcel then
+        print("objexcel is null")
+        return
+    end
+    print("start1")
+    objexcel:Init_App()
+    objexcel:OpenRead()
+    print("start2")
+    local obj = objexcel:LoadSheetByIndex(1)
+    print("start3")
+    if not obj then
+        print("LoadSheetByIndex失败!")
+        objexcel:Close()
+        objexcel:Quit_App()
+        return
+    end
+    local nCount = objexcel:GetCurrentSheetColCount()
+    local mCount = objexcel:GetCurrentSheetRowCount()
+
+
+    print("nCount", nCount)
+    print("mCount", mCount)
+
+    local nameA = {}
+    local nameB = {}
+
+
+    for i = 3, mCount do
+        local strA  = objexcel:ReadCellAsString(i, 2)
+        local strB  = objexcel:ReadCellAsString(i, 4)
+        if strA and #strA >=1 then
+            table.insert(nameA,strA)
+        end
+        if strB and #strB >= 1 then
+            table.insert(nameB,strB)
+        end
+    end
+
+    local str = ""
+
+    --local file1 = io.open("randname_girl.txt", 'w+')
+    --local file2 = io.open("randname_boy.txt", 'w+')
+    objexcel:WriteFile("randname_boy.txt",str)
+    objexcel:WriteFile("randname_girl.txt",str)
+    
+    for i , strA in ipairs(nameA) do
+        for j , strB in ipairs(nameB) do
+            local currName = strA..strB..'\n'
+            --str = str..currName
+            --file1:write(currName)
+            --file2:write(currName)
+            --print("str:"..tostring(str))
+
+            objexcel:WriteFile("randname_boy.txt",currName , 'a')
+            objexcel:WriteFile("randname_girl.txt",currName , 'a')
+        end
+    end
+    --file1:close()
+    --file2:close()
+
+
+    print("okkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk")
+    --objexcel:WriteFile("randname_boy.txt",str)
+    --objexcel:WriteFile("randname_girl.txt",str)
+
+    --objexcel:WriteFile("testnamne.txt",str)
+
+    --print("here9")
+    --local str = format_vip_str(VIPConfig)
+    --print("here10")
+    --写文件
+    --[[
+    writeConfig(itemfile, str)
+    --print("here11")
+    objexcel:WriteFile("roots.txt",str)
+    print("here12")
+    print(str)
+    --]]
+
+    objexcel:Close()
+    objexcel:Quit_App()
+    objexcel:delete()
+
+
+end

@@ -1,0 +1,15 @@
+﻿--#include "..\..\..\language\LangCode.txt"
+activity2003Conf = {
+	activityId = 2003,
+
+	activities =
+	{
+		 [84] = 
+		 {
+			--每日累计消费循环
+			id = 84,
+			target = {{1000, 30533}, {2000, 30534}, {3000, 30535}, },
+			context = "#c27344e活动时间#cff1d008.20-8.22#c27344e每日24点重置哦~",
+		},
+	},
+}

@@ -1,0 +1,545 @@
+--导出翅膀配置表
+----------------------------------------------------------------------------------------
+--写文件
+function writeConfig(configname, concent)
+	if not concent then
+		print("concent is null")
+		return
+	end
+
+	if not configname then
+		print("configname is null")
+		return
+	end
+
+	local f = io.open(configname, "w")
+	f:write(concent)
+	f:close()
+end
+
+
+
+----------------------------------------------------------------------------------------
+local function sz_T2S(_t)
+   local szRet = "{"
+    function doT2S(_i, _v)
+        if "number" == type(_i) then
+            --szRet = szRet .. "[" .. _i .. "] = "
+            if "number" == type(_v) then
+                szRet = szRet .. _v .. ","
+            elseif "string" == type(_v) then
+                szRet = szRet .. '"' .. _v .. '"' .. ","
+            elseif "table" == type(_v) then
+                szRet = szRet .. sz_T2S(_v) .. ","
+            else
+                szRet = szRet .. "nil,"
+            end
+        elseif "string" == type(_i) then
+            szRet = szRet .. _i..' = '
+            if "number" == type(_v) then
+                szRet = szRet .. _v .. ","
+            elseif "string" == type(_v) then
+                szRet = szRet .. '"' .. _v .. '"' .. ","
+            elseif "table" == type(_v) then
+                szRet = szRet .. sz_T2S(_v) .. ","
+            else
+                szRet = szRet .. "nil,"
+            end
+        end
+    end
+    table.foreach(_t, doT2S,0)
+    szRet = szRet .. "}"
+    return szRet
+end
+
+
+--切割字符串
+local function split(str, splitChar)
+    local subStrTab = {};
+    while true do
+        local pos = string.find(str, splitChar);
+        if (not pos) then
+            subStrTab[#subStrTab + 1] = str;
+            break;
+        end
+        local subStr = string.sub(str, 1, pos - 1);
+        subStrTab[#subStrTab + 1] = subStr;
+        str = string.sub(str, pos + 1, #str);
+    end
+    return subStrTab;
+end
+
+
+
+
+--生成暴击相关
+local function GetBjUnion(bj_object , i , currTmp)
+	if nil == bj_object then
+		return
+	end
+	local tmp = split(bj_object,"_")
+	if #tmp == 2 then
+		local bj_value = tonumber(tmp[1])
+		local bj_pro = tonumber(tmp[2])
+		if bj_value and bj_pro then
+			currTmp.jinjiebaoji[i] = bj_value
+			currTmp.baojilv[i] = bj_pro
+		end
+	end
+end
+
+
+
+--生成属性
+local function GetAttribute(objexcel , i)
+	local strValue = nil
+	local nAttribute = nil
+	local ReData = {}
+
+	strValue = objexcel:ReadCellAsString(i, 14)--生命
+	nAttribute = tonumber(strValue) or 0
+	if nAttribute then
+		table.insert(ReData , {type = 17 , value = nAttribute})
+	end
+
+	strValue = objexcel:ReadCellAsString(i, 15)--攻击
+	nAttribute = tonumber(strValue) or 0
+	if nAttribute then
+		table.insert(ReData , {type = 27 , value = nAttribute})
+	end
+
+	strValue = objexcel:ReadCellAsString(i, 16)--物防
+	nAttribute = tonumber(strValue) or 0
+	if nAttribute then
+		table.insert(ReData , {type = 23 , value = nAttribute})
+	end
+
+	strValue = objexcel:ReadCellAsString(i, 17)--道防
+	nAttribute = tonumber(strValue) or 0
+	if nAttribute then
+		table.insert(ReData , {type = 33 , value = nAttribute})
+	end
+
+	strValue = objexcel:ReadCellAsString(i, 18)--命中
+	nAttribute = tonumber(strValue) or 0
+	if nAttribute then
+		table.insert(ReData , {type = 39 , value = nAttribute})
+	end
+
+	strValue = objexcel:ReadCellAsString(i, 19)--37闪避
+	nAttribute = tonumber(strValue) or 0
+	if nAttribute then
+		table.insert(ReData , {type = 37 , value = nAttribute})
+	end
+
+	strValue = objexcel:ReadCellAsString(i, 20)--63会心
+	nAttribute = tonumber(strValue) or 0
+	if nAttribute then
+		table.insert(ReData , {type = 63 , value = nAttribute})
+	end
+
+	return ReData
+end
+
+
+
+local function format_upLevel_str(t)
+	local upLevel_model_str =
+		" {\n"
+.."				id =%d,\n"
+.."				name = 	'%s'	,\n"
+.."				modelId =	%d,\n"
+.."				addExp = %d,\n"
+.."				upCost = %s,\n"
+.."				upItemid = %s,\n"
+.."				upItemCount = %s,\n"
+.."				upgradeExp = %s,\n"
+.."				upgradAttr = %s, \n"
+.."            jinjiebaoji = %s ,\n"
+.."            baojilv = %s,\n"
+.."		 },\n"
+
+
+	local upLevel_str = "	upLevel =".."	{\n"
+	for i , v in pairs(t.Wings.upLevel) do
+		--[[
+		local str_upgradAttr = ""
+		for _ , value in pairs(v.upgradAttr) do
+			str_upgradAttr = str_upgradAttr..sz_T2S(value).."\n"
+		end
+		--]]
+
+		local currStr = string.format(upLevel_model_str,v.id , v.name , v.modelId , v.addExp , sz_T2S(v.upCost) ,
+			sz_T2S(v.upItemid) ,
+			sz_T2S(v.upItemCount) ,
+			sz_T2S(v.upgradeExp) ,
+			sz_T2S(v.upgradAttr) ,
+			sz_T2S(v.jinjiebaoji)
+			, sz_T2S(v.baojilv))
+
+		currStr = currStr.."\n"
+		upLevel_str = upLevel_str..currStr
+	end
+	upLevel_str = upLevel_str.."	},\n"
+
+	local stage_model_str =
+"		{\n"
+.."			id =%d,\n"
+.."			modelId =	%d,\n"
+.."			jinjieitemId = %d,\n"
+.."			itemCost = %d,\n"
+.."			stageCost = %d,\n"
+.."			addStageExp = %d,\n"
+.."			maxStageExp = %d,\n"
+.."			addStageAttr = {%s},\n"
+.."			jinjiebaoji = %s ,\n"
+.."			baojilv = %s,\n"
+.."			broadcast = %s,\n"
+.."		},\n"
+	local stage_str = "\n 	stage =".."	{\n"
+	for i , v in pairs(t.Wings.stage) do
+		local currStr = string.format(stage_model_str , v.id or 0 , v.modelId or 0 , v.jinjieitemId or 0 , v.itemCost or 0 , v.stageCost or 0 , v.addStageExp or 0 , v.maxStageExp or 0,
+									sz_T2S(v.addStageAttr or {}) ,
+									sz_T2S(v.jinjiebaoji or {}) ,
+									sz_T2S(v.baojilv or {}) ,
+									tostring(v.broadcast))
+		currStr = currStr.."\n"
+		stage_str = stage_str..currStr
+	end
+	stage_str = stage_str.."	},\n"
+
+	local specialWing_model_str =
+"	{\n"
+.."			id = %d,\n"
+.."			itemId = %d,\n"
+.."			name = 	'%s'	,\n"
+.."			modelId =	%d,\n"
+.."			access = '%s',\n"
+.."			attrs =	%s,\n"
+.."	},\n"
+	local specialWing_str = "\n 	specialWing =".."	{\n"
+	for i , v in pairs(t.Wings.specialWing) do
+		local currStr = string.format(specialWing_model_str , v.id , v.itemId , v.name , v.modelId , v.access , sz_T2S(v.attrs))
+		currStr = currStr.."\n"
+		specialWing_str = specialWing_str..currStr
+	end
+	specialWing_str = specialWing_str.."\n	},\n"
+
+	local include_str = '--wing_config\n--#include '..'"..\\..\\language\\langCode.txt" once\n\n'
+	local TotalStr = include_str.."Wings = {\n"..upLevel_str.."\n"..stage_str.."\n"..specialWing_str.."\n".."}"
+	return TotalStr
+end
+
+
+
+
+function ReadWing()
+	local objexcel = CExcelReader:new()
+	if not objexcel then
+		print("objexcel is null")
+		return
+	end
+
+	objexcel:Init_App()
+	objexcel:OpenRead()
+
+	local obj = objexcel:LoadSheetByIndex(1)
+	if not obj then
+		print("LoadSheetByIndex失败!")
+		objexcel:Close()
+		objexcel:Quit_App()
+		return
+	end
+
+	local nCount = objexcel:GetCurrentSheetColCount()
+	local mCount = objexcel:GetCurrentSheetRowCount()
+
+
+	print("nCount", nCount)
+	print("mCount", mCount)
+
+
+	local Wings = {upLevel = {} , stage = {} , specialWing = {}}
+	for i = 2, mCount do
+		--print("i:"..i)
+		local strValue = nil
+		strValue = objexcel:ReadCellAsString(i, 1)--翅膀id
+		local id = tonumber(strValue)
+		--print("here1")
+		if id then
+			--print("here2")
+			strValue = objexcel:ReadCellAsString(i, 9)--培养升级经验
+			local MaxExp = tonumber(strValue)
+			if MaxExp then	--培养（升级）的信息
+				--print("here3")
+				if nil == Wings.upLevel[id] then
+					--print("here4")
+					Wings.upLevel[id] = {id = id}
+				end
+				local currTmp = Wings.upLevel[id]
+
+				---------------------------------------------------------------
+				strValue = objexcel:ReadCellAsString(i, 2)--名字
+				if strValue then
+					currTmp.name = strValue
+				end
+				local modelId = tonumber(objexcel:ReadCellAsString(i, 3))--模型id
+				if modelId then
+					currTmp.modelId = modelId
+				end
+				local addExp = tonumber(objexcel:ReadCellAsString(i, 8))--每次培养增加的经验
+				if addExp then
+					currTmp.addExp = addExp
+				end
+				--print("here5")
+
+				--暴击相关
+				----------------------------------------------------------------------------------------------------
+				if nil == currTmp.jinjiebaoji then --暴击倍数
+					currTmp.jinjiebaoji = {}
+				end
+				if nil == currTmp.baojilv then 	   --暴击概率
+					currTmp.baojilv = {}
+				end
+				local bj_object1 = objexcel:ReadCellAsString(i, 21)
+				local bj_object2 = objexcel:ReadCellAsString(i, 22)
+				local bj_object3 = objexcel:ReadCellAsString(i, 23)
+
+				GetBjUnion(bj_object1 , 1 , currTmp)
+				GetBjUnion(bj_object2 , 2 , currTmp)
+				GetBjUnion(bj_object3 , 3 , currTmp)
+				--print("here6")
+				----------------------------------------------------------------------------------------------------
+				local level = tonumber(objexcel:ReadCellAsString(i, 5))--等级
+				if level then
+					if nil == currTmp.upCost then	--每次培养消耗的铜币
+						currTmp.upCost = {}
+					end
+
+					if nil == currTmp.upItemid then	--每次培养的材料ID
+						currTmp.upItemid = {}
+					end
+
+					if nil == currTmp.upItemCount then	--每次培养的材料数量
+						currTmp.upItemCount = {}
+					end
+
+					if nil == currTmp.upgradeExp then	--培养升级的经验
+						currTmp.upgradeExp = {}
+					end
+
+					if nil == currTmp.upgradAttr then	--每一级对应的属性加成
+						currTmp.upgradAttr = {}
+					end
+				end
+				--print("here7")
+				local nCostCoin = tonumber(objexcel:ReadCellAsString(i, 27))	--每次培养消耗的铜币
+				if nCostCoin and nil == currTmp.upCost[level] then
+					currTmp.upCost[level] = nCostCoin
+				end
+
+				local nItemId = tonumber(objexcel:ReadCellAsString(i, 6))		--每次培养消耗的材料id
+				if nItemId and nil == currTmp.upItemid[level] then
+					currTmp.upItemid[level] = nItemId
+				end
+
+				local nItemNum = tonumber(objexcel:ReadCellAsString(i, 7))		--每次培养消耗的材料数量
+				if nItemNum and nil == currTmp.upItemCount[level] then
+					currTmp.upItemCount[level] = nItemNum
+				end
+
+				local nMaxExp = tonumber(objexcel:ReadCellAsString(i, 9))		--培养升级的经验
+				if nMaxExp and nil == currTmp.upgradeExp[level] then
+					currTmp.upgradeExp[level] = nMaxExp
+				end
+				--print("here7.5")
+				local AttributeUnion = GetAttribute(objexcel , i)				--每一级对应的属性加成
+				if nil == currTmp.upgradAttr[level] then
+					currTmp.upgradAttr[level] = AttributeUnion
+				end
+				--print("here8")
+
+
+				--进阶信息
+				if nil == Wings.stage then
+					Wings.stage = {}
+				end
+				if nil == Wings.stage[id] then
+					Wings.stage[id] = {id = id}
+				end
+
+				local currStageTmp = Wings.stage[id]
+				if modelId then
+					currStageTmp.modelId = modelId
+				end
+
+			    if 1 == level then
+			    	local bNum = tonumber(objexcel:ReadCellAsString(i, 29))		--是否进行广播
+			    	local broadcast = (bNum == 1 ) and true or false
+			    	print("show id:"..tostring(id))
+					Wings.stage[id].broadcast = broadcast
+			    end
+
+
+				---------------------------------------------------------------
+			else			--进阶的信息
+				if nil == Wings.stage then
+					Wings.stage = {}
+				end
+				local id = tonumber(objexcel:ReadCellAsString(i, 1))
+				if nil == Wings.stage[id] then
+					Wings.stage[id] = {id = id}
+				end
+				local currTmp = Wings.stage[id]
+
+				local modelId = tonumber(objexcel:ReadCellAsString(i, 3))	--模型id
+				if modelId then
+					currTmp.modelId =modelId
+				end
+
+				local jinjieitemId = tonumber(objexcel:ReadCellAsString(i, 10)) --进阶消耗的材料
+				if jinjieitemId then
+					currTmp.jinjieitemId = jinjieitemId
+				end
+
+				local itemCost = tonumber(objexcel:ReadCellAsString(i, 11))		-- 消耗物品数量
+				if itemCost then
+					currTmp.itemCost = itemCost
+				end
+
+				local stageCost = tonumber(objexcel:ReadCellAsString(i, 28))	--进阶消耗的金钱
+				if stageCost then
+					currTmp.stageCost = stageCost
+				end
+
+				local addStageExp = tonumber(objexcel:ReadCellAsString(i, 12))  --每次进阶增加进阶经验
+				if addStageExp then
+					currTmp.addStageExp = addStageExp 
+				end
+
+				local maxStageExp = tonumber(objexcel:ReadCellAsString(i, 13))	--当前进阶所需的经验
+				if maxStageExp then
+					currTmp.maxStageExp = maxStageExp
+				end
+
+			    local AttributeUnion = GetAttribute(objexcel , i)				--进阶增加的属性
+			    currTmp.addStageAttr = AttributeUnion
+
+			    table.insert(Wings.upLevel[id].upgradAttr , AttributeUnion)
+
+			    print("stage_id:"..tostring(id))
+			    print("currTmp.addStageAttr:"..type(currTmp.addStageAttr))
+
+			    ------------------------------------------------------------------------------------------
+			    if nil == currTmp.jinjiebaoji then --暴击倍数
+					currTmp.jinjiebaoji = {}
+				end
+				if nil == currTmp.baojilv then 	   --暴击概率
+					currTmp.baojilv = {}
+				end
+				local bj_object1 = objexcel:ReadCellAsString(i, 24)
+				local bj_object2 = objexcel:ReadCellAsString(i, 25)
+				local bj_object3 = objexcel:ReadCellAsString(i, 26)
+
+				GetBjUnion(bj_object1 , 1 , currTmp)
+				GetBjUnion(bj_object2 , 2 , currTmp)
+				GetBjUnion(bj_object3 , 3 , currTmp)
+				------------------------------------------------------------------------------------------
+
+			end
+		end
+	end
+
+
+	local obj2 = objexcel:LoadSheetByIndex(2)
+	if not obj2 then
+		print("LoadSheetByIndex失败!")
+		objexcel:Close()
+		objexcel:Quit_App()
+		return
+	end
+
+	local nCount2 = objexcel:GetCurrentSheetColCount()
+	local mCount2 = objexcel:GetCurrentSheetRowCount()
+	local SpecialTmp = Wings.specialWing
+	for i = 2, mCount2 do
+		local id = tonumber(objexcel:ReadCellAsString(i, 1))
+		if id then
+			SpecialTmp[id] = {id = id}
+			local currTmp = SpecialTmp[id]
+
+
+			local itemId = tonumber(objexcel:ReadCellAsString(i, 2))	--化形卡id
+			if itemId then
+				currTmp.itemId = itemId
+			end
+
+			local name = objexcel:ReadCellAsString(i, 3)		--名字
+			if name then
+				currTmp.name = name
+			end
+
+			local modelId = tonumber(objexcel:ReadCellAsString(i, 4))	--外观id
+			if modelId then
+				currTmp.modelId = modelId
+			end
+
+			local access = objexcel:ReadCellAsString(i, 5)			--获得途径
+			if access then
+				currTmp.access = access
+			end
+
+			if nil == currTmp.attrs then
+				currTmp.attrs = {}
+			end
+
+			local strValue = objexcel:ReadCellAsString(i, 6)--生命
+			local nAttribute = tonumber(strValue) or 0
+			if nAttribute then
+				table.insert(currTmp.attrs , {type = 17 , value = nAttribute})
+			end
+
+			strValue = objexcel:ReadCellAsString(i, 7)--攻击
+			nAttribute = tonumber(strValue) or 0
+			if nAttribute then
+				table.insert(currTmp.attrs , {type = 27 , value = nAttribute})
+			end
+
+			strValue = objexcel:ReadCellAsString(i, 8)--物防
+			nAttribute = tonumber(strValue) or 0
+			if nAttribute then
+				table.insert(currTmp.attrs , {type = 23 , value = nAttribute})
+			end
+
+			strValue = objexcel:ReadCellAsString(i, 9)--道防
+			nAttribute = tonumber(strValue) or 0
+			if nAttribute then
+				table.insert(currTmp.attrs , {type = 33 , value = nAttribute})
+			end
+
+		end
+	end
+
+
+
+	local tmp = {Wings = Wings}
+	--print("here9")
+	local str = format_upLevel_str(tmp)
+	--print("here10")
+	--写文件
+	--writeConfig(itemfile, str)
+	--print("here11")
+	objexcel:WriteFile("data/config/wings/wings.txt",str)
+	print("here12")
+	--print(str)
+
+	objexcel:Close()
+	objexcel:Quit_App()
+	objexcel:delete()
+
+
+end
+----------------------------------------------------------------------------------------
+
+
+

@@ -1,0 +1,402 @@
+--王者归来处理
+--#include "data\functions\systems\timereward\newserver7_conf.txt" once
+function string_split(str, split_char)      
+	 local sub_str_tab = {}
+	   
+	 while (true) do          
+		 local pos = string.find(str, split_char)   
+		 if (not pos) then              
+			  local size_t = table.getn(sub_str_tab)  
+			  table.insert(sub_str_tab,size_t+1,str) 
+			  break   
+		 end  
+		   
+		 local sub_str = string.sub(str, 1, pos - 1)             
+		 local size_t = table.getn(sub_str_tab)  
+		 table.insert(sub_str_tab,size_t+1,sub_str) 
+		 local t = string.len(str) 
+		 str = string.sub(str, pos + 1, t)    
+	 end      
+	 return sub_str_tab
+end  
+  
+
+function WangzheNewDay()
+	print("---王者归来新的一天到来")
+	local sysVar = System.getStaticVar()
+	if sysVar == nil then 
+		return 
+	end
+	if sysVar.wangzheInfo == nil then
+		return
+	end
+	if sysVar.wangzheMaxcount == nil then
+		sysVar.wangzheMaxcount = #sysVar.wangzheInfo
+	end
+	local wangzheConf  = MiscsImplement.getWangzheguilaiconf()
+	if not wangzheConf then return end
+
+	if System.getOpenServerDay() ~= wangzheConf.open_days + 1 then
+		print("--时间未到，返回--")
+		return 
+	end 
+    local file = io.open("./runtime/wangzheinfo.txt","w")
+    if not file then
+    	print("--创建文件失败--")
+    	return
+    end
+	for i=1,sysVar.wangzheMaxcount do
+		if sysVar.wangzheInfo[i] ~= nil and sysVar.wangzheInfo[i].accountName ~= nil then
+			local total_days = 0
+			for k=1,wangzheConf.open_days do
+				if sysVar.wangzheInfo[i][k] ~= nil then
+					total_days = total_days + 1
+				end
+			end
+			local data = string.format("%s  %d  %d\n",sysVar.wangzheInfo[i].accountName,total_days,sysVar.wangzheInfo[i].vip_level)
+			--print(data)
+			file:write(data)
+		end
+	end
+	file:close()  
+end
+function read_ycyzInfo()
+	if 2 ~= System.getServerId() then return end
+
+	print("---读入参加一测的签到验证--")
+	local sysVar = System.getStaticVar()
+	if sysVar == nil then 
+		return 
+	end
+	if sysVar.ycyzInfo == nil then
+		sysVar.ycyzInfo = {}
+	end
+	print("---读入参加一测的签到验证--")
+
+	for line in io.lines("./runtime/wangzheinfo.txt") do
+	  local r = string_split(line,"  ")
+  	  if r[2] ~= nil and tonumber(r[2]) >= 7 then
+  	  	sysVar.ycyzInfo[r[1]] = 1
+  	  end
+	end
+	print("---读入参加一测的签到验证--完成--")
+end
+function create_wangzhe_reward()
+	print("--统计王者归来奖励--")
+	local wangzheConf  = MiscsImplement.getWangzheguilaiconf()
+	if not wangzheConf then return end
+
+	local str1 = {}
+	local str2 = {}
+    for line in io.lines("./runtime/wangzheinfo1.txt") do
+  	  --print(line)
+  	  local r = string_split(line,"  ")
+  	  if r[2] ~= nil and tonumber(r[2]) >= 7 then
+  	  	str1[r[1]] = r[1]
+  	  end
+ 	end
+
+ 	for line in io.lines("./runtime/wangzheinfo2.txt") do
+  	  --print(line)
+  	  local r = string_split(line,"  ")
+  	  if r[2] ~= nil and tonumber(r[2]) >= 7 then
+  	  	if str2[r[1]] ~= nil then
+  	  		local vip_level = tonumber(r[3])
+  	  		if str2[r[1]].vip_level < vip_level then
+  	  			str2[r[1]].vip_level = vip_level
+  	  		end
+  	  	else
+  	  		str2[r[1]] = { accountName = r[1],vip_level = tonumber(r[3])}
+  	  	end
+  	  end
+ 	end
+ 	local result = {}
+ 	for k,v in pairs(str2) do
+ 		if str1[k] ~= nil  then --同时参加一测和二测
+ 			table.insert(result,{accountName = v.accountName,lib_id = wangzheConf.only2_reward[1]})
+ 		else---仅参加二测并且vip等级满足条件
+ 			for i=#wangzheConf.reward_vip,1,-1 do
+ 				if v.vip_level >= wangzheConf.reward_vip[i] then
+ 					table.insert(result,{accountName = v.accountName,lib_id = wangzheConf.reward[i]})
+ 					break
+ 				end
+ 			end
+ 		end
+ 	end
+ 	local file = io.open("./runtime/wangzhe_reward.txt","w")
+ 	for _,v in ipairs(result) do
+ 		local data = string.format("%s  %d\n",v.accountName,v.lib_id)
+		--print(data)
+		file:write(data)
+ 	end
+
+ 	file:close()
+ 	print("--统计王者归来奖励--完成--")
+end
+MiscsImplement.getWangzheguilaiconf = function()	
+	--print("---王者归来--")
+	return NewServer7_conf.activities[32]
+end
+MiscsImplement.iSWangzheguilaiOpen = function()
+	local state = ONLINEREWARD.GetActivityState(NewServer7_conf.activityId)
+	local isOpen = true
+	if state == 0 then
+		isOpen = false
+	end
+	return isOpen
+end
+
+MiscsImplement.getWangzheguilaiInfo = function ( sysarg )
+	--WangzheNewDay()
+	--System.logCounter(actorId, actorAccount, actorLevel, 
+      --  "super", "", "", "jinjie", tostring(mjid), "", tostring(zhufu), tostring(level), lfBI+lfDB)
+    if not MiscsImplement.iSWangzheguilaiOpen() then
+		--LActor.sendTipmsg( sysarg, "活动还没开启！", ttMessage )
+		return 
+	end
+	local accountName = LActor.getAccountName(sysarg)
+	local wangzheConf  = MiscsImplement.getWangzheguilaiconf()
+	if not wangzheConf then return end
+
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then
+		return
+	end
+	if var.wangzheindex == nil then
+		var.wangzheindex = 0
+	end
+	if var.wangzhebuqiancount == nil then
+		var.wangzhebuqiancount = 0
+	end
+	local sysVar = System.getStaticVar()
+	if sysVar == nil then 
+		return 
+	end
+	if sysVar.wangzheInfo == nil then
+		sysVar.wangzheInfo = {}
+	end
+	--sysVar.wangzheInfo = {}
+	local wzinfo = sysVar.wangzheInfo[var.wangzheindex]
+	-- for i=1,sysVar.wangzheMaxcount do
+	-- 	if sysVar.wangzheInfo[i] ~= nil then
+	-- 		if sysVar.wangzheInfo[i].accountName == accountName then
+	-- 			print("======wwwwwwwwww",i)
+	-- 			wzinfo = sysVar.wangzheInfo[i]
+	-- 			break
+	-- 		end
+	-- 	end
+	-- end
+	local ycyzSign = 0
+	if sysVar.ycyzInfo ~= nil and sysVar.ycyzInfo[accountName] ~= nil then
+		ycyzSign = 1
+	end
+	local npack = DataPack.allocPacket(sysarg,139,219)  --申请一个数据包
+	if npack == nil then return end
+	DataPack.writeInt(npack,ycyzSign)
+	--print("---已补签次数",var.wangzhebuqiancount)
+	DataPack.writeInt(npack,var.wangzhebuqiancount)
+	DataPack.writeInt(npack,System.getOpenServerDay())
+	DataPack.writeInt(npack,wangzheConf.open_days)
+	for i=1,wangzheConf.open_days do
+		if wzinfo ~= nil and wzinfo[i] ~= nil then
+			DataPack.writeInt(npack,1)
+		else
+			DataPack.writeInt(npack,0)
+		end
+	end
+	DataPack.flush(npack)
+end
+MiscsImplement.wangzheQiandao = function (sysarg)
+	if not MiscsImplement.iSWangzheguilaiOpen() then
+		return 
+	end
+
+	local accountName = LActor.getAccountName(sysarg)
+	local vip_level = LActor.getVIPLevel(sysarg)
+	local wangzheConf  = MiscsImplement.getWangzheguilaiconf()
+	if not wangzheConf then return end
+	local openDay = System.getOpenServerDay()
+	if openDay > wangzheConf.open_days then 
+		return 
+	end
+
+	local sysVar = System.getStaticVar()
+	if sysVar == nil then 
+		return 
+	end
+	if sysVar.wangzheInfo == nil then
+		sysVar.wangzheInfo = {}
+	end
+	--sysVar.wangzheMaxcount = nil
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then
+		return
+	end
+	if var.wangzheindex == nil then
+		var.wangzheindex = 0
+	end
+	if sysVar.wangzheMaxcount == nil then
+		--print("----",#sysVar.wangzheInfo)
+		--sysVar.wangzheInfo[#sysVar.wangzheInfo] = nil
+		sysVar.wangzheMaxcount = #sysVar.wangzheInfo
+		--print("----",#sysVar.wangzheInfo)
+	end
+	--sysVar.wangzheInfo = {}
+	local wzinfo = sysVar.wangzheInfo[var.wangzheindex]
+
+	-- for i=1,sysVar.wangzheMaxcount do
+	-- 	if sysVar.wangzheInfo[i] ~= nil then
+	-- 		if sysVar.wangzheInfo[i].accountName == accountName then
+	-- 			wzinfo = sysVar.wangzheInfo[i]
+	-- 			print("==========",i)
+	-- 			break
+	-- 		end
+	-- 	end
+	-- end
+	if wzinfo and wzinfo[openDay] then
+		return
+	end
+	if wzinfo then
+		wzinfo.vip_level = vip_level
+		wzinfo[openDay] = openDay
+		--wzinfo[1] = 1
+	else		
+		sysVar.wangzheMaxcount =  sysVar.wangzheMaxcount + 1
+		local index = sysVar.wangzheMaxcount
+		var.wangzheindex = index
+		sysVar.wangzheInfo[index] = {}
+		sysVar.wangzheInfo[index].accountName = accountName
+		sysVar.wangzheInfo[index].vip_level = vip_level
+		sysVar.wangzheInfo[index][openDay] = openDay
+		--sysVar.wangzheInfo[index][1] = 1
+	end
+
+	
+	local money_count = wangzheConf.return_reward[openDay]
+	LActor.changeMoney(sysarg, 0, money_count , 1, true, "wangzheqiandao", "")
+	System.logCounter(LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), "wangzheguilai",tostring(openDay) , "", "", "qiandao", tostring(LActor.getName(sysarg)), "", "", lfDB)
+
+	MiscsImplement.getWangzheguilaiInfo(sysarg)
+end
+MiscsImplement.wangzheBuqian = function(sysarg,msgid,packet)
+
+	--local count = DataPack.readInt(packet)
+	--local count = 1
+	if not MiscsImplement.iSWangzheguilaiOpen() then
+		--Actor.sendTipmsg( sysarg, "活动还没开启！", ttMessage )
+		return 
+	end
+	local wangzheConf  = MiscsImplement.getWangzheguilaiconf()
+	if not wangzheConf then return end
+
+	if not wangzheConf.canbuqian then
+		return
+	end
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then
+		return
+	end
+	if var.wangzheindex == nil then
+		var.wangzheindex = 0
+	end
+	if var.wangzhebuqiancount == nil then
+		var.wangzhebuqiancount = 0
+	end
+	local count = var.wangzhebuqiancount + 1
+
+	if wangzheConf.buqian[count] == nil then
+		print("---没有补签次数了--")
+		return
+	end
+	local accountName = LActor.getAccountName(sysarg)
+	local vip_level = LActor.getVIPLevel(sysarg)
+
+	--判断vip_等级是否满足
+	if vip_level < wangzheConf.buqian[count].vip_level then
+		return
+	end
+	local price = wangzheConf.buqian[count].tianzhu or 0
+	local user_yuanbao = LActor.getMoneyCount(sysarg, mtYuanbao)
+	--判断元宝是否足够
+	if price > user_yuanbao then
+   		--LActor.sendTipmsg( sysarg, "天珠不足，购买失败!", ttMessage )
+      	print("天珠不足，购买失败!")
+      	LActor.SendGeneralTips(sysarg, 1, 3, 0)
+	    return 
+	end
+	local openDays = System.getOpenServerDay() - 1
+	if count > openDays or count <= 0 then
+		return
+	end
+
+	local sysVar = System.getStaticVar()
+	if sysVar == nil then 
+		return 
+	end
+	if sysVar.wangzheInfo == nil then
+		sysVar.wangzheInfo = {}
+	end
+	if sysVar.wangzheMaxcount == nil then
+		sysVar.wangzheMaxcount = #sysVar.wangzheInfo
+	end
+	--sysVar.wangzheInfo = {}
+	local wzinfo = sysVar.wangzheInfo[var.wangzheindex]
+	-- for i=1,sysVar.wangzheMaxcount do
+	-- 	if sysVar.wangzheInfo[i].accountName == accountName then
+	-- 		wzinfo = sysVar.wangzheInfo[i]
+	-- 		break
+	-- 	end
+	-- end
+	
+	local buqian_days = 0
+	if wzinfo then
+		for i=1,openDays do
+			if wzinfo[i] == nil then
+				buqian_days = buqian_days + 1
+			end
+		end
+	else
+		buqian_days = openDays
+	end
+	if buqian_days < 1 then
+		return
+	end
+
+	var.wangzhebuqiancount  = var.wangzhebuqiancount + 1
+	LActor.changeMoney(sysarg, 3, -price, 1, true, "wangzhebuqian", "")
+	local buqiandays = 0
+	if wzinfo then
+		wzinfo.vip_level = vip_level
+		for i=1,openDays do
+			if wzinfo[i] == nil then
+				wzinfo[i] = i
+				buqiandays = i
+				break
+			end
+		end
+	else
+		--local index = #sysVar.wangzheInfo+1
+		sysVar.wangzheMaxcount  =  sysVar.wangzheMaxcount + 1
+		local index = sysVar.wangzheMaxcount
+		var.wangzheindex = index
+		sysVar.wangzheInfo[index] = {}
+		sysVar.wangzheInfo[index].accountName = accountName
+		sysVar.wangzheInfo[index].vip_level = vip_level
+		sysVar.wangzheInfo[index][1] = 1
+		buqiandays = 1
+	end
+	local money_count = wangzheConf.return_reward[buqiandays]
+	LActor.changeMoney(sysarg, 0, money_count , 1, true, "wangzhebuqian", "")
+	System.logCounter(LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), "wangzheguilai",tostring(buqiandays) , "", "", "buqian", tostring(LActor.getName(sysarg)), "", "", lfDB)
+
+	MiscsImplement.getWangzheguilaiInfo(sysarg)
+
+end
+--EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeLevel, MiscsImplement.tejiaUpLevel)
+
+MiscsImplement.registerMsgHandler(219, MiscsImplement.getWangzheguilaiInfo)
+MiscsImplement.registerMsgHandler(220, MiscsImplement.wangzheQiandao)
+MiscsImplement.registerMsgHandler(221, MiscsImplement.wangzheBuqian)
+GmEventFuncList.register( "cwzgl",create_wangzhe_reward,1)
+--GmEventFuncList.register( "ycyzinfo",read_ycyzInfo,1)
+--table.insert(InitFnTable,read_ycyzInfo)

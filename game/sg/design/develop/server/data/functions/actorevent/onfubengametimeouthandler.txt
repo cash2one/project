@@ -1,0 +1,64 @@
+﻿--lua script
+
+EventCallDispatcher.FubenGameOverHandler = {}
+EventCallDispatcher.FubenGameOverBeforeHandler = {}
+
+EventCallDispatcher.OnFubenGameOver = function (sysarg,arg)
+	--print("--------OnFubenGameOver")
+	--结束之前的处理
+	local fbId = arg[1]
+	local handlers = EventCallDispatcher.FubenGameOverHandler
+	if handlers[fbId] ~= nil then
+		handlers[fbId]( sysarg )
+	end
+	--sysarg是副本指针,获取副本所有玩家的指针，并让其退出副本
+	
+end
+
+
+-- 注册副本结束处理
+EventCallDispatcher.registerFubenGameOver = function ( fbId, func )
+	if EventCallDispatcher.FubenGameOverHandler[ fbId ] ~= nil then
+		print( "fuben timeout handle has register:"..fbId )
+		return
+	end
+	EventCallDispatcher.FubenGameOverHandler[ fbId ] = func 		--一个副本Id只能注册一个函数
+end
+
+EventCallDispatcher.OnFubenGameOverBefore = function ( fbptr , arg )
+	-- body
+	local fbId = tonumber( arg[1] ) 
+	if  FuBen[fbId] and FuBen[fbId].dailycopy ~= nil and FuBen[fbId].dailycopy == 1 then
+		if FuBen[fbId].fbid == wujinmicangconfig.fubenId[1] or FuBen[fbId].fbid == ShouhuXuanNvConfig.fubenId[1] then
+            local fbVar = Fuben.getDyanmicVar(fbptr)
+            fbVar.IsTongguan = 1
+		end
+		local nFbActionList = LuaHelp.getFbActorList( fbptr )
+		if nFbActionList == nil then
+			return
+		end
+		for i = 1 , #nFbActionList do
+			Fuben.setStopMonsterRunOne(nFbActionList[i])
+			--local nFubenId = LActor.getFubenId( nFbActionList[i] )
+			local sceneId = LActor.getSceneId( nFbActionList[i] )
+			local scenePtr = LActor.getScenePtr( nFbActionList[i] )
+			fubenjiesuan.GameOver(nFbActionList[i])
+		end
+	else
+		if EventCallDispatcher.FubenGameOverBeforeHandler[fbId] ~= nil then
+			EventCallDispatcher.FubenGameOverBeforeHandler[fbId](fbptr)
+		end
+	end
+end
+
+EventCallDispatcher.registerFubenGameOverBefore = function ( fbId , func )
+	-- body
+	if EventCallDispatcher.FubenGameOverBeforeHandler[tonumber(fbId) ] ~= nil then
+		print(" fuben GameOver before has register:"..fbId)
+		return
+	end
+	EventCallDispatcher.FubenGameOverBeforeHandler[fbId] = func
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeFubenGameOverBefore, EventCallDispatcher.OnFubenGameOverBefore)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeFubenGameOver, EventCallDispatcher.OnFubenGameOver)

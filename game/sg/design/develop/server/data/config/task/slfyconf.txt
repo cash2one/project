@@ -1,0 +1,114 @@
+﻿--仙灵封印相关配置
+--#include "data\language\LangCode.txt" once
+
+SLFYConf = {
+	fubenId = 7,	--副本Id
+	sceneId = 1046,	--仙灵封印所在的场景的ID
+	sceneEnterX = 5,		--进入场景的X坐标
+	sceneEnterY = 22,
+	showEffect = { 10012, 6, 30 }, -- 仙灵即将出现的特效, 特效ID，特效类型和显示时间(秒)
+	ShouLingPos = { 41, 32 }, --仙灵出现的位置
+	returnSceneId = 11,	--返回场景的ID
+	returnSceneName = Lang.SceneName.s11,	--返回场景的名称
+	returnSceneX = 94,	--返回场景的X坐标
+	returnSceneY = 26,	--返回场景的Y坐标
+	showShouLingTime = 30,	-- 召唤仙灵后多少秒出现
+	lingShiId = 2,	--军团灵石的物品ID
+	startDate = {2012,6,3},	--活动开始日期(年月日)
+	noticeTime = {19,28,0},	--活动预告时间(时分秒)
+	startTime = {19,30,0},	--活动开始时间(时分秒)
+	endTime = {20,0,0},	--活动结束时间(时分秒)
+	timeCycle = 24 * 3600,	--检查周期
+	dayOfWeek = { 1, 2, 3, 4, 5, 6 },	--活动时间，一周的第几天,没配表示不管周几
+	callMonsterId = 87, --召唤的怪物[赤元子分身]的ID
+	callMonsterModelId = 17,	--赤元子分身的外观ID，给附身的玩家
+	addBuffInfo1 = { type=22,group=0,value=5,times=1200, interval=1, name=Lang.Actions.b001, timeOverlay=true },	--物理攻击倍率增加
+	addBuffInfo2 = { type=32,group=0,value=5,times=1200, interval=1, name=Lang.Actions.b001, timeOverlay=true },	--法术攻击倍率增加
+	largenBuff = { type=67,group=0,value=0,times=1200,interval=1,name=Lang.Actions.b002, timeOverlay=true }, --玩家变大buff
+	effectBlood = 100,
+	effectInfo = { 1, 1, 2000 },	-- id, 类型, 时间
+	stages = {	--仙灵封印各个阶段的配置
+		{
+			monsterId = 77,	--仙灵对应怪物Id
+			lingShiCount = 3000,	--消耗军团灵石的个数
+			awards = {
+				expFactor = 0.25533,	--奖励的经验系数
+				yinliang = 8000, --奖励的银两
+			},
+		},
+		--仙灵封印的其它等级按上面配置
+		{
+			monsterId = 78,	--仙灵对应怪物Id
+			lingShiCount = 6000,	--消耗军团灵石的个数
+			awards = {
+				expFactor = 0.29364,	--奖励的经验系数
+				yinliang = 9200, --奖励的银两
+			},
+		},
+		{
+			monsterId = 79,	--仙灵对应怪物Id
+			lingShiCount = 9000,	--消耗军团灵石的个数
+			awards = {
+				expFactor = 0.33187,	--奖励的经验系数
+				yinliang = 10400, --奖励的银两
+			},
+		},
+		{
+			monsterId = 80,	--仙灵对应怪物Id
+			lingShiCount = 12000,	--消耗军团灵石的个数
+			awards = {
+				expFactor = 0.37019,	--奖励的经验系数
+				yinliang = 11600, --奖励的银两
+			},
+		},
+		{
+			monsterId = 81,	--仙灵对应怪物Id
+			lingShiCount = 15000,	--消耗军团灵石的个数
+			awards = {
+				expFactor = 0.40851,	--奖励的经验系数
+				yinliang = 12800, --奖励的银两
+			},
+		},
+		{
+			monsterId = 82,	--仙灵对应怪物Id
+			lingShiCount = 18000,	--消耗军团灵石的个数
+			awards = {
+				expFactor = 0.44682,	--奖励的经验系数
+				yinliang = 14000, --奖励的银两
+			},
+		},
+		{
+			monsterId = 83,	--仙灵对应怪物Id
+			lingShiCount = 21000,	--消耗军团灵石的个数
+			awards = {
+				expFactor = 0.48514,	--奖励的经验系数
+				yinliang = 15200, --奖励的银两
+			},
+		},
+		{
+			monsterId = 84,	--仙灵对应怪物Id
+			lingShiCount = 24000,	--消耗军团灵石的个数
+			awards = {
+				expFactor = 0.52337,	--奖励的经验系数
+				yinliang = 16400, --奖励的银两
+			},
+		},
+		{
+			monsterId = 85,	--仙灵对应怪物Id
+			lingShiCount = 27000,	--消耗军团灵石的个数
+			awards = {
+				expFactor = 0.56168,	--奖励的经验系数
+				yinliang = 17600, --奖励的银两
+			},
+		},
+		{
+			monsterId = 86,	--仙灵对应怪物Id
+			lingShiCount = 30000,	--消耗军团灵石的个数
+			awards = {
+				expFactor = 0.60000,	--奖励的经验系数
+				yinliang = 18800, --奖励的银两
+			},
+		},
+		
+	},
+}

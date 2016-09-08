@@ -1,0 +1,141 @@
+﻿
+--#include "data\functions\Tasks\TianYuan\TianYuanSet.txt" once
+--#include "data\functions\tasks\fengcereward\fcactivehandler.txt" once
+
+local GameStartEventList = { }
+
+GameStartEventList.registerEvent = function (proc)
+	for i = 1, #GameStartEventList do
+		if GameStartEventList[i] == proc then
+			return
+		end
+	end
+	table.insert(GameStartEventList, proc)
+end
+
+local GameStopEventList = { }
+
+GameStopEventList.registerEvent = function (proc)
+	for i = 1, #GameStopEventList do
+		if GameStopEventList[i] == proc then
+			return
+		end
+	end
+	table.insert(GameStopEventList, proc)
+end
+function TianYuanInit()
+	local rank = Ranking.getRanking(TianYuanGuildRankName) --通过排行名称获取排行对象
+	if rank == nil then
+		print("can not get TianYuanGuildRankName rank file")
+		return 
+	end
+
+	local rank_item = Ranking.getItemFromIndex(rank, 0)
+	if rank_item == nil then
+		print("can not get tianyuan leader rank item")
+		return
+	end
+
+	local leadersex = tonumber(Ranking.getSub(rank_item,5))
+	local leaderjob = tonumber(Ranking.getSub(rank_item,4))
+	local leadername = Ranking.getSub(rank_item,3)
+
+	local conf = nil
+	for i=1,#TianYuanConfig.MODEL do	
+		if  TianYuanConfig.MODEL[i].job == leaderjob and  TianYuanConfig.MODEL[i].sex == leadersex then
+			conf = TianYuanConfig.MODEL[i]
+			break
+		end
+	end
+
+	if conf == nil then
+		print("can not find TianYuanConfig by sex and job")
+		return 
+	end
+
+	local scene = Fuben.getSceneHandleById(TianYuanConfig.STATUENPCSCENE,0)
+	if scene == 0 then
+		print("get tianyuan scene handle by id error")
+		return 
+	end
+	Fuben.setSceneNpcmodel(scene,TianYuanConfig.STATUENPCX,TianYuanConfig.STATUENPCY, conf.modelid,leadername)
+end
+
+function OnGameStart(eventId)
+	FCActivityHandler.LoginList(1)
+    FCActivityHandler.GuessSysUpdate()
+
+	local startTime = System.toMiniTime(LotterySYConf.startTime)
+	local endTime = System.toMiniTime(LotterySYConf.endTime)
+	local nowTime = System.getCurrMiniTime() 
+
+	if nowTime >= startTime and nowTime <= endTime then
+		CreateTaoBaoShuNpc()
+	end
+	
+	TianYuanInit() -- 暂时只能放这里，因为要用到场景配置，要等场景配置加载完再调用
+	
+	-- 初始化排行榜活动的榜
+	for i=1,6 do
+		local rankName = string.format("%s%d", "DbRankTakeSnapShot", i)
+		local thisRank = Ranking.getRanking(rankName) --通过排行名称获取排行对象
+		if thisRank == nil then  
+			thisRank = Ranking.add(rankName, 10, 0)
+			--print("load rank".. rankName)
+			local b = Ranking.load(thisRank, rankName)
+			if b == false then
+				--print("load ranking error")
+			end
+		end
+	end
+
+	-- 初始化第二轮充值返利活动结束时间
+	local sysVar = System.getStaticVar()
+	if sysVar.round2PayClose == nil then 
+		if System.getOpenServerDay() <= 7 then
+			sysVar.round2PayClose = 1 
+		else
+			sysVar.round2PayClose = 0
+		end
+	end
+
+	if sysVar.round2PayClose == 0 and sysVar.round2PayEndTime == nil then
+		local endTime = nil
+		if System.getOpenServerDay() <= 7 then
+			endTime = System.getOpenServerStartDateTime() + 14 * 86400
+		else
+			endTime = System.getToday() + 7 * 86400
+		end
+		sysVar.round2PayEndTime = endTime
+
+		-- 调试用
+		local year, month, day, hour, minute, sec = 0, 0, 0, 0, 0, 0
+		year, month, day, hour, minute, sec = System.timeDecode(sysVar.round2PayEndTime, year, month, day, hour, minute, sec)
+		local round2PayEndTime = string.format("%d-%d-%d %d:%d:%d", year, month, day, hour, minute, sec)
+		print("init sysVar.round2PayEndTime = ".. sysVar.round2PayEndTime .. " ("..round2PayEndTime ..")")
+	end
+
+	for i = 1, #GameStartEventList do
+		if GameStartEventList[i] then
+ 			GameStartEventList[i]()
+		end
+	end
+end
+
+function OnGameStop()
+	for i = 1, #GameStopEventList do
+		if GameStopEventList[i] then
+ 			GameStopEventList[i]()
+		end
+	end
+end
+
+-- 强制开服时间低于7天的关闭此系统
+local sysVar = System.getStaticVar()
+if sysVar.round2PayClose == nil then 
+	if System.getOpenServerDay() <= 7 then
+		sysVar.round2PayClose = 1 
+	else
+		sysVar.round2PayClose = 0
+	end
+end

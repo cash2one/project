@@ -1,0 +1,128 @@
+﻿--lua script
+--#include "data\config\task\TianYuanConfig.txt" once
+--#include "data\functions\Tasks\TianYuan\TianYuanSet.txt" once
+--#include "data\functions\mergefunc.txt" once
+--#include "data\functions\tasks\tianyuan\tianyuanfunc.txt" once
+
+TianYuanOp = {}
+
+-- 添加帮派排行榜
+TianYuanOp.AddTianYuanGuildRank = function(rankName, rankFile)
+	local ranking = Ranking.getRanking(rankName) --通过排行名称获取排行对象
+	if ranking == nil then  --没有排行对象则创建并加载数据
+		ranking = Ranking.add(rankName,1000,0)	--创建排行榜
+		--加载排行榜，如果加载失败则表示没有此数据，此时进行标题初始化
+		if ranking ~= nil then
+			if Ranking.load(ranking,rankFile) == false then
+				Ranking.addColumn(ranking,Lang.TaskTalk.a00009) --添加一个标题列  --姓名
+				Ranking.addColumn(ranking,Lang.TaskTalk.a00008) --添加一个标题列  --第一名的仙踪宗主领奖
+				Ranking.addColumn(ranking,Lang.TaskTalk.a00008) --添加多一列 --每个军团领奖
+				Ranking.addColumn(ranking,Lang.TaskTalk.ty0028)--添加多一列 领主姓名
+				Ranking.addColumn(ranking,Lang.TaskTalk.ty0029)--添加多一列 领主职业
+				Ranking.addColumn(ranking,Lang.TaskTalk.ty0030)--添加多一列 领主性别
+				Ranking.addColumn(ranking,Lang.TaskTalk.ty0031)
+			end
+		end
+	end
+	Ranking.addRef(ranking) --增加对此排行对象的引用计数
+	return ranking
+end
+
+-- 添加个人奖励排行榜
+TianYuanOp.AddTianYuanRank = function(rankName, rankFile)
+	local ranking = Ranking.getRanking(rankName) --通过排行名称获取排行对象
+	if ranking == nil then  --没有排行对象则创建并加载数据
+	   ranking = Ranking.add(TianYuanRankName,1000,0)	--创建排行榜
+	   --加载排行榜，如果加载失败则表示没有此数据，此时进行标题初始化
+	   if ranking ~= nil then
+			if Ranking.load(ranking, rankFile) == false then
+				Ranking.addColumn(ranking,Lang.TaskTalk.a00009) --添加一个标题列  --姓名
+				Ranking.addColumn(ranking,Lang.TaskTalk.a00008) --添加一个标题列  --领奖
+			end
+		end
+	end
+
+	-- 后来增加bi统计需要用到的列
+	if Ranking.getColumnCount(ranking) == 2 then
+		Ranking.addColumn(ranking,Lang.TaskTalk.tyr002) --添加一个标题列  -- 账号名
+		Ranking.addColumn(ranking,Lang.TaskTalk.tyr003) --添加一个标题列  -- 阵营
+		Ranking.addColumn(ranking,Lang.TaskTalk.tyr004) --添加一个标题列  -- 等级
+		Ranking.addColumn(ranking,Lang.TaskTalk.tyr005) --添加一个标题列  -- 战斗力
+	end
+
+	Ranking.addRef(ranking) --增加对此排行对象的引用计数
+	return ranking
+end
+
+-- 删除排行榜
+TianYuanOp.RemoveTianYuanRank = function(rankName, rankFile)
+	local ranking = Ranking.getRanking(rankName) --通过排行名称获取排行对象
+	if ranking ~= nil then
+		Ranking.save(ranking, rankFile)       --保存排行榜进文件
+		if Ranking.getRef(ranking) == 1 then
+			Ranking.removeRanking(rankName) 	--如果引用计数减少至0，则对象自动被销毁
+		else
+			Ranking.release(ranking)			--减少引用计数
+		end
+	end
+end
+
+function TianYuan_Init(sysarg)
+	if TianYuanConfig == nil then return end
+
+	TianYuanOp.AddTianYuanRank(TianYuanRankName, TianYuanFile)
+	local guildRanking = TianYuanOp.AddTianYuanGuildRank(TianYuanGuildRankName, TianYuanGuildFile)
+
+	if guildRanking ~= nil then
+		local rankItem = Ranking.getItemFromIndex(guildRanking, 0)
+		if rankItem ~= nil then
+			local guildid = Ranking.getId(rankItem) --获取第一名的帮派ID
+
+			LGuild.setTianYuanGuildId(guildid)
+			local leaderid = Ranking.getSub(rankItem,6)
+			local leadersex = Ranking.getSub(rankItem,5)
+
+			if leaderid == "-" then
+				--print("leaderid"..leaderid)
+				Ranking.clearRanking(guildRanking)         --清除排行榜对象
+				Ranking.save(guildRanking,TianYuanGuildRankFile)
+				return
+			end
+			local leaderjob = Ranking.getSub(rankItem,4)
+			local scene = Fuben.getSceneHandleById(TianYuanConfig.STATUENPCSCENE,0)
+			local leadername = Ranking.getSub(rankItem,3)
+			LGuild.setTianYuanStaicLeaderId(tonumber(leaderid))
+		end
+	end
+end
+
+function TianYuan_Fina(sysarg)
+  --每场排行榜
+	local RankNameList = Ranking.getRanking(TianYuanRankName) --通过排行名称获取排行对象
+	if RankNameList ~= nil then
+    --ranking = nil
+		Ranking.save(RankNameList,TianYuanFile)       --保存排行榜进文件
+		if Ranking.getRef(RankNameList) == 1 then
+			Ranking.removeRanking(TianYuanRankName) 	--如果引用计数减少至0，则对象自动被销毁
+		else
+			Ranking.release(RankNameList)			--减少引用计数
+		end
+	end
+	RankNameList = nil
+
+    local GuildRankNameList = Ranking.getRanking(TianYuanGuildRankName) --通过排行名称获取排行对象
+	if GuildRankNameList ~= nil then
+    	--ranking = nil
+		Ranking.save(GuildRankNameList,TianYuanGuildFile)       --保存排行榜进文件
+		if Ranking.getRef(GuildRankNameList) == 1 then
+			Ranking.removeRanking(TianYuanGuildRankName) 	--如果引用计数减少至0，则对象自动被销毁
+		else
+			Ranking.release(GuildRankNameList)			--减少引用计数
+		end
+	end
+	GuildRankNameList = nil
+
+end
+
+table.insert(InitFnTable,TianYuan_Init)
+table.insert(FinaFnTable,TianYuan_Fina)

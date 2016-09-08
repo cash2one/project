@@ -1,0 +1,41 @@
+{
+	id = 34,
+	name = Lang.Skill.s34Name,
+	desc = Lang.Skill.s34Desc,
+	vocation = 4,
+	skillType = 2,
+	skillSpellType = 0,
+	skillClass = 1,
+	commonCd = 0,
+	canbeDefault = false,
+	specialBuffCond = 0,
+	notAutoUse = false,
+ 	actions=
+{
+
+	{act=2,effect=1601,type=2},
+		
+},
+	skillSubLevel = { 
+--#include "Skill_34_1.txt"
+--#include "Skill_34_2.txt"
+--#include "Skill_34_3.txt"
+--#include "Skill_34_4.txt"
+--#include "Skill_34_5.txt"
+--#include "Skill_34_6.txt"
+--#include "Skill_34_7.txt"
+--#include "Skill_34_8.txt"
+--#include "Skill_34_9.txt"
+--#include "Skill_34_10.txt"
+--#include "Skill_34_11.txt"
+--#include "Skill_34_12.txt"
+--#include "Skill_34_13.txt"
+--#include "Skill_34_14.txt"
+--#include "Skill_34_15.txt"
+--#include "Skill_34_16.txt"
+--#include "Skill_34_17.txt"
+--#include "Skill_34_18.txt"
+--#include "Skill_34_19.txt"
+--#include "Skill_34_20.txt"  
+	},
+},

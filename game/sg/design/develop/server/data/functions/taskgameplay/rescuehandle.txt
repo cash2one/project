@@ -1,0 +1,147 @@
+--[[
+1.跟A NPC对话接取任务
+2.去监牢跟B NPC对话 B告诉需要去击杀守卫获得钥匙
+3.击杀守卫获得钥匙
+4.钥匙达到需求后会B NPC对话 B被释放出来
+5.玩家陪同B NPC一块回到A或者其他NPC处进行对话 完成任务
+--]]
+
+local RescueFuncs = {}
+local RescueGlobalFuncs = {} -- 公共函数
+
+local is_quest_target = 4 -- 目标属于任务需求
+
+EventCallDispatcher.HandlerQuestOp = function (actorobj, args)
+    if args[1] == nil then
+        return
+    end
+    local func = RescueFuncs[args[1]]
+    if func ~= nil and type(func) == "function" then
+        func(actorobj, args[2])
+    end
+end 
+
+-- ========================== 公共函数↓ ==========================
+function RescueGlobalFuncs.initRescueVal(actorobj)
+    if not actorobj or type(actorobj) ~= "userdata" then
+        return false
+    end
+    local nVal = LActor.getStaticVar(actorobj)
+    if not nVal then
+        return false
+    end
+    if nVal.rescue_quest_val == nil then
+        nVal.rescue_quest_val = {}
+    end
+    return true
+end
+-- ========================== 公共函数↑ ==========================
+
+-- 接救援任务时会触发调用接取默认第一个任务目标的任务
+function RescueFuncs.accept_callback_function (actorobj, qid)
+    debug_print("测试成功进入玩法接受任务处理函数...")
+    if not qid or qid <= 0 or not actorobj or not RescueConfig[qid] then
+        return
+    end
+    local targets = RescueConfig[qid].targets
+    if LActor.hasQuest(actorobj, qid) ~= true then -- 没有接该任务
+        return
+    end
+
+    -- 初始化变量
+    if RescueGlobalFuncs.initRescueVal(actorobj) == true then
+        local nVal = LActor.getStaticVar(actorobj)
+
+        if nVal.rescue_quest_val[qid] == nil then
+            nVal.rescue_quest_val[qid] = {} -- 初始化对应任务
+        end
+        local qVal = nVal.rescue_quest_val[qid] -- 任务的数据
+
+        local can_qid, idx = 0, 0 -- 要添加的任务
+        -- 以目标的顺序找到第一个是以任务为完成条件的
+        for k, v in ipairs(targets) do
+            if v.type == is_quest_target then
+                can_qid = v.id
+                idx = tonumber(k)
+                break
+            end
+        end
+        if can_qid > 0 and LActor.hasQuest(actorobj, can_qid) == false then
+            if LActor.addQuest(actorobj, can_qid, true) then -- 成功添加子系列任务
+                qVal.nowQuest = can_qid -- 记录当前的任务
+                qVal.nowQuestIdx = idx -- 记录位置
+            end
+        end
+    end
+end
+
+function RescueFuncs.commit_callback_function (actorobj, qid)
+    -- 需要判断任务是否属于救援主任务还是子系列任务
+    if not actorobj or not qid or qid <= 0 then
+        return
+    end
+    -- 初始化变量
+    if RescueGlobalFuncs.initRescueVal(actorobj) == true then
+        local nQuestIds = {}
+        local nVal = LActor.getStaticVar(actorobj)
+        -- 遍历配置表里面满足该任务的
+        for k, v in pairs(RescueConfig) do
+            if tonumber(k) == qid then -- 是救援任务 则处理完就返回
+                -- 处理完任务后的处理
+                return
+            else -- 不是救援任务就检索
+                for n, m in ipairs(v.targets) do
+                    if qid == m.id then -- 出现相同的qid
+                        -- 判断任务是否已接
+                        if LActor.hasQuest(actorobj, tonumber(k)) == true then -- 存在
+                            -- 判断当前做着的子系列任务是否相同]
+                            local qVal = nVal.rescue_quest_val[tonumber(k)]
+                            if qVal ~= nil and qVal.nowQuest ~= nil and qVal.nowQuest == qid then -- 存在该任务 并且有正在做的 则说明完成了
+                                LActor.addQuestValue(actorobj, tonumber(k), qid, 1) -- 增加目标完成进度
+                                table.insert(nQuestIds, tonumber(k)) -- 插入表中 后续处理
+                            end
+                        end
+                    end
+                end
+            end
+        end
+        for k, v in ipairs(nQuestIds) do -- 这堆任务需要更改当前目标任务了
+            local qVal = nVal.rescue_quest_val[tonumber(v)] -- 无需再判断nil了
+            local nowQuest, nowQuestIdx = qVal.nowQuest, qVal.nowQuestIdx -- 先记录
+            qVal.nowQuest, qVal.nowQuestIdx = nil, nil -- 再清空 如果没再找到需要处理的任务那就是空
+            for n, m in ipairs(RescueConfig[tonumber(v)].targets) do
+                if tonumber(n) > nowQuestIdx and m.type == is_quest_target then -- 最近的一个
+                    qVal.nowQuest = m.id
+                    qVal.nowQuestIdx = tonumber(n)
+                end
+            end
+        end
+    end
+end
+
+-- 放弃任务
+function RescueFuncs.giveup_callback_function (actorobj, qid)
+    -- 放弃任务需要清除掉所有已接的子系列任务
+    if not actorobj or not qid or qid <= 0 then
+        return
+    end
+    -- 初始化变量
+    if RescueGlobalFuncs.initRescueVal(actorobj) == true then
+        local nVal = LActor.getStaticVar(actorobj)
+        local qVal = nVal.rescue_quest_val[qid]
+        if qVal then
+            if qVal.nowQuest then
+                LActor.GiveUpQuest(actorobj, qVal.nowQuest)
+                qVal.nowQuest = nil
+                qVal.nowQuestIdx = nil
+            end
+            qVal = nil
+        end
+    end
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeQuest, EventCallDispatcher.HandlerQuestOp) -- 注册网络消息事件
+-- basequesttype.txt 定义类型
+ActorQuestCallDispatcher.registerPlayType(BaseTypes.BaseQuestAction.qaAccept, BaseTypes.BaseQuestPlayType.qptRescue, RescueFuncs.accept_callback_function) -- 注册接受任务的侦听
+ActorQuestCallDispatcher.registerPlayType(BaseTypes.BaseQuestAction.qaCommit, BaseTypes.BaseQuestPlayType.qptRescue, RescueFuncs.commit_callback_function) -- 注册完成任务的侦听
+ActorQuestCallDispatcher.registerPlayType(BaseTypes.BaseQuestAction.qaGiveUp, BaseTypes.BaseQuestPlayType.qptRescue, RescueFuncs.giveup_callback_function) -- 注册放弃任务的侦听

@@ -1,0 +1,177 @@
+﻿--lua script
+--处理灵根相关的操作
+
+--#include "data\config\roots\rootexp.txt" once
+--#include "data\config\roots\roots.txt" once
+--#include "data\config\quest\rootquest.txt" once --任务相关的配置
+--#include "data\functions\systems\root\rootsystem.txt" once
+
+RootOpFuncList = {}
+
+EventCallDispatcher.HandlerRootOp = function (sysarg, args)
+	if args[1] == nil then return end
+	if args[1] == 1 then
+		RootOpFuncList.HandleRootLevelUp(sysarg, args[2], args[3])
+		return
+	end
+end
+
+-- 灵根升级
+RootOpFuncList.HandleRootLevelUp = function (sysarg, level, root)
+	if level == nil or root == nil then return end
+	local quests = nil
+	for i=1,#RootQuest do
+		local conf = RootQuest[i]
+		if conf.root == root and conf.level == level then
+			quests = conf.quests
+			break
+		end
+	end
+
+	if quests == nil then return end
+
+	-- 完成任务
+	for i=1,#quests do
+		local quest = quests[i]
+		LActor.setQuestValue(sysarg, quest.qid, quest.tid, quest.count)
+	end
+end
+
+--[[
+-- 查克拉领取通知
+RootOpFuncList.NotifyRootExp = function (sysarg)
+	local var = LActor.getStaticVar(sysarg)
+	if var.getRootExpFlag == nil then
+		var.getRootExpFlag = 0
+	end
+
+	local curridx = 0	-- 当前时间段
+	local nextidx = 1	-- 下次时间段
+	local hour,minute,second = 0,0,0
+	hour, minute, second = System.getTime(hour, minute, second)
+	for i, v in pairs(RootExp.rewardTimeSlot) do
+		if hour >= v[1] and hour < v[2] then
+			curridx = i
+			nextidx = i
+		end
+		if hour >= v[2] then
+			nextidx = i+1
+		end
+	end
+
+	local npack = DataPack.allocPacket(sysarg, 29, 4)
+	if npack ~= nil then
+		DataPack.writeChar(npack, var.getRootExpFlag)
+		DataPack.writeChar(npack, curridx)
+		DataPack.writeChar(npack, nextidx)
+		DataPack.flush(npack)
+	end
+end
+
+-- 领询领取状态
+RootOpFuncList[4] = function (sysarg, dp)
+	RootOpFuncList.NotifyRootExp(sysarg)
+end
+
+-- 领取真气
+RootOpFuncList[5] = function (sysarg, dp)
+	local idx   = DataPack.readChar(dp)
+	local itemtype = DataPack.readChar(dp)
+	if idx ~=1 and idx ~= 2 and idx ~= 3 then return end
+	if itemtype ~= 1 and itemtype ~= 2 and itemtype ~= 3 then return end
+
+	local var = LActor.getStaticVar(sysarg)
+	if var.getRootExpFlag == nil then
+		var.getRootExpFlag = 0
+	end
+
+	local hour, minute, second = 0,0,0
+	hour, minute, second = System.getTime(hour, minute, second)
+
+	local timeSlot = RootExp.rewardTimeSlot[idx]
+	if hour < timeSlot[1] or hour*60+minute-1 >= timeSlot[2]*60 then
+		LActor.sendTipmsg(sysarg, Lang.RootLang.t04, ttMessage) 
+		return
+	end
+
+	if System.bitOPMask(var.getRootExpFlag, idx-1) then
+		LActor.sendTipmsg(sysarg, Lang.RootLang.t03, ttMessage) 
+		return		
+	end
+
+	local item = RootExp.getType[itemtype]
+	if item.itemId > 0 then
+		if LActor.getItemCount(sysarg, item.itemId) <= 0 then
+			LActor.sendTipmsg(sysarg, Lang.RootLang.t02, ttMessage) 
+			return
+		end
+
+		-- 移除物品
+		LActor.removeItem(sysarg, item.itemId, 1)
+	end
+
+	-- 物品增加倍率
+	local itemAddRate = item.expRate - 1	
+
+	-- VIP用户增加倍率
+	local vipAddRate = RootOpFuncList.RootExpRate(sysarg)
+	
+	local itemAddExp = RootExp.expPerTimes * itemAddRate
+	local vipAddExp  = RootExp.expPerTimes * vipAddRate
+	local totalExp   = RootExp.expPerTimes + itemAddExp + vipAddExp
+
+	-- 更新真气值
+	LActor.addRootExp(sysarg, totalExp, 0)
+	var.getRootExpFlag = System.bitOpSetMask(var.getRootExpFlag, idx-1, true)
+
+	-- 领取回复
+	local npack = DataPack.allocPacket(sysarg, 29, 5)
+	if npack ~= nil then
+		DataPack.writeChar(npack, itemtype)
+		DataPack.writeInt(npack, totalExp)
+		DataPack.writeInt(npack, itemAddExp)
+		DataPack.writeInt(npack, vipAddExp)
+		DataPack.flush(npack)
+	end
+
+	RootOpFuncList.NotifyRootExp(sysarg)
+end
+
+-- 真气获取倍率
+RootOpFuncList.RootExpRate = function (sysarg)
+	-- VIP玩家真气倍率
+	local vipRootExpAdd = 0
+	local vipLevel = LActor.getVIPLevel(sysarg)
+	if vipLevel > 0 then
+		vipRootExpAdd = VIPConfig.levels[vipLevel].practice.rootAdd
+	end
+
+	-- 蓝钻玩家真气倍率
+	local st = LActor.getStaticVar(sysarg)
+	if st.is_blue_vip then
+		local blueRootExpAdd = BlueVip.practice.rootAdd
+		if blueRootExpAdd > vipRootExpAdd then
+			vipRootExpAdd = blueRootExpAdd
+		end
+	end
+
+	return vipRootExpAdd
+end
+
+-- 新的一天
+EventCallDispatcher.OnNewDayRoot = function(sysarg, arg)
+    --print("OnNewDayRoot")
+    local var = LActor.getStaticVar(sysarg)
+    var.getRootExpFlag = 0
+    RootOpFuncList.NotifyRootExp(sysarg)
+end
+
+EventCallDispatcher.OnLoginRoot = function(sysarg, arg)
+    --print("OnLoginRoot")
+    RootOpFuncList.NotifyRootExp(sysarg)
+end
+--]]
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeRoot, EventCallDispatcher.HandlerRootOp)
+--EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, EventCallDispatcher.OnNewDayRoot)
+--EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, EventCallDispatcher.OnLoginRoot)

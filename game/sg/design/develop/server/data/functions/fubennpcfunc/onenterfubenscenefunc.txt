@@ -1,0 +1,83 @@
+﻿--lua script
+--用于在副本里传送到不同场景的个性化处理，目前只用于随从的传送 
+--[[键入'ss'并按分号即可按模板生成脚本]]--
+OnEnterFubenSceneTable = {
+[8] = {	
+       OnEnterFubenSceneFunc = function(sysarg,fHandle,sceneid,pos_x,pos_y)
+				  if LActor.getMyMonsterCount(sysarg,0) > 0 then
+			      --print("131 is live")
+			      local Asceneid = LActor.getSceneId(sysarg)
+			      local Hp = 0
+			      local monster = 0
+			      if LActor.getMyMonsterCount(sysarg,131) > 0 then
+			        monster = 1
+				      local hscene = Fuben.getSceneHandleById(Asceneid,fHandle)
+				      local monPtr = Fuben.getMonsterPtrById(hscene,131)
+						  Hp = LActor.getIntProperty(monPtr,PROP_HP)
+						  Fuben.clearMonster(hscene,131)
+					  end
+					  local bmonster = 0
+					  local bHp = 0
+					  if LActor.getMyMonsterCount(sysarg,132) > 0 then
+					     bmonster = 1
+				      local hscene = Fuben.getSceneHandleById(Asceneid,fHandle)
+				      local monPtr = Fuben.getMonsterPtrById(hscene,132)
+			        bHp = LActor.getIntProperty(monPtr,PROP_HP)
+			        Fuben.clearMonster(hscene,132)
+			      end
+				    LActor.enterFuBen(sysarg,fHandle,sceneid,pos_x,pos_y)
+				    if monster == 1 then
+			        --print("131 create")
+				      local mptr = LActor.createMonster(sysarg,131,pos_x,pos_y,0)
+				      local myMonHp = LActor.getIntProperty(mptr,PROP_HP)
+				      LActor.changeHp(mptr,-(myMonHp-Hp))
+				      LActor.followActor(mptr,sysarg)
+				      --保存下属动态变量Handle -白GG 
+					    local svar = LActor.getDyanmicVar(sysarg)
+              svar.slave1 = LActor.getHandle(mptr)
+              local monObj = LActor.getEntity(svar.slave1)
+			      end
+			      if bmonster == 1 then
+			        --print("132 create")
+			        local bmptr = LActor.createMonster(sysarg,132,pos_x,pos_y,0)
+			 	      local myMonHp = LActor.getIntProperty(bmptr,PROP_HP)
+				      LActor.changeHp(mptr,-(myMonHp-bHp))
+			        LActor.followActor(bmptr,sysarg)
+			        --保存下属动态变量Handle --白MM 
+					    local svar = LActor.getDyanmicVar(sysarg)
+              svar.slave2 = LActor.getHandle(bmptr)
+              local monObj = LActor.getEntity(svar.slave2)
+			      end
+			    else
+			      LActor.enterFuBen(sysarg,fHandle,sceneid,pos_x,pos_y)
+			    end
+			    local fbPtr = LActor.getFubenPrt(sysarg)
+			    local nextsceneid = LActor.getSceneId(sysarg)
+			    local Hnextscene = Fuben.getSceneHandleById(nextsceneid,fHandle)
+			    if Fuben.getFbValue(fbPtr,2) ~= 1 then
+			       local Fhandle = LActor.getFubenHandle(sysarg)
+			       Fuben.sendMsgToFb(Fhandle,Lang.ScriptTips.f00050,ttScreenCenter)
+			       local MonFeng = Fuben.createMonster(Hnextscene,133,59,28,0)
+			       
+			       local hp = math.floor(LActor.getIntProperty(monptr,PROP_MAXHP)*0.1)
+						 local outAttack = math.floor(LActor.getIntProperty(monptr,PROP_CREATURE_OUT_ATTACK)*0.1)
+				     local inAttack = math.floor(LActor.getIntProperty(monptr,PROP_CREATURE_INNER_ATTACK)*0.1)
+				     local outDefence = math.floor(LActor.getIntProperty(monptr,PROP_CREATURE_OUT_DEFENCE)*0.1) 
+				     local intDefence = math.floor(LActor.getIntProperty(monptr,PROP_CREATURE_INNER_DEFENCE)*0.1)
+			       
+			       LActor.addBuff(MonFeng,17,1,hp,-1,180,Lang.ScriptTips.b00008)
+			       LActor.addBuff(MonFeng,21,1,outAttack,-1,180,Lang.ScriptTips.b00001)
+			       LActor.addBuff(MonFeng,23,1,outDefence,-1,180,Lang.ScriptTips.b00006)
+			       LActor.addBuff(MonFeng,31,1,inAttack,-1,180,Lang.ScriptTips.b00002)
+			       LActor.addBuff(MonFeng,33,1,intDefence,-1,180,Lang.ScriptTips.b00007)
+			       Fuben.setFbValue(fbPtr,2,1)
+			       local NpcPtr = Fuben.getNpcPtrByName(Hnextscene,Lang.EntityName.n00369)
+				   --[[
+			       if NpcPtr ~= nil then 
+			          LActor.regScriptCallback(NpcPtr,NpcPtr,180000,60000,1,"giveBossAddBuffInThreeMin",Hnextscene,2)
+			       end 
+				   --]]				   
+			    end
+		    end
+      },
+ }

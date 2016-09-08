@@ -1,0 +1,1051 @@
+
+--#include "data\config\taskgameplayconfig\xuanshuangrenwuconfig.txt" once
+
+xuanshangrenwu = {}
+
+
+local star_rates = {
+    1, 4 / 3, 5 / 3, 2, 2.5,
+}
+
+--新的一天重置数据
+function xuanshangrenwu.Newday( actorobj , nFlag)
+	-- body
+	if actorobj == nil then
+		return
+	end
+--	debug_print("------xuanshangrenwu.Newday-------新的一天-------------"..tostring(nFlag[1]))
+	--LActor.sendTipmsg(actorobj ,"新的一天到了哦哦哦",ttWarmTip)
+	local nVar = LActor.getStaticVar( actorobj )
+	if nVar.XuanShangRenWu_Finsh_count ~= nil and nVar.XuanShangRenWu_Finsh_count ~= 0 then
+		nVar.XuanShangRenWu_Finsh_count = 0
+	end
+end
+
+function xuanshangrenwu.IsOpenSystem(sysarg)
+	local nLevel = LActor.getLevel( sysarg )
+	if nLevel >= LevelOpenPlaySys.xs_rw_lvl then
+		return true
+	end
+	return false
+end
+
+--开服加载数据
+function xuanshangrenwu.Openserver( )
+	AutoReshresh_XuanShangQuest( )
+	local nSysVar = System.getStaticVar()
+	if nSysVar.XuanShangRenWu_Time_handle == nil then
+		local nRet = System.registerTimeCall( thisNPC , "AutoReshresh_XuanShangQuest" , XSRW_Config.reshresh_star_time , XSRW_Config.refresh_interval_time , false)
+		if nRet == nil then
+			debug_print("------注册定时刷新失败----------")
+		else
+			nSysVar.XuanShangRenWu_Time_handle = nRet
+			--debug_print("---------------注册11111111111成功-----------------")
+		end
+	end
+end
+function xuanshangrenwu.release( )
+	local nSysVar = System.getStaticVar()
+	if nSysVar.XuanShangRenWu_Time_handle ~= nil then
+		local nRet = System.unregisterTimeCall(nSysVar.XuanShangRenWu_Time_handle)
+		if nRet == true then
+			nSysVar.XuanShangRenWu_Time_handle = nil
+		end
+	end
+end
+function xuanshangrenwu.RateQuest( quest_library , actorobj , refresh_cout)
+	-- body
+	if not quest_library or not actorobj then
+		debug_print("-------参数错误----------")
+		return
+	end
+	if type(quest_library) == 'table' then
+		local nTempTable = {}
+		local nRatePonint = 0
+		local nAcceptList = LActor.getAcceptTypeQuestId( actorobj , qtReward )
+		if nAcceptList == nil then
+			nAcceptList = {}
+		end
+		local nVar = LActor.getStaticVar( actorobj )
+		for k , v in pairs ( quest_library ) do
+			--debug_print("=-=============="..tostring(v.qid))
+			-- if nAcceptList == nil then
+			-- 	debug_print("=========nAcceptList==========")
+			-- 	table.insert(nTempTable , v)
+			-- 	nRatePonint = nRatePonint + v.rate
+			-- else
+				local nFlag = false
+				for i = 1,#nAcceptList do
+					if v.qid == nAcceptList[i] then
+						nFlag = true
+						break
+					end
+				end
+
+				if refresh_cout ~= nil then
+					if nVar.XuanShangRenWu_Reshresh == nil then
+						nVar.XuanShangRenWu_Reshresh = {}
+					end
+					for i=1 , #nVar.XuanShangRenWu_Reshresh do
+						if nVar.XuanShangRenWu_Reshresh[i] ~= nil and nVar.XuanShangRenWu_Reshresh[i].flag == 1 and nVar.XuanShangRenWu_Reshresh[i].qid == v.qid then
+							nFlag = true
+							break
+						end
+					end
+				end
+				if nFlag == false then
+					table.insert(nTempTable , v)
+					nRatePonint = nRatePonint + v.rate
+				end
+			--end
+		end
+		local nAcceptLen = 0
+		if nAcceptList ~= nil then
+			nAcceptLen = #nAcceptList
+		end
+		
+		--debug_print("=======nAcceptLen=======",nAcceptLen)
+		local nRefresh_count = 0
+		if refresh_cout == nil then
+			nVar.XuanShangRenWu_Reshresh = nil
+			nRefresh_count = XSRW_Config.reshresh_cout - nAcceptLen
+		else
+			nRefresh_count = refresh_cout
+		end
+		--debug_print("----------nRefresh_count----------",nRefresh_count,nAcceptLen,XSRW_Config.reshresh_cout)
+		while( nRefresh_count > 0)
+		do
+			local nRateNum = System.getRandomNumber(nRatePonint)
+			local nMinRate = 0
+			local nHighRate = 0
+
+			for k , v in pairs ( nTempTable ) do
+				nMinRate = nHighRate
+				nHighRate = nHighRate + v.rate		
+				if nMinRate < nRateNum  and nRateNum < nHighRate then
+					if nVar.XuanShangRenWu_Reshresh == nil then
+						nVar.XuanShangRenWu_Reshresh = {}
+					end
+					local nSize = #nVar.XuanShangRenWu_Reshresh
+					nVar.XuanShangRenWu_Reshresh[nSize + 1] = {}
+					nVar.XuanShangRenWu_Reshresh[nSize + 1].qid = v.qid
+					nVar.XuanShangRenWu_Reshresh[nSize + 1].flag = 1
+					local nStarPoint = System.getRandomNumber(100)
+					--debug_print("--------suiji---star----"..tostring(nStarPoint))
+					local nMaxPiont = 0
+					local nMinPiont = 0
+					for n , m in pairs ( XSRW_Config.Star_list ) do
+						nMinPiont = nMaxPiont
+						nMaxPiont = m.rate + nMaxPiont
+						if nMinPiont <= nStarPoint and nMaxPiont >= nStarPoint then
+							--debug_print("------------fff--------------"..tostring(m.star))
+							nVar.XuanShangRenWu_Reshresh[nSize + 1].star = m.star
+							break
+						end
+					end
+					nRatePonint = nRatePonint - v.rate
+					table.remove(nTempTable , k)
+					nRefresh_count = nRefresh_count - 1
+					if refresh_cout ~= nil and nRefresh_count == 0 then
+						return nSize + 1
+					end
+					break
+				end
+			end
+
+			if #nTempTable <= 0 then
+				print("xuanshangrenwu error RateQuest, not enough questConfig")
+				break
+			end
+		end
+		--debug_print("--------------end ----")
+	else
+		debug_print("该等级没有悬赏任务哦哦")
+	end
+
+end
+
+--自动刷新 全局定时器
+function AutoReshresh_XuanShangQuest( )
+	local nSysVar = System.getStaticVar()
+	if nSysVar.XuanShangRenWu_refresh_time == nil then
+		nSysVar.XuanShangRenWu_refresh_time = 0
+	end
+	nSysVar.XuanShangRenWu_refresh_time = System.getCurrMiniTime()
+
+	local nActorList = LuaHelp.getAllActorList()
+	if nActorList == nil then
+		--debug_print("------没人在线--------")
+		return
+	end
+	for i = 1 , #nActorList do
+		if  xuanshangrenwu.IsOpenSystem(nActorList[i]) == true then
+			local nactor = nActorList[i]
+			--LActor.sendTipmsg(nactor , "悬赏任务已经刷新了" , ttWarmTip)
+			xuanshangrenwu.Refresh_quest( nactor )
+			xuanshangrenwu.sendcanAcceptquestlist( nactor )
+			-- local nVar = LActor.getStaticVar( nactor )
+			-- if nVar ~= nil then
+			-- 	if nVar.XuanShangRenWu_Reshresh == nil then
+			-- 		nVar.XuanShangRenWu_Reshresh = {}
+			-- 	end
+			-- 	if nVar.XuanShangRenWu_Finsh == nil then
+			-- 		nVar.XuanShangRenWu_Finsh = {}
+			-- 	end
+			-- 	local Level = LActor.getLevel( nactor )
+			-- 	local nRateTaskTable 
+			-- 	for k , v in pairs ( XSRW_Config.Quest_Library) do
+			-- 		if v.MinLevel < Level and v.HigthLevel > Level then
+			-- 			nRateTaskTable = v.list
+			-- 			break
+			-- 		end
+			-- 	end
+			-- 	xuanshangrenwu.RateQuest( nRateTaskTable , nactor)
+			-- end
+		else
+			--debug_print("=======悬赏任务系统还没开放========")
+		end
+
+	end
+end
+
+function xuanshangrenwu.Refresh_quest( actorobj , refresh_cout )
+	-- body
+	if not actorobj then
+		return
+	end
+	if refresh_cout == nil then
+		--debug_print("=======自动刷新=====")
+	end
+	local nVar = LActor.getStaticVar( actorobj )
+	if nVar ~= nil then
+		if nVar.XuanShangRenWu_Reshresh == nil then
+			nVar.XuanShangRenWu_Reshresh = {}
+		end
+		if nVar.XuanShangRenWu_Finsh == nil then
+			nVar.XuanShangRenWu_Finsh = {}
+		end
+		local Level = LActor.getLevel( actorobj )
+
+		local nRateTaskTable = {}
+		for _ , v in pairs ( XSRW_Config.Quest_Library) do
+			if v.MinLevel <= Level and v.HigthLevel >= Level then
+				for _, v in pairs(v.list) do
+					table.insert(nRateTaskTable, v)
+				end
+				break
+			end
+		end
+
+		if #nRateTaskTable == 0 then return end
+
+		xuanshangrenwu.getExtraQuestId(actorobj, nRateTaskTable)
+
+		local nRet = xuanshangrenwu.RateQuest( nRateTaskTable , actorobj , refresh_cout)
+		return nRet
+	end
+end
+
+--获取额外的任务id
+function xuanshangrenwu.getExtraQuestId(actorobj, questTable)
+	local level = LActor.getLevel(actorobj)
+
+	for k, questsConfig in pairs(XSRW_Config.extraQuestId.level) do
+		if level >= k then
+			for _, questConfig in pairs(questsConfig) do
+				table.insert(questTable, questConfig)
+			end
+		end
+	end
+
+	for _, v in pairs(XSRW_Config.extraQuestId.specialQuest) do
+		if v.MinLevel <= level and v.HigthLevel >= level then
+			for questTarget, questConfig in pairs(v.list) do
+				if OnGetQuestTargetCount(actorobj, questTarget, questConfig.target) ~= 0 then		
+					table.insert(questTable, questConfig)
+				end
+			end
+			break
+		end
+	end
+end
+
+--手动刷新
+function xuanshangrenwu.HandReshresh( actorobj , pack , Iscanmoney)
+	--手动刷新
+	if not Iscanmoney or Iscanmoney ~= 1 then
+		if not actorobj then
+			return
+		end
+		local nLevel = LActor.getLevel( actorobj )
+		if nLevel > XSRW_Config.max_level then
+			LActor.sendTipmsg( actorobj , Lang.XSRW_Language.xsrw023 , ttWarmTip)
+			return
+		end
+		local nActorList = LActor.getAcceptTypeQuestId( actorobj , qtReward)
+		if nActorList ~= nil and #nActorList >= XSRW_Config.reshresh_cout then
+			LActor.sendTipmsg( actorobj , Lang.XSRW_Language.xsrw001 , ttWarmTip)
+			xuanshangrenwu.sendcanAcceptquestlist( actorobj )
+			return
+		end
+
+		local nCurGold = LActor.getMoneyCount( actorobj , mtYuanbao)
+		local nCostGold = XSRW_Config.hand_refresh_cost
+		if nCurGold < nCostGold then
+			--LActor.sendTipmsg(actorobj , Lang.XSRW_Language.xsrw002 , ttWarmTip)
+			LActor.SendGeneralTips(actorobj, 1, mtYuanbao, nCostGold-nCurGold)
+			return
+		end
+		local nRet = LActor.changeMoney(actorobj,mtYuanbao, -nCostGold, 1, true, "equip_strong", "strong")
+		if nRet ~= true then
+			LActor.sendTipmsg(actorobj , Lang.XSRW_Language.xsrw002 , ttWarmTip)
+			return
+		end
+	end
+
+	xuanshangrenwu.Refresh_quest( actorobj )
+	xuanshangrenwu.sendcanAcceptquestlist( actorobj )
+end
+
+--快速完成任务
+function xuanshangrenwu.quickFinshQuest( actorobj , dp )
+	-- body
+	if not actorobj and not dp then
+		debug_print("-----------快速完成--参数错误-------------")
+		return
+	end
+
+	local vipLevel = LActor.getVIPLevel( actorobj )
+	local nVipCout = 0
+	if vipLevel ~= 0 then
+		nVipCout = VIPConfig.payQuestLimit[vipLevel]
+	end
+
+	local nVar = LActor.getStaticVar( actorobj )
+	debug_print("nVar.XuanShangRenWu_Finsh_count",nVar.XuanShangRenWu_Finsh_count,XSRW_Config.MaxFinshcout + nVipCout)
+	if nVar.XuanShangRenWu_Finsh_count >= XSRW_Config.MaxFinshcout + nVipCout then
+		LActor.sendTipmsg( actorobj , Lang.XSRW_Language.xsrw005 , ttWarmTip)
+		return
+	end
+
+	local qid = DataPack.readInt( dp )
+	--qid = 22002
+	if nVar.XuanShangRenWu_Accept_List == nil then
+		LActor.sendTipmsg(actorobj, Lang.XSRW_Language.xsrw003 , ttWarmTip)
+		return
+	end
+	local nIndex = 0
+	for i = 1 , #nVar.XuanShangRenWu_Accept_List do
+		if nVar.XuanShangRenWu_Accept_List[i] ~= nil and nVar.XuanShangRenWu_Accept_List[i].qid == qid then
+			nIndex = i
+			break
+		end
+	end
+	if nIndex == 0 then
+		LActor.sendTipmsg(actorobj, Lang.XSRW_Language.xsrw003 , ttWarmTip)
+		return
+	end
+	local nStar = nVar.XuanShangRenWu_Accept_List[nIndex].star
+	local nCostGold = 0
+	for k , v in pairs (XSRW_Config.cost_list) do
+		if v.star == nStar then
+			nCostGold = v.glod
+			break
+		end
+	end
+	local nCurGold = LActor.getMoneyCount( actorobj , mtYuanbao)
+	if nCurGold < nCostGold then
+		-- LActor.sendTipmsg(actorobj , Lang.XSRW_Language.xsrw002 , ttWarmTip)
+		LActor.SendGeneralTips(actorobj, 1, mtYuanbao, nCostGold-nCurGold)
+		return
+	end
+	local nRet = LActor.finishQuest( actorobj , qid , -1 , true)
+	if nRet ~= true then
+		debug_print("不能快速完成任务")
+		LActor.sendTipmsg(actorobj , Lang.XSRW_Language.xsrw004, ttWarmTip)
+		return
+	end
+	nRet = LActor.changeMoney(actorobj,mtYuanbao, -nCostGold, 1, true, "equip_strong", "strong")
+	if nRet ~= true then
+		debug_print("天珠不足")
+		LActor.sendTipmsg(actorobj , Lang.XSRW_Language.xsrw002 , ttWarmTip)
+		return
+	end
+	--nVar.XuanShangRenWu_Accept_List[nIndex].flag = false
+
+	local nMinIndex = nIndex
+	local nStar = nVar.XuanShangRenWu_Accept_List[nIndex].star
+	nVar.XuanShangRenWu_Accept_List[nIndex] = nil
+	for i = nIndex + 1 , #nVar.XuanShangRenWu_Accept_List do
+		if nVar.XuanShangRenWu_Accept_List[i] ~= nil then
+			nVar.XuanShangRenWu_Accept_List[nMinIndex] = {}
+			nVar.XuanShangRenWu_Accept_List[nMinIndex].qid = nVar.XuanShangRenWu_Accept_List[i].qid
+			nVar.XuanShangRenWu_Accept_List[nMinIndex].star = nVar.XuanShangRenWu_Accept_List[i].star
+			nVar.XuanShangRenWu_Accept_List[i] = nil
+			nMinIndex = i
+		end
+	end
+	if nVar.XuanShangRenWu_Finsh_count == nil then
+		nVar.XuanShangRenWu_Finsh_count = 0
+	end
+	nVar.XuanShangRenWu_Finsh_count = nVar.XuanShangRenWu_Finsh_count + 1
+	--debug_print("--------快速完成任务-------------",nVar.XuanShangRenWu_Accept_List[nIndex].qid , nVar.XuanShangRenWu_Accept_List[nIndex].flag,nIndex)
+	-- if nVar.XuanShangRenWu_Accept_List[nIndex] ~= nil then
+	-- 	nVar.XuanShangRenWu_Accept_List[nIndex] = nil
+	-- end
+	xuanshangrenwu.getaward( actorobj , qid , nStar )
+
+	-- 活跃度
+	ActivationTrigger(actorobj, 29)
+end
+
+function xuanshangrenwu.findQuest( var_list , qid )
+	-- body
+	if not var_list or not qid then
+		return
+	end
+	for i = 1 , #var_list do
+		if var_list[i] ~= nil then
+			if var_list[i].qid == qid then
+				return i
+			end
+		end
+	end
+	return 0
+end
+
+-- 放弃任务
+function xuanshangrenwu.giveupQuest( actorobj , qid )
+	-- body
+	if not actorobj and not qid then
+		debug_print("-----放弃任务-参数错误---")
+		return
+	end
+	local nQuestType = System.getOneQuestType( qid)
+	if nQuestType ~= 3 then
+		debug_print("------不是日常任务--放弃任务---------")
+		return
+	end
+	local nVar = LActor.getStaticVar( actorobj )
+	if LActor.hasQuest( actorobj , qid ) == true then
+		debug_print("--------没有该任务还没有被移除-----------")
+		return
+	end
+	if nVar.XuanShangRenWu_Accept_List == nil then
+		debug_print("-------没有接受3该任务-------")
+		return
+	end
+
+	local nVar = LActor.getStaticVar( actorobj )
+	local nRet = xuanshangrenwu.findQuest( nVar.XuanShangRenWu_Accept_List , qid )
+	if nRet == 0 then
+		debug_print("------------没有接受该4任务-------------")
+		return
+	end
+	local nStrar = nVar.XuanShangRenWu_Accept_List[nRet].star
+
+	local nMinIndex = nRet
+	nVar.XuanShangRenWu_Accept_List[nRet] = nil
+	for i = nRet + 1 , #nVar.XuanShangRenWu_Accept_List do
+		if nVar.XuanShangRenWu_Accept_List[i] ~= nil then
+			nVar.XuanShangRenWu_Accept_List[nMinIndex] = {}
+			nVar.XuanShangRenWu_Accept_List[nMinIndex].qid = nVar.XuanShangRenWu_Accept_List[i].qid
+			nVar.XuanShangRenWu_Accept_List[nMinIndex].star = nVar.XuanShangRenWu_Accept_List[i].star
+			nVar.XuanShangRenWu_Accept_List[i] = nil
+			nMinIndex = i
+		end
+	end
+
+	local nIndex = xuanshangrenwu.Refresh_quest(actorobj , 1)
+	if not nIndex then
+		print("error xuanshangrenwu giveupQuest, nIndex")
+		return
+	end
+
+	if nVar.XuanShangRenWu_Reshresh == nil then
+		debug_print("-----------刷新列表此时------------")
+		nVar.XuanShangRenWu_Reshresh = {}
+	end
+	nVar.XuanShangRenWu_Reshresh[nIndex].star = nStrar
+	xuanshangrenwu.sendcanAcceptquestlist( actorobj )
+	--xuanshangrenwu.SendAcceptQuest( actorobj )
+	debug_print("放弃成功")
+end
+
+function xuanshangrenwu.IsCanQest( actorobj , qid  )
+	-- body
+	local nVar = LActor.getStaticVar( actorobj )
+	if nVar.XuanShangRenWu_Finsh_count == nil then
+		nVar.XuanShangRenWu_Finsh_count = 0
+	end
+
+	local vipLevel = LActor.getVIPLevel( actorobj )
+	local nVipCout = 0
+	if vipLevel ~= 0 then
+		nVipCout = VIPConfig.payQuestLimit[vipLevel]
+	end
+
+	-- if nVar.XuanShangRenWu_Finsh_count >= XSRW_Config.MaxFinshcout + nVipCout then
+	-- 	LActor.sendTipmsg( actorobj , Lang.XSRW_Language.xsrw005 , ttWarmTip)
+	-- 	return false
+	-- end
+	local nStar_ = 0
+	if nVar.XuanShangRenWu_Reshresh == nil then
+		LActor.sendTipmsg( actorobj , Lang.XSRW_Language.xsrw006 , ttWarmTip)
+		return false
+	end
+
+	for i= 1 , #nVar.XuanShangRenWu_Reshresh do
+		if nVar.XuanShangRenWu_Reshresh[i] ~= nil then
+			if nVar.XuanShangRenWu_Reshresh[i].qid == qid then
+				return true
+			end
+		end
+	end
+	LActor.sendTipmsg( actorobj , Lang.XSRW_Language.xsrw022 , ttWarmTip)
+	return false
+end
+
+
+function xuanshangrenwu.AcceptQuest( actorobj , dp )
+	LActor.OnQuestEvent(qtXuanshang, 0, 1, true, actorobj)
+
+	if not actorobj or not dp then
+		print("----------接受任务--参数错误-------------")
+		return
+	end
+	local qid = DataPack.readInt(dp)
+	local nQuestType = System.getOneQuestType( qid )
+	if nQuestType ~= 3 then
+		LActor.sendTipmsg( actorobj , Lang.XSRW_Language.xsrw007,ttWarmTip)
+		return
+	end
+
+	if xuanshangrenwu.IsCanQest( actorobj , qid  ) == false then
+		print("error XuanShangRenWu AcceptQuest")
+		return
+	end
+
+	local nVar = LActor.getStaticVar( actorobj )
+	if nVar.XuanShangRenWu_Accept_List == nil then
+		nVar.XuanShangRenWu_Accept_List = {}
+	end
+	local nIndex = 0
+	if nVar.XuanShangRenWu_Reshresh == nil then
+		nVar.XuanShangRenWu_Reshresh = {}
+	end 
+	for i= 1 , #nVar.XuanShangRenWu_Reshresh do
+		if nVar.XuanShangRenWu_Reshresh[i] ~= nil then
+			if nVar.XuanShangRenWu_Reshresh[i].qid == qid and nVar.XuanShangRenWu_Reshresh[i].flag ~= 0 then
+				nIndex = i
+			end
+		end
+	end
+	if nIndex == 0 then
+		LActor.sendTipmsg( actorobj , Lang.XSRW_Language.xsrw008 , ttWarmTip)
+		return
+	end
+
+	if LActor.addQuest( actorobj , qid ) ~= true then
+		LActor.sendTipmsg( actorobj , Lang.XSRW_Language.xsrw009 , ttWarmTip)
+		return
+	end
+
+	local nFlag = false
+	for i = 1 , #nVar.XuanShangRenWu_Accept_List do
+		if nVar.XuanShangRenWu_Accept_List[i] == nil then
+			nVar.XuanShangRenWu_Accept_List[i] = {}
+			nVar.XuanShangRenWu_Accept_List[i].qid = qid
+			nVar.XuanShangRenWu_Accept_List[i].star = nVar.XuanShangRenWu_Reshresh[nIndex].star
+			nFlag = true
+			break
+		end
+	end
+	if nFlag ~= true then
+		local nSize = #nVar.XuanShangRenWu_Accept_List + 1
+		nVar.XuanShangRenWu_Accept_List[nSize] = {}
+		nVar.XuanShangRenWu_Accept_List[nSize].qid = qid
+		nVar.XuanShangRenWu_Accept_List[nSize].star = nVar.XuanShangRenWu_Reshresh[nIndex].star
+	end
+	nVar.XuanShangRenWu_Reshresh[nIndex].flag = 0
+end
+
+function xuanshangrenwu.getShangChengItemId(itemId)
+	local store_items = GameStore[5].items
+	for k, v in pairs(store_items) do
+		if v.item == itemId then
+			return v.id
+		end
+	end
+	return -1
+end
+function xuanshangrenwu.onekeyupstar( actorobj , nIndex , nVar)
+	if not actorobj or not nIndex or not nVar then
+		return
+	end
+	local moneyCount = LActor.getMoneyCount(actorobj, XSRW_Config.onekeyUpstarMoneyType)
+	if moneyCount < XSRW_Config.onekeyUpstarMoneyCount then
+		LActor.SendGeneralTips(actorobj, 1, XSRW_Config.onekeyUpstarMoneyType, XSRW_Config.onekeyUpstarMoneyCount-moneyCount)
+		xuanshangrenwu.sendupstarresult( actorobj , 0 , nVar , nIndex , 1)
+		return
+	end
+
+	LActor.changeMoney(actorobj , XSRW_Config.onekeyUpstarMoneyType , -XSRW_Config.onekeyUpstarMoneyCount, 1 , true , Lang.XSRW_Language.xsrw017 , Lang.XSRW_Language.xsrw018)
+
+	LActor.sendTipmsg( actorobj , Lang.XSRW_Language.xsrw015 ,ttWarmTip)
+	nVar[nIndex].star = 5
+	--发送结果
+	xuanshangrenwu.sendupstarresult( actorobj , 1 , nVar , nIndex , 1)
+end
+
+function xuanshangrenwu.StarRefresh( actorobj, nVar , nQid , nType , nFlag , onekey)
+	local nIndex = 0
+	for i = 1 ,#nVar do
+		if  nVar[i] ~= nil and nVar[i].qid == nQid then
+			nIndex = i
+		end
+	end
+	if nIndex == 0 then
+		LActor.sendTipmsg(actorobj, Lang.XSRW_Language.xsrw003, ttWarmTip)
+		return
+	end
+	if nVar[nIndex].star == 5 then
+		LActor.sendTipmsg(actorobj , Lang.XSRW_Language.xsrw010 , ttWarmTip)
+		return
+	end
+
+	if onekey == 1 then
+		xuanshangrenwu.onekeyupstar(actorobj, nIndex, nVar)
+		return
+	end
+
+	local moneyCount = LActor.getMoneyCount(actorobj, XSRW_Config.upStarMoneyType)
+	if moneyCount < XSRW_Config.upStarMoneyCount then
+		LActor.SendGeneralTips(actorobj, 1, XSRW_Config.upStarMoneyType, XSRW_Config.upStarMoneyCount-moneyCount)
+		xuanshangrenwu.sendupstarresult( actorobj , 0 , nVar , nIndex , onekey)
+		return
+	end
+	LActor.changeMoney(actorobj , XSRW_Config.upStarMoneyType , -XSRW_Config.upStarMoneyCount , 1 , true , Lang.XSRW_Language.xsrw017 , Lang.XSRW_Language.xsrw018)
+
+	local nCurStar = nVar[nIndex].star
+	local nMaxPiont = 0
+	local nStarPoint = System.getRandomNumber(100)
+	local nCurPoint = nCurStar
+	if nCurStar < XSRW_Config.refresh_minStar then
+		nCurPoint = XSRW_Config.refresh_minStar
+	end
+	--每次刷星 必须超过自己的星级 或不变 ， 最低XSRW_Config.refresh_minStar星
+	for n , m in pairs ( XSRW_Config.refresh_star_list ) do
+		nMaxPiont = m.rate + nMaxPiont
+		if m.star >= nCurPoint then
+			if  nMaxPiont > nStarPoint then
+				nVar[nIndex].star = m.star
+				if m.star == 5 then
+					LActor.sendTipmsg( actorobj , Lang.XSRW_Language.xsrw015 , ttWarmTip)
+				elseif nCurStar == m.star then
+					LActor.sendTipmsg( actorobj , Lang.XSRW_Language.xsrw024 , ttWarmTip)
+				else
+					LActor.sendTipmsg( actorobj , string.format(Lang.XSRW_Language.xsrw016 , m.star), ttWarmTip)
+				end
+				break
+			end
+		end
+	end
+
+	xuanshangrenwu.sendupstarresult( actorobj , 1 , nVar , nIndex , onekey)
+end
+
+function xuanshangrenwu.sendupstarresult( actorobj , nRet , nVar , nIndex , onekey)
+	if not actorobj  or not nRet or not nVar or not nIndex or not onekey then return end
+
+	local npack = DataPack.allocPacket(actorobj , 6 , 99)
+	DataPack.writeByte( npack , nRet)
+	DataPack.writeByte( npack , 2)
+	DataPack.writeInt( npack , nVar[nIndex].qid )
+	DataPack.writeByte( npack , nVar[nIndex].star )
+	DataPack.writeByte( npack , onekey)
+	DataPack.writeByte( npack , 0)
+	DataPack.flush( npack )
+end
+
+--刷星
+function xuanshangrenwu.ReshreshStar( actorobj , dp )
+	if not actorobj or not dp then
+		return
+	end
+	local nQid = DataPack.readInt(dp)
+	local onekey = DataPack.readByte(dp)
+	local nVar = LActor.getStaticVar( actorobj )
+	if LActor.hasQuest( actorobj , nQid ) ~= true then
+		debug_print("---------XuanShangRenWu do not hasQuest qid ------  "..nQid.."   "..LActor.getActorId(actorobj))
+		xuanshangrenwu.StarRefresh(actorobj, nVar.XuanShangRenWu_Reshresh , nQid , nType , 0 , onekey)	
+	else
+		-- for i = 1 , #nVar.XuanShangRenWu_Accept_List do
+		-- 	debug_print("================id============="..tostring(nVar.XuanShangRenWu_Accept_List[i].qid))
+		-- end
+		xuanshangrenwu.StarRefresh( actorobj, nVar.XuanShangRenWu_Accept_List , nQid, nType , 1, onekey)
+	end
+end
+
+
+function xuanshangrenwu.completeQuest( actorobj , dp )
+	if not actorobj or not dp then
+		debug_print("--------完成任务 参数错误----------")
+		return
+	end
+
+	local vipLevel = LActor.getVIPLevel( actorobj )
+	local nVipCout = 0
+	if vipLevel ~= 0 then
+		nVipCout = VIPConfig.payQuestLimit[vipLevel]
+	end
+
+	local nVar = LActor.getStaticVar( actorobj )
+	debug_print("nVar.XuanShangRenWu_Finsh_count",nVar.XuanShangRenWu_Finsh_count,XSRW_Config.MaxFinshcout + nVipCout)
+	if nVar.XuanShangRenWu_Finsh_count >= XSRW_Config.MaxFinshcout + nVipCout then
+		LActor.sendTipmsg( actorobj , Lang.XSRW_Language.xsrw005 , ttWarmTip)
+		return
+	end
+	local qid = DataPack.readInt( dp )
+	--qid = 22002
+	local nRet = LActor.canFinishQuest(actorobj , qid)
+	if nRet ~= true then
+		LActor.sendTipmsg( actorobj , Lang.XSRW_Language.xsrw019 , ttWarmTip)
+		return
+	end
+	if not actorobj or not qid then
+		debug_print("------xuanshangrenwu.completeQuest--任务完成----")
+		return
+	end
+
+	
+	if nVar.XuanShangRenWu_Accept_List == nil then
+		--nVar.XuanShangRenWu_Accept_List = {}
+		LActor.sendTipmsg( actorobj , Lang.XSRW_Language.xsrw020, ttWarmTip)
+		return
+	end
+	local  nIndex = 0
+	for i = 1, #nVar.XuanShangRenWu_Accept_List do
+		if nVar.XuanShangRenWu_Accept_List[i] ~= nil then
+			if qid == nVar.XuanShangRenWu_Accept_List[i].qid then
+				--nVar.XuanShangRenWu_Finsh_count = nVar.XuanShangRenWu_Finsh_count + 1
+				nIndex = i
+				break
+			end
+		end
+	end
+
+	if nIndex == 0 then
+		if LActor.getActorId(actorobj) == 32771 and qid == 22062 then
+			--特殊处理下这个玩家的 这个任务
+			--不知道为什么多了几个XuanShangRenWu_Accept_List 数据（一共9个，另外还有一个没有记录在这里 但是已接了的 任务22062）
+			if  nVar.XuanShangRenWu_Finsh_count == nil then
+				nVar.XuanShangRenWu_Finsh_count = 0
+			end
+
+			if LActor.finishQuest( actorobj , qid) == false then
+				LActor.sendTipmsg( actorobj , Lang.XSRW_Language.xsrw020, ttWarmTip)
+				return
+			end
+
+			nVar.XuanShangRenWu_Finsh_count = nVar.XuanShangRenWu_Finsh_count + 1
+			xuanshangrenwu.getaward(actorobj , qid , 3)
+
+			-- 活跃度
+			ActivationTrigger(actorobj, 29)
+			return
+		end
+		LActor.sendTipmsg( actorobj , Lang.XSRW_Language.xsrw020 , ttWarmTip)
+		return
+	end
+	if LActor.finishQuest( actorobj , qid) == false then
+		LActor.sendTipmsg( actorobj , Lang.XSRW_Language.xsrw020, ttWarmTip)
+		return
+	end
+
+	if  nVar.XuanShangRenWu_Finsh_count == nil then
+		nVar.XuanShangRenWu_Finsh_count = 0
+	end
+	nVar.XuanShangRenWu_Finsh_count = nVar.XuanShangRenWu_Finsh_count + 1
+	local nStar = nVar.XuanShangRenWu_Accept_List[nIndex].star
+	nVar.XuanShangRenWu_Accept_List[nIndex] = nil
+	local nMinIndex = nIndex
+	for i = nIndex + 1 , #nVar.XuanShangRenWu_Accept_List do
+		if nVar.XuanShangRenWu_Accept_List[i] ~= nil then
+			nVar.XuanShangRenWu_Accept_List[nMinIndex] = {}
+			nVar.XuanShangRenWu_Accept_List[nMinIndex].qid = nVar.XuanShangRenWu_Accept_List[i].qid
+			nVar.XuanShangRenWu_Accept_List[nMinIndex].star = nVar.XuanShangRenWu_Accept_List[i].star
+			nVar.XuanShangRenWu_Accept_List[i] = nil
+			nMinIndex = i
+		end
+	end
+	xuanshangrenwu.getaward( actorobj , qid , nStar)
+
+	-- 活跃度
+	ActivationTrigger(actorobj, 29)
+end
+
+function xuanshangrenwu.getaward( actorobj , qid , star)
+	-- body
+	-- local nQuest_list = XSRW_Config.award_list
+	-- for k , v in pairs ( nQuest_list ) do
+	-- 	if qid == v.qid then
+	-- 		xuanshangrenwu.addaward(actorobj , v.list)
+	-- 		break
+	-- 	end
+	-- end
+	local awardlist = XSRW_Config.award_list[qid]
+	if awardlist ~= nil then
+		xuanshangrenwu.addaward( actorobj , awardlist.list ,star )
+	end
+
+end
+
+function xuanshangrenwu.addaward( actorobj ,award , star)
+	-- body
+	--print_table(award)
+	if star == nil then
+		star = 1
+	end
+	local double = (star_rates[star] or 1) * getAcitivityIsDouble(daXuanshangQuest)
+	local nJob = LActor.getActorjob( actorobj )
+	for k , v in pairs ( award ) do
+		local cout = math.floor( v.cout * double / 100 ) * 100
+		if v.type == 2 and ( v.job == 0 or v.job == nJob ) then --经验
+			LActor.giveAward(actorobj, 4 , cout )
+		elseif v.type == 128 and ( v.job == 0 or v.job == nJob ) then --贝比
+			LActor.changeMoney(actorobj, v.id, cout, 1, true, "pack money", "xuanshangrenwu award")
+		elseif ( v.job == 0 or v.job == nJob ) then
+			LActor.giveAward(actorobj, v.type , cout)
+		end
+	end
+end
+
+
+function xuanshangrenwu.sendcanAcceptquestlist( actorobj , dp)
+	-- body
+
+	if not actorobj then
+		debug_print("-------发送者为空--------")
+		return
+	end
+	local nVar = LActor.getStaticVar( actorobj )
+	local nSysVar = System.getStaticVar()
+	if nSysVar.XuanShangRenWu_refresh_time == nil then
+		--debug_print("---------没有刷新时间--------")
+		return 0
+	end
+	if nVar.XuanShangRenWu_Reshresh == nil then
+		--debug_print("---------刷新列表为空--------")
+		--LActor.sendTipmsg(actorobj, "没有可接的悬赏任务", ttWarmTip)
+		--return
+		nVar.XuanShangRenWu_Reshresh = {}
+	end
+	local nSize = 0
+	for i = 1 , #nVar.XuanShangRenWu_Reshresh do
+		--debug_print("--------------",nVar.XuanShangRenWu_Reshresh[i].flag)
+		if nVar.XuanShangRenWu_Reshresh[i] ~= nil and nVar.XuanShangRenWu_Reshresh[i].flag == 1 then
+			nSize = nSize + 1
+		end
+	end
+	local lasttime = nSysVar.XuanShangRenWu_refresh_time + XSRW_Config.refresh_interval_time - System.getCurrMiniTime()
+	--debug_print("=======剩余更新时间========",lasttime)
+	if lasttime < 0 then
+		lasttime = 0
+		debug_print(" 悬赏任务刷新没有更新时间")
+	end
+	--debug_print("=======剩余更新时间========",lasttime)
+	local npack = DataPack.allocPacket(actorobj , 6 ,70)
+	DataPack.writeUInt(npack , lasttime)
+	DataPack.writeInt( npack , nSize)
+--	debug_print("-----",nSysVar.XuanShangRenWu_refresh_time)
+--	debug_print("---size--",nSize)
+	for i = 1 , #nVar.XuanShangRenWu_Reshresh do
+		if nVar.XuanShangRenWu_Reshresh[i] ~= nil and nVar.XuanShangRenWu_Reshresh[i].flag == 1 then
+			DataPack.writeInt( npack , nVar.XuanShangRenWu_Reshresh[i].qid)
+			DataPack.writeInt( npack , nVar.XuanShangRenWu_Reshresh[i].star)
+			--debug_print("------------qid-------"..tostring(nVar.XuanShangRenWu_Reshresh[i].qid))
+		end
+	end
+	if  nVar.XuanShangRenWu_Finsh_count == nil then
+		nVar.XuanShangRenWu_Finsh_count = 0
+	end
+	--debug_print("==========XuanShangRenWu_Finsh_count========",nVar.XuanShangRenWu_Finsh_count)
+	DataPack.writeInt( npack , nVar.XuanShangRenWu_Finsh_count)
+	DataPack.writeInt( npack , XSRW_Config.MaxFinshcout)
+	DataPack.flush(npack)
+end
+
+function xuanshangrenwu.SendAcceptQuest( actorobj )
+	if not actorobj then return end
+
+	local nVar = LActor.getStaticVar( actorobj )
+	local nSysVar = System.getStaticVar()
+	if nVar.XuanShangRenWu_Accept_List == nil then
+		nVar.XuanShangRenWu_Accept_List = {}
+	end
+
+	local hasAcceptQuest = {}
+	local check
+	for i = 1 , #nVar.XuanShangRenWu_Accept_List do
+		if nVar.XuanShangRenWu_Accept_List[i] ~= nil then
+			if LActor.hasQuest(actorobj, nVar.XuanShangRenWu_Accept_List[i].qid) then
+				table.insert(hasAcceptQuest, {qid = nVar.XuanShangRenWu_Accept_List[i].qid, star = nVar.XuanShangRenWu_Accept_List[i].star})
+			else
+				print("error xuanshangrenwu data, not hasquest    "..LActor.getActorId(actorobj).." "..nVar.XuanShangRenWu_Accept_List[i].qid)
+				check = 1
+			end
+		end
+	end
+	if check then
+		print("error xuanshangrenwu data, not hasquest")
+		nVar.XuanShangRenWu_Accept_List = nil
+		nVar.XuanShangRenWu_Accept_List = {}
+		for i, tmp in ipairs(hasAcceptQuest) do
+			nVar.XuanShangRenWu_Accept_List[i] = {}
+			nVar.XuanShangRenWu_Accept_List[i].qid = tmp.qid
+			nVar.XuanShangRenWu_Accept_List[i].star = tmp.star
+		end
+	end
+
+	local npack = DataPack.allocPacket(actorobj , 6 ,76)
+	DataPack.writeInt( npack , #hasAcceptQuest)
+
+	for _, tmp in ipairs(hasAcceptQuest) do
+		DataPack.writeInt(npack , tmp.qid)
+		DataPack.writeInt(npack , tmp.star)
+	end
+	DataPack.flush(npack)
+end
+
+function xuanshangrenwu.registermsg( cmd , proc )
+	if not cmd or not proc then
+		debug_print("------参数错-----")
+		return
+	end
+	if xuanshangrenwu[cmd] == nil then
+		xuanshangrenwu[cmd] = proc
+	else
+		--debug_print("---------悬赏任务命令已经-注册--------")
+	end
+end
+
+function xuanshangrenwu.netdealwith( actorobj , arg )
+	-- body
+	if not actorobj then
+		debug_print("----参数为空------------")
+		return
+	end
+	if xuanshangrenwu.IsOpenSystem(actorobj) == false then
+		LActor.sendTipmsg(sysarg , Lang.XSRW_Language.xsrw021 , ttWarmTip)
+		return
+	end
+
+	local cmd = tonumber(arg[1])
+	--debug_print("----------cmd-----------"..tostring(cmd))
+	if xuanshangrenwu[cmd] ~= nil then
+		xuanshangrenwu[cmd](actorobj ,arg[2])
+	else
+		--debug_print("----------调用出bug-----------"..tostring(cmd))
+	end
+
+end
+
+function RateNote( actorobj , arg )
+	-- body
+	--xuanshangrenwu.AutoReshreshQuest()
+	local nVar = LActor.getStaticVar( actorobj )
+	local nSysVar = System.getStaticVar()
+	debug_print("-----time------"..tostring(nSysVar.XuanShangRenWu_refresh_time))
+	if nVar.XuanShangRenWu_Reshresh == nil then
+		nVar.XuanShangRenWu_Reshresh = {}
+	end
+	if nVar.XuanShangRenWu_Accept_List == nil then
+		nVar.XuanShangRenWu_Accept_List = {}
+	end
+	--debug_print("-----------------",#nVar.XuanShangRenWu_Reshresh)
+	for i = 1 , #nVar.XuanShangRenWu_Reshresh do
+		if nVar.XuanShangRenWu_Reshresh[i] ~= nil and nVar.XuanShangRenWu_Reshresh[i].flag == 1 then
+			debug_print("=====qie==="..tostring(nVar.XuanShangRenWu_Reshresh[i].qid))
+			debug_print("=====star==="..tostring(nVar.XuanShangRenWu_Reshresh[i].star))
+			debug_print("============"..tostring(nVar.XuanShangRenWu_Reshresh[i].flag))
+		end
+	end
+	--debug_print("----------------已经接收的任务-------------------")
+	for i = 1 , #nVar.XuanShangRenWu_Accept_List do
+		if nVar.XuanShangRenWu_Accept_List[i] ~= nil then
+			debug_print("=====qie==="..tostring(nVar.XuanShangRenWu_Accept_List[i].qid))
+			debug_print("=====star==="..tostring(nVar.XuanShangRenWu_Accept_List[i].star))
+		end
+	end
+
+end
+
+function Test( actorobj , arg )
+	-- body
+	local cmd = tonumber(arg[1])
+	debug_print("------Test---cmd--"..tostring(cmd))
+	if cmd == 1 then
+		xuanshangrenwu.HandReshresh(actorobj)
+	elseif cmd == 2 then
+		AutoReshresh_XuanShangQuest()
+	elseif cmd == 3 then
+		RateNote( actorobj )
+	elseif cmd == 4 then
+	end
+
+end
+
+function giveupxuanshangQuest( actorobj , qid )
+	-- body
+	taozhai.OverTime( actorobj , qid)
+	xuanshangrenwu.giveupQuest( actorobj , qid)
+end
+function xuanshangrenwu.ActorUpLeve( actorobj )
+	-- body
+	local nLevel = LActor.getLevel( actorobj )
+	local nVal = LActor.getStaticVar( actorobj )
+
+	if nLevel >= LevelOpenPlaySys.xs_rw_lvl and nVal.XuanShangRenWu_First_refresh == nil then
+		nVal.XuanShangRenWu_First_refresh = 1
+		xuanshangrenwu.HandReshresh( actorobj , nil , 1)
+	end
+end
+
+--返回剩余可完成次数（0没有次数）
+function xuanshangrenwu.leftCount(actorobj)
+	if xuanshangrenwu.IsOpenSystem(actorobj) == false then return 0 end
+	if not LActor.isFinishQuest(actorobj, XSRW_Config.preQuestId) then return 0 end
+
+	local vipLevel = LActor.getVIPLevel( actorobj )
+	local nVipCout = 0
+	if vipLevel ~= 0 then
+		nVipCout = VIPConfig.payQuestLimit[vipLevel]
+	end
+
+	local nVar = LActor.getStaticVar( actorobj )
+	if nVar.XuanShangRenWu_Finsh_count and nVar.XuanShangRenWu_Finsh_count >= XSRW_Config.MaxFinshcout + nVipCout then
+		return 0
+	end
+
+	return 1
+end
+GetQuestTargetCount.register(qtFinishXuanShang, xuanshangrenwu.leftCount)
+
+EventCallDispatcher.registerEventCall( BaseTypes.ActorEventId.aeQuest , xuanshangrenwu.netdealwith)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, xuanshangrenwu.Newday)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeLevel, xuanshangrenwu.ActorUpLeve)
+xuanshangrenwu.registermsg(70 , xuanshangrenwu.sendcanAcceptquestlist)
+xuanshangrenwu.registermsg(71 , xuanshangrenwu.HandReshresh)
+xuanshangrenwu.registermsg(72 , xuanshangrenwu.ReshreshStar)
+xuanshangrenwu.registermsg(73 , xuanshangrenwu.AcceptQuest)
+xuanshangrenwu.registermsg(74 , xuanshangrenwu.completeQuest)
+xuanshangrenwu.registermsg(75 , xuanshangrenwu.quickFinshQuest)
+xuanshangrenwu.registermsg(76 , xuanshangrenwu.SendAcceptQuest)
+
+
+GmEventFuncList.register( "rftt",RateNote, 1)
+GmEventFuncList.register( "ts",Test, 1)
+table.insert(InitFnTable,xuanshangrenwu.Openserver)   
+
+table.insert(FinaFnTable,xuanshangrenwu.release)

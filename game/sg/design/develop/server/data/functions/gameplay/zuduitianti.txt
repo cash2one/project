@@ -1,0 +1,1339 @@
+-- 组队天梯
+
+--#include "data\config\corps\corpsconfig.txt" once
+--#include "data\functions\actorevent\hetuleshuhandle.txt" once
+
+ZDTT = {}
+
+ZDTT.MACTHING_RANK_NAME = "zdtt_matching_rank"
+ZDTT.CORPS_RANKING_NAME = "corps_ranking"
+ZDTT.MACTHING_RANK_MAX_COUNT = 1024
+ZDTT.MAX_TEAM_MEMBER_COUNT = 3
+
+ZDTT.NetWorkHandle = function( sysarg, arg )
+	local cmd = arg[1]
+	local dp = arg[2]
+	-- print("========ZDTT.NetWorkHandle======="..cmd)
+	if ZDTT[cmd] then
+		ZDTT[cmd](sysarg, dp)
+	end
+end
+
+-- 测试
+function OnZDTTTest( sysarg, arg )
+	local num = tonumber(arg[1]) or 0
+	local var = LActor.getStaticVar(sysarg)
+	if var then
+		if var.zdtt_personal_point == nil then
+			var.zdtt_personal_point = 0
+		end
+		var.zdtt_personal_point = var.zdtt_personal_point + num
+	end
+end
+
+-- 增加战队评级
+function OnZDTTPinji( sysarg, arg )
+	local num = tonumber(arg[1]) or 0
+	local corpsid = LActor.getIntProperty(sysarg, PROP_CORPS_ID)
+	if corpsid >= 0 then
+		LActor.AddCorpsPointById(corpsid, num)
+	end
+end
+
+-- 活动开启
+function OnZDTTStart(  )
+	local sysvar = System.getDyanmicVar()
+	if sysvar == nil then return end
+	-- 初始化
+	if sysvar.ZDTT_state == nil then
+		sysvar.ZDTT_state = 0
+	end
+	if sysvar.ZDTT_state == 1 then return end
+	-- 设置活动状态
+	sysvar.ZDTT_state = 1
+	-- 创建一个排行榜当作匹配列表
+	local rank = Ranking.getRanking(ZDTT.MACTHING_RANK_NAME)
+	if rank then
+		Ranking.clearRanking(rank)
+	else
+		rank = Ranking.add(ZDTT.MACTHING_RANK_NAME, ZDTT.MACTHING_RANK_MAX_COUNT)
+		if rank then
+			Ranking.addColumn(rank, "macthing_count")
+		end
+	end
+	-- 清除连胜记录
+	LActor.ClearCorpsWinStreak()
+	-- 清除参与活动状态
+	LActor.ClearCorpsZDTTState()
+	-- 公告
+	System.broadcastTipmsg(Lang.ScriptTips.zdtt013,ttGmTip)
+end
+
+-- 活动结束
+function OnZDTTEnd(  )
+	local sysvar = System.getDyanmicVar()
+	if sysvar == nil then return end
+	-- 初始化
+	if sysvar.ZDTT_state == nil then
+		sysvar.ZDTT_state = 0
+	end
+	if sysvar.ZDTT_state == 0 then return end
+	-- 设置活动状态
+	sysvar.ZDTT_state = 0
+	-- 清除匹配列表
+	Ranking.removeRanking(ZDTT.MACTHING_RANK_NAME)
+	-- 5分钟后结算
+	local hsc = Fuben.getSceneHandleById(1, 0) -- 挂在世界地图上
+	if hsc > 0 then
+		Fuben.postSceneTimeCall(hsc, TimerMsg.ZDTTActivityAward,  300, 1)
+	end
+	
+end
+
+-- 清掉战队积分
+function OnZDTTClearScroe(  )
+	LActor.ClearCorpsScore()
+end
+
+-- 活动结算
+ZDTT.ActivityAward = function( msgid, pscene, index )
+	-- 清除连胜记录
+	LActor.ClearCorpsWinStreak()
+	-- 没有参与活动扣除积分
+	LActor.CheckCorpsZDTTState(50)
+	-- 公告
+	local rank = Ranking.getRanking(ZDTT.CORPS_RANKING_NAME)
+	-- local name
+	if rank == nil then return end
+	-- local item1 = Ranking.getItemFromIndex(rank, 0)
+	-- if item1 then
+	-- 	name = Ranking.getSub(item1, 0)
+	-- end
+	-- if name then
+	-- 	System.broadcastTipmsg(string.format(Lang.ScriptTips.zdtt014, name),ttGmTip)
+	-- end
+	-- 下发排名奖励
+	local count = Ranking.getRankItemCount(rank)
+	local conf = corpsconfig.zdtt.award.rank_award
+	for i=1,#conf do
+		if conf[i].rank[2] < conf[i].rank[1] then return end -- 配置错误
+		local from_, to_
+		if count >= conf[i].rank[2] then
+			from_ = conf[i].rank[1]
+			to_ = conf[i].rank[2]
+		elseif count >= conf[i].rank[1] and count < conf[i].rank[2] then
+			from_ = conf[i].rank[1]
+			to_ = count
+		end
+		if from_ and to_ then
+			-- 发放排名from_到to_的奖励
+			for j=from_,to_ do -- j为排名
+				local item = Ranking.getItemFromIndex(rank, j-1)
+				local corpsid = Ranking.getId(item)
+				local point = Ranking.getPoint(item)
+				local award_conf
+				local mail_content
+				if point <= 0 then -- -- 积分0没有排名奖励
+					award_conf = {} 
+					mail_content = ""
+				else -- 活动排名奖励
+					award_conf = conf[i].item
+					mail_content = string.format(Lang.ScriptTips.zdtt012, j)
+				end
+				if #award_conf > 0 and #award_conf <= 5 then
+					local award_list = {}
+					for ai=1,5 do
+						if award_conf[ai] then
+							award_list[ai] = award_conf[ai]
+						else
+							award_list[ai] = {type = 0, id = 0, count = 0, bind = 0}
+						end
+					end
+					local member = LuaHelp.getCorpsMember(corpsid)
+					for i=1,#member do
+						System.sendGmMailOffLine(member[i], mail_content , award_list[1].type, award_list[1].id, award_list[1].count, award_list[1].bind, Lang.ScriptTips.zdtt011
+							, award_list[2].type, award_list[2].id, award_list[2].count, award_list[2].bind
+							, award_list[3].type, award_list[3].id, award_list[3].count, award_list[3].bind
+							, award_list[4].type, award_list[4].id, award_list[4].count, award_list[4].bind
+							, award_list[5].type, award_list[5].id, award_list[5].count, award_list[5].bind)
+					end
+					
+				else
+					-- print("-------campbattle1 award conf error")
+				end
+				-- 第一名获得称号
+				if j == 1 and point > 0 then
+					local sys_s_var = System.getStaticVar()
+					if sys_s_var == nil then return end
+					sys_s_var.zdtt_first_title = {}
+					local actors = LuaHelp.getCorpsMember(corpsid)
+					for k=1,#actors do
+						local actor = LActor.getActorById(actors[k])
+						if actor then
+							LActor.GiveTitle(actor, titleway.ZDTT_first)
+						else
+							sys_s_var.zdtt_first_title[k] = actors[k]
+						end
+					end
+				end
+			end
+		end
+	end
+end
+
+-- 活动是否开启
+function IsZDTTStart(  )
+	local sysvar = System.getDyanmicVar()
+	if sysvar == nil then return end
+	-- 初始化
+	if sysvar.ZDTT_state == 1 then
+		return true
+	else
+		return false
+	end
+end
+
+-- 由于排行榜的id是用int保存，teamid却是uint，因此需要转换一下
+-- uint转int
+function uintToint( uint )
+	if uint > 2147483647 then
+		return 2147483647 - uint
+	else
+		return uint
+	end
+end
+
+-- int转uint
+function intTouint( int )
+	if int < 0 then
+		return 2147483647 - int
+	else
+		return int
+	end
+end
+
+-- 匹配中
+ZDTT.Macthing = function(  )
+	local rank = Ranking.getRanking(ZDTT.MACTHING_RANK_NAME)
+	if rank == nil then return end
+	local team1 = nil
+	local team1id = 0
+	local team1point = 0
+	local team1count = 0
+	local team2 = nil
+	local count = Ranking.getRankItemCount(rank)
+	for i=1,count do
+		local item = Ranking.getItemFromIndex(rank, i - 1)
+		if item then
+			local teamid = intTouint(Ranking.getId(item))
+			local teamptr = TeamFun.getTeam(teamid)
+			if teamptr then
+				-- 先放到team1 再放team2
+				if team1 == nil then
+					team1 = teamptr
+					team1id = teamid
+					team1point = Ranking.getPoint(item)
+					team1count = Ranking.getSubInt(item, 0)
+				else
+					team2 = teamptr
+				end
+				-- 准备进入
+				if team1 and team2 then
+					ZDTT.Entering(team1, team2)
+					team1 = nil
+					team1id = 0
+					team1point = 0
+					team1count = 0
+					team2 = nil
+				end
+			end
+		end
+	end
+	-- 重置匹配列表
+	Ranking.clearRanking(rank)
+	-- 可能有一个没匹配到
+	if team1 then
+		if team1count <= 1 then
+			-- 还没超过10秒
+			local item = Ranking.addItem(rank, uintToint(team1id), team1point)
+			if item then
+				Ranking.setSubInt(item, 0, team1count + 1)
+			end
+		else
+			-- 10秒后超时
+			local teammember = LuaHelp.getTeamMemberListByPtr(team1)
+			local captin = TeamFun.getTeamCaptain(team1)
+			for i=1,#teammember do
+				local var = LActor.getStaticVar(teammember[i])
+				if var == nil then return end
+				var.zdtt_matching_state = 0
+				-- 下发信息
+				ZDTT.SendInfo(teammember[i], var, captin)
+			end
+		end
+	end
+end
+
+-- 准备进入
+ZDTT.Entering = function( team1, team2 )
+	if team1 == nil and team2 == nil then
+		return
+	end
+	local captin1 = TeamFun.getTeamCaptain(team1)
+	local captin2 = TeamFun.getTeamCaptain(team2)
+	local hfb = Fuben.createFuBen(corpsconfig.zdtt.fbid)
+	if hfb <= 0 then return end
+	-- 设置副本
+	Fuben.setFbTriggerScript(hfb , true)
+	Fuben.setFbTriggerTime( hfb , 8)
+
+	local pfb = Fuben.getFubenPtr(hfb)
+	if pfb == nil then return end
+	local fbvar = Fuben.getDyanmicVar(pfb)
+	if fbvar == nil then return end
+	fbvar.zdtt_actors = {}
+	fbvar.zdtt_team1_corps = 0
+	fbvar.zdtt_team1_corps_icon = 0
+	fbvar.zdtt_team2_corps = 0
+	fbvar.zdtt_team2_corps_icon = 0
+	-- 最多每队3人
+	local teammember = LuaHelp.getTeamMemberListByPtr(team1)
+	for i=1,#teammember do
+		if i <= ZDTT.MAX_TEAM_MEMBER_COUNT then
+			local var = LActor.getStaticVar(teammember[i])
+			if var == nil then return end
+			var.zdtt_matching_state = 2
+			var.zdtt_fuben_handle = hfb
+			var.zdtt_fuben_x = corpsconfig.zdtt.position[1][i][1]
+			var.zdtt_fuben_y = corpsconfig.zdtt.position[1][i][2]
+			-- 下发信息
+			ZDTT.SendInfo(teammember[i], var, captin1, captin2)
+			-- 记录副本玩家
+			fbvar.zdtt_actors[i] = {}
+			fbvar.zdtt_actors[i].aid = LActor.getActorId(teammember[i])
+			fbvar.zdtt_actors[i].state = 0
+			fbvar.zdtt_actors[i].handle = LActor.getHandle(teammember[i])
+			fbvar.zdtt_actors[i].job = LActor.getActorjob(teammember[i])
+			fbvar.zdtt_actors[i].lvl = LActor.getLevel(teammember[i])
+			local corpsid = LActor.getIntProperty(teammember[i], PROP_CORPS_ID)
+			-- 用来记录这次战斗是否需要给战队积分
+			if fbvar.zdtt_team1_corps == 0 then
+				fbvar.zdtt_team1_corps = corpsid
+				local info = LuaHelp.getCorpsInfo(corpsid)
+				fbvar.zdtt_team1_corps_icon = info[1]
+			elseif fbvar.zdtt_team1_corps ~= corpsid then
+				fbvar.zdtt_team1_corps = -1
+			end
+		end
+	end
+	teammember = LuaHelp.getTeamMemberListByPtr(team2)
+	for i=1,#teammember do
+		if i <= ZDTT.MAX_TEAM_MEMBER_COUNT then
+			local var = LActor.getStaticVar(teammember[i])
+			if var == nil then return end
+			var.zdtt_matching_state = 2
+			var.zdtt_fuben_handle = hfb
+			var.zdtt_fuben_x = corpsconfig.zdtt.position[2][i][1]
+			var.zdtt_fuben_y = corpsconfig.zdtt.position[2][i][2]
+			-- 下发信息
+			ZDTT.SendInfo(teammember[i], var, captin2, captin1)
+			-- 记录副本玩家
+			local len = #fbvar.zdtt_actors
+			fbvar.zdtt_actors[i + ZDTT.MAX_TEAM_MEMBER_COUNT] = {}
+			fbvar.zdtt_actors[i + ZDTT.MAX_TEAM_MEMBER_COUNT].aid = LActor.getActorId(teammember[i])
+			fbvar.zdtt_actors[i + ZDTT.MAX_TEAM_MEMBER_COUNT].state = 0
+			fbvar.zdtt_actors[i + ZDTT.MAX_TEAM_MEMBER_COUNT].handle = LActor.getHandle(teammember[i])
+			fbvar.zdtt_actors[i + ZDTT.MAX_TEAM_MEMBER_COUNT].job = LActor.getActorjob(teammember[i])
+			fbvar.zdtt_actors[i + ZDTT.MAX_TEAM_MEMBER_COUNT].lvl = LActor.getLevel(teammember[i])
+			local corpsid = LActor.getIntProperty(teammember[i], PROP_CORPS_ID)
+			-- 用来记录这次战斗是否需要给战队积分
+			if fbvar.zdtt_team2_corps == 0 then
+				fbvar.zdtt_team2_corps = corpsid
+				local info = LuaHelp.getCorpsInfo(corpsid)
+				fbvar.zdtt_team2_corps_icon = info[1]
+			elseif fbvar.zdtt_team2_corps ~= corpsid then
+				fbvar.zdtt_team2_corps = -1
+			end
+		end
+	end
+	-- 初始化buff点数据
+	local tmppos = {}
+	for i=1,corpsconfig.zdtt.buffpositioncount do
+		tmppos[i] = i
+	end
+	fbvar.zdtt_buff = {}
+	for i=1,#corpsconfig.zdtt.buff do
+		fbvar.zdtt_buff[i] = {}
+		local rand = System.getRandomNumber(#tmppos) + 1
+		fbvar.zdtt_buff[i].posidx = tmppos[rand]
+		table.remove(tmppos, rand)
+	end
+end
+
+-- 下发信息
+ZDTT.SendInfo = function( sysarg, var, captin1, captin2 )
+	local rank = Ranking.getRanking(ZDTT.CORPS_RANKING_NAME)
+	if not rank then return end
+	local team1data = {}
+	local team2data = {}
+	-- 显示自己的
+	local corps1 = LActor.getIntProperty(sysarg, PROP_CORPS_ID)
+	-- if captin1 then
+	-- 	corps1 = LActor.getIntProperty(captin1, PROP_CORPS_ID)
+	-- else
+	-- 	corps1 = LActor.getIntProperty(sysarg, PROP_CORPS_ID)
+	-- end
+	local item1 = Ranking.getItemPtrFromId(rank, corps1)
+	local info1 = LuaHelp.getCorpsInfo(corps1)
+	if item1 and info1 then
+		team1data.icon = info1[1]
+		team1data.name = info1[2]
+		team1data.rank = Ranking.getIndexFromPtr(item1) + 1
+	end
+	local corps2 = LActor.getIntProperty(captin2, PROP_CORPS_ID)
+	local item2 = Ranking.getItemPtrFromId(rank, corps2)
+	local info2 = LuaHelp.getCorpsInfo(corps2)
+	if item2 and info2 then
+		team2data.icon = info2[1]
+		team2data.name = info2[2]
+		team2data.rank = Ranking.getIndexFromPtr(item2) + 1
+	end
+	local corpsid = LActor.getIntProperty(sysarg, PROP_CORPS_ID)
+	local corpspoint = LActor.GetCorpsPointById(corpsid)
+
+	local npack = DataPack.allocPacket( sysarg , 56 , 22)
+	if npack == nil then return end
+	DataPack.writeInt(npack, var.zdtt_matching_state or 0)
+	DataPack.writeInt(npack, team1data.icon or 0)
+	DataPack.writeInt(npack, team1data.rank or 0)
+	DataPack.writeString(npack, team1data.name or "")
+	DataPack.writeInt(npack, team2data.icon or 0)
+	DataPack.writeInt(npack, team2data.rank or 0)
+	DataPack.writeString(npack, team2data.name or "")
+	DataPack.writeInt(npack, var.zdtt_personal_point or 0)
+	DataPack.writeInt(npack, corpspoint)
+
+	DataPack.flush(npack)
+end
+
+-- 开始匹配
+ZDTT[20] = function( sysarg, dp )
+	if not IsZDTTStart() then
+		LActor.sendTipmsg( sysarg, Lang.ScriptTips.zdtt006, ttMessage )
+		return
+	end
+	local teamid = LActor.getTeamId(sysarg)
+	if teamid <= 0 then
+		LActor.sendTipmsg( sysarg, Lang.ScriptTips.zdtt001, ttMessage )
+		return
+	end
+	-- 不是队长
+	if not TeamFun.isCaptain(sysarg) then
+		LActor.sendTipmsg( sysarg, Lang.ScriptTips.zdtt005, ttMessage )
+		return
+	end
+	local teammember = LuaHelp.getTeamMemberList(sysarg)
+	-- 人数
+	-- if #teammember ~= corpsconfig.zdtt.teammembercount then
+	if #teammember < 1 or #teammember > ZDTT.MAX_TEAM_MEMBER_COUNT then
+		LActor.sendTipmsg( sysarg, Lang.ScriptTips.zdtt002, ttDialog )
+		return
+	end
+	local maxcorpspoint = 0
+	-- 检查进入条件
+	for i=1,#teammember do
+		if teammember[i] == nil then return end
+		local corpsid = LActor.getIntProperty(teammember[i], PROP_CORPS_ID)
+		-- 没有战队
+		if corpsid <= 0 then
+			LActor.sendTipmsg( sysarg, Lang.ScriptTips.zdtt003, ttDialog )
+			return
+		end
+		-- 在副本中
+		if LActor.isInFuben(teammember[i]) then
+			LActor.sendTipmsg( sysarg, Lang.ScriptTips.zdtt007, ttMessage )
+			return
+		end
+		-- 等级限制
+		if LActor.getLevel(teammember[i]) < corpsconfig.zdtt.limitlevel then
+			LActor.sendTipmsg( sysarg, Lang.ScriptTips.zdtt008, ttMessage )
+			return
+		end
+		-- 护送状态
+		if LActor.hasState(teammember[i], esProtection) then
+			LActor.sendTipmsg( sysarg, Lang.ScriptTips.zdtt004, ttMessage )
+			return
+		end
+		-- 记录战队分数
+		local tmppoint = LActor.GetCorpsPointById(corpsid)
+		if tmppoint > maxcorpspoint then
+			maxcorpspoint = tmppoint
+		end
+	end
+	-- 战队成员在比赛中
+	local captaincorpsid = LActor.getIntProperty(sysarg, PROP_CORPS_ID)
+	local corpsmember = LuaHelp.getCorpsMember(captaincorpsid)
+	local captainaid = LActor.getActorId(sysarg)
+	if corpsmember == nil then return end
+	for i=1,#corpsmember do
+		-- 其他战队成员
+		if captainaid ~= corpsmember[i] then
+			local corpsmemberptr = LActor.getActorById(corpsmember[i])
+			if corpsmemberptr then
+				local tmpvar = LActor.getStaticVar(corpsmemberptr)
+				if not tmpvar then return end
+				if tmpvar.zdtt_matching_state and tmpvar.zdtt_matching_state > 0 then
+					LActor.sendTipmsg( sysarg, Lang.ScriptTips.zdtt021, ttMessage )
+					return
+				end
+			end
+		end
+	end
+	-- 记录状态
+	for i=1,#teammember do
+		-- 记录状态
+		local var = LActor.getStaticVar(teammember[i])
+		if var == nil then return end
+		var.zdtt_matching_state = 1
+		-- 下发信息
+		ZDTT.SendInfo(teammember[i], var, sysarg)
+	end
+	-- 开始排队
+	local rank = Ranking.getRanking(ZDTT.MACTHING_RANK_NAME)
+	if rank == nil then return end
+	local item = Ranking.addItem(rank, uintToint(teamid), maxcorpspoint)
+	if item then
+		Ranking.setSubInt(item, 0, 0)
+	end
+end
+
+-- 进入副本
+ZDTT[21] = function( sysarg, dp )
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	if var.zdtt_matching_state ~= 2 then
+		return
+	end
+	if var.zdtt_fuben_handle == nil or var.zdtt_fuben_handle <= 0 or var.zdtt_fuben_x == nil or var.zdtt_fuben_y == nil then
+		return
+	end
+	LActor.enterFuBen(sysarg, var.zdtt_fuben_handle, corpsconfig.zdtt.sceneid, var.zdtt_fuben_x, var.zdtt_fuben_y)
+	var.zdtt_fuben_handle = nil
+	var.zdtt_fuben_x = nil
+	var.zdtt_fuben_y = nil
+end
+
+-- 请求信息
+ZDTT[22] = function( sysarg, dp )
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	local teamid = LActor.getTeamId(sysarg)
+	local captin = TeamFun.getTeamCaptain(teamid)
+	ZDTT.SendInfo(sysarg, var, captin)
+end
+
+-- 取消匹配
+ZDTT[23] = function( sysarg, dp )
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	if var.zdtt_matching_state == 1 then
+		-- 匹配中
+		var.zdtt_matching_state = 0
+		local rank = Ranking.getRanking(ZDTT.MACTHING_RANK_NAME)
+		if rank == nil then return end
+		local teamid = LActor.getTeamId(sysarg)
+		if teamid <= 0 then return end
+		--  从匹配列表删除
+		Ranking.removeId(rank, uintToint(teamid))
+		local captin = TeamFun.getTeamCaptain(teamid)
+		local teammember = LuaHelp.getTeamMemberList(sysarg)
+		for i=1,#teammember do
+			-- 记录状态
+			local actvar = LActor.getStaticVar(teammember[i])
+			if actvar == nil then return end
+			actvar.zdtt_matching_state = 0
+			-- 下发信息
+			ZDTT.SendInfo(teammember[i], actvar, captin)
+		end
+	elseif var.zdtt_matching_state == 2 then
+		-- 准备中
+		var.zdtt_matching_state = 0
+		local rank = Ranking.getRanking(ZDTT.MACTHING_RANK_NAME)
+		if rank == nil then return end
+		local teamid = LActor.getTeamId(sysarg)
+		if teamid <= 0 then return end
+		--  从匹配列表删除
+		Ranking.removeId(rank, uintToint(teamid))
+		-- 需要释放的副本
+		local hfb = nil
+		local captin = TeamFun.getTeamCaptain(teamid)
+		local teammember = LuaHelp.getTeamMemberList(sysarg)
+		for i=1,#teammember do
+			-- 记录状态
+			local actvar = LActor.getStaticVar(teammember[i])
+			if actvar == nil then return end
+			actvar.zdtt_matching_state = 0
+			if hfb == nil then
+				hfb = actvar.zdtt_fuben_handle
+			end
+			actvar.zdtt_fuben_handle = nil
+			actvar.zdtt_fuben_x = nil
+			actvar.zdtt_fuben_y = nil
+			-- 下发信息
+			ZDTT.SendInfo(teammember[i], actvar, captin)
+		end
+		-- 释放副本
+		if hfb then
+			Fuben.closeFuben(hfb)
+		end
+	end
+end
+
+-- 有人退出组队
+ZDTT.OnLeftTeam = function( sysarg, arg )
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	if var.zdtt_matching_state == 1 then
+		-- 匹配中
+		var.zdtt_matching_state = 0
+		-- 下发信息
+		ZDTT.SendInfo(sysarg, var)
+		local rank = Ranking.getRanking(ZDTT.MACTHING_RANK_NAME)
+		if rank == nil then return end
+		local teamptr = arg[1]
+		if teamptr == nil then return end
+		local teamid = TeamFun.getTeamId(teamptr)
+		if teamid == nil or teamid <= 0 then return end
+		--  从匹配列表删除
+		Ranking.removeId(rank, uintToint(teamid))
+		local teammember = LuaHelp.getTeamMemberListByPtr(teamptr) or {}
+		for i=1,#teammember do
+			-- 记录状态
+			local actvar = LActor.getStaticVar(teammember[i])
+			if actvar == nil then return end
+			actvar.zdtt_matching_state = 0
+			-- 下发信息
+			ZDTT.SendInfo(teammember[i], actvar)
+		end
+	elseif var.zdtt_matching_state == 2 then
+		-- 准备中
+		var.zdtt_matching_state = 0
+		-- 下发信息
+		ZDTT.SendInfo(sysarg, var)
+		local rank = Ranking.getRanking(ZDTT.MACTHING_RANK_NAME)
+		if rank == nil then return end
+		local teamptr = arg[1]
+		if teamptr == nil then return end
+		local teamid = TeamFun.getTeamId(teamptr)
+		if teamid == nil or teamid <= 0 then return end
+		--  从匹配列表删除
+		Ranking.removeId(rank, uintToint(teamid))
+		-- 需要释放的副本
+		local hfb = nil
+		local teammember = LuaHelp.getTeamMemberListByPtr(teamptr) or {}
+		for i=1,#teammember do
+			-- 记录状态
+			local actvar = LActor.getStaticVar(teammember[i])
+			if actvar == nil then return end
+			actvar.zdtt_matching_state = 0
+			if hfb == nil then
+				hfb = actvar.zdtt_fuben_handle
+			end
+			actvar.zdtt_fuben_handle = nil
+			actvar.zdtt_fuben_x = nil
+			actvar.zdtt_fuben_y = nil
+			-- 下发信息
+			ZDTT.SendInfo(teammember[i], actvar)
+		end
+		-- 释放副本
+		if hfb then
+			Fuben.closeFuben(hfb)
+		end
+	end
+end
+
+-- 登出
+ZDTT.OnLogout = function( sysarg )
+	ZDTT[23](sysarg)
+end
+
+-- 进入副本
+ZDTT.OnEnterFuben = function( sysarg, hfb, way )
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	-- 设置状态
+	var.zdtt_matching_state = 3
+	var.zdtt_kill_count = 0
+	var.zdtt_assist_count = 0
+	-- 设置pk模式
+	LActor.setPkMode(sysarg, fpTeam)
+	LActor.setAttackLog(sysarg, true) -- 设置记录攻击玩家列表
+	-- 设置参与过活动
+	local corpsid = LActor.getIntProperty(sysarg, PROP_CORPS_ID)
+	LActor.SetCorpsZDTTState(corpsid)
+	-- 副本玩家
+	local aid = LActor.getActorId(sysarg)
+	local pfb = Fuben.getFubenPtr(hfb)
+	if pfb == nil then return end
+	local fbvar = Fuben.getDyanmicVar(pfb)
+	if fbvar == nil then return end
+	for i=1,ZDTT.MAX_TEAM_MEMBER_COUNT*2 do
+		if fbvar.zdtt_actors[i] and fbvar.zdtt_actors[i].aid == aid then
+			fbvar.zdtt_actors[i].state = 1
+			break
+		end
+	end
+	-- 回复血蓝
+	LActor.setIntProperty(sysarg, PROP_HP, LActor.getIntProperty(sysarg, PROP_MAXHP))
+	LActor.setIntProperty(sysarg, PROP_MP, LActor.getIntProperty(sysarg, PROP_MAXMP))
+	-- 下发所有玩家列表
+	local npack = DataPack.allocPacket( sysarg , 56 , 30)
+	if npack == nil then return end
+	DataPack.writeInt(npack, fbvar.zdtt_team1_corps_icon)
+	DataPack.writeInt(npack, fbvar.zdtt_team2_corps_icon)
+	DataPack.writeInt(npack, ZDTT.MAX_TEAM_MEMBER_COUNT*2)
+	for i=1,ZDTT.MAX_TEAM_MEMBER_COUNT*2 do
+		if fbvar.zdtt_actors[i] then
+			DataPack.writeInt64(npack, fbvar.zdtt_actors[i].handle or 0)
+			DataPack.writeChar(npack, fbvar.zdtt_actors[i].job or 0)
+			DataPack.writeChar(npack, fbvar.zdtt_actors[i].lvl or 0)
+		else
+			DataPack.writeInt64(npack, 0)
+			DataPack.writeChar(npack, 0)
+			DataPack.writeChar(npack, 0)
+		end
+	end
+	DataPack.flush(npack)
+end
+
+-- 退出副本
+ZDTT.OnExitFuben = function( sysarg, hfb, way )
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	-- 设置pk模式
+	LActor.setPkMode(sysarg, fpPeaceful)
+	LActor.setAttackLog(sysarg, false) -- 设置记录攻击玩家列表
+	-- 记录状态
+	var.zdtt_matching_state = 0
+	var.zdtt_kill_count = 0
+	var.zdtt_assist_count = 0
+	-- 复活
+	LActor.relive(sysarg)
+	LActor.setIntProperty(sysarg, PROP_HP, LActor.getIntProperty(sysarg, PROP_MAXHP))
+	LActor.setIntProperty(sysarg, PROP_MP, LActor.getIntProperty(sysarg, PROP_MAXMP))
+	-- 副本玩家
+	local aid = LActor.getActorId(sysarg)
+	local pfb = Fuben.getFubenPtr(hfb)
+	if pfb == nil then return end
+	local fbvar = Fuben.getDyanmicVar(pfb)
+	if fbvar == nil then return end
+	local idx = 0
+	for i=1,ZDTT.MAX_TEAM_MEMBER_COUNT*2 do
+		if fbvar.zdtt_actors[i] and fbvar.zdtt_actors[i].aid == aid then
+			fbvar.zdtt_actors[i].state = 0
+			idx = i
+			break
+		end
+	end
+	ZDTT.IsFubenWin(hfb, fbvar, idx)
+end
+
+-- 玩家死亡
+ZDTT.OnActorDie = function( sysarg, arg )
+	local fbid = LActor.getFubenId(sysarg)
+	if fbid ~= corpsconfig.zdtt.fbid then return end
+	local pfb = LActor.getFubenPrt(sysarg)
+	if pfb == nil then return end
+	local hfb = LActor.getFubenHandle(sysarg)
+	if hfb == nil then return end
+	local fbvar = Fuben.getDyanmicVar(pfb)
+	if fbvar == nil then return end
+	local aid = LActor.getActorId(sysarg)
+	local idx = 0
+	for i=1,ZDTT.MAX_TEAM_MEMBER_COUNT*2 do
+		if fbvar.zdtt_actors[i] and fbvar.zdtt_actors[i].aid == aid then
+			fbvar.zdtt_actors[i].state = 0
+			idx = i
+			break
+		end
+	end
+	-- 击杀记录
+	local killer = arg[1]
+	if killer ~= nil then
+		if LActor.isPet(killer) then
+			killer = LActor.getMonsterOwner(killer)
+		end
+		local killer_var = LActor.getStaticVar(killer)
+		if killer_var and killer_var.zdtt_kill_count then
+			killer_var.zdtt_kill_count = killer_var.zdtt_kill_count + 1
+		end
+	end
+	-- 助攻记录
+	local actorList = LActor.getAttackList(sysarg)
+	if actorList ~= nil then
+		for i=1,#actorList do
+			if actorList[i] ~= killer then -- 不是最后击杀的玩家
+				local assistant_var = LActor.getStaticVar(actorList[i])
+				if assistant_var and assistant_var.zdtt_assist_count then
+					assistant_var.zdtt_assist_count = assistant_var.zdtt_assist_count + 1
+				end
+			end
+		end
+	end
+	ZDTT.IsFubenWin(hfb, fbvar, idx)
+end
+
+-- 副本结束前十秒，副本开始结算
+ZDTT.OnFubenTimeout = function( pfb )
+	-- 副本结算
+	local fbvar = Fuben.getDyanmicVar(pfb)
+	if fbvar == nil then return end
+	if fbvar.win_team then return end
+	local hfb = Fuben.getFubenHandle(pfb)
+	fbvar.win_team = 0
+	-- 平局结算
+	local rank = Ranking.getRanking(ZDTT.CORPS_RANKING_NAME)
+	if rank == nil then return end
+	local left_mem = 0
+	for i=1,ZDTT.MAX_TEAM_MEMBER_COUNT*2 do
+		if fbvar.zdtt_actors[i] then
+			if fbvar.zdtt_actors[i].state ~= 0 then
+				left_mem = left_mem + 1
+			end
+			-- 记录之前的积分和排名
+			local actor = LActor.getActorById(fbvar.zdtt_actors[i].aid)
+			local var = LActor.getStaticVar(actor)
+			if var then
+				local corpsid = LActor.getIntProperty(actor, PROP_CORPS_ID)
+				var.zdtt_tmp_rank = Ranking.getItemIndexFromId(rank, corpsid)
+				var.zdtt_tmp_score = LActor.GetCorpsPointById(corpsid)
+			end
+		end
+	end
+	local score = math.modf(left_mem/2)
+	LActor.AddCorpsPointById(fbvar.zdtt_team1_corps, -score)
+	LActor.AddCorpsPointById(fbvar.zdtt_team2_corps, -score)
+	-- 个人胜点
+	for i=1,ZDTT.MAX_TEAM_MEMBER_COUNT*2 do
+		if fbvar.zdtt_actors[i] then
+			local actor = LActor.getActorById(fbvar.zdtt_actors[i].aid)
+			local var = LActor.getStaticVar(actor)
+			if var then
+				if var.zdtt_personal_point == nil then
+					var.zdtt_personal_point = 0
+				end
+				if var.zdtt_kill_count == nil then
+					var.zdtt_kill_count = 0
+				end
+				if var.zdtt_assist_count == nil then
+					var.zdtt_assist_count = 0
+				end
+				var.zdtt_personal_point = var.zdtt_personal_point + 5 + var.zdtt_kill_count * 4 + var.zdtt_assist_count * 2
+			end
+			ZDTT.SendJieSuan(actor, var, 0, rank, 5 + var.zdtt_kill_count * 4 + var.zdtt_assist_count * 2)
+		end
+	end
+end
+
+-- 是否已分出胜负
+ZDTT.IsFubenWin = function( hfb, fbvar, idx )
+	if fbvar.win_team then return end
+	-- 获胜队伍
+	local win_team = 0
+	if idx > 0 and idx <= ZDTT.MAX_TEAM_MEMBER_COUNT then
+		win_team = 2
+		for i=1,ZDTT.MAX_TEAM_MEMBER_COUNT do
+			if fbvar.zdtt_actors[i] and fbvar.zdtt_actors[i].state ~= 0 then
+				-- 有玩家活着
+				win_team = 0
+				break
+			end
+		end
+	else
+		win_team = 1
+		for i=ZDTT.MAX_TEAM_MEMBER_COUNT+1,ZDTT.MAX_TEAM_MEMBER_COUNT*2 do
+			if fbvar.zdtt_actors[i] and fbvar.zdtt_actors[i].state ~= 0 then
+				-- 有玩家活着
+				win_team = 0
+				break
+			end
+		end
+	end
+	-- 有结果了
+	if win_team > 0 then
+		fbvar.win_team = win_team
+		-- 副本结算
+		local rank = Ranking.getRanking(ZDTT.CORPS_RANKING_NAME)
+		if rank == nil then return end
+		local left_mem = 0
+		for i=1,ZDTT.MAX_TEAM_MEMBER_COUNT*2 do
+			if fbvar.zdtt_actors[i] then
+				if fbvar.zdtt_actors[i].state ~= 0 then
+					left_mem = left_mem + 1
+				end
+				-- 记录之前的积分和排名
+				local actor = LActor.getActorById(fbvar.zdtt_actors[i].aid)
+				local var = LActor.getStaticVar(actor)
+				if var then
+					local corpsid = LActor.getIntProperty(actor, PROP_CORPS_ID)
+					var.zdtt_tmp_rank = Ranking.getItemIndexFromId(rank, corpsid)
+					var.zdtt_tmp_score = LActor.GetCorpsPointById(corpsid)
+				end
+			end
+		end
+		if win_team == 1 then
+			local win_streak = LActor.GetCorpsWinStreak(fbvar.zdtt_team1_corps)
+			win_streak = win_streak + 1
+			LActor.AddCorpsPointById(fbvar.zdtt_team1_corps, 10 + left_mem + win_streak - 1)
+			LActor.AddCorpsPointById(fbvar.zdtt_team2_corps, -10)
+			LActor.SetCorpsWinStreak(fbvar.zdtt_team1_corps, win_streak)
+			LActor.SetCorpsWinStreak(fbvar.zdtt_team2_corps, 0)
+		else
+			local win_streak = LActor.GetCorpsWinStreak(fbvar.zdtt_team2_corps)
+			win_streak = win_streak + 1
+			LActor.AddCorpsPointById(fbvar.zdtt_team2_corps, 10 + left_mem + win_streak - 1)
+			LActor.AddCorpsPointById(fbvar.zdtt_team1_corps, -10)
+			LActor.SetCorpsWinStreak(fbvar.zdtt_team2_corps, win_streak)
+			LActor.SetCorpsWinStreak(fbvar.zdtt_team1_corps, 0)
+		end
+		for i=1,ZDTT.MAX_TEAM_MEMBER_COUNT do
+			if fbvar.zdtt_actors[i] then
+				local actor = LActor.getActorById(fbvar.zdtt_actors[i].aid)
+				local var = LActor.getStaticVar(actor)
+				if var then
+					if var.zdtt_personal_point == nil then
+						var.zdtt_personal_point = 0
+					end
+					if var.zdtt_kill_count == nil then
+						var.zdtt_kill_count = 0
+					end
+					if var.zdtt_assist_count == nil then
+						var.zdtt_assist_count = 0
+					end
+					if win_team == 1 then
+						var.zdtt_personal_point = var.zdtt_personal_point + 10 + var.zdtt_kill_count * 4 + var.zdtt_assist_count * 2
+						ZDTT.SendJieSuan(actor, var, 1, rank, 10 + var.zdtt_kill_count * 4 + var.zdtt_assist_count * 2)
+					else
+						var.zdtt_personal_point = var.zdtt_personal_point + 3 + var.zdtt_kill_count * 4 + var.zdtt_assist_count * 2
+						ZDTT.SendJieSuan(actor, var, 2, rank, 3 + var.zdtt_kill_count * 4 + var.zdtt_assist_count * 2)
+					end
+				end
+			end
+		end
+		for i=ZDTT.MAX_TEAM_MEMBER_COUNT+1,ZDTT.MAX_TEAM_MEMBER_COUNT*2 do
+			if fbvar.zdtt_actors[i] then
+				local actor = LActor.getActorById(fbvar.zdtt_actors[i].aid)
+				local var = LActor.getStaticVar(actor)
+				if var then
+					if var.zdtt_personal_point == nil then
+						var.zdtt_personal_point = 0
+					end
+					if var.zdtt_kill_count == nil then
+						var.zdtt_kill_count = 0
+					end
+					if var.zdtt_assist_count == nil then
+						var.zdtt_assist_count = 0
+					end
+					if win_team == 1 then
+						var.zdtt_personal_point = var.zdtt_personal_point + 3 + var.zdtt_kill_count * 4 + var.zdtt_assist_count * 2
+						ZDTT.SendJieSuan(actor, var, 2, rank, 3 + var.zdtt_kill_count * 4 + var.zdtt_assist_count * 2)
+					else
+						var.zdtt_personal_point = var.zdtt_personal_point + 10 + var.zdtt_kill_count * 4 + var.zdtt_assist_count * 2
+						ZDTT.SendJieSuan(actor, var, 1, rank, 10 + var.zdtt_kill_count * 4 + var.zdtt_assist_count * 2)
+					end
+				end
+			end
+		end
+		-----------
+		Fuben.SetFubenTime(hfb, 10)
+	end
+end
+
+-- 结算
+ZDTT.SendJieSuan = function( sysarg, var, result, rank, add_point )
+	-- 结算奖励
+	local award
+	if result == 0 then
+		award = corpsconfig.zdtt.award.peace_award
+	elseif result == 1 then
+		award = corpsconfig.zdtt.award.win_award
+	else
+		award = corpsconfig.zdtt.award.lose_award
+	end
+	local left_item = {}
+	for i=1,#award do
+		if award[i].type == 1 then
+			if LActor.canAddItem(sysarg, award[i].id, award[i].count) == false then
+				left_item[#left_item + 1] = {type = award[i].type, id = award[i].id, count = award[i].count, bind = 0}
+			else
+				LActor.addItem(sysarg, award[i].id, 0, 0, award[i].count, 0, "zdtt_jiesuan", 1)
+			end
+		elseif award[i].type == 2 then
+			LActor.changeMoney(sysarg, award[i].id, award[i].count, 1, true, "zdtt_jiesuan")
+		elseif award[i].type == 3 then
+			LActor.addExp(sysarg, award[i].count, 0, 0)
+		end
+	end
+	if #left_item > 0 then
+		for i=#left_item+1,5 do
+			left_item[i] = {}
+		end
+		System.sendGmMailOffLine(LActor.getActorId(sysarg), Lang.ScriptTips.zdtt010, left_item[1].type, left_item[1].id, left_item[1].count, left_item[1].bind, Lang.ScriptTips.zdtt009
+			, left_item[2].type or 0, left_item[2].id or 0, left_item[2].count or 0, left_item[2].bind or 0
+			, left_item[3].type or 0, left_item[3].id or 0, left_item[3].count or 0, left_item[3].bind or 0
+			, left_item[4].type or 0, left_item[4].id or 0, left_item[4].count or 0, left_item[4].bind or 0
+			, left_item[5].type or 0, left_item[5].id or 0, left_item[5].count or 0, left_item[5].bind or 0)
+	end
+
+	local corpsid = LActor.getIntProperty(sysarg, PROP_CORPS_ID)
+	local npack = DataPack.allocPacket( sysarg , 56 , 24)
+	if npack == nil then return end
+	DataPack.writeInt(npack, result)
+	DataPack.writeInt(npack, var.zdtt_tmp_rank or -1)
+	DataPack.writeInt(npack, var.zdtt_tmp_score or -1)
+	DataPack.writeInt(npack, Ranking.getItemIndexFromId(rank, corpsid))
+	DataPack.writeInt(npack, LActor.GetCorpsPointById(corpsid))
+	DataPack.writeInt(npack, add_point or -1)
+
+	DataPack.flush(npack)
+	-- 活跃度
+	ActivationTrigger( sysarg, 21 )
+end
+
+-- buff区域触发
+function ZDTTBuff( sysarg, index )
+	index = tonumber(index) or 0
+	local hsc = LActor.getSceneHandle(sysarg)
+	if hsc == 0 then return end
+	local pfb = LActor.getFubenPrt(sysarg)
+	if pfb == nil then return end
+	local fb_var = Fuben.getDyanmicVar(pfb)
+	if fb_var == nil or fb_var.zdtt_buff == nil then return end
+	local buffidx = 0
+	for i=1,#fb_var.zdtt_buff do
+		if fb_var.zdtt_buff[i].posidx == index then
+			buffidx = i
+			break
+		end
+	end
+	if buffidx <= 0 then return end
+	-- 可以加buff
+	if fb_var.zdtt_buff[buffidx] then
+		local conf = corpsconfig.zdtt.buff[buffidx].list
+		-- 循环添加buff
+		for k, v in ipairs(conf) do
+			local value = v.value
+			if v.vt == 1 then
+				value = value / 10000
+			end
+			LActor.addBuff(sysarg, v.type, v.id, value, 1, v.interval, v.name, true, nil, 0, true)
+		end
+		-- 去掉地图上的buff,设置cd
+		fb_var.zdtt_buff[buffidx].posidx = 0
+		Fuben.postSceneTimeCall(hsc, TimerMsg.ZDTTBuffRefresh, corpsconfig.zdtt.buff[buffidx].cd, 1, buffidx)
+		-- 下发buff信息
+		local psc = LActor.getScenePtr(sysarg)
+		local playerlist = LuaHelp.getSceneActorListByPtr(psc)
+		for i=1,#playerlist do
+			ZDTT.SendBuffInfo(playerlist[i], fb_var)
+		end
+	end
+end
+
+-- 刷新buff
+ZDTT.RefreshBuff = function( msgid, pscene, index )
+	local pfb = Fuben.getSceneFuben(pscene)
+	if pfb == nil then return end
+	local fb_var = Fuben.getDyanmicVar(pfb)
+	if fb_var == nil or fb_var.zdtt_buff == nil then return end
+	-- 随机生成位置
+	local tmppos = {}
+	for i=1,corpsconfig.zdtt.buffpositioncount do
+		tmppos[i] = i
+	end
+	while(true) do
+		if #tmppos <= 0 then
+			break
+		end
+		local rand = System.getRandomNumber(#tmppos) + 1
+		local poshasuse = false
+		for i=1,#fb_var.zdtt_buff do
+			if fb_var.zdtt_buff[i].posidx == tmppos[rand] then
+				poshasuse = true
+				break
+			end
+		end
+		if poshasuse == false then
+			fb_var.zdtt_buff[index].posidx = tmppos[rand]
+			break
+		else
+			table.remove(tmppos, rand)
+		end
+	end
+
+	-- 下发buff信息
+	local playerlist = LuaHelp.getSceneActorListByPtr(pscene)
+	for i=1,#playerlist do
+		ZDTT.SendBuffInfo(playerlist[i], fb_var)
+	end
+end
+
+-- 下发buff信息
+ZDTT.SendBuffInfo = function( sysarg, fbvar )
+	if not sysarg or not fbvar then return end
+
+	local npack = DataPack.allocPacket(sysarg, 56, 25)
+	DataPack.writeChar(npack, #fbvar.zdtt_buff)
+	for i = 1, #fbvar.zdtt_buff do
+		DataPack.writeChar(npack, fbvar.zdtt_buff[i].posidx or 0)
+	end
+	DataPack.flush(npack)
+end
+
+-- 登录
+ZDTT.OnLogin = function( sysarg )
+	local corpsid = LActor.getIntProperty(sysarg, PROP_CORPS_ID)
+	if corpsid <= 0 then return end
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	local score = LActor.GetCorpsPointById(corpsid)
+	if not var.max_corps_score then
+		var.max_corps_score = 0
+	end
+	if var.max_corps_score and var.max_corps_score < score then
+		var.max_corps_score = score
+	end
+end
+
+-- 副本创建8秒后检查
+ZDTT.DealActorNotEnter = function( pfb , fbid )
+	if pfb == nil or fbid == nil or fbid == corpsconfig.zdtt.fbid then
+		return
+	end
+
+	local hfb = Fuben.getFubenHandle(pfb)
+	if hfb <= 0 then return end
+	local fbvar = Fuben.getDyanmicVar(pfb)
+	if fbvar == nil then return end
+
+	ZDTT.IsFubenWin(hfb, fbvar, 1)
+	ZDTT.IsFubenWin(hfb, fbvar, 1 + ZDTT.MAX_TEAM_MEMBER_COUNT)
+end
+
+-- 请求商店界面信息
+ZDTT[26] = function( sysarg, dp )
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	local npack = DataPack.allocPacket(sysarg, 56, 26)
+	DataPack.writeInt(npack, var.max_corps_score or 0)
+	DataPack.writeInt(npack, var.zdtt_personal_point or 0)
+	if var.zdtt_store_buy_limit == nil then
+		var.zdtt_store_buy_limit = {}
+		DataPack.writeInt(npack, 0)
+	else
+		DataPack.writeInt(npack, #var.zdtt_store_buy_limit)
+		for i=1,#var.zdtt_store_buy_limit do
+			DataPack.writeInt(npack, var.zdtt_store_buy_limit[i].idx)
+			DataPack.writeInt(npack, var.zdtt_store_buy_limit[i].count)
+		end
+	end
+	DataPack.flush(npack)
+end
+
+-- 请求购买
+ZDTT[27] = function( sysarg, dp )
+	local itemidx = DataPack.readInt(dp)
+	if itemidx <= 0 or corpsconfig.store[itemidx] == nil then return end
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	-- 评级限制
+	if not var.max_corps_score then
+		var.max_corps_score = 0
+	end
+	if var.max_corps_score == nil or var.max_corps_score < corpsconfig.store[itemidx].condition then
+		LActor.sendTipmsg( sysarg, Lang.ScriptTips.zdtt015, ttMessage )
+		return
+	end
+	-- 次数限制
+	local varidx = 0
+	if var.zdtt_store_buy_limit then
+		for i=1,#var.zdtt_store_buy_limit do
+			if var.zdtt_store_buy_limit[i].idx == itemidx then
+				varidx = i
+				if var.zdtt_store_buy_limit[i].count >= corpsconfig.store[itemidx].limitcount then
+					LActor.sendTipmsg( sysarg, Lang.ScriptTips.zdtt016, ttMessage )
+					return
+				end
+				break
+			end
+		end
+	else
+		var.zdtt_store_buy_limit = {}
+	end
+	-- 消耗限制
+	for i=1,#corpsconfig.store[itemidx].cost do
+		if corpsconfig.store[itemidx].cost[i].type == 1 then
+			if var.zdtt_personal_point == nil then
+				LActor.sendTipmsg( sysarg, Lang.ScriptTips.zdtt017, ttMessage )
+				return
+			end
+
+			if corpsconfig.store[itemidx].cost[i].count > var.zdtt_personal_point then
+				LActor.sendTipmsg( sysarg, Lang.ScriptTips.zdtt017, ttMessage )
+				return
+			end
+		elseif corpsconfig.store[itemidx].cost[i].type == 2 then
+			if LActor.CheckMoneyEnough(sysarg, corpsconfig.store[itemidx].cost[i].id, corpsconfig.store[itemidx].cost[i].count, true) == false then
+				return
+			end
+		end
+	end
+	
+	--购买武将卡判断
+	if CheckBuyWujiangCard(sysarg, corpsconfig.store[itemidx].item.id, corpsconfig.store[itemidx].item.count) ~= 0 then return end
+
+	-- 背包
+	if LActor.canAddItem(sysarg, corpsconfig.store[itemidx].item.id, corpsconfig.store[itemidx].item.count) == false then
+		-- LActor.sendTipmsg(sysarg, Lang.ScriptTips.znfp004, ttMessage)
+		LActor.SendGeneralTips(sysarg, 7, 0, 0)
+		return
+	end
+	-- 扣除次数
+	if varidx > 0 and var.zdtt_store_buy_limit[varidx] then
+		var.zdtt_store_buy_limit[varidx].count = var.zdtt_store_buy_limit[varidx].count + 1
+	else
+		local maxnum = #var.zdtt_store_buy_limit
+		var.zdtt_store_buy_limit[maxnum + 1] = {}
+		var.zdtt_store_buy_limit[maxnum + 1].idx = itemidx
+		var.zdtt_store_buy_limit[maxnum + 1].count = 1
+	end
+	-- 扣除消耗
+	for i=1,#corpsconfig.store[itemidx].cost do
+		if corpsconfig.store[itemidx].cost[i].type == 1 then
+			var.zdtt_personal_point = var.zdtt_personal_point - corpsconfig.store[itemidx].cost[i].count
+		elseif corpsconfig.store[itemidx].cost[i].type == 2 then
+			LActor.changeMoney(sysarg, corpsconfig.store[itemidx].cost[i].id, -corpsconfig.store[itemidx].cost[i].count, 1, true, "corps_store", "corps_store")
+		end
+	end
+	-- 获得物品
+	LActor.addItem(sysarg, corpsconfig.store[itemidx].item.id, 0, 0, corpsconfig.store[itemidx].item.count, 0, "corps_store", 1)
+	-- 下发数据
+	ZDTT[26](sysarg)
+end
+
+-- 新的一天
+ZDTT.NewDayAcrrive = function( sysarg )
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	var.zdtt_store_buy_limit = nil
+end
+
+-- 下发战队排行榜
+ZDTT[28] = function( sysarg, dp )
+	local rank = Ranking.getRanking(ZDTT.CORPS_RANKING_NAME)
+	if rank == nil then return end
+	local list = {}
+	local count = Ranking.getRankItemCount(rank)
+	if count > 30 then
+		count = 30
+	end
+	for i=1,count do
+		local item = Ranking.getItemFromIndex(rank, i - 1)
+		if item == nil then return end
+		list[i] = {}
+		list[i].name = Ranking.getSub(item, 0)
+		list[i].point = Ranking.getPoint(item)
+	end
+	local corpsid = LActor.getIntProperty(sysarg, PROP_CORPS_ID)
+	local myrank = -1
+	if corpsid > 0 then
+		myrank = Ranking.getItemIndexFromId(rank, corpsid)
+	end
+	-- 下发
+	local npack = DataPack.allocPacket(sysarg, 56, 28)
+	if not npack then return end
+	DataPack.writeInt(npack, myrank)
+	DataPack.writeInt(npack, #list)
+	for i=1,#list do
+		DataPack.writeInt(npack, list[i].point)
+		DataPack.writeString(npack, list[i].name)
+	end
+	DataPack.flush(npack)
+end
+
+-- 下发活动状态
+ZDTT[29] = function( sysarg, dp )
+	local state = 0
+	if IsZDTTStart(  ) == true then
+		state = 1
+	end
+	-- 下发
+	local npack = DataPack.allocPacket(sysarg, 56, 29)
+	if not npack then return end
+	DataPack.writeInt(npack, state)
+	DataPack.flush(npack)
+end
+
+-- 一键组队
+ZDTT[31] = function( sysarg, dp )
+	local corpsid = LActor.getIntProperty(sysarg, PROP_CORPS_ID)
+	if corpsid <= 0 then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.zdtt018, ttMessage)
+		return
+	end
+	local member = LuaHelp.getCorpsMember(corpsid)
+	if member == nil then return end
+	if #member <= 1 then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.zdtt019, ttMessage)
+		return
+	end
+	local aid = LActor.getActorId(sysarg)
+	for i=1,#member do
+		if member[i] ~= aid then
+			local actor = LActor.getActorById(member[i])
+			if actor then
+				LActor.inviteJoinTeam(sysarg, actor)
+			else
+				LActor.sendTipmsg(sysarg, Lang.ScriptTips.zdtt020, ttMessage)
+			end
+		end
+	end
+end
+
+-- GM
+function OnZDTTYJZD( sysarg )
+	ZDTT[31](sysarg)
+end
+
+-- 增加个人胜点
+function AddCorpsPersonalPoint( sysarg, type, count )
+	local var = LActor.getStaticVar(sysarg)
+	if var then
+		if var.zdtt_personal_point == nil then
+			var.zdtt_personal_point = 0
+		end
+		var.zdtt_personal_point = var.zdtt_personal_point + count
+	end
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeCorpsSys, ZDTT.NetWorkHandle)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeLeftTeam, ZDTT.OnLeftTeam)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogout, ZDTT.OnLogout)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeOnActorDeath, ZDTT.OnActorDie)
+EventCallDispatcher.registerFubenEnter(corpsconfig.zdtt.fbid, ZDTT.OnEnterFuben)
+EventCallDispatcher.registerFubenExit(corpsconfig.zdtt.fbid, ZDTT.OnExitFuben)
+EventCallDispatcher.registerFubenGameOverBefore(corpsconfig.zdtt.fbid, ZDTT.OnFubenTimeout)
+FubenCreateSceMrg.registerMsgHandler(corpsconfig.zdtt.fbid, ZDTT.DealActorNotEnter)
+TimerMsgFunc.register(TimerMsg.ZDTTBuffRefresh, ZDTT.RefreshBuff)
+TimerMsgFunc.register(TimerMsg.ZDTTActivityAward, ZDTT.ActivityAward)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, ZDTT.OnLogin)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, ZDTT.NewDayAcrrive)
+table.insert(PrecisionTimeFnTable, ZDTT.Macthing)
+
+-- GM COMMOND
+GmEventFuncList.register( "zdtts", OnZDTTStart, 1)
+GmEventFuncList.register( "zdtte", OnZDTTEnd, 1)
+GmEventFuncList.register( "zdttt", OnZDTTTest, 1)
+GmEventFuncList.register( "zdttp", OnZDTTPinji, 1)
+GmEventFuncList.register( "yjzd", OnZDTTYJZD, 1)
+GmEventFuncList.register( "zdc", OnZDTTClearScroe, 1)

@@ -1,0 +1,60 @@
+--#include "data\functions\Tasks\CrossSystem\CrossAuto.txt"
+--#include "data\functions\miscfunc.txt"  once
+
+--进入渡劫系统
+MiscsImplement.MoveToCroess = function (sysarg, msgid, packet)
+	local level = DataPack.readInt(packet)
+	if level == nil then
+		print( "MoveToCroess level is null" )
+		return 
+	end
+	moveCrossFuben(sysarg,level)
+end
+
+MiscsImplement.GetCroessList = function (sysarg, msgid, packet)
+	--local page = DataPack.readInt(pack)
+	--print("GetCroessList....")
+	GetCroesspage(sysarg)
+end
+
+MiscsImplement.LeaveCross = function (sysarg, msgid, packet)	
+	LeaveCrossFuben(sysarg)
+end
+
+MiscsImplement.AgainCross = function (sysarg, msgid, packet) --这个没用了，统一放到进入渡劫处理
+	--AgainCrossFuben(sysarg)
+end
+
+MiscsImplement.GetCroessReward = function (sysarg, msgid, packet)
+	local index = DataPack.readInt(packet)
+	local nstart = LActor.GetCrossStart(sysarg, index)
+	if nstart == 0 then return end
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	local processindex = math.floor((index - 1) / 32) + 1
+	local tmppos = index - (processindex - 1) * 32 - 1
+	if var.coressprocess == nil then var.coressprocess = {} end
+	if var.coressprocess[processindex] == nil then var.coressprocess[processindex] = 0 end
+	if not System.bitOPMask(var.coressprocess[processindex], tmppos) then
+		local effects = {} -- 特效项
+		local effect = {} -- 特效
+		effect.type = 2
+		effect.id = CrossSet[index].awardMoneyType
+		effect.count = CrossSet[index].awardMoneyNum
+		effects[#effects+1] = effect
+		MiscFunc.PlayItemEffect(sysarg, 3, effects)
+		LActor.changeMoney(sysarg, CrossSet[index].awardMoneyType, CrossSet[index].awardMoneyNum, 1, true, "dujie", "firstcross_"..index.."_award")
+		var.coressprocess[processindex] = System.bitOpSetMask(var.coressprocess[processindex], tmppos, true)
+	end
+	GetCroesspage(sysarg)
+end
+
+MiscsImplement.registerMsgHandler(LogicCmd.miscSys.sub.cMoveToCross  , MiscsImplement.MoveToCroess)
+
+MiscsImplement.registerMsgHandler(LogicCmd.miscSys.sub.cGetCroessList , MiscsImplement.GetCroessList)
+
+MiscsImplement.registerMsgHandler(LogicCmd.miscSys.sub.cLeaveCross , MiscsImplement.LeaveCross)
+
+MiscsImplement.registerMsgHandler(LogicCmd.miscSys.sub.cAgainCross , MiscsImplement.AgainCross)
+
+MiscsImplement.registerMsgHandler(135 , MiscsImplement.GetCroessReward)

@@ -1,0 +1,57 @@
+﻿{
+	quickFinish = false,
+	comp = {
+		type = 1,
+		scene = Lang.SceneName.s1,
+		npc = Lang.EntityName.n113,
+	},
+	nextacceptqid = 63,
+	timelimit = 0,
+	conds = {
+		{
+			id = 0,
+			type = 0,
+			count = 23,
+		},
+	},
+	target = {
+		{
+			id = 12,
+			type = 0,
+			count = 5,
+			location = {
+				y = 0,
+				x = 0,
+				sceneid = 1,
+				entityName = Lang.MonsterName.m12,
+				hideFastTransfer = false,
+			},
+		},
+	},
+	autofinish = false,
+	excludetree = true,
+	timeoutcleardata = false,
+	awards = {
+		{
+			id = 0,
+			type = 1,
+			count = 6750,
+		},
+		{
+			id = 0,
+			type = 4,
+			count = 20000,
+		},
+	},
+	id = 62,
+	commitjuqingkey = "none",
+	type = 0,
+	maxcount = 1,
+	acceptjuqingkey = "none",
+	name = Lang.Quest.n62,
+	parentid = 61,
+	cangiveup = false,
+	finishNext = true,
+	content = Lang.Quest.d62,
+	interval = 0,
+},

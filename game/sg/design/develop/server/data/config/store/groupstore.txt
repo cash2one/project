@@ -1,0 +1,516 @@
+--#include "..\..\language\LangCode.txt"
+--团购配置
+groupStore = 
+{
+	--活动id
+	activityId = 33,
+
+	--团购显示道具数量
+	shownum = 2,
+
+	--广播
+	broadcast = { num = {100, 200, 500}, msg = Lang.ScriptTips.tg003}, 
+
+	--道具列表
+	itemList = 
+	{
+		[1] = 
+		{
+			--轮循的起始日期,这个值一旦有更新到外网,要谨慎修改
+			startdate = "2013-12-11 00:00:00",
+			--				
+			{						
+				id =	1	,	--id从1开始,连续的,不能空,不能删		
+				item =	44541	,			
+				quality =	0	,			
+				strong =	0	,			
+				singleBuyLimit =	1 	,	
+				price = 50,	
+									
+				groupprice = 					
+				{					
+					{1, 10},
+					{10, 15}, --N人，返还N天珠 
+					{100, 20},
+					{200, 25},
+					{500, 30},
+				},					
+			},
+
+			--
+			{						
+				id =	2	,			
+				item =	44542	,			
+				quality =	0	,			
+				strong =	0	,			
+				singleBuyLimit =	1 	,	
+				price = 100,	
+									
+				groupprice = 					
+				{	
+					{1, 20},
+					{10, 30}, --N人，返还N天珠 
+					{100, 40},
+					{200, 50},
+					{500, 60},
+				},					
+			},
+			--					
+			{						
+				id =	3	,			
+				item =	44543	,			
+				quality =	0	,			
+				strong =	0	,			
+				singleBuyLimit =	1 	,	
+				price = 138,	
+									
+				groupprice = 					
+				{					
+					{1, 28},
+					{10, 42}, --N人，返还N天珠 
+					{100, 56},
+					{200, 69},
+					{500, 83},
+				},						
+			},						
+			--					
+			{						
+				id =	4	,			
+				item =	44544	,			
+				quality =	0	,			
+				strong =	0	,			
+				singleBuyLimit =	1 	,	
+				price = 100,	
+									
+				groupprice = 					
+				{					
+					{1, 20},
+					{10, 30}, --N人，返还N天珠 
+					{100, 40},
+					{200, 50},
+					{500, 60},
+				},					
+			},
+			--				
+			{						
+				id =	5	,			
+				item =	44546	,			
+				quality =	0	,			
+				strong =	0	,			
+				singleBuyLimit =	1 	,			
+				price = 180,	
+									
+				groupprice = 					
+				{					
+					{1, 36},
+					{10, 54}, --N人，返还N天珠 
+					{100, 72},
+					{200, 90},
+					{500, 108},
+				},						
+			},
+			--				
+			{						
+				id =	6	,			
+				item =	44547	,			
+				quality =	0	,			
+				strong =	0	,			
+				singleBuyLimit =	1 	,			
+				price = 80,	
+									
+				groupprice = 					
+				{					
+					{1, 16},
+					{10, 24}, --N人，返还N天珠 
+					{100, 32},
+					{200, 40},
+					{500, 48},
+				},						
+			},			
+						--				
+			{						
+				id =	7	,			
+				item =	44548	,			
+				quality =	0	,			
+				strong =	0	,			
+				singleBuyLimit =	1 	,			
+				price = 75,	
+									
+				groupprice = 					
+				{					
+					{1, 15},
+					{10, 23}, --N人，返还N天珠 
+					{100, 30},
+					{200, 38},
+					{500, 45},
+				},						
+			},
+									--				
+			{						
+				id =	8	,			
+				item =	48267	,			
+				quality =	0	,			
+				strong =	0	,			
+				singleBuyLimit =	1 	,			
+				price = 120,	
+									
+				groupprice = 					
+				{					
+					{1, 24},
+					{10, 36}, --N人，返还N天珠 
+					{100, 48},
+					{200, 60},
+					{500, 72},
+				},						
+			},
+												--				
+			{						
+				id =	9	,			
+				item =	48278	,			
+				quality =	0	,			
+				strong =	0	,			
+				singleBuyLimit =	1 	,			
+				price = 388,	
+									
+				groupprice = 					
+				{					
+					{1, 78},
+					{10, 117}, --N人，返还N天珠 
+					{100, 156},
+					{200, 194},
+					{500, 233},
+				},						
+			},
+															--				
+			{						
+				id =	10	,			
+				item =	18611	,			
+				quality =	0	,			
+				strong =	0	,			
+				singleBuyLimit =	1 	,			
+				price = 999,	
+									
+				groupprice = 					
+				{					
+					{1, 200},
+					{10, 300}, --N人，返还N天珠 
+					{100, 400},
+					{200, 500},
+					{500, 600},
+				},						
+			},
+		},
+
+ 		[2] = 
+ 		{
+ 			--轮循的起始日期,这个值一旦有更新到外网,要谨慎修改
+			startdate = "2013-12-3 00:00:00",
+			--					
+			{						
+				id =	1	,			--id从1开始,连续的,不能空,不能删
+				item =	44551	,			
+				quality =	0	,			
+				strong =	0	,			
+				singleBuyLimit =	1 	,			
+				price = 1500,	
+									
+				groupprice = 					
+				{					
+					{1, 300},
+					{10, 450}, --N人，返还N天珠 
+					{100, 600},
+					{200, 750},
+					{500, 900},
+				},					
+			},	
+			--					
+			{						
+				id =	2	,			
+				item =	44552	,			
+				quality =	0	,			
+				strong =	0	,			
+				singleBuyLimit =	1 	,			
+				price = 486,	
+									
+				groupprice = 					
+				{					
+					{1, 98},
+					{10, 146}, --N人，返还N天珠 
+					{100, 195},
+					{200, 243},
+					{500, 292},
+				},					
+			},	
+			--			
+			{						
+				id =	3	,			
+				item =	44555	,			
+				quality =	0	,			
+				strong =	0	,			
+				singleBuyLimit =	1 	,			
+				price = 666,	
+									
+				groupprice = 					
+				{					
+					{1, 134},
+					{10, 200}, --N人，返还N天珠 
+					{100, 267},
+					{200, 333},
+					{500, 400},
+				},					
+			},			
+		     --				
+			{						
+				id =	4	,			
+				item =	44558	,			
+				quality =	0	,			
+				strong =	0	,			
+				singleBuyLimit =	1 	,			
+				price = 621,	
+									
+				groupprice = 					
+				{					
+					{1, 125},
+					{10, 187}, --N人，返还N天珠 
+					{100, 249},
+					{200, 311},
+					{500, 373},
+				},					
+			},			
+		     --			
+			{						
+				id =	5	,			
+				item =	44553	,			
+				quality =	0	,			
+				strong =	0	,			
+				singleBuyLimit =	1 	,			
+				price = 1422,	
+									
+				groupprice = 					
+				{					
+					{1, 285},
+					{10, 427}, --N人，返还N天珠 
+					{100, 569},
+					{200, 711},
+					{500, 854},
+				},				
+			},	
+		     --			
+			{						
+				id =	6	,			
+				item =	44556	,			
+				quality =	0	,			
+				strong =	0	,			
+				singleBuyLimit =	1 	,			
+				price = 1494,	
+									
+				groupprice = 					
+				{					
+					{1, 299},
+					{10, 449}, --N人，返还N天珠 
+					{100, 598},
+					{200, 747},
+					{500, 897},
+				},				
+			},	
+		     --			
+			{						
+				id =	7	,			
+				item =	44559	,			
+				quality =	0	,			
+				strong =	0	,			
+				singleBuyLimit =	1 	,			
+				price = 1413,	
+									
+				groupprice = 					
+				{					
+					{1, 283},
+					{10, 424}, --N人，返还N天珠 
+					{100, 566},
+					{200, 707},
+					{500, 848},
+				},				
+			},
+		     --			
+			{						
+				id =	8	,			
+				item =	44561	,			
+				quality =	0	,			
+				strong =	0	,			
+				singleBuyLimit =	1 	,			
+				price = 1035,	
+									
+				groupprice = 					
+				{					
+					{1, 207},
+					{10, 311}, --N人，返还N天珠 
+					{100, 414},
+					{200, 518},
+					{500, 621},
+				},				
+			},	
+		     --			
+			{						
+				id =	9	,			
+				item =	44562	,			
+				quality =	0	,			
+				strong =	0	,			
+				singleBuyLimit =	1 	,			
+				price = 1000,	
+									
+				groupprice = 					
+				{					
+					{1, 200},
+					{10, 300}, --N人，返还N天珠 
+					{100, 400},
+					{200, 500},
+					{500, 600},
+				},				
+			},
+		     --			
+			{						
+				id =	10	,			
+				item =	44563	,			
+				quality =	0	,			
+				strong =	0	,			
+				singleBuyLimit =	1 	,			
+				price = 936,	
+									
+				groupprice = 					
+				{					
+					{1, 188},
+					{10, 281}, --N人，返还N天珠 
+					{100, 375},
+					{200, 468},
+					{500, 562},
+				},				
+			},
+		     --			
+			{						
+				id =	11	,			
+				item =	18231	,			
+				quality =	0	,			
+				strong =	0	,			
+				singleBuyLimit =	1 	,			
+				price = 640,	
+									
+				groupprice = 					
+				{					
+					{1, 128},
+					{10, 192}, --N人，返还N天珠 
+					{100, 256},
+					{200, 320},
+					{500, 384},
+				},				
+			},	
+		     --			
+			{						
+				id =	12	,			
+				item =	11630	,			
+				quality =	0	,			
+				strong =	0	,			
+				singleBuyLimit =	1 	,			
+				price = 888,	
+									
+				groupprice = 					
+				{					
+					{1, 178},
+					{10, 267}, --N人，返还N天珠 
+					{100, 356},
+					{200, 444},
+					{500, 533},
+				},				
+			},	
+		     --			
+			{						
+				id =	13	,			
+				item =	38207	,			
+				quality =	0	,			
+				strong =	0	,			
+				singleBuyLimit =	1 	,			
+				price = 498,	
+									
+				groupprice = 					
+				{					
+					{1, 100},
+					{10, 150}, --N人，返还N天珠 
+					{100, 200},
+					{200, 249},
+					{500, 299},
+				},				
+			},	
+		     --			
+			{						
+				id =	14	,			
+				item =	44554	,			
+				quality =	0	,			
+				strong =	0	,			
+				singleBuyLimit =	1 	,			
+				price = 2120,	
+									
+				groupprice = 					
+				{					
+					{1, 424},
+					{10, 636}, --N人，返还N天珠 
+					{100, 848},
+					{200, 1060},
+					{500, 1272},
+				},				
+			},
+		     --			
+			{						
+				id =	15	,			
+				item =	44557	,			
+				quality =	0	,			
+				strong =	0	,			
+				singleBuyLimit =	1 	,			
+				price = 1910,	
+									
+				groupprice = 					
+				{					
+					{1, 382},
+					{10, 573}, --N人，返还N天珠 
+					{100, 764},
+					{200, 955},
+					{500, 1146},
+				},				
+			},
+		     --			
+			{						
+				id =	16	,			
+				item =	44560	,			
+				quality =	0	,			
+				strong =	0	,			
+				singleBuyLimit =	1 	,			
+				price = 1805,	
+									
+				groupprice = 					
+				{					
+					{1, 361},
+					{10, 542}, --N人，返还N天珠 
+					{100, 722},
+					{200, 903},
+					{500, 1083},
+				},				
+			},
+		     --			
+			{						
+				id =	17	,			
+				item =	18230	,			
+				quality =	0	,			
+				strong =	0	,			
+				singleBuyLimit =	1 	,			
+				price = 160,	
+									
+				groupprice = 					
+				{					
+					{1, 32},
+					{10, 48}, --N人，返还N天珠 
+					{100, 64},
+					{200, 80},
+					{500, 96},
+				},				
+			},			
+		},
+	},
+}

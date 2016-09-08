@@ -1,0 +1,216 @@
+﻿-- 连续登录奖励配置
+
+--#include "data\config\misc\dtreward.txt" once
+--#include "data\functions\miscfunc.txt"  once
+
+ONLINEREWARD.DtRewardImplement = 
+{
+	EndTime = 0, -- 活动结束时间
+	StartTime = 0, -- 活动开始时间
+	-- 初始化
+	OnInit = function()
+		if DtRewardConf.sysFlag == nil then return end -- 不开启系统
+
+		print("dating reward system open")
+	end,
+
+	-- 玩家数据初始化，用来清空系统未开放时玩家保存的数据
+	InitVar = function(var)
+		-- 
+	end,
+
+	-- 发送领取结果
+	SendGetResult = function(sysarg, idx, ret)
+		local npack = DataPack.allocPacket(sysarg,138,45)
+		if npack == nil then return end
+		DataPack.writeInt(npack, idx)
+		DataPack.writeInt(npack, ret)
+		DataPack.flush(npack)
+	end,
+
+	-- 获取奖励信息
+	OnGetInfo = function(sysarg, packet)
+		if not DtRewardConf.sysFlag then return end
+
+		local var = LActor.getStaticVar(sysarg)
+		if var == nil then return end
+
+		local nday = var.dtlogintime
+		if nday == nil then
+			print("dtlogintime error")
+			return 
+		end
+
+		local rewards = var.dtrewards
+		local confs = DtRewardConf.rewards
+
+		local npack = DataPack.allocPacket(sysarg,138,44)
+		if npack == nil then return end
+		DataPack.writeInt(npack, nday)
+		DataPack.writeInt(npack, #confs)
+		for i=1, #confs do
+			-- 领取状态
+			local status = rewards[i]
+			if status == nil then status = 0 end -- 为空则是不可领取状态
+			DataPack.writeByte(npack, status)
+		end
+
+		DataPack.flush(npack)
+
+	end,
+
+	-- 领取
+	OnGetItem = function(sysarg, dp)
+		if not DtRewardConf.sysFlag then return end
+
+		local idx = DataPack.readInt(dp)
+
+		-- idx = 2
+
+		if idx == nil then return end
+
+		local var = LActor.getStaticVar(sysarg)
+		if var == nil or var.dtrewards == nil then
+			print("dtrewards is nil")
+			return 
+		end
+
+		local rewards = DtRewardConf.rewards[idx]
+
+		if rewards == nil then
+			print("dtrewards get idx error")
+			return 
+		end
+
+		local status = var.dtrewards[idx]
+		if status == nil or status == 0 then -- 不可领取
+			ONLINEREWARD.DtRewardImplement.SendGetResult(sysarg, idx, -1)
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.dt001, ttMessage)
+			return 
+		elseif status == 2 then -- 已经领取
+			ONLINEREWARD.DtRewardImplement.SendGetResult(sysarg, idx, -2)
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.dt002, ttMessage)
+			return
+		end
+
+		local needGrid = 0
+		for i=1,#rewards do
+			local reward = rewards[i]
+			if reward.type == 0 then
+				needGrid = needGrid + reward.count
+			end
+		end
+
+		if Item.getBagEmptyGridCount(sysarg) < needGrid then
+			ONLINEREWARD.DtRewardImplement.SendGetResult(sysarg, idx, -3)
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.dt003, ttMessage)
+			return
+		end
+
+		local effects = {} -- 用于播放特效
+		for i=1,#rewards do
+			local reward = rewards[i]
+			if reward.type == 0 then
+				LActor.addItem(sysarg,reward.id,0,0,reward.count,1,"dtrewarditem")
+
+				local effect = {} -- 特效
+			    effect.type = 1
+			    effect.id = reward.id
+			    effect.count = reward.count
+			    effects[#effects+1] = effect
+
+			elseif reward.type == 5 then
+				LActor.changeMoney(sysarg, reward.id, reward.count, 1, true, "dtlogin", "reward")
+
+				local effect = {} -- 特效
+			    effect.type = 2
+			    effect.id = reward.id
+			    effect.count = reward.count
+			    effects[#effects+1] = effect
+			end
+		end
+
+		-- 播放特效
+		if #effects > 0 then
+			MiscFunc.PlayItemEffect(sysarg, 9, effects)
+		end
+
+		var.dtrewards[idx] = 2
+
+		ONLINEREWARD.DtRewardImplement.SendGetResult(sysarg, idx, 0)
+	end,
+}
+
+
+-- 用户登录
+EventCallDispatcher.OnDtRewardLogin = function(sysarg)
+	if not DtRewardConf.sysFlag then return end
+
+	local var = LActor.getStaticVar(sysarg)
+
+	ONLINEREWARD.DtRewardImplement.InitVar(var)
+
+	-- 初始化
+	if var.dtrewards == nil or var.dtlogintime == nil then
+		var.dtlogintime = 1
+		var.dtrewards = {}
+		var.dtrewards[1] = 1
+	else
+		local nLast = LActor.getLastLogoutTime(sysarg)	--上次下线的时间
+
+		if nLast > 0 and System.getYesterday() < nLast and nLast < System.getToday() then -- 最后一次是昨天登录,增加连续登录次数
+			var.dtlogintime = var.dtlogintime + 1
+			if var.dtlogintime <= #DtRewardConf.rewards then -- 超过天数就不处理
+				var.dtrewards[var.dtlogintime] = 1
+			else
+				var.dtlogintime = 1 -- 超过的重新来
+				var.dtrewards = {}
+				var.dtrewards[1] = 1
+			end
+		elseif nLast < System.getToday() then -- 没有连续登录
+			var.dtlogintime = 1
+			var.dtrewards = {}
+			var.dtrewards[1] = 1
+		end
+	end
+
+	-- print("dtlogintime:"..var.dtlogintime)
+end
+
+-- 新的一天
+EventCallDispatcher.OnDtRewardNewDay = function(sysarg, arg)
+	if not DtRewardConf.sysFlag then return end
+
+	if arg[1] ~= nil and arg[1] == 1 then return end -- 登录的情况在上面已经处理
+
+	local var = LActor.getStaticVar(sysarg)
+
+	if var.dtrewards == nil or var.dtlogintime == nil then
+		print("OnDtRewardNewDay error")
+		return 
+	end
+
+	var.dtlogintime = var.dtlogintime + 1
+	if var.dtlogintime <= #DtRewardConf.rewards then -- 超过天数就不处理
+		var.dtrewards[var.dtlogintime] = 1
+	else
+		var.dtlogintime = 1 -- 超过的重新来
+		var.dtrewards = {}
+		var.dtrewards[1] = 1
+	end
+
+	-- print("dtlogintime:"..var.dtlogintime)
+end
+
+table.insert(InitFnTable,ONLINEREWARD.DtRewardImplement.OnInit) 
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, EventCallDispatcher.OnDtRewardLogin)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, EventCallDispatcher.OnDtRewardNewDay)
+
+function testdtreward(sysarg)
+	ONLINEREWARD.DtRewardImplement.OnGetItem(sysarg)
+end
+
+function testdtnewday(sysarg)
+	EventCallDispatcher.OnDtRewardNewDay(sysarg)
+end

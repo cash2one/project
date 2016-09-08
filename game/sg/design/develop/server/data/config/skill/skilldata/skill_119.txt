@@ -1,0 +1,15 @@
+﻿--击退 并对目前造成100%物理伤害
+{
+	id = 119,
+	name = Lang.Skill.s119Name,
+	desc = Lang.Skill.s119Desc,
+	vocation = 9,
+	skillType = 0,
+	skillSpellType = 0,
+	skillClass = 0,
+	commonCd = 0,
+	specialBuffCond = 0,
+	skillSubLevel = { 
+--#include "Skill_119_1.txt"
+	},
+},

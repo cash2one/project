@@ -1,0 +1,36 @@
+﻿{
+	--完成任务学习武功（1768），要跑去另外一个NPC处
+  trigger = 
+  { 
+    type = 2, 
+    value = 1768,
+  },
+ 
+  --引导的步骤 
+  steps = 
+  {
+    --第1步 追踪面板为“当前任务”标签页
+    {
+      cond = { type = 3, helpId = 1, data = 1 },
+
+      --引导玩家 点击追踪面板
+      action = { type = 2, helpId = 1, data = 1, desc = Lang.GuideLang.desc2 },
+    },
+
+    --第2步 打开NPC对话框
+    {
+      cond = { type = 7, helpId = 2, data = Lang.EntityName.n00418 },
+      
+      -- 引导玩家点击寻路到达NPC处，自动打开NPC对话框
+      action = { type = 5, helpId = 1768, data = Lang.EntityName.n00418, desc = Lang.GuideLang.desc14 },
+    },
+
+		--第3步  引导玩家NPC对话面板的操作（完成领取奖励）
+    {
+      cond = { type = 0, helpId = 0, data = 0 },
+
+      action = { type = 10, helpId = 2, data = Lang.Quest.q03518..Lang.GuideLang.name6, desc = Lang.GuideLang.desc15 },
+    },
+
+  } 
+}

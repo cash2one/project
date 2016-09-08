@@ -1,0 +1,33 @@
+﻿--lua script
+--Do something about Team
+--#include "data\envir\FuBen.txt" once
+
+
+--玩家离开队伍  [玩家的指针]
+EventCallDispatcher.handlerLeaveTeam = function (sysarg,arg)
+  local fbid = LActor.getFubenId( sysarg )
+
+  --LActor.exitFuben(sysarg)
+  LActor.exitTeam(sysarg)
+  --[[
+  if fbid ~= 0 then 
+    --print("dsage------------")
+    local teamPtr = arg[1]
+		if teamPtr == nil then return end
+		local memberPtr = LuaHelp.getTeamMemberListByPtr(teamPtr)
+		----print("----:"..table.getn(memberPtr))
+		--local teamCount = Fuben.getTeamOnlineMemberCount(teamPtr)
+		local mode = GetMode(sysarg,fbid)
+		local fbdata = FuBen[fbid]
+		if ( table.getn(memberPtr) < fbdata.minPlayCount ) then
+		
+			for i=1,table.getn(memberPtr) do
+			LActor.exitTeam(memberPtr[i])
+			LActor.exitFuben(memberPtr[i])
+			end
+		end
+  end
+  ]]
+end
+                                        
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeLeftTeam, EventCallDispatcher.handlerLeaveTeam)

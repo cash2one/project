@@ -1,0 +1,32 @@
+--#include "..\..\..\language\LangCode.txt"
+activity18Conf = {
+	activityId = 18,
+
+	activities =
+	{
+		[79] = {
+			--累计登录
+			id = 79,
+			--纸鸢物品id
+			item_id = 21502,
+			target = { 30405,30406,30407,30408,30409,30410,},
+
+			-- 在线时长
+			OnlineReward = {
+				{     id = 1,
+				     reward = {{type=2,id=0,count=30000}}
+				},
+				{     id = 2,
+				     reward = {{type=1,id=30304,count=1}}
+				},
+				{     id = 3,
+				     reward = {{type=1,id=26102,count=3}}
+				},
+				{     id = 4,
+				     reward = {{type=1,id=30202,count=1}}
+				},
+			},
+			LOGINTIMEINTERVALS = {300,900,1800,3600,},
+		},
+	},
+}

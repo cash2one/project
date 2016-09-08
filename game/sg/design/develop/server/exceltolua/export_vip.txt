@@ -1,0 +1,239 @@
+--导出VIP配置表
+----------------------------------------------------------------------------------------
+--写文件
+function writeConfig(configname, concent)
+	if not concent then
+		print("concent is null")
+		return
+	end
+
+	if not configname then
+		print("configname is null")
+		return
+	end
+
+	local f = io.open(configname, "w")
+	f:write(concent)
+	f:close()
+end
+
+--number_index_flag 为true的时候加入数字下标(默认不加)
+local function sz_T2S(_t , number_index_flag)
+   local szRet = "{"
+    function doT2S(_i, _v)
+        if "number" == type(_i) then
+        	if number_index_flag then
+            	szRet = szRet .. "[" .. _i .. "] = "	--导表中是有坑的，在需要将配置导入C++的时候一定要将这行注释掉（但是只有当table为数组时才能这样做）
+            end
+            if "number" == type(_v) then
+                szRet = szRet .. _v .. ","
+            elseif "string" == type(_v) then
+                szRet = szRet .. '"' .. _v .. '"' .. ","
+            elseif "table" == type(_v) then
+                szRet = szRet .. sz_T2S(_v,number_index_flag) .. ","
+            else
+                szRet = szRet .. "nil,"
+            end
+        elseif "string" == type(_i) then
+            szRet = szRet .. _i..' = '
+            if "number" == type(_v) then
+                szRet = szRet .. _v .. ","
+            elseif "string" == type(_v) then
+                szRet = szRet .. '"' .. _v .. '"' .. ","
+            elseif "table" == type(_v) then
+                szRet = szRet .. sz_T2S(_v,number_index_flag) .. ","
+            else
+                szRet = szRet .. "nil,"
+            end
+        end
+    end
+    table.foreach(_t, doT2S,0)
+    szRet = szRet .. "}"
+    return szRet
+end
+
+
+--切割字符串
+local function split(str, splitChar)
+    local subStrTab = {};
+    while true do
+        local pos = string.find(str, splitChar);
+        if (not pos) then
+            subStrTab[#subStrTab + 1] = str;
+            break;
+        end
+        local subStr = string.sub(str, 1, pos - 1);
+        subStrTab[#subStrTab + 1] = subStr;
+        str = string.sub(str, pos + 1, #str);
+    end
+    return subStrTab;
+end
+
+
+local function getPrizeUnion(prize_str,line)
+	if not prize_str then
+		return
+	end
+	local prize_union = {}
+	local item_str = split(prize_str,',')
+	for i , v in pairs(item_str) do
+		local item = split(v,'_')
+		if #item == 4 then
+			table.insert(prize_union , {tp = (tonumber(item[1]) or 0) , id = (tonumber(item[2]) or 0) , n = (tonumber(item[3]) or 0) , bind = (tonumber(item[4]) or 0) })
+		else
+			print(tostring(line).." line vip_prize error split is not 3")
+		end
+	end
+	return prize_union
+end
+
+local function getDayQuestAdds(str)
+	local reUnion = {}
+	local currUnion = split(str,',')
+	for i , v in ipairs(currUnion) do
+		local currFubenUnion = split(v,'_')
+		if #currFubenUnion == 2 then
+			local currIndex = tonumber(currFubenUnion[1])
+			if currIndex then
+				reUnion[currIndex] = tonumber(currFubenUnion[2]) or 0
+			end
+		end
+	end
+
+	return reUnion
+end
+
+
+
+local function format_vip_str(t)
+	local str = "VIPConfig = {\n"	
+.."		yuanbaos = %s,\n"
+.."		vipTitle = %s,\n"
+.."		dayFubenAdd = %s,\n"
+.."		jjcPlayAdd = %s,\n"
+.."		jjcBuyAdd = %s,\n"
+.."		moneyTreeAdd = %s,\n"
+.."		dayQuestAdds = %s,\n"
+.."		payQuestupdates = %s,\n"
+.."		payQuestLimit = %s,\n"
+.."		friendAdd = %s,\n"
+.."		enemyAdd = %s,\n"
+.."		blackAdd = %s,\n"
+.."		sendBoxKey = %s,\n"
+.."		receiveBoxKey = %s,\n"
+.."		stroryFubenAdd = %s,\n"
+.."     storyFuBenTotalAdd = %s,\n"
+.."		sendFlowerAdd = %s,\n"
+.."		txt = %s,\n"
+.."		telePort = %s,\n"
+.."		tongtianReset = %s,\n"
+.."		tongtianPushCd = %s,\n"
+.."		signReward = %s,\n"
+.."		exteraSignNum = %s,\n"
+.."		vipPrize = {\n%s\n 		},\n"
+.."		treasurePractice = %s,\n"
+.."		chatWait = %s,\n"
+.." 	}"
+
+	local vipPrizeStr = ""
+	for i = 1 , #(t.vipPrize) do
+		local currStr = " 		"..sz_T2S(t.vipPrize[i])..",\n"
+		vipPrizeStr = vipPrizeStr..currStr
+	end
+
+	local totalStr = string.format(str , sz_T2S(t.yuanbaos) , sz_T2S(t.vipTitle) , sz_T2S(t.dayFubenAdd , true) , sz_T2S(t.jjcPlayAdd),
+									sz_T2S(t.jjcBuyAdd) , sz_T2S(t.moneyTreeAdd) , sz_T2S(t.dayQuestAdds) , 
+									sz_T2S(t.payQuestupdates) , sz_T2S(t.payQuestLimit) , sz_T2S(t.friendAdd) , 
+									sz_T2S(t.enemyAdd) , sz_T2S(t.blackAdd) , sz_T2S(t.sendBoxKey) , sz_T2S(t.receiveBoxKey),
+									sz_T2S(t.stroryFubenAdd) , sz_T2S(t.storyFuBenTotalAdd),  sz_T2S(t.sendFlowerAdd) ,sz_T2S(t.txt), 
+									sz_T2S(t.telePort) ,sz_T2S(t.tongtianReset) ,sz_T2S(t.tongtianPushCd) ,sz_T2S(t.signReward),sz_T2S(t.exteraSignNum) ,
+									vipPrizeStr,sz_T2S(t.treasurePractice),sz_T2S(t.chatWait))
+	return totalStr
+end
+
+
+function ReadVip()
+	local objexcel = CExcelReader:new()
+	if not objexcel then
+		print("objexcel is null")
+		return
+	end
+	print("start1")
+	objexcel:Init_App()
+	objexcel:OpenRead()
+	print("start2")
+	local obj = objexcel:LoadSheetByIndex(1)
+	print("start3")
+	if not obj then
+		print("LoadSheetByIndex失败!")
+		objexcel:Close()
+		objexcel:Quit_App()
+		return
+	end
+	print("start4")
+
+	local nCount = objexcel:GetCurrentSheetColCount()
+	local mCount = objexcel:GetCurrentSheetRowCount()
+
+
+	print("nCount", nCount)
+	print("mCount", mCount)
+
+
+	local VIPConfig = {yuanbaos = {} , vipTitle = {} , dayFubenAdd = {}, jjcPlayAdd = {}, jjcBuyAdd = {} , moneyTreeAdd = {} , 
+						dayQuestAdds = {} , payQuestupdates = {} , payQuestLimit = {} , friendAdd = {} , enemyAdd = {},
+						blackAdd = {} , sendBoxKey = {} , receiveBoxKey = {} , stroryFubenAdd = {} , storyFuBenTotalAdd = {}, sendFlowerAdd = {},txt = {},
+						telePort = {} , tongtianReset = {}, tongtianPushCd = {},signReward = {},exteraSignNum = {},
+						vipPrize = {},treasurePractice = {},chatWait = {}}
+	local tmp = {'vip_level','yuanbaos','vipTitle', 'dayFubenAdd', 'jjcPlayAdd', 'jjcBuyAdd', 'moneyTreeAdd', 
+				'dayQuestAdds', 'payQuestupdates', 'payQuestLimit', 'friendAdd', 'enemyAdd',
+						'blackAdd', 'sendBoxKey', 'receiveBoxKey', 'stroryFubenAdd', 'storyFuBenTotalAdd', 'sendFlowerAdd','txt',
+						'telePort', 'tongtianReset','tongtianPushCd','signReward','exteraSignNum',
+						'vipPrize','treasurePractice','chatWait'}
+	for i = 2, mCount do
+		local vip_level = tonumber(objexcel:ReadCellAsString(i, 1))
+		if nil == vip_level then
+			print("error vip_level i:"..tostring(i))
+			return
+		end
+
+		for j = 2 , (#tmp - 3) do
+			if tmp[j] == 'txt' then
+				VIPConfig[tmp[j]][vip_level] = objexcel:ReadCellAsString(i, j)
+			elseif tmp[j] == 'dayFubenAdd' then
+				local currStr = objexcel:ReadCellAsString(i, j)
+				VIPConfig[tmp[j]][vip_level] = getDayQuestAdds(currStr)
+			else
+				VIPConfig[tmp[j]][vip_level] = tonumber(objexcel:ReadCellAsString(i, j)) or 0
+			end
+		end
+		local prize_str = objexcel:ReadCellAsString(i, #tmp - 2)
+		local vip_prize = getPrizeUnion(prize_str,i)
+		if vip_prize then
+			VIPConfig.vipPrize[vip_level] = vip_prize
+		end
+		VIPConfig.treasurePractice[vip_level] = tonumber(objexcel:ReadCellAsString(i, #tmp - 1)) or 0
+
+		VIPConfig.chatWait[vip_level] = tonumber(objexcel:ReadCellAsString(i, #tmp)) or 0
+	end
+
+	local RechargeStr = "\n\n--充值金额 \nrechargeLimitNum = {60, 300, 980, 1980, 3280, 6480}\n"
+
+
+	local temp = {VIPConfig = VIPConfig}
+	print("here9")
+	local str = format_vip_str(VIPConfig)..RechargeStr
+	print("here10")
+	--写文件
+	writeConfig(itemfile, str)
+	print("here11")
+	objexcel:WriteFile("vip.txt",str)
+	print("here12")
+	print(str)
+
+	objexcel:Close()
+	objexcel:Quit_App()
+	objexcel:delete()
+
+
+end

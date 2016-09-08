@@ -1,0 +1,54 @@
+--展示宝箱配置
+BaoItemList = {
+	{ --第一个宝箱
+		itemList = 
+		{
+			-- 配置奖励的物品
+			{count = 1, itemid =	18730	,present= 	4000,},
+			{count = 1, itemid =	18740	,present=	1000,},
+			{count = 1, itemid =	18512	,present=	500	,},
+			{count = 1, itemid =	18522	,present=	500	,},
+			{count = 1, itemid =	18532	,present=	500	,},
+			{count = 1, itemid =	18542	,present=	500	,},
+			{count = 1, itemid =	18604	,present=	500	,},
+			{count = 1, itemid =	28221	,present=	500	,},
+			{count = 1, itemid =	28231	,present=	1000,},
+			{count = 1, itemid =	18510	,present=	1000,},
+
+		},
+    },
+    { --第二个宝箱
+		itemList = 
+		{
+			-- 配置奖励的物品
+			{count = 1, itemid =	18730	,present= 	4000,},
+			{count = 1, itemid =	18740	,present=	1000,},
+			{count = 1, itemid =	18512	,present=	500	,},
+			{count = 1, itemid =	18522	,present=	500	,},
+			{count = 1, itemid =	18532	,present=	500	,},
+			{count = 1, itemid =	18542	,present=	500	,},
+			{count = 1, itemid =	18604	,present=	500	,},
+			{count = 1, itemid =	28221	,present=	500	,},
+			{count = 1, itemid =	28231	,present=	1000,},
+			{count = 1, itemid =	18510	,present=	1000,},
+
+		},
+    },
+    {--第三个宝箱
+		itemList = 
+		{
+			-- 配置奖励的物品
+			{count = 1, itemid =	18730	,present= 	4000,},
+			{count = 1, itemid =	18740	,present=	1000,},
+			{count = 1, itemid =	18512	,present=	500,},
+			{count = 1, itemid =	18522	,present=	500,},
+			{count = 1, itemid =	18532	,present=	500,},
+			{count = 1, itemid =	18542	,present=	500,},
+			{count = 1, itemid =	18604	,present=	500,},
+			{count = 1, itemid =	28221	,present=	500,},
+			{count = 1, itemid =	28231	,present=	1000,},
+			{count = 1, itemid =	18510	,present=	1000,},
+
+		},
+    },
+} 

@@ -1,0 +1,479 @@
+﻿-- 龙脉珍宝
+longmaizhenbaoconfig = {
+	fubenId = {16},			-- 副本ID
+	sceneId = {96},			-- 场景ID
+	sceneJieSuan = {96},
+	fubenToSence = {96},
+	isfanpai = 2, 				--是否翻牌 1 翻牌 2 普通奖励
+
+	toNextTeleport = {},		-- 传送门
+
+	gameTime = 3600,				-- 游戏时间
+
+	playerPos = {{26,21},{26,20},{25,21}},		-- 玩家进入副本的位置
+
+	NPCMonster = {
+		monsterId = 100,
+		posX1 = 30, --怪物x坐标范围
+		posX2 = 40,
+	},
+	
+	allmonstercout = 10, --一共刷这么多只 之后就副本结算
+	limitTime = 3600,				-- 结算的时间限制
+	RefreshMonsterTime = 1,				-- 刷怪事件
+	monsterIdList = {3001,3002,3003,3004,3005,3006,3007,3008,3009,3010,3011,3012,3013,3014,3015,3016,3017,3018,3019,3020,3021,3022,3023,3024,3025,3026,3027,3028,3029,3030},
+
+	gradeType = 1,				-- 评级类型：1表示时间，2表示层数
+
+	TongguanAward =
+	{
+		{22101,1,1,1,10000},-- {奖励ID,类型,数量,是否绑定,概率}	(其中类型部分：1表示的是物品 2 钱（贝币,天珠）3 经验,按需求往后面加)
+	},
+
+	--进入副本后 创建怪物的数量位置
+	startRefreshMonst =
+	{
+		[1]= --副本难度
+		{
+			{
+				monsterId = 3001, --怪物id
+				posX1 = 9, --怪物x坐标范围
+				posX2 = 37,
+				posY1 = 13,
+				posY2 = 26,
+				nCount = 1,
+			},
+			
+		},
+		[2]=
+		{
+			{
+				monsterId = 3011, --怪物id
+				posX1 = 9, --怪物x坐标范围
+				posX2 = 37,
+				posY1 = 13,
+				posY2 = 26,
+				nCount = 1,
+			},
+		},
+		[3]=
+		{
+			{
+				monsterId = 3021, --怪物id
+				posX1 = 9, --怪物x坐标范围
+				posX2 = 37,
+				posY1 = 13,
+				posY2 = 26,
+				nCount = 1,
+			},
+		},
+	},
+	--刷新怪物
+	RefreshMonster =
+	{
+		[1] =--副本难度
+		{
+		{
+			    monsterId = 3001, --怪物id
+			    posX1 = 9, --怪物x坐标范围
+			    posX2 = 37,
+			    posY1 = 13,
+			    posY2 = 26,
+			    nCount = 1,
+			    rate = 10,
+			    },
+			    {
+			    monsterId = 3002, --怪物id
+			    posX1 = 9, --怪物x坐标范围
+			    posX2 = 37,
+			    posY1 = 13,
+			    posY2 = 26,
+			    nCount = 1,
+			    rate = 10,
+			    },
+			    {
+			    monsterId = 3003, --怪物id
+			    posX1 = 9, --怪物x坐标范围
+			    posX2 = 37,
+			    posY1 = 13,
+			    posY2 = 26,
+			    nCount = 1,
+			    rate = 10,
+			    },
+			    {
+			    monsterId = 3004, --怪物id
+			    posX1 = 9, --怪物x坐标范围
+			    posX2 = 37,
+			    posY1 = 13,
+			    posY2 = 26,
+			    nCount = 1,
+			    rate = 10,
+			    },
+			    {
+			    monsterId = 3005, --怪物id
+			    posX1 = 9, --怪物x坐标范围
+			    posX2 = 37,
+			    posY1 = 13,
+			    posY2 = 26,
+			    nCount = 1,
+			    rate = 10,
+			    },
+			    {
+			    monsterId = 3006, --怪物id
+			    posX1 = 9, --怪物x坐标范围
+			    posX2 = 37,
+			    posY1 = 13,
+			    posY2 = 26,
+			    nCount = 1,
+			    rate = 10,
+			    },
+			    {
+			    monsterId = 3007, --怪物id
+			    posX1 = 9, --怪物x坐标范围
+			    posX2 = 37,
+			    posY1 = 13,
+			    posY2 = 26,
+			    nCount = 1,
+			    rate = 10,
+			    },
+			    {
+			    monsterId = 3008, --怪物id
+			    posX1 = 9, --怪物x坐标范围
+			    posX2 = 37,
+			    posY1 = 13,
+			    posY2 = 26,
+			    nCount = 1,
+			    rate = 10,
+			    },
+			    {
+			    monsterId = 3009, --怪物id
+			    posX1 = 9, --怪物x坐标范围
+			    posX2 = 37,
+			    posY1 = 13,
+			    posY2 = 26,
+			    nCount = 1,
+			    rate = 10,
+			    },
+			    {
+			    monsterId = 3010, --怪物id
+			    posX1 = 9, --怪物x坐标范围
+			    posX2 = 37,
+			    posY1 = 13,
+			    posY2 = 26,
+			    nCount = 1,
+			    rate = 10,
+			    },
+
+		},
+		[2] =
+		{
+		{
+			    monsterId = 3011, --怪物id
+			    posX1 = 9, --怪物x坐标范围
+			    posX2 = 37,
+			    posY1 = 13,
+			    posY2 = 26,
+			    nCount = 1,
+			    rate = 10,
+			    },
+			    {
+			    monsterId = 3012, --怪物id
+			    posX1 = 9, --怪物x坐标范围
+			    posX2 = 37,
+			    posY1 = 13,
+			    posY2 = 26,
+			    nCount = 1,
+			    rate = 10,
+			    },
+			    {
+			    monsterId = 3013, --怪物id
+			    posX1 = 9, --怪物x坐标范围
+			    posX2 = 37,
+			    posY1 = 13,
+			    posY2 = 26,
+			    nCount = 1,
+			    rate = 10,
+			    },
+			    {
+			    monsterId = 3014, --怪物id
+			    posX1 = 9, --怪物x坐标范围
+			    posX2 = 37,
+			    posY1 = 13,
+			    posY2 = 26,
+			    nCount = 1,
+			    rate = 10,
+			    },
+			    {
+			    monsterId = 3015, --怪物id
+			    posX1 = 9, --怪物x坐标范围
+			    posX2 = 37,
+			    posY1 = 13,
+			    posY2 = 26,
+			    nCount = 1,
+			    rate = 10,
+			    },
+			    {
+			    monsterId = 3016, --怪物id
+			    posX1 = 9, --怪物x坐标范围
+			    posX2 = 37,
+			    posY1 = 13,
+			    posY2 = 26,
+			    nCount = 1,
+			    rate = 10,
+			    },
+			    {
+			    monsterId = 3017, --怪物id
+			    posX1 = 9, --怪物x坐标范围
+			    posX2 = 37,
+			    posY1 = 13,
+			    posY2 = 26,
+			    nCount = 1,
+			    rate = 10,
+			    },
+			    {
+			    monsterId = 3018, --怪物id
+			    posX1 = 9, --怪物x坐标范围
+			    posX2 = 37,
+			    posY1 = 13,
+			    posY2 = 26,
+			    nCount = 1,
+			    rate = 10,
+			    },
+			    {
+			    monsterId = 3019, --怪物id
+			    posX1 = 9, --怪物x坐标范围
+			    posX2 = 37,
+			    posY1 = 13,
+			    posY2 = 26,
+			    nCount = 1,
+			    rate = 10,
+			    },
+			    {
+			    monsterId = 3020, --怪物id
+			    posX1 = 9, --怪物x坐标范围
+			    posX2 = 37,
+			    posY1 = 13,
+			    posY2 = 26,
+			    nCount = 1,
+			    rate = 10,
+			    },
+
+		},
+		[3] =
+		{
+			{
+			    monsterId = 3021, --怪物id
+			    posX1 = 9, --怪物x坐标范围
+			    posX2 = 37,
+			    posY1 = 13,
+			    posY2 = 26,
+			    nCount = 1,
+			    rate = 10,
+			   },
+			{
+			    monsterId = 3022, --怪物id
+			    posX1 = 9, --怪物x坐标范围
+			    posX2 = 37,
+			    posY1 = 13,
+			    posY2 = 26,
+			    nCount = 1,
+			    rate = 10,
+			   },
+			{
+			    monsterId = 3023, --怪物id
+			    posX1 = 9, --怪物x坐标范围
+			    posX2 = 37,
+			    posY1 = 13,
+			    posY2 = 26,
+			    nCount = 1,
+			    rate = 10,
+			   },
+			{
+			    monsterId = 3024, --怪物id
+			    posX1 = 9, --怪物x坐标范围
+			    posX2 = 37,
+			    posY1 = 13,
+			    posY2 = 26,
+			    nCount = 1,
+			    rate = 10,
+			   },
+			{
+			    monsterId = 3025, --怪物id
+			    posX1 = 9, --怪物x坐标范围
+			    posX2 = 37,
+			    posY1 = 13,
+			    posY2 = 26,
+			    nCount = 1,
+			    rate = 10,
+			   },
+			{
+			    monsterId = 3026, --怪物id
+			    posX1 = 9, --怪物x坐标范围
+			    posX2 = 37,
+			    posY1 = 13,
+			    posY2 = 26,
+			    nCount = 1,
+			    rate = 10,
+			   },
+			{
+			    monsterId = 3027, --怪物id
+			    posX1 = 9, --怪物x坐标范围
+			    posX2 = 37,
+			    posY1 = 13,
+			    posY2 = 26,
+			    nCount = 1,
+			    rate = 10,
+			   },
+			{
+			    monsterId = 3028, --怪物id
+			    posX1 = 9, --怪物x坐标范围
+			    posX2 = 37,
+			    posY1 = 13,
+			    posY2 = 26,
+			    nCount = 1,
+			    rate = 10,
+			   },
+			{
+			    monsterId = 3029, --怪物id
+			    posX1 = 9, --怪物x坐标范围
+			    posX2 = 37,
+			    posY1 = 13,
+			    posY2 = 26,
+			    nCount = 1,
+			    rate = 10,
+			   },
+			{
+			    monsterId = 3030, --怪物id
+			    posX1 = 9, --怪物x坐标范围
+			    posX2 = 37,
+			    posY1 = 13,
+			    posY2 = 26,
+			    nCount = 1,
+			    rate = 10,
+			   },
+						
+		},
+	},
+	-- 怪物buff
+	monsterbuff =
+	{
+		[1]= --副本难度
+		{
+			{
+				{type = 18, group = 0, value = 0.2, times=1800, interval=1, name=Lang.Misc.buff07, timeoverlay = true}, -- 血量上限
+				{type = 22, group = 0, value = 0.3, times=1800, interval=1, name=Lang.Misc.buff08, timeoverlay = true}, -- 物攻倍率
+			},
+			{
+				{type = 18, group = 0, value = 0.4, times=1800, interval=1, name=Lang.Misc.buff07, timeoverlay = true}, -- 血量上限
+				{type = 22, group = 0, value = 0.7, times=1800, interval=1, name=Lang.Misc.buff08, timeoverlay = true}, -- 物攻倍率
+			},
+			{
+				{type = 18, group = 0, value = 0.6, times=1800, interval=1, name=Lang.Misc.buff07, timeoverlay = true}, -- 血量上限
+				{type = 22, group = 0, value = 1.1, times=1800, interval=1, name=Lang.Misc.buff08, timeoverlay = true}, -- 物攻倍率
+			},
+			{
+				{type = 18, group = 0, value = 0.7, times=1800, interval=1, name=Lang.Misc.buff07, timeoverlay = true}, -- 血量上限
+				{type = 22, group = 0, value = 1.5, times=1800, interval=1, name=Lang.Misc.buff08, timeoverlay = true}, -- 物攻倍率
+			},
+			{
+				{type = 18, group = 0, value = 0.8, times=1800, interval=1, name=Lang.Misc.buff07, timeoverlay = true}, -- 血量上限
+				{type = 22, group = 0, value = 1.9, times=1800, interval=1, name=Lang.Misc.buff08, timeoverlay = true}, -- 物攻倍率
+			},
+			{
+				{type = 18, group = 0, value = 0.9, times=1800, interval=1, name=Lang.Misc.buff07, timeoverlay = true}, -- 血量上限
+				{type = 22, group = 0, value = 2.3, times=1800, interval=1, name=Lang.Misc.buff08, timeoverlay = true}, -- 物攻倍率
+			},
+			{
+				{type = 18, group = 0, value = 1.0, times=1800, interval=1, name=Lang.Misc.buff07, timeoverlay = true}, -- 血量上限
+				{type = 22, group = 0, value = 2.7, times=1800, interval=1, name=Lang.Misc.buff08, timeoverlay = true}, -- 物攻倍率
+			},
+			{
+				{type = 18, group = 0, value = 1.1, times=1800, interval=1, name=Lang.Misc.buff07, timeoverlay = true}, -- 血量上限
+				{type = 22, group = 0, value = 3.1, times=1800, interval=1, name=Lang.Misc.buff08, timeoverlay = true}, -- 物攻倍率
+			},
+			{
+				{type = 18, group = 0, value = 1.2, times=1800, interval=1, name=Lang.Misc.buff07, timeoverlay = true}, -- 血量上限
+				{type = 22, group = 0, value = 3.5, times=1800, interval=1, name=Lang.Misc.buff08, timeoverlay = true}, -- 物攻倍率
+			},
+		},
+		[2]=
+		{
+			{
+				{type = 18, group = 0, value = 0.2, times=1800, interval=1, name=Lang.Misc.buff07, timeoverlay = true}, -- 血量上限
+				{type = 22, group = 0, value = 0.3, times=1800, interval=1, name=Lang.Misc.buff08, timeoverlay = true}, -- 物攻倍率
+			},
+			{
+				{type = 18, group = 0, value = 0.4, times=1800, interval=1, name=Lang.Misc.buff07, timeoverlay = true}, -- 血量上限
+				{type = 22, group = 0, value = 0.7, times=1800, interval=1, name=Lang.Misc.buff08, timeoverlay = true}, -- 物攻倍率
+			},
+			{
+				{type = 18, group = 0, value = 0.6, times=1800, interval=1, name=Lang.Misc.buff07, timeoverlay = true}, -- 血量上限
+				{type = 22, group = 0, value = 1.1, times=1800, interval=1, name=Lang.Misc.buff08, timeoverlay = true}, -- 物攻倍率
+			},
+			{
+				{type = 18, group = 0, value = 0.7, times=1800, interval=1, name=Lang.Misc.buff07, timeoverlay = true}, -- 血量上限
+				{type = 22, group = 0, value = 1.5, times=1800, interval=1, name=Lang.Misc.buff08, timeoverlay = true}, -- 物攻倍率
+			},
+			{
+				{type = 18, group = 0, value = 0.8, times=1800, interval=1, name=Lang.Misc.buff07, timeoverlay = true}, -- 血量上限
+				{type = 22, group = 0, value = 1.9, times=1800, interval=1, name=Lang.Misc.buff08, timeoverlay = true}, -- 物攻倍率
+			},
+			{
+				{type = 18, group = 0, value = 0.9, times=1800, interval=1, name=Lang.Misc.buff07, timeoverlay = true}, -- 血量上限
+				{type = 22, group = 0, value = 2.3, times=1800, interval=1, name=Lang.Misc.buff08, timeoverlay = true}, -- 物攻倍率
+			},
+			{
+				{type = 18, group = 0, value = 1.0, times=1800, interval=1, name=Lang.Misc.buff07, timeoverlay = true}, -- 血量上限
+				{type = 22, group = 0, value = 2.7, times=1800, interval=1, name=Lang.Misc.buff08, timeoverlay = true}, -- 物攻倍率
+			},
+			{
+				{type = 18, group = 0, value = 1.1, times=1800, interval=1, name=Lang.Misc.buff07, timeoverlay = true}, -- 血量上限
+				{type = 22, group = 0, value = 3.1, times=1800, interval=1, name=Lang.Misc.buff08, timeoverlay = true}, -- 物攻倍率
+			},
+			{
+				{type = 18, group = 0, value = 1.2, times=1800, interval=1, name=Lang.Misc.buff07, timeoverlay = true}, -- 血量上限
+				{type = 22, group = 0, value = 3.5, times=1800, interval=1, name=Lang.Misc.buff08, timeoverlay = true}, -- 物攻倍率
+			},
+		},
+		[3]=
+		{
+			{
+				{type = 18, group = 0, value = 0.2, times=1800, interval=1, name=Lang.Misc.buff07, timeoverlay = true}, -- 血量上限
+				{type = 22, group = 0, value = 0.3, times=1800, interval=1, name=Lang.Misc.buff08, timeoverlay = true}, -- 物攻倍率
+			},
+			{
+				{type = 18, group = 0, value = 0.4, times=1800, interval=1, name=Lang.Misc.buff07, timeoverlay = true}, -- 血量上限
+				{type = 22, group = 0, value = 0.7, times=1800, interval=1, name=Lang.Misc.buff08, timeoverlay = true}, -- 物攻倍率
+			},
+			{
+				{type = 18, group = 0, value = 0.6, times=1800, interval=1, name=Lang.Misc.buff07, timeoverlay = true}, -- 血量上限
+				{type = 22, group = 0, value = 1.1, times=1800, interval=1, name=Lang.Misc.buff08, timeoverlay = true}, -- 物攻倍率
+			},
+			{
+				{type = 18, group = 0, value = 0.7, times=1800, interval=1, name=Lang.Misc.buff07, timeoverlay = true}, -- 血量上限
+				{type = 22, group = 0, value = 1.5, times=1800, interval=1, name=Lang.Misc.buff08, timeoverlay = true}, -- 物攻倍率
+			},
+			{
+				{type = 18, group = 0, value = 0.8, times=1800, interval=1, name=Lang.Misc.buff07, timeoverlay = true}, -- 血量上限
+				{type = 22, group = 0, value = 1.9, times=1800, interval=1, name=Lang.Misc.buff08, timeoverlay = true}, -- 物攻倍率
+			},
+			{
+				{type = 18, group = 0, value = 0.9, times=1800, interval=1, name=Lang.Misc.buff07, timeoverlay = true}, -- 血量上限
+				{type = 22, group = 0, value = 2.3, times=1800, interval=1, name=Lang.Misc.buff08, timeoverlay = true}, -- 物攻倍率
+			},
+			{
+				{type = 18, group = 0, value = 1.0, times=1800, interval=1, name=Lang.Misc.buff07, timeoverlay = true}, -- 血量上限
+				{type = 22, group = 0, value = 2.7, times=1800, interval=1, name=Lang.Misc.buff08, timeoverlay = true}, -- 物攻倍率
+			},
+			{
+				{type = 18, group = 0, value = 1.1, times=1800, interval=1, name=Lang.Misc.buff07, timeoverlay = true}, -- 血量上限
+				{type = 22, group = 0, value = 3.1, times=1800, interval=1, name=Lang.Misc.buff08, timeoverlay = true}, -- 物攻倍率
+			},
+			{
+				{type = 18, group = 0, value = 1.2, times=1800, interval=1, name=Lang.Misc.buff07, timeoverlay = true}, -- 血量上限
+				{type = 22, group = 0, value = 3.5, times=1800, interval=1, name=Lang.Misc.buff08, timeoverlay = true}, -- 物攻倍率
+			},
+		},
+	},
+
+}

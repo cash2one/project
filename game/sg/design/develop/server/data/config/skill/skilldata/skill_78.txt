@@ -1,0 +1,28 @@
+
+-- 霜剑分身1技能
+{
+	id=78,
+	name=Lang.Skill.s78Name,
+	desc=Lang.Skill.s78Desc,
+	vocation=0,	
+	skillClass =7,
+	skillType=6,
+	skillSpellType=0,
+	commonCd=0,
+	specialBuffCond =0,
+actions=
+	{
+		-- 11 = 结印施法， 15 = 跳跃施法
+		{ act = 2, effect = 0 },
+		{ act = 2, effect = 0 },
+		{ act = 2, effect = 0 },
+	},
+
+	skillSubLevel=
+	{
+--#include "Skill_78_1.txt"	
+	}
+},
+
+
+

@@ -1,0 +1,32 @@
+﻿{
+	id = 44719,
+	name = Lang.Item.n44719,
+	desc = Lang.Item.i44719,
+	type = 82,
+  sellType = 0,	
+	icon = 666,
+	shape = {0,0,0,0,0,0,0,0},
+	color = 3,
+	dura = 0,
+	dup = 0,
+	colGroup = 0,
+	dealType = 0,
+	dealPrice = 1000000,
+	time = 0,
+	suitId = 1,
+	maxStage = true,
+	staitcAttrs = { 
+	},
+	strongAttrs = { 	
+	},
+	qualityAttrs = { 	
+	},
+	flags = { 
+		recordLog = true,
+		hasHole = true, 
+	},
+	conds = { 
+		{ cond = 1, value = 1, },
+		{ cond = 3, value = 0, }, 
+	},
+},

@@ -1,0 +1,15 @@
+﻿--皇陵秘境副本怪物技能：天威煌炎2
+{
+	id = 90,
+	name = Lang.Skill.s90Name,
+	desc = Lang.Skill.s90Desc,
+	vocation = 9,
+	skillType = 0,
+	skillSpellType = 3,
+	skillClass = 9,
+	commonCd = 0,
+	specialBuffCond = 0,
+	skillSubLevel = { 
+--#include "Skill_90_1.txt"
+	},
+},

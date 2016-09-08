@@ -1,0 +1,122 @@
+﻿--#include "data\language\LangCode.txt" once
+--#include "data\config\task\tafang.txt" once
+--#include "data\functions\bifunc.txt" once
+--#include "data\functions\tasks\fengcereward\fcactivefunc.txt" once
+--#include "data\functions\actorevent\hirefriendshandler.txt" once
+
+--#include "data\functions\config\fubenconfig\mojierukoufubenconfig.txt" once		-- 魔界入口
+
+local Tafang = {}
+
+Tafang.OnEnterTafang = function(sysarg, hfb, way)
+	-- 进入塔防副本的处理，如果是第一次进入，则要刷新怪物（帮自己的）
+	local hScene = LActor.getSceneHandle(sysarg)
+	if way == 1 then
+		LActor.registerKillAllMonster( sysarg, true, 1 )
+
+		--print("Tafang.OnEnterTafang")
+		Fuben.SetFubenTime(hfb,MoJieRuKouFubenConfig.gameTime)
+		Fuben.SetFubenGameTime(hfb,MoJieRuKouFubenConfig.gameTime)
+
+		--print("time:  "..MoJieRuKouFubenConfig.gameTime)
+
+		for i=1, #TafangConf.babyList do
+			local conf = TafangConf.babyList[i]
+			local monsterPtr = LActor.createMonster(sysarg, conf.mid, conf.x, conf.y, 0)
+			LActor.addState(monsterPtr, esStateAttackedForbid)
+
+			LActor.changeToPet(monsterPtr)
+		end
+
+		LActor.sendTipmsg(sysarg, Lang.TaskTalk.tf01, ttScreenCenter)
+		
+		local monster = Fuben.getMonsterPtrById(hScene, TafangConf.treeid)
+
+		LActor.regScriptCallback( monster, nil, 15000, 16000, 1, "TafangTip", 1, sysarg )
+
+		LActor.ChangeCaleValue(sysarg, caleOther1, 0, false)	-- 波数
+		LActor.ChangeCaleValue(sysarg, caleOther2, 0, false)	-- 杀怪数
+		LActor.SendAllCaleValue(sysarg)
+	else
+		-- 重现上线的，要设置怪物的归属
+		local monster = Fuben.getMonsterPtrById(hScene, TafangConf.treeid)
+		if monster == nil then
+			--LActor.exitFuben(sysarg)
+			Fuben.SetFubenTime(hfb, 1)
+			return
+		end
+
+		for i=1, #TafangConf.babyList do
+			local conf = TafangConf.babyList[i]
+			local monster = Fuben.getMonsterPtrById(hScene, conf.mid)
+			LActor.setOwner(monster, sysarg)
+		end
+	end
+	LActor.triggerTarget( sysarg, enATMoJie )
+	FCActivityHandler.ActivityReward (sysarg)
+end
+
+-- 发送塔防的提示语
+function TafangTip( monster, idx, sysarg)
+	-- 必须是在塔防副本才发提示语
+	--print("---------tips")
+	local fb = LActor.getFubenId(monster)
+	if fb ~= TafangConf.fubenid then return end
+	
+	local ptr = LActor.getFubenPrt(monster)
+	if ptr ~= LActor.getFubenPrt(sysarg) then return end
+
+	local st = Fuben.getDyanmicVar(ptr)
+
+	if idx == 1 then
+		LActor.sendTipmsg(sysarg, Lang.TaskTalk.tf03, ttScreenCenter)
+	end
+
+	st.idx = idx -- 第几波的怪物
+	
+	LActor.SendAndChangeCaleValue(sysarg, caleOther1, idx, false)
+	if idx > TafangConf.maxTime then
+		if LActor.getLiveMonsterCount(sysarg, 0) <= 0 then
+			-- 副本结束
+			local str = string.format(Lang.TaskTalk.tf02, LActor.getName(sysarg), st.idx)
+			-- System.broadcastTipmsg(str, ttHearsay)
+			--LActor.exitFuben(sysarg)
+		end	
+	end
+	
+	if idx < TafangConf.maxTime then
+		LActor.regScriptCallback( monster, nil, 40000, 40000, 1, "TafangTip", idx + 1, sysarg )
+	end
+	--print("tafang time:" .. st.idx)
+end
+
+-- 退出副本
+Tafang.OnTafangExit = function(sysarg, hfb, way)
+ 	if way ~= 2 then
+		Fuben.SetFubenTime(hfb, 1)	-- 马上释放副本，免得再执行回调
+	end
+
+	-- BI统计
+	local fbPtr = Fuben.getFubenPtr(hfb)
+	if fbPtr == nil then return end
+
+	local var = Fuben.getDyanmicVar(fbPtr)
+	if var == nil then return end
+	
+	if var.idx ~= nil then
+		local step_str = tostring(var.idx)
+		if step_str ~= nil then
+			BiFunc.LogFubenExit(sysarg, "mo_jie_exit", step_str)
+		end
+		-- 触发成就
+		LActor.triggerAchieveEvent(sysarg, 47, TafangConf.fubenid, var.idx)
+	end
+    --add wupeng 雇用好友
+	HirefriendsList.Hirefriends_Exit(sysarg)
+end
+
+
+
+
+EventCallDispatcher.registerFubenEnter(TafangConf.fubenid, Tafang.OnEnterTafang)
+EventCallDispatcher.registerFubenExit(TafangConf.fubenid, Tafang.OnTafangExit)

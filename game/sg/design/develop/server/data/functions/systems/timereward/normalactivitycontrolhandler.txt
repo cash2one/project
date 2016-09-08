@@ -1,0 +1,440 @@
+--运营后台活动管理脚本，之通用活动
+
+ONLINEREWARD.CheckNormalActRewardInfo = function(sysarg, id, ifclear)
+	-- print("ONLINEREWARD.CheckNormalActRewardInfo id:"..id)
+	local oneconf = activityConf[id]
+	if oneconf == nil then return 0 end
+
+	--排行榜活动,先看排行榜
+	local rankactiveid = activitytypelist[6]
+	--排行榜
+	if oneconf.activities[rankactiveid] ~= nil and oneconf.activities[rankactiveid].id ~= nil then
+		--print("ONLINEREWARD.CheckNormalActRewardInfo 6")
+		local activeConf = oneconf.activities[rankactiveid]
+		for p,k in ipairs(activeConf.rankactivities) do
+			local rankConf = k
+			local rank = Ranking.getRanking(rankConf.CharmRankName)
+			if rank ~= nil then
+				local count = Ranking.getRankItemCount(rank)
+				local name = LActor.getName(sysarg)
+
+				for i=1,count do
+					local rankItem = Ranking.getItemFromIndex(rank, i-1)
+					local aname = Ranking.getSub(rankItem, 0)
+					local gt = 0
+					--print("ONLINEREWARD.CheckNormalActRewardInfo rank info index:"..i..",aname:"..aname)
+					if name == aname then -- 自己的，判断是否能领
+						gt = Ranking.getSubInt(rankItem, 1)
+						--print("ONLINEREWARD.CheckNormalActRewardInfo rank info gt:"..gt)
+						if gt ~= 2 then -- 未领取，判断自己能否领取
+							--print("ONLINEREWARD.CheckNormalActRewardInfo rank info has")
+							return 1
+						end
+					end
+				end
+			end
+		end
+	end
+
+	-- 特别处理90号活动,87号活动有通用和非通用子活动
+	--[[if id == 90 then
+		local ifreward = ONLINEREWARD.CheckActivityRewardInfo[90](sysarg)
+		if 1 == ifreward then
+			return 1
+		end
+	end
+	-- 特别处理91号活动,87号活动有通用和非通用子活动
+	if id == 91 then
+		local ifreward = ONLINEREWARD.CheckActivityRewardInfo[90](sysarg)
+		if 1 == ifreward then
+			return 1
+		end
+	end]]
+
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then  return 0 end
+	if var.activityList == nil then return 0 end
+	if var.activityList[id] == nil then return 0 end
+	local record = 0
+
+	--活动列表
+	local actlist = activitytypelist
+
+	--登陆活动
+	if oneconf.activities[actlist[1]] ~= nil and oneconf.activities[actlist[1]].id ~= nil then
+		--print("ONLINEREWARD.CheckNormalActRewardInfo 1")
+		if ONLINEREWARD.NorActRewardNumInfo(var.activityList[id].loginnum, 
+			oneconf.activities[actlist[1]].loginReward, var.activityList[id].loginreward) then
+			return 1 
+		end
+	end
+
+	--充值
+	if oneconf.activities[actlist[2]] ~= nil and oneconf.activities[actlist[2]].id ~= nil then
+		--print("ONLINEREWARD.CheckNormalActRewardInfo 2")
+		if ONLINEREWARD.NorActRewardNumInfo(var.activityList[id].rechargenum, 
+			oneconf.activities[actlist[2]].rechargerewards, var.activityList[id].rechargereward) then
+			return 1 
+		end
+	end
+
+	--消费
+	if oneconf.activities[actlist[3]] ~= nil and oneconf.activities[actlist[3]].id ~= nil then
+		--print("CheckNormalActRewardInfo id == " .. id .. "  3")
+		if ONLINEREWARD.NorActRewardNumInfo(var.activityList[id].consumenum, 
+			oneconf.activities[actlist[3]].consumerewards, var.activityList[id].consumereward) then
+			return 1 
+		end
+	end
+
+	--每日充值
+	if oneconf.activities[actlist[4]] ~= nil and oneconf.activities[actlist[4]].id ~= nil then
+		--print("ONLINEREWARD.CheckNormalActRewardInfo 4")
+		if var.activityList[id].drechargerewardnum ~= nil and var.activityList[id].drechargerewardnum ~= 0 then return 1 end
+	end
+
+	--每日消费
+	if oneconf.activities[actlist[5]] ~= nil and oneconf.activities[actlist[5]].id ~= nil then
+		--print("ONLINEREWARD.CheckNormalActRewardInfo 5")
+		if var.activityList[id].dconsumerewardnum ~= nil and var.activityList[id].dconsumerewardnum ~= 0 then return 1 end
+	end
+
+	--活动id,充值活动,重复单礼包
+	if oneconf.activities[actlist[7]] ~= nil and oneconf.activities[actlist[7]].id ~= nil then
+		--print("ONLINEREWARD.CheckNormalActRewardInfo 7")
+		if var.activityList[id].rechargereward ~= nil and var.activityList[id].rechargereward ~= 0 then return 1 end
+	end
+
+	--活动id,消费活动,重复单礼包
+	if oneconf.activities[actlist[8]] ~= nil and oneconf.activities[actlist[8]].id ~= nil then
+		--print("ONLINEREWARD.CheckNormalActRewardInfo 8")
+		if var.activityList[id].consumereward ~= nil and var.activityList[id].consumereward ~= 0 then return 1 end
+	end
+
+	--活动id,每日充值,多礼包
+	if oneconf.activities[actlist[9]] ~= nil and oneconf.activities[actlist[9]].id ~= nil then
+		if var.activityList[id].drechargerewardnum ~= nil then
+			--print("ONLINEREWARD.CheckNormalActRewardInfo 9")
+			for i,v in ipairs(oneconf.activities[actlist[9]].rechargerewards) do
+				if var.activityList[id].drechargerewardnum[i] ~= nil and var.activityList[id].drechargerewardnum[i] ~= 0 then return 1 end
+			end
+		end
+	end
+
+	--活动id,每日消费,多礼包
+	if oneconf.activities[actlist[10]] ~= nil and oneconf.activities[actlist[10]].id ~= nil then
+		if var.activityList[id].dconsumerewardnum ~= nil then
+			--print("ONLINEREWARD.CheckNormalActRewardInfo 10")
+			for i,v in ipairs(oneconf.activities[actlist[10]].consumerewards) do
+				if var.activityList[id].dconsumerewardnum[i] ~= nil and var.activityList[id].dconsumerewardnum[i] ~= 0 then return 1 end
+			end
+		end
+	end
+
+	--登陆有礼活动
+	if oneconf.activities[actlist[11]] ~= nil and oneconf.activities[actlist[11]].id ~= nil then
+		--print("ONLINEREWARD.CheckNormalActRewardInfo 11")
+		if var.activityList[id].onceloginreward ~= nil and var.activityList[id].onceloginreward == 1 then return 1 end
+	end
+
+	--日常活动累积
+	if oneconf.activities[actlist[12]] ~= nil and oneconf.activities[actlist[12]].id ~= nil then
+		--print("ONLINEREWARD.CheckNormalActRewardInfo 12")
+		if ONLINEREWARD.NorActRewardNumInfo(var.activityList[id].dailyactivitynum, 
+			oneconf.activities[actlist[12]].activityrewards, var.activityList[id].dailyactivityreward) then
+			return 1 
+		end
+	end
+
+	--每日登陆有礼
+	if oneconf.activities[actlist[13]] ~= nil and oneconf.activities[actlist[13]].id ~= nil then
+		--print("ONLINEREWARD.CheckNormalActRewardInfo 13")
+		record = var.activityList[id].dailyloginrecord or 0
+		local reward = var.activityList[id].dailyloginreward or 0
+		if record ~= 0 and reward ~= record then return 1 end
+	end
+
+	--活动累积
+	if oneconf.activities[actlist[14]] ~= nil and oneconf.activities[actlist[14]].id ~= nil then
+		--print("ONLINEREWARD.CheckNormalActRewardInfo 14 check")
+		if ONLINEREWARD.NorActRewardNumInfo(var.activityList[id].tailactivitynum, 
+			oneconf.activities[actlist[14]].activityrewards, var.activityList[id].tailactivityreward) then
+			return 1 
+		end
+	end
+
+	--活动id,单笔充值,多礼包
+	if oneconf.activities[actlist[16]] ~= nil and oneconf.activities[actlist[16]].id ~= nil then
+		if var.activityList[id].record ~= nil then
+			--print("ONLINEREWARD.CheckNormalActRewardInfo 16")
+			for i,v in ipairs(oneconf.activities[actlist[16]].awards) do
+				if var.activityList[id].record[i] ~= nil and var.activityList[id].record[i] ~= 0 then return 1 end
+			end
+		end
+	end
+
+	--活动id,充值返利,活动结束后按日返利
+	if oneconf.activities[actlist[17]] ~= nil and oneconf.activities[actlist[17]].id ~= nil then
+		if var.activityList[id].record ~= nil and var.activityList[id].record >= oneconf.activities[actlist[17]].awards[1][1] 
+			and var.activityList[id].reward == nil then
+			local state,starttime,endtime = ONLINEREWARD.GetActivityState(id, var.download_from)
+			for i=#oneconf.activities[actlist[17]].awards,1,-1 do
+				if var.activityList[id].record >= oneconf.activities[actlist[17]].awards[i][1] then
+					ONLINEREWARD.BuyDaysRewards(sysarg, oneconf.activities[actlist[17]].awards[i][2], endtime)
+					--print("ONLINEREWARD.CheckNormalActRewardInfo 17,typeid:"..oneconf.activities[actlist[17]].awards[i][2]..",endtime:"..endtime)
+					break
+				end
+			end
+			var.activityList[id].reward = 1
+		end
+	end
+
+	--活动id,花费天珠,按日返利
+	if oneconf.activities[actlist[18]] ~= nil and oneconf.activities[actlist[18]].id ~= nil then
+		local typeid = oneconf.activities[actlist[18]].rewardtype
+		record = ONLINEREWARD.checkDaysRewardsEnd(sysarg, typeid)
+		if record == 1 then 
+			return 1
+		else
+			ONLINEREWARD.ClearDaysRewards(sysarg, typeid)
+		end
+	end
+
+	-- 特别处理87号活动,87号活动有通用和非通用子活动
+	if id == 87 then
+		local ifreward = ONLINEREWARD.CheckActivityRewardInfo[87](sysarg)
+		if 1 == ifreward then
+			return 1
+		end
+	end
+
+	--如果没有活动奖励，清掉记录(注意这个函数是不在活动时间才会调用，这个前提才能清)，主要是为了省内存，还有省了重复检测
+	if ifclear == nil or ifclear then
+		var.activityList[id] = nil
+	end
+
+	return 0
+end
+
+ONLINEREWARD.NorActRewardNumInfo = function(num, rewards, rewardflag)
+	if rewards == nil or num == nil then return false end
+	local record = 0
+	local tailnum = num
+	local tailflag = rewardflag or 0
+
+	for i=1,#rewards do
+		if tailnum >= rewards[i][1] then 
+			record = System.bitOpSetMask(record, i - 1, true) 
+		else
+			break
+		end
+	end
+
+	if record ~= 0 and (tailflag == nil or tailflag ~= record) then return true end
+
+	return false
+end
+
+ONLINEREWARD.giveNorActReward = function(sysarg, actid, typeid, num, rewards, flag)
+	if sysarg == nil or rewards == nil or num == nil then return end
+	local record = 0
+	local tailnum = num
+	local tailflag = flag or 0
+
+	for i=1,#rewards do
+		if num >= rewards[i][1] then 
+			if not System.bitOPMask(tailflag, i - 1) then
+				local itemnum = rewards[i][3] or 1
+				ONLINEREWARD.ResetActivityMail(sysarg, actid, typeid, rewards[i][2], itemnum)
+			end
+		else
+			break
+		end
+	end
+end
+
+
+--后台调控,活动重开后,清理数据,通用活动
+ONLINEREWARD.ResetNormalActivityInfo = function(sysarg, id)
+	print("ONLINEREWARD.ResetNormalActivityInfo")
+	local var = LActor.getStaticVar(sysarg)
+
+	--print("ONLINEREWARD.ResetNormalActivityInfo ..pre1")
+	
+	if var == nil then return end
+	if var.activityList == nil then return end
+	if var.activityList[id] == nil then return end
+
+	local actorid = LActor.getActorId(sysarg)
+	print("ResetNormalActivityInfo start actorid:"..actorid..",activtyid:"..id)
+
+	--print("ONLINEREWARD.ResetNormalActivityInfo ..pre")
+	
+	--各种蛋碎的邮件
+	local oneconf = activityConf[id]
+	if oneconf == nil then return 0 end
+
+	--print("ONLINEREWARD.ResetNormalActivityInfo ..after")
+
+	--活动列表
+	local actlist = activitytypelist
+
+	--登陆活动
+	if oneconf.activities[actlist[1]] ~= nil and oneconf.activities[actlist[1]].id ~= nil then
+		ONLINEREWARD.giveNorActReward(sysarg, id, actlist[1], var.activityList[id].loginnum, 
+			oneconf.activities[actlist[1]].loginReward, var.activityList[id].loginreward)
+	end
+
+	--print("ONLINEREWARD.ResetNormalActivityInfo .."..actlist[2])
+
+	--充值
+	if oneconf.activities[actlist[2]] ~= nil and oneconf.activities[actlist[2]].id ~= nil then
+		print("rechargeId:"..actlist[2])
+		ONLINEREWARD.giveNorActReward(sysarg, id, actlist[2], var.activityList[id].rechargenum, 
+			oneconf.activities[actlist[2]].rechargerewards, var.activityList[id].rechargereward)
+	end
+
+	--消费
+	if oneconf.activities[actlist[3]] ~= nil and oneconf.activities[actlist[3]].id ~= nil then
+		--print("ONLINEREWARD.ResetNormalActivityInfo 3")
+		ONLINEREWARD.giveNorActReward(sysarg, id, actlist[3], var.activityList[id].consumenum, 
+			oneconf.activities[actlist[3]].consumerewards, var.activityList[id].consumereward)
+	end
+
+	--每日充值
+	if oneconf.activities[actlist[4]] ~= nil and oneconf.activities[actlist[4]].id ~= nil then
+		--print("ONLINEREWARD.ResetNormalActivityInfo 4")
+		if var.activityList[id].drechargerewardnum ~= nil and var.activityList[id].drechargerewardnum ~= 0 then
+			--邮件
+			ONLINEREWARD.ResetActivityMail(sysarg, id, actlist[4], oneconf.activities[actlist[4]].awardId, var.activityList[id].drechargerewardnum)
+		end
+	end
+
+	--每日消费
+	if oneconf.activities[actlist[5]] ~= nil and oneconf.activities[actlist[5]].id ~= nil then
+		--print("ONLINEREWARD.ResetNormalActivityInfo 5")
+		if var.activityList[id].dconsumerewardnum ~= nil and var.activityList[id].dconsumerewardnum ~= 0 then
+			--邮件
+			ONLINEREWARD.ResetActivityMail(sysarg, id, actlist[5], oneconf.activities[actlist[5]].awardId, var.activityList[id].dconsumerewardnum)
+		end
+	end
+
+	--活动id,充值活动,重复单礼包
+	if oneconf.activities[actlist[7]] ~= nil and oneconf.activities[actlist[7]].id ~= nil then
+		--print("ONLINEREWARD.ResetNormalActivityInfo 7")
+		if var.activityList[id].rechargereward ~= nil and var.activityList[id].rechargereward ~= 0 then
+			--邮件
+			ONLINEREWARD.ResetActivityMail(sysarg, id, actlist[7], oneconf.activities[actlist[7]].awardId, var.activityList[id].rechargereward)
+		end
+	end
+
+	--活动id,消费活动,重复单礼包
+	if oneconf.activities[actlist[8]] ~= nil and oneconf.activities[actlist[8]].id ~= nil then
+		--print("ONLINEREWARD.ResetNormalActivityInfo 8")
+		if var.activityList[id].consumereward ~= nil and var.activityList[id].consumereward ~= 0 then
+			--邮件
+			ONLINEREWARD.ResetActivityMail(sysarg, id, actlist[8], oneconf.activities[actlist[8]].awardId, var.activityList[id].consumereward)
+		end
+	end
+
+	--活动id,每日充值,多礼包
+	if oneconf.activities[actlist[9]] ~= nil and oneconf.activities[actlist[9]].id ~= nil then
+		if oneconf.activities[actlist[9]].id ~= nil and var.activityList[id].drechargerewardnum ~= nil then
+			--print("ONLINEREWARD.ResetNormalActivityInfo 9")
+			for i,v in ipairs(oneconf.activities[actlist[9]].rechargerewards) do
+				if var.activityList[id].drechargerewardnum[i] ~= nil and var.activityList[id].drechargerewardnum[i] ~= 0 then
+					--邮件
+					ONLINEREWARD.ResetActivityMail(sysarg, id, actlist[9], v[2], var.activityList[id].drechargerewardnum[i])
+				end
+			end
+		end
+	end
+
+	--活动id,每日消费,多礼包
+	if oneconf.activities[actlist[10]] ~= nil and oneconf.activities[actlist[10]].id ~= nil and var.activityList[id].dconsumerewardnum ~= nil then
+		--print("ONLINEREWARD.ResetNormalActivityInfo 10")
+		for i,v in ipairs(oneconf.activities[actlist[10]].consumerewards) do
+			if var.activityList[id].dconsumerewardnum[i] ~= nil and var.activityList[id].dconsumerewardnum[i] ~= 0 then
+				--邮件
+				ONLINEREWARD.ResetActivityMail(sysarg, id, actlist[10], v[2], var.activityList[id].dconsumerewardnum[i])
+			end
+		end
+	end
+
+	--登陆有礼活动
+	if oneconf.activities[actlist[11]] ~= nil and oneconf.activities[actlist[11]].id ~= nil then
+		if var.activityList[id].onceloginreward ~= nil and var.activityList[id].onceloginreward == 1 then 
+			--邮件
+			ONLINEREWARD.ResetActivityMail(sysarg, id, actlist[11], oneconf.activities[actlist[11]].awardId, 1)
+		end
+	end
+
+	--日常活动累积
+	if oneconf.activities[actlist[12]] ~= nil and oneconf.activities[actlist[12]].id ~= nil then
+		ONLINEREWARD.giveNorActReward(sysarg, id, actlist[12], var.activityList[id].dailyactivitynum, 
+			oneconf.activities[actlist[12]].activityrewards, var.activityList[id].dailyactivityreward)
+	end
+
+	--每日登陆有礼
+	if oneconf.activities[actlist[13]] ~= nil and oneconf.activities[actlist[13]].id ~= nil then
+		local awards = oneconf.activities[actlist[13]].awards
+		if var.activityList[id].dailyloginrecord ~= nil and var.activityList[id].dailyloginrecord > 0 then
+			if var.activityList[id].dailyloginreward == nil then var.activityList[id].dailyloginreward = 0 end
+			for i=1,#awards do
+				if System.bitOPMask(var.activityList[id].dailyloginrecord, i - 1) then 
+					if not System.bitOPMask(var.activityList[id].dailyloginreward, i - 1) then
+						ONLINEREWARD.ResetActivityMail(sysarg, id, actlist[13], awards[i], 1)
+					end
+				else
+					break
+				end
+			end
+		end
+	end
+
+	--活动累积
+	if oneconf.activities[actlist[14]] ~= nil and oneconf.activities[actlist[14]].id ~= nil then
+		ONLINEREWARD.giveNorActReward(sysarg, id, actlist[14], var.activityList[id].tailactivitynum, 
+			oneconf.activities[actlist[14]].activityrewards, var.activityList[id].tailactivityreward)
+	end
+
+	--活动id,单笔充值
+	if oneconf.activities[actlist[16]] ~= nil and oneconf.activities[actlist[16]].id ~= nil and var.activityList[id].record ~= nil then
+		--print("ONLINEREWARD.ResetNormalActivityInfo 16")
+		for i,v in ipairs(oneconf.activities[actlist[16]].awards) do
+			if var.activityList[id].record[i] ~= nil and var.activityList[id].record[i] ~= 0 then
+				--邮件
+				ONLINEREWARD.ResetActivityMail(sysarg, id, actlist[16], v[2], var.activityList[id].record[i])
+			end
+		end
+	end
+
+	--活动id,花费天珠,按日返利
+	if oneconf.activities[actlist[18]] ~= nil and oneconf.activities[actlist[18]].id ~= nil then
+		print("ONLINEREWARD.ResetNormalActivityInfo 18")
+		local typeid = oneconf.activities[actlist[18]].rewardtype
+		ONLINEREWARD.ClearDaysRewards(sysarg, typeid)
+	end
+
+	-- 特别处理87号活动,87号活动有通用和非通用子活动
+	if id == 87 then
+		ONLINEREWARD.ResetActivityInfo[87](sysarg)
+	end
+
+	print("ResetNormalActivityInfo end actorid:"..actorid..",activtyid:"..id)
+	var.activityList[id] = nil
+end
+
+--后台调控,活动重开后,清理数据,发邮件
+ONLINEREWARD.ResetActivityMail = function(sysarg, msgid, msg2id, itemid, itemcount)
+	--print("msgid:"..msgid)
+	--print("msg2id:"..msg2id)
+	--print("itemcount:"..itemcount)
+	local activityName = Lang.ActivityMail.activityName[msgid]
+	local childrenName = Lang.ActivityMail.childrenName[msg2id]
+	if activityName == nil then activityName = "" end
+	if childrenName == nil then childrenName = "" end
+	local content = string.format(Lang.ActivityMail.content, activityName, childrenName)
+	local actorid = LActor.getActorId(sysarg)
+	System.sendGmMailOffLine(actorid,  content, 1, itemid, itemcount, 1)
+end

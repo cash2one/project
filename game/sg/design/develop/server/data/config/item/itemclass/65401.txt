@@ -1,0 +1,26 @@
+{
+	id = 65401,
+	name = Lang.Item.n65401,
+	desc = Lang.Item.i65401,
+	type = 20,
+	sellType = 21,
+	icon = 65401,
+	shape = {0,0,0,0,0,0,0,0},
+	color = 3,
+	dura = 0,
+	dup = 99,
+	colGroup = 0,
+	dealType = 0,
+	dealPrice = 0,
+	time = 0,
+	staitcAttrs = {  
+	},
+	strongAttrs = {  
+	},
+	flags = { 
+		recordLog = true, 
+	},
+	conds = { 
+		{ cond = 1, value = 50, }, 
+	},
+},

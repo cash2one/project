@@ -1,0 +1,23 @@
+﻿--#include "data\config\activity\serverquestions.txt" once
+answerConfig=
+{
+  openFlag = true,
+  questions = question_server.questions,  --题目列表
+  rightAnswer = question_server.rightAnswer,  --和上面的题目对应
+  answerTime = 20, --答题时间间隔
+  nextTime = 5, --题目跳转时间
+  minLevel = 30, --参与答题等级
+  maxAttendNum = 1, --玩家一天参加的最大次数
+  totalTime = 600, --活动持续时间
+  awardNumList = {1000, 200}, --每对一题给予的{贝币,银两}
+  rankAwardList = {
+    {1, 1512000, 20000}, --第一名的奖励,经验,真气
+    {3, 1134000, 15000}, --2-3名,经验,真气
+    {6, 756000, 10000},
+    {10, 504000, 5000},
+    {100, 300000, 2500},
+  },
+  maxRankNum = 100, --排行榜最大数量
+  questionTotalNum = 30, --一次活动答题数量
+  maxHelpNum = 3, --每种求助最大的可使用次数
+}

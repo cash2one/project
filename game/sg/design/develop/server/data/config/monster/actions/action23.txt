@@ -1,0 +1,43 @@
+{
+	id = 23,	--行为ID
+	trigger = 1,	--触发类型，血量为1，时间为2
+
+	isInit = 0 ,
+	--创建的时候会调用,和info里的sequence一样
+	initSequence =
+	{
+		
+	},
+
+	infos = 
+	{
+		{
+			sequId = 1,
+			param = 80 ,
+			sequence = {
+				{ type = 16, duration = 20, position = { {x=19,y=12}, {x=29,y=13}, {x=18,y=19}, {x=27,y=18}, }, range = 4,effectId = 20059, effectType = 4, time = 8000, delay = 0, addBuffConfigId = 1 }, --怪物选点释放特效,特效释放完毕若有玩家不在范围内,则给怪物加buff
+			}
+		},
+		{
+			sequId = 2,
+			param = 60 ,
+			sequence = {
+				{ type = 16, duration = 20, position = { {x=19,y=12}, {x=29,y=13}, {x=18,y=19}, {x=27,y=18}, }, range = 4,effectId = 20059, effectType = 4, time = 8000, delay = 0, addBuffConfigId = 1 }, --怪物选点释放特效,特效释放完毕若有玩家不在范围内,则给怪物加buff
+			}
+		},
+		{
+			sequId = 3,
+			param = 40 ,
+			sequence = {
+				{ type = 16, duration = 20, position = { {x=19,y=12}, {x=29,y=13}, {x=18,y=19}, {x=27,y=18}, }, range = 4,effectId = 20059, effectType = 4, time = 8000, delay = 0, addBuffConfigId = 1 }, --怪物选点释放特效,特效释放完毕若有玩家不在范围内,则给怪物加buff
+			}
+		},
+		{
+			sequId = 4,
+			param = 20 ,
+			sequence = {
+				{ type = 16, duration = 20, position = { {x=19,y=12}, {x=29,y=13}, {x=18,y=19}, {x=27,y=18}, }, range = 4,effectId = 20059, effectType = 4, time = 8000, delay = 0, addBuffConfigId = 1 }, --怪物选点释放特效,特效释放完毕若有玩家不在范围内,则给怪物加buff
+			}
+		},
+	},
+},

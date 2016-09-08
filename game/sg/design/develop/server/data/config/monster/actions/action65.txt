@@ -1,0 +1,22 @@
+{
+	id = 65,	--行为ID
+	trigger = 1,	--触发类型，血量为1，时间为2
+
+	isInit = 1 ,
+	--创建的时候会调用,和info里的sequence一样
+	initSequence =
+	{
+		{ type = 20, duration = 2, target= { { monsterId = 1189, addBuffConfigId = 3}, } },	--向指定目标添加某个buff
+	},
+
+	infos = 
+	{
+		{
+			sequId = 1,
+			param = 0 ,
+			sequence = {
+				{ type = 20, duration = 2, target= { { monsterId = 1189, addBuffConfigId = 6}, } },	--向指定目标添加某个buff
+			}
+		},
+	},
+},

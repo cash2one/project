@@ -1,0 +1,111 @@
+﻿--#include "data\language\LangCode.txt" once
+--#include "data\config\task\petfb.txt" once
+--#include "data\functions\fubennpcfunc\commonfuben.txt" once
+--#include "data\functions\config\fubenconfig\chongwudaofubenconfig.txt" once	--  伙伴岛副本配置
+
+local PetFb = {}
+
+PetFb.randArea = function (area)
+	local x = System.getRandomNumber(area[2] - area[1] + 1) + area[1]
+	local y = System.getRandomNumber(area[4] - area[3] + 1) + area[3]
+	return x, y
+end
+PetFb.randMonsterRet = {}
+
+PetFb.randMonster = function()
+	PetFb.randMonsterRet = {}
+	local monstercnt = table.getn(petFbConf.monsterId)
+	for i=1,#petFbConf.area do
+		for j=1,100 do
+			local r = System.getRandomNumber(monstercnt) + 1
+			r = petFbConf.monsterId[r]
+			-- 是否已经包含在表里
+			local find = false
+			for k,v in ipairs(PetFb.randMonsterRet) do
+				if v == r then
+					find = true
+					break
+				end
+			end
+			if not find then
+				table.insert(PetFb.randMonsterRet, r)
+				break
+			end
+		end
+	end
+	return PetFb.randMonsterRet
+end
+
+PetFb.OnEnterFb = function(sysarg, hfb, way)
+	--初始化一些变量
+	--CommonFubenJiesuanConfig.install(hfb)
+
+	local hScene = LActor.getSceneHandle(sysarg)
+	if way == 1 then
+		--LActor.registerKillAllMonster( sysarg, true, 1 )	-- 杀死所有怪是否触发脚本
+		local ptr = LActor.getFubenPrt(sysarg)
+		local st = Fuben.getDyanmicVar(ptr)
+		st.killcnt = 0
+		st.idx = 0
+		PetFb.randMonster()	-- 随机怪物
+
+		for i=1, #petFbConf.area do
+			local conf = petFbConf.area[i]
+			-- 随机一个怪物id
+			local mid = PetFb.randMonsterRet[i]
+			local childareanum = #conf
+			local pernum = petFbConf.monsterCnt/childareanum
+			local nowpernum = pernum
+			local childindex = 1
+			for j=1, petFbConf.monsterCnt do
+				if j > nowpernum and childindex < childareanum then 
+					childindex = childindex + 1
+					nowpernum = nowpernum + pernum
+				end
+				local x, y = PetFb.randArea(conf[childindex])
+				local monsterPtr = Fuben.createMonster(hScene, mid, x, y, 0)
+			end
+		end
+	end
+
+	-- 设置副本时间
+	Fuben.SetFubenTime(hfb,petFbConf.fubentime)
+
+	-- 发送统计信息
+	LActor.ChangeCaleValue(sysarg, caleGameTime, petFbConf.fubentime)	-- 时间
+	LActor.ChangeCaleValue(sysarg,caleRemainMonster, ChongWuDaoFubenConfig.monsterCount)
+	LActor.SendAllCaleValue(sysarg)
+end
+
+PetFb.OnMonsterAllDie = function(sceneId, scenePtr, flag, monster)
+	-- 怪物全部死亡之后，传送阵
+	--print("_-----------over")
+	local fubenId = ChongWuDaoFubenConfig.fubenId[1]
+	--CommonFubenJiesuanConfig.OnMonsterAllDie(fubenId,sceneId,monster)		-- 公用的杀死怪物处理，设置层数，结算
+
+	for i=1,#ChongWuDaoFubenConfig.sceneId do
+		if ChongWuDaoFubenConfig.sceneId[i] == sceneId then
+			-- 增加到下一层的传送阵
+			
+			if ChongWuDaoFubenConfig.toNextTeleport ~= nil then
+				local teleportConf = ChongWuDaoFubenConfig.toNextTeleport[i]
+				if teleportConf ~= nil then
+					--print("---------creat")
+					LActor.createTranster(monster, teleportConf.modelid, teleportConf.posx, teleportConf.posy, 
+						teleportConf.toPosx, teleportConf.toPosy, teleportConf.toSceneid, teleportConf.name, teleportConf.comfirm)
+				end
+			end
+			
+			
+			break		-- 一次只处理一层
+		end
+	end
+
+	--print("-----over end")
+end
+
+EventCallDispatcher.registerFubenEnter(petFbConf.fubenid, PetFb.OnEnterFb)
+
+for i=1,#ChongWuDaoFubenConfig.sceneId do
+	MonAllKilledDispatcher.register( ChongWuDaoFubenConfig.sceneId[i], PetFb.OnMonsterAllDie )
+end

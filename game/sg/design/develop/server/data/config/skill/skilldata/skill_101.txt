@@ -1,0 +1,15 @@
+﻿--群体伤害-远程-冰锥特效
+{
+	id = 101,
+	name = Lang.Skill.s96Name,
+	desc = Lang.Skill.s96Desc,
+	vocation = 0,
+	skillType = 6,
+	skillSpellType = 0,
+	skillClass = 7,
+	commonCd = 0,
+	specialBuffCond =0,
+	skillSubLevel = { 
+--#include "Skill_101_1.txt"
+	},
+},

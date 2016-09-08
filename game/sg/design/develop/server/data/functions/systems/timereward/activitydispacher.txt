@@ -1,0 +1,109 @@
+--lua script
+--开服活动
+
+ONLINEREWARD.ServerActivityEvent = {}
+ONLINEREWARD.ServerActivityImplement = {}
+
+--#include "guildactivityhandler.txt" once
+--#include "suitactivityhandler.txt" once
+--#include "crossactivityhandler.txt" once
+
+
+-- 会改变活动状态的事件
+function OnServerActivityEvent(eventId, sysarg, param1, param2)
+	local handlers = ONLINEREWARD.ServerActivityEvent
+	if handlers[eventId] ~= nil then
+		handlers[eventId](sysarg, param1, param2)
+		return		
+	end
+end
+
+--获取开服奖励信息
+ONLINEREWARD.ServerActivityImplement = {
+	GetGuildRewardInfo = function(sysarg)
+		local day7_t = System.getRestTimeFromOpenServer(7)
+		day7_t = day7_t - 7200	-- 计算距离开服7天22时的时间
+
+		local guildReward = 0
+		local guildLevel = 0
+		local suitReward = 0
+		local crossReward = 0
+		if day7_t > 0 then 
+			--print("guildActivity isnt time "..day7_t)
+			--没到结算时间
+		else
+			ONLINEREWARD.getGuildRewardInfo(sysarg)
+			local var = LActor.getStaticVar(sysarg)
+			guildReward = var.GuildActivitycanReward
+			guildLevel = var.GuildActivityrewardInfo
+			if guildReward == nil then guildReward = 0 end
+			if guildLevel == nil then guildLevel = 0 end
+		end 
+		local npack = DataPack.allocPacket(sysarg, 138, 22)
+		if npack == nil then return end
+		DataPack.writeInt(npack, guildReward)
+		DataPack.writeByte(npack, guildLevel)
+		--print("guildActivity guildReward:"..guildReward..",guildLevel:"..guildLevel)
+		DataPack.flush(npack)
+	end,
+	getGuildReward = ONLINEREWARD.getGuildReward,				--23
+	GetSuitRewardInfo = ONLINEREWARD.getSuitActivityRewardInfo,	--24
+	getSuiteReward = ONLINEREWARD.getSuitActivityReward,		--25
+	GetCrossRewardInfo = ONLINEREWARD.getCrossActivityRewardInfo,  --26
+	getCrossReward = ONLINEREWARD.getCrossActivityReward,  	 --27
+--[[
+	CheckRewardOnLogin = function(sysarg)
+		print("CheckRewardOnLogin")
+		local Reward = 0
+		local var = LActor.getStaticVar(sysarg)
+		local day7_t = System.getRestTimeFromOpenServer(7)
+		day7_t = day7_t - 7200	-- 计算距离开服7天22时的时间
+		if day7_t > 0 then 
+			--没到结算时间
+		else
+			ONLINEREWARD.getGuildRewardInfo(sysarg)
+			if var.GuildActivitycanReward ~= 0 then
+				local ret = var.GuildActivitycanReward
+				if not System.bitOPMask(ret, 2) or not System.bitOPMask(ret, 3) then
+					Reward = System.bitOpSetMask(Reward, 0, true)
+				end
+			end
+		end
+
+		ONLINEREWARD.getSuitActivityRewardInfo(sysarg)
+		if var.suitActivitySub ~= 0 then
+			if System.bitOPMask(var.suitActivitySub, 0) and not System.bitOPMask(var.suitActiveRecord, 0) then
+				Reward = System.bitOpSetMask(Reward, 1, true)
+			end
+			if System.bitOPMask(var.suitActivitySub, 1) and not System.bitOPMask(var.suitActiveRecord, 1) then
+				Reward = System.bitOpSetMask(Reward, 1, true)
+			end
+			if System.bitOPMask(var.suitActivitySub, 2) and not System.bitOPMask(var.suitActiveRecord, 2) then
+				Reward = System.bitOpSetMask(Reward, 1, true)
+			end
+		end
+		ONLINEREWARD.getCrossActivityRewardInfo(sysarg)
+		if var.corssActivitySub ~= 0 then
+			if System.bitOPMask(var.corssActivitySub, 0) and not System.bitOPMask(var.corssActivityRecord, 0) then
+				Reward = System.bitOpSetMask(Reward, 2, true)
+			end
+			if System.bitOPMask(var.corssActivitySub, 1) and not System.bitOPMask(var.corssActivityRecord, 1) then
+				Reward = System.bitOpSetMask(Reward, 2, true)
+			end
+			if System.bitOPMask(var.corssActivitySub, 2) and not System.bitOPMask(var.corssActivityRecord, 2) then
+				Reward = System.bitOpSetMask(Reward, 2, true)
+			end
+		end
+
+		if Reward ~= 0 then
+			local npack = DataPack.allocPacket(sysarg, 138, 28)
+			if npack == nil then return end
+			DataPack.writeInt(npack, Reward)
+			DataPack.flush(npack)
+		end
+	end,
+	]]
+}
+
+
+--EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, ONLINEREWARD.ServerActivityImplement.CheckRewardOnLogin)

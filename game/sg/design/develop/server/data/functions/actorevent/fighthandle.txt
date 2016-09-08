@@ -1,0 +1,1808 @@
+﻿--lua script
+--处理竞技场的操作
+
+--#include "data\config\fight\fightconf.txt" once --竞技场配置
+--#include "data\config\task\TianYuanConfig.txt" once
+--#include "data\functions\customquestfunc.txt" once
+--#include "data\functions\tasks\fengcereward\fcactivefunc.txt" once
+--#include "data\config\vip\vip.txt" once
+--#include "data\functions\systems\timereward\activityautorun.txt" once
+--#include "data\functions\actorevent\hetuleshuhandle.txt" once
+
+FightOpFuncList = {}
+
+local FightSysId = 39 -- 消息系统id
+-- 消息
+local HandleMsg = {
+	SendArenaPlayerList = 1, -- C/S竞技场玩家
+	StartFight = 2, -- C开始战斗
+	ClearCdTime = 3, -- C请求消除挑战CD时间
+	SendCdTime = 3, -- S返回挑战CD时间
+	AddPkCount = 4, -- C请求增加挑战次数
+	SendPkCount = 4, -- S返回挑战次数给前端
+	SendRanking = 7, -- S发送排名奖励领取状态
+	SendTop3 = 8, -- S发送前三名信息
+	FightResult = 10, -- S发送战斗结果
+	GetWinExtAward = 13, -- C领取胜利目标奖励
+	SendWinExtInfo = 13, -- S获取胜利目标奖励信息
+
+	-- 威望商店部分
+	GetShopList = 14, -- C请求获取威望商店物品列表
+	ReturnShopList = 14, -- S响应获取威望商店物品列表
+	BuyShopItem = 15, -- C请求购买威望商店物品
+	ReturnBuyShopItem = 15, -- S响应请求购买威望商店物品
+	RefreshShopList = 16, -- C请求刷新商店物品列表
+}
+
+-- 奖励物品类型
+local ItemType = {
+	normalItem = 1, -- 道具
+	normalMoney = 2, -- 金钱 id(0：贝币, 1：银两(取消)，2：绑定天珠，3：天珠）
+	normalExp = 6, -- 经验
+	normalReput = 10, -- 威望
+}
+
+-- 定义商店每次刷新的个数
+local shop_list_num = 10
+
+-- 刷新最大人数
+local refresh_count = 4
+-- 刷新规则
+local refresh_rules = {
+	{ -- 排名1
+		start = 0, -- 左开区间
+		ended = 1, -- 右闭区间
+		rules = {
+			{
+				count = 1,
+				min = 4,
+				max = 10,
+			},
+			{
+				count = 3, -- 取的数量
+				min = 1, -- 最小范围起始
+				max = 3, -- 最大范围终止
+			},
+		},
+	},
+	{ -- 排名2
+		start = 1,
+		ended = 2,
+		rules = {
+			{
+				count = 3,
+				min = 1,
+				max = 10,
+			},
+			{
+				count = 1,
+				min = -1,
+				max = -1,
+			},
+		},
+	},
+	{ -- 排名3
+		start = 2,
+		ended = 3,
+		rules = {
+			{
+				count = 2,
+				min = 1,
+				max = 10,
+			},
+			{
+				count = 2,
+				min = -2,
+				max = -1,
+			},
+		},
+	},
+	{ -- 排名4-10
+		start = 3,
+		ended = 10,
+		rules = {
+			{
+				count = 2,
+				min = 1,
+				max = 10,
+			},
+			{
+				count = 2,
+				min = -2,
+				max = -1,
+			},
+		},
+	},
+	{ -- 排名11-15
+		start = 10,
+		ended = 15,
+		rules = {
+			{
+				count = 2,
+				min = 1,
+				max = 10,
+			},
+			{
+				count = 2,
+				min = -6,
+				max = -1,
+			},
+		},
+	},
+	{ -- 15-20
+		start = 15,
+		ended = 20,
+		rules = {
+			{
+				count = 2,
+				min = 1,
+				max = 10,
+			},
+			{
+				count = 2,
+				min = -8,
+				max = -1,
+			},
+		},
+	},
+	{ -- 排名20-50
+		start = 20,
+		ended = 50,
+		rules = {
+			{
+				count = 2,
+				min = 1,
+				max = 10,
+			},
+			{
+				count = 2,
+				min = -10,
+				max = -1,
+			},
+		},
+	},
+	{ -- 排名50-100
+		start = 50,
+		ended = 100,
+		rules = {
+			{
+				count = 1,
+				min = 1,
+				max = 20,
+			},
+			{
+				count = 3,
+				min = -20,
+				max = -1,
+			},
+		},
+	},
+	{ -- 排名100-200
+		start = 100,
+		ended = 200,
+		rules = {
+			{
+				count = 1,
+				min = 1,
+				max = 20,
+			},
+			{
+				count = 3,
+				min = -50,
+				max = -1,
+			},
+		},
+	},
+	{ -- 排名200-500
+		start = 200,
+		ended = 500,
+		rules = {
+			{
+				count = 1,
+				min = -20,
+				max = 20,
+			},
+			{
+				count = 3,
+				min = -100,
+				max = -1,
+			},
+		},
+	},
+	{ -- 排名500-1000
+		start = 500,
+		ended = 1000,
+		rules = {
+			{
+				count = 1,
+				min = -20,
+				max = 20,
+			},
+			{
+				count = 3,
+				min = -100,
+				max = -20,
+			},
+		},
+	},
+	{ -- 排名1000-∞
+		start = 1000,
+		ended = -1,
+		rules = {
+			{
+				count = 1,
+				min = -50,
+				max = 20,
+			},
+			{
+				count = 3,
+				min = -100,
+				max = -50,
+			},
+		},
+	},
+}
+
+-- 竞技场消息分发
+EventCallDispatcher.HandlerFightOp = function (obj, args)
+	if args[1] == nil then return end
+	
+	local func = FightOpFuncList[args[1]]
+	if func ~= nil then
+		if LActor.getLevel(obj) < FightConf.level then
+			-- LActor.sendTipmsg(obj, Lang.ScriptTips.fi00031, ttMessage)
+			return
+		end
+		func(obj, args[2]) 
+	end
+end
+
+
+-- =============================================================
+-- -- 后续增加的处理函数 2015.10.19
+
+-- -- 根据玩家自身排名获得挑战列表所需对手id(策划需求: 2名范围(x, x + 50]  2名[x - 50, x),(x, x + 100] 不包含前面重复) 排名第一就是actorIndex=1
+-- -- @param actorIndex 玩家排名
+-- -- @param actorsCount 排行榜玩家总数
+-- -- @return 实际数量数组
+-- function FightOpFuncList.findFighterList (actorIndex, actorsCount)
+-- 	local needCount = 4 -- 需要4个
+-- 	local fighters = {}
+-- 	if actorIndex <= 0 or actorsCount <= 1 or actorIndex > actorsCount then
+-- 		return fighters
+-- 	end
+-- 	local loop = 0
+
+-- 	if actorsCount - 1 <= needCount then -- 人数不足
+-- 		needCount = actorsCount - 1
+-- 	end
+
+-- 	local right = actorsCount - actorIndex -- 右边实际剩余
+-- 	if right > 2 then -- 稳定在50这个范围内
+-- 		loop = 2
+-- 		if right > 50 then
+-- 			right = 50
+-- 		end
+-- 	else
+-- 		loop = right
+-- 	end
+-- 	needCount = needCount - loop -- 计算可能这次人数没取够
+-- 	local tmp = {}
+-- 	for i = 1, right do
+-- 		tmp[i] = i
+-- 	end
+-- 	for i = 1, loop do -- 取了右侧(x, x + 50] 可能两位
+-- 		local rand_num = right - i + 1
+-- 		local rand = System.getRandomNumber(rand_num) + 1 -- 取得右边的范围
+-- 		table.insert(fighters, tmp[rand] + actorIndex) -- 因为lua数组从1开始
+-- 		tmp[rand], tmp[rand_num] = tmp[rand_num], tmp[rand]
+-- 	end
+-- 	loop = 0 -- 清空loop
+
+-- 	local left = actorIndex - 50 -- 左部空间范围
+-- 	if left > 0 then -- 明显超过50人左侧
+-- 		left = 50
+-- 	else
+-- 		left = actorIndex - 1 -- 去除自己
+-- 	end
+-- 	right = actorsCount - actorIndex -- 右部空间范围
+-- 	if right > 100 then
+-- 		right = 100
+-- 	end
+-- 	local total = left + right
+-- 	if total > needCount then -- 找准需要多少
+-- 		loop = needCount
+-- 	else
+-- 		loop = total
+-- 	end
+
+-- 	-- 制空tmp表
+-- 	for i = 1, total do
+-- 		if i <= left then
+-- 			tmp[i] = actorIndex - left + i - 1
+-- 		else
+-- 			tmp[i] = actorIndex + i - left
+-- 		end
+-- 	end
+-- 	for k, v in ipairs(fighters) do
+-- 		for i = k, total do
+-- 			if tmp[i] == v then
+-- 				tmp[i], tmp[total] = tmp[total], tmp[i]
+-- 				total = total - 1
+-- 				break
+-- 			end
+-- 		end
+-- 	end
+-- 	for i = 1, loop do
+-- 		local rand_num = total - i + 1
+-- 		local rand = System.getRandomNumber(rand_num) + 1
+-- 		table.insert(fighters, tmp[rand])
+-- 		tmp[rand], tmp[rand_num] = tmp[rand_num], tmp[rand]
+-- 	end
+-- 	return fighters
+-- end
+
+-- { -- 排名1000-∞
+-- 	start = 1000,
+-- 	ended = -1,
+-- 	rules = {
+-- 		{
+-- 			count = 2,
+-- 			min = -100,
+-- 			max = -50,
+-- 		},
+-- 		{
+-- 			count = 2,
+-- 			min = -50,
+-- 			max = 20,
+-- 		},
+-- 	},
+-- },
+
+-- 通过玩家的排名进行查询排名刷新规则的配置文件
+function FightOpFuncList.findRuleConf(actorIndex)
+	local conf = nil
+	for k, v in ipairs(refresh_rules) do
+		if v.start ~= -1 then
+			if actorIndex <= v.start then
+				break
+			else
+				if v.ended ~= -1 then
+					if actorIndex <= v.ended then
+						conf = FightOpFuncList.tableCopy(v.rules)
+						break
+					end
+				else
+					conf = tableCopy(v.rules)
+					break
+				end
+			end
+		end
+	end
+	return conf
+end
+
+-- 产生从min到max范围内num个过滤了filter表的不重复随机数值表 如果范围内不满足num个数量 则返回实际可产生的数量
+function FightOpFuncList.randomArray(min, max, num, filter)
+	local t = {}
+	local ret = {}
+	for i = 1, max - min + 1 do
+		table.insert(t, min + i - 1)
+	end
+	local tmp = {}
+	for k, v in ipairs(filter) do
+		tmp[v] = 1
+	end
+	
+	local len = #t
+	for k, v in ipairs(t) do
+		if tmp[v] == 1 then
+			t[k], t[len] = t[len], t[k]
+			len = len - 1
+		end
+	end
+	
+	if len > 0 then
+		if num > len then
+			num = len
+		end
+		for k = 1, num do
+			local rand = len - k + 1
+			local rand_num = System.getRandomNumber(rand) + 1
+			t[rand_num], t[rand] = t[rand], t[rand_num]
+			table.insert(ret, t[rand])
+		end
+	end
+	return ret
+end
+
+-- 根据玩家自身排名获得挑战列表所需对手id(refresh_rules规则配置表) 排名第一就是actorIndex=1
+-- @param actorIndex 玩家排名
+-- @param actorsCount 排行榜玩家总数
+-- @return 实际数量数组
+function FightOpFuncList.findFighterList (actorIndex, actorsCount)
+	local function checkParam(param, min, max)
+		if param < min then
+			param = min
+		end
+		if param > max then
+			param = max
+		end
+		return param
+	end
+	local fighters = {}
+	actorIndex = tonumber(actorIndex)
+	actorsCount = tonumber(actorsCount)
+	if not actorIndex or not actorsCount or actorIndex > actorsCount then
+		return fighters
+	end
+	local conf = FightOpFuncList.findRuleConf(actorIndex)
+	if not conf then
+		return fighters
+	end
+	
+	local more = 0
+	local filter = { actorIndex }
+	for k, v in ipairs(conf) do
+		local minArea = v.min + actorIndex
+		local maxArea = v.max + actorIndex
+		minArea = checkParam(minArea, 0, actorsCount)
+		maxArea = checkParam(maxArea, 0, actorsCount)
+		local ret = FightOpFuncList.randomArray(minArea, maxArea, v.count + more, filter)
+		more = (v.count + more) - #ret
+		for n, m in ipairs(ret) do
+			table.insert(filter, m)
+			table.insert(fighters, m)
+		end
+	end
+	table.sort(fighters)
+	return fighters
+end
+
+-- 查找胜利或失败后对应的奖励配置
+function FightOpFuncList.findAwardsConfWithWinOrFail (actorLevel, isWin)
+	local awards = FightConf.winAwards -- 默认赢的奖励
+	if isWin == nil or isWin == false then
+		awards = FightConf.failAwards
+	end
+	for k, v in pairs(awards) do
+		if v.level == actorLevel then
+			return v
+		end
+	end
+	return nil
+end
+
+-- 查找对应排名的奖励配置
+function FightOpFuncList.findRankIndexConfig (rankIndex)
+	for k, v in ipairs(FightConf.rankAwards) do
+		if rankIndex >= v.lowRank and rankIndex <= v.upRank then
+			return v
+		end
+	end
+	return nil
+end
+
+-- ============================= 业务处理↓ ================================
+FightOpFuncList[HandleMsg.SendArenaPlayerList] = function (obj, packet)
+	-- 获取自身排名 没有排名即为-1
+	local actorIndex = FightFun.getRanking(obj)
+	-- 获取竞技场总人数
+	local actorsCount = FightFun.getArenaCounts()
+	if actorIndex == -1 then
+		actorIndex = actorsCount
+	else
+		actorIndex = actorIndex + 1
+	end
+	-- 拿到根据玩家排名而筛选的玩家列表
+	local fighters = FightOpFuncList.findFighterList (actorIndex, actorsCount)
+	table.sort(fighters)
+	local pack = DataPack.allocPacket(obj, FightSysId, HandleMsg.SendArenaPlayerList)
+	DataPack.writeInt(pack, #fighters)
+	for k, v in ipairs(fighters) do
+		local fdata = FightFun.getFightDataByRankIdx(v - 1) -- v是真实的排名需要-1
+		if fdata ~= nil then
+			DataPack.writeInt(pack, fdata.aid)
+			DataPack.writeString(pack, fdata.name)
+			DataPack.writeInt(pack, fdata.model)
+			DataPack.writeWord(pack, fdata.icon)
+			DataPack.writeInt(pack, fdata.sex)
+			DataPack.writeInt(pack, fdata.job)
+			DataPack.writeInt(pack, fdata.camp)
+			DataPack.writeInt(pack, fdata.level)
+			DataPack.writeInt(pack, fdata.fight_value)
+			DataPack.writeInt(pack, fdata.rank + 1)
+			local money = FightOpFuncList.getAwardsByRankAndType(fdata.rank + 1, ItemType.normalMoney, 0)
+			local reput = FightOpFuncList.getAwardsByRankAndType(fdata.rank + 1, ItemType.normalReput)
+			local exp = FightOpFuncList.getAwardsByRankAndType(fdata.rank + 1, ItemType.normalExp)
+			DataPack.writeInt(pack, money) -- 钱
+			DataPack.writeInt(pack, reput) -- 威望
+			DataPack.writeInt(pack, fdata.weapon) -- 武器
+		end
+	end
+	DataPack.flush(pack)
+	FightOpFuncList.SendMoreArenaInfo(obj)
+	FightOpFuncList.SendWinExtInfo(obj)
+end
+
+-- 开始PK
+FightOpFuncList[HandleMsg.StartFight] = function(obj, packet)
+	local enid = DataPack.readInt(packet) -- 被挑战者的ID
+	local stype = DataPack.readByte(packet) -- 花钱进入的方式
+	if enid == nil then
+		debug_print("start pk packet error")
+		return 
+	end
+
+	if LActor.getTeamId(obj) > 0 then -- 组队不允许进入
+		LActor.sendTipmsg(obj, Lang.ScriptTips.f00095, ttMessage)
+		return
+	end
+
+	FightOpFuncList.StartFight(obj, enid, stype)
+	
+	LActor.triggerTarget(obj, enATFight) -- 成就系统部分 点将台挑战5次
+	FCActivityHandler.ActivityReward (obj) -- 成就系统部分
+end
+
+-- 消除CD时间
+FightOpFuncList[HandleMsg.ClearCdTime] = function(obj, dp)
+	local var = LActor.getStaticVar(obj)
+	if var == nil then return end
+
+	-- 是否需要消除
+	local next_pk_t = var.next_pk_t
+	local current_t = System.getCurrMiniTime()
+	if next_pk_t == nil then next_pk_t = 0 end
+	if next_pk_t < current_t then
+		LActor.sendTipmsg(obj, Lang.ScriptTips.fi00001, ttMessage) -- 无需消除CD时间
+		return
+	end
+
+	-- 是否有足够的天珠
+	local needYB = FightOpFuncList.getClearCDByCount(next_pk_t - current_t)
+	local hasyuanbao = LActor.getMoneyCount(obj, mtYuanbao)
+	if hasyuanbao < needYB then
+		-- LActor.sendTipmsg(obj, Lang.ScriptTips.fi00002, ttMessage)
+		LActor.SendGeneralTips(obj, 1, mtYuanbao, needYB-hasyuanbao)
+		return -1
+	end
+
+	-- 扣除天珠
+	LActor.changeMoney( obj, mtYuanbao, -needYB, 1, true, "fight", "clearcd" )
+
+	-- 消除CD时间
+	var.next_pk_t = 0
+
+	FightOpFuncList.SendPkCD(obj, var.next_pk_t)
+end
+
+-- 增加挑战次数
+FightOpFuncList[HandleMsg.AddPkCount] = function(obj, packet)
+	local var = LActor.getStaticVar(obj)
+	if var == nil then return end
+
+	if var.pk_count == nil then var.pk_count = 0 end
+	if var.add_pk_count == nil then var.add_pk_count = 0 end
+
+	if var.add_pk_count >= FightConf.addpkCount + FightOpFuncList.getVipAddPkCount(LActor.getVIPLevel(obj)) then -- 不能超过最大次数
+		LActor.sendTipmsg( obj, Lang.ScriptTips.fi00016, ttMessage )
+		return -1
+	end
+
+	local needYB, ctype = FightOpFuncList.getAddPkMoney(var.add_pk_count + 1)
+	debug_print(string.format("============= 仙斗会需要购买挑战次数[%d] 需要天珠[%d]", var.add_pk_count + 1, needYB))
+	local hasyuanbao = LActor.getMoneyCount( obj, mtYuanbao ) 
+	if hasyuanbao < needYB then
+		-- LActor.sendTipmsg( obj, Lang.ScriptTips.fi00002, ttMessage )
+		LActor.SendGeneralTips(obj, 1, mtYuanbao, needYB-hasyuanbao)
+		return -1
+	end
+
+	-- 扣除天珠
+	LActor.changeMoney( obj, mtYuanbao, -needYB, 1, true, "fight", "addfight" )
+
+	-- 增加次数
+	var.add_pk_count = var.add_pk_count + 1
+	-- 减掉pk已消耗的次数
+	var.pk_count = var.pk_count - 1
+
+	-- 通知客户端
+	FightOpFuncList.SendPkCount(obj, var.pk_count, var.add_pk_count)
+
+	return 1
+end
+
+-- 请求领取胜利目标奖励
+FightOpFuncList[HandleMsg.GetWinExtAward] = function (obj, packet)
+	local var = LActor.getStaticVar(obj)
+	if not var then return end
+	if #FightConf.winTargets == 0 then
+		return
+	end
+	-- 胜利次数目标
+	if var.actor_pk_win_id == nil then -- 记录胜利次数目标ID
+		var.actor_pk_win_id = System.getRandomNumber(#FightConf.winTargets) + 1
+	end
+	if var.fightWin == nil then
+		var.fightWin = 0
+	end
+	-- 检查次数
+	local winConf = FightConf.winTargets[var.actor_pk_win_id]
+	if winConf == nil then
+		return
+	end
+	debug_print("===================> actor_pk_win_id", var.actor_pk_win_id, var.fightWin, winConf.needWinCount)
+	if var.fightWin >= winConf.needWinCount then -- 达成目标
+		for k, v in pairs(winConf.awards) do
+			local id, num = v.itemId, v.itemNum
+			num = num * getAcitivityIsDouble(daYanwuchang)
+			if v.itemType == ItemType.normalMoney then
+				if v.itemId == 0 then
+					LActor.changeMoney(obj, mtBindCoin, num, 1, true,  "fight", "winTargets")
+				elseif v.itemType == 1 then
+					LActor.changeMoney(obj, mtCoin, num, 1, true,  "fight", "winTargets")
+				elseif v.itemType == 2 then
+					LActor.changeMoney(obj, mtBindYuanbao, num, 1, true,  "fight", "winTargets")
+				elseif v.itemType == 3 then
+					LActor.changeMoney(obj, mtYuanbao, num, 1, true,  "fight", "winTargets")
+				else
+					debug_print("===>>> [仙斗会目标奖励] 错误的金钱类型!")
+				end
+			elseif v.itemType == ItemType.normalItem then
+				-- 道具比较特殊 需要把不够塞背包的物品发邮件
+				local more = LActor.addItem(obj, id, 0, 0, num, 0, "winTargets")
+				local needSendMailNum = num - more
+				if needSendMailNum > 0 then -- 需要发邮箱
+					System.sendGmMailOffLine(LActor.getActorId(obj), Lang.ScriptTips.fi00025, 1, id, needSendMailNum, 0, Lang.ScriptTips.fi00032)
+				end
+			elseif v.itemType == ItemType.normalExp then
+				LActor.giveAward(obj, qatExp, num)
+			elseif v.itemType == ItemType.normalReput then
+				LActor.giveAward(obj, qatShengWang, num)
+			else
+			end
+		end
+		var.actor_pk_win_id = System.getRandomNumber(#FightConf.winTargets) + 1
+		var.fightWin = 0 -- 清空
+		FightOpFuncList.SendWinExtInfo(obj)
+	else
+		LActor.sendTipmsg(obj, "无额外奖励", ttMessage)
+	end
+end
+
+-- ============================= 特殊公共↓ ================================
+-- 获取竞技场信息
+function FightOpFuncList.SendMoreArenaInfo (obj)
+	local var = LActor.getStaticVar(obj)
+	if var == nil then return end
+
+	-- 挑战次数
+	local pk_count = var.pk_count
+	if pk_count == nil then pk_count = 0 end
+	local add_count = var.add_pk_count
+	if add_count == nil then add_count = 0 end
+
+	FightOpFuncList.SendPkCount(obj, pk_count, add_count)
+
+	-- cd时间
+	local cd = var.next_pk_t
+	if cd == nil then cd = 0 end
+	cd = cd - System.getCurrMiniTime()
+	if cd < 0 then cd = 0 end
+
+	FightOpFuncList.SendPkCD(obj, cd)
+
+	FightOpFuncList.SendRanking(obj, FightFun.getRanking(obj) + 1)
+	FightOpFuncList.SendTop3(obj)
+end
+
+-- 返回PK次数信息给前端
+function FightOpFuncList.SendPkCount (obj, pk_count, add_count)
+	local pack = DataPack.allocPacket(obj, FightSysId, HandleMsg.SendPkCount)
+    if pack == nil then return end
+
+    DataPack.writeInt(pack, FightConf.pkCount + FightOpFuncList.getVipAddNormalPkCount(LActor.getVIPLevel(obj)) - pk_count) -- 剩余次数
+    DataPack.writeInt(pack, add_count) -- 已接购买了多少次
+    local needYB, ctype = FightOpFuncList.getAddPkMoney(add_count + 1)
+    DataPack.writeInt(pack, needYB) -- 如果购买则需要的天珠
+    DataPack.flush(pack)
+end
+
+-- 返回CD时间
+function FightOpFuncList.SendPkCD (obj, time)
+	local pack = DataPack.allocPacket(obj, FightSysId, HandleMsg.SendCdTime)
+    if pack == nil then return end
+    DataPack.writeInt(pack, time)
+    DataPack.flush(pack)
+end
+
+-- 发送自己的排名和领奖信息
+function FightOpFuncList.SendRanking (obj, rank)
+	local pack = DataPack.allocPacket(obj, FightSysId, HandleMsg.SendRanking)
+    if pack == nil then return end
+
+	local moneyadd = FightOpFuncList.getAwardsByRankAndType(rank, ItemType.normalMoney, 0) -- 普通货币
+	local reputadd = FightOpFuncList.getAwardsByRankAndType(rank, ItemType.normalReput) -- 威望
+	local expadd = FightOpFuncList.getAwardsByRankAndType(rank, ItemType.normalExp) -- 经验
+
+    local sys_var = System.getStaticVar()
+	if sys_var.rank_tomorrowTime == nil then -- 领奖时间不能空
+		sys_var.rank_tomorrowTime = System.getTomorrow()
+	end
+    local awardTime = sys_var.rank_tomorrowTime - System.getCurrMiniTime()
+
+    local var = LActor.getStaticVar(obj)
+    if not var then return end
+	-- 胜利次数、胜利目标id (新增字段)
+	if var.fight_suc_count == nil then
+		var.fight_suc_count = 0
+	end
+	if var.fight_suc_sid == nil then
+		var.fight_suc_sid = 0
+	end
+
+    DataPack.writeInt(pack, rank)
+    DataPack.writeByte(pack, 1) -- 为了保证兼容性 废弃该字段 但又不能删除
+    DataPack.writeInt(pack, moneyadd)
+    DataPack.writeInt(pack, reputadd)
+    DataPack.writeInt(pack, awardTime)
+    DataPack.flush(pack)
+end
+
+-- 发送前三名信息
+function FightOpFuncList.SendTop3 (obj)
+	local actorsCount = FightFun.getArenaCounts()
+	local count = 3 -- 三人
+	if actorsCount < 3 then
+		count = actorsCount -- 实际人数
+	end
+	local pack = DataPack.allocPacket(obj, FightSysId, HandleMsg.SendTop3)
+	for i = 1, count do
+		local fdata = FightFun.getFightDataByRankIdx(i - 1) -- v是真实的排名需要-1
+		if fdata ~= nil then
+			DataPack.writeInt(pack, fdata.aid)
+			DataPack.writeString(pack, fdata.name)
+			DataPack.writeInt(pack, fdata.model)
+			DataPack.writeWord(pack, fdata.icon)
+			DataPack.writeInt(pack, fdata.sex)
+			DataPack.writeInt(pack, fdata.job)
+			DataPack.writeInt(pack, fdata.camp)
+			DataPack.writeInt(pack, fdata.level)
+			DataPack.writeInt(pack, fdata.fight_value)
+			DataPack.writeInt(pack, fdata.rank + 1)
+			local money = FightOpFuncList.getAwardsByRankAndType(fdata.rank + 1, ItemType.normalMoney, 0)
+			local reput = FightOpFuncList.getAwardsByRankAndType(fdata.rank + 1, ItemType.normalReput)
+			local exp = FightOpFuncList.getAwardsByRankAndType(fdata.rank + 1, ItemType.normalExp)
+			DataPack.writeInt(pack, money) -- 钱
+			DataPack.writeInt(pack, reput) -- 威望
+		end
+	end
+	DataPack.flush(pack)
+end
+
+-- 获取胜利目标奖励信息
+function FightOpFuncList.SendWinExtInfo(obj)
+	local var = LActor.getStaticVar(obj)
+	if not var then return end
+	if #FightConf.winTargets == 0 then
+		return
+	end
+	-- 胜利次数目标
+	if var.actor_pk_win_id == nil then -- 记录胜利次数目标ID
+		var.actor_pk_win_id = System.getRandomNumber(#FightConf.winTargets) + 1
+	end
+
+	local pack = DataPack.allocPacket(obj, FightSysId, HandleMsg.SendWinExtInfo)
+	DataPack.writeUInt(pack, var.actor_pk_win_id)
+
+	if var.fightWin == nil then
+		var.fightWin = 0
+	end
+
+	-- 检查次数
+	local winConf = FightConf.winTargets[var.actor_pk_win_id]
+	if winConf == nil then
+		return
+	end
+	if var.fightWin >= winConf.needWinCount then -- 达成目标
+		DataPack.writeUInt(pack, 1) -- 可领
+	else
+		DataPack.writeUInt(pack, 0) -- 不可领
+	end
+	DataPack.writeUInt(pack, var.fightWin) -- 已连胜多少次
+	DataPack.flush(pack)
+end
+
+-- PK stype 是否花钱的方式
+function FightOpFuncList.StartFight (obj, enid, stype)
+	if not stype then
+		stype = 0
+	end
+	if LActor.getFubenId(obj) == FightConf.fbId then
+		LActor.sendTipmsg(obj, Lang.ScriptTips.fi00010, ttMessage)
+		return
+	end -- 已经在竞技场副本
+
+	-- 护送任务期间不能进入点将台
+	if LActor.hasState(obj, esProtection) then
+    	LActor.sendTipmsg(obj, Lang.ScriptTips.fi00019, ttMessage)
+    	return 
+  	end
+
+	-- PK状态下不能进入
+	if LActor.hasState(obj, esPkState) then
+		LActor.sendTipmsg(obj, Lang.ScriptTips.fi00012, ttMessage)
+		return 
+	end
+
+	if LActor.isInFuben(obj) or LActor.getSceneId(obj) == TianYuanConfig.SCENEID then --在其它副本不能渡劫，14是雁门关的场景ID，这里特殊处理
+		LActor.sendTipmsg(obj,Lang.ScriptTips.fi00018,ttMessage)
+		return
+	end
+
+	local var = LActor.getStaticVar(obj)
+	if var == nil then return end
+	local var_d = LActor.getDyanmicVar(obj)
+	if var_d == nil then return end
+
+	-- 判断挑战的玩家是否在榜上
+	local ranking = FightFun.getRankingById(enid)
+	if ranking < 0 then
+		LActor.sendTipmsg(obj, Lang.ScriptTips.fi00008, ttMessage)
+		return 
+	end
+
+	-- 判断CD时间
+	if var.next_pk_t ~= nil and var.next_pk_t > System.getCurrMiniTime() then
+		LActor.sendTipmsg(obj, Lang.ScriptTips.fi00003, ttMessage)
+		return 
+	end
+
+	-- 判断挑战次数
+
+	-- 测试
+	-- var.pk_count = 0
+
+	local pk_count = var.pk_count
+	local add_count = var.add_pk_count
+	if pk_count == nil then pk_count = 0 end
+	if add_count == nil then add_count = 0 end
+	if pk_count >= FightConf.pkCount + FightOpFuncList.getVipAddNormalPkCount(LActor.getVIPLevel(obj)) then -- 次数不足了
+		-- 判断是否有要求花钱进入
+		if stype == 1 then -- 花钱进去
+			if FightOpFuncList[HandleMsg.AddPkCount](obj) ~= 1 then
+				return
+			end
+		else
+			LActor.sendTipmsg(obj, Lang.ScriptTips.fi00004, ttMessage)
+			return
+		end
+	end
+
+	FightOpFuncList.EnterFight(obj, enid)
+
+	-- 累加挑战次数
+	if var.pk_count == nil then
+		var.pk_count = 1
+	else
+		var.pk_count = var.pk_count + 1
+	end
+
+	-- 保存对手id
+	var_d.fightRivalRank = ranking -- 对手当时的排名
+end
+
+-- 进入竞技场
+function FightOpFuncList.EnterFight (obj, enid)
+	LActor.OnQuestEvent(qtYanwuchang, 0, 1, true, obj)
+
+	local hfb = Fuben.createFuBen(FightConf.fbId)
+	if hfb == 0 then
+		debug_print("can not create fight fuben")
+		return
+	end
+	Fuben.SetFubenGameTime(hfb, FightConf.pkTime + FightConf.pkReady)
+
+	LActor.setIntProperty(obj, PROP_DIR, 2)
+	if LActor.enterFuBen(obj, hfb, FightConf.sceneId, FightConf.pos1[1], FightConf.pos1[2]) == false then
+		debug_print("can not enter fight fuben")
+		return
+	end
+
+	-- 创建被挑战者怪物
+	-- local en = FightFun.createFightMonster(obj, enid, FightConf.pos2[1], FightConf.pos2[2], FightConf.pkTime + 5)
+	local en = FightFun.createFightMonster(obj, enid, FightConf.pos2[1], FightConf.pos2[2], FightConf.pkTime + 100)
+	if en == nil then
+		debug_print("can not create fight monster")
+		return 
+	end
+	LActor.setDenyMove(en, true)
+	LActor.setDenyBeAttack(en, true)
+	-- 设置方向好像没什么用
+	--LActor.setIntProperty(en, PROP_DIR, 6)
+	--LActor.setIntProperty(obj, PROP_DIR, 2)
+
+	-- 延时3秒开始
+	-- EntityCallbackMsg.FightReady 由lua层注册实体小心内循环 最终也由lua层进行触发响应
+	LActor.postEntityScriptCallbackMsg(obj, EntityCallbackMsg.FightReady, FightConf.pkReady * 1000)
+	LActor.sendCountdown(obj, FightConf.pkReady, 0)
+	LActor.clearSkillCd(obj) -- 清除技能CD时间
+
+	-- 保存对手ID
+	local var_d = LActor.getDyanmicVar(obj)
+	if var_d == nil then return end
+	var_d.fightRival = enid
+
+	-- 检查任务相关
+	CustomQuestFunc.CheckQuest(obj, FightQuestData)
+
+	-- 任务事件触发
+	LActor.OnQuestEvent(qtXianDouHui, 0, 1, true, obj)
+	
+end
+
+-- 排行奖励中 根据提供的排行起始条件及类型 获取该类型的值
+function FightOpFuncList.getAwardsByRankAndType(rank, ctype, mtype)
+	mtype = tonumber(mtype) or -1
+	local conf = FightConf.rankAwards[rank]
+	if conf ~= nil then
+		for n, m in ipairs(conf.awards) do
+			if m.itemType ~= ItemType.normalMoney then
+				if m.itemType == ctype then
+					return m.itemNum, m.itemId
+				end
+			else
+				if mtype >= 0 and m.itemId == mtype then
+					return m.itemNum, m.itemId
+				end
+			end
+		end
+	end
+	return 0, 0
+end
+
+-- 获取清楚CD需要消耗的天珠
+function FightOpFuncList.getClearCDByCount(time)
+	if type(time) ~= "number" then
+		return 0
+	end
+	return math.ceil(time / 60) -- 1分钟1天珠 不足1分钟按1分钟算
+end
+
+-- 根据排名获得奖励(贝币和威望)
+function FightOpFuncList.GetAwardByRank (rank)
+	-- 获取奖励
+	local moneyadd, reputadd, expadd = 0, 0, 0
+	-- 奖励贝币
+	local awards = FightConf.rankAwards
+	for k, v in ipairs(awards.rankTarget) do
+		if rank <= v then
+			
+		end
+	end
+	return moneyadd, reputadd, expadd
+end
+
+-- 获取增加pk次数需要的天珠数
+function FightOpFuncList.getAddPkMoney(count)
+	local cost, ctype = 0, 0
+	if count <= 0 then
+		return cost, ctype
+	end
+	local conf = FightConf.addPKYb[count]
+	if conf == nil then
+		conf = FightConf.addPKYb[#FightConf.addPKYb]
+	end
+	cost = conf.cost
+	ctype = conf.type
+	return cost, ctype 
+end
+
+function FightOpFuncList.getVipAddPkCount(vipLevel)
+	if not vipLevel or type(vipLevel) ~= "number" or vipLevel <= 0 then
+		return 0
+	elseif vipLevel >= #VIPConfig.jjcBuyAdd then
+		return VIPConfig.jjcBuyAdd[#VIPConfig.jjcBuyAdd]
+	else
+		return VIPConfig.jjcBuyAdd[vipLevel]
+	end
+end
+
+function FightOpFuncList.getVipAddNormalPkCount(vipLevel)
+	if not vipLevel or type(vipLevel) ~= "number" or vipLevel <= 0 then
+		return 0
+	elseif vipLevel >= #VIPConfig.jjcPlayAdd then
+		return VIPConfig.jjcPlayAdd[#VIPConfig.jjcPlayAdd]
+	else
+		return VIPConfig.jjcPlayAdd[vipLevel]
+	end
+end
+
+-- table的拷贝
+function FightOpFuncList.tableCopy(srcTab)
+    local retTab = {}
+    if srcTab and type(srcTab) == "table" then
+        for k, v in pairs(srcTab) do
+            if type(v) ~= "table" then
+                retTab[k] = v
+            else
+                retTab[k] = PartnerOpFuncList.tableCopy(v)
+            end
+        end
+    end
+    return retTab
+end
+-- ============================= 特殊公共↑ ================================
+
+-- ============================= 业务处理↑ ================================
+
+-- 正式开始战斗
+function OnStartFight( obj )
+	if LActor.getFubenId(obj) ~= FightConf.fbId then return end -- 不在竞技场副本
+
+	-- 开始战斗
+	local npack = DataPack.allocPacket(obj,39,2)
+    if npack == nil then return end
+    DataPack.flush(npack)
+
+    
+    LActor.setDenyMove(obj, false)
+    LActor.setDenyBeAttack(obj, false)
+    local hscene = LActor.getSceneHandle(obj)
+    local en = Fuben.getMonsterPtrById(hscene, FightConf.monsterId)
+    if en ~= nil then
+	    LActor.setDenyMove(en, false)
+	    LActor.setDenyBeAttack(en, false)
+	end
+
+    LActor.sendCountdown(obj, FightConf.pkTime, 1)
+end
+
+-- 挑战失败的处理
+FightOpFuncList.OnFightPkLost = function(obj)
+	local var = LActor.getStaticVar(obj)
+	if var == nil then return end
+
+	local var_d = LActor.getDyanmicVar(obj)
+	if var_d == nil then return end
+
+	var.fightWin = nil -- 终结连胜
+
+	local cd = FightConf.pkCD
+
+	var.next_pk_t = System.getCurrMiniTime() + cd
+	FightOpFuncList.SendPkCD(obj, cd)
+	local pk_count = var.pk_count
+	if pk_count == nil then pk_count = 0 end
+	local add_count = var.add_pk_count
+	if add_count == nil then add_count = 0 end
+	FightOpFuncList.SendPkCount(obj, pk_count, add_count)
+
+	local enid = var_d.fightRival
+	if enid == nil then return end
+
+	-- 记录
+	local myid = LActor.getActorId(obj)
+	FightFun.addResultLog(obj, enid, 0, FightFun.getRankingById(myid), FightFun.getRankingById(enid))
+	-- 奖励
+	-- LActor.changeMoney(obj, mtBindCoin, FightConf.failCoin * LActor.getLevel(obj), 1, true,  "fight", "lose")
+	-- -- 威望公式：经验：40*玩家等级，贝币：80*玩家等级，威望：40+（1001-玩家名次）/5
+	-- local reputadd = FightConf.failReput + math.floor((1001 - FightFun.getRanking(obj) + 1) / 5)
+	-- LActor.giveAward(obj, qatShengWang , reputadd, 0, 0, "fighthandle.txt", 1, false, "fight", "lose")
+	-- LActor.giveAward(obj, qatExp, FightConf.failExp * LActor.getLevel(obj))
+
+	-- LActor.triggerAchieveEvent(obj, 43, 0, 0, 0, reputadd) -- aAchieveEventFightSW 在atoms.txt处定义
+	---- activityFunc.OnfightLost(obj)
+
+	local finalAwards = nil
+	local pkFailConf = FightOpFuncList.findAwardsConfWithWinOrFail (LActor.getLevel(obj), false)
+	if pkFailConf ~= nil then
+		finalAwards = CommAwardFunc.giveToActor(obj, pkFailConf.awards, Lang.ScriptTips.fi00033, "fight_fail")
+	end
+
+	return finalAwards
+end
+
+-- 挑战胜利的处理
+FightOpFuncList.OnFightPkWin = function(obj)
+	local var = LActor.getStaticVar(obj)
+	if var == nil then return end
+
+	local var_d = LActor.getDyanmicVar(obj)
+	if var_d == nil then return end
+
+	local enid = var_d.fightRival
+	if enid == nil then
+		debug_print("fight rival is nil")
+		return 
+	end
+
+	-- 被挑战者排名有没有变化
+	local ranking = var_d.fightRivalRank
+	if ranking == nil then return end
+
+	local newRanking = FightFun.getRankingById(enid) -- 对手新的排名
+	local myRank = FightFun.getRankingById(LActor.getActorId(obj))
+		-- debug_print(string.format("=============================> ranking = %d, myRank = %d, newRanking = %d", ranking, myRank, newRanking))
+
+	local swapRank = false
+	if ranking ~= newRanking and myRank <= newRanking then
+		--排名被抢
+		FightFun.addResultLog(obj, enid, 2, myRank, ranking)
+		return
+	elseif myRank > -1 and myRank <= ranking then -- 对手排名比自己低
+		FightFun.addResultLog(obj, enid, 3, myRank, ranking)
+	else
+		-- 交换排名
+		myRank, newRanking = newRanking, myRank
+		swapRank = true
+
+		-- 记录
+		FightFun.addResultLog(obj, enid, 1, myRank, newRanking)
+		-- 必须先记录再交换排名
+		FightFun.swapRanking(obj, enid)
+	end
+
+	-- 奖励
+	-- LActor.changeMoney(obj, mtBindCoin, FightConf.winCoin * LActor.getLevel(obj), 1, true,  "fight", "win")
+	-- -- 威望公式：经验：40*玩家等级，贝币：80*玩家等级，威望：40+（1001-玩家名次）/5
+	-- local reputadd = FightConf.winReput + math.floor((1001 - FightFun.getRanking(obj) + 1) / 5)
+	-- LActor.giveAward(obj, qatShengWang , reputadd, 0, 0, "fighthandle.txt", 1, false, "fight", "win")
+	-- LActor.giveAward(obj, qatExp, FightConf.winExp * LActor.getLevel(obj))
+
+	local finalAwards = nil
+	local pkWinConf = FightOpFuncList.findAwardsConfWithWinOrFail (LActor.getLevel(obj), true)
+	if pkWinConf ~= nil then
+		finalAwards = CommAwardFunc.giveToActor(obj, pkWinConf.awards, Lang.ScriptTips.fi00033, "fight_win")
+	end
+
+	-- 连胜次数
+	if var.fightWin == nil then
+		var.fightWin = 0
+	end
+	if var.fightWin == 20 then
+		local tips = string.format(Lang.ScriptTips.fi00011, LActor.getName(obj))
+		System.broadcastTipmsg(tips, ttGmTip )
+	end
+
+	var.fightWin = var.fightWin + 1
+	--activityFunc.OnfightWint(obj)
+
+	--公告
+	if swapRank == true then
+		if myRank == 0 then
+			local tips = string.format(Lang.ScriptTips.fi00013, LActor.getName(obj))
+			System.broadcastTipmsg(tips, ttGmTip )
+		elseif myRank == 1 then
+			local tips = string.format(Lang.ScriptTips.fi00014, LActor.getName(obj))
+			System.broadcastTipmsg(tips, ttGmTip )
+		elseif myRank == 2 then
+			local tips = string.format(Lang.ScriptTips.fi00015, LActor.getName(obj))
+			System.broadcastTipmsg(tips, ttGmTip )
+		end
+	end
+	-- 同时发送额外奖励信息
+	FightOpFuncList.SendWinExtInfo(obj)
+
+	return finalAwards
+end
+
+-- 挑战者死亡，挑战失败
+EventCallDispatcher.OnFightPlayerDie = function(obj, arg)
+	if LActor.getFubenId(obj) ~= FightConf.fbId then return end -- 不在竞技场副本
+
+	local pfb = LActor.getFubenPrt(obj)
+	if pfb == nil then return end
+	if Fuben.getFubenProgress(pfb) == 100 then return end -- 胜负已分出，不用再处理
+
+	local var_d = LActor.getDyanmicVar(obj)
+	if var_d == nil then return end
+
+	if var_d.fightRival == nil then
+		debug_print("var_d.fightRival is nil")
+		return 
+	end
+
+	-- 设置副本进度
+	Fuben.setFubenProgress(pfb, 100)
+
+	debug_print("==================================> 触发了演武场玩家死亡")
+	FightFun.notifyFightResult(obj, var_d.fightRival, 0)
+end
+
+-- 游戏时间到，挑战失败
+EventCallDispatcher.OnFightFubenGameOver = function(fbPtr)
+	if Fuben.getFubenProgress(fbPtr) == 100 then return end -- 胜负已分出，不用再处理
+
+	local actors = LuaHelp.getFbActorList(fbPtr)
+	if actors == nil then return end
+	local obj = actors[1]
+	if obj == nil then return end
+
+	local var_d = LActor.getDyanmicVar(obj)
+	if var_d == nil then return end
+
+	if var_d.fightRival == nil then
+		debug_print("var_d.fightRival is nil")
+		return
+	end
+
+	-- 根据血量剩余多少来判断胜负
+	local myhp = LActor.getIntProperty(obj, PROP_HP)
+	local enhp = 0
+	local hscene = LActor.getSceneHandle(obj)
+    local en = Fuben.getMonsterPtrById(hscene, FightConf.monsterId)
+	if en ~= nil then
+		enhp = LActor.getIntProperty(en, PROP_HP)
+	end
+	local ret = 1
+	if myhp <= enhp then ret = 0 end
+
+	-- 设置副本进度
+	Fuben.setFubenProgress(fbPtr, 100)
+
+	debug_print("==================================> 触发了演武场gameover")
+	FightFun.notifyFightResult(obj, var_d.fightRival, ret)
+end
+
+
+-- 玩家升级
+EventCallDispatcher.OnLevelUpFight = function(obj, arg)
+	local newLevel = arg[1]
+	local oldLevel = arg[2]
+	if newLevel == nil or oldLevel == nil then
+		debug_print("OnLevelUpFight arg error")
+		return 
+	end
+
+	if newLevel < FightConf.addDataLevel or oldLevel >= FightConf.addDataLevel then return end -- 等级条件不符合，不用处理
+
+	-- 添加到竞技场列表
+	FightFun.addFightActor(obj)
+
+	local myid = LActor.getActorId(obj)
+	local rank = FightFun.getRanking(obj) + 1
+
+	-- 排名
+	FightOpFuncList.SendRanking(obj, rank)
+end
+
+-- 新的一天
+EventCallDispatcher.OnNewDayFight = function(obj, arg)
+	if LActor.getLevel(obj) < FightConf.level then return end -- 等级不够不处理
+	
+	local var = LActor.getStaticVar(obj)
+	if var == nil then return end
+
+	var.pk_count = nil
+	var.add_pk_count = nil
+
+	FightOpFuncList.SendPkCount(obj, 0, 0)
+end
+
+-- 进入副本
+EventCallDispatcher.OnEnterFightFuben = function(obj, hfb, way)
+	LActor.addState(obj, esChallenge) -- 擂台状态，禁止所有buff
+	LActor.refreshActor(obj)
+
+	local var_d = LActor.getDyanmicVar(obj)
+	if var_d == nil then return end
+
+	-- 保存进入前的属性
+	var_d.hpFight = LActor.getIntProperty(obj, PROP_HP)
+	var_d.mpFight = LActor.getIntProperty(obj, PROP_MP)
+	LActor.setIntProperty(obj, PROP_HP, LActor.getIntProperty(obj, PROP_MAXHP))
+	LActor.setIntProperty(obj, PROP_MP, LActor.getIntProperty(obj, PROP_MAXMP))
+	LActor.setDenyMove(obj, true)
+	LActor.setDenyBeAttack(obj, true)
+
+	var_d.fightPKMode = LActor.getPkMode(obj) -- 保存之前的PK模式
+	LActor.setPkMode(obj, fpPk)
+end
+
+-- 退出副本
+EventCallDispatcher.OnExitFightFuben = function(obj, hfb, way)
+	local var_d = LActor.getDyanmicVar(obj)
+	if var_d == nil then return end
+
+	local pfb = Fuben.getFubenPtr(hfb)
+	if pfb == nil then return end
+
+	if Fuben.getFubenProgress(pfb) ~= 100 then -- 副本进度没到100，客户端点退出的情况
+		FightOpFuncList.OnFightPkLost(obj)
+		LActor.removeState(obj, esChallenge)
+		LActor.refreshActor(obj)
+		LActor.sendCountdown(obj, 0, 1) -- 停止倒计时
+		Fuben.setFubenProgress(pfb, 100)
+	end
+
+	-- 恢复原来的状态
+
+	if LActor.hasState(obj, esStateDeath) then
+		LActor.relive(obj)
+	end
+
+	if var_d.hpFight ~= nil then
+		LActor.setIntProperty(obj, PROP_HP, var_d.hpFight)
+	end
+	if var_d.mpFight ~= nil then
+		LActor.setIntProperty(obj, PROP_MP, var_d.mpFight)
+	end
+	if var_d.fightPKMode ~= nil then
+		LActor.setPkMode(obj, var_d.fightPKMode)
+	end
+	LActor.setDenyMove(obj, false)
+	LActor.setDenyBeAttack(obj, false)
+	LActor.removeState(obj, esChallenge)		-- 退出时删除状态
+
+	-- 退出竞技场相应的处理
+	FightFun.exitFight(obj)
+end
+
+-- 处理pk结果
+FightOpFuncList.OnFightResult = function(obj, arg)
+	local enid = arg[1] -- 对手ID
+	local ret = arg[2] -- 结果 0 : 输, 1 : 赢
+	if enid == nil or ret == nil then return end
+
+	-- 奖励
+	local moneyadd = 0
+	local yupeiadd = 0
+	local reputadd = 0
+
+	local pkAwardConf = nil
+
+	if ret == 0 then
+		pkAwardConf = FightOpFuncList.OnFightPkLost(obj)
+	else
+		pkAwardConf = FightOpFuncList.OnFightPkWin(obj)
+	end
+
+	local itemAwardTable = {}
+	if pkAwardConf ~= nil then
+		for k, v in ipairs(pkAwardConf) do
+			if v.itemType == catMoney and v.itemId == CommAwardFunc.getMoneyType(qatBindMoney) then -- 铜币
+				moneyadd = moneyadd + v.itemNum
+			elseif v.itemType == catMoney and v.itemId == CommAwardFunc.getMoneyType(qatLiJin) then -- 玉佩
+				yupeiadd = yupeiadd + v.itemNum
+			elseif v.itemType == catShengWang then -- 声望
+				reputadd = reputadd + v.itemNum
+			elseif v.itemType == catItem then -- 物品
+				table.insert(itemAwardTable, v)
+			end
+		end
+	end
+
+	-- debug_print(string.format("=======> 下发奖励面板: 铜币:%d, 玉佩:%d, 声望:%d, 物品表:%s, 奖励表:%s", moneyadd, yupeiadd, reputadd, dump(itemAwardTable), dump(pkAwardConf)))
+
+	-- local moneyadd = moneyBase * LActor.getLevel(obj)
+	-- -- 公式：配置文件基数*玩家等级，贝币：配置文件基数*玩家等级，威望：配置文件基数+（1001-玩家名次）/5
+	-- local reputadd = reputBase + math.floor((1001 - FightFun.getRanking(obj) + 1) / 5)
+	-- local expadd = expBase * LActor.getLevel(obj)
+
+	-- 通知客户端结果
+	local npack = DataPack.allocPacket(obj, FightSysId, HandleMsg.FightResult)
+    if npack ~= nil then 
+    	DataPack.writeInt(npack, ret)
+    	DataPack.writeInt(npack, moneyadd)
+    	DataPack.writeInt(npack, reputadd)
+    	DataPack.writeInt(npack, yupeiadd) -- 屏蔽
+    	DataPack.writeUInt(npack, FightFun.getRanking(obj) + 1)
+    	DataPack.writeUInt(npack, #itemAwardTable)
+    	if #itemAwardTable > 0 then
+    		for k, v in ipairs(itemAwardTable) do
+    			DataPack.writeUInt(npack, v.itemId)
+    			DataPack.writeUInt(npack, v.itemNum)
+    		end
+    	end
+    	DataPack.flush(npack)
+    end
+
+	LActor.refreshActor(obj)
+	LActor.sendCountdown(obj, 0, 1) -- 停止倒计时
+
+	LActor.setDenyBeAttack(obj, true)
+	LActor.setDenyMove(obj, true)
+
+	-- 如果怪物还在就设置为禁止移动和攻击
+	local hscene = LActor.getSceneHandle(obj)
+    local en = Fuben.getMonsterPtrById(hscene, FightConf.monsterId)
+    if en ~= nil then
+    	LActor.setDenyMove(en, true)
+    	LActor.setDenyBeAttack(en, true)
+    end
+
+	-- 设置副本进度为完成
+	local pfb = LActor.getFubenPrt(obj)
+	Fuben.setFubenProgress(pfb, 100)
+
+	-- 活跃度
+	ActivationTrigger( obj, 7 )
+end
+
+-- -- 登录后的处理
+-- EventCallDispatcher.OnFightLogin = function(obj, arg)
+-- 	if LActor.getLevel(obj) < FightConf.level then return end -- 等级不够不处理
+
+-- 	local myid = LActor.getActorId(obj)
+-- 	local rank = FightFun.getRanking(obj) + 1
+
+-- 	-- 排名
+-- 	FightOpFuncList.SendRanking(obj, rank)
+
+-- 	-- 查看是否能领取排行榜威望奖励
+-- 	local sys_var = System.getStaticVar()
+-- 	if not sys_var then
+-- 		return
+-- 	end
+-- 	-- 测试专属代码 正式绝对不允许解开注释
+-- 	-- sys_var.rank_tomorrowTime = System.getTomorrow()
+-- 	if not sys_var.rank_players then
+-- 		sys_var.rank_players = {}
+-- 	end
+-- 	local players = sys_var.rank_players
+-- 	if not players[myid] then
+-- 		players[myid] = {}
+-- 		players[myid].reputadd = 0
+-- 	end
+-- 	local reputadd = players[myid].reputadd
+-- 	if reputadd > 0 then
+-- 		local levelStr = tostring(LActor.getLevel(obj))
+-- 		local rankStr = tostring(rank)
+-- 		local accountName = LActor.getAccountName(obj)
+
+-- 		LActor.giveAward(obj, qatShengWang, reputadd)
+-- 		System.logCounter(myid, accountName, levelStr, "fight", tostring(reputadd), rankStr, "shengwang")
+-- 		LActor.triggerAchieveEvent(obj, 43, 0, 0, 0, reputadd)
+-- 		LActor.sendTipmsg(obj, string.format(Lang.ScriptTips.fi00005, rank, reputadd), ttMessage)
+
+-- 		players[myid].reputadd = 0 -- 清空威望
+-- 	end
+-- end
+
+-- 每日转点领取排行榜奖励 全局定时任务
+function FightSysNewDayGetAward ()
+	local sys_var = System.getStaticVar()
+	if not sys_var then
+		return
+	end
+	if sys_var.rank_tomorrowTime == nil then -- 领奖时间不能空
+		sys_var.rank_tomorrowTime = System.getTomorrow()
+	end
+
+	if sys_var.rank_players == nil then
+		sys_var.rank_players = {}
+	end
+
+	if System.getCurrMiniTime() >= sys_var.rank_tomorrowTime then -- 达到了领奖要求时间
+		debug_print("===============> 仙斗会每日转点领取排行榜奖励")
+		-- 标记下次的领奖时间
+		sys_var.rank_tomorrowTime = System.getTomorrow()
+
+		-- 遍历整个有奖励排名的表
+		local allCnt = FightFun.getArenaCounts()
+		for rank = 1, allCnt do
+			local fdata = FightFun.getFightDataByRankIdx(rank - 1)
+			if fdata and fdata.level >= FightConf.level then
+				local rankConf = FightOpFuncList.findRankIndexConfig(rank)
+				if rankConf ~= nil then
+					local actorId = FightFun.getIdByRanking(rank - 1) -- 因为c++层排名从0开始
+					CommAwardFunc.giveToActorOffLine(actorId, rankConf.awards, Lang.ScriptTips.fi00033, string.format(Lang.ScriptTips.fi00026, rank))
+				end
+
+				-- local levelStr = tostring(fdata.level)
+				-- local rankStr = tostring(fdata.rank + 1)
+				-- local accountName = fdata.name
+				-- 获取奖励
+				-- local yuanbaoadd = FightOpFuncList.getAwardsByRankAndType(rank, ItemType.normalMoney, 2) -- 绑定天珠
+				-- local moneyadd = FightOpFuncList.getAwardsByRankAndType(rank, ItemType.normalMoney, 0) -- 普通贝币
+				-- local reputadd = FightOpFuncList.getAwardsByRankAndType(rank, ItemType.normalReput) -- 威望
+				-- local itemadd, itemid = FightOpFuncList.getAwardsByRankAndType(rank, ItemType.normalItem) -- 火砂
+
+				-- -- 改发邮件
+				-- local actorId = FightFun.getIdByRanking(rank - 1) -- 因为c++层排名从0开始
+
+				-- -- 天珠 贝币 火砂
+				-- if moneyadd > 0 then
+				-- 	System.sendGmMailOffLine(actorId, string.format(Lang.ScriptTips.fi00026, rank), 2, mtBindYuanbao, yuanbaoadd, 0, Lang.ScriptTips.fi00033, 2, mtBindCoin, moneyadd, 0, 1, itemid, itemadd, 0, 10, 0, reputadd, 0)
+				-- 	System.logCounter(actorId, accountName, levelStr, "fight", tostring(moneyadd), rankStr, "addmoney")
+				-- else
+				-- 	System.sendGmMailOffLine(actorId, string.format(Lang.ScriptTips.fi00026, rank), 2, mtBindYuanbao, yuanbaoadd, 0, Lang.ScriptTips.fi00033, 1, itemid, itemadd, 0, 10, 0, reputadd, 0)
+				-- end
+				-- System.logCounter(actorId, accountName, levelStr, "fight", tostring(moneyadd), rankStr, "addtianzhu")
+				-- System.logCounter(actorId, accountName, levelStr, "fight", tostring(itemadd), rankStr, "additem")
+				-- System.logCounter(actorId, accountName, levelStr, "fight", tostring(reputadd), rankStr, "addweiwang")
+			end
+		end
+	end
+end
+
+-- =========== 以下为威望商店的代码部分 整合到仙斗会 ===========
+
+-- 根据传入的rand_num获取商店列表的随机产生列表数据,当rand_num传参非法时返回nil值,否则返回对应数量的table
+function FightOpFuncList.randomShopList(rand_num)
+	if rand_num <= 0 or rand_num > #(FightConf.renownShop.lists) then
+		return nil
+	end
+	local left_rate = 0
+	local ListTab = {}
+	local tmpTab = FightOpFuncList.tableCopy(FightConf.renownShop.lists)
+	for i = 1, rand_num do
+		local rand_suc_rate = System.getRandomNumber(10000 - left_rate) -- 万分率
+		local pre_rand = 0
+		for k = 1, #tmpTab - i + 1 do
+			if rand_suc_rate <= (pre_rand + tmpTab[k].randNum) then
+				local t = FightOpFuncList.tableCopy(tmpTab[k])
+				t.hasBuyNum = 0 -- 已买次数
+				table.insert(ListTab, t)
+				-- 保存已消耗的概率
+				left_rate = left_rate + t.randNum
+				-- 交换位置
+				local tail = tmpTab[#tmpTab -  i + 1] -- 尾部
+				local cur = tmpTab[k]
+				cur.listId, tail.listId = tail.listId, cur.listId
+				cur.itemType, tail.itemType = tail.itemType, cur.itemType
+				cur.itemId, tail.itemId = tail.itemId, cur.itemId
+				cur.itemNum, tail.itemNum = tail.itemNum, cur.itemNum
+				cur.costRenown, tail.costRenown = tail.costRenown, cur.costRenown
+				cur.dayNum, tail.dayNum = tail.dayNum, cur.dayNum
+				cur.randNum, tail.randNum = tail.randNum, cur.randNum
+				break
+			end
+			pre_rand = pre_rand + tmpTab[k].randNum
+		end
+	end
+	return ListTab
+end
+
+function FightOpFuncList.initShopData(obj)
+	local var = LActor.getStaticVar(obj) -- 玩家的商店兑换表私有的
+	if var == nil then
+		return
+	end
+	if var.renown_shop_list == nil then
+		var.renown_shop_list = {}
+	else
+		if var.renown_shop_list.refreshTime ~= nil and System.getCurrMiniTime() < var.renown_shop_list.refreshTime then
+			return
+		end
+	end
+	local lists = FightOpFuncList.randomShopList(shop_list_num)
+	if lists == nil then
+		debug_print("====> 产生随机物品列表异常,可能shop_list_num值超出配置文件lists的数量上限或shop_list_num是非法值!")
+		return
+	end
+	var.renown_shop_list.lists = {}
+	for k, v in ipairs(lists) do
+		if type(v) == "table" then
+			var.renown_shop_list.lists[k] = {}
+			for n, m in pairs(v) do
+				var.renown_shop_list.lists[k][n] = m
+			end
+		else
+			var.renown_shop_list.lists[k] = v
+		end
+		var.renown_shop_list.lists[k].hasBuyNum = v.dayNum
+	end
+	var.renown_shop_list.refreshTime = FightConf.renownShop.refreshTime + System.getCurrMiniTime() -- 下一次的刷新时间
+end
+
+-- 发送商店列表
+function FightOpFuncList.sendShopList (obj)
+	local var = LActor.getStaticVar(obj) -- 玩家的商店兑换表私有的
+	if var == nil or var.renown_shop_list == nil then
+		return
+	end
+	if var.renown_shop_list.lists ~= nil then
+		local refreshTime = var.renown_shop_list.refreshTime - System.getCurrMiniTime() -- 刷新时间
+		local renown = LActor.getIntProperty(obj, PROP_ACTOR_SHENGWANG) -- 威望
+		local count = #(var.renown_shop_list.lists) -- 数量
+		local pack = DataPack.allocPacket(obj, FightSysId, HandleMsg.ReturnShopList)
+		DataPack.writeUInt(pack, refreshTime)
+		DataPack.writeUInt(pack, renown)
+		DataPack.writeUInt(pack, count)
+		-- 返回一个个元素
+		for i = 1, count do
+			local v = var.renown_shop_list.lists[i]
+			DataPack.writeUInt(pack, v.listId)
+			DataPack.writeUInt(pack, v.hasBuyNum)
+		end
+		DataPack.flush(pack)
+	end
+end
+
+-- 此部分抛弃了定时刷新功能的调用 直接采取玩家进行获取列表或者购买的时候进行刷新的检查来进行判断是否需要刷新物品
+FightOpFuncList[HandleMsg.GetShopList] = function (obj, packet)
+	FightOpFuncList.initShopData(obj) -- 检查初始化和刷新
+	FightOpFuncList.sendShopList(obj)
+end
+
+-- 此部分抛弃了定时刷新功能的调用 直接采取玩家进行获取列表或者购买的时候进行刷新的检查来进行判断是否需要刷新物品
+FightOpFuncList[HandleMsg.BuyShopItem] = function (obj, packet)
+	FightOpFuncList.initShopData(obj) -- 检查初始化和刷新
+	local listId = DataPack.readUInt(packet)
+
+	local function findShopItemByListId(tab, listId)
+		if not tab then
+			return nil
+		end
+		for i = 1, #tab do
+			if tab[i].listId == listId then
+				return tab[i]
+			end
+		end
+		return nil
+	end
+
+	local var = LActor.getStaticVar(obj) -- 玩家的商店兑换表私有的
+	if var == nil or var.renown_shop_list == nil then
+		return
+	end
+
+	local listInfo = findShopItemByListId(var.renown_shop_list.lists, listId)
+	if listInfo == nil then
+		LActor.sendTipmsg(obj, Lang.ScriptTips.fi00027, ttMessage)
+		return
+	end
+	-- 判断购买次数
+	if listInfo.hasBuyNum <= 0 then
+		LActor.sendTipmsg(obj, Lang.ScriptTips.fi00028, ttMessage)
+		return
+	end
+	local renown = LActor.getIntProperty(obj, PROP_ACTOR_SHENGWANG) -- 威望
+	if renown < listInfo.costRenown then
+		--LActor.sendTipmsg(obj, Lang.ScriptTips.fi00029, ttMessage)
+		LActor.SendGeneralTips(obj, 5, 0, listInfo.costRenown-renown)
+		return
+	end
+
+	local id = listInfo.itemId
+	local num = listInfo.itemNum
+
+	if num > 0 and listInfo.itemType == ItemType.normalItem then
+		--购买武将卡判断
+		if CheckBuyWujiangCard(obj, id, num) ~= 0 then return end
+	end
+
+	-- 扣消费	
+	LActor.giveAward(obj, qatShengWang , -listInfo.costRenown, 0, 0, "fighthandle.txt", 1, false, "fight", "store_buy", "" , string.format("%d", id))-- 威望
+	-- 扣次数
+	listInfo.hasBuyNum = listInfo.hasBuyNum - 1
+
+	-- LActor.sendTipmsg(obj, string.format(Lang.ScriptTips.fi00030, listInfo.costRenown), ttDialog)
+
+	if num > 0 then
+		num = num * getAcitivityIsDouble(daYanwuchang)
+		if listInfo.itemType == ItemType.normalMoney then
+			if listInfo.itemId == 0 then
+				LActor.changeMoney(obj, mtBindCoin, num, 1, true,  "fight", "winTargets")
+			elseif listInfo.itemType == 1 then
+				LActor.changeMoney(obj, mtCoin, num, 1, true,  "fight", "winTargets")
+			elseif listInfo.itemType == 2 then
+				LActor.changeMoney(obj, mtBindYuanbao, num, 1, true,  "fight", "winTargets")
+			elseif listInfo.itemType == 3 then
+				LActor.changeMoney(obj, mtYuanbao, num, 1, true,  "fight", "winTargets")
+			else
+				debug_print("===>>> [仙斗会商店] 无效的金钱类型!")
+			end
+		elseif listInfo.itemType == ItemType.normalItem then
+			-- 道具比较特殊 需要把不够塞背包的物品发邮件
+			local more = LActor.addItem(obj, id, 0, 0, num, 0, "winTargets")
+			local needSendMailNum = num - more
+			if needSendMailNum > 0 then -- 需要发邮箱
+				System.sendGmMailOffLine(LActor.getActorId(obj), Lang.ScriptTips.fi00034, 1, id, needSendMailNum, 0, Lang.ScriptTips.fi00035)
+			end
+		else
+		end
+	end
+	local pack = DataPack.allocPacket(obj, FightSysId, HandleMsg.ReturnBuyShopItem)
+	DataPack.writeUInt(pack, LActor.getIntProperty(obj, PROP_ACTOR_SHENGWANG))
+	DataPack.writeUInt(pack, listId)
+	DataPack.writeUInt(pack, listInfo.hasBuyNum)
+	DataPack.flush(pack)
+end
+
+-- 刷新
+FightOpFuncList[HandleMsg.RefreshShopList] = function (obj, packet)
+	local var = LActor.getStaticVar(obj) -- 玩家的商店兑换表私有的
+	if var == nil then
+		return
+	end
+
+	if var.renown_shop_list == nil then -- 原本就没刷新 则默认刷新 然后返回数据
+		FightOpFuncList.initShopData(obj)
+	else
+		-- 判断消耗是否足够
+		local cost = FightConf.refreshCost
+		if cost == nil or cost < 0 then
+			debug_print("error: 仙斗会商店刷新扣费异常配置 出现负数!")
+			return
+		end
+		local money = LActor.getMoneyCount(obj, mtYuanbao)
+		if money < cost then
+			--LActor.sendTipmsg(obj, Lang.ScriptTips.fi00002, ttMessage)
+			LActor.SendGeneralTips(obj, 1, mtYuanbao, cost-money)
+			return
+		end
+		-- 扣钱
+		if cost > 0 then
+			LActor.changeMoney(obj, mtYuanbao, -cost, 1, true,  "fight", "refreshShop")
+		end
+		var.renown_shop_list.refreshTime = 0
+		FightOpFuncList.initShopData(obj)
+	end
+	FightOpFuncList.sendShopList(obj)
+end
+
+FightOpFuncList.OnMonsterDamage = function( monster, mid ,val ,sysarg )
+	local fubenid = LActor.getFubenId(monster)
+	--野外场景不能这样搞，广播太厉害
+	if fubenid == 0 then
+		print("=============野外长江======")
+		return
+	end
+	local fubenptr = LActor.getFubenPrt(monster)
+	if fubenptr == nil then
+		print("获取副本指针错误")
+		return
+	end
+	local actorList = LuaHelp.getFbActorList( fubenptr)
+	if actorList == nil then
+		print("=============获取副本玩家错误======")
+		return
+	end
+	local handle = LActor.getHandle( monster )
+	local maxhp = LActor.getIntProperty(monster ,PROP_MAXHP)
+	local hp = LActor.getIntProperty(monster ,PROP_HP)
+	local maxmp = LActor.getIntProperty(monster ,PROP_MAXMP)
+	local mp = LActor.getIntProperty(monster ,PROP_MP)
+	local level = LActor.getIntProperty(monster, PROP_LEVEL)
+	local name = LActor.getName( monster )
+	for i = 1 , #actorList do
+		--if actorList[i] ~= actorobj then
+			local npack = DataPack.allocPacket( actorList[i] , 0, 55)
+			if npack ~= nil then
+				DataPack.writeInt64(npack,handle)
+				DataPack.writeInt( npack , level)
+				DataPack.writeInt( npack , hp - val)
+				DataPack.writeInt( npack , maxhp)
+				DataPack.writeInt( npack , mp)
+				DataPack.writeInt( npack , maxmp)
+				DataPack.writeString( npack , name)
+				DataPack.flush( npack )
+			end
+		--end
+	end
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeFight, EventCallDispatcher.HandlerFightOp)
+EventCallDispatcher.regEntityCallbackMsg(EntityCallbackMsg.FightReady, OnStartFight)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeLevel, EventCallDispatcher.OnLevelUpFight)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeOnActorDeath, EventCallDispatcher.OnFightPlayerDie)
+EventCallDispatcher.registerFubenGameOver(FightConf.fbId,  EventCallDispatcher.OnFightFubenGameOver)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeFightResult, FightOpFuncList.OnFightResult)
+EventCallDispatcher.registerFubenExit(FightConf.fbId, EventCallDispatcher.OnExitFightFuben)
+EventCallDispatcher.registerFubenEnter(FightConf.fbId, EventCallDispatcher.OnEnterFightFuben)
+MonsterDamageDispatch.register( FightConf.monsterId, FightOpFuncList.OnMonsterDamage )
+-- EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, EventCallDispatcher.OnFightLogin)
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, EventCallDispatcher.OnNewDayFight) -- 新的一天
+
+GmEventFuncList.register( "ffff",function (actorobj, args)
+	FightSysNewDayGetAward()
+end, 1)
+
+--返回是否可以挑战
+function FightOpFuncList.leftCount(obj)
+	if LActor.getLevel(obj) < FightConf.level then return 0 end
+
+	local var = LActor.getStaticVar(obj)
+	if var == nil then return 0 end
+
+	local pk_count = var.pk_count or 0
+	if pk_count >= FightConf.pkCount + FightOpFuncList.getVipAddNormalPkCount(LActor.getVIPLevel(obj)) then return 0 end
+
+	return 1
+end
+GetQuestTargetCount.register(qtXianDouHui, FightOpFuncList.leftCount)

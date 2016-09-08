@@ -1,0 +1,73 @@
+﻿-- 剧情副本2-4 东夷监狱场景相关的配置 监狱
+{
+	--场景1
+	scenceid = 109,						--这个id必须每次递增，比如第一个场景id是0，下一个一定是1，类推
+	--场景名称
+	scencename = Lang.SceneName.s109,
+	--场景对应的地图,只需要填文件名，不需要写路径和后缀名，比如这个地图文件是map/demo.jxm，只需要写demo
+	mapfilename = "qz",
+	--限制等级,低于这个等级无法进入
+	minlevel = 1,
+	--限制物品，这是一个数字列表，代表有这些物品的玩家不能进入
+	forbiddenitem = {},
+	--限制的技能列表，有这些技能的玩家不能进入
+	forbiddenskill = {},
+	--0表示可以pk，1表示不可以，默认是0
+	nopk = 1,
+	progress = 0,
+	music = "yewaiqingxin.mp3",
+	triggerkillallmonster = true, 
+	musicInterval=5,
+        --在世界地图上的坐标x
+        worldmapPosx =0,
+        worldmapPosy =0,
+        --场景的长宽,是指格子数的长宽
+        sceneWidth =118,
+        sceneHeight =98,
+
+	poetry = Lang.SceneName.s109,
+	area = 
+	{
+		{ 
+		  name = Lang.SceneName.s109, range = { 0,0,118,98,118,0,0,98}, center = {60,3},
+		    attri = { 
+		      -- {type= 46 ,value = {0}}, --复活点，无参数,
+        --       {type= 50 ,value = {0}}, --PK模式  
+					}
+		},			
+	},
+	--refresh项用来配置这个场景的刷怪点，每个场景可以有多个刷怪点，可以用include包含多个刷怪点
+
+     
+ refresh =
+{	  
+},
+	--这里配置这个场景出现的NPC，如果有多个NPC，这配置多行，每一项（行）表示一个NPC
+	npc = 
+	{
+		--name表示npc的名称，
+		--posx和posy分别表示出现的位置坐标
+		--script是对应的脚本名字，需要用相对路径
+		--modelid表示外观模型id
+                --camp表示是阵营的id，默认是0表示所有的阵营都能用，1神武  2天机  3鸿儒，如果是0可以不配置
+    --{name = Lang.EntityName.n1 , posx = 47 , posy = 20,script= "data/script/yueyawan/shanbao.txt",modelid=1,icon = 1},  -- 山豹
+    --{name = Lang.EntityName.n2 , posx = 69 , posy = 37,script= "data/script/yueyawan/laozhongyi.txt",modelid=2,icon = 2},  -- 老中医
+    --{name = Lang.EntityName.n3 , posx = 16 , posy = 46,script= "data/script/yueyawan/cunzhang.txt",modelid=3,icon = 3},  -- 村长
+    --{name = Lang.EntityName.n4 , posx = 32 , posy = 57,script= "data/script/yueyawan/xiyuqixia.txt",modelid=4,icon = 4},  -- 西域奇侠
+    --{name = Lang.EntityName.n5 , posx = 72 , posy = 77,script= "data/script/yueyawan/longtianxiang.txt",modelid=5,icon = 5},  -- 龙天香
+    --{name = Lang.EntityName.n6 , posx = 39 , posy = 88,script= "data/script/yueyawan/minbing.txt",modelid=6,icon = 6},  -- 民兵
+
+
+
+
+
+      
+  },
+  --fromTels = { 1,2,3 }
+  teleport = 
+  {  
+     
+     --{ posx = 15, posy = 46,toSceneid = 25,toPosx = 87, toPosy = 40,modelid = 50001,name = Lang.SceneName.s109,effect=20},
+
+  },
+},

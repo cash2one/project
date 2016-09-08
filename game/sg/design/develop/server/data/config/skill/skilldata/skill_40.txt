@@ -1,0 +1,28 @@
+
+-- 怪物近程攻击
+{
+	id=40,
+	name=Lang.Skill.s40Name,
+	desc=Lang.Skill.s40Desc,
+	vocation=0,	
+	skillClass =7,
+	skillType=6,
+	skillSpellType=0,
+	commonCd=0,
+	specialBuffCond =0,
+actions=
+	{
+		-- 11 = 结印施法， 15 = 跳跃施法
+		{ act = 2, effect = 0 },
+		{ act = 2, effect = 0 },
+		{ act = 2, effect = 0 },
+	},
+
+	skillSubLevel=
+	{
+--#include "Skill_40_1.txt"	
+	}
+},
+
+
+

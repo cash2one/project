@@ -1,0 +1,17 @@
+﻿--皇陵秘境副本怪物技能：万剑归宗
+{
+	id = 94,
+	name = Lang.Skill.s94Name,
+	desc = Lang.Skill.s94Desc,
+	vocation = 9,
+	skillType = 2,
+	skillSpellType = 3,
+	skillClass = 9,
+	commonCd = 0,
+	canbeDefault = false,
+	specialBuffCond = 0,
+	notAutoUse = false,
+	skillSubLevel = { 
+--#include "Skill_94_1.txt"
+	},
+},

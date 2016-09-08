@@ -1,0 +1,26 @@
+--概率减少对手防御
+{
+	id = 115,
+	name = Lang.Skill.s115Name,
+	desc = Lang.Skill.s115Desc,
+	vocation = 0,
+	skillType = 8,
+	skillSpellType = 0,
+	skillClass = 1,
+	commonCd = 0,
+	canbeDefault = false,
+	specialBuffCond = 0,
+	notAutoUse = false,
+	skillSubLevel = { 
+--#include "Skill_115_1.txt"
+--#include "Skill_115_2.txt"
+--#include "Skill_115_3.txt"
+--#include "Skill_115_4.txt"
+--#include "Skill_115_5.txt"
+--#include "Skill_115_6.txt"
+--#include "Skill_115_7.txt"
+--#include "Skill_115_8.txt"
+--#include "Skill_115_9.txt"
+--#include "Skill_115_10.txt"
+	},
+},

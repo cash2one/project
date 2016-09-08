@@ -1,0 +1,63 @@
+﻿{
+	quickFinish = false,
+	comp = {
+		type = 1,
+		scene = Lang.SceneName.s7,
+		npc = Lang.EntityName.n703,
+	},
+	prom = {
+		type = 1,
+		scene = Lang.SceneName.s7,
+		npc = Lang.EntityName.n701,
+	},
+	nextacceptqid = 0,
+	timelimit = 0,
+	conds = {
+		{
+			id = 0,
+			type = 0,
+			count = 64,
+		},
+	},
+	target = {
+		{
+			id = 4214,
+			type = 3,
+			count = 1,
+		},
+		{
+			id = 4215,
+			type = 3,
+			count = 1,
+		},
+	},
+	autofinish = true,
+	excludetree = true,
+	type = 1,
+	awards = {
+		{
+			id = 0,
+			type = 1,
+			count = 5000,
+		},
+		{
+			id = 0,
+			type = 4,
+			count = 746670,
+		},
+	},
+	finishNext = true,
+	commitjuqingkey = "none",
+	playType = {
+		5,
+	},
+	timeoutcleardata = false,
+	maxcount = 1,
+	acceptjuqingkey = "none",
+	name = Lang.Quest.n5175,
+	parentid = 5174,
+	cangiveup = false,
+	interval = 0,
+	content = Lang.Quest.d5175,
+	id = 5175,
+},

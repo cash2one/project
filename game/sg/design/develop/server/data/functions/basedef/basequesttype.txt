@@ -1,0 +1,176 @@
+-- 任务的操作行为
+BaseQuestAction = {
+    qaAccept = 1, -- 接受任务
+    qaCommit = 2, -- 提交任务
+    qaGiveUp = 3, -- 放弃任务
+    qaTimeOut = 4, -- 任务超时
+    qaTargetFinish = 5, --任务目标改变
+},
+
+-- 任务类型定义
+BaseQuestPlayType = {
+    qptCatches = 1, --捕获类
+    qptTogather = 2, --并肩作战 NPC协助玩家类
+    qptDebt = 3, --讨债类
+    qptLatent = 4, --潜入 潜伏类
+    qptRescue = 5, --救援类
+    qptChase = 6, --追捕类
+    qptSummon = 7, --召唤类
+    qptTransform = 8, --变身类
+    qptProtect = 9, --护送类
+    qptDispatchItem = 10,--分发物品
+    qptGuildLoop = 100, -- 公会任务
+    qptGuildProtect = 101, -- 公会跑商
+},
+
+-- 目标target 和C++的 目标需要严格对应
+
+BaseQuestTargetType = {
+    qtMonster = 0,      -- 杀怪类
+    qtCollect = 1,      -- 收集类
+    qtTalk = 2,         -- 对话类
+    qtQuest = 3,        -- 子系列任务类
+    qtActorLevel = 4,   --角色的等级达标
+    qtShopping = 5,     -- 购买物品
+
+    qtMountAdvance = 30,        --坐骑进阶
+    qtMountFoster = 31,         --坐骑培养
+    qtWingAdvance = 32,         --翅膀进阶
+    qtWingFoster = 33,          -- 翅膀培养
+    qtWeaponFix = 34,           -- 法宝修炼
+    qtPartnerAdvance = 35,      --伙伴培养
+    qtEquipStrength = 36,       --强化装备
+    qtEquipAdvance = 37,        --装备进阶
+    qtEquipUpLevel = 38,        --装备升级
+    qtEquipWashs = 39,          --装备洗练
+    qtInsertGem = 40,           -- 镶嵌宝石
+    qtSyntheticMaterial = 41,   --合成材料
+    qtXuanShangTask = 42,       -- 完成悬赏任务
+    qtUpStar = 43,              --任务升星
+    qtInJoinFigth = 44,         --参与竞技场
+    qtInJoinWar = 45,           --参与竞战场
+
+    --自定义需求，id为在此需求表中唯一的非0值（最大值为65000），
+    --count为需要完成的数量，data值为自定义需求的名称；自定义需求需要通过脚本来增加完成的值； 
+    qcCustomize = 127,
+    qcNoTarget = 256,--空需求
+    qtTimeOut = 0xffff  --超时
+}
+--所有的任务类型 参数 C++ 都导出到lua中使用 此处做说明 可以直接使用以下类型
+--[[
+//定义返回给客户端的错误码
+enum QuestErrorCode
+{
+    qecSucc = 0,    //成功
+    qecNoQuest = 1,//用户没有指定的任务在身
+    qecCanNotFinish = 2,//用户还没达到完成任务的条件
+    qecGetAward = 3,    //领取不到奖励，通常是由于背包不够大
+    qecGetAwardPara = 4,    //领取的奖励不合符要求，比如本职业不能领取本物品
+    qecNotGiveUp = 5,           //本任务不能放弃
+    qecNoQuestItem = 6, //没有指定的正在进行的任务的类型
+    qecDoing = 7,       //正在做这个任务，不能新增
+    qecNewCond = 8,     //没达到接受任务的条件
+    qecMainFinish = 9,  //主线任务已做了一次，不能再接
+    qecRepeatMax = 10,  //已经超过了每日可做的最大次数
+    qecInterval = 11,   //周期任务只能做一次
+    qecParent = 12,     //父任务没完成
+    qecExcludeTree = 13,    //子任务正在进行中，不能接这个任务
+    qecSkill = 14,          //不能学习这个技能
+    qecNotAutoCompleteQuest = 15,   //不是一个自动完成的任务
+    qecQuestFull = 16,      //任务已满
+    qecNoQuickFinish = 17, // 该任务不能快速完成
+    qecNoFinishYB = 18,     // 没有足够的天珠快速完成
+    qecBagFullSendMail = 19, //背包满，发邮件
+    qecErr = 127,   //内部错误，不用显示给用户看
+};
+//任务基本操作
+enum QuestAction
+{
+    qaAccept = 1, //接受任务
+    qaCommit = 2, //提交任务
+    qaGiveUp = 3, //放弃任务
+    qaTimeOut = 4, // 超时任务
+};
+//玩法类型 派发消息
+enum QuestPlayType
+{
+    qptCatches = 1, //捕获类
+    qptTogather = 2, //并肩作战 NPC协助玩家类
+    qptDebt = 3, //讨债类
+    qptLatent = 4, //潜入 潜伏类
+    qptRescue = 5, //救援类
+    qptChase = 6, //追捕类
+    qptSummon = 7, //召唤类
+    qptTransform = 8, //变身类
+};
+
+//完成目标 type
+enum QuestTarget
+{
+    qtMonster = 0,      // 杀怪类
+    qtCollect = 1,      // 收集类
+    qtTalk = 2,         // 对话类
+    qtQuest = 3,        // 子系列任务类
+    qtActorLevel = 4,   // 角色的等级达标
+    qtShopping = 5,     // 购买物品
+
+    qtMountAdvance = 30,        //坐骑进阶
+    qtMountFoster = 31,         //坐骑培养
+    qtWingAdvance = 32,         //翅膀进阶
+    qtWingFoster = 33,          // 翅膀培养
+    qtWeaponFix = 34,           // 法宝修炼
+    qtPartnerAdvance = 35,      //伙伴培养
+    qtEquipStrength = 36,       //强化装备
+    qtEquipAdvance = 37,        // 装备进阶
+    qtEquipUpLevel = 38,        // 装备升级
+    qtEquipWashs = 39,          // 装备洗练
+    qtInsertGem = 40,           // 镶嵌宝石
+    qtSyntheticMaterial = 41,   //合成材料
+    qtXuanShangTask = 42,       // 完成悬赏任务
+    qtUpStar = 43,              //任务升星
+    qtInJoinFigth = 44,         //参与竞技场
+    qtInJoinWar = 45,           //参与竞战场
+
+    //自定义需求，id为在此需求表中唯一的非0值（最大值为65000），
+    //count为需要完成的数量，data值为自定义需求的名称；自定义需求需要通过脚本来增加完成的值； 
+    qcCustomize = 127,
+    qcNoTarget = 256,//空需求
+    qtTimeOut = 0xffff  //超时
+};
+
+//任务激活的条件
+enum QuestCondition
+{
+    qcLevel = 0,//0、角色等级
+    qcGuildLevel = 1,//1、帮派等级
+    qcJob = 2,  //2、职业分类
+    qcMenPai = 3,//3、门派分类
+    qcZY = 4,   //4、所在阵营
+    qcKill = 5, //5、杀戮值
+    qcZhanHun = 6,  //6、战魂值
+    qcPreQuest = 7, //7、前置任务
+    qcItem = 8, //8、身上携带物品
+    qcItemCount = 9,//9、物品数量
+    qcUserItem = 10,            //10、对应道具ID,输入道具ID，玩家双击该道具后添加任务(zac:这种是通过物品获得任务）
+    qcMulMp = 11,           //11、多个门派可以接的任务
+    qcMulParent = 12,       //12、支持两个前置任务
+    qcSex = 13,             //13、性别
+    qcMaxConition,      //配置文件的值不能超过这个
+
+};
+
+//任务的类型
+enum QuestType
+{
+    qtMain = 0, //主线任务
+    qtSub = 1,//支线任务
+    qtFuben = 2,//副本任务
+    qtDay = 3,//日常任务
+    qtGuild = 4,//帮派任务
+    qtChallenge = 5,//挑战任务
+    qtRnd = 6,//奇遇任务
+    qtRecommended = 7,//活动推介
+    qtZyQuest = 8,  //阵营任务
+    qtMaxQuestType,//最大值
+};
+]]

@@ -1,0 +1,11 @@
+﻿--lua script
+
+--[[键入'ss'并按分号即可按模板生成脚本]]--
+function CityChuanSongItem(sysarg,arg)
+	local type = arg[3]
+	if LActor.getItemCount(sysarg,18200) >= 1 then
+		System.telportSceneByName(sysarg,Lang.SceneName.s3,93,58)
+		LActor.removeItem(sysarg,18200,1,-1,-1,-1,"回城",2)
+	end
+end
+table.insert(LocalDT.ScriptDelayConfig[1],CityChuanSongItem)

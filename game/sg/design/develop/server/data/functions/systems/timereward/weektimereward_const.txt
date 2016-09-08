@@ -1,0 +1,8 @@
+LocalDT.WeekTimeMoneyRewardConst =
+{
+   
+	REWARDLIMLEVEL = {1,100},     --限制领取等级 
+	REWARDTIME = 3600*40,        --超过多少小时可以领取
+	REWARDMONEY = 200,         --金钱数量
+	
+}

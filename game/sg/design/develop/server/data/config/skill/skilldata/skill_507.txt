@@ -1,0 +1,31 @@
+{
+	id = 507,
+	name = Lang.Skill.s507Name,
+	desc = Lang.Skill.s507Desc,
+	vocation = 0,
+	skillType = 11,
+	skillSpellType = 0,
+	skillClass = 5,
+	commonCd = 0,
+	canbeDefault = false,
+	specialBuffCond = 0,
+	notAutoUse = false,
+ 	actions=
+{
+
+	{act=2,effect=1601,type=2},
+		
+},
+	skillSubLevel = { 
+--#include "Skill_507_1.txt"
+--#include "Skill_507_2.txt"
+--#include "Skill_507_3.txt"
+--#include "Skill_507_4.txt"
+--#include "Skill_507_5.txt" 
+--#include "Skill_507_6.txt"
+--#include "Skill_507_7.txt"
+--#include "Skill_507_8.txt"
+--#include "Skill_507_9.txt"
+--#include "Skill_507_10.txt" 
+	},
+},

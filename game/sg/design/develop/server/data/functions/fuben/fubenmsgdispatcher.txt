@@ -1,0 +1,32 @@
+--说明 副本消息处理
+
+FubenMsgHandle = {}
+
+
+FubenMsgHandle.registerMsgHandler = function ( MsgId , proc)
+  -- body
+  if FubenMsgHandle[MsgId] then
+    return false
+  else
+    FubenMsgHandle[MsgId] = proc
+  end
+end
+
+FubenMsgHandle.dispatcher = function  ( sysarg, dp )
+  -- body
+  local nFubenId = DataPack.readInt(dp)
+  if FubenMsgHandle[nFubenId] then
+     FubenMsgHandle[nFubenId](sysarg, dp)
+  else
+    debug_print("副本id="..nFubenId.."还没有注册")
+  end
+end
+
+FubenMsgHandle.unregisterMsgHandler = function(msgid, proc)
+    if FubenMsgHandle[msgid] == proc then
+        FubenMsgHandle[msgid] = nil
+        return true
+    else
+        return false
+    end
+end

@@ -1,0 +1,26 @@
+--被攻击概率提升物理法术防御
+{
+	id = 116,
+	name = Lang.Skill.s116Name,
+	desc = Lang.Skill.s116Desc,
+	vocation = 0,
+	skillType = 8,
+	skillSpellType = 0,
+	skillClass = 1,
+	commonCd = 0,
+	canbeDefault = false,
+	specialBuffCond = 0,
+	notAutoUse = false,
+	skillSubLevel = { 
+--#include "Skill_116_1.txt"
+--#include "Skill_116_2.txt"
+--#include "Skill_116_3.txt"
+--#include "Skill_116_4.txt"
+--#include "Skill_116_5.txt"
+--#include "Skill_116_6.txt"
+--#include "Skill_116_7.txt"
+--#include "Skill_116_8.txt"
+--#include "Skill_116_9.txt"
+--#include "Skill_116_10.txt"
+	},
+},

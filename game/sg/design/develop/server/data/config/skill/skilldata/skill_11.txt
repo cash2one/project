@@ -1,0 +1,54 @@
+{
+	id = 11,
+	name = Lang.Skill.s11Name,
+	desc = Lang.Skill.s11Desc,
+	vocation = 2,
+	skillType = 2,
+	skillSpellType = 0,
+	skillClass = 1,
+	commonCd = 0,
+	canbeDefault = false,
+	specialBuffCond = 0,
+	notAutoUse = false,
+	trainCondAddtions=
+{
+	{addtionsid=1,cond=1,value=4,consume=false},
+	{addtionsid=2,cond=1,value=9,consume=false},
+	{addtionsid=3,cond=1,value=24,consume=false},
+},
+	
+	trainCondAdddesc=
+{
+	{addtionid=1,iconid=201,name=Lang.Skill.s11_21Name,desc=Lang.Skill.s11_21Desc},
+	{addtionid=2,iconid=202,name=Lang.Skill.s11_22Name,desc=Lang.Skill.s11_22Desc},
+	{addtionid=3,iconid=203,name=Lang.Skill.s11_23Name,desc=Lang.Skill.s11_23Desc},
+},
+ 	actions=
+{
+
+	{act=2,effect=1601,type=2},
+		
+},
+	skillSubLevel = { 
+--#include "Skill_11_1.txt"
+--#include "Skill_11_2.txt"
+--#include "Skill_11_3.txt"
+--#include "Skill_11_4.txt"
+--#include "Skill_11_5.txt"
+--#include "Skill_11_6.txt"
+--#include "Skill_11_7.txt"
+--#include "Skill_11_8.txt"
+--#include "Skill_11_9.txt"
+--#include "Skill_11_10.txt" 
+--#include "Skill_11_11.txt"
+--#include "Skill_11_12.txt"
+--#include "Skill_11_13.txt"
+--#include "Skill_11_14.txt"
+--#include "Skill_11_15.txt"
+--#include "Skill_11_16.txt"
+--#include "Skill_11_17.txt"
+--#include "Skill_11_18.txt"
+--#include "Skill_11_19.txt"
+--#include "Skill_11_20.txt" 
+	},
+},

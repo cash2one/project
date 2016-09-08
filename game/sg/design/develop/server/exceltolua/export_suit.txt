@@ -1,0 +1,155 @@
+--导出套装表
+
+--[[
+{											
+	name = Lang.Item.t1,										
+	items = {	1111	,	7111	,	4111	,	8111	,	6111	},
+	attrs = {										
+		{type =39,value =	16	,need =2},								
+		{type =35,value =	16	,need =3},								
+		{type =41,value =	37	,need =4},								
+		{type =21,value =	51	,need =5},								
+	},										
+},	
+]]
+
+
+local strLangTemplate = "n%d=\"%s\",i%d=\"%s\","
+
+local strTemplete = [[
+	{
+		name='%s',
+		items={%s},
+		attrs={
+%s
+		},
+	},
+]]
+
+
+
+function ReadSuitConfigItem()
+	local objexcel = CExcelReader:new()
+	if not objexcel then
+		print("objexcel is null")
+		return
+	end
+
+	objexcel:Init_App()
+	objexcel:OpenRead()
+
+	local obj = objexcel:LoadSheetByIndex(1) --套装属性.xlsx
+	if not obj then
+		print("LoadSheetByIndex失败!")
+		objexcel:Close()
+		objexcel:Quit_App()
+		return
+	end
+
+	local nCount = objexcel:GetCurrentSheetColCount()
+	local mCount = objexcel:GetCurrentSheetRowCount()
+
+
+	print("nCount", nCount)
+	print("mCount", mCount)
+
+	local attrs = ""
+	local strAllConcent = "--#include \"..\\..\\language\\LangCode.txt\"\n\nSuitConfig = {\n"
+
+	for i = 2, mCount do
+		local concent = {} --第一行构造成一个table
+
+		local strValue = objexcel:ReadCellAsString(i, 4) --所需部件数
+		concent.need = tostring(strValue) or 0
+
+		concent.staitcAttrs = {}
+		strValue = objexcel:ReadCellAsString(i, 5)--物理防御
+		if strValue and strValue ~= "" and tonumber(strValue) > 0 then
+			concent.staitcAttrs[#concent.staitcAttrs+1] = {type = 23, value = tonumber(strValue)}
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 6)--法力防御
+		if strValue and strValue ~= "" and tonumber(strValue) > 0 then
+			concent.staitcAttrs[#concent.staitcAttrs+1] = {type = 33, value = tonumber(strValue)}
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 7)--生命
+		if strValue and strValue ~= "" and tonumber(strValue) > 0 then
+			concent.staitcAttrs[#concent.staitcAttrs+1] = {type = 17, value = tonumber(strValue)}
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 8)--所有攻击
+		if strValue and strValue ~= "" then
+			concent.staitcAttrs[#concent.staitcAttrs+1] = {type = 27, value = tonumber(strValue)}
+		end
+
+		--转成字符串
+		for k, v in pairs(concent.staitcAttrs) do
+			local strCond = string.format("\t\t\t{type=%d, value=%d, need=%d},\n", v.type, v.value, concent.need)
+			attrs = attrs..strCond
+		end
+
+		local str = ""
+		if i % 3 == 1 then
+			strValue = objexcel:ReadCellAsString(i, 1) --套装ID
+			concent.id = tonumber(strValue)
+			
+			strValue = objexcel:ReadCellAsString(i, 2) --套装名称
+			concent.name = tostring(strValue) or ""
+			
+			strValue = objexcel:ReadCellAsString(i, 3) --套装部件ID
+			concent.items = tostring(strValue) or ""
+
+										print(concent.id)
+										print(concent.name)
+										print(concent.items)
+										print(attrs)
+
+			str = string.format(strTemplete,
+										--concent.id,
+										concent.name,
+										concent.items,
+										attrs
+										)
+
+			print(str)
+
+			attrs = "" --重置
+		end
+
+		strAllConcent = strAllConcent..str.."\n"
+		if mCount == i then
+			strAllConcent = strAllConcent.."\n}"
+			objexcel:WriteFile("suitconfig.txt", strAllConcent)
+		end
+
+		--[[
+		--写文件
+		--objexcel:WriteFile(itemfile, str)
+
+
+		--语言包
+		local strLang = string.format(strLangTemplate, concent.id, concent.name, concent.id, concent.desc)
+		strAllLang = strAllLang..strLang.."\n"
+		if mCount == i then
+			objexcel:WriteFile("item.txt", strAllLang)
+		end
+
+		--生成include文件名
+		local strStdItem = string.format("--#include \"itemclass\\%d.txt\"", concent.id)
+		strAllStdItem = strAllStdItem..strStdItem.."\n"
+		if mCount == i then
+			objexcel:WriteFile("stditems.txt", strAllStdItem)
+		end
+		--]]
+
+	end
+
+	objexcel:Close()
+	objexcel:Quit_App()
+	objexcel:delete()
+end
+----------------------------------------------------------------------------------------
+
+
+

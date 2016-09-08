@@ -1,0 +1,528 @@
+
+--龙脉珍宝副本
+
+
+longmaizhenbao = {}
+
+
+--初始化副本
+longmaizhenbao.OnInitCopy = function(sysarg, Fhandle)
+
+	local nTeam = LActor.getTeamId( sysarg )
+	if nTeam > 0 then
+		local nActionList = LuaHelp.getTeamMemberList(sysarg)
+		for i = 1 , #nActionList do
+      		LActor.enterFuBen( nActionList[i], Fhandle, longmaizhenbaoconfig.sceneId[1], longmaizhenbaoconfig.playerPos[i][1], longmaizhenbaoconfig.playerPos[i][2] )
+      		-- 触发任务事件
+			LActor.OnQuestEvent(qtWuJinMiZang, 0, 1, true, nActionList[i])
+      	end
+ 	else
+ 		LActor.enterFuBen( sysarg, Fhandle, longmaizhenbaoconfig.sceneId[1], longmaizhenbaoconfig.playerPos[1][1], longmaizhenbaoconfig.playerPos[1][2] )
+ 		-- 触发任务事件
+		-- LActor.OnQuestEvent(qtWuJinMiZang, 0, 1, true, sysarg)
+  	end
+
+	Fuben.SetFubenTime(Fhandle,longmaizhenbaoconfig.limitTime)
+
+	fubenbase.Init(sysarg,longmaizhenbaoconfig.fubenId[1],longmaizhenbaoconfig.sceneId[1])
+
+	--特殊化 副本信息
+
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+	if not fbVar then return end
+	fbVar.longmaizhenbao_create_first_monster = 1
+	--[[
+	local hscene = Fuben.getSceneHandleById(ShouhuXuanNvConfig.sceneId[1], Fhandle) 
+
+	local nDiff = Fuben.getFubenDifficulty(Fhandle)
+
+	local nMonsterConfig = longmaizhenbaoconfig.startRefreshMonst[nDiff]
+
+	if nMonsterConfig == nil then
+		debug_print("---无尽秘藏副本配置错误---")
+		return
+	end
+	for k , v in pairs (nMonsterConfig) do
+		Fuben.createMonsters(hscene, v.monsterId, v.posX1, v.posX2, v.posY1, v.posY2, v.nCount,0)
+	end
+	--]]
+
+	
+end
+
+
+longmaizhenbao.getRandomNumberResult = function ( RandomNum , table)
+	-- body
+	local nrate = System.getRandomNumber(RandomNum)
+	if type(table) ~= 'table' then
+		return
+	end
+	local sum = 0
+	for k , v in pairs ( table ) do
+		if nrate <= sum + v.rate then
+			--debug_print("---------返回值------------",k)
+			return k
+		else
+			sum = sum + v.rate
+		end
+	end
+end
+
+-- 怪物死亡
+longmaizhenbao.OnMonsterDie = function ( monster, sysarg, monId )
+	local fptr = LActor.getFubenPrt( sysarg )
+	if fptr == nil then
+		return
+	end
+	local fbid = Fuben.getFubenIdbyFuBenPtr(fptr)
+	if fbid ~= longmaizhenbaoconfig.fubenId[1] then
+		print("------------------longmaizhenbao.OnMonsterDie register error")
+		return
+	end
+	
+	-- body
+	fubenjiesuan.OnKillMonster( monster, sysarg, monId )
+
+	local Fhandle = LActor.getFubenHandle(sysarg)
+	--debug_print("-----怪物死亡----")
+	local nDiff = Fuben.getFubenDifficulty(Fhandle)
+	local nMonsterConfig = longmaizhenbaoconfig.RefreshMonster[nDiff]
+	if nMonsterConfig == nil then
+		--debug_print("无尽秘藏副本配置错误")
+		return
+	end
+	-- local nIndex = longmaizhenbao.getRandomNumberResult(100,nMonsterConfig)
+	--debug_print("-------nIndex-----------",nIndex)
+	
+--	local Fhandle = LActor.getFubenHandle(sysarg)
+	local hscene = Fuben.getSceneHandleById(longmaizhenbaoconfig.sceneId[1], Fhandle)
+
+	local nVar = Fuben.getDyanmicVar( fptr )
+	if not nVar then return end
+	if nVar.longmaizhenbao_Kill_Monster_Count == nil then
+		nVar.longmaizhenbao_Kill_Monster_Count = 1
+	else
+		nVar.longmaizhenbao_Kill_Monster_Count = nVar.longmaizhenbao_Kill_Monster_Count + 1
+	end
+	log_print("==============killer===="..tostring(nVar.longmaizhenbao_Kill_Monster_Count))
+	if nVar.longmaizhenbao_Kill_Monster_Count >= longmaizhenbaoconfig.allmonstercout then
+		if nVar.IsTongguan ~= 1 then
+			-- 下发层数
+			local actors = LuaHelp.getFbActorList(fptr)
+			if actors ~= nil then
+				for i = 1,#actors do
+					local actor = actors[i]
+					if actor then
+						longmaizhenbao.SendMaxWave(actor, nVar.longmaizhenbao_wave or 1)
+					end
+				end
+			end
+			-- 下发结算
+			nVar.IsTongguan = 1
+			local sceneId = LActor.getSceneId( sysarg )
+			local scenePtr = LActor.getScenePtr( sysarg )
+			fubenjiesuan.OnMonsterAllDie(sceneId, scenePtr, 1, sysarg)
+		end
+		return
+	end
+	
+	if not nVar.longmaizhenbao_create_monster_count then
+		print("------------------longmaizhenbao.OnMonsterDie error, problem still exist")
+		nVar.longmaizhenbao_create_monster_count = 1
+	end
+	if nVar.longmaizhenbao_create_monster_count < longmaizhenbaoconfig.allmonstercout then
+		-- nVar.longmaizhenbao_create_monster_count = nVar.longmaizhenbao_create_monster_count + 1
+		-- Fuben.createMonsters(hscene, nMonsterConfig[nIndex].monsterId, nMonsterConfig[nIndex].posX1, nMonsterConfig[nIndex].posX2, nMonsterConfig[nIndex].posY1, nMonsterConfig[nIndex].posY2, 1,0)
+		-- 波数
+		nVar.longmaizhenbao_wave = nVar.longmaizhenbao_wave + 1
+		-- -- 加BUFF
+		-- local buffconfig = longmaizhenbaoconfig.monsterbuff[nDiff][nVar.longmaizhenbao_wave - 1]
+		-- if buffconfig then
+		-- 	local monster = Fuben.getMonsterPtrById(hscene, nMonsterConfig[nIndex].monsterId)
+		-- 	if monster then
+		-- 		for i=1,#buffconfig do
+		-- 			LActor.addBuff( monster, buffconfig[i].type, buffconfig[i].group, buffconfig[i].value, buffconfig[i].times, buffconfig[i].interval, buffconfig[i].name, buffconfig[i].timeOverlay )
+		-- 		end
+		-- 	end
+		-- end
+		nVar.longmaizhenbao_create_next_monster = 1
+		-- 设置玩家最大波数
+		local curwave = nVar.longmaizhenbao_wave
+		local actors = LuaHelp.getFbActorList(fptr)
+		if actors ~= nil then
+			for i = 1,#actors do
+				if actors[i] then
+					local actorvar = LActor.getStaticVar(actors[i])
+					if actorvar then
+						if actorvar.longmaizhenbao_max_wave == nil then
+							actorvar.longmaizhenbao_max_wave = 0
+						end
+						if actorvar.longmaizhenbao_max_wave < curwave then
+							actorvar.longmaizhenbao_max_wave = curwave
+						end
+					end
+					-- 通知开始倒计时
+					local npack = DataPack.allocPacket(actors[i],167,11)
+					if npack then
+						DataPack.writeInt( npack , longmaizhenbaoconfig.fubenId[1])
+						DataPack.writeInt( npack , 2)
+						DataPack.writeInt( npack , curwave)
+						DataPack.writeInt( npack , longmaizhenbaoconfig.allmonstercout)
+						DataPack.flush(npack)
+					end
+				end
+			end
+		end
+	end
+	log_print("==============killer===="..tostring(nVar.longmaizhenbao_create_monster_count))
+end
+
+-- longmaizhenbao.OnRefreshMonster = function( msgid, psc, nIndex, wave, nDiff )
+-- 	if not psc then return end
+-- 	local hscene = Fuben.getSceneHandleByPtr(psc)
+-- 	if hscene <= 0 then return end
+-- 	local nMonsterConfig = longmaizhenbaoconfig.RefreshMonster[nDiff]
+-- 	if nMonsterConfig == nil then
+-- 		--debug_print("无尽秘藏副本配置错误")
+-- 		return
+-- 	end
+
+-- 	Fuben.createMonsters(hscene, nMonsterConfig[nIndex].monsterId, nMonsterConfig[nIndex].posX1, nMonsterConfig[nIndex].posX2, nMonsterConfig[nIndex].posY1, nMonsterConfig[nIndex].posY2, 1,0)
+-- 	-- 加BUFF
+-- 	local buffconfig = longmaizhenbaoconfig.monsterbuff[nDiff][wave - 1]
+-- 	if buffconfig then
+-- 		local monster = Fuben.getMonsterPtrById(hscene, nMonsterConfig[nIndex].monsterId)
+-- 		if monster then
+-- 			for i=1,#buffconfig do
+-- 				LActor.addBuff( monster, buffconfig[i].type, buffconfig[i].group, buffconfig[i].value, buffconfig[i].times, buffconfig[i].interval, buffconfig[i].name, buffconfig[i].timeOverlay )
+-- 			end
+-- 		end
+-- 	end
+-- end
+
+longmaizhenbao.CreateNextWaveMonster = function( sysarg )
+	local Fhandle = LActor.getFubenHandle(sysarg)
+	--debug_print("-----怪物死亡----")
+	local nDiff = Fuben.getFubenDifficulty(Fhandle)
+	local nMonsterConfig = longmaizhenbaoconfig.RefreshMonster[nDiff]
+	if nMonsterConfig == nil then
+		--debug_print("无尽秘藏副本配置错误")
+		return
+	end
+	local nIndex = longmaizhenbao.getRandomNumberResult(100,nMonsterConfig)
+	--debug_print("-------nIndex-----------",nIndex)
+	
+--	local Fhandle = LActor.getFubenHandle(sysarg)
+	local hscene = Fuben.getSceneHandleById(longmaizhenbaoconfig.sceneId[1], Fhandle)
+
+	local fptr = LActor.getFubenPrt( sysarg )
+	if fptr == nil then
+		return
+	end
+	local nVar = Fuben.getDyanmicVar( fptr )
+	if not nVar then return end
+	if nVar.longmaizhenbao_create_next_monster == nil or nVar.longmaizhenbao_create_next_monster == 0 then
+		return
+	elseif nVar.longmaizhenbao_create_next_monster == 1 then
+		nVar.longmaizhenbao_create_next_monster = 0
+	end
+
+	if nMonsterConfig[nIndex] then
+		nVar.longmaizhenbao_create_monster_count = nVar.longmaizhenbao_create_monster_count + 1
+		Fuben.createMonsters(hscene, nMonsterConfig[nIndex].monsterId, nMonsterConfig[nIndex].posX1, nMonsterConfig[nIndex].posX2, nMonsterConfig[nIndex].posY1, nMonsterConfig[nIndex].posY2, 1,0)
+		-- 加BUFF
+		local buffconfig = longmaizhenbaoconfig.monsterbuff[nDiff][nVar.longmaizhenbao_wave - 1]
+		if buffconfig then
+			local monster = Fuben.getMonsterPtrById(hscene, nMonsterConfig[nIndex].monsterId)
+			if monster then
+				for i=1,#buffconfig do
+					LActor.addBuff( monster, buffconfig[i].type, buffconfig[i].group, buffconfig[i].value, buffconfig[i].times, buffconfig[i].interval, buffconfig[i].name, buffconfig[i].timeOverlay )
+				end
+			end
+		end
+	end
+end
+
+
+longmaizhenbao.OnActorDie = function ( sysarg, nkiller )
+	local nFubenId = LActor.getFubenId( sysarg )
+	if nFubenId ~= longmaizhenbaoconfig.fubenId[1] then
+		return
+	end
+	local fptr = LActor.getFubenPrt( sysarg )
+	if fptr == nil then
+		return
+	end
+
+	local isAllDie = true
+	local actorList = LuaHelp.getFbActorList(fptr)
+	if actorList ~= nil then
+		for i = 1 , #actorList do
+            if LActor.ActorIsDie(actorList[i]) == true then
+                isAllDie = false
+                break
+            end
+		end
+	end
+
+	if isAllDie == true then
+		local nVar = Fuben.getDyanmicVar( fptr )
+		if not nVar then return end
+
+		local curwave = 1
+		if nVar.longmaizhenbao_wave then
+			curwave = nVar.longmaizhenbao_wave
+		end
+
+		if nVar.IsTongguan ~= 1 then
+			-- 下发层数
+			local actors = LuaHelp.getFbActorList(fptr)
+			if actors ~= nil then
+				for i = 1,#actors do
+					local actor = actors[i]
+					if actor then
+						longmaizhenbao.SendMaxWave(actor, curwave-1)
+					end
+				end
+			end
+			-- 下发结算
+			nVar.IsTongguan = 1
+			local sceneId = LActor.getSceneId( sysarg )
+			local scenePtr = LActor.getScenePtr( sysarg )
+			fubenjiesuan.OnMonsterAllDie(sceneId, scenePtr, 1, sysarg)
+		end
+	end
+end
+
+
+
+-- 结束副本
+longmaizhenbao.OnFubenOverTime = function ( sysarg )
+	local pfb = LActor.getFubenPrt(sysarg)
+	if not pfb then return end
+	local fbVar = Fuben.getDyanmicVar(pfb)
+	if not fbVar then return end
+	local curwave = 1
+	if fbVar.longmaizhenbao_wave then
+		curwave = fbVar.longmaizhenbao_wave
+	end
+   	local actors = LuaHelp.getFbActorList(pfb)
+	if actors ~= nil then
+		for i = 1,#actors do
+			local actor = actors[i]
+			if actor then
+				longmaizhenbao.SendMaxWave(actor, curwave-1)
+				fubenjiesuan.GameOver(actor)
+			end
+		end
+	end
+end
+
+
+longmaizhenbao.OnExitFuben = function ( sysarg, hfb, way )
+	-- body
+	if not way or way ~= 1 or not sysarg or not hfb then
+		--debug_print(" ---------退出副本--------"..tostring(way))
+		return
+	end
+	--debug_print(" ---------清空退出副本数据--------"..tostring(way)) 
+	-- local fbPtr = Fuben.getFubenPtr( hfb )
+	-- local fbVar = Fuben.getDyanmicVar(fbPtr)
+	-- if not fbVar then return end
+	-- fbVar.longmaizhenbao_create_first_monster = nil
+
+	fubenbase.ExitFubenRestore( sysarg )
+end
+
+longmaizhenbao.CreateFirstWaveMonster = function ( sysarg )
+	-- body
+	--debug_print("=========longmaizhenbao.CreateFirstWaveMonster===========")
+	local nFubenid = LActor.getFubenId( sysarg )
+	if nFubenid ~= longmaizhenbaoconfig.fubenId[1] then
+		return
+	end
+
+	local Fhandle = LActor.getFubenHandle( sysarg )
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+	if not fbVar then return end
+	if fbVar.longmaizhenbao_create_first_monster == nil or fbVar.longmaizhenbao_create_first_monster == 0 then
+		return
+	elseif fbVar.longmaizhenbao_create_first_monster == 1 then
+		fbVar.longmaizhenbao_create_first_monster = 0
+	end
+	local hscene = Fuben.getSceneHandleById(longmaizhenbaoconfig.sceneId[1], Fhandle)
+
+	local nDiff = Fuben.getFubenDifficulty(Fhandle)
+
+	local nMonsterConfig = longmaizhenbaoconfig.startRefreshMonst[nDiff]
+
+	if nMonsterConfig == nil then
+		debug_print("---无尽秘藏副本配置错误---")
+		return
+	end
+	for k , v in pairs (nMonsterConfig) do
+		Fuben.createMonsters(hscene, v.monsterId, v.posX1, v.posX2, v.posY1, v.posY2, v.nCount,0)
+		if fbVar.longmaizhenbao_create_monster_count == nil then
+			fbVar.longmaizhenbao_create_monster_count = v.nCount
+		else
+			fbVar.longmaizhenbao_create_monster_count = v.nCount + fbVar.longmaizhenbao_create_monster_count
+		end
+		-- 波数
+		if fbVar.longmaizhenbao_wave == nil then
+			fbVar.longmaizhenbao_wave = 1
+		else
+			fbVar.longmaizhenbao_wave = 1 + fbVar.longmaizhenbao_wave
+		end
+		-- 设置玩家最大波数
+		local actors = LuaHelp.getFbActorList(fbPtr)
+		if actors ~= nil then
+			for i = 1,#actors do
+				if actors[i] then
+					local actorvar = LActor.getStaticVar(actors[i])
+					if actorvar then
+						if actorvar.longmaizhenbao_max_wave == nil then
+							actorvar.longmaizhenbao_max_wave = 0
+						end
+						if actorvar.longmaizhenbao_max_wave < fbVar.longmaizhenbao_wave then
+							actorvar.longmaizhenbao_max_wave = fbVar.longmaizhenbao_wave
+						end
+					end
+				end
+			end
+		end
+	end
+end
+
+
+longmaizhenbao.getmosterdiecount = function ( sysarg )
+	-- body
+	if sysarg == nil then
+		return
+	end
+	local fptr = LActor.getFubenPrt( sysarg )
+	if fptr == nil then
+		return
+	end
+	local nVar = Fuben.getDyanmicVar( fptr )
+	if not nVar then return end
+	local nCount = 0
+	debug_print("=========getmosterdiecount========",nVar.longmaizhenbao_Kill_Monster_Count)
+	if nVar.longmaizhenbao_Kill_Monster_Count ~= nil then
+		nCount = nVar.longmaizhenbao_Kill_Monster_Count
+	end
+	local nFubenid = LActor.getFubenId(sysarg)
+	local npack = DataPack.allocPacket(sysarg,167,11)
+	DataPack.writeInt( npack , nFubenid)
+	DataPack.writeInt( npack , 12)
+	DataPack.writeInt( npack , nCount)
+	DataPack.flush(npack)
+
+end
+
+longmaizhenbao.HandleNetworkData = function ( sysarg, dp)
+
+	local cmdid = DataPack.readInt(dp)
+	if cmdid == 1 then
+		longmaizhenbao.CreateFirstWaveMonster( sysarg )
+	elseif cmdid == 2 then
+		longmaizhenbao.CreateNextWaveMonster( sysarg )
+	elseif cmdid == 4 then
+		longmaizhenbao.SendWaveNum( sysarg )
+	else
+		debug_print(" 无尽秘藏没有该命令",cmdid)
+	end
+end
+
+longmaizhenbao.SendWaveNum = function( sysarg )
+	local nFubenid = LActor.getFubenId( sysarg )
+	if nFubenid ~= longmaizhenbaoconfig.fubenId[1] then
+		return
+	end
+
+	local Fhandle = LActor.getFubenHandle( sysarg )
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+	if not fbVar then return end
+	local hscene = Fuben.getSceneHandleById(longmaizhenbaoconfig.sceneId[1], Fhandle)
+	local isalldie = Fuben.isKillAllMonster(hscene)
+
+	local npack = DataPack.allocPacket(sysarg,167,11)
+	if not npack then return end
+	DataPack.writeInt( npack , nFubenid)
+	DataPack.writeInt( npack , 4)
+	DataPack.writeInt( npack , fbVar.longmaizhenbao_wave or 1)
+	DataPack.writeInt( npack , longmaizhenbaoconfig.allmonstercout)
+	if isalldie == true then
+		DataPack.writeInt( npack , 0)
+	else
+		DataPack.writeInt( npack , 1)
+	end
+	DataPack.flush(npack)
+end
+
+longmaizhenbao.OnGameOver = function ( fubenptr)
+	-- body
+
+	local nFbActionList = LuaHelp.getFbActorList( fubenptr )
+	if nFbActionList == nil then
+		return
+	end
+	local fbVar = Fuben.getDyanmicVar(fubenptr)
+	if not fbVar then return end
+	fbVar.IsTongguan = 1
+	Fuben.setStopMonsterRunOne(nFbActionList[1])
+	for i = 1 , #nFbActionList do
+		fubenjiesuan.GameOver(nFbActionList[i])
+	end
+end
+
+-- 下发层数
+longmaizhenbao.SendMaxWave = function ( sysarg, curwave )
+	local actorvar = LActor.getStaticVar(sysarg)
+	if not actorvar then return end
+	if  not actorvar.longmaizhenbao_max_wave then
+		actorvar.longmaizhenbao_max_wave = 0
+	end
+	local nFubenid = LActor.getFubenId(sysarg)
+	local maxwave = actorvar.longmaizhenbao_max_wave
+	local npack = DataPack.allocPacket(sysarg,167,11)
+	if not npack then return end
+	DataPack.writeInt( npack , nFubenid)
+	DataPack.writeInt( npack , 3)
+	DataPack.writeInt( npack , curwave)
+	DataPack.writeInt( npack , maxwave)
+	DataPack.flush(npack)
+
+end
+
+--以上所有事件都要注册
+
+-- 注册怪物被杀死事件
+for i=1,#longmaizhenbaoconfig.monsterIdList do
+	--debug_print("------注册怪物 id 事件------",ShouhuXuanNvConfig.monsterIdList[i])
+	MonDieDispatcher.register( longmaizhenbaoconfig.monsterIdList[i],  longmaizhenbao.OnMonsterDie, 1)
+end
+
+--注册副本初始化函数
+for k, v in pairs ( longmaizhenbaoconfig.fubenId ) do
+--	debug_print("-------注册无尽秘藏------",v)
+	fubenbase.registerEnterFuben(v,longmaizhenbao.OnInitCopy)
+	EventCallDispatcher.registerFubenExit(v,lieqifuben.OnExitFuben)
+end
+
+--注册定时器
+--TimerMsgFunc.register(TimerMsg.SHXNMosterRefresh, longmaizhenbao.OnRefreshMonster)
+--EventCallDispatcher.registerFubenEnter(LieqiFubenConfig.fubenId, lieqifuben.AgainLogin)	-- 重新登陆处理
+--EventCallDispatcher.registerFubenExit(LieqiFubenConfig.fubenId, lieqifuben.LoginOut)		-- 登出处理
+--副本时间到
+
+EventCallDispatcher.registerFubenGameOverBefore(longmaizhenbaoconfig.fubenId[1],  longmaizhenbao.OnGameOver)
+
+FubenMsgHandle.registerMsgHandler(longmaizhenbaoconfig.fubenId[1],longmaizhenbao.HandleNetworkData) --注册副本中消息处理协议
+-- EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeOnActorDeath, longmaizhenbao.OnExitFuben)
+
+EventCallDispatcher.registerFubenGameOver(longmaizhenbaoconfig.fubenId[1], longmaizhenbao.OnFubenOverTime)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeOnActorDeath, longmaizhenbao.OnActorDie)
+EventCallDispatcher.registerFubenEnter(longmaizhenbaoconfig.fubenId[1], longmaizhenbao.SendWaveNum)

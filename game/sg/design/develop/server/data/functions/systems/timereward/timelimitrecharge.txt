@@ -1,0 +1,406 @@
+--每日限时充值
+--#include "data\functions\systems\timereward\activityconf.txt" once
+--#include "data\functions\systems\timereward\activityhandler.txt" once 
+--#include "data\config\activity\activitycontrol.txt" once
+TimeLimitReCharge={}
+ 
+
+ --得到充值数
+TimeLimitReCharge.getTimeLimitRechargeChargeNum=function(sysarg)
+	local var=LActor.getStaticVar(sysarg)
+	if not var then return end 
+
+	if not var.timeLimitRecharge then var.timeLimitRecharge={} end
+	if not var.timeLimitRecharge.chargenum then  var.timeLimitRecharge.chargenum=0 end 
+	return var.timeLimitRecharge.chargenum
+end
+
+TimeLimitReCharge.getCurrDateStr=function()
+	local cur_t = System.getCurrMiniTime()
+
+	local year, month, day, hour, minute, sec = 0, 0, 0, 0, 0, 0
+	year, month, day, hour, minute, sec = System.timeDecode(cur_t, year, month, day, hour, minute, sec)
+
+	local currDateStr = string.format("%d%02d%02d", year, month, day)
+
+	return currDateStr
+
+end 
+ 
+--ScriptTimer c++调用函数
+function timelimitRecharge(isopen)
+	debug_print("-----------timeLimitRecharge function ")
+	local isopen=tonumber(isopen)
+	debug_print(isopen)
+	 
+	local id=21
+	local state,starttime,endtime= ONLINEREWARD.GetActivityState(id)
+	if  state~= 0 then
+ 
+		local config = activityConf[id].activities[91]
+		if config then
+			
+			local systemVar=System.getStaticVar()
+			if not systemVar then return end 
+			if not systemVar.timeLimitChongzhi then 
+				systemVar.timeLimitChongzhi ={} 
+			end 
+			systemVar.timeLimitChongzhi.isOpen = isopen
+
+			TimeLimitReCharge.sendIsOpen(nil, id,isopen)
+			return
+		end
+	end
+	 
+end
+ 
+
+--通知活动是否开启了
+TimeLimitReCharge.sendIsOpen=function(sysarg,id ,isopen)
+	debug_print("------sendIsOpen:")
+	debug_print(isopen)
+	local config = activityConf[id].activities[91]
+	if not config then return end
+
+	local display_text=config.display_text --客户端显示
+
+	if sysarg then 
+		debug("little packet")
+		TimeLimitReCharge.sendActorInfo (sysarg, id, isopen)
+
+	else 
+		debug_print("LDataPack")
+		local pack = LDataPack.allocPacket()
+		if pack == nil then return end
+
+		LDataPack.writeByte(pack, BaseTypes.SystemId.miscsSystem)
+		LDataPack.writeByte(pack, 230)
+
+		LDataPack.writeInt(pack, id) --活动大id
+		LDataPack.writeInt(pack, isopen) --活动状态
+		LDataPack.writeInt(pack, 0) --充值金额
+
+
+		LDataPack.writeInt(pack, 0) --record
+		LDataPack.writeInt(pack, 0) --reward
+
+
+		LDataPack.writeString(pack,display_text) --客户端显示
+
+		local currDateStr=TimeLimitReCharge.getCurrDateStr()
+		LDataPack.writeString(pack, currDateStr )
+
+		System.broadcastData(pack)
+
+		if isopen ~= 1 then --关闭
+			local actorList = LuaHelp.getAllActorList()
+			if not actorList or #actorList == 0 then return end
+
+			for _, actor in pairs(actorList) do
+				TimeLimitReCharge.sendAwardEmail(actor) --给所有玩家发邮件结算
+			end
+
+		end
+
+	end
+
+end
+
+TimeLimitReCharge.sendActorInfo =function(sysarg,id,isopen)
+	debug_print("sendActorInfo:isOpen"..tostring(isopen))
+	local var =LActor.getStaticVar(sysarg)
+ 
+ 	local pack = DataPack.allocPacket(sysarg, BaseTypes.SystemId.miscsSystem,230)
+	if not pack then return end
+
+	local chargenum=TimeLimitReCharge.getTimeLimitRechargeChargeNum(sysarg)
+
+	debug_print("sendActorInfo：chargenum"..tostring(chargenum))
+	DataPack.writeInt(pack, id)--活动大id
+	DataPack.writeInt(pack, isopen) --活动状态
+	DataPack.writeInt(pack, chargenum) ----充值金额
+
+	local config = activityConf[21].activities[91]
+
+	local rewardsConfig=config.target
+
+	local currDateStr=TimeLimitReCharge.getCurrDateStr()
+	local rewards = rewardsConfig[ tonumber(currDateStr) ]
+
+	local record = activityFunc.getActivityNumRecord(chargenum, rewards)
+	local reward = var.timeLimitRecharge.charge_reward  or 0
+
+
+	DataPack.writeInt(pack,record)
+	DataPack.writeInt(pack,reward)
+
+	local display_text=config.display_text --客户端显示
+	DataPack.writeString(pack, display_text)--客户端显示
+	
+	DataPack.writeString(pack, currDateStr )
+
+
+	DataPack.flush(pack)
+
+end
+
+TimeLimitReCharge.newDayforActivity=function(sysarg)
+	debug_print("TimeLimitReCharge.newDayforActivity")
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then
+	  return 
+	end
+	--每日0：00重置当天充值的计算
+
+	if var.activityList == nil then var.activityList = {} end
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+
+	for _, conf in pairs(ActivityControl) do
+
+		if activityConf[conf.id] and activityConf[conf.id].activities[91] then
+
+				local state= ONLINEREWARD.GetActivityState(conf.id)
+				if  state ~= 0 then
+					TimeLimitReCharge.sendAwardEmail(sysarg)
+
+				else  --结束
+				    TimeLimitReCharge.sendAwardEmail(sysarg)
+					
+				end
+		end
+	end
+
+end
+
+
+TimeLimitReCharge.onLogin=function(sysarg)
+	debug_print("--onLogin")
+
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+
+	local isTodayFirst = false 
+	local nLast = LActor.getLastLogoutTime(sysarg)	--上次下线的时间
+	
+	if (nLast == 0) then --新注册玩家
+		isTodayFirst = true
+
+	else 
+		if (nLast < System.getToday()) then  	--昨天下线的
+			isTodayFirst = true 
+		end
+	end
+
+	for _, conf in pairs(ActivityControl) do
+
+		if activityConf[conf.id] and activityConf[conf.id].activities[91] then
+
+				local state= ONLINEREWARD.GetActivityState(conf.id)
+				if  state ~= 0 then
+					local systemVar=System.getStaticVar()
+					if not systemVar then return end 
+					if not systemVar.timeLimitChongzhi then 
+						systemVar.timeLimitChongzhi ={} 
+					end 
+					if systemVar.timeLimitChongzhi.isOpen == 1  then--处理state判断外，还要
+						
+						if isTodayFirst then 
+							debug_print("-----------------isTodayFirst")
+							TimeLimitReCharge.sendAwardEmail(sysarg)
+						end
+
+						TimeLimitReCharge.sendActorInfo(sysarg,conf.id, 1)
+						 
+					else 
+						TimeLimitReCharge.sendAwardEmail(sysarg)
+
+					end
+
+				else  --结束
+
+				    TimeLimitReCharge.sendAwardEmail(sysarg)
+					
+				end
+		end
+	end
+
+end
+
+ 
+TimeLimitReCharge.onRecharge=function( sysarg, arg)
+
+	local val = arg[1]
+	if val == nil or val == 0 then return end
+	--debug_print("activityFunc.actorRecharge ..."..val)
+
+	debug_print("TimeLimitReCharge.onRecharge:"..val)
+
+	local var =LActor.getStaticVar(sysarg)
+	if var.activityList == nil then var.activityList = {} end
+ 	if var == nil then return end
+
+	for _, conf in pairs(ActivityControl) do
+
+		if activityConf[conf.id] and activityConf[conf.id].activities[91] then
+
+				local state= ONLINEREWARD.GetActivityState(conf.id)
+				if  state ~= 0 then
+					local systemVar=System.getStaticVar()
+					if not systemVar then return end 
+					if not systemVar.timeLimitChongzhi then 
+						systemVar.timeLimitChongzhi ={} 
+					end 
+					if systemVar.timeLimitChongzhi.isOpen == 1 then --处理state判断外，还要
+						local chargenum= TimeLimitReCharge.getTimeLimitRechargeChargeNum(sysarg)
+
+						if var.timeLimitRecharge.chargenum < val then 
+							var.timeLimitRecharge.chargenum =   val  --如果开着取最大值，不累加
+						end
+					else 
+						--var.timeLimitRecharge.chargenum  = 0
+					end
+
+				else  --结束
+				   -- var.timeLimitRecharge.chargenum = 0
+					
+				end
+		end
+	end
+
+
+end
+
+
+--发邮件会充值chargenum
+TimeLimitReCharge.sendAwardEmail=function(sysarg)
+	debug_print("sendAwardEmail")
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+
+	local chargenum =TimeLimitReCharge.getTimeLimitRechargeChargeNum(sysarg)
+	if chargenum<=0 then return end 
+	for _, conf in pairs(ActivityControl) do
+		if activityConf[conf.id] and activityConf[conf.id].activities[91] then
+
+ 
+ 				if var.timeLimitRecharge.charge_reward == nil then 
+ 					var.timeLimitRecharge.charge_reward =0
+ 				end
+			    	 
+			    local rewardsConfig= activityConf[conf.id].activities[91].target or {}
+
+			    local currDateStr=TimeLimitReCharge.getCurrDateStr()
+			    debug_print("currDateStr:"..currDateStr)
+			    local rewards = rewardsConfig[ tonumber(currDateStr) ]
+ 
+			    if  rewards then   
+ 					for index,_ in ipairs(rewards) do
+						local itemid,itemnum = activityFunc.checkActivityNumReward(sysarg, chargenum ,
+											rewards, index, var.timeLimitRecharge.charge_reward ,true)
+
+					    	if itemid ~= nil then
+					    		debug_print("award index:"..tostring(index))
+					    		System.sendGmMailOffLine(LActor.getActorId(sysarg), Lang.ScriptTips.timeLimitRecharge001, 1, itemid, itemnum, 1, Lang.ScriptTips.timeLimitRecharge002)
+	 				    		System.logCounter(
+												  LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), 
+												  "activityreward",tostring(conf.id) , tostring(91), tostring(index), string.format("%s:%s",itemid,itemnum),
+												  tostring(LActor.getName(sysarg)), var.download_from, "", lfDB
+												 )
+					    	end
+					end
+				end 
+				var.timeLimitRecharge.charge_reward=0
+				var.timeLimitRecharge.chargenum = 0 --发完邮件后重置
+
+		end 
+	end
+
+
+end
+
+
+TimeLimitReCharge.gmFunction=function(sysarg, args)
+	local systemVar=System.getStaticVar()
+	if not systemVar then return end 
+	if not systemVar.timeLimitChongzhi then 
+		systemVar.timeLimitChongzhi ={} 
+	end 
+
+
+	local gm= tonumber(args[1])
+	if gm == 1   then
+		 local chargenum =TimeLimitReCharge.getTimeLimitRechargeChargeNum(sysarg)
+		 debug_print("TimeLimitReCharge:chargenum:"..tostring(chargenum))
+		 debug_print("now isopen status")
+		
+		if systemVar.timeLimitChongzhi.isOpen == nil then 
+			debug_print("systemVar.timeLimitChongzhi.isOpen is nil ")
+		else 
+			debug_print("systemVar.timeLimitChongzhi.isOpen: "..tostring(systemVar.timeLimitChongzhi.isOpen) )
+		end
+
+
+
+	elseif gm ==2 then --set status 
+		local on_off=tonumber(args[2])
+		systemVar.timeLimitChongzhi.isOpen = on_off
+		local isopen=systemVar.timeLimitChongzhi.isOpen
+		TimeLimitReCharge.sendIsOpen(nil, 21 ,isopen)
+		 
+	elseif gm ==3 then --new day 
+		TimeLimitReCharge.newDayforActivity(sysarg)
+
+	elseif gm == 4 then
+		ONLINEREWARD.SetActivityTime(21, "2016-07-21 00:00:00", "2016-07-30", 0, 1)
+	end
+end
+
+GmEventFuncList.register("tlr", TimeLimitReCharge.gmFunction ,1)
+
+
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, TimeLimitReCharge.newDayforActivity)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, TimeLimitReCharge.onLogin)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeRecharge, TimeLimitReCharge.onRecharge)
+
+
+TimeLimitReCharge.handleNetMsg=function(sysarg,sysid,msgid,dp)
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+
+	local nCmd = msgid
+	if nCmd == 230 then
+				local id = 21  
+				if activityConf[id] and activityConf[ id].activities[91] then
+
+						local state= ONLINEREWARD.GetActivityState(id)
+						if  state ~= 0 then
+							local systemVar=System.getStaticVar()
+							if not systemVar then return end 
+							if not systemVar.timeLimitChongzhi then 
+								systemVar.timeLimitChongzhi ={} 
+							end 
+							if systemVar.timeLimitChongzhi.isOpen == 1  then--处理state判断外，还要
+								
+								TimeLimitReCharge.sendActorInfo(sysarg, id, 1)
+								 
+							else 
+								TimeLimitReCharge.sendActorInfo(sysarg, id, 2)
+							end
+
+						else  --结束
+
+						    TimeLimitReCharge.sendActorInfo(sysarg, id, 2)
+							
+						end
+
+				else 
+					TimeLimitReCharge.sendActorInfo(sysarg, id, 2)
+				end
+			 
+
+	end
+
+end
+SystemHandlerDispatcher.registerSystemHander(BaseTypes.SystemId.miscsSystem, TimeLimitReCharge.handleNetMsg )

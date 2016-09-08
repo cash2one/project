@@ -1,0 +1,74 @@
+--lua script
+local FENGCEREWARDINDEX = 30
+
+--#include "data\language\LangCode.txt" once
+--#include "data\config\item\FengCeReward.txt" once
+--#include "data\functions\NormalItem\UseFengCeDengLuLiHe.txt" once
+
+local GetRewardSystemImplement =
+{
+  --领取奖励，MSGID：1
+  getRewardItem = function (sysarg)
+
+	  local arraynum = LActor.getRTIntValue(sysarg,FENGCEREWARDINDEX+1)
+	  local resultnum = LActor.getRTIntValue(sysarg,FENGCEREWARDINDEX+2)
+	  if(arraynum == 0) then
+
+	    return
+	  end
+	  if(resultnum == 0) then
+
+	    return
+	  end
+	  local c = FengCeReward[arraynum]
+	  local x = c[resultnum]
+    local itemcount = Item.getAddItemNeedGridCount(sysarg,x.itemid,x.count)
+
+	  if not LActor.canAddItem(sysarg,x.itemid,x.count) then
+	    if itemcount ~= nil then
+	    	local str = string.format(Lang.ScriptTips.f00016,itemcount)
+		  	-- LActor.sendTipmsg(sysarg, str, ttTipmsgWindow)
+		  	LActor.SendGeneralTips(sysarg, 7, 0, 0)
+		  end
+	    local npack = DataPack.allocPacket(sysarg,140,2)  --申请一个数据包
+		  DataPack.writeByte(npack,0)
+		  DataPack.flush(npack)
+		  return
+	  else
+	    if LActor.canAddItem(sysarg,x.itemid,x.count) then
+	      LActor.addItem(sysarg,x.itemid,x.quality,x.strong,x.count,x.bind,"getReward",21)
+	 	  else
+	 	    local str = string.format(Lang.ScriptTips.f00016,x.count)
+	 	 	  -- LActor.sendTipmsg(sysarg, str, ttTipmsgWindow)
+	 	 	  LActor.SendGeneralTips(sysarg, 7, 0, 0)
+	 	  end
+	  end
+	  local npack = DataPack.allocPacket(sysarg,140,2)  --申请一个数据包
+	  DataPack.writeByte(npack,1)
+	  DataPack.flush(npack)
+	  LActor.setRTIntValue(sysarg,FENGCEREWARDINDEX+1,0)
+	  LActor.setRTIntValue(sysarg,FENGCEREWARDINDEX+2,0)
+	  if(LActor.getItemCount(sysarg,1615) > 0) then
+	    getFengCeReward(sysarg)
+	  end
+	end,
+	deleteRewardItem = function (sysarg)
+    local result =0
+
+    if(Item.getBagEmptyGridCount(sysarg) >= 1) then
+      if (LActor.getItemCount(sysarg,1615) >= 1) then
+      	LActor.removeItem(sysarg,1615,1,-1,-1,-1,"getReward",5)      --删除一个领奖物品
+      	result =1
+      else
+      	LActor.sendTipmsg( sysarg,Lang.ScriptTips.x00030,ttDialog )
+      end
+    else
+
+      LActor.sendTipmsg( sysarg,Lang.ScriptTips.n00006,ttDialog )
+
+    end
+    local npack = DataPack.allocPacket(sysarg,140,3)  --申请一个数据包
+    DataPack.writeByte(npack,result)
+    DataPack.flush(npack)
+  end,
+}

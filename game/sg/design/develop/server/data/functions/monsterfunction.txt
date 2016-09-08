@@ -1,0 +1,136 @@
+--lua script
+local LocalDT={}
+
+--这个文件是所有的怪物相关的脚本逻辑的总函数
+--包括怪物的死亡，怪物的刷新处理的一些逻辑的入口在这里
+
+--#include "data\envir\FuBenTongGuan.txt" once		--副本通关条件的定义，这里包含是为了注册副本中出现的怪物的死亡事件
+
+--#include "MonEvent\MDCDispatcherImplement.txt" once
+--#include "MonEvent\MonsterMobDispatchImpl.txt" once
+--#include "MonEvent\MonsterGatherFinishDispatch.txt" once 
+--#include "MonEvent\MonsterActionImpl.txt" once
+--#include "MonEvent\MonsterAllKilledImpl.txt" once
+--#include "MonEvent\MonsterHpChangedImpl.txt" once
+--#include "MonEvent\MonsterDamageImpl.txt" once
+
+--#include "MonEvent\FBMonsters\FBMonstersInclude.txt" once
+ --#include "MonEvent\AtvMonsters\AtvMonstersInclude.txt" once
+--#include "MonEvent\QuestMonsters\QuestMonsterFunc.txt" once
+--#include "data\config\quest\QuestMonster.txt" once
+--#include "MonEvent\WorldBoss\WorldBossDie.txt" once
+---#include "MonEvent\FBMonsters\liudaoinit.txt" once
+---#include "MonEvent\FBMonsters\tianmotamon.txt" once
+---#include "MonEvent\FBMonsters\mijingmon.txt" once
+---#include "MonEvent\FBMonsters\xuantianmon.txt" once
+--#include "MonEvent\FBMonsters\CommonMonsterFunc.txt" once
+--#include "data\functions\tasks\tafang\tafangmonster.txt" once
+--#include "data\functions\tasks\petfb\petmonster.txt" once
+--#include "data\functions\tasks\liangongfang\lgfmonster.txt" once
+--#include "MonEvent\FBMonsters\baguamon.txt" once --秦皇地宫
+--#include "data\functions\monevent\fbmonsters\guoqingfubenmon.txt" once --add wupeng,怪物
+--#include "MonEvent\fbmonsters\shenmibaoxiangmonsterfunc.txt" once           --神秘宝箱 ，
+
+
+--当一个怪物被杀死的时候
+function OnMonsterKilled(monster, killer, monId)
+  MonDieDispatcher.dispatch(monster, killer, monId)  
+end
+
+
+--当一个怪物刷新出来的时候的时候调用
+function OnMonsterMob(monster, monId)
+    MonMobDispatcher.dispatch(monster, monId)
+end
+
+function OnGatherFinished(monster,sysarg, monId)
+	GatherFinishDispatcher.dispatch(monster,sysarg, monId)
+end
+
+function OnGatherCheck(monseter, sysarg, monId)
+	return GatherCheckDispatcher.dispatch(monster, sysarg, monId)
+end
+
+function OnAddMonsterEffect( monseter , effectid )
+	return MonsterActionImpl.AddMonsterEffect(monseter , effectid)
+end
+
+--所有怪物被打死
+-- et : 杀死最后一个怪物的玩家指针
+function OnMonsterAllKilled( sceneId, scenePtr, flag, et )
+	--print( "OnMonsterAllKilled" )
+	MonAllKilledDispatcher.dispatch( sceneId, scenePtr, flag, et )
+end
+
+--注册那些以杀怪为目的的副本里的出现的怪物,并执行通用的怪物死亡接口
+for k,v in pairs(TongGuanCondition) do
+	if v ~= nil then
+		for j = 1, #v do
+			local conf = v[j]
+			if conf.type == 1 then -- 杀死某种怪
+				MonDieDispatcher.register(conf.monsterid,MonDieDispatcher.CommonDieFunc)
+			elseif conf.type == 2 then -- 杀死所有怪
+				MonAllKilledDispatcher.register(conf.sceneId, MonAllKilledDispatcher.CommonKillAllFunc)
+			end
+		end
+	end
+end
+
+for k,v in pairs(MonsterForQuest) do
+	if v ~= nil then
+		for j = 1, #v do
+			MonDieDispatcher.register(k,MonDieDispatcher.QuestDieFunc)
+		end
+	end
+end
+
+-- 杀死某种怪物就完成的任务
+for k,v in pairs(KillMonsterQuest) do
+	if v ~= nil then
+		for j = 1, #v do
+			MonDieDispatcher.register(k,MonDieDispatcher.MonsterQuestFunc)
+		end
+	end
+end
+
+
+--怪物行为
+--返回整数,-1表示结束，0表示不延时继续执行下一个行为
+function OnMonsterAction( monster, monId, actionId, squeId, itemId, all )
+	return MonsterActionImpl.dispatch( monster, monId, actionId, squeId, itemId, all )
+end
+
+function OnMonsterInitAction( monster, monId, actionId) 
+	return MonsterActionImpl.InitDispatch(monster, monId, actionId);
+end
+
+function registerMonsterFunc( funcName, func )
+	if MonsterActionFunc[funcName] ~= nil then
+		print( "registerMonsterFunc error:"..funcName )
+		return false
+	end
+	MonsterActionFunc[funcName] = func
+	return true
+end
+
+function OnMonsterHpChanged(monster, rate, monId)
+	MonHpChangedDispatcher.dispatch(monster, rate, monId)
+end
+
+
+function OnMonsterEvadeAction( monster, monId, actionId )
+	return MonsterActionImpl.EvadeDispatch(monster, monId, actionId);
+end
+
+function OnMonsterTimeCall( funcType, monster, p1, p2, p3, p4, p5) 
+	return MonsterActionTimer.dispatch(funcType, monster, p1, p2, p3, p4, p5)
+end
+
+function OnMonsterAttacked(defMon , nMonid , val , attMon)
+	return MonDamageDispatcher.dispatch(defMon, nMonid, val, attMon)
+end
+
+function OnMonsterLastHp( monseter , lasthp , monsterid )
+	-- body
+	return MonLastHpDispatcher.dispatch( monseter , lasthp , monsterid )
+end

@@ -1,0 +1,120 @@
+﻿--#include "..\..\language\LangCode.txt"
+--职业的配置文件
+--[[
+	每个职业的初始的一些属性
+	id=0,          --职业的ID
+	tInitProperty={} --初始化的属性列表 分别对应 外功攻击、内功攻击、外功防御、内功防御、生命值、内力值、命中值、闪避值、暴击值
+	--每升一级对应的是玩家的属性加成分别对外功攻击、内功攻击、外功防御、内功防御、生命值、内力值、命中值、闪避值、暴击值加成、抗暴击
+	tLevelUpPropertyEnhance ={1.2,1,1,0.6,0.4,10,10,10}     
+--]]
+
+ActorInitConfig =
+{
+	nMoveSpeed=340,           --移动速度,多少毫秒移动一个格      --改动的话 需要告诉客户端：人物面板、坐骑移动速度的公式里的值要对应改变。
+	--nBagGridCount=60,         --默认的背包格子的数量
+	nDefaultAttackSpeed=400,  --默认的攻击速度，表示多少毫秒攻击一次
+
+	-- 攻击输出的计算
+	minHitRate = 0.5,           --最少的命中的概率
+	hitBaseRateC = 0.05263,     --修正系数a(闪避系数)
+	criticalStrikesMax = 0.5,   --暴击率的下限
+	
+	--伤害输出的计算相关
+	--攻击者攻击输出*if(攻击者攻击/(攻击者攻击*修正系数a+被攻击者防御*修正系数b)>=10%,攻击者攻击/(攻击者攻击*修正系数a+被攻击者防御*修正系数b),randbetween(8%,10%))													
+	-- 修正系数b
+	hitReviseBaseD = 19,   
+	damageReviseBaseA = 1,  
+	damageReviseBaseB = 0.5,-- 计算伤害的修正系数   
+	hitMinRate = 0.1,  --低于10%则取8%-10%的随机数
+	hitRandMin = 8,--随机的范围，注意是整数，表示8%
+	hitRandMax = 10,
+}
+
+VocationConfig =
+{
+      
+	--无职业
+	{
+		id=0,                       --
+		nDefaultMaleModelID =0,     --默认的男性职业的模型ID
+		nDefaultFemaleModelID =0,   --默认的女性职业的模型ID
+		--初始化的属性列表 分别对应 外功攻击、内功攻击、外功防御、内功防御、生命值、内力值、命中值、闪避值、暴击值、抗暴击值
+		--                          最大生命 最大灵力	物理攻击	道法攻击	物理防御	道法防御	命中值	闪避值	暴击值	抗暴值	暴击倍数(会心)
+		tInitProperty={10,10,10,10,10,10,10,10,10,10,0,}, 			       
+		tLevelUpPropertyEnhance ={10,10,10,10,10,10,10,10,10,10,0,},   --每升一级对应的是玩家的属性加成分别对外功攻击、内功攻击、外功防御、内功防御、生命值、内力值、命中值、闪避值、暴击值、会心
+		levelprop = 
+		{
+--#include "levelprop1.txt"
+		},
+		nNearAttackRate =8000,      --普通攻击的系数,4500表示45%
+		nNearAttackType =1,         --普通攻击的输出类型，1法术攻击，2物理攻击
+		nNearAttackDis =1,          --普通攻击的距离
+		nDefaultIcon = 0,           --默认的头像               
+	},
+
+	--风刀
+	{
+		id=1,
+		nDefaultMaleModelID =1000,    --默认的男性职业的模型ID
+		nDefaultFemaleModelID =1100,  --默认的女性职业的模型ID
+		
+		tInitProperty={25,0,17,12,218,147,12,11,11,11,0,},      --初始化的属性列表 分别对应 外功攻击、内功攻击、外功防御、内功防御、生命值、内力值、命中值、闪避值、暴击值
+		tLevelUpPropertyEnhance ={5,0,3.3,2.4,43.6,29.4,1.2,1.1,1.1,1.1,0,}, --每升一级对应的是玩家的属性加成分别对应外功攻击、内功攻击、外功防御、内功防御、生命值、内力值、命中值、闪避值、暴击值
+		levelprop = 
+		{
+--#include "levelprop1.txt"
+		},
+		nNearAttackRate =8000,        --普通攻击的系数,4500表示45%
+		nNearAttackType =2,           --普通攻击的输出类型，1法术攻击，2物理攻击
+		nDefaultIcon = 0,             --默认的头像
+		nNearAttackDis =3,          --普通攻击的距离              
+	},
+	--霜剑
+	{
+		id=2, 
+		nDefaultMaleModelID =2000,    --默认的男性职业的模型ID
+		nDefaultFemaleModelID =2100,  --默认的女性职业的模型ID
+		tInitProperty={0,23,14,17,208,182,12,12,12,13,0,},      --初始化的属性列表 分别对应 外功攻击、内功攻击、外功防御、内功防御、生命值、内力值、命中值、闪避值、暴击值
+		tLevelUpPropertyEnhance ={0,4.5,2.7,3.3,41.5,36.3,1.2,1.2,1.2,1.3,0,}, --每升一级对应的是玩家的属性加成分别对应外功攻击、内功攻击、外功防御、内功防御、生命值、内力值、命中值、闪避值、暴击值
+		levelprop = 
+		{
+--#include "levelprop2.txt"
+		},		
+		nNearAttackRate =8000,        --普通攻击的系数,4500表示45% 
+		nNearAttackType =1,           --普通攻击的输出类型，1法术攻击，2物理攻击
+		nDefaultIcon = 1,             --默认的头像
+	},
+
+	--灵狐
+	{
+		id=3,
+		nDefaultMaleModelID =3000,    --默认的男性职业的模型ID
+		nDefaultFemaleModelID =3100,  --默认的女性职业的模型ID
+		tInitProperty={23,0,15,14,208,164,12,13,13,13,0,}, 			         --初始化的属性列表 分别对应外功攻击、内功攻击、外功防御、内功防御、生命值、内力值、命中值、闪避值、暴击值
+		tLevelUpPropertyEnhance ={4.5,0,3,2.7,41.5,32.9,1.2,1.3,1.3,1.3,0,},  --每升一级对应的是玩家的属性加成分别对应外功攻击、内功攻击、外功防御、内功防御、生命值、内力值、命中值、闪避值、暴击值
+		levelprop = 
+		{
+--#include "levelprop3.txt"
+		},				
+		nNearAttackRate =8000,        --普通攻击的系数,4500表示45% 
+		nNearAttackType =2,           --普通攻击的输出类型，1法术攻击，2物理攻击
+		nNearAttackDis =2,            --普通攻击的距离
+		nDefaultIcon = 2,             --默认的头像
+	},
+	--瑶姬
+	{
+		id=4,
+		nDefaultMaleModelID =4000,    --默认的男性职业的模型ID
+		nDefaultFemaleModelID =4100,  --默认的女性职业的模型ID
+		tInitProperty={0,27,12,15,197,199,12,12,12,11,0,},  			            --初始化的属性列表 分别对应外功攻击、内功攻击、外功防御、内功防御、生命值、内力值、命中值、闪避值、暴击值
+		tLevelUpPropertyEnhance ={0,5.4,2.4,3,39.4,39.8,1.2,1.2,1.2,1.1,0,},    --每升一级对应的是玩家的属性加成分别对应外功攻击、内功攻击、外功防御、内功防御、生命值、内力值、命中值、闪避值、暴击值
+		levelprop = 
+		{
+--#include "levelprop4.txt"
+		},				
+		nNearAttackRate =8000,        --普通攻击的系数,4500表示45%                
+		nNearAttackType =1,           --普通攻击的输出类型，1法术攻击，2物理攻击
+		nNearAttackDis =2,            --普通攻击的距离
+		nDefaultIcon = 3,             --默认的头像
+	},
+}

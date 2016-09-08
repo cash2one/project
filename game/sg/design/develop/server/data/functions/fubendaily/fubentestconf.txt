@@ -1,0 +1,29 @@
+local FubenTestConfig = {
+	sceneId = 1058,
+	posX = 10,
+	posY = 13,
+	limitTime = 10,
+
+	monsters = {
+	[1] = {
+			{monsterId=125,posX1=10,posY1=13,posX2=20,posY2=1,nCount=1,probability=1},
+			{monsterId=126,posX1=10,posY1=13,posX2=20,posY2=1,nCount=1,probability=1},
+			{monsterId=127,posX1=10,posY1=13,posX2=20,posY2=1,nCount=1,probability=1},
+		},
+	[2] = {
+			{monsterId=125,posX1=10,posY1=13,posX2=20,posY2=1,nCount=1,probability=1},
+			{monsterId=126,posX1=10,posY1=13,posX2=20,posY2=1,nCount=1,probability=1},
+			{monsterId=127,posX1=10,posY1=13,posX2=20,posY2=1,nCount=1,probability=1},
+		}
+	},
+
+	isTurnover = true,
+	turnoverReward = {
+		{count=1, itemid=18623, probability=0.1,},
+		{count=1, itemid=18624, probability=0.1,},
+		{count=1, itemid=18625, probability=0.1,},
+		{count=1, itemid=18626, probability=0.1,},
+	}
+}
+
+

@@ -1,0 +1,19 @@
+--小活动配置表
+--#include "..\..\..\language\LangCode.txt" once
+
+activity54Conf = {
+	activityId = 54,
+	
+	activities =
+	{
+ --[[
+		[72] = {
+			-- 活动id,寻宝助秀成霸业
+			id = 72,
+			 
+           target = { {1,30740},{2,30741},{3,30742},{5,30743},{8,30744},{10,30745}, 		},
+		},
+	]]
+	},
+
+}

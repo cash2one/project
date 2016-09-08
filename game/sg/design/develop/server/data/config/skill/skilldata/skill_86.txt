@@ -1,0 +1,15 @@
+﻿--冰剑群体爆发
+{
+	id = 86,
+	name = Lang.Skill.s86Name,
+	desc = Lang.Skill.s86Desc,
+	vocation = 9,
+	skillType = 6,
+	skillSpellType = 0,
+	skillClass = 9,
+	commonCd = 0,
+	specialBuffCond = 0,
+	skillSubLevel = { 
+--#include "Skill_86_1.txt"
+	},
+},

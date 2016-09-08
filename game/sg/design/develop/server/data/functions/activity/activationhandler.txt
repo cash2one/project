@@ -1,0 +1,230 @@
+-- 活跃度系统
+
+--#include "data\config\activity\activationconfig.txt" once
+
+ActivationHandler = {}
+
+ActivationHandler.protoid = BaseTypes.SystemId.activationSystem
+
+ActivationHandler.main = function (sysarg, systemid, msgid, packet)
+	local func = ActivationHandler[msgid]
+	if func ~= nil then
+		func(sysarg,packet)
+	end
+end
+
+-- 下发所有活跃度数据
+ActivationHandler[1] = function(sysarg, dp)
+	local actorvar = LActor.getStaticVar(sysarg)
+	if not actorvar then return end
+	if actorvar.activation_data == nil then
+		actorvar.activation_data = {}
+		actorvar.activation_data.activities = {}
+		actorvar.activation_data.award = {}
+		actorvar.activation_data.point = 0
+	end
+
+	-- 活动个数
+	local activities_count = 0
+	for i,v in pairs(activationconfig.activities) do
+		activities_count = activities_count + 1
+	end
+	-- 下发所有数据
+	local npack = DataPack.allocPacket(sysarg, ActivationHandler.protoid, 1)
+    if npack == nil then return end
+
+    DataPack.writeInt(npack, actorvar.activation_data.point or 0)
+    DataPack.writeInt(npack, activities_count)
+    for i,v in pairs(activationconfig.activities) do
+    	DataPack.writeInt(npack, i)
+    	DataPack.writeInt(npack, actorvar.activation_data.activities[i] or 0)
+    	-- print("--------------", i, (actorvar.activation_data.activities[i] or 0))
+    end
+    DataPack.writeInt(npack, #activationconfig.pointaward)
+    for i=1,#activationconfig.pointaward do
+    	DataPack.writeInt(npack, actorvar.activation_data.award[i] or 0)
+    end
+    DataPack.flush(npack)
+end
+
+-- 触发活跃
+function ActivationTrigger( sysarg, index, count )
+	if not count then
+		count = 1
+	end
+	if count <= 0 then
+		return
+	end
+	local actorvar = LActor.getStaticVar(sysarg)
+	if not actorvar then return end
+	if actorvar.activation_data == nil then
+		actorvar.activation_data = {}
+		actorvar.activation_data.activities = {}
+		actorvar.activation_data.award = {}
+		actorvar.activation_data.point = 0
+	end
+	-- print("-------------ActivationTrigger")
+	-- 找不到配置
+	if activationconfig.activities[index] == nil then
+		return
+	end
+	if actorvar.activation_data.activities[index] == nil then
+		actorvar.activation_data.activities[index] = 0
+	end
+	-- 达到最大次数
+	if actorvar.activation_data.activities[index] >= activationconfig.activities[index].count then
+		return
+	end
+	-- 增加的次数
+	local left_count = activationconfig.activities[index].count - actorvar.activation_data.activities[index]
+	if count > left_count then
+		count = left_count
+	end
+	-- 更新活跃度
+	actorvar.activation_data.activities[index] = actorvar.activation_data.activities[index] + count
+	actorvar.activation_data.point = actorvar.activation_data.point + activationconfig.activities[index].eachpoint * count
+	-- 更新一条活跃数据
+	local npack = DataPack.allocPacket(sysarg, ActivationHandler.protoid, 2)
+    if npack == nil then return end
+    DataPack.writeInt(npack, actorvar.activation_data.point or 0)
+    DataPack.writeInt(npack, index)
+    DataPack.writeInt(npack, actorvar.activation_data.activities[index] or 0)
+    DataPack.flush(npack)
+
+    -- 触发任务事件
+    LActor.OnQuestEvent(qtHuoYueDu, 0, count, true, sysarg, false)
+end
+
+-- 请求活跃奖励
+ActivationHandler[3] = function(sysarg, dp)
+	local actorvar = LActor.getStaticVar(sysarg)
+	if not actorvar then return end
+	if actorvar.activation_data == nil then
+		actorvar.activation_data = {}
+		actorvar.activation_data.activities = {}
+		actorvar.activation_data.award = {}
+		actorvar.activation_data.point = 0
+	end
+
+	local index = DataPack.readInt(dp)
+	if index == nil or index <= 0 or index > #activationconfig.pointaward or activationconfig.pointaward[index] == nil then
+		return
+	end
+	-- 已领取
+	if actorvar.activation_data.award[index] == 1 then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.activation001, ttMessage)
+		return
+	end
+	-- 活跃度不足
+	if activationconfig.pointaward[index].needpoint > actorvar.activation_data.point then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.activation002, ttMessage)
+		return
+	end
+	-- 检查背包
+	local awardconf = activationconfig.pointaward[index].award or {}
+	local needbagcount = 0
+	for i=1,#awardconf do
+		if awardconf[i].type == 1 then
+			needbagcount = needbagcount + Item.getAddItemNeedGridCount(sysarg, awardconf[i].id, awardconf[i].count) 
+		end
+	end
+	if Item.getBagEmptyGridCount(sysarg) < needbagcount then
+		LActor.SendGeneralTips(sysarg, 7, 0, 0)
+		return
+	end
+	-- 下发奖励
+	local effects = {} -- 特效项
+	actorvar.activation_data.award[index] = 1
+	for i=1,#awardconf do
+		if awardconf[i].type == 1 then
+			LActor.addItem(sysarg, awardconf[i].id, 0, 0, awardconf[i].count, 0, "activation_award")
+		elseif awardconf[i].type == 2 then
+			LActor.changeMoney(sysarg, awardconf[i].id, awardconf[i].count, 1, true, "activation_award", "activation_award")
+		elseif awardconf[i].type == 7 then
+			LActor.addExp(sysarg, awardconf[i].count, 0, 0)
+		end
+		if awardconf[i].type == 1 or awardconf[i].type == 2 then
+			local effect = {} -- 特效
+			effect.type = awardconf[i].type
+			effect.id = awardconf[i].id
+			effect.count = awardconf[i].count
+			effects[#effects+1] = effect
+		end
+	end
+	-- 播放特效
+	if #effects > 0 then
+		MiscFunc.PlayItemEffect(sysarg, 14, effects)
+	end
+	-- 下发协议
+	local npack = DataPack.allocPacket(sysarg, ActivationHandler.protoid, 3)
+    if npack == nil then return end
+    DataPack.flush(npack)
+end
+
+-- 登录
+ActivationHandler.OnLogin = function( sysarg )
+	-- 检查是否需要重置数据
+	local sysvar = System.getStaticVar()
+	if not sysvar then return end
+	if sysvar.activation_refresh then
+		local actorvar = LActor.getStaticVar(sysarg)
+		if not actorvar then return end
+		if actorvar.activation_refresh ~= sysvar.activation_refresh then
+			actorvar.activation_data = nil
+			actorvar.activation_refresh = sysvar.activation_refresh
+		end
+	end
+
+	-- 下发数据
+	ActivationHandler[1](sysarg)
+end
+
+-- 重置在线玩家数据
+function ActivationClearData(  )
+	local sysvar = System.getStaticVar()
+	if not sysvar then return end
+	-- 保存数据重置时间
+	local curtime = System.getCurrMiniTime()
+	sysvar.activation_refresh = curtime
+
+	local actors = LuaHelp.getAllActorList()
+	if actors ~= nil then
+		for i=1,#actors do
+			if actors[i] then
+				local actorvar = LActor.getStaticVar(actors[i])
+				if actorvar then
+					actorvar.activation_data = nil
+					actorvar.activation_refresh = curtime
+				end
+				ActivationHandler[1](actors[i])
+			end
+		end
+	end
+end
+
+
+SystemHandlerDispatcher.registerSystemHander(BaseTypes.SystemId.activationSystem, ActivationHandler.main)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, ActivationHandler.OnLogin)
+
+function activationgm( sysarg, arg )
+	ActivationClearData()
+end
+
+function activationadd( sysarg, arg )
+	local num = tonumber(arg[1])
+	if not num then
+		return
+	end
+	local actorvar = LActor.getStaticVar(sysarg)
+	if not actorvar then return end
+	if not actorvar.activation_data then
+		actorvar.activation_data = {}
+		actorvar.activation_data.activities = {}
+		actorvar.activation_data.award = {}
+		actorvar.activation_data.point = 0
+	end
+	actorvar.activation_data.point = actorvar.activation_data.point + num
+end
+
+GmEventFuncList.register( "activationclear", activationgm, 1)
+GmEventFuncList.register( "activationadd", activationadd, 1)

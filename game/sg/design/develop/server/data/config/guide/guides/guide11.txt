@@ -1,0 +1,58 @@
+﻿{
+  maxLevel = 40,
+  
+  --引导必杀技
+  trigger = 
+  { 
+    type = 1,
+    value = 53,
+  },
+
+  --引导中锁定的窗口ID
+  lockUI = 
+  {
+    240,
+  },
+
+  --引导的步骤 
+  steps = 
+  {
+
+	--第1步 切换到副本地图
+    --[[{
+      cond = { type = 27,  helpId = 0, data = 1048 },
+
+      action = { type = 21, helpId = 0, data = Lang.GuideLang.npc60, desc = "" },
+    },--]]
+
+	--第2步 引导点击必杀技界面的装备必杀技
+    {
+      cond = { type = 1,  helpId = 241, data = 0 },
+
+      action = { type = 1, helpId = 241, data = 0, desc = "" },
+    },
+
+
+	--第3步 引导点击必杀技按钮
+    {
+      cond = { type = 1, helpId = 12, data = 0 },
+
+      action = { type = 1, helpId = 12, data = 0, desc = "", fix = 1},
+    },
+
+	--第4步 引导点击离开副本
+    {
+      cond = { type = 0, helpId = 0, data = 0 },
+
+      action = { type = 1, helpId = 13, data = 0, desc = "" },
+    },
+
+ 	--第5步 离开副本到云梦山时结束引导
+   {
+      cond = { type = 27, helpId = 0, data = 13 },
+
+      action = { type = 16, helpId = 0, data = Lang.GuideLang.func11, desc = "" },
+    },
+
+  } 
+}

@@ -1,0 +1,23 @@
+﻿--[[
+	定时执行 include文件
+	活动中的定时执行初始化文件可以挂到此文件中
+	此文件挂于GlobalFunction.txt
+	执行实体为全局NPC 可以用thisNPC取得NPC实体
+]]
+--通用的
+--#include "data\functions\ExpandFunc\TaskRankInit.txt" once --活动通用排行榜初始化
+--常规的
+--#include "data\functions\Tasks\GatherPeach\GatherPeachAutoRun.txt" once --采集蟠桃
+--#include "data\functions\Tasks\ShouLingFengYin\SLFYAutoRun.txt" once --仙灵封印
+--#include "data\functions\Tasks\TianYuan\TianYuanAutoRun.txt" once -- 王城之战
+--#include "data\functions\Tasks\ShenHai\ShenHai.txt" once --深海之峦
+---#include "data\functions\Tasks\Nirvana\NirvanaFubenTimeOut.txt" once --必杀技
+--#include "data\functions\Tasks\campbattle\campbattleinit.txt" once --阵营之战
+--#include "data\functions\tasks\tafang\tafangfuben.txt" once -- 塔防
+--#include "data\functions\tasks\liangongfang\lgffuben.txt" once -- 练功房
+---#include "data\functions\tasks\petfb\petfuben.txt" once -- 伙伴副本
+--#include "data\functions\tasks\arena\arenainit.txt" once -- 
+--#include "data\functions\systems\miscs\guoqingfubenhandler.txt" once -- add wupeng 
+--#include "data\functions\tasks\fudi\fudi_fuben.txt" once
+--#include "data\functions\tasks\teamfuben\slshfuben.txt" once
+--#include "data\functions\tasks\teamfuben\cymkhandle.txt" once

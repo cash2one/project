@@ -1,0 +1,197 @@
+﻿--lua script
+--To do something about equip event
+
+--[[
+    穿上装备触发的任务目标定义 
+]]
+EventCallDispatcher._EqiupTakeOnEquestData = 
+{
+   [511] = { {qid = 777, tid = 30002},{qid = 1703, tid = 30002},{qid = 1735, tid = 30002},{qid = 1767, tid = 30002},},	--511为物品id
+   [554] = { {qid = 777, tid = 30002},{qid = 1703, tid = 30002},{qid = 1735, tid = 30002},{qid = 1767, tid = 30002},},
+   [576] = { {qid = 777, tid = 30002},{qid = 1703, tid = 30002},{qid = 1735, tid = 30002},{qid = 1767, tid = 30002},},
+   [565] = { {qid = 777, tid = 30002},{qid = 1703, tid = 30002},{qid = 1735, tid = 30002},{qid = 1767, tid = 30002},},
+   [522] = { {qid = 777, tid = 30002},{qid = 1703, tid = 30002},{qid = 1735, tid = 30002},{qid = 1767, tid = 30002},},
+   [586] = { {qid = 777, tid = 30002},{qid = 1703, tid = 30002},{qid = 1735, tid = 30002},{qid = 1767, tid = 30002},},
+   [543] = { {qid = 777, tid = 30002},{qid = 1703, tid = 30002},{qid = 1735, tid = 30002},{qid = 1767, tid = 30002},},
+   [532] = { {qid = 777, tid = 30002},{qid = 1703, tid = 30002},{qid = 1735, tid = 30002},{qid = 1767, tid = 30002},},
+
+   [512] = { {qid = 2, tid = 30003}, },
+   [513] = { {qid = 2, tid = 30003}, },
+   [523] = { {qid = 2, tid = 30003}, },
+   [533] = { {qid = 2, tid = 30003}, },
+   [534] = { {qid = 2, tid = 30003}, },
+   [544] = { {qid = 2, tid = 30003}, },
+   [545] = { {qid = 2, tid = 30003}, },
+   [555] = { {qid = 2, tid = 30003}, },
+   [556] = { {qid = 2, tid = 30003}, },
+   [566] = { {qid = 2, tid = 30003}, },
+   [567] = { {qid = 2, tid = 30003}, },
+   [577] = { {qid = 2, tid = 30003}, },
+   [587] = { {qid = 2, tid = 30003}, },
+} 
+
+--套装类型任务的配置
+EventCallDispatcher._SuitQuestData = 
+{
+	[37] = { { qid = 1818,count=5},{ qid = 1819,count=5},{ qid = 1820,count=5},{ qid = 1821,count=5},},	--123为套装id，qid为对应的任务id,count表示要收集套装37的5件装备，如果完成任务需要多个套装，可以直接再添加
+	[38] = { { qid = 1820,count=5},{ qid = 1821,count=5},},
+	[39] = { { qid = 1822,count=5},{ qid = 1823,count=5},{ qid = 1824,count=5},{ qid = 1825,count=5},},
+	[40] = { { qid = 1824,count=5},{ qid = 1825,count=5},},
+	[41] = { { qid = 1826,count=5},{ qid = 1827,count=5},{ qid = 1828,count=5},{ qid = 1829,count=5},},
+	[42] = { { qid = 1828,count=5},{ qid = 1829,count=5},},
+	[43] = { { qid = 1830,count=5},{ qid = 1831,count=5},{ qid = 1832,count=5},{ qid = 1833,count=5},},
+	[44] = { { qid = 1832,count=5},{ qid = 1833,count=5},},
+	[21] = { { qid = 1834,count=5},{ qid = 1835,count=5},{ qid = 1836,count=5},{ qid = 1837,count=5},},
+	[22] = { { qid = 1836,count=5},{ qid = 1837,count=5},},
+	[23] = { { qid = 1838,count=5},{ qid = 1839,count=5},{ qid = 1840,count=5},{ qid = 1841,count=5},},
+	[24] = { { qid = 1840,count=5},{ qid = 1841,count=5},},
+	[25] = { { qid = 1842,count=5},{ qid = 1843,count=5},{ qid = 1844,count=5},{ qid = 1845,count=5},},
+	[26] = { { qid = 1844,count=5},{ qid = 1845,count=5},},
+	[27] = { { qid = 1846,count=5},{ qid = 1847,count=5},{ qid = 1848,count=5},{ qid = 1849,count=5},},
+	[28] = { { qid = 1848,count=5},{ qid = 1849,count=5},},
+	 [5] = { { qid = 1850,count=5},{ qid = 1851,count=5},},
+	 [7] = { { qid = 1852,count=5},{ qid = 1853,count=5},},
+	 [9] = { { qid = 1854,count=5},{ qid = 1855,count=5},},
+	[11] = { { qid = 1856,count=5},{ qid = 1857,count=5},},
+}
+
+EventCallDispatcher._EqiupTakeOnEquestFunc = 
+{
+}
+
+--交换经验宝盒
+function changeExpItem(sysarg,itemId)
+	--判断是否有满了的经验宝盒，如果有，换个物品【小经验封存宝盒】变为【小经验封存宝盒（满）】，【大经验封存宝盒】变为【大经验封存宝盒（满）】，
+	local itemPtr = Item.getDuraFullItemFromBag(sysarg,itemId)
+	if itemPtr == nil then return end
+	--先删除
+	if Item.removeItem(sysarg,itemPtr,1,"exp Item change",2) == 1 then
+		--成功删除则给他（她）新的物品,删了后背包会空出一格，不需要判断背包大小
+		local id = 0
+		if itemId == 1737 then
+			id = 1739
+		elseif itemId == 1738 then
+			id = 1740
+		end
+		LActor.addItem(sysarg,id,0,0,1,0,"exp Item change")
+	end
+end
+
+EventCallDispatcher._EqiupTakeOffEquestFunc = 
+{
+	[1737] = changeExpItem,	--小
+	[1738] = changeExpItem,	--大
+}
+
+EventCallDispatcher.handlerTakeOnQuestEquip = function ( sysarg, arg )
+  --检查是否是与任务关联的物品并设置任务目标进度 
+	local qData = EventCallDispatcher._EqiupTakeOnEquestData[arg[1]]
+	if qData then
+		for i = 1,#qData do
+			LActor.setQuestValue(sysarg, qData[i].qid, qData[i].tid, 1)
+		end
+	end
+	--套装任务，检查本物品是否属于某个套装，然后再查这个套装有没有对应的任务
+	local suit = Item.getSuitIdByItemId(arg[1])
+	if suit ~= 0 then
+		local qData = EventCallDispatcher._SuitQuestData[suit]
+		--检查套装是否齐全
+		if qData ~= nil then
+			for i = 1,#qData do
+				if Item.isGetAllSuitEquip(sysarg,suit,qData[i].count) then
+					LActor.setQuestValue(sysarg, qData[i].qid, suit, qData[i].count)
+				end
+			end
+		end
+	end
+	
+	local itemId = arg[1]
+	if itemId == 11700 or itemId == 11702 then
+		LActor.addBuff(sysarg, 8, 86, 0.15, -1, 1, Item.getItemName(itemId))
+	elseif itemId == 11701 or itemId == 11703 then
+		LActor.addBuff(sysarg, 8, 87, 0.25, -1, 1, Item.getItemName(itemId))
+	elseif itemId == 11706 then
+		LActor.addBuff(sysarg, 8, 86, 0.18, -1, 1, Item.getItemName(itemId))
+	elseif itemId == 11707 then
+		LActor.addBuff(sysarg, 8, 87, 0.30, -1, 1, Item.getItemName(itemId))
+	elseif arg[3] == 12 then	-- c++里tagEquipSlot定义
+		LActor.setIntPropertyLo16(sysarg, PROP_FOOT_EFFECT, Item.getSuitIdByItemId(itemId))
+	end
+end
+
+EventCallDispatcher.handlerTakeOffQuestEquip = function ( sysarg, arg )   
+	--检查是否是与任务关联的物品并设置任务目标进度
+	local qData = EventCallDispatcher._EqiupTakeOnEquestData[arg[1]]
+	if qData then
+		for i=1,#qData do
+			LActor.setQuestValue(sysarg, qData[i].qid, qData[i].tid, 0)
+		end
+	end
+	--脱下装备的处理函数
+	local itemid = arg[1]
+	if EventCallDispatcher._EqiupTakeOffEquestFunc[itemid] ~= nil then
+		EventCallDispatcher._EqiupTakeOffEquestFunc[itemid]( sysarg ,itemid)
+	end
+	
+	--套装任务
+	local suit = Item.getSuitIdByItemId(arg[1])
+	if suit ~= 0 then
+		local qData = EventCallDispatcher._SuitQuestData[suit]
+		--检查套装是否齐全
+		if qData ~= nil then
+			for i = 1,#qData do
+				LActor.setQuestValue(sysarg, qData[i].qid, suit, 0)
+			end
+		end
+	end
+	
+
+	local itemId = arg[1];
+	if itemId == 11700 or itemId == 11702 or itemId == 11706 then
+		LActor.delBuff(sysarg, 8, 86)
+	elseif itemId == 11701 or itemId == 11703 or itemId == 11707 then
+		LActor.delBuff(sysarg, 8, 87)
+	elseif arg[3] == 12 then	-- c++里tagEquipSlot定义
+		if arg[4] == nil then
+			LActor.setIntPropertyLo16(sysarg, PROP_FOOT_EFFECT, 0)
+		end
+	end
+end
+
+EventCallDispatcher.onEquipEnterGame = function (sysarg, arg)
+	local itemPtr = Item.getEquipByPos(sysarg, 12)
+	if itemPtr == nil then
+		LActor.setIntPropertyLo16(sysarg, PROP_FOOT_EFFECT, 0)
+	else
+		local itemId = Item.getItemId(itemPtr)
+		LActor.setIntPropertyLo16(sysarg, PROP_FOOT_EFFECT, Item.getSuitIdByItemId(itemId))
+	end
+end
+
+EventCallDispatcher.onEquipTimeout = function (sysarg, arg)
+	if arg[3] == 12 then
+		LActor.setIntPropertyLo16(sysarg, PROP_FOOT_EFFECT, 0)
+	end
+end
+
+EventCallDispatcher.OnShowFootEff = function (sysarg, arg)
+	if arg[1] == 0 then
+		LActor.setIntPropertyLo16(sysarg, PROP_FOOT_EFFECT, 0)
+	else
+		local itemPtr = Item.getEquipByPos(sysarg, 12)
+		local eff = 0
+		if itemPtr ~= nil then
+			local itemId = Item.getItemId(itemPtr)
+			eff = Item.getSuitIdByItemId(itemId)
+		end
+
+		LActor.setIntPropertyLo16(sysarg, PROP_FOOT_EFFECT, eff)
+	end
+end
+                                                
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeAddEquiment, EventCallDispatcher.handlerTakeOnQuestEquip)  
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeDelEquiment, EventCallDispatcher.handlerTakeOffQuestEquip)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeEquipTimeout, EventCallDispatcher.onEquipTimeout)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeShowFootEff, EventCallDispatcher.OnShowFootEff)
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, EventCallDispatcher.onEquipEnterGame)

@@ -1,0 +1,60 @@
+--冰封的紫霞仙子
+{
+	id = 3,	--行为ID
+	trigger = 1,	--触发类型，血量为1，时间为2
+	infos = 
+	{
+		--血量90%
+		{
+			sequId = 1,
+			param = 90,
+			sequence = 
+			{
+				{ --动作列表
+					type = 12,
+					duration = 2, 
+					items =
+					{
+						{ type = 10, msg = Lang.ScriptTips.sh005, msgType=0 },	--公告
+						{ type = 7, func = "shzlRefresh3" },	--刷怪
+					},
+				},
+			} 
+		},
+		--血量50%
+		{
+			sequId = 1,
+			param = 50,
+			sequence = 
+			{
+				{ --动作列表
+					type = 12,
+					duration = 2, 
+					items =
+					{
+						{ type = 10, msg=Lang.ScriptTips.sh006, msgType=0 },	--公告
+						{ type = 7, func = "shzlRefresh4" },	--刷怪
+					},
+				},
+			} 
+		},
+		--血量20%
+		{
+			sequId = 1,
+			param = 20,
+			sequence = 
+			{
+				{ type = 1, duration = 0, talk=Lang.Actions.a000201, talkType=1 },	--对白
+			} 
+		},
+		--血量17%
+		{
+			sequId = 1,
+			param = 17,
+			sequence = 
+			{
+				{ type = 1, duration = 2, talk=Lang.Actions.a000202, talkType=1 },	--对白
+			} 
+		},
+	},
+},

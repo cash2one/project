@@ -1,0 +1,41 @@
+﻿-- 伙伴副本的怪物死亡的处理
+
+--#include "data\language\LangCode.txt" once
+--#include "data\config\task\petfb.txt" once
+
+
+MonDieDispatcher.PetFbMonsterDie = function ( monster, sysarg, monId )
+	local ptr = LActor.getFubenPrt(sysarg)
+	local st = Fuben.getDyanmicVar(ptr)
+	if st.killcnt == nil then st.killcnt = 0 end
+	st.killcnt = st.killcnt + 1
+	--print("pet fb kill:"..st.killcnt)
+
+	if st.killcnt % petFbConf.monsterCnt2 == 0 then
+		-- 随机出个boss
+		st.idx = st.idx + 1
+		local r = System.getRandomNumber(100)
+		if r < petFbConf.bossPresent then
+			local hScene = LActor.getSceneHandle(sysarg)
+			local list = petFbConf.group[st.idx]
+			local mid = list[System.getRandomNumber(table.getn(list)) + 1]
+			local x, y = 0, 0
+			x, y = LActor.getEntityPosition(monster, x, y)
+			Fuben.createMonster(hScene, mid, petFbConf.bosspos.x, petFbConf.bosspos.y, 0)
+			--print("pet fb create boss:"..mid)
+			LActor.ChangeCaleValue(sysarg,caleRemainMonster, 1)
+			LActor.SendAllCaleValue(sysarg)
+		end
+	end
+end
+
+for i=1, #petFbConf.monsterId do
+	MonDieDispatcher.register(petFbConf.monsterId[i], MonDieDispatcher.PetFbMonsterDie)
+end
+
+-- 杀死副本内所有怪物
+MonAllKilledDispatcher.PetKillAllMonster = function (sceneId, scenePtr, flag, monster)
+	--print("MonAllKilledDispatcher.PetKillAllMonster")
+end
+
+MonAllKilledDispatcher.register( petFbConf.sceneid, MonAllKilledDispatcher.PetKillAllMonster )

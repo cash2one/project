@@ -1,0 +1,65 @@
+
+function ReadClientQMDialog()
+    local monster_dialog = {}
+
+    local objexcel = CExcelReader:new()
+    if not objexcel then
+        print("objexcel is null")
+        return
+    end
+
+    objexcel:Init_App()
+    objexcel:OpenRead()
+
+    print("=============>>>>>> 任务/野外 创建怪的冒泡对白配置开始读取...\n")
+
+    local obj = objexcel:LoadSheetByIndex(1)
+    if not obj then
+        print("LoadSheetByIndex失败!")
+        objexcel:Close()
+        objexcel:Quit_App()
+        return
+    end
+
+    local cCount = objexcel:GetCurrentSheetColCount()
+    local rCount = objexcel:GetCurrentSheetRowCount()
+
+    local fileName = "quest_monster_dialog"
+    local isQuest = tonumber(objexcel:ReadCellAsString(1, 1)) or 0 -- 判断是导出野外怪冒泡还是任务怪冒泡
+    if isQuest == 0 then -- 任务怪
+        fileName = "wild_monster_dialog"
+    end
+
+    for i = 3, rCount do
+        local id = tonumber(objexcel:ReadCellAsString(i, 1)) or 0
+        if id > 0 then
+            local num = tonumber(objexcel:ReadCellAsString(i, 2)) or 0 -- 数量
+            if num > 0 then
+                if monster_dialog[id]  == nil then
+                    monster_dialog[id] = {}
+                end
+                for n = 1, num do
+                    local talk = objexcel:ReadCellAsString(i, 2 + n)
+                    table.insert(monster_dialog[id], talk)
+                end
+            end
+        else
+            print(string.format("=============>>>>>> WARNNING <任务/野外 创建怪的冒泡对白>第%d行空编号", i))
+        end
+    end
+
+    print("=============>>>>>> 任务/野外 创建怪的冒泡对白配置完成读取...\n")
+
+    print("=============>>>>>> 任务/野外 创建怪的冒泡对白配置开始写入...")
+
+    local str = string.format("%s = \n%s", fileName, dump(monster_dialog, true))
+    objexcel:WriteFileWithUTF8(string.format("%s.lua", fileName), str)
+
+    print("=============>>>>>> 任务/野外 创建怪的冒泡对白配置完成写入...\n")
+
+    print("============>>> 导出任务/野外 创建怪的冒泡对白成功")
+
+    objexcel:Close()
+    objexcel:Quit_App()
+    objexcel:delete()
+end

@@ -1,0 +1,29 @@
+-- 对应171系统id指令
+
+TaskNPCEntity = {}
+function TaskNPCEntity.register( cmd , proc )
+	-- body
+	if not cmd  or not proc then
+		return
+	end
+
+	if TaskNPCEntity[cmd] == nil then
+		TaskNPCEntity[cmd] = proc
+	else
+		debug_print("-----------该命令已经被注册了------------"..tostring(cmd))
+	end
+
+end
+
+function TaskNPCEntity.NetWorldDealWith(sysarg , sysid , cmd , dp )
+	if not sysarg or not sysid or not cmd or not dp then
+		return
+	end
+	if TaskNPCEntity[tonumber(cmd)] ~= nil then
+		TaskNPCEntity[tonumber(cmd)](sysarg , dp)
+	else
+		debug_print("-------前端发送命令错误-------")
+	end
+end
+
+SystemHandlerDispatcher.registerSystemHander(BaseTypes.SystemId.cscy_QuestNPC , TaskNPCEntity.NetWorldDealWith)

@@ -1,0 +1,143 @@
+--#ifndef _ACTOR_EVENT_DISPATCHER_
+--#define _ACTOR_EVENT_DISPATCHER_
+
+--延时回调类型表
+LocalDT.ScriptDelayConfig = {}
+--延时回调类型
+LocalDT.ScriptDelayConfig =
+{
+	[1] = {},	--回城传送
+	[2] = {},	--阵营传送
+	[3] = {}, --放置炸药包
+	[4] = {}, --某地方放置物品
+	[5] = {},	--使用疾风令
+	[6] = {},	--使用修为封存宝盒
+	[7] = {},	--使用经验封存宝盒
+	[8] = {},	--使用道具刷怪延时
+	[9] = {}, --使用开启伙伴道具 
+	[10] = {}, -- 宝物骑乘
+	[11] = {}, --使用圣火素材
+	[12] = {}, --延迟上坐骑
+	[13] = {}, --延迟加buff
+	[14] = {}, --删除buff
+	[15] = {},
+	[16] = {}, -- 密宗佛塔统计
+	[17] = {}, -- 皇陵秘境统计
+	[18] = {}, -- 玄天封印统计
+	[19] = {}, -- 免费探宝延时发送
+	[20] = {}, -- 副本委托定时消息
+	[21] = {}, -- 温泉划拳匹配延迟
+	[22] = {}, -- 竞技场延时匹配
+	[23] = {}, -- 自由赛延时退出报名场景
+	[24] = {}, -- 争霸赛退出副本延时处理
+	[25] = {}, -- 设置神兽属性
+	[27] = {}, -- 信使守护统计
+	[28] = {}, -- 炽翼秘窟统计
+	[29] = {}, -- 死亡炽翼技能
+	[41] = {}, --过关斩将统计
+	[42] = {}, --保护罩回调
+}
+
+--#include "AEDispatcherImplement.txt" once
+--#include "questdispatcherimpl.txt" once
+--#include "actorofflineeventimpl.txt" once
+
+--#include "ItemEventHandler.txt" once
+--#include "ScriptDelayCallBack.txt" once	--脚本延迟回调
+--#include "EquipEnhanceHandler.txt" once    
+--#include "LeaveTeamHandler.txt" once
+--#include "TakeOnOffQuestEquipHandler.txt" once
+--#include "ActorDieHandler.txt" once 
+--#include "ActorLoginHandler.txt" once    
+--#include "ActorLogOutHandler.txt" once
+--#include "GuildCallHandler.txt" once
+--#include "GuildQuestHandler.txt" once
+--#include "GuildBlessHandler.txt" once
+--#include "GuildBossHandler.txt" once
+--去掉打坐
+--#include "LevelUPFriendCongHandler.txt" once
+--#include "..\Systems\TimeReward\TimeReward_Event.txt" once 
+--#include "ActorFinishAchieveHandler.txt" once
+--#include "LogOutExpHandler.txt" once
+--#include "NewDayArriveHandler.txt" once
+--#include "OnAsyncOpResultHandler.txt" once
+--#include "OnFubenTimeoutHandler.txt" once
+--#include "onfubengametimeouthandler.txt" once
+--#include "OnLearnSkill.txt" once
+--#include "OnBeKilledByActorInclude.txt" once
+--#include "..\Systems\TimeReward\TimeMoneyReward_Event.txt" once
+--#include "VIPHandler.txt" once
+--#include "GemHandle.txt" once
+--#include "StoreHandle.txt" once
+--#include "MountHandle.txt" once
+--#include "LotteryHandle.txt" once
+--#include "OnGuildActivityHandle.txt" once
+--#include "TianYuanOnBekill.txt" once
+--#include "OpenDialogHandle.txt" once
+--#include "roothandler.txt" once
+--#include "pethandle.txt" once
+--#include "slavehandler.txt" once
+--#include "fighthandle.txt" once
+--#include "winghandle.txt" once
+--#include "ciyinghandle.txt" once
+--#include "theplothandle.txt" once
+--#include "recenttargethandler.txt" once
+--#include "leveluphandler.txt" once
+--#include "teleport.txt" once
+--#include "looptaskhandler.txt" once
+--#include "..\Systems\answerquestion\answerhandler.txt" once
+--#include "..\Systems\timereward\equipenactivityhandler.txt" once
+--#include "..\Systems\timereward\petactivityhandler.txt" once
+--#include "..\Systems\timereward\gemactivityhandler.txt" once
+--#include "superhandle.txt" once
+--#include "data\functions\systems\miscs\superfbhandle.txt" once
+--#include "entrusthandle.txt" once
+--#include "storeimphandle.txt" once --每日限购
+--#include "chapterhandle.txt" once
+--#include "data\functions\monevent\monsteractionimpl.txt" once
+--#include "artifacthandler.txt" once
+--#include "partnerhandle.txt" once -- 伙伴子系统
+--#include "treasurehandler.txt" once -- 寻宝系统
+--#include "friendrelevant.txt" once --好友相关系统
+--#include "wantedhandler.txt" once -- 通缉板
+--#include "..\monevent\fbmonsters\shenmibaoxiangactorfunc.txt" once--神秘宝箱
+--#include "huangbangquest.txt" once 	--皇榜任务
+
+--调用对应的事件函数，处理不同的事件，如角色升级等
+--param sysarg:角色指针
+--param eventId:事件id
+--param args:对应的参数列表
+function OnActorEvent(sysarg, eventId, ...)
+  --print("eventID:"..eventId)
+  local fnTable = EventCallDispatcher[eventId]
+  if fnTable then   
+	  local i
+	  for i = 1, #fnTable do
+	    fnTable[i](sysarg, arg)
+	  end
+  end
+end
+
+function OnGlobalQuestEvent(actorobj, action, playType, qid, ...)
+	local func = ActorQuestCallDispatcher.callbackTypeFunc(action, playType)
+	--print(string.format("==========> OnGlobalQuestEvent: action = [%d], playType = [%d], qid = [%d], funcs = [%s]", action, playType, qid, dump(func)))
+	if func then
+		func(actorobj, qid, arg)
+	end
+end
+
+function OnGlobalQuestCheckEvent(actorobj, action, playType, qid, ...)
+	local func = ActorQuestCallDispatcher.callbackCheckFunc(action, playType)
+	--print(string.format("==========> OnGlobalQuestCheckEvent: action = [%d], playType = [%d], qid = [%d], funcs = [%s]", action, playType, qid, dump(func)))
+	if func then
+		return func(actorobj, qid, arg)
+	else
+		return true -- 不注册认为是通过的
+	end
+end
+
+
+table.insert(LocalDT.ScriptDelayConfig[42], MonsterActionFunc.BaoHuZhao);
+
+
+--#endif  //end of _ACTOR_EVENT_DISPATCHER_

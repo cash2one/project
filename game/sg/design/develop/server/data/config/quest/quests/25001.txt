@@ -1,0 +1,39 @@
+﻿{
+	quickFinish = false,
+	comp = {
+		type = 1,
+		scene = Lang.SceneName.s5,
+		npc = Lang.EntityName.n526,
+	},
+	nextacceptqid = 0,
+	timelimit = 0,
+	conds = {
+		{
+			id = 0,
+			type = 0,
+			count = 1,
+		},
+	},
+	target = {
+	},
+	autofinish = false,
+	excludetree = true,
+	type = 4,
+	awards = {
+	},
+	finishNext = false,
+	commitjuqingkey = "none",
+	playType = {
+		101,
+		9,
+	},
+	timeoutcleardata = false,
+	maxcount = 0,
+	acceptjuqingkey = "none",
+	name = Lang.Quest.n25001,
+	parentid = -1,
+	cangiveup = true,
+	id = 25001,
+	content = Lang.Quest.d25001,
+	interval = 0,
+},

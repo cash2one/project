@@ -1,0 +1,30 @@
+{
+	id = 48260,
+	name = Lang.Item.n48260,
+	desc = Lang.Item.i48260,
+	type = 82,
+	sellType = 82,
+	icon = 605,
+	shape = {0,0,0,0,0,0,0,0},
+	color = 4,
+	dura = 0,
+	dup = 0,
+	colGroup = 0,
+	dealType = 0,
+	dealPrice = 0,
+	time = 0,
+	suitId = 0,
+	staitcAttrs = { 	
+	},
+	strongAttrs = {  
+	},
+	flags = { 
+		recordLog = true,
+		denyDeal = true,
+		denySell = true, 
+        denyDestroy = true,
+	},
+	conds = { 
+		{ cond = 1, value = 1, }, 
+	},
+},

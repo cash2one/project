@@ -1,0 +1,18 @@
+﻿--  魅力排行榜
+
+charmRankConf = {
+
+	activityId = 35,
+		--榜单名字
+	rankName = "charmrank",
+    -- 最低魅力
+	limitCharm = 1,
+    -- 奖励前几名
+	charmcount = 10,
+	awards=
+    	{
+    		{1, 60286},  --第一名的礼包
+    		{3, 60287},  --第2-3名的礼包
+    		{10, 60288},  --第4-10名的礼包		
+  		},
+}

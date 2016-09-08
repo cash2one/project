@@ -1,0 +1,14 @@
+-- 自定义任务相关操作函数
+
+--#include "data\config\quest\customquest.txt" once
+
+CustomQuestFunc = {}
+
+-- 检查能否完成任务
+CustomQuestFunc.CheckQuest = function(sysarg, conf)
+	if conf then
+		for i=1,#conf do
+			LActor.addQuestValue(sysarg, conf[i].qid, conf[i].tid, conf[i].count)			
+		end
+	end
+end

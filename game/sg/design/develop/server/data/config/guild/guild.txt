@@ -1,0 +1,4883 @@
+﻿--这里定义帮派相关的配置信息，主要是各个帮派等级的限制条件，比如人数上限等，还包括一些全局的帮派设定，比如创建帮派需要的达到的角色等级、
+--绑定银两（银两）等
+--#include "..\..\language\LangCode.txt"
+Guild = {
+	--全局的配置
+	levelLimit = 25,		--创建帮派时，角色需要达到的最小等级
+	money = 250000,			--创建帮派时，角色需要缴纳的游戏币数量，成功创建的话，会扣除这部分的银两
+	leftTimeLimit = 1,		--玩家主动脱离帮派的话，在一定时间内（如24小时）不能加入其他帮派或者接受其他帮派的邀请，这个是配置这个时间，以小时为单位
+	kickoutTimeLimit = 0,	--玩家退出帮派后，在这个时间(小时)内不能加入其它帮派
+	--itemId：灵石的物品id，是指在物品配置表中配置好的物品id，升级用的
+	-- 这个字段未必需要
+	upItemId = 1563,
+	-- 每次领取福利消耗的帮贡，每个人消耗是一样的
+	weal_contrib = 0,
+	--护送任务npc
+	questNPC = {sceneName = Lang.SceneName.s3, entityName= Lang.EntityName.n2016 },
+	--军团领地地点，该结构和任务的NPC是一样的，可以指定NPC名称或是一个坐标
+	manor = {sceneName = Lang.SceneName.s3, entityName= Lang.EntityName.n2016 },
+	--王城之战规则
+	tianyuanDesc = Lang.GuildLang.t100,
+	checkTime = 48,		-- 创建帮派后不足10人多久解散,单位小时
+	checkMemberCount = 5, -- 不足N人，一定时间后解散
+	--军团建筑的名字
+	buildingName = Lang.GuildLang.buildingName,
+	--军团建筑的TIPS
+	buildingTips = Lang.GuildLang.buildingTips,
+	-- 帮派商店的配置
+	store = 
+	{
+		-- 这个等级表示帮派建筑：百宝阁的等级
+		
+		{itemid =26181, level = 1 , contrib = 30,limitcount=10},
+		{itemid =26183, level = 1 , contrib = 60,limitcount=10},
+		{itemid =26182, level = 2 , contrib = 60,limitcount=10},
+		{itemid =30564, level = 1 , contrib = 1000,limitcount=1},
+		{itemid =30565, level = 2 , contrib = 1000,limitcount=1},
+		{itemid =30567, level = 3 , contrib = 3000,limitcount=1},
+		{itemid =30568, level = 3 , contrib = 3000,limitcount=1},
+		{itemid =30580, level = 4 , contrib = 4500,limitcount=1},
+		{itemid =30581, level = 5 , contrib = 4500,limitcount=1},
+		{itemid =30584, level = 7 , contrib = 6000,limitcount=1},
+
+
+	},
+	position_name = {"成员","精英","长老","副族长","族长"},
+
+	-- 捐献配置
+	donation = 
+	{
+		-- money类型0，金币
+		[0] = {
+			--捐献的最小数量
+			mincount = 1000,
+			--捐献1对应贡献
+			contirbRatio = 0.001,
+			--捐献1对应繁荣度
+			buildRatio = 0.002,
+			--捐献1对应财产
+			propertyRatio = 0.004,
+		},
+		-- money类型3，天珠
+		[3] = {
+			--捐献的最小数量
+			mincount = 1,
+			--捐献1对应贡献
+			contirbRatio = 1,
+			--捐献1对应繁荣度
+			buildRatio = 20,
+			--捐献1对应财产
+			propertyRatio = 40,
+		},
+	},
+	-- 捐献铜钱上限
+	donationlimit = {
+		-- money类型0，金币
+		[0] = {
+			-- 1-10
+			{
+				level = 1,
+				money = 50000,
+			},
+			-- 20-100
+			{
+				level = 10,
+				money = 100000,
+			},
+			{
+				level = 20,
+				money = 150000,
+			},
+			{
+				level = 30,
+				money = 200000,
+			},
+			{
+				level = 40,
+				money = 250000,
+			},
+			{
+				level = 50,
+				money = 300000,
+			},
+			{
+				level = 60,
+				money = 350000,
+			},
+			{
+				level = 70,
+				money = 400000,
+			},
+			{
+				level = 80,
+				money = 450000,
+			},
+			{
+				level = 90,
+				money = 500000,
+			},
+		},
+	},
+
+	--以下是各个等级的配置
+	--注意：如果达到一定的等级后，以后所有的配置都一样的话，可以只配置到这个等级，以后的等级配置按照这个配置
+	--比如，如果帮派达到20级后，大于或等于20级的帮派都是按照20级的配置，那么这里配置文件就只需配置到20级，以后的级数不用再配置
+	guildLevel = {
+					 {
+						level = 1,
+						maxMember = 35,
+						--这个是升级到下一级需要满足的条件内容 
+						stone = 10,
+						build = 10000,
+						property = 20000,
+						money = {
+						    { moneyType = 0, leader = 8000, secLeader = 7000, hufa = 6000, jy = 5000, member = 4000 },
+						   },
+						},
+
+					{ 
+						level = 2,
+						maxMember = 37,
+						--这个是升级到下一级需要满足的条件内容 
+						stone = 10,
+						build = 40000,
+						property = 80000,
+						money = {
+						    { moneyType = 0, leader = 8000, secLeader = 7000, hufa = 6000, jy = 5000, member = 4000 },
+						   },
+						   
+						},
+						{ 
+						level = 3,
+						maxMember = 39,
+						--这个是升级到下一级需要满足的条件内容 
+						stone = 10,
+						build = 70000,
+						property = 140000,
+						money = {
+						    { moneyType = 0, leader = 8000, secLeader = 7000, hufa = 6000, jy = 5000, member = 4000 },
+						   },
+						},
+						{ 
+						level = 4,
+						maxMember = 41,
+						--这个是升级到下一级需要满足的条件内容 
+						stone = 10,
+						build = 120000,
+						property = 240000,
+						money = {
+						    { moneyType = 0, leader = 8000, secLeader = 7000, hufa = 6000, jy = 5000, member = 4000 },
+						   },
+						},
+						{ 
+						level = 5,
+						maxMember = 43,
+						--这个是升级到下一级需要满足的条件内容 
+						stone = 10,
+						build = 170000,
+						property = 340000,
+						money = {
+						    { moneyType = 0, leader = 8000, secLeader = 7000, hufa = 6000, jy = 5000, member = 4000 },
+						   },
+						},
+						{ 
+						level = 6,
+						maxMember = 45,
+						--这个是升级到下一级需要满足的条件内容 
+						stone = 10,
+						build = 240000,
+						property = 480000,
+						money = {
+						    { moneyType = 0, leader = 8000, secLeader = 7000, hufa = 6000, jy = 5000, member = 4000 },
+						   },
+						},
+						{ 
+						level = 7,
+						maxMember = 47,
+						--这个是升级到下一级需要满足的条件内容 
+						stone = 10,
+						build = 320000,
+						property = 640000,
+						money = {
+						    { moneyType = 0, leader = 8000, secLeader = 7000, hufa = 6000, jy = 5000, member = 4000 },
+						   },
+						},
+						{ 
+						level = 8,
+						maxMember = 48,
+						--这个是升级到下一级需要满足的条件内容 
+						stone = 10,
+						build = 400000,
+						property = 800000,
+						money = {
+						    { moneyType = 0, leader = 8000, secLeader = 7000, hufa = 6000, jy = 5000, member = 4000 },
+						   },
+						},
+						{ 
+						level = 9,
+						maxMember = 49,
+						--这个是升级到下一级需要满足的条件内容 
+						stone = 10,
+						build = 500000,
+						property = 1000000,
+						money = {
+						    { moneyType = 0, leader = 8000, secLeader = 7000, hufa = 6000, jy = 5000, member = 4000 },
+						   },
+						},
+						{ 
+						level = 10,
+						maxMember = 50,
+						--这个是升级到下一级需要满足的条件内容 
+						stone = 10,
+						build = 610000,
+						property = 1220000,
+						money = {
+						    { moneyType = 0, leader = 8000, secLeader = 7000, hufa = 6000, jy = 5000, member = 4000 },
+						   },
+						},
+						{ 
+						level = 11,
+						maxMember = 51,
+						--这个是升级到下一级需要满足的条件内容 
+						stone = 10,
+						build = 720000,
+						property = 1440000,
+						money = {
+						    { moneyType = 0, leader = 8000, secLeader = 7000, hufa = 6000, jy = 5000, member = 4000 },
+						   },
+						},
+						{ 
+						level = 12,
+						maxMember = 52,
+						--这个是升级到下一级需要满足的条件内容 
+						stone = 10,
+						build = 850000,
+						property = 1700000,
+						money = {
+						    { moneyType = 0, leader = 8000, secLeader = 7000, hufa = 6000, jy = 5000, member = 4000 },
+						   },
+						},
+						{ 
+						level = 13,
+						maxMember = 53,
+						--这个是升级到下一级需要满足的条件内容 
+						stone = 10,
+						build = 980000,
+						property = 1960000,
+						money = {
+						    { moneyType = 0, leader = 8000, secLeader = 7000, hufa = 6000, jy = 5000, member = 4000 },
+						   },
+						},
+						{ 
+						level = 14,
+						maxMember = 54,
+						--这个是升级到下一级需要满足的条件内容 
+						stone = 10,
+						build = 1130000,
+						property = 2260000,
+						money = {
+						    { moneyType = 0, leader = 8000, secLeader = 7000, hufa = 6000, jy = 5000, member = 4000 },
+						   },
+						},
+						{ 
+						level = 15,
+						maxMember = 55,
+						--这个是升级到下一级需要满足的条件内容 
+						stone = 10,
+						build = 1280000,
+						property = 2560000,
+						money = {
+						    { moneyType = 0, leader = 8000, secLeader = 7000, hufa = 6000, jy = 5000, member = 4000 },
+						   },
+						},
+						{ 
+						level = 16,
+						maxMember = 56,
+						--这个是升级到下一级需要满足的条件内容 
+						stone = 10,
+						build = 1440000,
+						property = 2880000,
+						money = {
+						    { moneyType = 0, leader = 8000, secLeader = 7000, hufa = 6000, jy = 5000, member = 4000 },
+						   },
+						},
+						{ 
+						level = 17,
+						maxMember = 57,
+						--这个是升级到下一级需要满足的条件内容 
+						stone = 10,
+						build = 1610000,
+						property = 3220000,
+						money = {
+						    { moneyType = 0, leader = 8000, secLeader = 7000, hufa = 6000, jy = 5000, member = 4000 },
+						   },
+						},
+						{ 
+						level = 18,
+						maxMember = 58,
+						--这个是升级到下一级需要满足的条件内容 
+						stone = 10,
+						build = 1790000,
+						property = 3580000,
+						money = {
+						    { moneyType = 0, leader = 8000, secLeader = 7000, hufa = 6000, jy = 5000, member = 4000 },
+						   },
+						},
+						{ 
+						level = 19,
+						maxMember = 59,
+						--这个是升级到下一级需要满足的条件内容 
+						stone = 10,
+						build = 1980000,
+						property = 3960000,
+						money = {
+						    { moneyType = 0, leader = 8000, secLeader = 7000, hufa = 6000, jy = 5000, member = 4000 },
+						   },
+						},
+						{ 
+						level = 20,
+						maxMember = 60,
+						--这个是升级到下一级需要满足的条件内容 
+						stone = 10,
+						build = 1980000,
+						property = 3960000,
+						money = {
+						    { moneyType = 0, leader = 8000, secLeader = 7000, hufa = 6000, jy = 5000, member = 4000 },
+						   },
+						},
+
+	},
+
+	--宗门属性
+	guildAttr = {
+		{
+nLevel = 1 , 
+nCostContri = 40 , 
+nCostBindYB = 21 , 
+--属性 
+attrs = { 
+{type = 17,value = 470,},  --增加血
+{type = 27,value = 25,}, 
+{type = 23,value = 25,}, 
+{type = 33,value = 17,}, 
+{type = 39,value = 17,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 1 , 
+nCostContri = 100 , 
+nCostBindYB = 53 , 
+--属性 
+attrs = { 
+{type = 17,value = 790,},  --增加血
+{type = 27,value = 42,}, 
+{type = 23,value = 42,}, 
+{type = 33,value = 28,}, 
+{type = 39,value = 28,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 1 , 
+nCostContri = 140 , 
+nCostBindYB = 74 , 
+--属性 
+attrs = { 
+{type = 17,value = 1110,},  --增加血
+{type = 27,value = 59,}, 
+{type = 23,value = 59,}, 
+{type = 33,value = 39,}, 
+{type = 39,value = 39,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 1 , 
+nCostContri = 170 , 
+nCostBindYB = 90 , 
+--属性 
+attrs = { 
+{type = 17,value = 1440,},  --增加血
+{type = 27,value = 76,}, 
+{type = 23,value = 76,}, 
+{type = 33,value = 51,}, 
+{type = 39,value = 51,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 1 , 
+nCostContri = 210 , 
+nCostBindYB = 112 , 
+--属性 
+attrs = { 
+{type = 17,value = 1770,},  --增加血
+{type = 27,value = 94,}, 
+{type = 23,value = 94,}, 
+{type = 33,value = 63,}, 
+{type = 39,value = 63,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 1 , 
+nCostContri = 240 , 
+nCostBindYB = 128 , 
+--属性 
+attrs = { 
+{type = 17,value = 2100,},  --增加血
+{type = 27,value = 112,}, 
+{type = 23,value = 112,}, 
+{type = 33,value = 74,}, 
+{type = 39,value = 74,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 1 , 
+nCostContri = 270 , 
+nCostBindYB = 144 , 
+--属性 
+attrs = { 
+{type = 17,value = 2440,},  --增加血
+{type = 27,value = 130,}, 
+{type = 23,value = 130,}, 
+{type = 33,value = 86,}, 
+{type = 39,value = 86,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 1 , 
+nCostContri = 290 , 
+nCostBindYB = 154 , 
+--属性 
+attrs = { 
+{type = 17,value = 2780,},  --增加血
+{type = 27,value = 148,}, 
+{type = 23,value = 148,}, 
+{type = 33,value = 98,}, 
+{type = 39,value = 98,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 1 , 
+nCostContri = 320 , 
+nCostBindYB = 170 , 
+--属性 
+attrs = { 
+{type = 17,value = 3120,},  --增加血
+{type = 27,value = 166,}, 
+{type = 23,value = 166,}, 
+{type = 33,value = 111,}, 
+{type = 39,value = 111,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 1 , 
+nCostContri = 340 , 
+nCostBindYB = 181 , 
+--属性 
+attrs = { 
+{type = 17,value = 3470,},  --增加血
+{type = 27,value = 184,}, 
+{type = 23,value = 184,}, 
+{type = 33,value = 123,}, 
+{type = 39,value = 123,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 2 , 
+nCostContri = 370 , 
+nCostBindYB = 197 , 
+--属性 
+attrs = { 
+{type = 17,value = 3810,},  --增加血
+{type = 27,value = 202,}, 
+{type = 23,value = 202,}, 
+{type = 33,value = 135,}, 
+{type = 39,value = 135,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 2 , 
+nCostContri = 390 , 
+nCostBindYB = 208 , 
+--属性 
+attrs = { 
+{type = 17,value = 4160,},  --增加血
+{type = 27,value = 221,}, 
+{type = 23,value = 221,}, 
+{type = 33,value = 147,}, 
+{type = 39,value = 147,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 2 , 
+nCostContri = 410 , 
+nCostBindYB = 218 , 
+--属性 
+attrs = { 
+{type = 17,value = 4510,},  --增加血
+{type = 27,value = 239,}, 
+{type = 23,value = 239,}, 
+{type = 33,value = 160,}, 
+{type = 39,value = 160,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 2 , 
+nCostContri = 430 , 
+nCostBindYB = 229 , 
+--属性 
+attrs = { 
+{type = 17,value = 4860,},  --增加血
+{type = 27,value = 258,}, 
+{type = 23,value = 258,}, 
+{type = 33,value = 172,}, 
+{type = 39,value = 172,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 2 , 
+nCostContri = 450 , 
+nCostBindYB = 240 , 
+--属性 
+attrs = { 
+{type = 17,value = 5210,},  --增加血
+{type = 27,value = 277,}, 
+{type = 23,value = 277,}, 
+{type = 33,value = 184,}, 
+{type = 39,value = 184,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 2 , 
+nCostContri = 470 , 
+nCostBindYB = 250 , 
+--属性 
+attrs = { 
+{type = 17,value = 5560,},  --增加血
+{type = 27,value = 295,}, 
+{type = 23,value = 295,}, 
+{type = 33,value = 197,}, 
+{type = 39,value = 197,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 2 , 
+nCostContri = 490 , 
+nCostBindYB = 261 , 
+--属性 
+attrs = { 
+{type = 17,value = 5920,},  --增加血
+{type = 27,value = 314,}, 
+{type = 23,value = 314,}, 
+{type = 33,value = 210,}, 
+{type = 39,value = 210,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 2 , 
+nCostContri = 510 , 
+nCostBindYB = 272 , 
+--属性 
+attrs = { 
+{type = 17,value = 6280,},  --增加血
+{type = 27,value = 333,}, 
+{type = 23,value = 333,}, 
+{type = 33,value = 222,}, 
+{type = 39,value = 222,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 2 , 
+nCostContri = 530 , 
+nCostBindYB = 282 , 
+--属性 
+attrs = { 
+{type = 17,value = 6630,},  --增加血
+{type = 27,value = 352,}, 
+{type = 23,value = 352,}, 
+{type = 33,value = 235,}, 
+{type = 39,value = 235,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 2 , 
+nCostContri = 550 , 
+nCostBindYB = 293 , 
+--属性 
+attrs = { 
+{type = 17,value = 6990,},  --增加血
+{type = 27,value = 371,}, 
+{type = 23,value = 371,}, 
+{type = 33,value = 248,}, 
+{type = 39,value = 248,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 3 , 
+nCostContri = 570 , 
+nCostBindYB = 304 , 
+--属性 
+attrs = { 
+{type = 17,value = 7350,},  --增加血
+{type = 27,value = 390,}, 
+{type = 23,value = 390,}, 
+{type = 33,value = 260,}, 
+{type = 39,value = 260,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 3 , 
+nCostContri = 580 , 
+nCostBindYB = 309 , 
+--属性 
+attrs = { 
+{type = 17,value = 7710,},  --增加血
+{type = 27,value = 410,}, 
+{type = 23,value = 410,}, 
+{type = 33,value = 273,}, 
+{type = 39,value = 273,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 3 , 
+nCostContri = 600 , 
+nCostBindYB = 320 , 
+--属性 
+attrs = { 
+{type = 17,value = 8080,},  --增加血
+{type = 27,value = 429,}, 
+{type = 23,value = 429,}, 
+{type = 33,value = 286,}, 
+{type = 39,value = 286,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 3 , 
+nCostContri = 620 , 
+nCostBindYB = 330 , 
+--属性 
+attrs = { 
+{type = 17,value = 8440,},  --增加血
+{type = 27,value = 448,}, 
+{type = 23,value = 448,}, 
+{type = 33,value = 299,}, 
+{type = 39,value = 299,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 3 , 
+nCostContri = 630 , 
+nCostBindYB = 336 , 
+--属性 
+attrs = { 
+{type = 17,value = 8800,},  --增加血
+{type = 27,value = 467,}, 
+{type = 23,value = 467,}, 
+{type = 33,value = 312,}, 
+{type = 39,value = 312,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 3 , 
+nCostContri = 650 , 
+nCostBindYB = 346 , 
+--属性 
+attrs = { 
+{type = 17,value = 9170,},  --增加血
+{type = 27,value = 487,}, 
+{type = 23,value = 487,}, 
+{type = 33,value = 325,}, 
+{type = 39,value = 325,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 3 , 
+nCostContri = 670 , 
+nCostBindYB = 357 , 
+--属性 
+attrs = { 
+{type = 17,value = 9540,},  --增加血
+{type = 27,value = 506,}, 
+{type = 23,value = 506,}, 
+{type = 33,value = 338,}, 
+{type = 39,value = 338,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 3 , 
+nCostContri = 680 , 
+nCostBindYB = 362 , 
+--属性 
+attrs = { 
+{type = 17,value = 9900,},  --增加血
+{type = 27,value = 526,}, 
+{type = 23,value = 526,}, 
+{type = 33,value = 351,}, 
+{type = 39,value = 351,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 3 , 
+nCostContri = 700 , 
+nCostBindYB = 373 , 
+--属性 
+attrs = { 
+{type = 17,value = 10270,},  --增加血
+{type = 27,value = 545,}, 
+{type = 23,value = 545,}, 
+{type = 33,value = 364,}, 
+{type = 39,value = 364,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 3 , 
+nCostContri = 710 , 
+nCostBindYB = 378 , 
+--属性 
+attrs = { 
+{type = 17,value = 10640,},  --增加血
+{type = 27,value = 565,}, 
+{type = 23,value = 565,}, 
+{type = 33,value = 377,}, 
+{type = 39,value = 377,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 4 , 
+nCostContri = 730 , 
+nCostBindYB = 389 , 
+--属性 
+attrs = { 
+{type = 17,value = 11010,},  --增加血
+{type = 27,value = 584,}, 
+{type = 23,value = 584,}, 
+{type = 33,value = 390,}, 
+{type = 39,value = 390,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 4 , 
+nCostContri = 740 , 
+nCostBindYB = 394 , 
+--属性 
+attrs = { 
+{type = 17,value = 11380,},  --增加血
+{type = 27,value = 604,}, 
+{type = 23,value = 604,}, 
+{type = 33,value = 403,}, 
+{type = 39,value = 403,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 4 , 
+nCostContri = 760 , 
+nCostBindYB = 405 , 
+--属性 
+attrs = { 
+{type = 17,value = 11750,},  --增加血
+{type = 27,value = 624,}, 
+{type = 23,value = 624,}, 
+{type = 33,value = 416,}, 
+{type = 39,value = 416,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 4 , 
+nCostContri = 770 , 
+nCostBindYB = 410 , 
+--属性 
+attrs = { 
+{type = 17,value = 12120,},  --增加血
+{type = 27,value = 644,}, 
+{type = 23,value = 644,}, 
+{type = 33,value = 429,}, 
+{type = 39,value = 429,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 4 , 
+nCostContri = 790 , 
+nCostBindYB = 421 , 
+--属性 
+attrs = { 
+{type = 17,value = 12500,},  --增加血
+{type = 27,value = 663,}, 
+{type = 23,value = 663,}, 
+{type = 33,value = 442,}, 
+{type = 39,value = 442,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 4 , 
+nCostContri = 800 , 
+nCostBindYB = 426 , 
+--属性 
+attrs = { 
+{type = 17,value = 12870,},  --增加血
+{type = 27,value = 683,}, 
+{type = 23,value = 683,}, 
+{type = 33,value = 456,}, 
+{type = 39,value = 456,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 4 , 
+nCostContri = 820 , 
+nCostBindYB = 437 , 
+--属性 
+attrs = { 
+{type = 17,value = 13250,},  --增加血
+{type = 27,value = 703,}, 
+{type = 23,value = 703,}, 
+{type = 33,value = 469,}, 
+{type = 39,value = 469,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 4 , 
+nCostContri = 830 , 
+nCostBindYB = 442 , 
+--属性 
+attrs = { 
+{type = 17,value = 13620,},  --增加血
+{type = 27,value = 723,}, 
+{type = 23,value = 723,}, 
+{type = 33,value = 482,}, 
+{type = 39,value = 482,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 4 , 
+nCostContri = 850 , 
+nCostBindYB = 453 , 
+--属性 
+attrs = { 
+{type = 17,value = 14000,},  --增加血
+{type = 27,value = 743,}, 
+{type = 23,value = 743,}, 
+{type = 33,value = 496,}, 
+{type = 39,value = 496,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 4 , 
+nCostContri = 860 , 
+nCostBindYB = 459 , 
+--属性 
+attrs = { 
+{type = 17,value = 14370,},  --增加血
+{type = 27,value = 763,}, 
+{type = 23,value = 763,}, 
+{type = 33,value = 509,}, 
+{type = 39,value = 509,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 5 , 
+nCostContri = 870 , 
+nCostBindYB = 464 , 
+--属性 
+attrs = { 
+{type = 17,value = 14750,},  --增加血
+{type = 27,value = 783,}, 
+{type = 23,value = 783,}, 
+{type = 33,value = 522,}, 
+{type = 39,value = 522,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 5 , 
+nCostContri = 890 , 
+nCostBindYB = 475 , 
+--属性 
+attrs = { 
+{type = 17,value = 15130,},  --增加血
+{type = 27,value = 803,}, 
+{type = 23,value = 803,}, 
+{type = 33,value = 536,}, 
+{type = 39,value = 536,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 5 , 
+nCostContri = 900 , 
+nCostBindYB = 480 , 
+--属性 
+attrs = { 
+{type = 17,value = 15510,},  --增加血
+{type = 27,value = 823,}, 
+{type = 23,value = 823,}, 
+{type = 33,value = 549,}, 
+{type = 39,value = 549,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 5 , 
+nCostContri = 910 , 
+nCostBindYB = 485 , 
+--属性 
+attrs = { 
+{type = 17,value = 15890,},  --增加血
+{type = 27,value = 843,}, 
+{type = 23,value = 843,}, 
+{type = 33,value = 562,}, 
+{type = 39,value = 562,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 5 , 
+nCostContri = 930 , 
+nCostBindYB = 496 , 
+--属性 
+attrs = { 
+{type = 17,value = 16270,},  --增加血
+{type = 27,value = 864,}, 
+{type = 23,value = 864,}, 
+{type = 33,value = 576,}, 
+{type = 39,value = 576,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 5 , 
+nCostContri = 940 , 
+nCostBindYB = 501 , 
+--属性 
+attrs = { 
+{type = 17,value = 16650,},  --增加血
+{type = 27,value = 884,}, 
+{type = 23,value = 884,}, 
+{type = 33,value = 589,}, 
+{type = 39,value = 589,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 5 , 
+nCostContri = 950 , 
+nCostBindYB = 507 , 
+--属性 
+attrs = { 
+{type = 17,value = 17030,},  --增加血
+{type = 27,value = 904,}, 
+{type = 23,value = 904,}, 
+{type = 33,value = 603,}, 
+{type = 39,value = 603,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 5 , 
+nCostContri = 970 , 
+nCostBindYB = 517 , 
+--属性 
+attrs = { 
+{type = 17,value = 17410,},  --增加血
+{type = 27,value = 924,}, 
+{type = 23,value = 924,}, 
+{type = 33,value = 616,}, 
+{type = 39,value = 616,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 5 , 
+nCostContri = 980 , 
+nCostBindYB = 523 , 
+--属性 
+attrs = { 
+{type = 17,value = 17800,},  --增加血
+{type = 27,value = 945,}, 
+{type = 23,value = 945,}, 
+{type = 33,value = 630,}, 
+{type = 39,value = 630,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 5 , 
+nCostContri = 990 , 
+nCostBindYB = 528 , 
+--属性 
+attrs = { 
+{type = 17,value = 18180,},  --增加血
+{type = 27,value = 965,}, 
+{type = 23,value = 965,}, 
+{type = 33,value = 644,}, 
+{type = 39,value = 644,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 6 , 
+nCostContri = 1000 , 
+nCostBindYB = 533 , 
+--属性 
+attrs = { 
+{type = 17,value = 18560,},  --增加血
+{type = 27,value = 986,}, 
+{type = 23,value = 986,}, 
+{type = 33,value = 657,}, 
+{type = 39,value = 657,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 6 , 
+nCostContri = 1020 , 
+nCostBindYB = 544 , 
+--属性 
+attrs = { 
+{type = 17,value = 18950,},  --增加血
+{type = 27,value = 1006,}, 
+{type = 23,value = 1006,}, 
+{type = 33,value = 671,}, 
+{type = 39,value = 671,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 6 , 
+nCostContri = 1030 , 
+nCostBindYB = 549 , 
+--属性 
+attrs = { 
+{type = 17,value = 19330,},  --增加血
+{type = 27,value = 1026,}, 
+{type = 23,value = 1026,}, 
+{type = 33,value = 684,}, 
+{type = 39,value = 684,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 6 , 
+nCostContri = 1040 , 
+nCostBindYB = 555 , 
+--属性 
+attrs = { 
+{type = 17,value = 19720,},  --增加血
+{type = 27,value = 1047,}, 
+{type = 23,value = 1047,}, 
+{type = 33,value = 698,}, 
+{type = 39,value = 698,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 6 , 
+nCostContri = 1050 , 
+nCostBindYB = 560 , 
+--属性 
+attrs = { 
+{type = 17,value = 20110,},  --增加血
+{type = 27,value = 1067,}, 
+{type = 23,value = 1067,}, 
+{type = 33,value = 712,}, 
+{type = 39,value = 712,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 6 , 
+nCostContri = 1060 , 
+nCostBindYB = 565 , 
+--属性 
+attrs = { 
+{type = 17,value = 20490,},  --增加血
+{type = 27,value = 1088,}, 
+{type = 23,value = 1088,}, 
+{type = 33,value = 725,}, 
+{type = 39,value = 725,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 6 , 
+nCostContri = 1080 , 
+nCostBindYB = 576 , 
+--属性 
+attrs = { 
+{type = 17,value = 20880,},  --增加血
+{type = 27,value = 1109,}, 
+{type = 23,value = 1109,}, 
+{type = 33,value = 739,}, 
+{type = 39,value = 739,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 6 , 
+nCostContri = 1090 , 
+nCostBindYB = 581 , 
+--属性 
+attrs = { 
+{type = 17,value = 21270,},  --增加血
+{type = 27,value = 1129,}, 
+{type = 23,value = 1129,}, 
+{type = 33,value = 753,}, 
+{type = 39,value = 753,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 6 , 
+nCostContri = 1100 , 
+nCostBindYB = 587 , 
+--属性 
+attrs = { 
+{type = 17,value = 21660,},  --增加血
+{type = 27,value = 1150,}, 
+{type = 23,value = 1150,}, 
+{type = 33,value = 767,}, 
+{type = 39,value = 767,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 6 , 
+nCostContri = 1110 , 
+nCostBindYB = 592 , 
+--属性 
+attrs = { 
+{type = 17,value = 22050,},  --增加血
+{type = 27,value = 1170,}, 
+{type = 23,value = 1170,}, 
+{type = 33,value = 781,}, 
+{type = 39,value = 781,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 7 , 
+nCostContri = 1120 , 
+nCostBindYB = 597 , 
+--属性 
+attrs = { 
+{type = 17,value = 22440,},  --增加血
+{type = 27,value = 1191,}, 
+{type = 23,value = 1191,}, 
+{type = 33,value = 794,}, 
+{type = 39,value = 794,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 7 , 
+nCostContri = 1130 , 
+nCostBindYB = 603 , 
+--属性 
+attrs = { 
+{type = 17,value = 22830,},  --增加血
+{type = 27,value = 1212,}, 
+{type = 23,value = 1212,}, 
+{type = 33,value = 808,}, 
+{type = 39,value = 808,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 7 , 
+nCostContri = 1150 , 
+nCostBindYB = 613 , 
+--属性 
+attrs = { 
+{type = 17,value = 23220,},  --增加血
+{type = 27,value = 1233,}, 
+{type = 23,value = 1233,}, 
+{type = 33,value = 822,}, 
+{type = 39,value = 822,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 7 , 
+nCostContri = 1160 , 
+nCostBindYB = 619 , 
+--属性 
+attrs = { 
+{type = 17,value = 23610,},  --增加血
+{type = 27,value = 1253,}, 
+{type = 23,value = 1253,}, 
+{type = 33,value = 836,}, 
+{type = 39,value = 836,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 7 , 
+nCostContri = 1170 , 
+nCostBindYB = 624 , 
+--属性 
+attrs = { 
+{type = 17,value = 24000,},  --增加血
+{type = 27,value = 1274,}, 
+{type = 23,value = 1274,}, 
+{type = 33,value = 850,}, 
+{type = 39,value = 850,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 7 , 
+nCostContri = 1180 , 
+nCostBindYB = 629 , 
+--属性 
+attrs = { 
+{type = 17,value = 24390,},  --增加血
+{type = 27,value = 1295,}, 
+{type = 23,value = 1295,}, 
+{type = 33,value = 864,}, 
+{type = 39,value = 864,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 7 , 
+nCostContri = 1190 , 
+nCostBindYB = 635 , 
+--属性 
+attrs = { 
+{type = 17,value = 24790,},  --增加血
+{type = 27,value = 1316,}, 
+{type = 23,value = 1316,}, 
+{type = 33,value = 877,}, 
+{type = 39,value = 877,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 7 , 
+nCostContri = 1200 , 
+nCostBindYB = 640 , 
+--属性 
+attrs = { 
+{type = 17,value = 25180,},  --增加血
+{type = 27,value = 1337,}, 
+{type = 23,value = 1337,}, 
+{type = 33,value = 891,}, 
+{type = 39,value = 891,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 7 , 
+nCostContri = 1210 , 
+nCostBindYB = 645 , 
+--属性 
+attrs = { 
+{type = 17,value = 25570,},  --增加血
+{type = 27,value = 1358,}, 
+{type = 23,value = 1358,}, 
+{type = 33,value = 905,}, 
+{type = 39,value = 905,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 7 , 
+nCostContri = 1220 , 
+nCostBindYB = 651 , 
+--属性 
+attrs = { 
+{type = 17,value = 25970,},  --增加血
+{type = 27,value = 1379,}, 
+{type = 23,value = 1379,}, 
+{type = 33,value = 919,}, 
+{type = 39,value = 919,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 8 , 
+nCostContri = 1240 , 
+nCostBindYB = 661 , 
+--属性 
+attrs = { 
+{type = 17,value = 26360,},  --增加血
+{type = 27,value = 1400,}, 
+{type = 23,value = 1400,}, 
+{type = 33,value = 933,}, 
+{type = 39,value = 933,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 8 , 
+nCostContri = 1250 , 
+nCostBindYB = 667 , 
+--属性 
+attrs = { 
+{type = 17,value = 26760,},  --增加血
+{type = 27,value = 1421,}, 
+{type = 23,value = 1421,}, 
+{type = 33,value = 947,}, 
+{type = 39,value = 947,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 8 , 
+nCostContri = 1260 , 
+nCostBindYB = 672 , 
+--属性 
+attrs = { 
+{type = 17,value = 27160,},  --增加血
+{type = 27,value = 1442,}, 
+{type = 23,value = 1442,}, 
+{type = 33,value = 961,}, 
+{type = 39,value = 961,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 8 , 
+nCostContri = 1270 , 
+nCostBindYB = 677 , 
+--属性 
+attrs = { 
+{type = 17,value = 27550,},  --增加血
+{type = 27,value = 1463,}, 
+{type = 23,value = 1463,}, 
+{type = 33,value = 975,}, 
+{type = 39,value = 975,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 8 , 
+nCostContri = 1280 , 
+nCostBindYB = 683 , 
+--属性 
+attrs = { 
+{type = 17,value = 27950,},  --增加血
+{type = 27,value = 1484,}, 
+{type = 23,value = 1484,}, 
+{type = 33,value = 989,}, 
+{type = 39,value = 989,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 8 , 
+nCostContri = 1290 , 
+nCostBindYB = 688 , 
+--属性 
+attrs = { 
+{type = 17,value = 28350,},  --增加血
+{type = 27,value = 1505,}, 
+{type = 23,value = 1505,}, 
+{type = 33,value = 1003,}, 
+{type = 39,value = 1003,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 8 , 
+nCostContri = 1300 , 
+nCostBindYB = 693 , 
+--属性 
+attrs = { 
+{type = 17,value = 28740,},  --增加血
+{type = 27,value = 1526,}, 
+{type = 23,value = 1526,}, 
+{type = 33,value = 1018,}, 
+{type = 39,value = 1018,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 8 , 
+nCostContri = 1310 , 
+nCostBindYB = 699 , 
+--属性 
+attrs = { 
+{type = 17,value = 29140,},  --增加血
+{type = 27,value = 1547,}, 
+{type = 23,value = 1547,}, 
+{type = 33,value = 1032,}, 
+{type = 39,value = 1032,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 8 , 
+nCostContri = 1320 , 
+nCostBindYB = 704 , 
+--属性 
+attrs = { 
+{type = 17,value = 29540,},  --增加血
+{type = 27,value = 1568,}, 
+{type = 23,value = 1568,}, 
+{type = 33,value = 1046,}, 
+{type = 39,value = 1046,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 8 , 
+nCostContri = 1330 , 
+nCostBindYB = 709 , 
+--属性 
+attrs = { 
+{type = 17,value = 29940,},  --增加血
+{type = 27,value = 1589,}, 
+{type = 23,value = 1589,}, 
+{type = 33,value = 1060,}, 
+{type = 39,value = 1060,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 9 , 
+nCostContri = 1340 , 
+nCostBindYB = 715 , 
+--属性 
+attrs = { 
+{type = 17,value = 30340,},  --增加血
+{type = 27,value = 1611,}, 
+{type = 23,value = 1611,}, 
+{type = 33,value = 1074,}, 
+{type = 39,value = 1074,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 9 , 
+nCostContri = 1350 , 
+nCostBindYB = 720 , 
+--属性 
+attrs = { 
+{type = 17,value = 30740,},  --增加血
+{type = 27,value = 1632,}, 
+{type = 23,value = 1632,}, 
+{type = 33,value = 1088,}, 
+{type = 39,value = 1088,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 9 , 
+nCostContri = 1360 , 
+nCostBindYB = 725 , 
+--属性 
+attrs = { 
+{type = 17,value = 31140,},  --增加血
+{type = 27,value = 1653,}, 
+{type = 23,value = 1653,}, 
+{type = 33,value = 1102,}, 
+{type = 39,value = 1102,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 9 , 
+nCostContri = 1370 , 
+nCostBindYB = 731 , 
+--属性 
+attrs = { 
+{type = 17,value = 31540,},  --增加血
+{type = 27,value = 1674,}, 
+{type = 23,value = 1674,}, 
+{type = 33,value = 1117,}, 
+{type = 39,value = 1117,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 9 , 
+nCostContri = 1380 , 
+nCostBindYB = 736 , 
+--属性 
+attrs = { 
+{type = 17,value = 31940,},  --增加血
+{type = 27,value = 1696,}, 
+{type = 23,value = 1696,}, 
+{type = 33,value = 1131,}, 
+{type = 39,value = 1131,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 9 , 
+nCostContri = 1390 , 
+nCostBindYB = 741 , 
+--属性 
+attrs = { 
+{type = 17,value = 32340,},  --增加血
+{type = 27,value = 1717,}, 
+{type = 23,value = 1717,}, 
+{type = 33,value = 1145,}, 
+{type = 39,value = 1145,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 9 , 
+nCostContri = 1400 , 
+nCostBindYB = 747 , 
+--属性 
+attrs = { 
+{type = 17,value = 32740,},  --增加血
+{type = 27,value = 1738,}, 
+{type = 23,value = 1738,}, 
+{type = 33,value = 1159,}, 
+{type = 39,value = 1159,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 9 , 
+nCostContri = 1410 , 
+nCostBindYB = 752 , 
+--属性 
+attrs = { 
+{type = 17,value = 33150,},  --增加血
+{type = 27,value = 1760,}, 
+{type = 23,value = 1760,}, 
+{type = 33,value = 1173,}, 
+{type = 39,value = 1173,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 9 , 
+nCostContri = 1420 , 
+nCostBindYB = 757 , 
+--属性 
+attrs = { 
+{type = 17,value = 33550,},  --增加血
+{type = 27,value = 1781,}, 
+{type = 23,value = 1781,}, 
+{type = 33,value = 1188,}, 
+{type = 39,value = 1188,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 9 , 
+nCostContri = 1430 , 
+nCostBindYB = 763 , 
+--属性 
+attrs = { 
+{type = 17,value = 33950,},  --增加血
+{type = 27,value = 1802,}, 
+{type = 23,value = 1802,}, 
+{type = 33,value = 1202,}, 
+{type = 39,value = 1202,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 10 , 
+nCostContri = 1440 , 
+nCostBindYB = 768 , 
+--属性 
+attrs = { 
+{type = 17,value = 34360,},  --增加血
+{type = 27,value = 1824,}, 
+{type = 23,value = 1824,}, 
+{type = 33,value = 1216,}, 
+{type = 39,value = 1216,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 10 , 
+nCostContri = 1450 , 
+nCostBindYB = 773 , 
+--属性 
+attrs = { 
+{type = 17,value = 34760,},  --增加血
+{type = 27,value = 1845,}, 
+{type = 23,value = 1845,}, 
+{type = 33,value = 1231,}, 
+{type = 39,value = 1231,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 10 , 
+nCostContri = 1460 , 
+nCostBindYB = 779 , 
+--属性 
+attrs = { 
+{type = 17,value = 35160,},  --增加血
+{type = 27,value = 1867,}, 
+{type = 23,value = 1867,}, 
+{type = 33,value = 1245,}, 
+{type = 39,value = 1245,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 10 , 
+nCostContri = 1470 , 
+nCostBindYB = 784 , 
+--属性 
+attrs = { 
+{type = 17,value = 35570,},  --增加血
+{type = 27,value = 1888,}, 
+{type = 23,value = 1888,}, 
+{type = 33,value = 1259,}, 
+{type = 39,value = 1259,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 10 , 
+nCostContri = 1480 , 
+nCostBindYB = 789 , 
+--属性 
+attrs = { 
+{type = 17,value = 35970,},  --增加血
+{type = 27,value = 1910,}, 
+{type = 23,value = 1910,}, 
+{type = 33,value = 1274,}, 
+{type = 39,value = 1274,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 10 , 
+nCostContri = 1490 , 
+nCostBindYB = 795 , 
+--属性 
+attrs = { 
+{type = 17,value = 36380,},  --增加血
+{type = 27,value = 1931,}, 
+{type = 23,value = 1931,}, 
+{type = 33,value = 1288,}, 
+{type = 39,value = 1288,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 10 , 
+nCostContri = 1500 , 
+nCostBindYB = 800 , 
+--属性 
+attrs = { 
+{type = 17,value = 36790,},  --增加血
+{type = 27,value = 1953,}, 
+{type = 23,value = 1953,}, 
+{type = 33,value = 1302,}, 
+{type = 39,value = 1302,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 10 , 
+nCostContri = 1510 , 
+nCostBindYB = 805 , 
+--属性 
+attrs = { 
+{type = 17,value = 37190,},  --增加血
+{type = 27,value = 1975,}, 
+{type = 23,value = 1975,}, 
+{type = 33,value = 1317,}, 
+{type = 39,value = 1317,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 10 , 
+nCostContri = 1520 , 
+nCostBindYB = 811 , 
+--属性 
+attrs = { 
+{type = 17,value = 37600,},  --增加血
+{type = 27,value = 1996,}, 
+{type = 23,value = 1996,}, 
+{type = 33,value = 1331,}, 
+{type = 39,value = 1331,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 10 , 
+nCostContri = 1530 , 
+nCostBindYB = 816 , 
+--属性 
+attrs = { 
+{type = 17,value = 38010,},  --增加血
+{type = 27,value = 2018,}, 
+{type = 23,value = 2018,}, 
+{type = 33,value = 1345,}, 
+{type = 39,value = 1345,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 11 , 
+nCostContri = 1540 , 
+nCostBindYB = 821 , 
+--属性 
+attrs = { 
+{type = 17,value = 38410,},  --增加血
+{type = 27,value = 2039,}, 
+{type = 23,value = 2039,}, 
+{type = 33,value = 1360,}, 
+{type = 39,value = 1360,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 11 , 
+nCostContri = 1550 , 
+nCostBindYB = 827 , 
+--属性 
+attrs = { 
+{type = 17,value = 38820,},  --增加血
+{type = 27,value = 2061,}, 
+{type = 23,value = 2061,}, 
+{type = 33,value = 1374,}, 
+{type = 39,value = 1374,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 11 , 
+nCostContri = 1560 , 
+nCostBindYB = 832 , 
+--属性 
+attrs = { 
+{type = 17,value = 39230,},  --增加血
+{type = 27,value = 2083,}, 
+{type = 23,value = 2083,}, 
+{type = 33,value = 1389,}, 
+{type = 39,value = 1389,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 11 , 
+nCostContri = 1570 , 
+nCostBindYB = 837 , 
+--属性 
+attrs = { 
+{type = 17,value = 39640,},  --增加血
+{type = 27,value = 2104,}, 
+{type = 23,value = 2104,}, 
+{type = 33,value = 1403,}, 
+{type = 39,value = 1403,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 11 , 
+nCostContri = 1580 , 
+nCostBindYB = 843 , 
+--属性 
+attrs = { 
+{type = 17,value = 40050,},  --增加血
+{type = 27,value = 2126,}, 
+{type = 23,value = 2126,}, 
+{type = 33,value = 1418,}, 
+{type = 39,value = 1418,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 11 , 
+nCostContri = 1590 , 
+nCostBindYB = 848 , 
+--属性 
+attrs = { 
+{type = 17,value = 40460,},  --增加血
+{type = 27,value = 2148,}, 
+{type = 23,value = 2148,}, 
+{type = 33,value = 1432,}, 
+{type = 39,value = 1432,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 11 , 
+nCostContri = 1600 , 
+nCostBindYB = 853 , 
+--属性 
+attrs = { 
+{type = 17,value = 40870,},  --增加血
+{type = 27,value = 2170,}, 
+{type = 23,value = 2170,}, 
+{type = 33,value = 1447,}, 
+{type = 39,value = 1447,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 11 , 
+nCostContri = 1600 , 
+nCostBindYB = 853 , 
+--属性 
+attrs = { 
+{type = 17,value = 41280,},  --增加血
+{type = 27,value = 2191,}, 
+{type = 23,value = 2191,}, 
+{type = 33,value = 1461,}, 
+{type = 39,value = 1461,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 11 , 
+nCostContri = 1610 , 
+nCostBindYB = 859 , 
+--属性 
+attrs = { 
+{type = 17,value = 41690,},  --增加血
+{type = 27,value = 2213,}, 
+{type = 23,value = 2213,}, 
+{type = 33,value = 1476,}, 
+{type = 39,value = 1476,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 11 , 
+nCostContri = 1620 , 
+nCostBindYB = 864 , 
+--属性 
+attrs = { 
+{type = 17,value = 42100,},  --增加血
+{type = 27,value = 2235,}, 
+{type = 23,value = 2235,}, 
+{type = 33,value = 1490,}, 
+{type = 39,value = 1490,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 12 , 
+nCostContri = 1630 , 
+nCostBindYB = 869 , 
+--属性 
+attrs = { 
+{type = 17,value = 42510,},  --增加血
+{type = 27,value = 2257,}, 
+{type = 23,value = 2257,}, 
+{type = 33,value = 1505,}, 
+{type = 39,value = 1505,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 12 , 
+nCostContri = 1640 , 
+nCostBindYB = 875 , 
+--属性 
+attrs = { 
+{type = 17,value = 42920,},  --增加血
+{type = 27,value = 2279,}, 
+{type = 23,value = 2279,}, 
+{type = 33,value = 1519,}, 
+{type = 39,value = 1519,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 12 , 
+nCostContri = 1650 , 
+nCostBindYB = 880 , 
+--属性 
+attrs = { 
+{type = 17,value = 43330,},  --增加血
+{type = 27,value = 2300,}, 
+{type = 23,value = 2300,}, 
+{type = 33,value = 1534,}, 
+{type = 39,value = 1534,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 12 , 
+nCostContri = 1660 , 
+nCostBindYB = 885 , 
+--属性 
+attrs = { 
+{type = 17,value = 43750,},  --增加血
+{type = 27,value = 2322,}, 
+{type = 23,value = 2322,}, 
+{type = 33,value = 1549,}, 
+{type = 39,value = 1549,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 12 , 
+nCostContri = 1670 , 
+nCostBindYB = 891 , 
+--属性 
+attrs = { 
+{type = 17,value = 44160,},  --增加血
+{type = 27,value = 2344,}, 
+{type = 23,value = 2344,}, 
+{type = 33,value = 1563,}, 
+{type = 39,value = 1563,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 12 , 
+nCostContri = 1680 , 
+nCostBindYB = 896 , 
+--属性 
+attrs = { 
+{type = 17,value = 44570,},  --增加血
+{type = 27,value = 2366,}, 
+{type = 23,value = 2366,}, 
+{type = 33,value = 1578,}, 
+{type = 39,value = 1578,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 12 , 
+nCostContri = 1690 , 
+nCostBindYB = 902 , 
+--属性 
+attrs = { 
+{type = 17,value = 44980,},  --增加血
+{type = 27,value = 2388,}, 
+{type = 23,value = 2388,}, 
+{type = 33,value = 1592,}, 
+{type = 39,value = 1592,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 12 , 
+nCostContri = 1700 , 
+nCostBindYB = 907 , 
+--属性 
+attrs = { 
+{type = 17,value = 45400,},  --增加血
+{type = 27,value = 2410,}, 
+{type = 23,value = 2410,}, 
+{type = 33,value = 1607,}, 
+{type = 39,value = 1607,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 12 , 
+nCostContri = 1700 , 
+nCostBindYB = 907 , 
+--属性 
+attrs = { 
+{type = 17,value = 45810,},  --增加血
+{type = 27,value = 2432,}, 
+{type = 23,value = 2432,}, 
+{type = 33,value = 1622,}, 
+{type = 39,value = 1622,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 12 , 
+nCostContri = 1710 , 
+nCostBindYB = 912 , 
+--属性 
+attrs = { 
+{type = 17,value = 46230,},  --增加血
+{type = 27,value = 2454,}, 
+{type = 23,value = 2454,}, 
+{type = 33,value = 1636,}, 
+{type = 39,value = 1636,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 13 , 
+nCostContri = 1720 , 
+nCostBindYB = 918 , 
+--属性 
+attrs = { 
+{type = 17,value = 46640,},  --增加血
+{type = 27,value = 2476,}, 
+{type = 23,value = 2476,}, 
+{type = 33,value = 1651,}, 
+{type = 39,value = 1651,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 13 , 
+nCostContri = 1730 , 
+nCostBindYB = 923 , 
+--属性 
+attrs = { 
+{type = 17,value = 47050,},  --增加血
+{type = 27,value = 2498,}, 
+{type = 23,value = 2498,}, 
+{type = 33,value = 1666,}, 
+{type = 39,value = 1666,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 13 , 
+nCostContri = 1740 , 
+nCostBindYB = 928 , 
+--属性 
+attrs = { 
+{type = 17,value = 47470,},  --增加血
+{type = 27,value = 2520,}, 
+{type = 23,value = 2520,}, 
+{type = 33,value = 1680,}, 
+{type = 39,value = 1680,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 13 , 
+nCostContri = 1750 , 
+nCostBindYB = 934 , 
+--属性 
+attrs = { 
+{type = 17,value = 47890,},  --增加血
+{type = 27,value = 2542,}, 
+{type = 23,value = 2542,}, 
+{type = 33,value = 1695,}, 
+{type = 39,value = 1695,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 13 , 
+nCostContri = 1760 , 
+nCostBindYB = 939 , 
+--属性 
+attrs = { 
+{type = 17,value = 48300,},  --增加血
+{type = 27,value = 2564,}, 
+{type = 23,value = 2564,}, 
+{type = 33,value = 1710,}, 
+{type = 39,value = 1710,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 13 , 
+nCostContri = 1770 , 
+nCostBindYB = 944 , 
+--属性 
+attrs = { 
+{type = 17,value = 48720,},  --增加血
+{type = 27,value = 2586,}, 
+{type = 23,value = 2586,}, 
+{type = 33,value = 1725,}, 
+{type = 39,value = 1725,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 13 , 
+nCostContri = 1770 , 
+nCostBindYB = 944 , 
+--属性 
+attrs = { 
+{type = 17,value = 49130,},  --增加血
+{type = 27,value = 2608,}, 
+{type = 23,value = 2608,}, 
+{type = 33,value = 1739,}, 
+{type = 39,value = 1739,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 13 , 
+nCostContri = 1780 , 
+nCostBindYB = 950 , 
+--属性 
+attrs = { 
+{type = 17,value = 49550,},  --增加血
+{type = 27,value = 2631,}, 
+{type = 23,value = 2631,}, 
+{type = 33,value = 1754,}, 
+{type = 39,value = 1754,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 13 , 
+nCostContri = 1790 , 
+nCostBindYB = 955 , 
+--属性 
+attrs = { 
+{type = 17,value = 49970,},  --增加血
+{type = 27,value = 2653,}, 
+{type = 23,value = 2653,}, 
+{type = 33,value = 1769,}, 
+{type = 39,value = 1769,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 13 , 
+nCostContri = 1800 , 
+nCostBindYB = 960 , 
+--属性 
+attrs = { 
+{type = 17,value = 50390,},  --增加血
+{type = 27,value = 2675,}, 
+{type = 23,value = 2675,}, 
+{type = 33,value = 1784,}, 
+{type = 39,value = 1784,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 14 , 
+nCostContri = 1810 , 
+nCostBindYB = 966 , 
+--属性 
+attrs = { 
+{type = 17,value = 50800,},  --增加血
+{type = 27,value = 2697,}, 
+{type = 23,value = 2697,}, 
+{type = 33,value = 1798,}, 
+{type = 39,value = 1798,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 14 , 
+nCostContri = 1820 , 
+nCostBindYB = 971 , 
+--属性 
+attrs = { 
+{type = 17,value = 51220,},  --增加血
+{type = 27,value = 2719,}, 
+{type = 23,value = 2719,}, 
+{type = 33,value = 1813,}, 
+{type = 39,value = 1813,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 14 , 
+nCostContri = 1830 , 
+nCostBindYB = 976 , 
+--属性 
+attrs = { 
+{type = 17,value = 51640,},  --增加血
+{type = 27,value = 2741,}, 
+{type = 23,value = 2741,}, 
+{type = 33,value = 1828,}, 
+{type = 39,value = 1828,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 14 , 
+nCostContri = 1830 , 
+nCostBindYB = 976 , 
+--属性 
+attrs = { 
+{type = 17,value = 52060,},  --增加血
+{type = 27,value = 2764,}, 
+{type = 23,value = 2764,}, 
+{type = 33,value = 1843,}, 
+{type = 39,value = 1843,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 14 , 
+nCostContri = 1840 , 
+nCostBindYB = 982 , 
+--属性 
+attrs = { 
+{type = 17,value = 52480,},  --增加血
+{type = 27,value = 2786,}, 
+{type = 23,value = 2786,}, 
+{type = 33,value = 1858,}, 
+{type = 39,value = 1858,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 14 , 
+nCostContri = 1850 , 
+nCostBindYB = 987 , 
+--属性 
+attrs = { 
+{type = 17,value = 52900,},  --增加血
+{type = 27,value = 2808,}, 
+{type = 23,value = 2808,}, 
+{type = 33,value = 1873,}, 
+{type = 39,value = 1873,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 14 , 
+nCostContri = 1860 , 
+nCostBindYB = 992 , 
+--属性 
+attrs = { 
+{type = 17,value = 53320,},  --增加血
+{type = 27,value = 2830,}, 
+{type = 23,value = 2830,}, 
+{type = 33,value = 1887,}, 
+{type = 39,value = 1887,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 14 , 
+nCostContri = 1870 , 
+nCostBindYB = 998 , 
+--属性 
+attrs = { 
+{type = 17,value = 53740,},  --增加血
+{type = 27,value = 2853,}, 
+{type = 23,value = 2853,}, 
+{type = 33,value = 1902,}, 
+{type = 39,value = 1902,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 14 , 
+nCostContri = 1880 , 
+nCostBindYB = 1003 , 
+--属性 
+attrs = { 
+{type = 17,value = 54160,},  --增加血
+{type = 27,value = 2875,}, 
+{type = 23,value = 2875,}, 
+{type = 33,value = 1917,}, 
+{type = 39,value = 1917,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 14 , 
+nCostContri = 1880 , 
+nCostBindYB = 1003 , 
+--属性 
+attrs = { 
+{type = 17,value = 54580,},  --增加血
+{type = 27,value = 2897,}, 
+{type = 23,value = 2897,}, 
+{type = 33,value = 1932,}, 
+{type = 39,value = 1932,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 15 , 
+nCostContri = 1890 , 
+nCostBindYB = 1008 , 
+--属性 
+attrs = { 
+{type = 17,value = 55000,},  --增加血
+{type = 27,value = 2920,}, 
+{type = 23,value = 2920,}, 
+{type = 33,value = 1947,}, 
+{type = 39,value = 1947,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 15 , 
+nCostContri = 1900 , 
+nCostBindYB = 1014 , 
+--属性 
+attrs = { 
+{type = 17,value = 55420,},  --增加血
+{type = 27,value = 2942,}, 
+{type = 23,value = 2942,}, 
+{type = 33,value = 1962,}, 
+{type = 39,value = 1962,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 15 , 
+nCostContri = 1910 , 
+nCostBindYB = 1019 , 
+--属性 
+attrs = { 
+{type = 17,value = 55840,},  --增加血
+{type = 27,value = 2964,}, 
+{type = 23,value = 2964,}, 
+{type = 33,value = 1977,}, 
+{type = 39,value = 1977,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 15 , 
+nCostContri = 1920 , 
+nCostBindYB = 1024 , 
+--属性 
+attrs = { 
+{type = 17,value = 56260,},  --增加血
+{type = 27,value = 2987,}, 
+{type = 23,value = 2987,}, 
+{type = 33,value = 1992,}, 
+{type = 39,value = 1992,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 15 , 
+nCostContri = 1930 , 
+nCostBindYB = 1030 , 
+--属性 
+attrs = { 
+{type = 17,value = 56680,},  --增加血
+{type = 27,value = 3009,}, 
+{type = 23,value = 3009,}, 
+{type = 33,value = 2007,}, 
+{type = 39,value = 2007,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 15 , 
+nCostContri = 1930 , 
+nCostBindYB = 1030 , 
+--属性 
+attrs = { 
+{type = 17,value = 57110,},  --增加血
+{type = 27,value = 3032,}, 
+{type = 23,value = 3032,}, 
+{type = 33,value = 2022,}, 
+{type = 39,value = 2022,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 15 , 
+nCostContri = 1940 , 
+nCostBindYB = 1035 , 
+--属性 
+attrs = { 
+{type = 17,value = 57530,},  --增加血
+{type = 27,value = 3054,}, 
+{type = 23,value = 3054,}, 
+{type = 33,value = 2037,}, 
+{type = 39,value = 2037,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 15 , 
+nCostContri = 1950 , 
+nCostBindYB = 1040 , 
+--属性 
+attrs = { 
+{type = 17,value = 57950,},  --增加血
+{type = 27,value = 3077,}, 
+{type = 23,value = 3077,}, 
+{type = 33,value = 2052,}, 
+{type = 39,value = 2052,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 15 , 
+nCostContri = 1960 , 
+nCostBindYB = 1046 , 
+--属性 
+attrs = { 
+{type = 17,value = 58370,},  --增加血
+{type = 27,value = 3099,}, 
+{type = 23,value = 3099,}, 
+{type = 33,value = 2066,}, 
+{type = 39,value = 2066,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 15 , 
+nCostContri = 1970 , 
+nCostBindYB = 1051 , 
+--属性 
+attrs = { 
+{type = 17,value = 58800,},  --增加血
+{type = 27,value = 3121,}, 
+{type = 23,value = 3121,}, 
+{type = 33,value = 2081,}, 
+{type = 39,value = 2081,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 16 , 
+nCostContri = 1970 , 
+nCostBindYB = 1051 , 
+--属性 
+attrs = { 
+{type = 17,value = 59220,},  --增加血
+{type = 27,value = 3144,}, 
+{type = 23,value = 3144,}, 
+{type = 33,value = 2096,}, 
+{type = 39,value = 2096,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 16 , 
+nCostContri = 1980 , 
+nCostBindYB = 1056 , 
+--属性 
+attrs = { 
+{type = 17,value = 59650,},  --增加血
+{type = 27,value = 3166,}, 
+{type = 23,value = 3166,}, 
+{type = 33,value = 2111,}, 
+{type = 39,value = 2111,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 16 , 
+nCostContri = 1990 , 
+nCostBindYB = 1062 , 
+--属性 
+attrs = { 
+{type = 17,value = 60070,},  --增加血
+{type = 27,value = 3189,}, 
+{type = 23,value = 3189,}, 
+{type = 33,value = 2127,}, 
+{type = 39,value = 2127,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 16 , 
+nCostContri = 2000 , 
+nCostBindYB = 1067 , 
+--属性 
+attrs = { 
+{type = 17,value = 60490,},  --增加血
+{type = 27,value = 3212,}, 
+{type = 23,value = 3212,}, 
+{type = 33,value = 2142,}, 
+{type = 39,value = 2142,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 16 , 
+nCostContri = 2010 , 
+nCostBindYB = 1072 , 
+--属性 
+attrs = { 
+{type = 17,value = 60920,},  --增加血
+{type = 27,value = 3234,}, 
+{type = 23,value = 3234,}, 
+{type = 33,value = 2157,}, 
+{type = 39,value = 2157,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 16 , 
+nCostContri = 2010 , 
+nCostBindYB = 1072 , 
+--属性 
+attrs = { 
+{type = 17,value = 61340,},  --增加血
+{type = 27,value = 3257,}, 
+{type = 23,value = 3257,}, 
+{type = 33,value = 2172,}, 
+{type = 39,value = 2172,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 16 , 
+nCostContri = 2020 , 
+nCostBindYB = 1078 , 
+--属性 
+attrs = { 
+{type = 17,value = 61770,},  --增加血
+{type = 27,value = 3279,}, 
+{type = 23,value = 3279,}, 
+{type = 33,value = 2187,}, 
+{type = 39,value = 2187,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 16 , 
+nCostContri = 2030 , 
+nCostBindYB = 1083 , 
+--属性 
+attrs = { 
+{type = 17,value = 62200,},  --增加血
+{type = 27,value = 3302,}, 
+{type = 23,value = 3302,}, 
+{type = 33,value = 2202,}, 
+{type = 39,value = 2202,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 16 , 
+nCostContri = 2040 , 
+nCostBindYB = 1088 , 
+--属性 
+attrs = { 
+{type = 17,value = 62620,},  --增加血
+{type = 27,value = 3324,}, 
+{type = 23,value = 3324,}, 
+{type = 33,value = 2217,}, 
+{type = 39,value = 2217,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 16 , 
+nCostContri = 2050 , 
+nCostBindYB = 1094 , 
+--属性 
+attrs = { 
+{type = 17,value = 63050,},  --增加血
+{type = 27,value = 3347,}, 
+{type = 23,value = 3347,}, 
+{type = 33,value = 2232,}, 
+{type = 39,value = 2232,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 17 , 
+nCostContri = 2050 , 
+nCostBindYB = 1094 , 
+--属性 
+attrs = { 
+{type = 17,value = 63470,},  --增加血
+{type = 27,value = 3370,}, 
+{type = 23,value = 3370,}, 
+{type = 33,value = 2247,}, 
+{type = 39,value = 2247,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 17 , 
+nCostContri = 2060 , 
+nCostBindYB = 1099 , 
+--属性 
+attrs = { 
+{type = 17,value = 63900,},  --增加血
+{type = 27,value = 3392,}, 
+{type = 23,value = 3392,}, 
+{type = 33,value = 2262,}, 
+{type = 39,value = 2262,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 17 , 
+nCostContri = 2070 , 
+nCostBindYB = 1104 , 
+--属性 
+attrs = { 
+{type = 17,value = 64330,},  --增加血
+{type = 27,value = 3415,}, 
+{type = 23,value = 3415,}, 
+{type = 33,value = 2277,}, 
+{type = 39,value = 2277,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 17 , 
+nCostContri = 2080 , 
+nCostBindYB = 1110 , 
+--属性 
+attrs = { 
+{type = 17,value = 64750,},  --增加血
+{type = 27,value = 3438,}, 
+{type = 23,value = 3438,}, 
+{type = 33,value = 2292,}, 
+{type = 39,value = 2292,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 17 , 
+nCostContri = 2090 , 
+nCostBindYB = 1115 , 
+--属性 
+attrs = { 
+{type = 17,value = 65180,},  --增加血
+{type = 27,value = 3460,}, 
+{type = 23,value = 3460,}, 
+{type = 33,value = 2307,}, 
+{type = 39,value = 2307,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 17 , 
+nCostContri = 2090 , 
+nCostBindYB = 1115 , 
+--属性 
+attrs = { 
+{type = 17,value = 65610,},  --增加血
+{type = 27,value = 3483,}, 
+{type = 23,value = 3483,}, 
+{type = 33,value = 2323,}, 
+{type = 39,value = 2323,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 17 , 
+nCostContri = 2100 , 
+nCostBindYB = 1120 , 
+--属性 
+attrs = { 
+{type = 17,value = 66040,},  --增加血
+{type = 27,value = 3506,}, 
+{type = 23,value = 3506,}, 
+{type = 33,value = 2338,}, 
+{type = 39,value = 2338,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 17 , 
+nCostContri = 2110 , 
+nCostBindYB = 1126 , 
+--属性 
+attrs = { 
+{type = 17,value = 66470,},  --增加血
+{type = 27,value = 3529,}, 
+{type = 23,value = 3529,}, 
+{type = 33,value = 2353,}, 
+{type = 39,value = 2353,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 17 , 
+nCostContri = 2120 , 
+nCostBindYB = 1131 , 
+--属性 
+attrs = { 
+{type = 17,value = 66890,},  --增加血
+{type = 27,value = 3551,}, 
+{type = 23,value = 3551,}, 
+{type = 33,value = 2368,}, 
+{type = 39,value = 2368,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 17 , 
+nCostContri = 2120 , 
+nCostBindYB = 1131 , 
+--属性 
+attrs = { 
+{type = 17,value = 67320,},  --增加血
+{type = 27,value = 3574,}, 
+{type = 23,value = 3574,}, 
+{type = 33,value = 2383,}, 
+{type = 39,value = 2383,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 18 , 
+nCostContri = 2130 , 
+nCostBindYB = 1136 , 
+--属性 
+attrs = { 
+{type = 17,value = 67750,},  --增加血
+{type = 27,value = 3597,}, 
+{type = 23,value = 3597,}, 
+{type = 33,value = 2398,}, 
+{type = 39,value = 2398,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 18 , 
+nCostContri = 2140 , 
+nCostBindYB = 1142 , 
+--属性 
+attrs = { 
+{type = 17,value = 68180,},  --增加血
+{type = 27,value = 3620,}, 
+{type = 23,value = 3620,}, 
+{type = 33,value = 2414,}, 
+{type = 39,value = 2414,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 18 , 
+nCostContri = 2150 , 
+nCostBindYB = 1147 , 
+--属性 
+attrs = { 
+{type = 17,value = 68610,},  --增加血
+{type = 27,value = 3642,}, 
+{type = 23,value = 3642,}, 
+{type = 33,value = 2429,}, 
+{type = 39,value = 2429,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 18 , 
+nCostContri = 2150 , 
+nCostBindYB = 1147 , 
+--属性 
+attrs = { 
+{type = 17,value = 69040,},  --增加血
+{type = 27,value = 3665,}, 
+{type = 23,value = 3665,}, 
+{type = 33,value = 2444,}, 
+{type = 39,value = 2444,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 18 , 
+nCostContri = 2160 , 
+nCostBindYB = 1152 , 
+--属性 
+attrs = { 
+{type = 17,value = 69470,},  --增加血
+{type = 27,value = 3688,}, 
+{type = 23,value = 3688,}, 
+{type = 33,value = 2459,}, 
+{type = 39,value = 2459,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 18 , 
+nCostContri = 2170 , 
+nCostBindYB = 1158 , 
+--属性 
+attrs = { 
+{type = 17,value = 69900,},  --增加血
+{type = 27,value = 3711,}, 
+{type = 23,value = 3711,}, 
+{type = 33,value = 2475,}, 
+{type = 39,value = 2475,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 18 , 
+nCostContri = 2180 , 
+nCostBindYB = 1163 , 
+--属性 
+attrs = { 
+{type = 17,value = 70330,},  --增加血
+{type = 27,value = 3734,}, 
+{type = 23,value = 3734,}, 
+{type = 33,value = 2490,}, 
+{type = 39,value = 2490,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 18 , 
+nCostContri = 2190 , 
+nCostBindYB = 1168 , 
+--属性 
+attrs = { 
+{type = 17,value = 70760,},  --增加血
+{type = 27,value = 3757,}, 
+{type = 23,value = 3757,}, 
+{type = 33,value = 2505,}, 
+{type = 39,value = 2505,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 18 , 
+nCostContri = 2190 , 
+nCostBindYB = 1168 , 
+--属性 
+attrs = { 
+{type = 17,value = 71190,},  --增加血
+{type = 27,value = 3780,}, 
+{type = 23,value = 3780,}, 
+{type = 33,value = 2520,}, 
+{type = 39,value = 2520,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 18 , 
+nCostContri = 2200 , 
+nCostBindYB = 1174 , 
+--属性 
+attrs = { 
+{type = 17,value = 71630,},  --增加血
+{type = 27,value = 3802,}, 
+{type = 23,value = 3802,}, 
+{type = 33,value = 2536,}, 
+{type = 39,value = 2536,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 19 , 
+nCostContri = 2210 , 
+nCostBindYB = 1179 , 
+--属性 
+attrs = { 
+{type = 17,value = 72060,},  --增加血
+{type = 27,value = 3825,}, 
+{type = 23,value = 3825,}, 
+{type = 33,value = 2551,}, 
+{type = 39,value = 2551,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 19 , 
+nCostContri = 2220 , 
+nCostBindYB = 1184 , 
+--属性 
+attrs = { 
+{type = 17,value = 72490,},  --增加血
+{type = 27,value = 3848,}, 
+{type = 23,value = 3848,}, 
+{type = 33,value = 2566,}, 
+{type = 39,value = 2566,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 19 , 
+nCostContri = 2220 , 
+nCostBindYB = 1184 , 
+--属性 
+attrs = { 
+{type = 17,value = 72920,},  --增加血
+{type = 27,value = 3871,}, 
+{type = 23,value = 3871,}, 
+{type = 33,value = 2581,}, 
+{type = 39,value = 2581,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 19 , 
+nCostContri = 2230 , 
+nCostBindYB = 1190 , 
+--属性 
+attrs = { 
+{type = 17,value = 73350,},  --增加血
+{type = 27,value = 3894,}, 
+{type = 23,value = 3894,}, 
+{type = 33,value = 2597,}, 
+{type = 39,value = 2597,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 19 , 
+nCostContri = 2240 , 
+nCostBindYB = 1195 , 
+--属性 
+attrs = { 
+{type = 17,value = 73790,},  --增加血
+{type = 27,value = 3917,}, 
+{type = 23,value = 3917,}, 
+{type = 33,value = 2612,}, 
+{type = 39,value = 2612,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 19 , 
+nCostContri = 2240 , 
+nCostBindYB = 1195 , 
+--属性 
+attrs = { 
+{type = 17,value = 74220,},  --增加血
+{type = 27,value = 3940,}, 
+{type = 23,value = 3940,}, 
+{type = 33,value = 2627,}, 
+{type = 39,value = 2627,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 19 , 
+nCostContri = 2250 , 
+nCostBindYB = 1200 , 
+--属性 
+attrs = { 
+{type = 17,value = 74650,},  --增加血
+{type = 27,value = 3963,}, 
+{type = 23,value = 3963,}, 
+{type = 33,value = 2643,}, 
+{type = 39,value = 2643,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 19 , 
+nCostContri = 2260 , 
+nCostBindYB = 1206 , 
+--属性 
+attrs = { 
+{type = 17,value = 75090,},  --增加血
+{type = 27,value = 3986,}, 
+{type = 23,value = 3986,}, 
+{type = 33,value = 2658,}, 
+{type = 39,value = 2658,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 19 , 
+nCostContri = 2270 , 
+nCostBindYB = 1211 , 
+--属性 
+attrs = { 
+{type = 17,value = 75520,},  --增加血
+{type = 27,value = 4009,}, 
+{type = 23,value = 4009,}, 
+{type = 33,value = 2673,}, 
+{type = 39,value = 2673,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 19 , 
+nCostContri = 2270 , 
+nCostBindYB = 1211 , 
+--属性 
+attrs = { 
+{type = 17,value = 75950,},  --增加血
+{type = 27,value = 4032,}, 
+{type = 23,value = 4032,}, 
+{type = 33,value = 2689,}, 
+{type = 39,value = 2689,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 20 , 
+nCostContri = 2280 , 
+nCostBindYB = 1216 , 
+--属性 
+attrs = { 
+{type = 17,value = 76390,},  --增加血
+{type = 27,value = 4055,}, 
+{type = 23,value = 4055,}, 
+{type = 33,value = 2704,}, 
+{type = 39,value = 2704,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 20 , 
+nCostContri = 2290 , 
+nCostBindYB = 1222 , 
+--属性 
+attrs = { 
+{type = 17,value = 76820,},  --增加血
+{type = 27,value = 4078,}, 
+{type = 23,value = 4078,}, 
+{type = 33,value = 2720,}, 
+{type = 39,value = 2720,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 20 , 
+nCostContri = 2300 , 
+nCostBindYB = 1227 , 
+--属性 
+attrs = { 
+{type = 17,value = 77260,},  --增加血
+{type = 27,value = 4101,}, 
+{type = 23,value = 4101,}, 
+{type = 33,value = 2735,}, 
+{type = 39,value = 2735,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 20 , 
+nCostContri = 2300 , 
+nCostBindYB = 1227 , 
+--属性 
+attrs = { 
+{type = 17,value = 77690,},  --增加血
+{type = 27,value = 4124,}, 
+{type = 23,value = 4124,}, 
+{type = 33,value = 2750,}, 
+{type = 39,value = 2750,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 20 , 
+nCostContri = 2310 , 
+nCostBindYB = 1232 , 
+--属性 
+attrs = { 
+{type = 17,value = 78130,},  --增加血
+{type = 27,value = 4148,}, 
+{type = 23,value = 4148,}, 
+{type = 33,value = 2766,}, 
+{type = 39,value = 2766,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 20 , 
+nCostContri = 2320 , 
+nCostBindYB = 1238 , 
+--属性 
+attrs = { 
+{type = 17,value = 78560,},  --增加血
+{type = 27,value = 4171,}, 
+{type = 23,value = 4171,}, 
+{type = 33,value = 2781,}, 
+{type = 39,value = 2781,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 20 , 
+nCostContri = 2330 , 
+nCostBindYB = 1243 , 
+--属性 
+attrs = { 
+{type = 17,value = 79000,},  --增加血
+{type = 27,value = 4194,}, 
+{type = 23,value = 4194,}, 
+{type = 33,value = 2797,}, 
+{type = 39,value = 2797,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 20 , 
+nCostContri = 2330 , 
+nCostBindYB = 1243 , 
+--属性 
+attrs = { 
+{type = 17,value = 79430,},  --增加血
+{type = 27,value = 4217,}, 
+{type = 23,value = 4217,}, 
+{type = 33,value = 2812,}, 
+{type = 39,value = 2812,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 20 , 
+nCostContri = 2340 , 
+nCostBindYB = 1248 , 
+--属性 
+attrs = { 
+{type = 17,value = 79870,},  --增加血
+{type = 27,value = 4240,}, 
+{type = 23,value = 4240,}, 
+{type = 33,value = 2827,}, 
+{type = 39,value = 2827,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+{
+nLevel = 20 , 
+nCostContri = 2350 , 
+nCostBindYB = 1254 , 
+--属性 
+attrs = { 
+{type = 17,value = 80620,},  --增加血
+{type = 27,value = 4280,}, 
+{type = 23,value = 4280,}, 
+{type = 33,value = 2854,}, 
+{type = 39,value = 2854,}, 
+{type = 37,value = 0,}, 
+{type = 35,value = 0,}, 
+{type = 25,value = 0,}, 
+},
+},
+	
+
+
+	},
+
+	touchEggExp = 100, -- 每次抚摸神兽蛋增加的经验
+	touchEggXb = 8888, -- 抚摸神兽蛋获得的贝币
+	totalTouch = 20, -- 每个军团每天可以抚摸神兽的次数
+	upEggExp = { 1000, 1500, 2000, 2500, 3000, 3500, 4000 }, -- 点亮每颗灵珠需要的经验, 共7颗
+	ssLevelLimit = 5, -- 神兽祭坛的1级对应神兽等级上限的几级
+	totalXianGuo = 999, -- 每个军团每天献果的总次数
+	xianGuoBackDay = 7, -- 找回献果次数累计最大次数
+	xianGuoBackMoney = 5, -- 找回献果需要的天珠
+	ssLevels = 
+	{ -- 每个等级神兽的配置，从1开始
+		{
+			upExp = 3300, -- 升级需要的经验
+			attrs = -- 该等级增加的属性 
+			{
+				{type = 81,value = 0.02,},
+				{type = 82,value = 0.02,},
+				-- 其它属性按上面配置
+			},
+		},
+		{
+			upExp = 4500, -- 升级需要的经验
+			attrs = -- 该等级增加的属性 
+			{
+				{type = 81,value = 0.023,},
+				{type = 82,value = 0.023,},
+				-- 其它属性按上面配置
+			},
+		},
+		{
+			upExp = 5700, -- 升级需要的经验
+			attrs = -- 该等级增加的属性 
+			{
+				{type = 81,value = 0.026,},
+				{type = 82,value = 0.026,},
+				-- 其它属性按上面配置
+			},
+		},
+		{
+			upExp = 6900, -- 升级需要的经验
+			attrs = -- 该等级增加的属性 
+			{
+				{type = 81,value = 0.029,},
+				{type = 82,value = 0.029,},
+				-- 其它属性按上面配置
+			},
+		},
+		{
+			upExp = 8100, -- 升级需要的经验
+			attrs = -- 该等级增加的属性 
+			{
+				{type = 81,value = 0.032,},
+				{type = 82,value = 0.032,},
+				-- 其它属性按上面配置
+			},
+		},
+		{
+			upExp = 9300, -- 升级需要的经验
+			attrs = -- 该等级增加的属性 
+			{
+				{type = 81,value = 0.035,},
+				{type = 82,value = 0.035,},
+				-- 其它属性按上面配置
+			},
+		},
+		{
+			upExp = 10500, -- 升级需要的经验
+			attrs = -- 该等级增加的属性 
+			{
+				{type = 81,value = 0.038,},
+				{type = 82,value = 0.038,},
+				-- 其它属性按上面配置
+			},
+		},
+		{
+			upExp = 11700, -- 升级需要的经验
+			attrs = -- 该等级增加的属性 
+			{
+				{type = 81,value = 0.041,},
+				{type = 82,value = 0.041,},
+				-- 其它属性按上面配置
+			},
+		},
+		{
+			upExp = 12900, -- 升级需要的经验
+			attrs = -- 该等级增加的属性 
+			{
+				{type = 81,value = 0.044,},
+				{type = 82,value = 0.044,},
+				-- 其它属性按上面配置
+			},
+		},
+		{
+			upExp = 14100, -- 升级需要的经验
+			attrs = -- 该等级增加的属性 
+			{
+				{type = 81,value = 0.047,},
+				{type = 82,value = 0.047,},
+				-- 其它属性按上面配置
+			},
+		},	
+		
+		-- 其它等级按上面配置  10
+		{
+			upExp = 15300, -- 升级需要的经验
+			attrs = -- 该等级增加的属性 
+			{
+				{type = 81,value = 0.05,},
+				{type = 82,value = 0.05,},
+				-- 其它属性按上面配置
+			},
+		},
+		{
+			upExp = 16500, -- 升级需要的经验
+			attrs = -- 该等级增加的属性 
+			{
+				{type = 81,value = 0.053,},
+				{type = 82,value = 0.053,},
+				-- 其它属性按上面配置
+			},
+		},
+		{
+			upExp = 17700, -- 升级需要的经验
+			attrs = -- 该等级增加的属性 
+			{
+				{type = 81,value = 0.056,},
+				{type = 82,value = 0.056,},
+				-- 其它属性按上面配置
+			},
+		},
+		{
+			upExp = 18900, -- 升级需要的经验
+			attrs = -- 该等级增加的属性 
+			{
+				{type = 81,value = 0.059,},
+				{type = 82,value = 0.059,},
+				-- 其它属性按上面配置
+			},
+		},
+		{
+			upExp = 20100, -- 升级需要的经验
+			attrs = -- 该等级增加的属性 
+			{
+				{type = 81,value = 0.062,},
+				{type = 82,value = 0.062,},
+				-- 其它属性按上面配置
+			},
+		},
+		{
+			upExp = 21300, -- 升级需要的经验
+			attrs = -- 该等级增加的属性 
+			{
+				{type = 81,value = 0.065,},
+				{type = 82,value = 0.065,},
+				-- 其它属性按上面配置
+			},
+		},
+		{
+			upExp = 22500, -- 升级需要的经验
+			attrs = -- 该等级增加的属性 
+			{
+				{type = 81,value = 0.068,},
+				{type = 82,value = 0.068,},
+				-- 其它属性按上面配置
+			},
+		},
+		{
+			upExp = 23700, -- 升级需要的经验
+			attrs = -- 该等级增加的属性 
+			{
+				{type = 81,value = 0.071,},
+				{type = 82,value = 0.071,},
+				-- 其它属性按上面配置
+			},
+		},
+		{
+			upExp = 24900, -- 升级需要的经验
+			attrs = -- 该等级增加的属性 
+			{
+				{type = 81,value = 0.074,},
+				{type = 82,value = 0.074,},
+				-- 其它属性按上面配置
+			},
+		},
+		{
+			upExp = 26100, -- 升级需要的经验
+			attrs = -- 该等级增加的属性 
+			{
+				{type = 81,value = 0.077,},
+				{type = 82,value = 0.077,},
+				-- 其它属性按上面配置
+			},
+		},	
+		--20
+		{
+			upExp = 27300, -- 升级需要的经验
+			attrs = -- 该等级增加的属性 
+			{
+				{type = 81,value = 0.08,},
+				{type = 82,value = 0.08,},
+				-- 其它属性按上面配置
+			},
+		},
+		{
+			upExp = 28500, -- 升级需要的经验
+			attrs = -- 该等级增加的属性 
+			{
+				{type = 81,value = 0.083,},
+				{type = 82,value = 0.083,},
+				-- 其它属性按上面配置
+			},
+		},
+		{
+			upExp = 29700, -- 升级需要的经验
+			attrs = -- 该等级增加的属性 
+			{
+				{type = 81,value = 0.086,},
+				{type = 82,value = 0.086,},
+				-- 其它属性按上面配置
+			},
+		},
+		{
+			upExp = 30900, -- 升级需要的经验
+			attrs = -- 该等级增加的属性 
+			{
+				{type = 81,value = 0.089,},
+				{type = 82,value = 0.089,},
+				-- 其它属性按上面配置
+			},
+		},
+		{
+			upExp = 32100, -- 升级需要的经验
+			attrs = -- 该等级增加的属性 
+			{
+				{type = 81,value = 0.092,},
+				{type = 82,value = 0.092,},
+				-- 其它属性按上面配置
+			},
+		},
+		{
+			upExp = 33300, -- 升级需要的经验
+			attrs = -- 该等级增加的属性 
+			{
+				{type = 81,value = 0.095,},
+				{type = 82,value = 0.095,},
+				-- 其它属性按上面配置
+			},
+		},
+		{
+			upExp = 34500, -- 升级需要的经验
+			attrs = -- 该等级增加的属性 
+			{
+				{type = 81,value = 0.098,},
+				{type = 82,value = 0.098,},
+				-- 其它属性按上面配置
+			},
+		},
+		{
+			upExp = 35700, -- 升级需要的经验
+			attrs = -- 该等级增加的属性 
+			{
+				{type = 81,value = 0.101,},
+				{type = 82,value = 0.101,},
+				-- 其它属性按上面配置
+			},
+		},
+		{
+			upExp = 36900, -- 升级需要的经验
+			attrs = -- 该等级增加的属性 
+			{
+				{type = 81,value = 0.104,},
+				{type = 82,value = 0.104,},
+				-- 其它属性按上面配置
+			},
+		},
+		{
+			upExp = 38100, -- 升级需要的经验
+			attrs = -- 该等级增加的属性 
+			{
+				{type = 81,value = 0.107,},
+				{type = 82,value = 0.107,},
+				-- 其它属性按上面配置
+			},
+		},	
+		--30
+		{
+			upExp = 39300, -- 升级需要的经验
+			attrs = -- 该等级增加的属性 
+			{
+				{type = 81,value = 0.11,},
+				{type = 82,value = 0.11,},
+				-- 其它属性按上面配置
+			},
+		},
+		{
+			upExp = 40500, -- 升级需要的经验
+			attrs = -- 该等级增加的属性 
+			{
+				{type = 81,value = 0.113,},
+				{type = 82,value = 0.113,},
+				-- 其它属性按上面配置
+			},
+		},
+		{
+			upExp = 41700, -- 升级需要的经验
+			attrs = -- 该等级增加的属性 
+			{
+				{type = 81,value = 0.116,},
+				{type = 82,value = 0.116,},
+				-- 其它属性按上面配置
+			},
+		},
+		{
+			upExp = 42900, -- 升级需要的经验
+			attrs = -- 该等级增加的属性 
+			{
+				{type = 81,value = 0.119,},
+				{type = 82,value = 0.119,},
+				-- 其它属性按上面配置
+			},
+		},
+		{
+			upExp = 44100, -- 升级需要的经验
+			attrs = -- 该等级增加的属性 
+			{
+				{type = 81,value = 0.122,},
+				{type = 82,value = 0.122,},
+				-- 其它属性按上面配置
+			},
+		},
+		{
+			upExp = 45300, -- 升级需要的经验
+			attrs = -- 该等级增加的属性 
+			{
+				{type = 81,value = 0.125,},
+				{type = 82,value = 0.125,},
+				-- 其它属性按上面配置
+			},
+		},
+		{
+			upExp = 46500, -- 升级需要的经验
+			attrs = -- 该等级增加的属性 
+			{
+				{type = 81,value = 0.128,},
+				{type = 82,value = 0.128,},
+				-- 其它属性按上面配置
+			},
+		},
+		{
+			upExp = 47700, -- 升级需要的经验
+			attrs = -- 该等级增加的属性 
+			{
+				{type = 81,value = 0.131,},
+				{type = 82,value = 0.131,},
+				-- 其它属性按上面配置
+			},
+		},
+		{
+			upExp = 48900, -- 升级需要的经验
+			attrs = -- 该等级增加的属性 
+			{
+				{type = 81,value = 0.134,},
+				{type = 82,value = 0.134,},
+				-- 其它属性按上面配置
+			},
+		},
+		{
+			upExp = 50100, -- 升级需要的经验
+			attrs = -- 该等级增加的属性 
+			{
+				{type = 81,value = 0.137,},
+				{type = 82,value = 0.137,},
+				-- 其它属性按上面配置
+			},
+		},	
+		---40
+		{
+			upExp = 51300, -- 升级需要的经验
+			attrs = -- 该等级增加的属性 
+			{
+				{type = 81,value = 0.14,},
+				{type = 82,value = 0.14,},
+				-- 其它属性按上面配置
+			},
+		},
+		{
+			upExp = 52500, -- 升级需要的经验
+			attrs = -- 该等级增加的属性 
+			{
+				{type = 81,value = 0.143,},
+				{type = 82,value = 0.143,},
+				-- 其它属性按上面配置
+			},
+		},
+		{
+			upExp = 53700, -- 升级需要的经验
+			attrs = -- 该等级增加的属性 
+			{
+				{type = 81,value = 0.146,},
+				{type = 82,value = 0.146,},
+				-- 其它属性按上面配置
+			},
+		},
+		{
+			upExp = 54900, -- 升级需要的经验
+			attrs = -- 该等级增加的属性 
+			{
+				{type = 81,value = 0.149,},
+				{type = 82,value = 0.149,},
+				-- 其它属性按上面配置
+			},
+		},
+		{
+			upExp = 56100, -- 升级需要的经验
+			attrs = -- 该等级增加的属性 
+			{
+				{type = 81,value = 0.152,},
+				{type = 82,value = 0.152,},
+				-- 其它属性按上面配置
+			},
+		},
+		{
+			upExp = 57300, -- 升级需要的经验
+			attrs = -- 该等级增加的属性 
+			{
+				{type = 81,value = 0.155,},
+				{type = 82,value = 0.155,},
+				-- 其它属性按上面配置
+			},
+		},
+		{
+			upExp = 58500, -- 升级需要的经验
+			attrs = -- 该等级增加的属性 
+			{
+				{type = 81,value = 0.158,},
+				{type = 82,value = 0.158,},
+				-- 其它属性按上面配置
+			},
+		},
+		{
+			upExp = 59700, -- 升级需要的经验
+			attrs = -- 该等级增加的属性 
+			{
+				{type = 81,value = 0.161,},
+				{type = 82,value = 0.161,},
+				-- 其它属性按上面配置
+			},
+		},
+		{
+			upExp = 60900, -- 升级需要的经验
+			attrs = -- 该等级增加的属性 
+			{
+				{type = 81,value = 0.164,},
+				{type = 82,value = 0.164,},
+				-- 其它属性按上面配置
+			},
+		},
+		{
+			upExp = 62100, -- 升级需要的经验
+			attrs = -- 该等级增加的属性 
+			{
+				{type = 81,value = 0.167,},
+				{type = 82,value = 0.167,},
+				-- 其它属性按上面配置
+			},
+		},	
+		--50
+		
+	},
+	--宗门属性加成
+	guildAttr_addition = {
+		{
+		-- 等级1
+		member = 1.08 ,
+		jingying = 1.1 ,
+		hufa = 1.12 ,
+		assistleader = 1.14 ,
+		leader = 1.15 ,
+		 } ,
+		{
+		-- 等级2
+		member = 1.16 ,
+		jingying = 1.2 ,
+		hufa = 1.24 ,
+		assistleader = 1.27 ,
+		leader = 1.3 ,
+		 } ,
+		{
+		-- 等级3
+		member = 1.24 ,
+		jingying = 1.3 ,
+		hufa = 1.36 ,
+		assistleader = 1.41 ,
+		leader = 1.45 ,
+		 } ,
+		{
+		-- 等级4
+		member = 1.32 ,
+		jingying = 1.4 ,
+		hufa = 1.48 ,
+		assistleader = 1.54 ,
+		leader = 1.6 ,
+		 } ,
+		{
+		-- 等级5
+		member = 1.4 ,
+		jingying = 1.5 ,
+		hufa = 1.6 ,
+		assistleader = 1.68 ,
+		leader = 1.75 ,
+		 } ,
+		{
+		-- 等级6
+		member = 1.48 ,
+		jingying = 1.6 ,
+		hufa = 1.72 ,
+		assistleader = 1.81 ,
+		leader = 1.9 ,
+		 } ,
+		{
+		-- 等级7
+		member = 1.56 ,
+		jingying = 1.7 ,
+		hufa = 1.84 ,
+		assistleader = 1.95 ,
+		leader = 2.05 ,
+		 } ,
+		{
+		-- 等级8
+		member = 1.64 ,
+		jingying = 1.8 ,
+		hufa = 1.96 ,
+		assistleader = 2.08 ,
+		leader = 2.2 ,
+		 } ,
+		{
+		-- 等级9
+		member = 1.72 ,
+		jingying = 1.9 ,
+		hufa = 2.08 ,
+		assistleader = 2.22 ,
+		leader = 2.35 ,
+		 } ,
+		{
+		-- 等级10
+		member = 1.8 ,
+		jingying = 2 ,
+		hufa = 2.2 ,
+		assistleader = 2.35 ,
+		leader = 2.5 ,
+		 } ,
+		{
+		-- 等级11
+		member = 1.88 ,
+		jingying = 2.1 ,
+		hufa = 2.32 ,
+		assistleader = 2.49 ,
+		leader = 2.65 ,
+		 } ,
+		{
+		-- 等级12
+		member = 1.96 ,
+		jingying = 2.2 ,
+		hufa = 2.44 ,
+		assistleader = 2.62 ,
+		leader = 2.8 ,
+		 } ,
+		{
+		-- 等级13
+		member = 2.04 ,
+		jingying = 2.3 ,
+		hufa = 2.56 ,
+		assistleader = 2.76 ,
+		leader = 2.95 ,
+		 } ,
+		{
+		-- 等级14
+		member = 2.12 ,
+		jingying = 2.4 ,
+		hufa = 2.68 ,
+		assistleader = 2.89 ,
+		leader = 3.1 ,
+		 } ,
+		{
+		-- 等级15
+		member = 2.2 ,
+		jingying = 2.5 ,
+		hufa = 2.8 ,
+		assistleader = 3.03 ,
+		leader = 3.25 ,
+		 } ,
+		{
+		-- 等级16
+		member = 2.28 ,
+		jingying = 2.6 ,
+		hufa = 2.92 ,
+		assistleader = 3.16 ,
+		leader = 3.4 ,
+		 } ,
+		{
+		-- 等级17
+		member = 2.36 ,
+		jingying = 2.7 ,
+		hufa = 3.04 ,
+		assistleader = 3.3 ,
+		leader = 3.55 ,
+		 } ,
+		{
+		-- 等级18
+		member = 2.44 ,
+		jingying = 2.8 ,
+		hufa = 3.16 ,
+		assistleader = 3.43 ,
+		leader = 3.7 ,
+		 } ,
+		{
+		-- 等级19
+		member = 2.52 ,
+		jingying = 2.9 ,
+		hufa = 3.28 ,
+		assistleader = 3.57 ,
+		leader = 3.85 ,
+		 } ,
+		{
+		-- 等级20
+		member = 2.6 ,
+		jingying = 3 ,
+		hufa = 3.4 ,
+		assistleader = 3.7 ,
+		leader = 4 ,
+		 } ,
+
+		-- ...
+	},	
+	
+	
+	-- 各种类型的仙果的配置
+	xianGuoExp = { 100, 200, 500},	-- 获得的经验
+	xianGuoRenown = { 50, 150, 1000},	-- 获得的威望
+	xianGuoMoney = { 8000, 8, 58},	-- 消耗的金钱
+	xianGuoMoneyType = { 0, 3, 3},	-- 消耗的金钱类型
+
+	--献果的名字
+	animalFoodName = Lang.GuildLang.animalFoodName,
+
+	--军团长弹劾令id
+	quickKickLeaderItem = 34682,
+
+	-- 公会跑环任务
+	guildloopquest = {
+		-- 不同公会等级可发布次数
+		maxreleasecount = {115,120,125,135,140,145,150,155,160,165,170,170,175,180,180,185,190,190,195,200},
+		-- 不同公会等级玩家接受次数
+		maxacceptcount = {4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4},
+		-- 发布消耗
+		releasecost = 150,
+		-- 不同公会等级任务环数
+		maxruncount = {5,5,5,5,5,5,5,5,5,5,10,10,10,10,10,10,10,10,10,10},
+		-- 任务池
+		questlist ={ 
+			{
+				level = 1, -- 1-39
+				list = {23001,23002,23003,23004,23005,23006,23007,23008,23009,23010,23011,23012,23013,23014,23015,23016,23017,23018,23019,23020,},
+			},
+			{
+				level = 40, -- 40-49
+				-- list = {23001,23002,23003,23004,23005,23006,23007,23008,23009,23010,23011,23012,23013,23014,23015,23016,23017,23018,23019,23020,},
+				list = {23021,23022,23023,23024,23025,23026,23027,23028,23029,23030,23031,23032,23033,23034,23035,23036,23037,23038,23039,23040,},
+			},
+			{
+				level = 50, 
+				-- list = {23001,23002,23003,23004,23005,23006,23007,23008,23009,23010,23011,23012,23013,23014,23015,23016,23017,23018,23019,23020,},
+				list = {23041,23042,23043,23044,23045,23046,23047,23048,23049,23050,23051,23052,23053,23054,23055,23056,23057,23058,23059,23060,},
+			},
+			{
+				level = 60,
+				-- list = {23041,23042,23043,23044,23045,23046,23047,23048,23049,23050,23051,23052,23053,23054,23055,23056,23057,23058,23059,23060,},
+				list = {23061,23062,23063,23064,23065,23066,23067,23068,23069,23070,23071,23072,23073,23074,23075,23076,23077,23078,23079,23080,},
+			},
+			{
+				level = 70,
+				list = {23061,23062,23063,23064,23065,23066,23067,23068,23069,23070,23071,23072,23073,23074,23075,23076,23077,23078,23079,23080,},
+				-- list = {23081,23082,23083,23084,23085,23086,23087,23088,23089,23090,23091,23092,23093,23094,23095,23096,23097,23098,23099,23100,},
+			},
+			{
+				level = 80,
+				list = {23061,23062,23063,23064,23065,23066,23067,23068,23069,23070,23071,23072,23073,23074,23075,23076,23077,23078,23079,23080,},
+				-- list = {23081,23082,23083,23084,23085,23086,23087,23088,23089,23090,23091,23092,23093,23094,23095,23096,23097,23098,23099,23100,},
+			},
+			{
+				level = 90,
+				list = {23061,23062,23063,23064,23065,23066,23067,23068,23069,23070,23071,23072,23073,23074,23075,23076,23077,23078,23079,23080,},
+				-- list = {23081,23082,23083,23084,23085,23086,23087,23088,23089,23090,23091,23092,23093,23094,23095,23096,23097,23098,23099,23100,},
+			},
+		},
+		--[[ 奖励
+		award = {
+			{
+				level = 0, -- 0-49
+				-- * Param char* contex: 附件的类型 （1 物品 2 金钱 3 装备 4 公会财产 5 公会繁荣度 6 公会贡献 7 经验） 3没做
+				-- * Param char* contex: 附件的种类（ 物品ID  金钱类型  装备ID）
+				-- * Param char* contex: 附件的数量（ 物品数量  金钱数量  装备强化等级）
+				item = {
+					{type = 2, id = 2, count = 100,  bind = 1},
+				},
+			},
+			{
+				level = 50, -- 50-99
+				item = {
+					{type = 2, id = 2, count = 200,  bind = 1},
+				},
+			},
+			{
+				level = 100, -- 100-
+				item = {
+					{type = 2, id = 2, count = 300,  bind = 1},
+				},
+			},
+		},]]
+		-- 立即完成消耗
+		quickfinish = {
+			{
+				level = 1, -- 1-39
+				cost = 10, -- 消耗天珠
+			},
+			{
+				level = 40, -- 40-49
+				cost = 10, -- 消耗天珠
+			},
+			{
+				level = 50, -- 50-59
+				cost = 10, -- 消耗天珠
+			},
+			{
+				level = 60, -- 60-69
+				cost = 10, -- 消耗天珠
+			},
+			{
+				level = 70, -- 70-79
+				cost = 10, -- 消耗天珠
+			},
+			{
+				level = 80, -- 80-89
+				cost = 10, -- 消耗天珠
+			},
+			{
+				level = 90, -- 90-100
+				cost = 10, -- 消耗天珠
+			},
+		},
+	},
+
+	-- 公会跑商任务
+	guildprotectquest = {
+		-- 不同星级的任务id
+		questid = {25001, 25001, 25001, 25001, 25001},
+		-- 不同公会等级玩家接受次数
+		maxacceptcount = {4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4},
+		-- 刷星消耗物品
+		refreshitem = {id = 28112, count = 1},
+		-- 刷星消耗绑定天珠
+		refreshbindmoney = 20,
+		-- 刷星消耗天珠
+		refreshmoney = 10,
+		-- 一键满星消耗天珠
+		allstarmoney = 20,
+		-- 满星几
+		maxstar = 5,
+		-- 升星配置
+		upstar = {
+			{ -- 1星的时候
+				{starnum = 1, rate = 20}, -- 升1星的概率
+				{starnum = 2, rate = 75}, -- 升2星的概率
+				{starnum = 3, rate = 5}, -- 升3星的概率
+			},
+			{ -- 2星的时候
+				{starnum = 1, rate = 60}, -- 升1星的概率
+				{starnum = 2, rate = 40}, -- 升2星的概率
+			},
+			{ -- 3星的时候
+				{starnum = 1, rate = 70}, -- 升1星的概率
+				{starnum = 2, rate = 30}, -- 升2星的概率
+			},
+			{ -- 4星的时候
+				{starnum = 1, rate = 80}, -- 升1星的概率
+				{starnum = 0, rate = 20}, -- 升0星的概率
+			},
+		},
+		-- 双倍奖励时间 
+		doubletime = {15,16}, -- 每天15点到16点
+		-- 被劫后剩下的比例
+		attacked_rate = {0.85, 0.7},
+		-- 星级比例加成
+		star_rate = {1, 1.5, 2, 2.75, 4},
+		-- 最多被劫多少次
+		maxattacked = 2,
+		-- 最多劫持多少金币
+		maxattack = {20000,20000,20000,20000,20000,30000,30000,30000,30000,30000,40000,40000,40000,40000,40000,50000,50000,50000,50000,50000},
+		-- 完成任务奖励
+		finish_award = {
+			-- * Param char* contex: 附件的类型 （1 物品 2 金钱 3 装备 4 公会财产 5 公会繁荣度 6 公会贡献 7 经验） 1 3没做
+			{
+            level = 1,
+            item={
+			{type = 2, id = 0, count = 7300},
+			{type = 4, id = 0, count = 130},
+		    },
+		    },
+
+			{
+            level = 40,
+            item={
+			{type = 2, id = 0, count = 7900},
+			{type = 4, id = 0, count = 150},
+		    },
+		    },
+
+		    {
+            level = 50,
+            item={
+			{type = 2, id = 0, count = 8500},
+			{type = 4, id = 0, count = 170},
+		    },
+		    },
+
+		    {
+            level = 60,
+            item={
+			{type = 2, id = 0, count = 9100},
+			{type = 4, id = 0, count = 190},
+		    },
+		    },
+
+		    {
+            level = 70,
+            item={
+			{type = 2, id = 0, count = 9700},
+			{type = 4, id = 0, count = 210},
+		    },
+		    },
+
+		    {
+            level = 80,
+            item={
+			{type = 2, id = 0, count = 10400},
+			{type = 4, id = 0, count = 230},
+		    },
+		    },
+
+		    {
+            level = 90,
+            item={
+			{type = 2, id = 0, count = 11000},
+			{type = 4, id = 0, count = 250},
+		    },
+		    },
+		},
+		-- 劫持奖励
+		attack_award = {
+			-- * Param char* contex: 附件的类型 （1 物品 2 金钱 3 装备 4 公会财产 5 公会繁荣度 6 公会贡献 7 经验） 1 3没做
+			{type = 2, id = 2, count = 10,  bind = 1},
+			{type = 2, id = 0, count = 10000,  bind = 1},
+		},
+	},
+
+	-- 公会祈福
+	guildbless = {
+		-- 祈福列表人数
+		-- maxblessnum = 5,
+		-- 招募天珠
+		-- zhaomu_cost = 20,
+		-- 祈福消耗(只支持钱)
+		bless_cost = {
+			-- 祈福
+			[1] = nil;
+			-- 祭天
+			[2] = {type = 0, count = 5000},
+			-- 封禅
+			[3] = {type = 3, count = 20},
+		},
+		-- 祈福奖励
+		bless_award = {
+			-- * Param char* contex: 附件的类型 （1 物品 2 金钱 3 装备 4 公会财产 5 公会繁荣度 6 公会贡献 7 经验） 1 3没做
+			-- 祈福
+			[1] = {
+				{type = 4, id = 0, count = 20,  bind = 1},
+				{type = 5, id = 0, count = 10,  bind = 1},
+			},
+			-- 祭天
+			[2] = {
+				{type = 4, id = 0, count = 40,  bind = 1},
+				{type = 5, id = 0, count = 20,  bind = 1},
+				{type = 6, id = 0, count = 20,  bind = 1},
+			},
+			-- 封禅
+			[3] = {
+				{type = 4, id = 0, count = 800,  bind = 1},
+				{type = 5, id = 0, count = 400,  bind = 1},
+				{type = 6, id = 0, count = 50,  bind = 1},
+			},
+		},
+		-- 祈福获得福源值
+		get_fuyuan = {
+			-- 祈福
+			[1] = 2,
+			-- 祭天
+			[2] = 4,
+			-- 封禅
+			[3] = 5,
+		},
+		-- 福源
+		fuyuan = {
+			{
+				needfy = 30,
+				award = {
+					-- * Param char* contex: 附件的类型 （1 物品 2 金钱 3 装备 4 公会财产 5 公会繁荣度 6 公会贡献 7 经验） 1 3没做
+					{type = 2, id = 0, count = 10000,  bind = 1},
+					{type = 2, id = 2, count = 20,  bind = 1},
+				},
+			},
+			{
+				needfy = 50,
+				award = {
+					-- * Param char* contex: 附件的类型 （1 物品 2 金钱 3 装备 4 公会财产 5 公会繁荣度 6 公会贡献 7 经验） 1 3没做
+					{type = 2, id = 2, count = 30,  bind = 1},
+					{type = 1, id = 26121, count = 2,  bind = 1},
+				},
+			},
+			{
+				needfy = 100,
+				award = {
+					-- * Param char* contex: 附件的类型 （1 物品 2 金钱 3 装备 4 公会财产 5 公会繁荣度 6 公会贡献 7 经验） 1 3没做
+					{type = 2, id = 3, count = 30,  bind = 1},
+					{type = 1, id = 26123, count = 1,  bind = 1},
+					{type = 1, id = 26125, count = 1,  bind = 1},
+
+				},
+			},
+			{
+				--最后一个奖励没用 但是客户端说要配 所以奖励配成空
+				needfy = 120,
+				award = {
+					-- * Param char* contex: 附件的类型 （1 物品 2 金钱 3 装备 4 公会财产 5 公会繁荣度 6 公会贡献 7 经验） 1 3没做
+					-- {type = 2, id = 3, count = 50,  bind = 1},
+
+					   
+				},
+			},
+		},
+	},
+
+	-- 宗门约战
+	invitefight = {
+		-- 邀请消耗的财产
+		invitecost = 10000,
+	},
+
+	-- 宗门俸禄
+	-- * Param char* contex: 附件的类型 （1 物品 2 金钱 3 装备 4 公会财产 5 公会繁荣度 6 公会贡献 7 经验） 1 3没做
+	fenglu = {
+		award = {
+					{ --世族等级1
+					--成员
+					{ { type = 2, id = 2, count = 11, bind = 1 } , } ,
+					--精英
+					{ { type = 2, id = 2, count = 16, bind = 1 } , } ,
+					--长老
+					{ { type = 2, id = 2, count = 21, bind = 1 } , } ,
+					--副
+					{ { type = 2, id = 2, count = 31, bind = 1 } , } ,
+					--家主
+					{ { type = 2, id = 2, count = 41, bind = 1 } , } ,
+					 } ,
+					{ --世族等级2
+					--成员
+					{ { type = 2, id = 2, count = 12, bind = 1 } , } ,
+					--精英
+					{ { type = 2, id = 2, count = 17, bind = 1 } , } ,
+					--长老
+					{ { type = 2, id = 2, count = 22, bind = 1 } , } ,
+					--副
+					{ { type = 2, id = 2, count = 32, bind = 1 } , } ,
+					--家主
+					{ { type = 2, id = 2, count = 42, bind = 1 } , } ,
+					 } ,
+					{ --世族等级3
+					--成员
+					{ { type = 2, id = 2, count = 13, bind = 1 } , } ,
+					--精英
+					{ { type = 2, id = 2, count = 18, bind = 1 } , } ,
+					--长老
+					{ { type = 2, id = 2, count = 23, bind = 1 } , } ,
+					--副
+					{ { type = 2, id = 2, count = 33, bind = 1 } , } ,
+					--家主
+					{ { type = 2, id = 2, count = 43, bind = 1 } , } ,
+					 } ,
+					{ --世族等级4
+					--成员
+					{ { type = 2, id = 2, count = 14, bind = 1 } , } ,
+					--精英
+					{ { type = 2, id = 2, count = 19, bind = 1 } , } ,
+					--长老
+					{ { type = 2, id = 2, count = 24, bind = 1 } , } ,
+					--副
+					{ { type = 2, id = 2, count = 34, bind = 1 } , } ,
+					--家主
+					{ { type = 2, id = 2, count = 44, bind = 1 } , } ,
+					 } ,
+					{ --世族等级5
+					--成员
+					{ { type = 2, id = 2, count = 15, bind = 1 } , } ,
+					--精英
+					{ { type = 2, id = 2, count = 20, bind = 1 } , } ,
+					--长老
+					{ { type = 2, id = 2, count = 25, bind = 1 } , } ,
+					--副
+					{ { type = 2, id = 2, count = 35, bind = 1 } , } ,
+					--家主
+					{ { type = 2, id = 2, count = 45, bind = 1 } , } ,
+					 } ,
+					{ --世族等级6
+					--成员
+					{ { type = 2, id = 2, count = 16, bind = 1 } , } ,
+					--精英
+					{ { type = 2, id = 2, count = 21, bind = 1 } , } ,
+					--长老
+					{ { type = 2, id = 2, count = 26, bind = 1 } , } ,
+					--副
+					{ { type = 2, id = 2, count = 36, bind = 1 } , } ,
+					--家主
+					{ { type = 2, id = 2, count = 46, bind = 1 } , } ,
+					 } ,
+					{ --世族等级7
+					--成员
+					{ { type = 2, id = 2, count = 17, bind = 1 } , } ,
+					--精英
+					{ { type = 2, id = 2, count = 22, bind = 1 } , } ,
+					--长老
+					{ { type = 2, id = 2, count = 27, bind = 1 } , } ,
+					--副
+					{ { type = 2, id = 2, count = 37, bind = 1 } , } ,
+					--家主
+					{ { type = 2, id = 2, count = 47, bind = 1 } , } ,
+					 } ,
+					{ --世族等级8
+					--成员
+					{ { type = 2, id = 2, count = 18, bind = 1 } , } ,
+					--精英
+					{ { type = 2, id = 2, count = 23, bind = 1 } , } ,
+					--长老
+					{ { type = 2, id = 2, count = 28, bind = 1 } , } ,
+					--副
+					{ { type = 2, id = 2, count = 38, bind = 1 } , } ,
+					--家主
+					{ { type = 2, id = 2, count = 48, bind = 1 } , } ,
+					 } ,
+					{ --世族等级9
+					--成员
+					{ { type = 2, id = 2, count = 19, bind = 1 } , } ,
+					--精英
+					{ { type = 2, id = 2, count = 24, bind = 1 } , } ,
+					--长老
+					{ { type = 2, id = 2, count = 29, bind = 1 } , } ,
+					--副
+					{ { type = 2, id = 2, count = 39, bind = 1 } , } ,
+					--家主
+					{ { type = 2, id = 2, count = 49, bind = 1 } , } ,
+					 } ,
+					{ --世族等级10
+					--成员
+					{ { type = 2, id = 2, count = 20, bind = 1 } , } ,
+					--精英
+					{ { type = 2, id = 2, count = 25, bind = 1 } , } ,
+					--长老
+					{ { type = 2, id = 2, count = 30, bind = 1 } , } ,
+					--副
+					{ { type = 2, id = 2, count = 40, bind = 1 } , } ,
+					--家主
+					{ { type = 2, id = 2, count = 50, bind = 1 } , } ,
+					 } ,
+					{ --世族等级11
+					--成员
+					{ { type = 2, id = 2, count = 22, bind = 1 } , } ,
+					--精英
+					{ { type = 2, id = 2, count = 27, bind = 1 } , } ,
+					--长老
+					{ { type = 2, id = 2, count = 32, bind = 1 } , } ,
+					--副
+					{ { type = 2, id = 2, count = 42, bind = 1 } , } ,
+					--家主
+					{ { type = 2, id = 2, count = 52, bind = 1 } , } ,
+					 } ,
+					{ --世族等级12
+					--成员
+					{ { type = 2, id = 2, count = 24, bind = 1 } , } ,
+					--精英
+					{ { type = 2, id = 2, count = 29, bind = 1 } , } ,
+					--长老
+					{ { type = 2, id = 2, count = 34, bind = 1 } , } ,
+					--副
+					{ { type = 2, id = 2, count = 44, bind = 1 } , } ,
+					--家主
+					{ { type = 2, id = 2, count = 54, bind = 1 } , } ,
+					 } ,
+					{ --世族等级13
+					--成员
+					{ { type = 2, id = 2, count = 26, bind = 1 } , } ,
+					--精英
+					{ { type = 2, id = 2, count = 31, bind = 1 } , } ,
+					--长老
+					{ { type = 2, id = 2, count = 36, bind = 1 } , } ,
+					--副
+					{ { type = 2, id = 2, count = 46, bind = 1 } , } ,
+					--家主
+					{ { type = 2, id = 2, count = 56, bind = 1 } , } ,
+					 } ,
+					{ --世族等级14
+					--成员
+					{ { type = 2, id = 2, count = 28, bind = 1 } , } ,
+					--精英
+					{ { type = 2, id = 2, count = 33, bind = 1 } , } ,
+					--长老
+					{ { type = 2, id = 2, count = 38, bind = 1 } , } ,
+					--副
+					{ { type = 2, id = 2, count = 48, bind = 1 } , } ,
+					--家主
+					{ { type = 2, id = 2, count = 58, bind = 1 } , } ,
+					 } ,
+					{ --世族等级15
+					--成员
+					{ { type = 2, id = 2, count = 30, bind = 1 } , } ,
+					--精英
+					{ { type = 2, id = 2, count = 35, bind = 1 } , } ,
+					--长老
+					{ { type = 2, id = 2, count = 40, bind = 1 } , } ,
+					--副
+					{ { type = 2, id = 2, count = 50, bind = 1 } , } ,
+					--家主
+					{ { type = 2, id = 2, count = 60, bind = 1 } , } ,
+					 } ,
+					{ --世族等级16
+					--成员
+					{ { type = 2, id = 2, count = 32, bind = 1 } , } ,
+					--精英
+					{ { type = 2, id = 2, count = 37, bind = 1 } , } ,
+					--长老
+					{ { type = 2, id = 2, count = 42, bind = 1 } , } ,
+					--副
+					{ { type = 2, id = 2, count = 52, bind = 1 } , } ,
+					--家主
+					{ { type = 2, id = 2, count = 62, bind = 1 } , } ,
+					 } ,
+					{ --世族等级17
+					--成员
+					{ { type = 2, id = 2, count = 34, bind = 1 } , } ,
+					--精英
+					{ { type = 2, id = 2, count = 39, bind = 1 } , } ,
+					--长老
+					{ { type = 2, id = 2, count = 44, bind = 1 } , } ,
+					--副
+					{ { type = 2, id = 2, count = 54, bind = 1 } , } ,
+					--家主
+					{ { type = 2, id = 2, count = 64, bind = 1 } , } ,
+					 } ,
+					{ --世族等级18
+					--成员
+					{ { type = 2, id = 2, count = 36, bind = 1 } , } ,
+					--精英
+					{ { type = 2, id = 2, count = 41, bind = 1 } , } ,
+					--长老
+					{ { type = 2, id = 2, count = 46, bind = 1 } , } ,
+					--副
+					{ { type = 2, id = 2, count = 56, bind = 1 } , } ,
+					--家主
+					{ { type = 2, id = 2, count = 66, bind = 1 } , } ,
+					 } ,
+					{ --世族等级19
+					--成员
+					{ { type = 2, id = 2, count = 38, bind = 1 } , } ,
+					--精英
+					{ { type = 2, id = 2, count = 43, bind = 1 } , } ,
+					--长老
+					{ { type = 2, id = 2, count = 48, bind = 1 } , } ,
+					--副
+					{ { type = 2, id = 2, count = 58, bind = 1 } , } ,
+					--家主
+					{ { type = 2, id = 2, count = 68, bind = 1 } , } ,
+					 } ,
+					{ --世族等级20
+					--成员
+					{ { type = 2, id = 2, count = 40, bind = 1 } , } ,
+					--精英
+					{ { type = 2, id = 2, count = 45, bind = 1 } , } ,
+					--长老
+					{ { type = 2, id = 2, count = 50, bind = 1 } , } ,
+					--副
+					{ { type = 2, id = 2, count = 60, bind = 1 } , } ,
+					--家主
+					{ { type = 2, id = 2, count = 70, bind = 1 } , } ,
+					 } ,
+			},
+		},
+
+	-- 宗门邮件
+	guildmail = {
+		-- 消耗财产
+		property = 100,
+		-- 副族长 族长次数
+		count = {3, 5},
+	},
+
+	-- 宗门招募
+	guildrecruit = {
+		-- 默认内容
+		defaultcontent = "【%s】世族广纳各路英雄好汉，平天下之乱世战火，得个人之声名厚禄！",
+		-- 跳转内容
+		teleportcontent = "##textbutton,#c2cab0a#u1立即加入#u0#info,@@joinGuild##",
+		-- 副族长 族长次数
+		count = {3, 5},
+	},
+
+	-- 宗门boss
+	guildboss = {
+		-- 副本id
+		fbid = 12,
+		-- 场景id
+		sceneid = 92,
+		-- 进入位置
+		pos = {26, 21},
+		-- 次数
+		count = 1,
+		-- 消耗
+		property = 1000,
+		-- 时间，比boss时间长一点
+		time = 3800,
+		-- boss怪
+		boss = {id = 808, x = 20, y = 20, time = 3600},
+		-- boss升级时间
+		uplvltime = 600,
+		-- boss降级时间
+		downlvltime = 1800,
+		-- boss升级buff
+		level = {
+			{
+				{type = 18, group = 0, value = 0.5, times=1800, interval=1, name=Lang.Misc.buff07, timeoverlay = true}, -- 血量上限
+				{type = 22, group = 0, value = 0.5, times=1800, interval=1, name=Lang.Misc.buff08, timeoverlay = true}, -- 物攻倍率
+			},
+			{
+				{type = 18, group = 0, value = 1.25, times=1800, interval=1, name=Lang.Misc.buff07, timeoverlay = true}, -- 血量上限
+				{type = 22, group = 0, value = 1.25, times=1800, interval=1, name=Lang.Misc.buff08, timeoverlay = true}, -- 物攻倍率
+			},
+			{
+				{type = 18, group = 0, value = 1.8, times=1800, interval=1, name=Lang.Misc.buff07, timeoverlay = true}, -- 血量上限
+				{type = 22, group = 0, value = 1.8, times=1800, interval=1, name=Lang.Misc.buff08, timeoverlay = true}, -- 物攻倍率
+			},
+		},
+		-- 排名奖励 仅世界boss有用
+		awards=
+		{
+			{
+				rank = {1,1}, -- 排名1-1
+				item = { -- 奖励，奖励最多只发5个，因为一封邮件只能有5个
+					{type = 3, id = 0, count = 300,  bind = 0},
+					{type = 1, id = 26123, count = 10,  bind = 0},
+					{type = 1, id = 26125, count = 10,  bind = 0},
+					{type = 1, id = 26174, count = 1,  bind = 0},
+					{type = 1, id = 30451, count = 1,  bind = 0},
+				},
+			},
+			{
+				rank = {2,2}, -- 排名2-2
+				item = {
+					{type = 3, id = 0, count = 270,  bind = 0},
+					{type = 1, id = 26123, count = 8,  bind = 0},
+					{type = 1, id = 26125, count = 8,  bind = 0},
+					{type = 1, id = 26174, count = 1,  bind = 0},
+					{type = 1, id = 30451, count = 1,  bind = 0},
+				},
+			},
+			{
+				rank = {3,3}, -- 排名3-3
+				item = {
+					{type = 3, id = 0, count = 240,  bind = 0},
+					{type = 1, id = 26123, count = 7,  bind = 0},
+					{type = 1, id = 26125, count = 7,  bind = 0},
+					{type = 1, id = 26174, count = 1,  bind = 0},
+				},
+			},
+			{
+				rank = {4,10}, -- 排名4-10
+				item = {
+					{type = 3, id = 0, count = 220,  bind = 0},
+					{type = 1, id = 26123, count = 6,  bind = 0},
+					{type = 1, id = 26125, count = 6,  bind = 0},
+				},
+			},
+			{
+				rank = {11,30}, -- 排名11-20
+				item = {
+					{type = 3, id = 0, count = 200,  bind = 0},
+					{type = 1, id = 26123, count = 5,  bind = 0},
+					{type = 1, id = 26125, count = 5,  bind = 0},
+				},
+			},
+			{
+				rank = {31,70}, -- 排名11-20
+				item = {
+					{type = 3, id = 0, count = 180,  bind = 0},
+					{type = 1, id = 26123, count = 4,  bind = 0},
+					{type = 1, id = 26125, count = 4,  bind = 0},
+				},
+			},
+		},
+		-- 击杀奖励 仅世界boss有用
+		kill_awards = 
+		{
+			{type = 2, id = 0, count = 200000,  bind = 0},--皇玺玉
+		},
+		-- 展示奖励 仅前端显示使用
+		display_awards = {
+			        {type = 3, id = 0, count = 500,  bind = 0},--皇玺玉
+					{type = 1, id = 26123, count = 10,  bind = 0},--玄离铁
+					{type = 1, id = 26125, count = 10,  bind = 0},--玄离铁
+		},
+	},
+}

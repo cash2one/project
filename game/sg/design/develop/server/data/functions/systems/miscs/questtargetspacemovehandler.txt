@@ -1,0 +1,239 @@
+﻿--疾风令飞往任务目标地点的实现函数
+--[[
+  目前这个实现存在很大的设计漏洞： 
+    现在的实现是客户端发目标地图、X、Y上来，脚本里面直接传，这样的话客户端可以任意伪造数据包传送到任何地点。
+    正确的实现方法是，服务器读取每个任务的需求的Location，然后客户端上发任务ID、需求索引，服务器通过配置中的地点传送玩家。
+]] 
+--#include "data\config\quest\ProtectionQuest.txt" once
+--玩家点击速传按钮的函数[指定场景名称和坐标] 
+
+--#include "data\config\vip\vip.txt" 
+--#include "data\functions\tasks\baguadigong\baguafunc.txt" once
+
+
+-- 发送免费速传次数
+EventCallDispatcher.SendTelportCount = function(sysarg, count)
+	local npack = DataPack.allocPacket(sysarg,139,49)
+    if npack == nil then return end
+
+    DataPack.writeInt(npack, count)
+    DataPack.flush(npack)
+end
+
+
+MiscsImplement.questTargetSpaceMoveHandler = function (sysarg, msgid, packet)
+	if LActor.getSceneId(sysarg) == BaGuaConfig.SCENEID then
+		MiscsImplement.BaGua_Tranfer(sysarg, msgid, packet )
+		--LActor.sendTipmsg(sysarg, Lang.ScriptTips.sc0003, ttTipmsgWindow)
+		return
+	end
+	--挂了就不能用速传
+	if LActor.isDeath(sysarg) then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.sc0001, ttTipmsgWindow)
+		return 
+	end
+
+	-- 护送任务状态禁止使用速传
+	if (LActor.hasState(sysarg, esProtection)) then  	
+		LActor.sendTipmsg(sysarg,Lang.ScriptTips.x00146,ttMessage)
+		return
+	end
+
+	-- 战斗状态禁止使用速传
+	if (LActor.hasState(sysarg, esPkState)) then  	
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.x00147, ttMessage)
+		return
+	end
+
+	if LActor.hasState(sysarg, esStateSpecialQuest) then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.x00149, ttMessage)
+		return
+	end
+	
+	if LActor.isInFuben(sysarg) or LActor.getSceneId(sysarg) == TianYuanConfig.SCENEID then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.sc0002, ttWarmTip)
+		return
+	end
+
+	local var = LActor.getStaticVar( sysarg )
+	if var == nil then return end
+
+	-- 获取已经使用的免费速传次数
+	local useTelport = var.quickTelport
+	if useTelport == nil then
+		useTelport = 0
+	end
+
+	-- 该VIP等级下的免费速传次数
+	local level = LActor.getVIPLevel(sysarg)
+	local totalTelport = VIPConfig.telePort[level] or 0
+
+	local itemId = 28102
+
+	local teleportTaste = var.teleportTaste 
+	if teleportTaste then
+		currTime = System.getCurrMiniTime()
+		if teleportTaste >= currTime then
+			totalTelport = -1
+		end
+	end
+
+	local useItem = ( totalTelport >= 0 and totalTelport - useTelport <= 0 ) -- 是否使用物品速传, totalTelport < 0 表示无限免费速传
+
+	-- 没有免费速传次数，判断是否有足够的物品
+	if useItem then
+		if not LActor.canUseItem(sysarg, itemId) then
+			--LActor.sendTipmsg( sysarg, Lang.ScriptTips.x00043,ttTipmsgWindow )
+		  	return
+	  	end
+
+		if LActor.getItemCount(sysarg, itemId) <= 0 then 
+			-- LActor.sendTipmsg( sysarg, Lang.ScriptTips.x00015,ttTipmsgWindow ) 
+			LActor.openDialogs( sysarg, diQuickTelport ) -- 物品不够，打开速传提示窗口
+	  		return
+		end
+	end
+
+    local sceneId = DataPack.readWord(packet)  --读取场景的ID
+    local scenename = DataPack.readString(packet)  --读取场景的名字
+	local pos_x = DataPack.readWord(packet)
+	local pos_y = DataPack.readWord(packet)
+  
+	if not System.telportSceneByName(sysarg, scenename, pos_x, pos_y) then
+		return 
+	end
+
+	-- 扣除免费速传次数或物品
+	if useItem then
+		LActor.removeItem(sysarg, itemId, 1, -1, -1, -1, "任务速传", 2)
+	else
+		if totalTelport >= 0 then
+			if var.quickTelport == nil then
+				var.quickTelport = 1
+			else
+				var.quickTelport = var.quickTelport + 1
+			end
+		end
+	end
+
+	--print("var.quickTelport:"..tostring(var.quickTelport))
+	if not useItem then
+		local left = totalTelport
+		if left > 0 then
+			left = left - var.quickTelport
+		end
+		EventCallDispatcher.SendTelportCount(sysarg, left)
+	end
+end 
+
+
+--每日免费速传次数数据初始化
+EventCallDispatcher.NewDayAcrriveTelport = function (sysarg,arg)
+	local var = LActor.getStaticVar( sysarg )
+	if var == nil then return end
+
+	var.quickTelport = nil
+
+	-- 该VIP等级下的免费速传次数
+	local level = LActor.getVIPLevel(sysarg)
+	local totalTelport = VIPConfig.telePort[level] or 0
+
+	local left = totalTelport
+	if left > 0 and var.quickTelport then
+		left = left - var.quickTelport
+	end
+
+	EventCallDispatcher.SendTelportCount(sysarg, left)
+end
+
+--登录时发送剩余免费速传次数
+EventCallDispatcher.OnLoginTelportInit = function(sysarg, arg)	
+	--print( "OnLoginWorshipInit" )
+	local var = LActor.getStaticVar( sysarg )
+	if var == nil then return end
+
+	-- 该VIP等级下的免费速传次数
+	local level = LActor.getVIPLevel(sysarg)
+	local totalTelport = VIPConfig.telePort[level] or 0
+
+	local left = totalTelport
+	if left > 0 and var.quickTelport then
+		left = left - var.quickTelport
+	end
+
+	EventCallDispatcher.SendTelportCount(sysarg, left)
+
+	EventCallDispatcher.SendFreeTeleportTime(sysarg)
+end
+
+
+--vip等级改变后处理
+EventCallDispatcher.handleVIPChangedTelport = function(sysarg, arg)	
+	--print( "handleVIPChangedTelport" )
+	local var = LActor.getStaticVar( sysarg )
+	if var == nil then return end
+
+	-- 该VIP等级下的免费速传次数
+	local level = LActor.getVIPLevel(sysarg)
+	local totalTelport = VIPConfig.telePort[level] or 0
+
+	local left = totalTelport
+	if left > 0 and var.quickTelport then
+		left = left - var.quickTelport
+	end
+
+	EventCallDispatcher.SendTelportCount(sysarg, left)
+end
+
+
+
+--玩家等级改变
+EventCallDispatcher.handleLevelChangedTelport = function(sysarg, arg)
+	--print("--------change1---------------")
+	local var = LActor.getStaticVar( sysarg )
+	if var == nil then return end
+
+	local SendLevel = 9 		--触发赠送免费速传次数的等级
+	local SendTimeLong = 2700 	--赠送的免费速传时长(单位：秒)
+
+	local level = LActor.getLevel(sysarg)
+	if level < SendLevel then
+		return
+	end
+
+	if nil == var.teleportTaste then
+		var.teleportTaste = System.getCurrMiniTime() + SendTimeLong
+		EventCallDispatcher.SendFreeTeleportTime(sysarg)
+	end
+	--print("--------change2---------------")
+end
+
+--发送剩余免费传送时间
+EventCallDispatcher.SendFreeTeleportTime = function(sysarg,msgid, packet)
+	--print("发送剩余免费传送时间")
+	local var = LActor.getStaticVar( sysarg )
+	if var == nil then return end
+	local currTime = System.getCurrMiniTime()
+	local endTime = var.teleportTaste or 0
+	
+	local leftTime = endTime - currTime
+	if leftTime < 0 then
+		leftTime = 0
+	end
+
+	local npack = DataPack.allocPacket(sysarg,139,211)
+    if npack == nil then return end
+    DataPack.writeUInt(npack, leftTime)
+    DataPack.flush(npack)
+    --print("endTime:"..tostring(endTime))
+
+
+    -- EventCallDispatcher.NewDayAcrriveTelport(sysarg,arg)
+end
+  
+MiscsImplement.registerMsgHandler(211, EventCallDispatcher.SendFreeTeleportTime)  
+MiscsImplement.registerMsgHandler(7, MiscsImplement.questTargetSpaceMoveHandler)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, EventCallDispatcher.NewDayAcrriveTelport)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, EventCallDispatcher.OnLoginTelportInit)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUpdateVipInfo, EventCallDispatcher.handleVIPChangedTelport)
+-- EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeLevel, EventCallDispatcher.handleLevelChangedTelport)

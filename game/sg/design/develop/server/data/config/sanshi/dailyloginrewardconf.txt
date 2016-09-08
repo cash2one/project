@@ -1,0 +1,889 @@
+--#include "..\..\language\langCode.txt"
+DailyLoginRewardConf = {
+	--最大签到天数,不能大于32
+	maxnum = 30,	
+	--首次累计登陆奖励
+	firstrewards = 
+	{
+		--[签到天数] = {奖励},最多只能32天
+		[1] = {		
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			items = {			
+				{ itemid =18612, count =2, quality=0, strong=0, bind=1 },
+				{ itemid =18210, count =2, quality=0, strong=0, bind=1 },
+				{ itemid =18601, count =5, quality=0, strong=0, bind=1 },
+				{ itemid =18613, count =5, quality=0, strong=0, bind=1 },
+				{ itemid =18227, count =2, quality=0, strong=0, bind=1 },
+			},
+		},
+		[2] = {			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			items = {			
+				{ itemid =61003, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =18710, count =5, quality=0, strong=0, bind=1 },
+				{ itemid =18618, count =4, quality=0, strong=0, bind=1 },
+				{ itemid =18621, count =5, quality=0, strong=0, bind=1 },
+				{ itemid =18227, count =2, quality=0, strong=0, bind=1 },
+			},
+		},
+		[3] = {			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			items = {			
+				{ itemid =61002, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =18627, count =3, quality=0, strong=0, bind=1 },
+				{ itemid =18720, count =2, quality=0, strong=0, bind=1 },
+				{ itemid =18613, count =5, quality=0, strong=0, bind=1 },
+				{ itemid =18227, count =3, quality=0, strong=0, bind=1 },
+			},
+		},
+
+		[4] = {			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			items = {			
+				{ itemid =62002, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =18603, count =5, quality=0, strong=0, bind=1 },
+				{ itemid =18600, count =5, quality=0, strong=0, bind=1 },
+				{ itemid =18621, count =5, quality=0, strong=0, bind=1 },
+				{ itemid =18227, count =3, quality=0, strong=0, bind=1 },
+			},
+		},
+
+		[5] = {			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			items = {			
+				{ itemid =28209, count =2, quality=0, strong=0, bind=1 },
+				{ itemid =18617, count =2, quality=0, strong=0, bind=1 },
+				{ itemid =18219, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =18613, count =5, quality=0, strong=0, bind=1 },
+				{ itemid =18227, count =5, quality=0, strong=0, bind=1 },
+			},
+		},
+
+		[6] = {			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			items = {			
+				{ itemid =62004, count =1, quality=1, strong=0, bind=1 },
+				{ itemid =18633, count =3, quality=3, strong=0, bind=1 },
+				{ itemid =18605, count =1, quality=1, strong=0, bind=1 },
+				{ itemid =18621, count =10, quality=10, strong=0, bind=1 },
+				{ itemid =18227, count =5, quality=5, strong=0, bind=1 },
+			},
+		},
+
+		[7] = {			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			items = {			
+				{ itemid =61005, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =61001, count =3, quality=0, strong=0, bind=1 },
+				{ itemid =18512, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =18219, count =3, quality=0, strong=0, bind=1 },
+				{ itemid =18219, count =7, quality=0, strong=0, bind=1 },
+			},
+		},
+
+		[8] = {			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			items = {			
+				{ itemid =18711, count =2, quality=0, strong=0, bind=1 },
+				{ itemid =18720, count =2, quality=0, strong=0, bind=1 },
+				{ itemid =18210, count =2, quality=0, strong=0, bind=1 },
+				{ itemid =18613, count =5, quality=0, strong=0, bind=1 },
+				{ itemid =18227, count =3, quality=0, strong=0, bind=1 },
+			},
+		},
+
+		[9] = {			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			items = {			
+				{ itemid =28230, count =2, quality=0, strong=0, bind=1 },
+				{ itemid =28220, count =2, quality=0, strong=0, bind=1 },
+				{ itemid =19300, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =18621, count =5, quality=0, strong=0, bind=1 },
+				{ itemid =18227, count =3, quality=0, strong=0, bind=1 },
+			},
+		},
+
+		[10] = {			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			items = {			
+				{ itemid =18612, count =2, quality=0, strong=0, bind=1 },
+				{ itemid =18606, count =2, quality=0, strong=0, bind=1 },
+				{ itemid =18229, count =2, quality=0, strong=0, bind=1 },
+				{ itemid =18613, count =5, quality=0, strong=0, bind=1 },
+				{ itemid =18227, count =3, quality=0, strong=0, bind=1 },
+			},
+		},
+
+		[11] = {			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			items = {			
+				{ itemid =18603, count =3, quality=0, strong=0, bind=1 },
+				{ itemid =18627, count =2, quality=0, strong=0, bind=1 },
+				{ itemid =18600, count =3, quality=0, strong=0, bind=1 },
+				{ itemid =18621, count =5, quality=0, strong=0, bind=1 },
+				{ itemid =18227, count =3, quality=0, strong=0, bind=1 },
+			},
+		},
+
+		[12] = {			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			items = {			
+				{ itemid =28226, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =28236, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =18211, count =2, quality=0, strong=0, bind=1 },
+				{ itemid =18613, count =5, quality=0, strong=0, bind=1 },
+				{ itemid =18227, count =3, quality=0, strong=0, bind=1 },
+			},
+		},
+
+		[13] = {			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			items = {			
+				{ itemid =18617, count =2, quality=0, strong=0, bind=1 },
+				{ itemid =18351, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =18321, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =18621, count =10, quality=0, strong=0, bind=1 },
+				{ itemid =18227, count =3, quality=0, strong=0, bind=1 },
+			},
+		},
+
+		[14] = {			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			items = {			
+				{ itemid =61006, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =61001, count =2, quality=0, strong=0, bind=1 },
+				{ itemid =18607, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =18229, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =18227, count =3, quality=0, strong=0, bind=1 },
+			},
+		},
+
+		[15] = {			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			items = {			
+				{ itemid =18711, count =3, quality=0, strong=0, bind=1 },
+				{ itemid =18720, count =3, quality=0, strong=0, bind=1 },
+				{ itemid =18211, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =18613, count =5, quality=0, strong=0, bind=1 },
+				{ itemid =18227, count =4, quality=0, strong=0, bind=1 },
+			},
+		},
+
+		[16] = {			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			items = {			
+				{ itemid =28230, count =3, quality=0, strong=0, bind=1 },
+				{ itemid =28220, count =3, quality=0, strong=0, bind=1 },
+				{ itemid =19200, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =18621, count =5, quality=0, strong=0, bind=1 },
+				{ itemid =18227, count =4, quality=0, strong=0, bind=1 },
+			},
+		},
+
+		[17] = {			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			items = {			
+				{ itemid =18612, count =3, quality=0, strong=0, bind=1 },
+				{ itemid =18606, count =3, quality=0, strong=0, bind=1 },
+				{ itemid =18229, count =3, quality=0, strong=0, bind=1 },
+				{ itemid =18613, count =5, quality=0, strong=0, bind=1 },
+				{ itemid =18227, count =4, quality=0, strong=0, bind=1 },
+			},
+		},
+
+		[18] = {			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			items = {			
+				{ itemid =18603, count =4, quality=0, strong=0, bind=1 },
+				{ itemid =18627, count =3, quality=0, strong=0, bind=1 },
+				{ itemid =18600, count =4, quality=0, strong=0, bind=1 },
+				{ itemid =18621, count =5, quality=0, strong=0, bind=1 },
+				{ itemid =18227, count =4, quality=0, strong=0, bind=1 },
+			},
+		},
+
+
+		[19] = {			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			items = {			
+				{ itemid =28226, count =2, quality=0, strong=0, bind=1 },
+				{ itemid =28236, count =2, quality=0, strong=0, bind=1 },
+				{ itemid =18219, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =18613, count =5, quality=0, strong=0, bind=1 },
+				{ itemid =18227, count =4, quality=0, strong=0, bind=1 },
+			},
+		},
+
+		[20] = {			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			items = {			
+				{ itemid =18616, count =2, quality=0, strong=0, bind=1 },
+				{ itemid =18353, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =18323, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =18621, count =10, quality=0, strong=0, bind=1 },
+				{ itemid =18227, count =4, quality=0, strong=0, bind=1 },
+			},
+		},
+
+
+		[21] = {			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			items = {			
+				{ itemid =61001, count =3, quality=0, strong=0, bind=1 },
+				{ itemid =18607, count =2, quality=0, strong=0, bind=1 },
+				{ itemid =28209, count =2, quality=0, strong=0, bind=1 },
+				{ itemid =18613, count =10, quality=0, strong=0, bind=1 },
+				{ itemid =18227, count =4, quality=0, strong=0, bind=1 },
+			},
+		},
+
+		[22] = {			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			items = {			
+				{ itemid =18711, count =4, quality=0, strong=0, bind=1 },
+				{ itemid =18720, count =4, quality=0, strong=0, bind=1 },
+				{ itemid =18211, count =2, quality=0, strong=0, bind=1 },
+				{ itemid =18613, count =5, quality=0, strong=0, bind=1 },
+				{ itemid =18227, count =5, quality=0, strong=0, bind=1 },
+			},
+		},
+
+		[23] = {			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			items = {			
+				{ itemid =28230, count =4, quality=0, strong=0, bind=1 },
+				{ itemid =28220, count =4, quality=0, strong=0, bind=1 },
+				{ itemid =19100, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =18621, count =5, quality=0, strong=0, bind=1 },
+				{ itemid =18227, count =5, quality=0, strong=0, bind=1 },
+			},
+		},
+
+		[24] = {			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			items = {			
+				{ itemid =18612, count =4, quality=0, strong=0, bind=1 },
+				{ itemid =18606, count =4, quality=0, strong=0, bind=1 },
+				{ itemid =18229, count =3, quality=0, strong=0, bind=1 },
+				{ itemid =18613, count =5, quality=0, strong=0, bind=1 },
+				{ itemid =18227, count =5, quality=0, strong=0, bind=1 },
+			},
+		},
+
+		[25] = {			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			items = {			
+				{ itemid =18603, count =5, quality=0, strong=0, bind=1 },
+				{ itemid =18627, count =4, quality=0, strong=0, bind=1 },
+				{ itemid =18600, count =5, quality=0, strong=0, bind=1 },
+				{ itemid =18621, count =5, quality=0, strong=0, bind=1 },
+				{ itemid =18227, count =5, quality=0, strong=0, bind=1 },
+			},
+		},
+
+		[26] = {			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			items = {			
+				{ itemid =28226, count =3, quality=0, strong=0, bind=1 },
+				{ itemid =28236, count =3, quality=0, strong=0, bind=1 },
+				{ itemid =18219, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =18613, count =5, quality=0, strong=0, bind=1 },
+				{ itemid =18227, count =5, quality=0, strong=0, bind=1 },
+			},
+		},
+
+		[27] = {			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			items = {			
+				{ itemid =18615, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =18353, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =18323, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =18621, count =10, quality=0, strong=0, bind=1 },
+				{ itemid =18227, count =5, quality=0, strong=0, bind=1 },
+			},
+		},
+
+		[28] = {			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			items = {			
+				{ itemid =61007, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =61001, count =4, quality=0, strong=0, bind=1 },
+				{ itemid =18607, count =3, quality=0, strong=0, bind=1 },
+				{ itemid =28209, count =2, quality=0, strong=0, bind=1 },
+				{ itemid =18227, count =5, quality=0, strong=0, bind=1 },
+			},
+		},
+
+
+		[29] = {			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			items = {			
+				{ itemid =18602, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =18627, count =5, quality=0, strong=0, bind=1 },
+				{ itemid =18404, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =18605, count =2, quality=0, strong=0, bind=1 },
+				{ itemid =18227, count =6, quality=0, strong=0, bind=1 },
+			},
+		},
+
+		[30] = {			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			items = {			
+				{ itemid =28298, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =48209, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =48200, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =18721, count =2, quality=0, strong=0, bind=1 },
+				{ itemid =18227, count =7, quality=0, strong=0, bind=1 },
+			},
+		},
+
+	},
+	--然后的累计登陆奖励
+	normalrewards = 
+	{
+		--[签到天数] = {奖励},最多只能32天
+		[1] = {		
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			items = {			
+				{ itemid =18711, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =18720, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =18210, count =2, quality=0, strong=0, bind=1 },
+				{ itemid =18613, count =5, quality=0, strong=0, bind=1 },
+				{ itemid =18227, count =2, quality=0, strong=0, bind=1 },
+			},
+		},
+		[2] = {			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			items = {			
+				{ itemid =28230, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =28220, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =19300, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =18621, count =5, quality=0, strong=0, bind=1 },
+				{ itemid =18227, count =2, quality=0, strong=0, bind=1 },
+			},
+		},
+		[3] = {			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			items = {			
+				{ itemid =18612, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =18606, count =2, quality=0, strong=0, bind=1 },
+				{ itemid =18229, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =18613, count =5, quality=0, strong=0, bind=1 },
+				{ itemid =18227, count =2, quality=0, strong=0, bind=1 },
+			},
+		},
+
+		[4] = {			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			items = {			
+				{ itemid =18219, count =2, quality=0, strong=0, bind=1 },
+				{ itemid =18219, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =18219, count =2, quality=0, strong=0, bind=1 },
+				{ itemid =18219, count =5, quality=0, strong=0, bind=1 },
+				{ itemid =18219, count =2, quality=0, strong=0, bind=1 },
+			},
+		},
+
+		[5] = {			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			items = {			
+				{ itemid =18603, count =2, quality=0, strong=0, bind=1 },
+				{ itemid =18627, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =18600, count =2, quality=0, strong=0, bind=1 },
+				{ itemid =18621, count =5, quality=0, strong=0, bind=1 },
+				{ itemid =18227, count =2, quality=0, strong=0, bind=1 },
+			},
+		},
+
+		[6] = {			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			items = {			
+				{ itemid =18618, count =4, quality=0, strong=0, bind=1 },
+				{ itemid =18351, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =18321, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =18621, count =10, quality=0, strong=0, bind=1 },
+				{ itemid =18227, count =2, quality=0, strong=0, bind=1 },
+			},
+		},
+
+		[7] = {			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			items = {			
+				{ itemid =61001, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =18607, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =18229, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =18613, count =10, quality=0, strong=0, bind=1 },
+				{ itemid =18227, count =2, quality=0, strong=0, bind=1 },
+			},
+		},
+
+		[8] = {			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			items = {			
+				{ itemid =18711, count =2, quality=0, strong=0, bind=1 },
+				{ itemid =18720, count =2, quality=0, strong=0, bind=1 },
+				{ itemid =18210, count =2, quality=0, strong=0, bind=1 },
+				{ itemid =18613, count =5, quality=0, strong=0, bind=1 },
+				{ itemid =18227, count =3, quality=0, strong=0, bind=1 },
+			},
+		},
+
+		[9] = {			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			items = {			
+				{ itemid =28230, count =2, quality=0, strong=0, bind=1 },
+				{ itemid =28220, count =2, quality=0, strong=0, bind=1 },
+				{ itemid =19200, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =18621, count =5, quality=0, strong=0, bind=1 },
+				{ itemid =18227, count =3, quality=0, strong=0, bind=1 },
+			},
+		},
+
+		[10] = {			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			items = {			
+				{ itemid =18612, count =2, quality=0, strong=0, bind=1 },
+				{ itemid =18606, count =2, quality=0, strong=0, bind=1 },
+				{ itemid =18229, count =2, quality=0, strong=0, bind=1 },
+				{ itemid =18613, count =5, quality=0, strong=0, bind=1 },
+				{ itemid =18227, count =3, quality=0, strong=0, bind=1 },
+			},
+		},
+
+		[11] = {			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			items = {			
+				{ itemid =18603, count =3, quality=0, strong=0, bind=1 },
+				{ itemid =18627, count =2, quality=0, strong=0, bind=1 },
+				{ itemid =18600, count =3, quality=0, strong=0, bind=1 },
+				{ itemid =18621, count =5, quality=0, strong=0, bind=1 },
+				{ itemid =18227, count =3, quality=0, strong=0, bind=1 },
+			},
+		},
+
+		[12] = {			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			items = {			
+				{ itemid =18219, count =3, quality=0, strong=0, bind=1 },
+				{ itemid =18219, count =2, quality=0, strong=0, bind=1 },
+				{ itemid =18219, count =3, quality=0, strong=0, bind=1 },
+				{ itemid =18219, count =5, quality=0, strong=0, bind=1 },
+				{ itemid =18219, count =3, quality=0, strong=0, bind=1 },
+			},
+		},
+
+		[13] = {			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			items = {			
+				{ itemid =18617, count =2, quality=0, strong=0, bind=1 },
+				{ itemid =18351, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =18321, count =2, quality=0, strong=0, bind=1 },
+				{ itemid =18621, count =5, quality=0, strong=0, bind=1 },
+				{ itemid =18227, count =3, quality=0, strong=0, bind=1 },
+			},
+		},
+
+		[14] = {			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			items = {			
+				{ itemid =61001, count =2, quality=0, strong=0, bind=1 },
+				{ itemid =18607, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =18229, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =18613, count =10, quality=0, strong=0, bind=1 },
+				{ itemid =18227, count =3, quality=0, strong=0, bind=1 },
+			},
+		},
+
+		[15] = {			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			items = {			
+				{ itemid =18711, count =3, quality=0, strong=0, bind=1 },
+				{ itemid =18720, count =3, quality=0, strong=0, bind=1 },
+				{ itemid =18211, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =18613, count =5, quality=0, strong=0, bind=1 },
+				{ itemid =18227, count =4, quality=0, strong=0, bind=1 },
+			},
+		},
+
+		[16] = {			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			items = {			
+				{ itemid =28230, count =3, quality=0, strong=0, bind=1 },
+				{ itemid =28220, count =3, quality=0, strong=0, bind=1 },
+				{ itemid =19100, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =18621, count =5, quality=0, strong=0, bind=1 },
+				{ itemid =18227, count =4, quality=0, strong=0, bind=1 },
+			},
+		},
+
+		[17] = {			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			items = {			
+				{ itemid =18612, count =3, quality=0, strong=0, bind=1 },
+				{ itemid =18606, count =3, quality=0, strong=0, bind=1 },
+				{ itemid =18229, count =3, quality=0, strong=0, bind=1 },
+				{ itemid =18613, count =5, quality=0, strong=0, bind=1 },
+				{ itemid =18227, count =4, quality=0, strong=0, bind=1 },
+			},
+		},
+
+		[18] = {			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			needbagnum = 5,	
+			items = {			
+				{ itemid =18603, count =4, quality=0, strong=0, bind=1 },
+				{ itemid =18627, count =3, quality=0, strong=0, bind=1 },
+				{ itemid =18600, count =4, quality=0, strong=0, bind=1 },
+				{ itemid =18621, count =5, quality=0, strong=0, bind=1 },
+				{ itemid =18227, count =4, quality=0, strong=0, bind=1 },
+			},
+		},
+
+
+		[19] = {			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			items = {			
+				{ itemid =28226, count =2, quality=0, strong=0, bind=1 },
+				{ itemid =28236, count =2, quality=0, strong=0, bind=1 },
+				{ itemid =18219, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =18613, count =5, quality=0, strong=0, bind=1 },
+				{ itemid =18227, count =4, quality=0, strong=0, bind=1 },
+			},
+		},
+
+		[20] = {			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			items = {			
+				{ itemid =18616, count =2, quality=0, strong=0, bind=1 },
+				{ itemid =18353, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =18323, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =18621, count =10, quality=0, strong=0, bind=1 },
+				{ itemid =18227, count =4, quality=0, strong=0, bind=1 },
+			},
+		},
+
+
+		[21] = {			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			items = {			
+				{ itemid =61001, count =3, quality=0, strong=0, bind=1 },
+				{ itemid =18607, count =2, quality=0, strong=0, bind=1 },
+				{ itemid =18229, count =2, quality=0, strong=0, bind=1 },
+				{ itemid =18613, count =10, quality=0, strong=0, bind=1 },
+				{ itemid =18227, count =4, quality=0, strong=0, bind=1 },
+			},
+		},
+
+		[22] = {			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			items = {			
+				{ itemid =18711, count =4, quality=0, strong=0, bind=1 },
+				{ itemid =18720, count =4, quality=0, strong=0, bind=1 },
+				{ itemid =18211, count =2, quality=0, strong=0, bind=1 },
+				{ itemid =18613, count =5, quality=0, strong=0, bind=1 },
+				{ itemid =18227, count =5, quality=0, strong=0, bind=1 },
+			},
+		},
+
+		[23] = {			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			items = {			
+				{ itemid =28230, count =4, quality=0, strong=0, bind=1 },
+				{ itemid =28220, count =4, quality=0, strong=0, bind=1 },
+				{ itemid =19301, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =18621, count =5, quality=0, strong=0, bind=1 },
+				{ itemid =18227, count =5, quality=0, strong=0, bind=1 },
+			},
+		},
+
+		[24] = {			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			items = {			
+				{ itemid =18612, count =4, quality=0, strong=0, bind=1 },
+				{ itemid =18606, count =4, quality=0, strong=0, bind=1 },
+				{ itemid =18229, count =3, quality=0, strong=0, bind=1 },
+				{ itemid =18613, count =5, quality=0, strong=0, bind=1 },
+				{ itemid =18227, count =5, quality=0, strong=0, bind=1 },
+			},
+		},
+
+		[25] = {			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			items = {			
+				{ itemid =18219, count =4, quality=0, strong=0, bind=1 },
+				{ itemid =18219, count =4, quality=0, strong=0, bind=1 },
+				{ itemid =18219, count =3, quality=0, strong=0, bind=1 },
+				{ itemid =18219, count =5, quality=0, strong=0, bind=1 },
+				{ itemid =18219, count =5, quality=0, strong=0, bind=1 },
+			},
+		},
+
+		[26] = {			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			items = {			
+				{ itemid =18603, count =3, quality=0, strong=0, bind=1 },
+				{ itemid =18627, count =3, quality=0, strong=0, bind=1 },
+				{ itemid =18600, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =18227, count =5, quality=0, strong=0, bind=1 },
+				{ itemid =18621, count =5, quality=0, strong=0, bind=1 },
+			},
+		},
+
+		[27] = {			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			items = {			
+				{ itemid =18615, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =18353, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =18323, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =18621, count =10, quality=0, strong=0, bind=1 },
+				{ itemid =18227, count =5, quality=0, strong=0, bind=1 },
+			},
+		},
+
+		[28] = {			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			items = {			
+				{ itemid =61001, count =4, quality=0, strong=0, bind=1 },
+				{ itemid =18607, count =3, quality=0, strong=0, bind=1 },
+				{ itemid =18229, count =2, quality=0, strong=0, bind=1 },
+				{ itemid =18613, count =10, quality=0, strong=0, bind=1 },
+				{ itemid =18227, count =5, quality=0, strong=0, bind=1 },
+			},
+		},
+
+		[29] = {			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			items = {			
+				{ itemid =18602, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =18627, count =5, quality=0, strong=0, bind=1 },
+				{ itemid =18404, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =18605, count =2, quality=0, strong=0, bind=1 },
+				{ itemid =18227, count =6, quality=0, strong=0, bind=1 },
+			},
+		},
+
+		[30] = {			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			needbagnum = 5,	
+			items = {			
+				{ itemid =28298, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =48209, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =48200, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =18721, count =2, quality=0, strong=0, bind=1 },
+				{ itemid =18227, count =7, quality=0, strong=0, bind=1 },
+			},
+		},
+
+
+	},
+
+	--给客户端展示用的奖励
+	showrewards = 
+	{
+		--首月的重要奖励展示
+		{			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			items = {			
+				{ itemid =61002, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =61003, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =61006, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =61007, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =62002, count =1, quality=0, strong=0, bind=1 },
+			},
+		},
+		--其他月的重要奖励展示
+		{			
+			rewards = {
+				{type = 0, count = 1},
+			},
+			items = {			
+				{ itemid =28298, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =48209, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =48200, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =18602, count =1, quality=0, strong=0, bind=1 },
+				{ itemid =18605, count =1, quality=0, strong=0, bind=1 },
+			},
+		},
+	},
+}

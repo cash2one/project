@@ -1,0 +1,62 @@
+-- 魔界入口副本的怪物刷新处理
+--#include "data\functions\config\fubenconfig\mojierukoufubenconfig.txt" once	--  魔界入口副本配置
+
+xinMoHuanJingFubenMon = {}
+-- 单个怪物杀死触发的事件
+xinMoHuanJingFubenMon.OnKillMonster = function(monster,sysarg,monsterid)
+	
+end
+
+-- 场景所有怪物死亡事件
+xinMoHuanJingFubenMon.OnMonsterAllDie = function(sceneId, scenePtr, flag, monster)
+	print("-----huantian all die")
+	local players = LuaHelp.getSceneActorList(monster)
+	if players == nil or #players < 1 then return end
+	local sysarg = players[1]
+	if sysarg == nil then return end
+
+	local pfb = LActor.getFubenPrt(sysarg)
+	if pfb == nil then return end
+	local fbVar = Fuben.getDyanmicVar(pfb)
+
+	-- 设置层数
+	for i=1,#MoJieRuKouFubenConfig.sceneId do
+		if MoJieRuKouFubenConfig.sceneId[i] == sceneId then
+			fbVar.floor = i -- 设置层数
+			-- 增加到下一层的传送阵
+			if LilianFubenConfig.toNextTeleport == nil then
+				break
+			end
+			local teleportConf = MoJieRuKouFubenConfig.toNextTeleport[i]
+			LActor.createTranster(monster, teleportConf.modelid, teleportConf.posx, teleportConf.posy, 
+				teleportConf.toPosx, teleportConf.toPosy, teleportConf.toSceneid, teleportConf.name, teleportConf.comfirm)
+		end
+	end
+
+	-- 委托的处理
+	local fbid = MoJieRuKouFubenConfig.fubenId[1]
+	print("----------wei tuo")
+	EntrustFunc.SetFubenValue(sysarg,fbid,fbVar.floor)
+
+	-- 最后一层进行结算
+	for i=1,#MoJieRuKouFubenConfig.sceneJieSuan do
+		if MoJieRuKouFubenConfig.sceneJieSuan[i] == sceneId then
+			local onFhandle = LActor.getFubenHandle(sysarg)
+			fbVar.hasTongGuan = true		-- 已经通关
+			CommonFubenJiesuanConfig.onFubenOver(sysarg,onFhandle)	-- 结算
+		end
+	end
+	print("-----do over")
+end
+
+-- 注册怪物
+for i=1,#MoJieRuKouFubenConfig.monsterRecharge do
+	MonDieDispatcher.register( MoJieRuKouFubenConfig.monsterRecharge[i][1],  xinMoHuanJingFubenMon.OnKillMonster)
+end
+
+-- 注册怪物全部杀死
+for i=1,#MoJieRuKouFubenConfig.sceneId do
+	MonAllKilledDispatcher.register( MoJieRuKouFubenConfig.sceneId[i], xinMoHuanJingFubenMon.OnMonsterAllDie )
+end
+
+

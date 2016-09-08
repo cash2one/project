@@ -1,0 +1,95 @@
+﻿-- 新手副本处理脚本
+--#include "data\config\misc\gamestartfbconfig.txt" once
+
+--客户端请求保存进度
+OFFLINEFBSYSTEM.savefbprocess = function(sysarg, packet)
+  local process = DataPack.readInt( packet )
+
+  local sceneid = LActor.getSceneId(sysarg)
+  if sceneid ~= gameStartFbConf.sceneid then
+    return
+  end
+
+  local var = LActor.getStaticVar(sysarg)
+  var.gamestartfbprocess = process
+
+  --已经完成所有进度,退出副本
+  --if process == #gameStartFbConf.process then
+    --print("OFFLINEFBSYSTEM.savefbprocess telportScene")
+    --System.telportScene(sysarg, gameStartFbConf.exitconfig.scene, gameStartFbConf.exitconfig.posx, gameStartFbConf.exitconfig.posy, 1)
+  --end
+
+  --print("OFFLINEFBSYSTEM.savefbprocess end")
+end
+
+OFFLINEFBSYSTEM.exitstartfbscene = function(sysarg, packet)
+  --System.telportScene(sysarg, gameStartFbConf.exitconfig.scene, gameStartFbConf.exitconfig.posx, gameStartFbConf.exitconfig.posy, 1)
+  LActor.exitFuben(sysarg)
+end 
+
+OFFLINEFBSYSTEM.gamestartfbLogin = function(sysarg, arg)
+  local sceneid = LActor.getSceneId(sysarg)
+  if not sceneid then return end
+
+  --新创建的角色
+  if sceneid == 0 then
+    System.telportScene(sysarg, gameStartFbConf.newbornconfig.scene, gameStartFbConf.newbornconfig.posx, gameStartFbConf.newbornconfig.posy, 1)
+  end
+
+  --是在新手副本场景中，则下发坐标
+  if sceneid == gameStartFbConf.sceneid then
+    local var = LActor.getStaticVar(sysarg)
+    if var.gamestartfbprocess == nil then
+      var.gamestartfbprocess = 1
+    end
+
+    if var.gamestartfbprocess < 1 then 
+      var.gamestartfbprocess = 1
+    end
+
+    local npack = DataPack.allocPacket(sysarg, 158, 1)
+    if npack == nil then return end
+    DataPack.writeInt(npack, var.gamestartfbprocess)
+    DataPack.writeInt(npack, gameStartFbConf.process[var.gamestartfbprocess][1])
+    DataPack.writeInt(npack, gameStartFbConf.process[var.gamestartfbprocess][2])
+    DataPack.flush(npack)
+  end
+
+end
+
+function OnGameStartFirstFB(sysarg)
+    local var = LActor.getStaticVar(sysarg)
+    if var.gamestartfbprocess == nil then 
+      var.gamestartfbprocess = 1
+    end
+
+    if var.gamestartfbprocess >= #gameStartFbConf.process then  --跳過新手界面
+      return
+    end
+
+    if var.gamestartfbprocess < 1 then 
+      var.gamestartfbprocess = 1
+    end
+
+    local npack = DataPack.allocPacket(sysarg, 158, 1)
+    if npack == nil then return end
+    DataPack.writeInt(npack, var.gamestartfbprocess)
+    DataPack.writeInt(npack, gameStartFbConf.process[var.gamestartfbprocess][1])
+    DataPack.writeInt(npack, gameStartFbConf.process[var.gamestartfbprocess][2])
+    DataPack.flush(npack)
+end
+
+--gm命令进入新手副本
+OFFLINEFBSYSTEM.gmEnterStartFB = function(sysarg, args)
+    local Hfuben = Fuben.createFuBen(1)
+    LActor.enterFuBen(sysarg, Hfuben, -1, -1, -1)
+    local var = LActor.getStaticVar(sysarg)
+    if var.gamestartfbprocess ~= nil then 
+      var.gamestartfbprocess = nil
+    end
+    OnGameStartFirstFB(sysarg)
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, OFFLINEFBSYSTEM.gamestartfbLogin)
+
+GmEventFuncList.register( "enterstartfb", OFFLINEFBSYSTEM.gmEnterStartFB, 1) --进入新手副本

@@ -1,0 +1,14 @@
+﻿    {
+	--屠龙山谷
+          fbid = 19 ,fbname = Lang.FubenName.fname0019,fbDesc = Lang.FubenName.fdesc0019,minLevel = 50,minPlayCount = 1,maxPlayCount = 5,type = 0,fbTime=3600,
+	  awards=
+	  {
+		{type=0,id=1002,count=2,bind=0,strong=0,quality=0},  --初级强化石*2
+	  },
+	  npc=
+         {
+ 	    --洛阳 龙飞
+            {sceneId=49,name=Lang.EntityName.n00479,conds={}},
+	  },
+	
+  },

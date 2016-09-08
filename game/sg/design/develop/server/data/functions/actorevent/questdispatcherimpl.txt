@@ -1,0 +1,262 @@
+--#ifndef __QUEST_TYPE_CALL_DISPATCHER_H__
+--#define __QUEST_TYPE_CALL_DISPATCHER_H__
+
+local ActorQuestCallDispatcher = {} -- 玩家任务派发器
+
+ActorQuestCallDispatcher.QuestTypeCallDispatcher = {} -- 任务玩法的存储
+ActorQuestCallDispatcher.QuestCheckCallDispatcher = {} -- 任务检查的存储
+
+
+-- 检查能否注册函数
+local function register (dispatcherTab, action, playType, func)
+    if not dispatcherTab or not action or not playType or not func or type(func) ~= "function" then
+        return
+    end
+    action = tonumber(action)
+    playType = tonumber(playType)
+
+    if dispatcherTab[action] == nil then
+        dispatcherTab[action] = {}
+    end
+    local actionTab = dispatcherTab[action]
+
+    if actionTab[playType] == nil then
+        actionTab[playType] = func
+    end
+end
+
+-- 检查能否销毁函数
+local function unregister (dispatcherTab, action, playType, func)
+    if not dispatcherTab or not action or not playType or not func or type(func) ~= "function" then
+        return
+    end
+    action = tonumber(action)
+    playType = tonumber(playType)
+
+    if dispatcherTab[action] == nil then
+        return
+    end
+    local actionTab = dispatcherTab[action]
+
+    if actionTab[playType] == nil then
+        return
+    end
+    local callFunc = actionTab[playType]
+    if callFunc == func then
+        actionTab[playType] = nil
+    end
+end
+
+--[[
+注册任务事件回调
+@param: action 任务的处理方式: 接受任务 提交任务 任务事件触发 参见BaseQuestAction
+@param: questType 任务的类型 参见BaseQuestType
+@param: func 注册的回调函数
+--]]
+ActorQuestCallDispatcher.registerPlayType = function (action, playType, func)
+    register(ActorQuestCallDispatcher.QuestTypeCallDispatcher, action, playType, func)
+end
+
+--[[
+注册销毁任务事件回调
+@param: action 任务的处理方式: 接受任务 提交任务 任务事件触发 参见BaseQuestAction
+@param: playType 任务的类型 参见BaseQuestPlayType
+@param: func 需要销毁的回调函数
+--]]
+ActorQuestCallDispatcher.unregisterPlayType = function (action, playType, func)
+    unregister(ActorQuestCallDispatcher.QuestTypeCallDispatcher, action, playType, func)
+end
+
+--[[
+注册任务事件检查回调
+@param: action 任务的处理方式: 接受任务 提交任务 任务事件触发 参见BaseQuestAction
+@param: questType 任务的类型 参见BaseQuestType
+@param: func 注册的回调函数
+--]]
+ActorQuestCallDispatcher.registerCheck = function (action, playType, func)
+    register(ActorQuestCallDispatcher.QuestCheckCallDispatcher, action, playType, func)
+end
+
+--[[
+注册销毁任务事件检查回调
+@param: action 任务的处理方式: 接受任务 提交任务 任务事件触发 参见BaseQuestAction
+@param: playType 任务的类型 参见BaseQuestPlayType
+@param: func 需要销毁的回调函数
+--]]
+ActorQuestCallDispatcher.unregisterCheck = function (action, playType, func)
+    unregister(ActorQuestCallDispatcher.QuestCheckCallDispatcher, action, playType, func)
+end
+
+--[[
+获取对应任务处理方式和任务类型的回调函数列表
+@param: action 任务的处理方式: 接受任务 提交任务 任务事件触发 参见BaseQuestAction
+@param: playType 任务的类型 参见BaseQuestPlayType
+return: 回调函数列表 空为nil
+--]]
+ActorQuestCallDispatcher.callbackTypeFunc = function (action, playType)
+    if not action or not playType then
+        return nil
+    end
+    action = tonumber(action)
+    playType = tonumber(playType)
+
+    if ActorQuestCallDispatcher.QuestTypeCallDispatcher[action] ~= nil then
+        return ActorQuestCallDispatcher.QuestTypeCallDispatcher[action][playType]
+    end
+    return nil
+end
+
+--[[
+获取对应任务检查处理方式和任务类型的回调函数列表
+@param: action 任务的处理方式: 接受任务 提交任务 任务事件触发 参见BaseQuestAction
+@param: playType 任务的类型 参见BaseQuestPlayType
+return: 回调函数列表 空为nil
+--]]
+ActorQuestCallDispatcher.callbackCheckFunc = function (action, playType)
+    if not action or not playType then
+        return nil
+    end
+    action = tonumber(action)
+    playType = tonumber(playType)
+
+    if ActorQuestCallDispatcher.QuestCheckCallDispatcher[action] ~= nil then
+        return ActorQuestCallDispatcher.QuestCheckCallDispatcher[action][playType]
+    end
+    return nil
+end
+
+
+
+-- 更新任务时 是玩法需要自己处理任务更新时 需要注册对应的目标处理方法
+
+ActorQuestUpDataMsgHandle = {}
+
+ActorQuestUpDataMsgHandle.register = function ( playType , targettype , proc )
+    -- body
+    if not playType or not proc or not targettype then
+        print("-----------------",playType,targettype,proc)
+        return
+    end
+
+    if ActorQuestUpDataMsgHandle[playType] == nil then
+        ActorQuestUpDataMsgHandle[playType] = {}
+    end
+
+    if ActorQuestUpDataMsgHandle[playType][targettype] == nil then
+        ActorQuestUpDataMsgHandle[playType][targettype] = proc
+    else
+        print("-----该玩法已经注册过了-----------="..tostring(playType))
+        return false
+    end
+end
+
+ActorQuestUpDataMsgHandle.dispatcher = function ( actorobj , playType , questid , targettype , targetid)
+    print("---------------------",actorobj , playType , questid ,targettype ,targetid)
+    if not actorobj or not playType or not targettype or not targetid then
+        return false
+    end
+    if ActorQuestUpDataMsgHandle[playType] == nil then
+        return false
+    end
+    if ActorQuestUpDataMsgHandle[playType][targettype] == nil then
+        return false
+    end
+    ActorQuestUpDataMsgHandle[playType][targettype](actorobj , questid , targetid)
+    return true
+end
+
+function UpdataQuest(  actorobj , playType , questid , targettype , targetid )
+    print("--------------")
+    return ActorQuestUpDataMsgHandle.dispatcher( actorobj , playType , questid , targettype , targetid )
+end
+
+ActorQuestTimeOutClearData = {}
+
+
+function QuestTimeOutCleatData( actorobj , playType , questid )
+    -- body
+    ActorQuestTimeOutClearData.dispatcher( actorobj , playType , questid )
+end
+
+function ActorQuestTimeOutClearData.register( playType , proc )
+    -- bod
+    if not playType or not proc then
+        print("---------参数错误-------",playType , proc)
+        return
+    end
+    if ActorQuestTimeOutClearData[playType] == nil then
+        ActorQuestTimeOutClearData[playType] = proc
+    else
+        print("--------该玩法已经注册过清理任务的方法--------")
+    end
+end
+
+function ActorQuestTimeOutClearData.dispatcher( actorobj , playType , questid )
+    -- body
+    if ActorQuestTimeOutClearData[playType] ~= nil then
+        ActorQuestTimeOutClearData[playType]( actorobj , questid)
+    else
+        debug_print(string.format("-----------该玩法[%d]任务[%d]没有注册清除数据的方法--------------", playType, questid))
+    end
+end
+
+--自动接受等级引导任务
+function ActorQuestCallDispatcher.addLevelGuideQuest(actor)
+    local var = LActor.getStaticVar(actor)
+    if not var then return end
+    if not var.autoAddQuest then var.autoAddQuest = {} end
+
+    local level = LActor.getLevel(actor)
+    for k, config in pairs(AutoAddQuest.level) do
+        if k <= level then
+            for _, qid in pairs(config) do
+                if not var.autoAddQuest[qid] then
+                    var.autoAddQuest[qid] = 1
+                    LActor.addQuest(actor, qid)
+                end
+            end
+        end
+    end
+    newIntervalDayQuest(actor)
+end
+
+-- 每天自动添加的任务
+function newIntervalDayQuest (actorobj, qid)
+    if qid == nil then
+        for _, v in ipairs(AutoAddDayQuest) do
+            local qid = tonumber(v) or 0
+            if qid > 0 then
+                if LActor.hasQuest(actorobj, qid) == false then
+                    LActor.addQuest(actorobj, qid, true)
+                end
+            end
+        end
+    else
+        qid = tonumber(qid) or 0
+        if qid > 0 then
+            if LActor.hasQuest(actorobj, qid) == false then
+                LActor.addQuest(actorobj, qid, true)
+            end
+        end
+    end
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeLevel, ActorQuestCallDispatcher.addLevelGuideQuest)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, ActorQuestCallDispatcher.addLevelGuideQuest)
+
+--自动接受引导任务
+function onAutoAddGuideQuest(actor, type, qid)
+    local config
+    if type == 1 then --接受任务
+        config = AutoAddQuest.addQuest[qid]
+    elseif type == 2 then --完成任务
+        config = AutoAddQuest.finishQuest[qid]
+    end
+
+    if not config then return end
+    for _, value in pairs(config) do
+        LActor.addQuest(actor, value)
+    end
+end
+
+--#endif //end of __QUEST_TYPE_CALL_DISPATCHER_H__

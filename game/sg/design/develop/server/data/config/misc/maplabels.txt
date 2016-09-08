@@ -1,0 +1,22 @@
+
+--该配置文件是在一些特殊的地图上显示一些特殊的区域的显示，让玩家更清晰得知道每个点的作用，比如阵营对战区， 
+
+--#include "..\..\language\LangCode.txt"
+MapLabels=
+{
+  --天魔城
+  {
+		sceneId = 14,      --场景ID
+		--当前场景要显示的文本
+		labels = 
+		{
+			--name   	 要显示的文本
+			--size    	文本字体大小
+			--color   	文本颜色
+			--filterColor   文本外发光的颜色
+			--x ,y           文本的位置
+			{name=Lang.SceneName.s215, size=14, color="FFCC00", filterColor="FF00FF", x=296,y=334},
+		}
+  },
+
+}

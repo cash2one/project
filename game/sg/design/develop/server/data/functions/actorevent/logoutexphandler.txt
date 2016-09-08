@@ -1,0 +1,176 @@
+﻿--lua script
+--To do something about Login and Logout
+--[[
+  经验福利奖励
+  经验福利奖励规则:
+  经验福利奖励，主要针对玩家在当天获得的经验值是否达到每天经验最高值设定。
+	每位玩家每天登录游戏都可以获得前一天（已登录游戏）的经验福利奖励。奖励规则如下：
+	
+	经验福利奖励 = （每日经验最高值 -前一天一共获得的经验值） * EXPRATE （往下取整）
+	当（每日经验最高值 - 前一天一共获得的经验值）<= 0，该玩家不再获得前一天经验福利奖励。
+
+]] 
+
+
+--#include "data\config\guide\LoginOutExpConfig.txt" once
+--#include "data\config\property\ExpUpLmtEveryDay.txt" once
+--#include "data\config\property\LevelUpExp.txt" once
+
+                                                                                   
+                            
+-------------------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------------------
+
+--[[
+    函数名称：sendToClient
+    函数描述：发送给客户端 福利奖励信息 
+    参数 sysarg 的描述：
+]]
+local function sendToClient(sysarg, logoutExp, isSend)
+  --静态变量记录
+	local var = LActor.getStaticVar(sysarg)
+	local getlogoutExp = var.getlogoutExp
+	if getlogoutExp == nil then
+	 getlogoutExp = var.getlogoutExp
+	 getlogoutExp = logoutExp
+	else
+	 if getlogoutExp == nil then
+	   getlogoutExp = logoutExp
+	 else
+	   getlogoutExp = getlogoutExp + logoutExp
+	 end
+	end
+	--print("getlogoutExp[1]:"..getlogoutExp[1])
+	if getlogoutExp == 0 then return end
+	if getlogoutExp > LogOutExp.GETMAXEXP then
+	 getlogoutExp = LogOutExp.GETMAXEXP
+	end 
+	if isSend == true then
+		--打开领取离线经验面板 
+		local npack = DataPack.allocPacket(sysarg,139,5)    -- 139-5  打开领取离线经验面板
+		if npack == nil then return end
+		DataPack.writeUint64(npack,getlogoutExp*(LogOutExp.GETEXPRATE[1]))       --N1倍离线经验 
+		DataPack.writeUint64(npack,math.floor(getlogoutExp*(LogOutExp.GETEXPRATE[2])))  --1.5倍离线经验 
+		DataPack.writeUint64(npack,getlogoutExp*(LogOutExp.GETEXPRATE[3]))     --1倍离线经验 
+		DataPack.flush(npack) 
+  end 
+end
+
+
+--[[
+    函数名称：GetLogOutExpToClient
+    函数描述：计算 经验福利奖励  
+    参数 sysarg 的描述：
+]] 
+EventCallDispatcher.GetLogOutExpToClient = function (sysarg,arg) 
+   local nLast = LActor.getLastLogoutTime(sysarg)   --获取角色上次下线的时间 
+   if nLast == 0 then return end
+   local t = System.getCurrMiniTime() --获取当前的mini时间，单位秒 
+   local tt = System.getToday()  --获取今日凌晨零点的时间秒数 
+   --local lastDay = math.floor(nLast/LogOutExp.DAYTIME )
+   --local toDay = math.floor(t/LogOutExp.DAYTIME)
+   --print("nlast and t : "..nLast.." "..t.." "..tt)
+   --print("lastDay and toDay:"..lastDay.." "..toDay)
+   if nLast == 0 then return end
+   --local count = toDay - lastDay
+   local count = math.floor((tt-nLast)/LogOutExp.DAYTIME) + 1    --离线天数 
+   if tt < nLast then
+     count = 0 
+   end
+   --print("count:"..count)
+   local lastExp = 0--LActor.getExpLastLogout(sysarg)  --获取角色上次下线那天获取的经验值
+   --print("lastExp:"..lastExp)
+   local level =  LActor.getIntProperty(sysarg,PROP_LEVEL)
+   --local upExp = LevelUpExp[level+1]           --升级经验
+   --print(upExp)
+   local upExp = LevelUpExp[level]           --升级经验 
+   if upExp == nil then return end  
+   local DaymaxExp = ExpUpLmtEveryDay[level]                          --读取当前等级能获到的经验最大值 
+   --print("DaymaxExp:"..DaymaxExp)
+   if DaymaxExp == nil then return end
+   local logoutExp = 0
+   local nowlevelExp = LActor.getIntProperty(sysarg,PROP_ACTOR_EXP)   --获取当前经验值，用于算出还有多少经验就可以升级 
+   ---local MaxLevel = LogOutExp.MAMLEVEL     --修改为读取配置进行领取最大等级限制
+   local MaxLevel = table.getn(ExpUpLmtEveryDay)    --领取最大等级限制 
+   if level > MaxLevel then return end
+   for i = 1 ,count do
+     DaymaxExp = ExpUpLmtEveryDay[level]  --获取每日经验限制
+     --upExp = LevelUpExp[level+1]    --获取每日升级经验
+     upExp = LevelUpExp[level]    --获取每日升级经验
+     if i == 1 then 
+       if DaymaxExp - lastExp <= 0 then      --判断是否超过最大经验 
+         logoutExp = logoutExp + 0
+       else
+        logoutExp = math.floor(logoutExp + (DaymaxExp - lastExp)*(LogOutExp.EXPRATE))  --计算离线当日经验奖励 
+       end
+     else 
+       logoutExp = math.floor(logoutExp + DaymaxExp * (LogOutExp.EXPRATE))    --计算非离线当日的经验奖励 
+     end
+     
+     --判断领取福利后是否能升级 
+     if (nowlevelExp + logoutExp >= upExp) then              --能升级 
+       local upcount = 0                    --能升的级数 
+       local allExp = 0                     --能升级数所需的经验 
+       for i = level , MaxLevel do                                       --用于计算能升多少级 
+         --计算每个级数所需的升级经验  再与积累的福利经验比较 如果可升级则 级数递增 
+				 
+         allExp = LevelUpExp[i] + allExp
+         if allExp > nowlevelExp + logoutExp then
+           break
+         end
+         upcount = upcount + 1
+       end
+       --计算升级后级数 
+       level = level +upcount
+			 if level > MaxLevel then
+				 level = MaxLevel
+			 end
+       --升完级后的当前经验条的值 
+       nowlevelExp = nowlevelExp + logoutExp - (allExp - LevelUpExp[level])      
+       
+       --检测最高等级 
+	     if level >= MaxLevel  then 
+	       --break
+       end
+     end
+     
+     if level >= MaxLevel then 
+       --break
+     end
+   end 
+
+   --print("logoutExp:"..logoutExp)
+   --print("level:"..level)
+   --发送给客户端 
+   sendToClient(sysarg, logoutExp, true)
+end
+
+--[[
+    函数名称：NewDayAcrriveLogOutExp
+    函数描述：每日0:00结算 经验福利 
+    参数 sysarg 的描述：
+]]
+EventCallDispatcher.NewDayAcrriveLogOutExp = function (sysarg,arg)
+  local yExp = arg[1]     --获取昨天 所得经验
+  local level =  LActor.getIntProperty(sysarg,PROP_LEVEL)
+	local DaymaxExp = ExpUpLmtEveryDay[level]                          --读取当前等级能获到的经验最大值
+	if DaymaxExp == nil then return end
+	local logoutExp = 0
+	local MaxLevel = table.getn(ExpUpLmtEveryDay)    --领取最大等级限制
+	if level > MaxLevel then return end
+	DaymaxExp = ExpUpLmtEveryDay[level]  --获取每日经验限制
+	--upExp = LevelUpExp[level+1]    --获取每日升级经验
+	if DaymaxExp - yExp <= 0 then      --判断是否超过最大经验
+	 logoutExp = logoutExp + 0
+	else
+	 logoutExp = math.floor(logoutExp + (DaymaxExp - yExp)*(LogOutExp.EXPRATE))  --计算离线当日经验奖励
+	end 
+	--发送给客户端
+	sendToClient(sysarg, logoutExp, false)
+end 
+
+
+                                              
+--EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, EventCallDispatcher.GetLogOutExpToClient)
+--EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, EventCallDispatcher.NewDayAcrriveLogOutExp)

@@ -1,0 +1,911 @@
+DayPlotMonsterConfig = {
+	[201] = { -- 关卡怪物配置及剧情播放配置
+		enterPos = { 7, 43, }, -- 进入副本的初始坐标
+		beganJuQingKey = "juqing-ix001", -- 开场剧情
+		endedJuQingKey = "juqing-ix002", -- 结束剧情
+		blockArea = {{8,10,48,50},{11,13,46,48},{14,16,44,46},{29,31,38,40},{32,34,36,38},{35,37,34,36},{38,40,32,34},},
+		monsterList = {
+				[1] = { -- 波数
+					{
+						monsterId = 300, -- 怪物ID
+						monsterNum = 8, -- 怪物数量
+						
+						position = { 11, 20, 35, 39 },-- x1, x2, y1, y2
+					},
+				},
+				[2] = { -- 波数
+					{
+						monsterId = 300, -- 怪物ID
+						monsterNum = 8, -- 怪物数量
+						position = { 20, 29, 31, 35 },-- x1, x2, y1, y2
+					},
+				},
+				[3] = { -- 波数
+					{
+						monsterId = 300, -- 怪物ID
+						monsterNum = 8, -- 怪物数量
+						position = { 30, 38, 26, 29 },-- x1, x2, y1, y2
+					},
+				},
+				[4] = { -- 波数
+					{
+						monsterId = 301, -- 怪物ID
+						monsterNum = 1, -- 怪物数量
+						position = { 41, 41, 12, 12 },-- x1, x2, y1, y2
+					},
+					{
+						monsterId = 302, -- 怪物ID
+						monsterNum = 1, -- 怪物数量
+						position = { 43, 43, 13, 13 },-- x1, x2, y1, y2
+					},
+				},
+		},
+	},
+
+	[202] = { -- 关卡怪物配置及剧情播放配置
+		enterPos = { 82, 66, }, -- 进入副本的初始坐标
+		beganJuQingKey = "juqing-ix003", -- 开场剧情
+		endedJuQingKey = "juqing-ix004", -- 结束剧情
+		blockArea = {{57,113,75,75},{28,45,38,42},{46,51,38,40}},
+		monsterList = {
+			[1] = { -- 波数
+				{
+					monsterId = 303, -- 怪物ID
+					monsterNum = 8, -- 怪物数量
+					position = { 71, 80, 56, 62 }, -- x1, x2, y1, y2
+				},
+			},
+			[2] = { -- 波数
+				{
+					monsterId = 304, -- 怪物ID
+					monsterNum = 8, -- 怪物数量
+					position = { 59, 68, 55, 61 }, -- x1, x2, y1, y2
+				},
+			},
+			[3] = { -- 波数
+				{
+					monsterId = 305, -- 怪物ID
+					monsterNum = 1, -- 怪物数量
+						position = { 50, 50, 49, 49 }, -- x1, x2, y1, y2
+				},
+			},
+			[4] = { -- 波数
+				{
+					monsterId = 306, -- 怪物ID
+					monsterNum = 1, -- 怪物数量
+					position = { 39, 39, 52, 52 }, -- x1, x2, y1, y2
+				},
+			},
+		},
+	},
+
+	[203] = { -- 关卡怪物配置及剧情播放配置
+		enterPos = { 24, 29, }, -- 进入副本的初始坐标
+		beganJuQingKey = "juqing-ix005", -- 开场剧情
+		endedJuQingKey = "juqing-ix006", -- 结束剧情
+		blockArea = {{42,48,56,59},},
+		monsterList = {
+			[1] = { -- 波数
+				{
+					monsterId = 307, -- 怪物ID
+					monsterNum = 8, -- 怪物数量
+					position = { 29, 34, 31, 36 }, -- x1, x2, y1, y2
+				},
+			},
+			[2] = { -- 波数
+				{
+					monsterId = 308, -- 怪物ID
+					monsterNum = 8, -- 怪物数量
+					position = { 35, 40, 37, 42 }, -- x1, x2, y1, y2
+				},
+			},
+			[3] = { -- 波数
+				{
+					monsterId = 309, -- 怪物ID
+					monsterNum = 1, -- 怪物数量
+						position = { 39, 39, 44, 44 }, -- x1, x2, y1, y2
+				},
+			},
+
+		},
+	},	
+
+	[204] = { -- 关卡怪物配置及剧情播放配置
+		enterPos = { 86, 44, }, -- 进入副本的初始坐标
+		beganJuQingKey = "juqing-ix007", -- 开场剧情
+		endedJuQingKey = "juqing-ix008", -- 结束剧情
+		blockArea = {{70,72,69,75},},
+		monsterList = {
+			[1] = { -- 波数
+				{
+					monsterId = 310, -- 怪物ID
+					monsterNum = 8, -- 怪物数量
+					position = { 73, 78, 34, 39 }, -- x1, x2, y1, y2
+				},
+			},
+			[2] = { -- 波数
+				{
+					monsterId = 311, -- 怪物ID
+					monsterNum = 8, -- 怪物数量
+					position = { 87, 92, 31, 36 }, -- x1, x2, y1, y2
+				},
+			},
+			[3] = { -- 波数
+				{
+					monsterId = 312, -- 怪物ID
+					monsterNum = 1, -- 怪物数量
+						position = { 81, 81, 30, 30 }, -- x1, x2, y1, y2
+				},
+			},
+
+		},
+	},
+
+	[205] = { -- 关卡怪物配置及剧情播放配置
+		enterPos = { 92, 52, }, -- 进入副本的初始坐标
+		beganJuQingKey = "juqing-ix009", -- 开场剧情
+		endedJuQingKey = "juqing-ix010", -- 结束剧情
+		blockArea = {{89,96,55,57},},
+		monsterList = {
+			[1] = { -- 波数
+				{
+					monsterId = 313, -- 怪物ID
+					monsterNum = 8, -- 怪物数量
+					position = { 88, 97, 44, 50 }, -- x1, x2, y1, y2
+				},
+			},
+			[2] = { -- 波数
+				{
+					monsterId = 313, -- 怪物ID
+					monsterNum = 8, -- 怪物数量
+					position = { 67, 75, 40, 44 }, -- x1, x2, y1, y2
+				},
+			},
+			[3] = { -- 波数
+				{
+					monsterId = 314, -- 怪物ID
+					monsterNum = 8, -- 怪物数量
+						position = { 75, 82, 30, 35 }, -- x1, x2, y1, y2
+				},
+			},
+			[4] = { -- 波数
+				{
+					monsterId = 315, -- 怪物ID
+					monsterNum = 1, -- 怪物数量
+					position = { 83, 83, 26, 26 }, -- x1, x2, y1, y2
+				},
+			},
+		},
+	},
+
+	[206] = { -- 关卡怪物配置及剧情播放配置
+		enterPos = { 15, 67, }, -- 进入副本的初始坐标
+		beganJuQingKey = "juqing-ix011", -- 开场剧情
+		endedJuQingKey = "juqing-ix012", -- 结束剧情
+		blockArea = {{13,19,78,79},{41,75,70,71},{14,16,39,39},},
+		monsterList = {
+			[1] = { -- 波数
+				{
+					monsterId = 316, -- 怪物ID
+					monsterNum = 8, -- 怪物数量
+					position = { 9, 19, 57, 61 }, -- x1, x2, y1, y2
+				},
+			},
+			[2] = { -- 波数
+				{
+					monsterId = 316, -- 怪物ID
+					monsterNum = 8, -- 怪物数量
+					position = { 20, 30, 44, 49 }, -- x1, x2, y1, y2
+				},
+			},
+			[3] = { -- 波数
+				{
+					monsterId = 317, -- 怪物ID
+					monsterNum = 1, -- 怪物数量
+						position = { 34, 43, 45, 50 }, -- x1, x2, y1, y2
+				},
+				{
+					monsterId = 316, -- 怪物ID
+					monsterNum = 4, -- 怪物数量
+						position = { 34, 43, 45, 50 }, -- x1, x2, y1, y2
+				},
+			},
+			[4] = { -- 波数
+				{
+					monsterId = 318, -- 怪物ID
+					monsterNum = 1, -- 怪物数量
+					position = { 53, 53, 46, 46 }, -- x1, x2, y1, y2
+				},
+			},
+		},
+	},
+
+	[207] = { -- 关卡怪物配置及剧情播放配置
+		enterPos = {61,55}, -- 进入副本的初始坐标
+		beganJuQingKey = "juqing-ix013", -- 开场剧情
+		endedJuQingKey = "juqing-ix014", -- 结束剧情
+		blockArea = {{25,96,60,60},{38,49,25,25}},
+		monsterList = {
+			[1] = { -- 波数
+				{
+					monsterId = 319, -- 怪物ID
+					monsterNum = 8, -- 怪物数量
+					position = { 46, 55, 47, 52 }, -- x1, x2, y1, y2
+				},
+			},
+			[2] = { -- 波数
+				{
+					monsterId = 320, -- 怪物ID
+					monsterNum = 8, -- 怪物数量
+					position = { 38, 46, 35, 41 }, -- x1, x2, y1, y2
+				},
+			},
+			[3] = { -- 波数
+				{
+					monsterId = 321, -- 怪物ID
+					monsterNum = 1, -- 怪物数量
+						position = { 25, 25, 32, 32 }, -- x1, x2, y1, y2
+				},
+			},
+			[4] = { -- 波数
+				{
+					monsterId = 322, -- 怪物ID
+					monsterNum = 1, -- 怪物数量
+					position = { 16, 16, 26, 26 }, -- x1, x2, y1, y2
+				},
+			},
+		},
+	},		
+
+	[208] = { -- 关卡怪物配置及剧情播放配置
+		enterPos = { 45, 76, }, -- 进入副本的初始坐标
+		beganJuQingKey = "juqing-ix015", -- 开场剧情
+		endedJuQingKey = "juqing-ix016", -- 结束剧情
+		blockArea = {{50,51,57,63},},
+		monsterList = {
+			[1] = { -- 波数
+				{
+					monsterId = 323, -- 怪物ID
+					monsterNum = 8, -- 怪物数量
+					position = { 33, 38, 71, 76 }, -- x1, x2, y1, y2
+				},
+			},
+			[2] = { -- 波数
+				{
+					monsterId = 324, -- 怪物ID
+					monsterNum = 2, -- 怪物数量
+					position = { 30, 33, 58, 61 }, -- x1, x2, y1, y2
+				},
+			},
+			[3] = { -- 波数
+				{
+					monsterId = 325, -- 怪物ID
+					monsterNum = 1, -- 怪物数量
+						position = { 23, 23, 55, 55 }, -- x1, x2, y1, y2
+				},
+			},
+
+		},
+	},
+
+	[209] = { -- 关卡怪物配置及剧情播放配置
+		enterPos = { 95, 11, }, -- 进入副本的初始坐标
+		beganJuQingKey = "juqing-ix017", -- 开场剧情
+		endedJuQingKey = "juqing-ix018", -- 结束剧情
+		blockArea = {{33,34,27,34},{93,102,29,30}},
+		monsterList = {
+			[1] = { -- 波数
+				{
+					monsterId = 326, -- 怪物ID
+					monsterNum = 8, -- 怪物数量
+					position = { 83, 92, 9, 13 }, -- x1, x2, y1, y2
+				},
+			},
+			[2] = { -- 波数
+				{
+					monsterId = 326, -- 怪物ID
+					monsterNum = 4, -- 怪物数量
+					position = { 72, 81, 9, 12 }, -- x1, x2, y1, y2
+				},
+				{
+					monsterId = 328, -- 怪物ID
+					monsterNum = 1, -- 怪物数量
+					position = { 72, 81, 9, 12 }, -- x1, x2, y1, y2
+				},
+			},
+			[3] = { -- 波数
+				{
+					monsterId = 327, -- 怪物ID
+					monsterNum = 8, -- 怪物数量
+						position = { 39, 48, 20, 24 }, -- x1, x2, y1, y2
+				},
+			},
+			[4] = { -- 波数
+				{
+					monsterId = 329, -- 怪物ID
+					monsterNum = 1, -- 怪物数量
+					position = { 33, 33, 19, 19 }, -- x1, x2, y1, y2
+				},
+			},
+		},
+	},	
+
+	[210] = { -- 关卡怪物配置及剧情播放配置
+		enterPos = { 24, 81, }, -- 进入副本的初始坐标
+		beganJuQingKey = "juqing-ix019", -- 开场剧情
+		endedJuQingKey = "juqing-ix020", -- 结束剧情
+		blockArea = {{33,66,44,44},{33,33,44,55},{2,33,55,55},{2,2,55,86},{2,66,86,86},{66,66,44,86}},
+		monsterList = {
+			[1] = { -- 波数
+				{
+					monsterId = 330, -- 怪物ID
+					monsterNum = 8, -- 怪物数量
+					position = { 22, 35, 69, 75 }, -- x1, x2, y1, y2
+				},
+			},
+			[2] = { -- 波数
+				{
+					monsterId = 331, -- 怪物ID
+					monsterNum = 2, -- 怪物数量
+					position = { 48, 55, 54, 58 }, -- x1, x2, y1, y2
+				},
+			},
+			[3] = { -- 波数
+				{
+					monsterId = 332, -- 怪物ID
+					monsterNum = 1, -- 怪物数量
+						position = { 59, 59, 52, 52 }, -- x1, x2, y1, y2
+				},
+			},
+		},
+	},	
+	[211] = { -- 关卡怪物配置及剧情播放配置
+		enterPos = { 50, 57 }, -- 进入副本的初始坐标
+		beganJuQingKey = "juqing-ix021", -- 开场剧情
+		endedJuQingKey = "juqing-ix022", -- 结束剧情
+		blockArea = {{70,64,74,74},{63,44,65,53},},
+		monsterList = {
+			[1] = { -- 波数
+				{
+					monsterId = 333, -- 怪物ID
+					monsterNum = 8, -- 怪物数量
+					position = { 47, 52, 54, 62 }, -- x1, x2, y1, y2
+				},
+			},
+			[2] = { -- 波数
+				{
+					monsterId = 334, -- 怪物ID
+					monsterNum = 2, -- 怪物数量
+					position = { 17, 17, 45, 54 }, -- x1, x2, y1, y2
+				},
+			},
+			[3] = { -- 波数
+				{
+					monsterId = 335, -- 怪物ID
+					monsterNum = 1, -- 怪物数量
+						position = { 40, 40, 22, 27 }, -- x1, x2, y1, y2
+				},
+			},
+		},
+	},
+
+	[212] = { -- 关卡怪物配置及剧情播放配置
+		enterPos = { 44, 55 }, -- 进入副本的初始坐标
+		beganJuQingKey = "juqing-ix023", -- 开场剧情
+		endedJuQingKey = "juqing-ix024", -- 结束剧情
+		blockArea = {{47,55,40,45},},
+		monsterList = {
+			[1] = { -- 波数
+				{
+					monsterId = 336, -- 怪物ID
+					monsterNum = 8, -- 怪物数量
+					position = { 29, 34, 48, 53 }, -- x1, x2, y1, y2
+				},
+			},
+			[2] = { -- 波数
+				{
+					monsterId = 337, -- 怪物ID武
+					monsterNum = 2, -- 怪物数量
+					position = { 18, 23, 43, 48 }, -- x1, x2, y1, y2
+				},
+				{
+					monsterId = 338, -- 怪物ID文
+					monsterNum = 2, -- 怪物数量
+					position = { 18, 23, 43, 48 }, -- x1, x2, y1, y2
+				},
+				{
+					monsterId = 339, -- 怪物ID
+					monsterNum = 1, -- 怪物数量
+					position = { 12, 12, 44, 44 }, -- x1, x2, y1, y2
+				},
+				{
+					monsterId = 340, -- 怪物ID
+					monsterNum = 1, -- 怪物数量
+					position = { 22, 22, 39, 39 }, -- x1, x2, y1, y2
+				},
+			},
+			[3] = { -- 波数
+				{
+					monsterId = 341, -- 怪物ID
+					monsterNum = 1, -- 怪物数量
+						position = { 11, 11, 35, 35 }, -- x1, x2, y1, y2
+				},
+			},
+		},
+	},
+
+	[213] = { -- 关卡怪物配置及剧情播放配置
+		enterPos = { 51, 62 }, -- 进入副本的初始坐标
+		beganJuQingKey = "juqing-ix025", -- 开场剧情
+		endedJuQingKey = "juqing-ix026", -- 结束剧情
+		blockArea = {{28,34,36,41},{26,30,43,56},{66,72,65,70},},
+		monsterList = {
+			[1] = { -- 波数
+				{
+					monsterId = 342, -- 怪物ID
+					monsterNum = 8, -- 怪物数量
+					position = { 48,53,53,58 }, -- x1, x2, y1, y2
+				},
+			},
+			[2] = { -- 波数
+				{
+					monsterId = 343, -- 怪物ID武
+					monsterNum = 4, -- 怪物数量
+					position = { 58, 63, 49, 54 }, -- x1, x2, y1, y2
+				},
+
+			},
+			[3] = { -- 波数
+				{
+					monsterId = 344, -- 怪物ID
+					monsterNum = 1, -- 怪物数量
+						position = { 65, 65, 47, 47 }, -- x1, x2, y1, y2
+				},
+			},
+		},
+	},
+
+
+
+	[214] = { -- 关卡怪物配置及剧情播放配置
+		enterPos = { 125, 115, }, -- 进入副本的初始坐标
+		beganJuQingKey = "juqing-ix027", -- 开场剧情
+		endedJuQingKey = "juqing-ix028", -- 结束剧情
+		blockArea = {{129,135,102,106},{140,146,107,110},{140,146,107,110},{93,94,123,127},{87,96,93,96},{66,68,83,85},{69,71,85,87},{72,75,67,88},{35,46,81,82},},
+		monsterList = {
+			[1] = { -- 波数
+				{
+					monsterId = 345, -- 怪物ID
+					monsterNum = 8, -- 怪物数量
+					position = { 111, 119, 109, 112 }, -- x1, x2, y1, y2
+				},
+			},
+			[2] = { -- 波数
+				{
+					monsterId = 345, -- 怪物ID
+					monsterNum = 8, -- 怪物数量
+					position = { 95, 104, 103, 107 }, -- x1, x2, y1, y2
+				},
+			},
+			[3] = { -- 波数
+				{
+					monsterId = 346, -- 怪物ID
+					monsterNum = 8, -- 怪物数量
+						position = { 62, 70, 93, 97 }, -- x1, x2, y1, y2
+				},
+			},
+			[4] = { -- 波数
+				{
+					monsterId = 347, -- 怪物ID
+					monsterNum = 1, -- 怪物数量
+					position = { 57, 57, 91, 91 }, -- x1, x2, y1, y2
+				},
+			},
+		},
+	},	
+
+	[215] = { -- 关卡怪物配置及剧情播放配置
+		enterPos = { 58, 85, }, -- 进入副本的初始坐标
+		beganJuQingKey = "juqing-ix029", -- 开场剧情
+		endedJuQingKey = "juqing-ix030", -- 结束剧情
+		blockArea = {{54,54,70,97},{99,113,62,62},},
+		monsterList = {
+			[1] = { -- 波数
+				{
+					monsterId = 348, -- 怪物ID
+					monsterNum = 8, -- 怪物数量
+					position = { 67, 78, 77, 85 }, -- x1, x2, y1, y2
+				},
+			},
+			[2] = { -- 波数
+				{
+					monsterId = 349, -- 怪物ID
+					monsterNum = 1, -- 怪物数量
+					position = { 91, 91, 79, 79 }, -- x1, x2, y1, y2
+				},
+			},
+			[3] = { -- 波数
+				{
+					monsterId = 350, -- 怪物ID
+					monsterNum = 1, -- 怪物数量
+						position = { 99, 99, 75, 75 }, -- x1, x2, y1, y2
+				},
+			},
+			[4] = { -- 波数
+				{
+					monsterId = 351, -- 怪物ID
+					monsterNum = 1, -- 怪物数量
+					position = { 104, 104, 67, 67 }, -- x1, x2, y1, y2
+				},
+			},
+		},
+	},
+	[216] = { -- 关卡怪物配置及剧情播放配置
+		enterPos = { 42, 28, }, -- 进入副本的初始坐标
+		beganJuQingKey = "juqing-ix031", -- 开场剧情
+		endedJuQingKey = "juqing-ix032", -- 结束剧情
+		blockArea = {{15,35,53,51},},
+		monsterList = {
+			[1] = { -- 波数
+				{
+					monsterId = 352, -- 怪物ID
+					monsterNum = 8, -- 怪物数量
+					position = { 37, 43, 26, 29 }, -- x1, x2, y1, y2
+				},
+				{
+					monsterId = 353, -- 怪物ID
+					monsterNum = 2, -- 怪物数量
+					position = { 37, 43, 26, 29 }, -- x1, x2, y1, y2
+				},
+			},
+			[2] = { -- 波数
+				{
+					monsterId = 354, -- 怪物ID
+					monsterNum = 1, -- 怪物数量
+					position = { 12, 18, 35, 39 }, -- x1, x2, y1, y2
+				},
+			},
+		},
+	},
+	[217] = { -- 关卡怪物配置及剧情播放配置
+		enterPos = { 32, 50, }, -- 进入副本的初始坐标
+		beganJuQingKey = "juqing-ix033", -- 开场剧情
+		endedJuQingKey = "juqing-ix034", -- 结束剧情
+		blockArea = {{15,35,53,51},},
+		monsterList = {
+			[1] = { -- 波数
+				{
+					monsterId = 355, -- 怪物ID
+					monsterNum = 8, -- 怪物数量
+					position = {38,47,47,52 }, -- x1, x2, y1, y2
+				},
+				{
+					monsterId = 356, -- 怪物ID
+					monsterNum = 2, -- 怪物数量
+					position = {38,47,47,52 }, -- x1, x2, y1, y2
+				},
+			},
+			[2] = { -- 波数
+				{
+					monsterId = 357, -- 怪物ID
+					monsterNum = 1, -- 怪物数量
+					position = {53,53,58,58}, -- x1, x2, y1, y2
+				},
+			},
+		},
+	},
+	[218] = { -- 关卡怪物配置及剧情播放配置
+		enterPos = { 6, 28, }, -- 进入副本的初始坐标
+		beganJuQingKey = "juqing-ix035", -- 开场剧情
+		endedJuQingKey = "juqing-ix036", -- 结束剧情
+		blockArea = {{42,47,70,71},{68,69,51,68},},
+		monsterList = {
+			[1] = { -- 波数
+				{
+					monsterId = 358, -- 怪物ID
+					monsterNum = 8, -- 怪物数量
+					position = { 9, 21, 34, 38 }, -- x1, x2, y1, y2
+				},
+			},
+			[2] = { -- 波数
+				{
+					monsterId = 358, -- 怪物ID
+					monsterNum = 8, -- 怪物数量
+					position = { 18, 31, 49, 54 }, -- x1, x2, y1, y2
+				},
+			},
+			[3] = { -- 波数
+				{
+					monsterId = 358, -- 怪物ID
+					monsterNum = 4, -- 怪物数量
+						position = { 35, 48, 56, 61 }, -- x1, x2, y1, y2
+				},
+				{
+					monsterId = 359, -- 怪物ID
+					monsterNum = 2, -- 怪物数量
+						position = { 35, 48, 56, 61 }, -- x1, x2, y1, y2
+				},
+			},
+			[4] = { -- 波数
+				{
+					monsterId = 360, -- 怪物ID
+					monsterNum = 1, -- 怪物数量
+					position = { 57, 57, 60, 60 }, -- x1, x2, y1, y2
+				},
+			},
+		},
+	},	
+
+	[219] = { -- 关卡怪物配置及剧情播放配置
+		enterPos = { 23, 10, }, -- 进入副本的初始坐标
+		beganJuQingKey = "juqing-ix037", -- 开场剧情
+		endedJuQingKey = "juqing-ix038", -- 结束剧情
+		blockArea = {{9,13,44,45},},
+		monsterList = {
+			[1] = { -- 波数
+				{
+					monsterId = 361, -- 怪物ID
+					monsterNum = 8, -- 怪物数量
+					position = { 39, 47, 13, 17 }, -- x1, x2, y1, y2
+				},
+			},
+			[2] = { -- 波数
+				{
+					monsterId = 361, -- 怪物ID
+					monsterNum = 4, -- 怪物数量
+						position = { 27, 35, 25, 28 }, -- x1, x2, y1, y2
+				},
+				{
+					monsterId = 362, -- 怪物ID
+					monsterNum = 2, -- 怪物数量
+						position = { 27, 35, 25, 28 }, -- x1, x2, y1, y2
+				},
+			},
+			[3] = { -- 波数
+				{
+					monsterId = 361, -- 怪物ID
+					monsterNum = 4, -- 怪物数量
+					position = { 21, 25, 30, 34 }, -- x1, x2, y1, y2
+				},
+
+				{
+					monsterId = 363, -- 怪物ID
+					monsterNum = 1, -- 怪物数量
+					position = { 23, 23, 32, 32 }, -- x1, x2, y1, y2
+				},
+			},
+		},
+	},
+
+	[220] = { -- 关卡怪物配置及剧情播放配置
+		enterPos = {43,65 }, -- 进入副本的初始坐标
+		beganJuQingKey = "juqing-ix039", -- 开场剧情
+		endedJuQingKey = "juqing-ix040", -- 结束剧情
+		blockArea = {{23,26,26,28},{86,94,65,68},},
+		monsterList = {
+			[1] = { -- 波数
+				{
+					monsterId = 364, -- 怪物ID
+					monsterNum = 8, -- 怪物数量
+					position = { 46,50,58,63 }, -- x1, x2, y1, y2
+				},
+			},
+			[2] = { -- 波数
+				{
+					monsterId = 365, -- 怪物ID
+					monsterNum = 2, -- 怪物数量
+						position = { 50,54,55,59 }, -- x1, x2, y1, y2
+				},
+
+			},
+			[3] = { -- 波数
+				{
+					monsterId = 366, -- 怪物ID
+					monsterNum = 1, -- 怪物数量
+					position = {45,45,50,50 }, -- x1, x2, y1, y2
+				},
+
+			},
+		},
+	},
+	[221] = { -- 关卡怪物配置及剧情播放配置
+		enterPos = { 60, 51, }, -- 进入副本的初始坐标
+		beganJuQingKey = "juqing-ix041", -- 开场剧情
+		endedJuQingKey = "juqing-ix042", -- 结束剧情
+		blockArea = {{21,33,34,35},{73,78,71,72},{95,103,28,29},},
+		monsterList = {
+			[1] = { -- 波数
+				{
+					monsterId = 367, -- 怪物ID
+					monsterNum = 8, -- 怪物数量
+					position = { 43, 53, 52, 56 }, -- x1, x2, y1, y2
+				},
+			},
+			[2] = { -- 波数
+				{
+					monsterId = 367, -- 怪物ID
+					monsterNum = 8, -- 怪物数量
+						position = { 28, 38, 49, 53 }, -- x1, x2, y1, y2
+				},
+			},
+			[3] = { -- 波数
+				{
+					monsterId = 368, -- 怪物ID
+					monsterNum = 2, -- 怪物数量
+					position = { 14, 22, 46, 49 }, -- x1, x2, y1, y2
+				},
+
+				{
+					monsterId = 369, -- 怪物ID
+					monsterNum = 1, -- 怪物数量
+					position = { 18, 18, 47, 47 }, -- x1, x2, y1, y2
+				},
+			},
+		},
+	},
+
+	[223] = { -- 关卡怪物配置及剧情播放配置
+		enterPos = { 55, 45, }, -- 进入副本的初始坐标
+		beganJuQingKey = "juqing-ix045", -- 开场剧情
+		endedJuQingKey = "juqing-ix046", -- 结束剧情
+		blockArea = {{41,75,70,71},{13,19,78,79},{14,16,38,39},},
+		monsterList = {
+			[1] = { -- 波数
+				{
+					monsterId = 373, -- 怪物ID
+					monsterNum = 8, -- 怪物数量
+					position = { 37, 49, 46, 51 }, -- x1, x2, y1, y2
+				},
+			},
+			[2] = { -- 波数
+				{
+					monsterId = 373, -- 怪物ID
+					monsterNum = 4, -- 怪物数量
+						position = { 10, 21, 50, 56 }, -- x1, x2, y1, y2
+				},
+
+				{
+					monsterId = 374, -- 怪物ID
+					monsterNum = 2, -- 怪物数量
+					position = { 10, 21, 50, 56 }, -- x1, x2, y1, y2
+				},
+			},
+			[3] = { -- 波数
+				{
+					monsterId = 373, -- 怪物ID
+					monsterNum = 2, -- 怪物数量
+					position = { 14, 21, 63, 69 }, -- x1, x2, y1, y2
+				},
+				{
+					monsterId = 375, -- 怪物ID
+					monsterNum = 1, -- 怪物数量
+					position = { 17, 17, 66, 66 }, -- x1, x2, y1, y2
+				},
+			},
+		},
+	},
+
+	[224] = { -- 关卡怪物配置及剧情播放配置
+		enterPos = { 40, 37, }, -- 进入副本的初始坐标
+		beganJuQingKey = "juqing-ix047", -- 开场剧情
+		endedJuQingKey = "juqing-ix048", -- 结束剧情
+		blockArea = {},
+		monsterList = {
+			[1] = { -- 波数
+				{
+					monsterId = 376, -- 怪物ID
+					monsterNum = 8, -- 怪物数量
+					position = { 27, 35, 30, 34 }, -- x1, x2, y1, y2
+				},
+			},
+			[2] = { -- 波数
+				{
+					monsterId = 376, -- 怪物ID
+					monsterNum = 6, -- 怪物数量
+						position = { 24, 33, 23, 27 }, -- x1, x2, y1, y2
+				},
+				{
+					monsterId = 377, -- 怪物ID
+					monsterNum = 2, -- 怪物数量
+					position = { 24, 33, 23, 27 }, -- x1, x2, y1, y2
+				},
+			},
+			[3] = { -- 波数
+				{
+					monsterId = 376, -- 怪物ID
+					monsterNum = 4, -- 怪物数量
+					position = { 6, 10, 10, 12 }, -- x1, x2, y1, y2
+				},
+
+				{
+					monsterId = 378, -- 怪物ID
+					monsterNum = 1, -- 怪物数量
+					position = { 8, 8, 11, 11 }, -- x1, x2, y1, y2
+				},
+			},
+		},
+	},	
+
+	[225] = { -- 关卡怪物配置及剧情播放配置
+		enterPos = { 36, 35, }, -- 进入副本的初始坐标
+		beganJuQingKey = "juqing-ix049", -- 开场剧情
+		endedJuQingKey = "juqing-ix050", -- 结束剧情
+		blockArea = {{38,44,26,28},{88,105,77,78},},
+		monsterList = {
+			[1] = { -- 波数
+				{
+					monsterId = 379, -- 怪物ID
+					monsterNum = 8, -- 怪物数量
+					position = { 45, 54, 45, 49 }, -- x1, x2, y1, y2
+				},
+			},
+			[2] = { -- 波数
+				{
+					monsterId = 380, -- 怪物ID
+					monsterNum = 6, -- 怪物数量
+						position = { 59, 67, 52, 56 }, -- x1, x2, y1, y2
+				},
+				{
+					monsterId = 381, -- 怪物ID
+					monsterNum = 2, -- 怪物数量
+					position = { 59, 67, 52, 56 }, -- x1, x2, y1, y2
+				},
+			},
+			[3] = { -- 波数
+				{
+					monsterId = 380, -- 怪物ID
+					monsterNum = 4, -- 怪物数量
+					position = { 69, 76, 58, 62 }, -- x1, x2, y1, y2
+				},
+
+				{
+					monsterId = 382, -- 怪物ID
+					monsterNum = 1, -- 怪物数量
+					position = { 72, 72, 60, 60 }, -- x1, x2, y1, y2
+				},
+			},
+		},
+	},	
+
+	[226] = { -- 关卡怪物配置及剧情播放配置
+		enterPos = { 98, 66, }, -- 进入副本的初始坐标
+		beganJuQingKey = "juqing-ix051", -- 开场剧情
+		endedJuQingKey = "juqing-ix052", -- 结束剧情
+		blockArea = {{76,77,73,81},},
+		monsterList = {
+			[1] = { -- 波数
+				{
+					monsterId = 383, -- 怪物ID
+					monsterNum = 8, -- 怪物数量
+					position = { 91, 98, 69, 73 }, -- x1, x2, y1, y2
+				},
+			},
+			[2] = { -- 波数
+				{
+					monsterId = 384, -- 怪物ID
+					monsterNum = 4, -- 怪物数量
+						position = { 85, 93, 79, 84 }, -- x1, x2, y1, y2
+				},
+				{
+					monsterId = 383, -- 怪物ID
+					monsterNum = 4, -- 怪物数量
+					position = { 85, 93, 79, 84 }, -- x1, x2, y1, y2
+				},
+			},
+			[3] = { -- 波数
+				{
+					monsterId = 384, -- 怪物ID
+					monsterNum = 2, -- 怪物数量
+					position = { 91, 97, 90, 94 }, -- x1, x2, y1, y2
+				},
+
+				{
+					monsterId = 385, -- 怪物ID
+					monsterNum = 1, -- 怪物数量
+					position = { 94, 94, 92, 92 }, -- x1, x2, y1, y2
+				},
+			},
+		},
+	},	
+
+}

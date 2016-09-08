@@ -1,0 +1,34 @@
+﻿{
+	cangiveup = false,
+	nextacceptqid = 0,
+	timelimit = 0,
+	conds = {
+		{
+			id = 0,
+			type = 0,
+			count = 61,
+		},
+	},
+	target = {
+		{
+			id = 0,
+			type = 4,
+			count = 62,
+		},
+	},
+	autofinish = true,
+	excludetree = true,
+	timeoutcleardata = false,
+	awards = {
+	},
+	id = 4035,
+	commitjuqingkey = "none",
+	maxcount = 1,
+	acceptjuqingkey = "none",
+	name = Lang.Quest.n4035,
+	parentid = -1,
+	type = 0,
+	finishNext = true,
+	content = Lang.Quest.d4035,
+	interval = 0,
+},

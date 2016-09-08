@@ -1,0 +1,54 @@
+﻿-- 限时商店配置
+--#include "..\..\language\LangCode.txt" once
+
+LimitShop = {
+	activityid = 29,
+	times = {
+		-- 测试
+		--sjTime = { { 2013, 11, 1, 0, 0, 0 }, { 2013,11, 15, 23, 59, 59 }, }, -- 服务器ID,开始时间和结束时间, 年月日时分秒
+	},
+	refreshTime = 7200 * 2, -- 刷新时间(秒)
+	refreshCount = 20, -- 刷新次数 -- 不限制的就配个0
+	refreshCost = 20, -- 刷新需要的天珠数
+
+	--限制购买数量
+	--{itemid = [物品ID],limit=[全服限制数量],rate=[概率（注意此处的概率一定要和下面的一直）]}
+	limits = {
+				{itemid = 34942, limit = 3,rate = 2},
+				{itemid = 48265, limit = 6,rate = 7},
+				{itemid = 48271, limit = 6,rate = 7},
+
+             },
+
+            
+	xb = { -- 仙币库
+		{ itemid = 18711, cost = 45000, oricost = 36,  rate = 8, limit = 1, broadcast=false },	--中级强化石
+		{ itemid = 18720, cost = 22500, oricost = 18,  rate = 8, limit = 1, broadcast=false },	--中级保护符
+		{ itemid = 18616, cost = 72000, oricost = 72,  rate = 8, limit = 1, broadcast=true }, --3级宝石
+		{ itemid = 18612, cost = 40000, oricost = 58,  rate = 8, limit = 1, broadcast=false }, --坐骑口粮
+		{ itemid = 18604, cost = 31250, oricost = 38,  rate = 8, limit = 1, broadcast=false }, --中级美人玉
+		{ itemid = 18635, cost = 50000, oricost = 58,  rate = 10, limit = 1, broadcast=true },  --高级化羽技能书
+		{ itemid = 28221, cost = 48000, oricost = 48,  rate = 8, limit = 1, broadcast=false }, --中级悟性丹
+		{ itemid = 28231, cost = 45000, oricost = 48,  rate = 8, limit = 1, broadcast=false },  --中级成长丹
+		{ itemid = 18606, cost = 12500, oricost = 10, rate = 8, limit = 1, broadcast=false }, --秦皇令
+		{ itemid = 18634, cost = 25000, oricost = 20,  rate = 10, limit = 1, broadcast=false },  --中级化羽技能书
+		{ itemid = 64751, cost = 25000, oricost = 28,  rate = 8, limit = 1, broadcast=false },--1000威望丹
+		{ itemid = 18629, cost = 35000, oricost = 48,  rate = 8, limit = 1, broadcast=false }, --三阶化羽丹
+	},
+	yb = { -- 天珠库
+		{ itemid = 18730, cost = 58,   oricost = 188,   rate = 11, limit = 1, broadcast=true }, --百炼钢
+		{ itemid = 18722, cost = 198,  oricost = 288,  rate = 7, limit = 1, broadcast=true },  --特级保护符
+		{ itemid = 18605, cost = 58,   oricost = 80,   rate = 10, limit = 1, broadcast=true }, --高级美人玉
+		{ itemid = 28222, cost = 48,   oricost = 88,   rate = 7, limit = 1, broadcast=false },  --高级悟性丹
+		{ itemid = 28232, cost = 48,   oricost = 88,   rate = 8, limit = 1, broadcast=false }, --高级成长丹
+		{ itemid = 18740, cost = 58,   oricost = 188,   rate = 8, limit = 1, broadcast=true }, --鎏金铜
+		{ itemid = 39607, cost = 98,   oricost = 188,  rate = 10, limit = 1, broadcast=true },--神圣秘籍经验丹
+		{ itemid = 34943, cost = 588,  oricost = 1288, rate = 8, limit = 1, broadcast=false }, --紫色秘籍
+		{ itemid = 34942, cost = 1988, oricost = 5888, rate = 2, limit = 1, broadcast=true }, --橙色秘籍
+		{ itemid = 18615, cost = 128,  oricost = 288,  rate = 11, limit = 1, broadcast=false },--4级宝石
+		{ itemid = 18614, cost = 498,  oricost = 988,  rate = 4, limit = 1, broadcast=true }, --5级宝石
+		{ itemid = 48265, cost = 298,  oricost = 888,  rate = 7, limit = 1, broadcast=true },  --300000灵气丹
+		{ itemid = 48278, cost = 288,  oricost = 888,  rate = 7, limit = 1, broadcast=true }, --2W威望丹
+		},
+}
+

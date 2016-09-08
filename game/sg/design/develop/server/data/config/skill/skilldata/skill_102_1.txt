@@ -1,0 +1,41 @@
+﻿--群体伤害-近程-冰剑特效
+{
+	desc=Lang.Skill.s40L1Desc,
+	iconID=1,
+	actRange=
+	{
+		{
+			angleRadius=5,
+			angleRange = 80,
+			rangeType=5,
+			rangeCenter=0,
+			acts=
+			{
+				{
+					conds=
+					{
+						{cond=13,value=true},
+					},
+					results=
+					{
+						{mj=0,timeParam=1,type=27,delay=200,value={rate=10000,value=0}},
+						{mj=0,timeParam=1,type=27,delay=900,value={rate=20000,value=0}},
+					},
+					specialEffects=
+					{
+						{type=2,mj=0,id=0,keepTime=0,delay=200,always=false},
+					},
+				},
+			},
+		},
+	},
+	trainConds=
+	{
+	},	
+	spellConds=
+	{
+		{cond=13,value=2,consume=false},
+	},
+	singTime=0,
+	cooldownTime=1000,
+},

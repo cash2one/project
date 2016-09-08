@@ -1,0 +1,84 @@
+﻿--成就例子1,完成30次帮派任务
+	{
+		groupId = 0,   --成就的分组ID 
+		groupname = Lang.AchieveName.groupName0001,
+--[[
+1：角色
+2：技能
+3：装备
+4：宝石
+5：功能
+6：坐骑
+7：翅膀
+8：伙伴
+9：法宝
+10：日常活动
+11：任务
+12：社交
+13：货币
+14：击杀
+15：VIP
+16：称号
+17：赤影传说
+18：其他
+--]]
+
+	    id = 1,								--成就id
+	    name = Lang.AchieveName.name0001,  	--成就名字
+		broadcast = false,          		--是否进行全服播报。true为全服可见,false为自己可见。
+
+		--[[
+		一个成就是由1个或多个成就事件触发完成的,
+		比如杀掉死亡之勾这个boss
+		4种生活技能中有3个达到3级
+		eventId: 成就事件,是achieveEvent.txt配置的id
+		count:    需要完成几次
+		--]]
+		conds = 
+		{ 
+			{ eventId = 0, count = 30 },		--表示完成0事件(帮派任务)30次
+		},
+		--成就奖励类型
+		--[[
+		//奖励类型
+		enum tagAwardType
+		{
+		    qatEquipment = 0,           //物品或者装备
+		    qatRootExp = 1,	            //灵气
+		    qatExp = 2,                	//角色经验值
+		    qatGuildContribution = 3,	//帮派贡献值
+		    qatZYContribution = 4,		//阵营贡献
+		    qatBindMoney = 5,           //绑定银两
+		    qatMoney = 6,	            //银两(取消)
+		    qatLiJin = 7,	            //绑定天珠(绑定天珠)
+		    qatTitle = 8,	            //称谓
+		    qatSkill = 9,	            //技能
+		    qatShengWang = 10,	        //威望
+		    qatAchievePoint = 11,       //成就点
+		    qatRenown = 12,              //历练
+		    qatPet = 13,                 //奖励宠物
+		    qatStone = 14,				// 帮派灵石
+		    qatYuanbao = 15,			// 天珠(天珠)
+		    qatHonor = 16,				//荣誉值
+			qatPassKey = 17,			//钥匙值
+		    qatCount ,					// 奖励个数
+
+		    qatCustomize = 127,		    //自定义奖励
+		};
+		--]]
+		--[[
+		完成成就的奖励
+		bind绑定；1为绑定,0为不绑定
+		job:表示能接受该奖励的玩家职业，1.天雷,2.蜀山,3.圆月,4.云华 默认的话是-1，可以不填，表示任何职业都可以
+		sex:表示能接受该奖励的玩家玩家的性别，默认的话是-1，可以不填，表示任何性别都可以，否则0表示男的，1表示女的
+		count:该类型奖励的数量
+		strong:强化，物品类型的奖励会用到
+		--]]
+
+		awards=
+		{
+			{ type = 11, id = 0, count = 20 },
+			{ type = 11, id = 0, count = 20 },
+			{ type = 11, id = 0, count = 20 },
+		},
+	},

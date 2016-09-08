@@ -1,0 +1,234 @@
+--战力排行榜
+--#include "data\config\misc\fightrankconfig.txt" once
+
+FightRankActivity = {}
+
+function FightRankActivity.getSystemVar()
+	local sysVar = System.getStaticVar()
+	if not sysVar then return end
+
+	if not sysVar.fightRankActivity then sysVar.fightRankActivity = {} end
+	return sysVar.fightRankActivity
+end
+
+--活动是否开启了
+function FightRankActivity.sendIsOpen(actor)
+	local sysVar = FightRankActivity.getSystemVar()
+	if not sysVar then return end
+
+	if actor then
+		local pack = DataPack.allocPacket(actor, BaseTypes.SystemId.timeRewardSystem, 135)
+		if not pack then return end
+
+		DataPack.writeByte(pack, sysVar.isInActivity or 0)
+
+		DataPack.flush(pack)
+	else
+		local pack = LDataPack.allocPacket()
+		if pack == nil then return end
+
+		LDataPack.writeByte(pack, BaseTypes.SystemId.timeRewardSystem)
+		LDataPack.writeByte(pack, 135)
+		LDataPack.writeByte(pack, sysVar.isInActivity or 0)
+
+		System.broadcastData(pack)
+	end
+end
+
+-- 发送前count名信息
+function FightRankActivity.sendInfo(actor, packet)
+	if not actor or not packet then return end
+
+	local count = DataPack.readInt(packet)
+
+	local sysVar = FightRankActivity.getSystemVar()
+	if not sysVar or not sysVar.isInActivity or not sysVar.actorRank or not sysVar.actorCount then return end
+
+	if sysVar.actorCount == 0 then
+		return
+	elseif sysVar.actorCount < count then
+		count = sysVar.actorCount
+	end
+
+	local pack = DataPack.allocPacket(actor, BaseTypes.SystemId.timeRewardSystem, 134)
+	if pack == nil then return end
+
+	DataPack.writeByte(pack, count)
+	for i = 1, count do
+		if sysVar.actorRank[i] then
+			DataPack.writeInt(pack, i)
+			DataPack.writeInt(pack, sysVar.actorRank[i].actorId)
+			DataPack.writeString(pack, sysVar.actorRank[i].name)
+			DataPack.writeInt(pack, sysVar.actorRank[i].fight)
+			DataPack.writeByte(pack, sysVar.actorRank[i].job)
+			DataPack.writeByte(pack, sysVar.actorRank[i].sex)
+			DataPack.writeInt(pack, sysVar.actorRank[i].weapon or 0)
+		else
+			print("FightRankActivity error data,      sendInfo       "..i.."   "..sysVar.actorCount)
+			return
+		end
+	end
+
+	DataPack.flush(pack)
+end
+
+--活动处理
+function FightRankActivityTimer(npc, args)
+	local tmp
+	if npc and type(npc) ~= "userdata"  then
+		tmp = tonumber(npc)
+	else
+		if not args then return end
+		tmp = tonumber(args)
+	end
+
+	local sysVar = FightRankActivity.getSystemVar()
+	if not sysVar then return end
+
+	if tmp == 0 then
+		--活动期间每天结算
+		if not sysVar.isInActivity then return end
+		System.saveActorAndRefreshRank()
+		FightRankActivityJiesuanRank()
+		LActor.regScriptCallback(System.getGlobalNpc(), nil, 1*1000, 0, 1, "FightRankActivityJiesuanRank")
+	elseif tmp == 1 then
+		--凌晨发奖励
+		if not sysVar.isInActivity then return end
+		FightRankActivity.sendAwards()
+	elseif tmp == 2 then
+		--活动开启
+		if sysVar.isInActivity then
+			print("error has open FightRankActivity")
+			return
+		end
+		sysVar.isInActivity = 1
+
+		FightRankActivity.sendIsOpen()
+	elseif tmp == 3 then
+		--活动结束了
+		if not sysVar.isInActivity then
+			print("error has close FightRankActivity")
+			return
+		end
+		sysVar.isInActivity = nil
+		FightRankActivity.sendIsOpen()
+		if sysVar.actorRank and sysVar.actorCount then
+			for i = 1, FightRankConfig.finalActorCount do
+				if sysVar.actorRank[i] then
+					System.logCounter(0, "", "", "fightrank", tostring(i), tostring(sysVar.actorRank[i].actorId), tostring(sysVar.actorRank[i].name), tostring(sysVar.actorRank[i].fight))
+					for _, conf in ipairs(FightRankConfig.finalAwards) do
+						if i >= conf.rank[1] and i <= conf.rank[2] then
+							local awards = {}
+							for _, tmp in pairs(conf.item) do
+								table.insert(awards, {itemType = tmp.type, itemId = tmp.id, itemNum = tmp.count})
+							end
+							local context = string.format(Lang.ScriptTips.levelrank009, i)
+							CommAwardFunc.giveToActorOffLine(sysVar.actorRank[i].actorId, awards, Lang.ScriptTips.levelrank010, context)
+						end
+					end
+				end
+			end
+		end
+	end
+end
+
+--排行榜结算记录数据
+function FightRankActivityJiesuanRank()
+	local sysVar = FightRankActivity.getSystemVar()
+	if not sysVar or not sysVar.isInActivity then return end
+
+	sysVar.actorRank = {}	--结算时记录的玩家信息
+	sysVar.actorCount = 0	--结算时记录的玩家个数
+
+	for i = 1, #FightRankConfig.everyDayAwards do
+		local actorInfo = Ranking.getActorInfo(1, i)
+		if actorInfo then
+			if actorInfo.actorid == 0 then break end
+
+			sysVar.actorRank[i] = {}
+			sysVar.actorRank[i].actorId = actorInfo.actorid
+			sysVar.actorRank[i].name = actorInfo.name
+			sysVar.actorRank[i].fight = Ranking.getPointFromDbRank(1, i-1)
+			sysVar.actorRank[i].job = actorInfo.job
+			sysVar.actorRank[i].sex = actorInfo.sex
+			sysVar.actorRank[i].vip = actorInfo.vip
+			sysVar.actorRank[i].weapon = actorInfo.weapon
+			sysVar.actorRank[i].guildname = actorInfo.guildname
+			sysVar.actorCount = sysVar.actorCount + 1
+		else
+			break
+		end
+	end
+end
+
+--发奖励
+function FightRankActivity.sendAwards()
+	local sysVar = FightRankActivity.getSystemVar()
+	if not sysVar or not sysVar.actorRank or not sysVar.actorCount then return end
+
+	for i = 1, sysVar.actorCount do
+		if sysVar.actorRank[i] and FightRankConfig.everyDayAwards[i] then
+			local award = FightRankConfig.everyDayAwards[i]
+			local context = string.format(Lang.ScriptTips.levelrank001, i)
+			System.sendGmMailOffLine(sysVar.actorRank[i].actorId, context, award[1].type, award[1].id, award[1].count, award[1].bind, Lang.ScriptTips.levelrank002, award[2].type, award[2].id, award[2].count, award[2].bind)
+		end
+	end
+end
+
+--设置活动时间
+function FightRankActivity.setActivityTime(startMiniTime, endMiniTime)
+	local sysVar = FightRankActivity.getSystemVar()
+	if not sysVar then return end
+
+	print("setActivityTime FightRankActivity          "..startMiniTime.."        "..endMiniTime)
+
+	local npc = System.getGlobalNpc()
+	if sysVar.startTimerId then
+		LActor.unregScriptCallback(npc, sysVar.startTimerId, true)
+	end
+	if sysVar.endTimerId then
+		LActor.unregScriptCallback(npc, sysVar.endTimerId, true)
+	end
+
+	local now = System.getCurrMiniTime()
+	if now > endMiniTime then
+		--过期
+		print("error fightRankActivity time guoqi")
+		FightRankActivityTimer(nil, 3)
+		return
+	elseif now < startMiniTime then
+		--未来执行
+		sysVar.startTimerId = LActor.regScriptCallback(npc, nil, (startMiniTime-now)*1000, 0, 1, "FightRankActivityTimer", 2)
+		sysVar.endTimerId = LActor.regScriptCallback(npc, nil, (endMiniTime-now)*1000, 0, 1, "FightRankActivityTimer", 3)
+	else
+		FightRankActivityTimer(nil, 2)
+		sysVar.startTimerId = 0
+		sysVar.endTimerId = LActor.regScriptCallback(npc, nil, (endMiniTime-now)*1000, 0, 1, "FightRankActivityTimer", 3)
+	end
+end
+
+function FightRankActivity.onServerStart()
+	local sysVar = FightRankActivity.getSystemVar()
+	if not sysVar then return end
+
+	local startMiniTime = System.getOpenServerStartDateTime()
+	local endMiniTime = startMiniTime + 24*3600 * FightRankConfig.openDay
+	FightRankActivity.setActivityTime(startMiniTime, endMiniTime)
+end
+
+GameStartEventList.registerEvent(FightRankActivity.onServerStart)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, FightRankActivity.sendIsOpen)
+
+function FightRankActivity.gmFunction(actor, args)
+	local gmid = tonumber(args[1])
+	if gmid == 0 or gmid == 1 or gmid == 2 or gmid == 3 then
+		FightRankActivityTimer(nil, gmid)
+	elseif gmid == 4 then
+		-- FightRankActivity.setActivityTime(args[2].." "..args[3], args[4].." "..args[5])
+	elseif gmid == 5 then
+		FightRankActivity.sendRankInfo(actor, nil)
+	end
+end
+
+GmEventFuncList.register( "fightrank", FightRankActivity.gmFunction, 1)
+

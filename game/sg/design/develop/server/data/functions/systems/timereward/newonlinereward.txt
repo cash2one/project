@@ -1,0 +1,274 @@
+-- newonlinereward
+
+newonlinereward = 
+{
+	ActivityId = 18,
+	SubActivityId = 79,
+
+	-- 发送领取奖励结果
+	-- SendRewardResult = function(sysarg, awardinfo)
+	-- 	print("---发送领取奖励结果--")
+	-- 	local npack = DataPack.allocPacket(sysarg,138,122)  --申请一个数据包
+	-- 	if npack == nil then return end
+
+	-- 	DataPack.writeInt(npack, #awardinfo) -- 奖励个数
+
+	-- 	-- 各个奖励信息
+	-- 	for i = 1, #awardinfo do
+	-- 		local c = awardinfo[i]
+	-- 		DataPack.writeInt(npack, c.rewardtype) -- 奖励类型
+	-- 		if c.rewardtype == 1 then
+	-- 			DataPack.writeInt(npack, c.itemid) -- 类型
+	-- 			DataPack.writeInt(npack, c.amount) -- 数量
+	-- 		elseif c.rewardtype == 2 then -- 绑定银两
+	-- 			DataPack.writeInt(npack, c.type) -- 类型
+	-- 			DataPack.writeInt(npack, c.amount) -- 数量
+	-- 		end
+	-- 	end
+
+	-- 	DataPack.flush(npack)
+	-- end,
+
+	--客户端申请领取在线奖励
+	getOnlineReward = function ( sysarg, packet )
+		local var = LActor.getStaticVar( sysarg )
+		if not var then return end
+		if ONLINEREWARD.GetActivityState(newonlinereward.ActivityId, var.download_from, sysarg) ~= 1 then return end
+
+		local leaveReward = var.newonlinereward
+		if leaveReward == nil or leaveReward[1] == nil then return end -- 正常情况这个是不会为空的，登录的时候会初始化
+		local t = System.getCurrMiniTime()
+		local config = activityConf[newonlinereward.ActivityId].activities[newonlinereward.SubActivityId]
+		local LOGINTIMEINTERVALS = config.LOGINTIMEINTERVALS
+		local OnlineReward = config.OnlineReward
+
+		local isSendInfo = DataPack.readChar(packet)
+		if 1 == isSendInfo then
+			
+			local idx = leaveReward[1]
+			local times = leaveReward[2] - (t - leaveReward[3])
+			if times < 0 then
+				times = 0
+			end
+			local leftCount = #LOGINTIMEINTERVALS - leaveReward[1] + 1
+
+			newonlinereward.SendRewardMsg(sysarg, 121, idx, times, leftCount)
+			return
+		end
+
+		
+		-- 今天领奖次数是否已经用完
+	  	if leaveReward[1] > #LOGINTIMEINTERVALS then
+	  		--LActor.sendTipmsg(sysarg,Lang.ScriptTips.f00017,ttMessage)
+	  		return 
+	  	end
+
+		-- 领奖时间未到
+		if t - leaveReward[3] < leaveReward[2] then
+			LActor.sendTipmsg(sysarg,Lang.ScriptTips.f00004,ttMessage)
+			return
+		end
+
+		--print("leaveReward[1]:"..tostring(leaveReward[1]))
+		--print("OnlineReward[leaveReward[1]]:"..tostring(OnlineReward[leaveReward[1]]))
+
+		-- 获取奖励配置
+		local onlineRewardConf = OnlineReward[leaveReward[1]].reward
+		if onlineRewardConf == nil then return end
+
+		-- 检查背包够不够空间
+		local needspace = 0  --物品所需空格
+		for i,c in ipairs(onlineRewardConf) do
+			if c.type == 1 then
+				needspace = needspace + Item.getAddItemNeedGridCount( sysarg, c.id, c.count )
+			end
+		end
+		if needspace > Item.getBagEmptyGridCount( sysarg ) then
+			-- LActor.sendTipmsg( sysarg, Lang.ScriptTips.zxjl001,ttDialog )
+			LActor.SendGeneralTips(sysarg, 7, 0, 0)
+			return
+		end
+		--print("needspace:"..tostring(needspace))
+
+		local effects = {} -- 用于播放特效
+
+	  	--领奖了
+		for i = 1, #onlineRewardConf do
+			local c = onlineRewardConf[i]
+			if c.type == 1 then -- 物品
+				LActor.addItem(sysarg,c.id,0,0, c.count,0,"OnlineReward",57)
+				--[[
+				local itemname = Item.getItemName(c.itemid)
+				if itemname ~= nil then
+					local allmsg = string.format(Lang.ScriptTips.q00037,itemname,c.amount)
+					print(allmsg)
+					LActor.sendTipmsg(sysarg, allmsg, ttMessage)  
+				end
+				]]
+
+				local effect = {} -- 特效
+			    effect.type = 1
+			    effect.id = c.id
+			    effect.count = c.count
+			    effects[#effects+1] = effect
+
+			elseif c.type == 2 then -- 绑定银两
+				LActor.changeMoney( sysarg, c.id, c.count, 0, true, "online_reward" )
+				--[[
+				local moneystr = MONEYTYPE[c.type]
+				local allmsg = string.format(moneystr,c.amount)  
+				LActor.sendTipmsg(sysarg, allmsg, ttMessage)
+				]]
+
+				local effect = {} -- 特效
+			    effect.type = 2
+			    effect.id = c.id
+			    effect.count = c.count
+			    effects[#effects+1] = effect
+			end
+		end
+
+		-- 播放特效
+		if #effects > 0 then
+			MiscFunc.PlayItemEffect(sysarg, 1, effects)
+		end
+
+		-- 发送领奖结果
+		-- ONLINEREWARD.TimeRewardImplement.SendRewardResult(sysarg, onlineRewardConf)
+
+
+		--跨日处理
+		-- if System.isSameDay(leaveReward[4], t) == false then  
+		-- 	-- 不是当天，按第一次
+		-- 	leaveReward[1] = 1
+		-- 	leaveReward[2] = LOGINTIMEINTERVALS[1]
+		-- 	leaveReward[3] = t
+		-- 	leaveReward[4] = t
+		-- 	--leaveReward[5] = getRewardOnlineRand(sysarg, leaveReward[1])  --记录奖励的索引
+		-- else
+			--是当天领奖了
+			leaveReward[1] = leaveReward[1] + 1
+			if leaveReward[1] <= #LOGINTIMEINTERVALS then
+				leaveReward[2] = LOGINTIMEINTERVALS[leaveReward[1]]
+				leaveReward[3] = t
+				leaveReward[4] = t -- 更新领奖时间
+				--leaveReward[5] = getRewardOnlineRand(sysarg, leaveReward[1])
+			end
+		-- end
+
+		
+
+		--138 通知客户端一次在线奖励 1
+		local npack = DataPack.allocPacket(sysarg,138,121)  --申请一个数据包
+		if npack == nil then return end
+		DataPack.writeByte(npack, leaveReward[1]) -- 第几次领奖
+		DataPack.writeUInt(npack, leaveReward[2]) -- 剩余领奖事件
+		DataPack.writeInt(npack, #LOGINTIMEINTERVALS - leaveReward[1] + 1) -- 剩余领奖次数
+		DataPack.flush(npack)
+	end,
+
+	SendRewardMsg = function (sysarg, protoid, idx, times, leftCount)
+		local npack = DataPack.allocPacket(sysarg,138,protoid)  --申请一个数据包
+		if npack == nil then return end
+		DataPack.writeByte(npack, idx) -- 下次是第几次领奖
+		DataPack.writeUInt(npack, times) -- 剩余领奖时间
+		DataPack.writeInt(npack, leftCount) -- 剩余领奖次数
+		DataPack.flush(npack)
+	end,
+
+	-- 用户登录发送在线奖励信息
+	_NoviceLoginReward = function ( sysarg )
+		local var = LActor.getStaticVar( sysarg )
+		if not var then return end
+		if ONLINEREWARD.GetActivityState(newonlinereward.ActivityId, var.download_from, sysarg) ~= 1 then return end
+
+		local t = System.getCurrMiniTime()
+
+	    local config = activityConf[newonlinereward.ActivityId].activities[newonlinereward.SubActivityId]
+	    local LOGINTIMEINTERVALS = config.LOGINTIMEINTERVALS
+		local OnlineReward = config.OnlineReward
+
+	     --获得上次剩余的在线奖励记录
+		local leaveReward = var.newonlinereward	
+		local rand = 0
+		if leaveReward == nil then --初始化
+			var.newonlinereward = {}
+			leaveReward = var.newonlinereward
+			leaveReward[1] = 1 
+			leaveReward[2] = LOGINTIMEINTERVALS[1]
+			leaveReward[3] = 0
+			leaveReward[4] = t -- 还没领过奖，将上次领奖时间设为登录时间
+		end
+
+		--跨日处理
+		-- if System.isSameDay(leaveReward[4], t) == false then--第二天初始化
+		-- 	--print("next day -------")
+		-- 	leaveReward[1] = 1 
+		-- 	leaveReward[2] = LOGINTIMEINTERVALS[1]
+		-- 	leaveReward[3] = 0
+		-- 	leaveReward[4] = t
+		-- end
+
+		-- if leaveReward[1] > #LOGINTIMEINTERVALS then return end   --领奖次数限制，防止发送多余次数给客户端
+
+		leaveReward[3] = t -- 开始累加在线时间
+
+		newonlinereward.SendRewardMsg(sysarg, 121, leaveReward[1], leaveReward[2], #LOGINTIMEINTERVALS - leaveReward[1] + 1)
+	end,
+
+	--在线奖励的情况的下线存储
+	_LogoutRecordAwardTime = function ( sysarg )
+		local var = LActor.getStaticVar( sysarg )
+		if not var then return end
+		if ONLINEREWARD.GetActivityState(newonlinereward.ActivityId, var.download_from, sysarg) ~= 1 then return end
+
+		local config = activityConf[newonlinereward.ActivityId].activities[newonlinereward.SubActivityId]
+		local LOGINTIMEINTERVALS = config.LOGINTIMEINTERVALS
+		local OnlineReward = config.OnlineReward
+
+		local leaveReward = var.newonlinereward	--获得上次剩余的在线奖励记录
+		if leaveReward == nil then return end
+
+		if leaveReward[1] > #LOGINTIMEINTERVALS then return end -- 可能是领奖次数已经用完
+
+		local t = System.getCurrMiniTime()
+
+		-- 保存剩余领奖时间，下次登录时候继续使用这个时间
+		leaveReward[2] = leaveReward[2] - (t - leaveReward[3])
+		if leaveReward[2] < 0 then
+			leaveReward[2] = 0
+		end
+	end,
+
+	-- 新一天到来的处理
+	NewDayAcrriveTimeReward = function (sysarg, arg)
+		-- if arg == nil or arg[1] == nil then return end
+		local var = LActor.getStaticVar( sysarg )
+		if not var then return end
+		if ONLINEREWARD.GetActivityState(newonlinereward.ActivityId, var.download_from, sysarg) ~= 1 then return end
+
+		local config = activityConf[newonlinereward.ActivityId].activities[newonlinereward.SubActivityId]
+		local LOGINTIMEINTERVALS = config.LOGINTIMEINTERVALS
+		local OnlineReward = config.OnlineReward
+
+		-- if arg[1] == 1 then return end -- 登录时的检查，不在这里处理
+
+		local leaveReward = var.newonlinereward
+
+		if leaveReward == nil then return end
+
+		local tm = System.getCurrMiniTime()
+
+		-- if leaveReward[1] > #LOGINTIMEINTERVALS then -- 上次全部奖品已经领完, 初始值
+			leaveReward[1] = 1 
+			leaveReward[2] = LOGINTIMEINTERVALS[1]
+			leaveReward[3] = tm
+			leaveReward[4] = tm
+			newonlinereward.SendRewardMsg(sysarg, 121, leaveReward[1], leaveReward[2], #LOGINTIMEINTERVALS - leaveReward[1] + 1)
+		-- end
+	end,
+}
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, newonlinereward._NoviceLoginReward)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogout, newonlinereward._LogoutRecordAwardTime)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, newonlinereward.NewDayAcrriveTimeReward)

@@ -1,0 +1,1774 @@
+--#include "..\..\language\LangCode.txt" 
+
+--成就奖励 award = {}
+--成就奖励类型，沿用以前的
+--[[
+//奖励类型
+enum tagAwardType
+{
+    qatEquipment = 0,           //物品或者装备
+	qatBindMoney = 1,           //铜钱
+	qatLiJin = 2,	            //绑定元宝
+	qatYuanbao = 3,				//元宝
+	qatExp = 4,                	//角色经验值
+	qatGuildContribution = 5,	//世族贡献值
+	qatShengWang = 6,	        //威望
+	qatHonor = 7,				//荣誉值
+	qatPassKey = 8,				//钥匙值
+
+	qatRootExp = 9,	            //灵气
+	qatZYContribution = 10,		//阵营贡献
+	qatMoney = 11,	            //银两(取消)
+	qatTitle = 12,	            //称谓
+	qatSkill = 13,	            //技能
+	qatAchievePoint = 14,       //成就点
+	qatRenown = 15,             //历练
+	qatPet = 16,                //奖励宠物
+	qatStone = 17,				// 世族灵石
+	qatGuildBuild = 18,			//世族繁荣度
+	qatGuildProperty = 19,		//世族财产
+	qatCount,					// 奖励个数
+
+    qatCustomize = 127,		    //自定义奖励
+};
+--]]
+--[[
+完成成就的奖励
+bind绑定；1为绑定,0为不绑定
+job:表示能接受该奖励的玩家职业，1.天雷,2.蜀山,3.圆月,4.云华 默认的话是-1，可以不填，表示任何职业都可以
+sex:表示能接受该奖励的玩家玩家的性别，默认的话是-1，可以不填，表示任何性别都可以，否则0表示男的，1表示女的
+count:该类型奖励的数量
+strong:强化，物品类型的奖励会用到
+--]]
+
+-- 上线后如果修改成就需要通知程序！！如果追加则不需要
+-- 一组成就，完成一个接着另一个，一组里面只能是同一种类型的事件
+-- 一个进度相当于一个成就，暂时只支持128个，实际上256也可以，再多就要改数据库
+
+Achieves =
+{
+	{
+		id = 1,	-- id范围从1-256 且连续！！
+		type = 2,	-- 类型参考data/config/achieve/atoms.txt 不过全都要重新加
+		name = "独领天下",
+		desc = "等级达到%d级",
+		process = {
+			{
+				id = 1,	-- 唯一，连续
+				count = 20,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 1,
+				award = {
+					{ type = 1, id = 1, count =20000 }
+				},
+			},
+			{
+				id = 2,	-- 唯一，连续
+				count = 30,	-- 根据类型而定，如提升到10级
+				title_award = 1,
+				quality = 1,
+				award = {
+					
+				},
+			},
+			{
+				id = 3,	-- 唯一，连续
+				count = 40,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 1,
+				award = {
+					{ type = 1, id = 1, count =30000 }
+				},
+			},
+			{
+				id = 4,	-- 唯一，连续
+				count = 50,	-- 根据类型而定，如提升到10级
+				title_award = 2,
+				quality = 1,
+				award = {
+					
+				},
+			},
+			{
+				id = 5,	-- 唯一，连续
+				count = 55,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 2,
+				award = {
+					{ type = 1, id = 1, count =40000 }
+				},
+			},
+			{
+				id = 6,	-- 唯一，连续
+				count = 60,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 2,
+				award = {
+					{ type = 1, id = 1, count =50000 }
+				},
+			},
+			{
+				id = 7,	-- 唯一，连续
+				count = 65,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 2,
+				award = {
+					{ type = 1, id = 1, count =80000 }
+				},
+			},
+			{
+				id = 8,	-- 唯一，连续
+				count = 70,	-- 根据类型而定，如提升到10级
+				title_award = 3,
+				quality = 2,
+				award = {
+					
+				},
+			},
+			{
+				id = 9,	-- 唯一，连续
+				count = 75,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 3,
+				award = {
+					{ type = 1, id = 1, count =100000 }
+				},
+			},
+			{
+				id = 10,	-- 唯一，连续
+				count = 80,	-- 根据类型而定，如提升到10级
+				title_award = 4,
+				quality = 3,
+				award = {
+					
+				},
+			},
+			{
+				id = 11,	-- 唯一，连续
+				count = 85,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 3,
+				award = {
+					{ type = 1, id = 1, count =120000 }
+				},
+			},
+			{
+				id = 12,	-- 唯一，连续
+				count = 90,	-- 根据类型而定，如提升到10级
+				title_award = 5,
+				quality = 3,
+				award = {
+					
+				},
+			},
+		},
+	},
+	{
+		id = 2,	-- id范围从1-256 且连续！！
+		type = 115,	-- 类型参考data/config/achieve/atoms.txt 不过全都要重新加
+		name = "功橙名就",
+		desc = "全身%d件装备达到橙色",
+		process = {
+			{
+				id = 1,	-- 唯一，连续
+				count = 1,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 3,
+				award = {
+					{ type = 0, id = 26113, count = 1 }
+				},
+			},
+			{
+				id = 2,	-- 唯一，连续
+				count = 2,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 3,
+				award = {
+					{ type = 0, id = 26113, count = 1 }
+				},
+			},
+			{
+				id = 3,	-- 唯一，连续
+				count = 3,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 3,
+				award = {
+					{ type = 0, id = 26113, count = 1 }
+				},
+			},
+			{
+				id = 4,	-- 唯一，连续
+				count = 4,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 3,
+				award = {
+					{ type = 0, id = 26113, count = 2 }
+				},
+			},
+			{
+				id = 5,	-- 唯一，连续
+				count = 5,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 3,
+				award = {
+					{ type = 0, id = 26113, count = 2 }
+				},
+			},
+			{
+				id = 6,	-- 唯一，连续
+				count = 6,	-- 根据类型而定，如提升到10级
+				title_award = 6,
+				quality = 3,
+				award = {
+					
+				},
+			},
+		},
+	},
+	{
+		id = 3,	-- id范围从1-256 且连续！！
+		type = 85,	-- 类型参考data/config/achieve/atoms.txt 不过全都要重新加
+		name = "莹光流红",
+		desc = "全身%d件装备达到红色",
+		process = {
+			{
+				id = 1,	-- 唯一，连续
+				count = 1,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 3,
+				award = {
+					{ type = 0, id = 26114, count = 1 }
+				},
+			},
+			{
+				id = 2,	-- 唯一，连续
+				count = 2,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 3,
+				award = {
+					{ type = 0, id = 26119, count = 3 }
+				},
+			},
+			{
+				id = 3,	-- 唯一，连续
+				count = 3,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 3,
+				award = {
+					{ type = 0, id = 26114, count = 2 }
+				},
+			},
+			{
+				id = 4,	-- 唯一，连续
+				count = 4,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 3,
+				award = {
+					{ type = 0, id = 26119, count = 5 }
+				},
+			},
+			{
+				id = 5,	-- 唯一，连续
+				count = 5,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 3,
+				award = {
+					{ type = 0, id = 26114, count = 2 }
+				},
+			},
+			{
+				id = 6,	-- 唯一，连续
+				count = 6,	-- 根据类型而定，如提升到10级
+				title_award = 7,
+				quality = 3,
+				award = {
+					
+				},
+			},
+		},
+	},
+	{
+		id = 4,	-- id范围从1-256 且连续！！
+		type = 116,	-- 类型参考data/config/achieve/atoms.txt 不过全都要重新加
+		name = "秀丽长歌",
+		desc = "通关普通剧情副本第%d章",
+		process = {
+			{
+				id = 1,	-- 唯一，连续
+				count = 1,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 1,
+				award = {
+					{ type = 1, id = 1, count =30000 }
+				},
+			},
+			{
+				id = 2,	-- 唯一，连续
+				count = 2,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 1,
+				award = {
+					{ type = 1, id = 1, count =50000 }
+				},
+			},
+			{
+				id = 3,	-- 唯一，连续
+				count = 3,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 1,
+				award = {
+					{ type = 0, id = 30562, count =1 }
+				},
+			},
+			{
+				id = 4,	-- 唯一，连续
+				count = 4,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 1,
+				award = {
+					{ type = 0, id = 30563, count =1 }
+				},
+			},
+			{
+				id = 5,	-- 唯一，连续
+				count = 5,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 2,
+				award = {
+					{ type = 0, id = 30574, count =1 }
+				},
+			},
+		},
+	},
+	{
+		id = 5,	-- id范围从1-256 且连续！！
+		type = 112,	-- 类型参考data/config/achieve/atoms.txt 不过全都要重新加
+		name = "精英长歌",
+		desc = "通关精英剧情副本第%d章",
+		process = {
+			{
+				id = 1,	-- 唯一，连续
+				count = 1,	-- 根据类型而定，如提升到10级
+				title_award = 8,
+				quality = 2,
+				award = {
+					
+				},
+			},
+			{
+				id = 2,	-- 唯一，连续
+				count = 2,	-- 根据类型而定，如提升到10级
+				title_award = 9,
+				quality = 2,
+				award = {
+					
+				},
+			},
+			{
+				id = 3,	-- 唯一，连续
+				count = 3,	-- 根据类型而定，如提升到10级
+				title_award = 10,
+				quality = 2,
+				award = {
+					
+				},
+			},
+			{
+				id = 4,	-- 唯一，连续
+				count = 4,	-- 根据类型而定，如提升到10级
+				title_award = 11,
+				quality = 2,
+				award = {
+					
+				},
+			},
+			{
+				id = 5,	-- 唯一，连续
+				count = 5,	-- 根据类型而定，如提升到10级
+				title_award = 12,
+				quality = 3,
+				award = {
+					
+				},
+			},
+			{
+				id = 6,	-- 唯一，连续
+				count = 6,	-- 根据类型而定，如提升到10级
+				title_award = 13,
+				quality = 3,
+				award = {
+					
+				},
+			},
+		},
+	},
+	{
+		id = 6,	-- id范围从1-256 且连续！！
+		type = 82,	-- 类型参考data/config/achieve/atoms.txt 不过全都要重新加
+		name = "富轹万古",
+		desc = "累计消费%d元宝",
+		process = {
+			{
+				id = 1,	-- 唯一，连续
+				count = 100,	-- 根据类型而定，如提升到10级
+				title_award = 15,
+				quality = 1,
+				award = {
+					
+				},
+			},
+			{
+				id = 2,	-- 唯一，连续
+				count = 500,	-- 根据类型而定，如提升到10级
+				title_award = 16,
+				quality = 1,
+				award = {
+					
+				},
+			},
+			{
+				id = 3,	-- 唯一，连续
+				count = 1000,	-- 根据类型而定，如提升到10级
+				title_award = 17,
+				quality = 1,
+				award = {
+					
+				},
+			},
+			{
+				id = 4,	-- 唯一，连续
+				count = 2000,	-- 根据类型而定，如提升到10级
+				title_award = 18,
+				quality = 2,
+				award = {
+					
+				},
+			},
+			{
+				id = 5,	-- 唯一，连续
+				count = 5000,	-- 根据类型而定，如提升到10级
+				title_award = 19,
+				quality = 2,
+				award = {
+					
+				},
+			},
+			{
+				id = 6,	-- 唯一，连续
+				count = 10000,	-- 根据类型而定，如提升到10级
+				title_award = 20,
+				quality = 2,
+				award = {
+					
+				},
+			},
+			{
+				id = 7,	-- 唯一，连续
+				count = 20000,	-- 根据类型而定，如提升到10级
+				title_award = 21,
+				quality = 3,
+				award = {
+					
+				},
+			},
+			{
+				id = 8,	-- 唯一，连续
+				count = 50000,	-- 根据类型而定，如提升到10级
+				title_award = 22,
+				quality = 3,
+				award = {
+					
+				},
+			},
+			{
+				id = 9,	-- 唯一，连续
+				count = 100000,	-- 根据类型而定，如提升到10级
+				title_award = 23,
+				quality = 3,
+				award = {
+					
+				},
+			},
+			{
+				id = 10,	-- 唯一，连续
+				count = 200000,	-- 根据类型而定，如提升到10级
+				title_award = 24,
+				quality = 3,
+				award = {
+					
+				},
+			},
+		},
+	},
+	{
+		id = 7,	-- id范围从1-256 且连续！！
+		type = 79,	-- 类型参考data/config/achieve/atoms.txt 不过全都要重新加
+		name = "锦衣玉食",
+		desc = "累计获得铜币%d",
+		process = {
+			{
+				id = 1,	-- 唯一，连续
+				count = 10000000,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 1,
+				award = {
+					{ type = 2, id = 2, count =200 }
+				},
+			},
+			{
+				id = 2,	-- 唯一，连续
+				count = 20000000,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 1,
+				award = {
+					{ type = 2, id = 2, count =300 }
+				},
+			},
+			{
+				id = 3,	-- 唯一，连续
+				count = 50000000,	-- 根据类型而定，如提升到10级
+				title_award = 25,
+				quality = 2,
+				award = {
+					
+				},
+			},
+			{
+				id = 4,	-- 唯一，连续
+				count = 100000000,	-- 根据类型而定，如提升到10级
+				title_award = 26,
+				quality = 2,
+				award = {
+					
+				},
+			},
+		},
+	},
+	{
+		id = 8,	-- id范围从1-256 且连续！！
+		type = 103,	-- 类型参考data/config/achieve/atoms.txt 不过全都要重新加
+		name = "傲气凌云",
+		desc = "累计通关玩法-副本%d次",
+		process = {
+			{
+				id = 1,	-- 唯一，连续
+				count = 20,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 1,
+				award = {
+					{ type = 1, id = 1, count =20000 }
+				},
+			},
+			{
+				id = 2,	-- 唯一，连续
+				count = 50,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 1,
+				award = {
+					{ type = 1, id = 1, count =30000 }
+				},
+			},
+			{
+				id = 3,	-- 唯一，连续
+				count = 100,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 1,
+				award = {
+					{ type = 1, id = 1, count =50000 }
+				},
+			},
+			{
+				id = 4,	-- 唯一，连续
+				count = 200,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 2,
+				award = {
+					{ type = 1, id = 1, count =80000 }
+				},
+			},
+			{
+				id = 5,	-- 唯一，连续
+				count = 500,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 2,
+				award = {
+					{ type = 1, id = 1, count =100000 }
+				},
+			},
+			{
+				id = 6,	-- 唯一，连续
+				count = 1000,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 2,
+				award = {
+					{ type = 1, id = 1, count =120000 }
+				},
+			},
+			{
+				id = 7,	-- 唯一，连续
+				count = 2000,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 2,
+				award = {
+					{ type = 1, id = 1, count =150000 }
+				},
+			},
+			{
+				id = 8,	-- 唯一，连续
+				count = 3500,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 3,
+				award = {
+					{ type = 1, id = 1, count =180000 }
+				},
+			},
+			{
+				id = 9,	-- 唯一，连续
+				count = 5000,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 3,
+				award = {
+					{ type = 1, id = 1, count =210000 }
+				},
+			},
+			{
+				id = 10,	-- 唯一，连续
+				count = 8000,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 3,
+				award = {
+					{ type = 1, id = 1, count =240000 }
+				},
+			},
+			{
+				id = 11,	-- 唯一，连续
+				count = 10000,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 3,
+				award = {
+					{ type = 1, id = 1, count =250000 }
+				},
+			},
+		},
+	},
+	{
+		id = 9,	-- id范围从1-256 且连续！！
+		type = 106,	-- 类型参考data/config/achieve/atoms.txt 不过全都要重新加
+		name = "披星斩月",
+		desc = "完成悬赏任务%d次",
+		process = {
+			{
+				id = 1,	-- 唯一，连续
+				count = 40,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 1,
+				award = {
+					{ type = 1, id = 1, count =20000 }
+				},
+			},
+			{
+				id = 2,	-- 唯一，连续
+				count = 120,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 1,
+				award = {
+					{ type = 1, id = 1, count =50000 }
+				},
+			},
+			{
+				id = 3,	-- 唯一，连续
+				count = 320,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 2,
+				award = {
+					{ type = 1, id = 1, count =80000 }
+				},
+			},
+			{
+				id = 4,	-- 唯一，连续
+				count = 400,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 2,
+				award = {
+					{ type = 1, id = 1, count =100000 }
+				},
+			},
+			{
+				id = 5,	-- 唯一，连续
+				count = 600,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 2,
+				award = {
+					{ type = 1, id = 1, count =120000 }
+				},
+			},
+			{
+				id = 6,	-- 唯一，连续
+				count = 1200,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 3,
+				award = {
+					{ type = 1, id = 1, count =150000 }
+				},
+			},
+			{
+				id = 7,	-- 唯一，连续
+				count = 3600,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 3,
+				award = {
+					{ type = 1, id = 1, count =180000 }
+				},
+			},
+			{
+				id = 8,	-- 唯一，连续
+				count = 10800,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 3,
+				award = {
+					{ type = 1, id = 1, count =200000 }
+				},
+			},
+		},
+	},
+	{
+		id = 10,	-- id范围从1-256 且连续！！
+		type = 51,	-- 类型参考data/config/achieve/atoms.txt 不过全都要重新加
+		name = "千锤百炼",
+		desc = "全身强化等级最低至少%d级",
+		process = {
+			{
+				id = 1,	-- 唯一，连续
+				count = 5,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 1,
+				award = {
+					{ type = 3, id = 3, count =20 }
+				},
+			},
+			{
+				id = 2,	-- 唯一，连续
+				count = 8,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 1,
+				award = {
+					{ type = 3, id = 3, count =30 }
+				},
+			},
+			{
+				id = 3,	-- 唯一，连续
+				count = 10,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 1,
+				award = {
+					{ type = 3, id = 3, count =50 }
+				},
+			},
+			{
+				id = 4,	-- 唯一，连续
+				count = 15,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 1,
+				award = {
+					{ type = 3, id = 3, count =70 }
+				},
+			},
+			{
+				id = 5,	-- 唯一，连续
+				count = 20,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 2,
+				award = {
+					{ type = 3, id = 3, count =100 }
+				},
+			},
+			{
+				id = 6,	-- 唯一，连续
+				count = 25,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 2,
+				award = {
+					{ type = 3, id = 3, count =120 }
+				},
+			},
+			{
+				id = 7,	-- 唯一，连续
+				count = 30,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 2,
+				award = {
+					{ type = 3, id = 3, count =150 }
+				},
+			},
+			{
+				id = 8,	-- 唯一，连续
+				count = 35,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 2,
+				award = {
+					{ type = 3, id = 3, count =180 }
+				},
+			},
+			{
+				id = 9,	-- 唯一，连续
+				count = 40,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 3,
+				award = {
+					{ type = 3, id = 3, count =200 }
+				},
+			},
+			{
+				id = 10,	-- 唯一，连续
+				count = 45,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 3,
+				award = {
+					{ type = 3, id = 3, count =220 }
+				},
+			},
+			{
+				id = 11,	-- 唯一，连续
+				count = 50,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 3,
+				award = {
+					{ type = 3, id = 3, count =250 }
+				},
+			},
+			{
+				id = 12,	-- 唯一，连续
+				count = 55,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 3,
+				award = {
+					{ type = 3, id = 3, count =300 }
+				},
+			},
+			{
+				id = 13,	-- 唯一，连续
+				count = 60,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 3,
+				award = {
+					{ type = 3, id = 3, count =350 }
+				},
+			},
+		},
+	},
+	{
+		id = 11,	-- id范围从1-256 且连续！！
+		type = 56,	-- 类型参考data/config/achieve/atoms.txt 不过全都要重新加
+		name = "流光溢彩",
+		desc = "全身宝石等级总和不低于%d",
+		process = {
+			{
+				id = 1,	-- 唯一，连续
+				count = 12,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 1,
+				award = {
+					{ type = 0, id = 21102, count = 1 }
+				},
+			},
+			{
+				id = 2,	-- 唯一，连续
+				count = 24,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 1,
+				award = {
+					{ type = 0, id = 21202, count = 1 }
+				},
+			},
+			{
+				id = 3,	-- 唯一，连续
+				count = 37,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 1,
+				award = {
+					{ type = 0, id = 21504, count = 1 },
+{ type = 0, id = 21604, count = 1 }
+				},
+			},
+			{
+				id = 4,	-- 唯一，连续
+				count = 50,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 1,
+				award = {
+					{ type = 0, id = 21304, count = 1 }
+				},
+			},
+			{
+				id = 5,	-- 唯一，连续
+				count = 63,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 2,
+				award = {
+					{ type = 0, id = 21404, count = 1 }
+				},
+			},
+			{
+				id = 6,	-- 唯一，连续
+				count = 76,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 2,
+				award = {
+					{ type = 0, id = 21705, count = 1 },
+{ type = 0, id = 21805, count = 1 }
+				},
+			},
+			{
+				id = 7,	-- 唯一，连续
+				count = 90,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 2,
+				award = {
+					{ type = 0, id = 21103, count = 1 }
+				},
+			},
+			{
+				id = 8,	-- 唯一，连续
+				count = 105,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 2,
+				award = {
+					{ type = 0, id = 21304, count = 1 },
+{ type = 0, id = 21404, count = 1 }
+				},
+			},
+			{
+				id = 9,	-- 唯一，连续
+				count = 125,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 3,
+				award = {
+					{ type = 0, id = 21104, count = 1 }
+				},
+			},
+			{
+				id = 10,	-- 唯一，连续
+				count = 150,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 3,
+				award = {
+					{ type = 0, id = 21104, count = 1 }
+				},
+			},
+			{
+				id = 11,	-- 唯一，连续
+				count = 180,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 3,
+				award = {
+					{ type = 0, id = 21204, count = 1 }
+				},
+			},
+			{
+				id = 11,	-- 唯一，连续
+				count = 216,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 3,
+				award = {
+					{ type = 0, id = 21305, count = 1 },
+{ type = 0, id = 21405, count = 1 }
+				},
+			},
+		},
+	},
+	{
+		id = 12,	-- id范围从1-256 且连续！！
+		type = 55,	-- 类型参考data/config/achieve/atoms.txt 不过全都要重新加
+		name = "所向披靡",
+		desc = "战斗力达到%d",
+		process = {
+			{
+				id = 1,	-- 唯一，连续
+				count = 30000,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 1,
+				award = {
+					{ type = 3, id = 3, count =50 }
+				},
+			},
+			{
+				id = 2,	-- 唯一，连续
+				count = 50000,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 1,
+				award = {
+					{ type = 3, id = 3, count =80 }
+				},
+			},
+			{
+				id = 3,	-- 唯一，连续
+				count = 80000,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 1,
+				award = {
+					{ type = 3, id = 3, count =100 }
+				},
+			},
+			{
+				id = 2,	-- 唯一，连续
+				count = 100000,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 2,
+				award = {
+					{ type = 3, id = 3, count =150 }
+				},
+			},
+			{
+				id = 3,	-- 唯一，连续
+				count = 120000,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 2,
+				award = {
+					{ type = 3, id = 3, count =200 }
+				},
+			},
+			{
+				id = 4,	-- 唯一，连续
+				count = 150000,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 2,
+				award = {
+					{ type = 3, id = 3, count =250 }
+				},
+			},
+			{
+				id = 5,	-- 唯一，连续
+				count = 200000,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 2,
+				award = {
+					{ type = 3, id = 3, count =300 }
+				},
+			},
+			{
+				id = 6,	-- 唯一，连续
+				count = 250000,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 2,
+				award = {
+					{ type = 3, id = 3, count =350 }
+				},
+			},
+			{
+				id = 7,	-- 唯一，连续
+				count = 300000,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 3,
+				award = {
+					{ type = 3, id = 3, count =400 }
+				},
+			},
+			{
+				id = 8,	-- 唯一，连续
+				count = 400000,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 3,
+				award = {
+					{ type = 3, id = 3, count =450 }
+				},
+			},
+			{
+				id = 9,	-- 唯一，连续
+				count = 500000,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 3,
+				award = {
+					{ type = 3, id = 3, count =500 }
+				},
+			},
+			{
+				id = 10,	-- 唯一，连续
+				count = 600000,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 3,
+				award = {
+					{ type = 3, id = 3, count =600 }
+				},
+			},
+			{
+				id = 11,	-- 唯一，连续
+				count = 700000,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 3,
+				award = {
+					{ type = 3, id = 3, count =700 }
+				},
+			},
+			{
+				id = 11,	-- 唯一，连续
+				count = 800000,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 3,
+				award = {
+					{ type = 3, id = 3, count =800 }
+				},
+			},
+			{
+				id = 12,	-- 唯一，连续
+				count = 900000,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 3,
+				award = {
+					{ type = 3, id = 3, count =1000 }
+				},
+			},
+		},
+	},
+	{
+		id = 13,	-- id范围从1-256 且连续！！
+		type = 37,	-- 类型参考data/config/achieve/atoms.txt 不过全都要重新加
+		name = "世族之柱",
+		desc = "累计世族贡献达到%d",
+		process = {
+			{
+				id = 1,	-- 唯一，连续
+				count = 500,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 1,
+				award = {
+					{ type = 1, id = 1, count =10000 }
+				},
+			},
+			{
+				id = 2,	-- 唯一，连续
+				count = 1000,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 1,
+				award = {
+					{ type = 1, id = 1, count =20000 }
+				},
+			},
+			{
+				id = 3,	-- 唯一，连续
+				count = 4000,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 1,
+				award = {
+					{ type = 1, id = 1, count =40000 }
+				},
+			},
+			{
+				id = 2,	-- 唯一，连续
+				count = 8000,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 2,
+				award = {
+					{ type = 1, id = 1, count =50000 }
+				},
+			},
+			{
+				id = 3,	-- 唯一，连续
+				count = 12000,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 2,
+				award = {
+					{ type = 1, id = 1, count =60000 }
+				},
+			},
+			{
+				id = 4,	-- 唯一，连续
+				count = 20000,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 2,
+				award = {
+					{ type = 1, id = 1, count =80000 }
+				},
+			},
+			{
+				id = 5,	-- 唯一，连续
+				count = 30000,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 2,
+				award = {
+					{ type = 1, id = 1, count =100000 }
+				},
+			},
+			{
+				id = 6,	-- 唯一，连续
+				count = 50000,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 2,
+				award = {
+					{ type = 1, id = 1, count =120000 }
+				},
+			},
+			{
+				id = 7,	-- 唯一，连续
+				count = 80000,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 3,
+				award = {
+					{ type = 1, id = 1, count =130000 }
+				},
+			},
+			{
+				id = 8,	-- 唯一，连续
+				count = 100000,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 3,
+				award = {
+					{ type = 1, id = 1, count =140000 }
+				},
+			},
+			{
+				id = 9,	-- 唯一，连续
+				count = 150000,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 3,
+				award = {
+					{ type = 1, id = 1, count =150000 }
+				},
+			},
+			{
+				id = 10,	-- 唯一，连续
+				count = 200000,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 3,
+				award = {
+					{ type = 1, id = 1, count =160000 }
+				},
+			},
+			{
+				id = 11,	-- 唯一，连续
+				count = 400000,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 3,
+				award = {
+					{ type = 1, id = 1, count =170000 }
+				},
+			},
+			{
+				id = 12,	-- 唯一，连续
+				count = 600000,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 3,
+				award = {
+					{ type = 1, id = 1, count =180000 }
+				},
+			},
+			{
+				id = 13,	-- 唯一，连续
+				count = 800000,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 3,
+				award = {
+					{ type = 1, id = 1, count =190000 }
+				},
+			},
+		},
+	},
+	{
+		id = 14,	-- id范围从1-256 且连续！！
+		type = 76,	-- 类型参考data/config/achieve/atoms.txt 不过全都要重新加
+		name = "九转天机",
+		desc = "洗炼装备总次数达到%d次",
+		process = {
+			{
+				id = 1,	-- 唯一，连续
+				count = 5,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 1,
+				award = {
+					{ type = 1, id = 1, count =20000 }
+				},
+			},
+			{
+				id = 2,	-- 唯一，连续
+				count = 10,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 1,
+				award = {
+					{ type = 1, id = 1, count =35000 }
+				},
+			},
+			{
+				id = 3,	-- 唯一，连续
+				count = 20,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 1,
+				award = {
+					{ type = 1, id = 1, count =50000 }
+				},
+			},
+			{
+				id = 2,	-- 唯一，连续
+				count = 40,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 1,
+				award = {
+					{ type = 1, id = 1, count =75000 }
+				},
+			},
+			{
+				id = 3,	-- 唯一，连续
+				count = 80,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 2,
+				award = {
+					{ type = 1, id = 1, count =90000 }
+				},
+			},
+			{
+				id = 4,	-- 唯一，连续
+				count = 160,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 2,
+				award = {
+					{ type = 1, id = 1, count =100000 }
+				},
+			},
+			{
+				id = 5,	-- 唯一，连续
+				count = 300,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 2,
+				award = {
+					{ type = 1, id = 1, count =120000 }
+				},
+			},
+			{
+				id = 6,	-- 唯一，连续
+				count = 500,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 2,
+				award = {
+					{ type = 1, id = 1, count =145000 }
+				},
+			},
+			{
+				id = 7,	-- 唯一，连续
+				count = 800,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 3,
+				award = {
+					{ type = 1, id = 1, count =160000 }
+				},
+			},
+			{
+				id = 8,	-- 唯一，连续
+				count = 1200,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 3,
+				award = {
+					{ type = 1, id = 1, count =185000 }
+				},
+			},
+			{
+				id = 9,	-- 唯一，连续
+				count = 1500,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 3,
+				award = {
+					{ type = 1, id = 1, count =200000 }
+				},
+			},
+			{
+				id = 10,	-- 唯一，连续
+				count = 5000,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 3,
+				award = {
+					{ type = 1, id = 1, count =220000 }
+				},
+			},
+			{
+				id = 11,	-- 唯一，连续
+				count = 10000,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 3,
+				award = {
+					{ type = 1, id = 1, count =250000 }
+				},
+			},
+		},
+	},
+	{
+		id = 15,	-- id范围从1-256 且连续！！
+		type = 117,	-- 类型参考data/config/achieve/atoms.txt 不过全都要重新加
+		name = "风云再起",
+		desc = "参与击杀协作类BOSS达到%d次",
+		process = {
+			{
+				id = 1,	-- 唯一，连续
+				count = 4,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 1,
+				award = {
+					{ type = 2, id = 2, count =100 }
+				},
+			},
+			{
+				id = 2,	-- 唯一，连续
+				count = 15,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 1,
+				award = {
+					{ type = 2, id = 2, count =150 }
+				},
+			},
+			{
+				id = 3,	-- 唯一，连续
+				count = 30,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 1,
+				award = {
+					{ type = 2, id = 2, count =200 }
+				},
+			},
+			{
+				id = 2,	-- 唯一，连续
+				count = 50,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 1,
+				award = {
+					{ type = 2, id = 2, count =250 }
+				},
+			},
+			{
+				id = 3,	-- 唯一，连续
+				count = 75,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 2,
+				award = {
+					{ type = 2, id = 2, count =300 }
+				},
+			},
+			{
+				id = 4,	-- 唯一，连续
+				count = 100,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 2,
+				award = {
+					{ type = 2, id = 2, count =350 }
+				},
+			},
+			{
+				id = 5,	-- 唯一，连续
+				count = 150,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 2,
+				award = {
+					{ type = 2, id = 2, count =400 }
+				},
+			},
+			{
+				id = 6,	-- 唯一，连续
+				count = 200,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 2,
+				award = {
+					{ type = 2, id = 2, count =450 }
+				},
+			},
+			{
+				id = 7,	-- 唯一，连续
+				count = 250,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 3,
+				award = {
+					{ type = 2, id = 2, count =500 }
+				},
+			},
+			{
+				id = 8,	-- 唯一，连续
+				count = 300,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 3,
+				award = {
+					{ type = 2, id = 2, count =550 }
+				},
+			},
+			{
+				id = 9,	-- 唯一，连续
+				count = 350,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 3,
+				award = {
+					{ type = 2, id = 2, count =600 }
+				},
+			},
+			{
+				id = 10,	-- 唯一，连续
+				count = 400,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 3,
+				award = {
+					{ type = 2, id = 2, count =650 }
+				},
+			},
+		},
+	},
+	{
+		id = 16,	-- id范围从1-256 且连续！！
+		type = 92,	-- 类型参考data/config/achieve/atoms.txt 不过全都要重新加
+		name = "素缘卿辞",
+		desc = "累计获得%d个伙伴",
+		process = {
+			{
+				id = 1,	-- 唯一，连续
+				count = 2,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 1,
+				award = {
+					{ type = 2, id = 2, count =100 }
+				},
+			},
+			{
+				id = 2,	-- 唯一，连续
+				count = 4,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 1,
+				award = {
+					{ type = 2, id = 2, count =150 }
+				},
+			},
+			{
+				id = 3,	-- 唯一，连续
+				count = 5,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 1,
+				award = {
+					{ type = 2, id = 2, count =200 }
+				},
+			},
+			{
+				id = 4,	-- 唯一，连续
+				count = 6,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 1,
+				award = {
+					{ type = 2, id = 2, count =250 }
+				},
+			},
+			{
+				id = 5,	-- 唯一，连续
+				count = 7,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 2,
+				award = {
+					{ type = 2, id = 2, count =300 }
+				},
+			},
+			{
+				id = 6,	-- 唯一，连续
+				count = 8,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 2,
+				award = {
+					{ type = 2, id = 2, count =350 }
+				},
+			},
+			{
+				id = 7,	-- 唯一，连续
+				count = 9,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 2,
+				award = {
+					{ type = 2, id = 2, count =400 }
+				},
+			},
+			{
+				id = 8,	-- 唯一，连续
+				count = 10,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 2,
+				award = {
+					{ type = 2, id = 2, count =450 }
+				},
+			},
+			{
+				id = 9,	-- 唯一，连续
+				count = 11,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 3,
+				award = {
+					{ type = 2, id = 2, count =500 }
+				},
+			},
+			{
+				id = 10,	-- 唯一，连续
+				count = 12,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 3,
+				award = {
+					{ type = 2, id = 2, count =550 }
+				},
+			},
+			{
+				id = 11,	-- 唯一，连续
+				count = 13,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 3,
+				award = {
+					{ type = 2, id = 2, count =600 }
+				},
+			},
+			{
+				id = 12,	-- 唯一，连续
+				count = 14,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 3,
+				award = {
+					{ type = 2, id = 2, count =650 }
+				},
+			},
+			{
+				id = 13,	-- 唯一，连续
+				count = 15,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 3,
+				award = {
+					{ type = 2, id = 2, count =700 }
+				},
+			},
+			{
+				id = 14,	-- 唯一，连续
+				count = 16,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 3,
+				award = {
+					{ type = 2, id = 2, count =750 }
+				},
+			},
+		},
+	},
+	{
+		id = 17,	-- id范围从1-256 且连续！！
+		type = 118,	-- 类型参考data/config/achieve/atoms.txt 不过全都要重新加
+		name = "剧情达人",
+		desc = "累计通关每日剧情副本%d次",
+		process = {
+			{
+				id = 1,	-- 唯一，连续
+				count = 2,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 2,
+				award = {
+					{ type = 1, id = 1, count =10000 }
+				},
+			},
+			{
+				id = 2,	-- 唯一，连续
+				count = 5,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 2,
+				award = {
+					{ type = 1, id = 1, count =20000 }
+				},
+			},
+			{
+				id = 3,	-- 唯一，连续
+				count = 8,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 2,
+				award = {
+					{ type = 3, id = 3, count =50 }
+				},
+			},
+			{
+				id = 4,	-- 唯一，连续
+				count = 10,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 2,
+				award = {
+					{ type = 3, id = 3, count =80 }
+				},
+			},
+			{
+				id = 5,	-- 唯一，连续
+				count = 15,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 2,
+				award = {
+					{ type = 3, id = 3, count =100 }
+				},
+			},
+			{
+				id = 6,	-- 唯一，连续
+				count = 20,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 2,
+				award = {
+					{ type = 3, id = 3, count =120 }
+				},
+			},
+			{
+				id = 7,	-- 唯一，连续
+				count = 30,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 2,
+				award = {
+					{ type = 3, id = 3, count =150 }
+				},
+			},
+			{
+				id = 8,	-- 唯一，连续
+				count = 50,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 2,
+				award = {
+					{ type = 3, id = 3, count =180 }
+				},
+			},
+			{
+				id = 9,	-- 唯一，连续
+				count = 80,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 2,
+				award = {
+					{ type = 3, id = 3, count =200 }
+				},
+			},
+			{
+				id = 10,	-- 唯一，连续
+				count = 120,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 2,
+				award = {
+					{ type = 3, id = 3, count =250 }
+				},
+			},
+			{
+				id = 11,	-- 唯一，连续
+				count = 150,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 2,
+				award = {
+					{ type = 3, id = 3, count =300 }
+				},
+			},
+			{
+				id = 12,	-- 唯一，连续
+				count = 180,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 2,
+				award = {
+					{ type = 3, id = 3, count =350 }
+				},
+			},
+			{
+				id = 13,	-- 唯一，连续
+				count = 240,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 2,
+				award = {
+					{ type = 3, id = 3, count =400 }
+				},
+			},
+			{
+				id = 14,	-- 唯一，连续
+				count = 300,	-- 根据类型而定，如提升到10级
+				title_award = 0,
+				quality = 2,
+				award = {
+					{ type = 3, id = 3, count =450 }
+				},
+			},
+		},
+	},
+}

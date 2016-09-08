@@ -1,0 +1,97 @@
+--导出时装配置
+----------------------------------------------------------------------------------------
+function ReadFashionConfig()
+    local objexcel = CExcelReader:new()
+    if not objexcel then
+        print("objexcel is null")
+        return
+    end
+    print("start1")
+    objexcel:Init_App()
+    objexcel:OpenRead()
+    print("start2")
+    local obj = objexcel:LoadSheetByIndex(1)
+    print("start3")
+    if not obj then
+        print("LoadSheetByIndex失败!")
+        objexcel:Close()
+        objexcel:Quit_App()
+        return
+    end
+    local nCount = objexcel:GetCurrentSheetColCount()
+    local mCount = objexcel:GetCurrentSheetRowCount()
+
+
+    print("nCount", nCount)
+    print("mCount", mCount)
+
+    local YiguiConf = {wushiIdList = {} , fashionIdList = {} , starCountList = {}, starAddList = {}}
+    for i = 2, mCount do
+        local currId = tonumber(objexcel:ReadCellAsString(i, 1))
+        local currType = tonumber(objexcel:ReadCellAsString(i, 2))
+        local currLevel = tonumber(objexcel:ReadCellAsString(i, 3))
+
+        if 1 == currType then
+            if currType then
+                table.insert(YiguiConf.fashionIdList , currId)
+            end
+        elseif 2 == currType then
+            if currType then
+                table.insert(YiguiConf.wushiIdList , currId)
+            end
+        end
+
+
+        if currLevel then
+            YiguiConf.openLevel = currLevel
+        end
+    end
+
+
+
+    local obj = objexcel:LoadSheetByIndex(2)
+    print("start3")
+    if not obj then
+        print("LoadSheetByIndex失败!")
+        objexcel:Close()
+        objexcel:Quit_App()
+        return
+    end
+    local nCount = objexcel:GetCurrentSheetColCount()
+    local mCount = objexcel:GetCurrentSheetRowCount()
+
+
+    print("nCount", nCount)
+    print("mCount", mCount)
+
+    for i = 2, mCount do
+        local currId = tonumber(objexcel:ReadCellAsString(i, 1))
+        local currNum = tonumber(objexcel:ReadCellAsString(i, 2))
+
+        local currLife = tonumber(objexcel:ReadCellAsString(i, 3)) or 0
+        local currAtt = tonumber(objexcel:ReadCellAsString(i, 4)) or 0
+        local PhyDef = tonumber(objexcel:ReadCellAsString(i, 5)) or 0
+        local MagDef = tonumber(objexcel:ReadCellAsString(i, 6)) or 0
+
+        table.insert(YiguiConf.starCountList , currNum)
+
+        local currAttrUnion = {}
+        table.insert(currAttrUnion , {type = 17 , value = currLife})
+        table.insert(currAttrUnion , {type = 27 , value = currAtt})
+        table.insert(currAttrUnion , {type = 23 , value = PhyDef})
+        table.insert(currAttrUnion , {type = 33 , value = MagDef})
+
+        table.insert(YiguiConf.starAddList , currAttrUnion)
+    end
+
+    print("var ok")
+    dump_to_file(objexcel , "Fashion_config" , 'YiguiConf' , "data/config/fashion/yiguiconf.txt" , YiguiConf , true)
+    print("go ok")
+
+
+    objexcel:Close()
+    objexcel:Quit_App()
+    objexcel:delete()
+
+
+end

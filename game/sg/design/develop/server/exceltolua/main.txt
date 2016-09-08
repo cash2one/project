@@ -1,0 +1,819 @@
+
+	--写标题
+	title = {
+		"物品ID",
+		"道具名称",	
+		"物理攻击",	
+		"法力攻击",	
+		"物理防御",	
+		"法力防御",	
+		"生命",	
+		"灵力",	
+		"命中",	
+		"闪避",	
+		"暴击",	
+		"抗暴击",
+		"会心(暴击倍数)",
+
+			"描述",
+			"物品的类型",
+			"寄卖系统的物品类型",
+			"物品图标图片编号",
+			"外观",
+			"物品颜色",
+			--"耐久度",
+			--"叠加数量上限",
+			--"冷却组",
+			"售出的货币类型",
+			"售出的价格",
+			"使用时限",
+			"套装的ID",
+
+		"等级限制",
+		"性别限制",
+		"职业限制",
+		"婚姻限制",
+		--"坐骑等级限制",
+		--"阵营职位限制"
+		"标志",
+	}
+
+	--#include "..\data\config\item\stditems.txt"
+	--#include "..\data\config\monster\monsterconfig.txt"
+	--#include "..\data\envir\staticzone.txt"
+	--#include "..\data\config\quest\stdquests.txt"
+
+--#include "var_dump.txt"
+
+--#include "export_equipt.txt"
+--#include "export_equipt_gem.txt"
+--#include "export_equipt_fashion.txt"
+--#include "export_item_liquid.txt"
+--#include "export_item_other.txt"
+
+
+--#include "export_monster.txt"
+--#include "export_actorinit_prop.txt"
+--#include "export_gem.txt"
+--#include "export_wing.txt"
+--#include "export_zhuzhao.txt"
+--#include "export_zhuoqi.txt"
+--#include "export_partner.txt"
+--#include "export_vip.txt"
+--#include "export_title.txt"
+--#include "export_store.txt"
+--#include "export_ai.txt"
+--#include "export_fight.txt"
+--#include "fubenjiangli.txt"
+--#include "export_star.txt"
+--#include "export_suit.txt"
+--#include "export_online_reward.txt"
+--#include "export_sign.txt"
+--#include "export_quest.txt"
+--#include "export_totallogin_reward.txt"
+--#include "export_normaldayquest.txt"
+--#include "export_tongtianshiliansaodangaward.txt"
+--#include "export_ttslconfig.txt"
+--#include "export_rand_name.txt"
+--#include "export_itemsplit.txt"
+--#include "export_fashion.txt"
+--#include "export_npc_script.txt"
+--#include "export_xuanshangaward.txt"
+--#include "export_client_taozhai.txt"
+--#include "export_client_un_dialog.txt"
+--#include "export_client_modelid_to_faceid.txt"
+--#include "export_client_qm_dialog.txt"
+--#include "export_shouhuxuannv_monster.txt"
+
+
+function OnMain()
+	while true do
+		print("------------------------ 山海经 --------------------")
+		print("\t1、导出主角裸装属性（主角裸装属性.xlsx）")
+		print("\t2、导出道具总表(先要导入 铸造.xls);")
+		print("\t3、导出套装配置（套装属性.xlsx）")
+		print("\t4、导出升级经验表（经验表.xlsx）")
+		print("\t5、战斗力权重（战斗力.xlsx）")
+		--print("\t6、导出其它道具;")
+
+		print("\t7、导出怪物配置;")
+		--print("\t8、导出升级经验配置表;")
+		print("\t9、测试写excel")
+		print("\t10、导出语言包")
+		print("\t11、导出铸造系统配置")
+		print("\t12、导出坐骑系统配置")
+		print("\t13、导出法宝系统配置")
+		print("\t14、导出伙伴系统配置")
+		print("\t15、导出翅膀系统配置")
+		print("\t16、导出vip系统配置")
+		print("\t17、导出AI配置")
+		print("\t18、导出仙斗会配置")
+
+		print("\t19、商城")
+		print("\t20、称号")
+		print("\t21、副本奖励")
+		print("\t22、星图配置")
+		print("\t23、在线奖励配置")
+		print("\t24、签到奖励配置")
+		print("\t25、任务配置")
+		print("\t26、累计登陆配置")
+		print("\t27、日常任务配置")
+		print("\t28、通天试炼扫荡奖励")
+		print("\t29、通天试炼怪物配置")
+		print("\t30、通天试炼额外奖励")
+		print("\t31、分解道具配置")
+		print("\t32、随机名字导出")
+		print("\t33、时装导出")
+		print("\t34、NPC脚本导出")
+		print("\t35、悬赏任务奖励")
+		print("\t36、前端专属导出--讨债对白")
+		print("\t37、前端专属导出--未完成对白")
+		print("\t38、前端专属导出--NPC模型ID转头像ID")
+		print("\t39、前端专属导出--任务/野外 创建怪的冒泡对白")
+		print("\t40、导出守护玄女第三个难度的怪物")
+	
+
+		print("\t100、退出;")
+		print("------------------------ 山海经 --------------------")
+
+		print ("请选择：")
+		local index = io.read()
+
+		if tonumber(index) == 100 then
+			break
+		elseif tonumber(index) == 1 then
+			ReadActorInitProp("")
+		elseif tonumber(index) == 2 then
+			ReadEquiptItem()
+			ReadEquiptFashionItem()
+			ReadEquiptGemItem()
+			ReadItemLiquid()
+			ReadItemOther()
+			ReadGiftItem()
+		elseif tonumber(index) == 3 then
+			--ReadEquiptGemItem()
+			ReadSuitConfigItem()
+			
+		elseif tonumber(index) == 4 then
+			--ReadEquiptFashionItem()
+			ReadLevelUpExp()
+		elseif tonumber(index) == 5 then
+			--ReadItemLiquid()
+			ReadEquipValuation()
+		elseif tonumber(index) == 6 then
+			--ReadItemOther()
+		elseif tonumber(index) == 7 then
+			--print("procedure export 7");
+			ReadMonsterItem()
+			exportMonsterDrops()
+		elseif tonumber(index) == 8 then
+			print("procedure export 8");
+		elseif tonumber(index) == 9 then
+			testwriteexcel()
+		elseif tonumber(index) == 10 then
+			export_item_lang()
+		elseif tonumber(index) == 11 then
+			ReadZhuzhaoConfig()
+		elseif tonumber(index) == 12 then
+			ReadMountsConfig()
+		elseif tonumber(index) == 13 then
+			ReadGemConfig()
+		elseif tonumber(index) == 14 then
+			ReadPartnerConfig()
+		elseif tonumber(index) == 15 then
+			ReadWing()
+		elseif tonumber(index) == 16 then
+			ReadVip()
+		elseif tonumber(index) == 17 then
+			AI.LoadFromExcelToLua("AI")	
+		elseif tonumber(index) == 18 then
+			ReadFightSysConfig()
+		elseif tonumber(index) == 19 then
+			ReadStore(1, ".\\data\\config\\store\\classes\\newhot.txt")
+			ReadStore(2, ".\\data\\config\\store\\classes\\gem.txt")
+			ReadStore(3, ".\\data\\config\\store\\classes\\material.txt")
+			ReadStore(4, ".\\data\\config\\store\\classes\\fashion.txt")
+			ReadStore(5, ".\\data\\config\\store\\classes\\other.txt")
+			ReadStore(6, ".\\data\\config\\store\\classes\\free.txt")
+			ReadStore(7, ".\\data\\config\\store\\classes\\hide.txt")
+		elseif tonumber(index) == 20 then
+			ReadTitle()
+		elseif tonumber(index) == 21 then
+			ReadFubenAward()
+		elseif tonumber(index) == 22 then
+			ReadStar()
+		elseif tonumber(index) == 23 then
+			ReadOnlineReward()
+		elseif tonumber(index) == 24 then
+			ReadSignReward()
+		elseif tonumber(index) == 25 then
+			ReadQuestConfig()
+		elseif tonumber(index) == 26 then
+			ReadTotalLoginReward()
+		elseif tonumber(index) == 27 then
+			ReadDayQuestConfig()
+		elseif tonumber(index) == 28 then
+			ReadTTSLAward()
+		elseif tonumber(index) == 29 then
+			ReadTTSLConfig()
+		elseif tonumber(index) == 30 then
+			ReadExtraAwardConfig()
+		elseif tonumber(index) == 31 then
+			ReadItemSplitConfig()
+		elseif tonumber(index) == 32 then
+			ReadRandomName()
+		elseif tonumber(index) == 33 then
+			ReadFashionConfig()
+		elseif tonumber(index) == 34 then
+			ReadNPCScript()
+		elseif tonumber(index) == 35 then
+			ReadXuanShangTaskAward()
+		elseif tonumber(index) == 36 then
+			ReadClientTaoZhaiConfig()
+		elseif tonumber(index) == 37 then
+			ReadClientUnDialog()
+		elseif tonumber(index) == 38 then
+			ReadClientModelIdToFaceId()
+		elseif tonumber(index) == 39 then
+			ReadClientQMDialog()
+		elseif tonumber(index) == 40 then
+			ReadShouHuXuanNvMonster()
+		else
+			print("非法输入")
+			index = nil
+		end
+	end
+end
+
+
+
+--读取装备、武器和衣服时装
+function writeEquiptExcel()
+	--写入excel
+	local objexcel = CExcelWriter:new()
+	if not objexcel then
+		print("CExcelWriter objexcel is null")
+		return
+	end
+
+	objexcel:Init_App()
+	objexcel:OpenWrite()
+	if not objexcel:LoadSheetByIndex(1) then
+		print("LoadSheetByIndex failed!")
+		return
+	end
+
+	for x, y in pairs(title) do
+		objexcel:WriteCellAsString(1, x, tostring(y))		
+	end
+
+	--遍历StdItems表
+	local i = 2
+	for k, v in pairs(StdItems) do
+		
+		local tseleType = {
+			[1]=true,[2]=true,[3]=true,[4]=true,[5]=true,[6]=true,[7]=true,[8]=true,[9]=true,[10]=true,
+			[15]=true,[16]=true,[17]=true,
+			[202]=true,
+		}
+
+		--if v.type ~= nil and (v.type > 0 and v.type <= 10) then --只读装备
+		if v.type ~= nil and tseleType[v.type] == true then
+			--print(k, Json.Encode(v))
+
+			objexcel:WriteCellAsString(i, 1, tostring(v.id))
+			objexcel:WriteCellAsString(i, 2, tostring(v.name))
+
+			for _, n in pairs(v.staitcAttrs) do
+				local col = 3
+				if n.type == 21 then--物理攻击
+					col = col + 0
+				elseif n.type == 31 then --法力攻击
+					col = col + 1
+				elseif n.type == 23 then --物理防御
+					col = col + 2
+				elseif n.type == 33 then --法力防御
+					col = col + 3
+				elseif n.type == 17 then --生命
+					col = col + 4
+				elseif n.type == 1000 then --灵力
+					col = col + 5
+				elseif n.type == 39 then --命中
+					col = col + 6
+				elseif n.type == 37 then --闪避
+					col = col + 7
+				elseif n.type == 35 then --暴击
+					col = col + 8
+				elseif n.type == 25 then --抗暴击
+					col = col + 9
+				elseif n.type == 36 then --会心(暴击倍数)
+					col = col + 10
+				else 
+					print("ERROR TYPE........")
+				end
+
+				objexcel:WriteCellAsString(i, col, tostring(n.value))
+			end
+
+			objexcel:WriteCellAsString(i, 14, tostring(v.desc)) --描述
+			objexcel:WriteCellAsString(i, 15, tostring(v.type)) --物品的类型
+			objexcel:WriteCellAsString(i, 16, tostring(v.sellType) or 0) --寄卖系统的物品类型
+			objexcel:WriteCellAsString(i, 17, tostring(v.icon)) --物品图标图片编号
+			objexcel:WriteCellAsString(i, 18, tostring(Json.Encode(v.shape))) --外观
+			objexcel:WriteCellAsString(i, 19, tostring(v.color)) --物品颜色
+
+			--objexcel:WriteCellAsString(i, 20, tostring(v.dura)) --装备耐久度(固定为0)
+			--objexcel:WriteCellAsString(i, 21, tostring(v.dup)) --叠加数量上限(固定为0)
+			--objexcel:WriteCellAsString(i, 22, tostring(v.colGroup)) --冷却组(固定为0)
+
+			objexcel:WriteCellAsString(i, 20, tostring(v.dealType)) --售出的价格
+			objexcel:WriteCellAsString(i, 21, tostring(v.dealPrice)) --售出的价格
+			objexcel:WriteCellAsString(i, 22, tostring(v.time) or 0) --使用时限
+			objexcel:WriteCellAsString(i, 23, tostring(v.suitId) or 0) --套装的ID
+
+			--objexcel:WriteCellAsString(i, 27, tostring(Json.Encode(v.staitcAttrs)))
+			--objexcel:WriteCellAsString(i, 28, tostring(Json.Encode(v.strongAttrs)))
+			--objexcel:WriteCellAsString(i, 29, tostring(Json.Encode(v.flags)))
+			--objexcel:WriteCellAsString(i, 30, tostring(Json.Encode(v.conds)))
+
+			--使用条件
+			for _, n in pairs(v.conds) do
+				local col = 24
+				if n.cond == 1 then --"等级限制"
+					col = col + 0
+				elseif n.cond == 2 then --"性别限制",
+					col = col + 1
+				elseif n.cond == 3 then --"职业限制",
+					col = col + 2
+				elseif n.cond == 4 then --"婚姻限制",
+					col = col + 3
+				--elseif n.cond == 5 then
+				--	col = col + 4
+				--elseif n.cond == 6 then
+				--	col = col + 5
+				else 
+					print("ERROR TYPE........")
+				end
+
+				objexcel:WriteCellAsString(i, col, tostring(n.value))
+			end
+
+			objexcel:WriteCellAsString(i, 28, tostring(Json.Encode(v.flags)))
+
+			i = i + 1
+		end
+	end
+
+	objexcel:Close()
+	objexcel:Quit_App()
+	objexcel:delete()
+end
+
+
+function writeItemExcel()
+	--写入excel
+	local objexcel = CExcelWriter:new()
+	if not objexcel then
+		print("CExcelWriter objexcel is null")
+		return
+	end
+
+	objexcel:Init_App()
+	objexcel:OpenWrite()
+	if not objexcel:LoadSheetByIndex(1) then
+		print("LoadSheetByIndex failed!")
+		return
+	end
+
+	local title_item = {
+		"物品ID", --id
+		"道具名称",	--name
+
+		"描述", --desc
+		"物品的类型", --type
+		"寄卖系统的物品类型", --sellType
+		"物品图标图片编号", --icon
+		"外观", --shape
+		"物品颜色", --color
+		"耐久度", --dura
+		"叠加数量上限", --dup
+		"冷却组", --colGroup
+
+		"售出的货币类型", --dealType
+		"售出的价格", --dealPrice
+		"使用时限", --time
+		"套装的ID", --suitId
+
+		"静态属性",--staitcAttrs
+		"强化属性",--strongAttrs
+		"使用标志",--flags
+		"使用条件",--conds
+		"品质属性表",--qualityAttrs
+		"物品存在的有效场景", --existScenes
+		"物品使用的有效副本ID",--validFbId
+		"物品使用的有效场景ID",--validSceneId
+	}
+	for x, y in pairs(title_item) do
+		objexcel:WriteCellAsString(1, x, tostring(y))		
+	end
+
+	--遍历StdItems表
+	local i = 2
+	for k, v in pairs(StdItems) do
+		if v.type ~= nil and (v.type > 11) then --只读道具
+			--print(k, Json.Encode(v))
+
+			objexcel:WriteCellAsString(i, 1, tostring(v.id))
+			objexcel:WriteCellAsString(i, 2, tostring(v.name))
+
+			objexcel:WriteCellAsString(i, 3, tostring(v.desc)) --描述
+			objexcel:WriteCellAsString(i, 4, tostring(v.type)) --物品的类型
+			objexcel:WriteCellAsString(i, 5, tostring(v.sellType)) --寄卖系统的物品类型
+			objexcel:WriteCellAsString(i, 6, tostring(v.icon)) --物品图标图片编号
+			objexcel:WriteCellAsString(i, 7, tostring(Json.Encode(v.shape))) --外观
+			objexcel:WriteCellAsString(i, 8, tostring(v.color)) --物品颜色
+
+			objexcel:WriteCellAsString(i, 9, tostring(v.dura)) --装备耐久度(固定为0)
+			objexcel:WriteCellAsString(i, 10, tostring(v.dup)) --叠加数量上限(固定为0)
+			objexcel:WriteCellAsString(i, 11, tostring(v.colGroup)) --冷却组(固定为0)
+
+			objexcel:WriteCellAsString(i, 12, tostring(v.dealType)) --售出的价格
+			objexcel:WriteCellAsString(i, 13, tostring(v.dealPrice)) --售出的价格
+			objexcel:WriteCellAsString(i, 14, tostring(v.time)) --使用时限
+			objexcel:WriteCellAsString(i, 15, tostring(v.suitId)) --套装的ID
+
+			objexcel:WriteCellAsString(i, 16, tostring(Json.Encode(v.staitcAttrs)))
+			objexcel:WriteCellAsString(i, 17, tostring(Json.Encode(v.strongAttrs)))
+			objexcel:WriteCellAsString(i, 18, tostring(Json.Encode(v.flags)))
+			objexcel:WriteCellAsString(i, 19, tostring(Json.Encode(v.conds)))
+
+			objexcel:WriteCellAsString(i, 20, tostring(Json.Encode(v.qualityAttrs))) --品质属性表
+			objexcel:WriteCellAsString(i, 21, tostring(Json.Encode(v.existScenes)))
+			objexcel:WriteCellAsString(i, 22, tostring(v.validFbId))   -- 物品使用的有效副本ID
+    		objexcel:WriteCellAsString(i, 23, tostring(v.validSceneId))-- 物品使用的有效场景ID
+
+			i = i + 1
+		end
+	end
+
+	objexcel:Close()
+	objexcel:Quit_App()
+	objexcel:delete()
+end
+
+
+
+--读取药水类
+function writeLiquidBufExcel()
+	--写入excel
+	local objexcel = CExcelWriter:new()
+	if not objexcel then
+		print("CExcelWriter objexcel is null")
+		return
+	end
+
+	objexcel:Init_App()
+	objexcel:OpenWrite()
+	if not objexcel:LoadSheetByIndex(1) then
+		print("LoadSheetByIndex failed!")
+		return
+	end
+
+	for x, y in pairs(title) do
+		objexcel:WriteCellAsString(1, x, tostring(y))		
+	end
+
+	--遍历StdItems表
+	local i = 2
+	for k, v in pairs(StdItems) do
+		
+		local tseleType = {
+			[13]=true,[83]=true,[84]=true,[90]=true,[92]=true,[93]=true,[94]=true,
+		}
+
+		if v.type ~= nil and tseleType[v.type] == true then --只读药水有BUFF类型
+			--print(k, Json.Encode(v))
+
+			objexcel:WriteCellAsString(i, 1, tostring(v.id))
+			objexcel:WriteCellAsString(i, 2, tostring(v.name))
+
+			for _, n in pairs(v.staitcAttrs) do
+				local col = 3
+				if n.type == 21 then--物理攻击
+					col = col + 0
+				elseif n.type == 31 then --法力攻击
+					col = col + 1
+				elseif n.type == 23 then --物理防御
+					col = col + 2
+				elseif n.type == 33 then --法力防御
+					col = col + 3
+				elseif n.type == 17 then --生命
+					col = col + 4
+				elseif n.type == 1000 then --灵力
+					col = col + 5
+				elseif n.type == 39 then --命中
+					col = col + 6
+				elseif n.type == 37 then --闪避
+					col = col + 7
+				elseif n.type == 35 then --暴击
+					col = col + 8
+				elseif n.type == 25 then --抗暴击
+					col = col + 9
+				elseif n.type == 36 then --会心(暴击倍数)
+					col = col + 10
+				else 
+					print("ERROR TYPE........"..n.type)
+				end
+
+				objexcel:WriteCellAsString(i, col, tostring(n.value))
+			end
+
+			objexcel:WriteCellAsString(i, 14, tostring(v.desc)) --描述
+			objexcel:WriteCellAsString(i, 15, tostring(v.type)) --物品的类型
+			objexcel:WriteCellAsString(i, 16, tostring(v.sellType) or 0) --寄卖系统的物品类型
+			objexcel:WriteCellAsString(i, 17, tostring(v.icon)) --物品图标图片编号
+			objexcel:WriteCellAsString(i, 18, tostring(Json.Encode(v.shape))) --外观
+			objexcel:WriteCellAsString(i, 19, tostring(v.color)) --物品颜色
+
+			--objexcel:WriteCellAsString(i, 20, tostring(v.dura)) --装备耐久度(固定为0)
+			--objexcel:WriteCellAsString(i, 21, tostring(v.dup)) --叠加数量上限(固定为0)
+			--objexcel:WriteCellAsString(i, 22, tostring(v.colGroup)) --冷却组(固定为0)
+
+			objexcel:WriteCellAsString(i, 20, tostring(v.dealType)) --售出的价格
+			objexcel:WriteCellAsString(i, 21, tostring(v.dealPrice)) --售出的价格
+			objexcel:WriteCellAsString(i, 22, tostring(v.time) or 0) --使用时限
+			objexcel:WriteCellAsString(i, 23, tostring(v.suitId) or 0) --套装的ID
+
+			--objexcel:WriteCellAsString(i, 27, tostring(Json.Encode(v.staitcAttrs)))
+			--objexcel:WriteCellAsString(i, 28, tostring(Json.Encode(v.strongAttrs)))
+			--objexcel:WriteCellAsString(i, 29, tostring(Json.Encode(v.flags)))
+			--objexcel:WriteCellAsString(i, 30, tostring(Json.Encode(v.conds)))
+
+			--使用条件
+			for _, n in pairs(v.conds) do
+				local col = 24
+				if n.cond == 1 then --"等级限制"
+					col = col + 0
+				elseif n.cond == 2 then --"性别限制",
+					col = col + 1
+				elseif n.cond == 3 then --"职业限制",
+					col = col + 2
+				elseif n.cond == 4 then --"婚姻限制",
+					col = col + 3
+				--elseif n.cond == 5 then
+				--	col = col + 4
+				--elseif n.cond == 6 then
+				--	col = col + 5
+				else 
+					print("ERROR TYPE........")
+				end
+
+				objexcel:WriteCellAsString(i, col, tostring(n.value))
+			end
+
+			objexcel:WriteCellAsString(i, 28, tostring(Json.Encode(v.flags)))
+
+			i = i + 1
+		end
+	end
+
+	objexcel:Close()
+	objexcel:Quit_App()
+	objexcel:delete()
+end
+
+
+--将天任务写到Excel中
+function writeQuestxcel()
+	--写入excel
+	local objexcel = CExcelWriter:new()
+	if not objexcel then
+		print("CExcelWriter objexcel is null")
+		return
+	end
+
+	objexcel:Init_App()
+	objexcel:OpenWrite()
+	if not objexcel:LoadSheetByIndex(1) then
+		print("LoadSheetByIndex failed!")
+		return
+	end
+
+	local title_item = {
+		"任务id", --id
+		"任务名称",	--name
+		"父任务ID", --parentid
+		"是否需要新手指引", --xszy
+		"任务类型", --type
+		"任务品级", --level
+		"是否可以放弃", --cangiveup
+		"是否接任务自动上坐骑", --automount
+		"任务描述", --content
+		"任务提示", --tips
+		"刷星任务类型ID", --starid
+		"任务完成动作", --finishAction
+		"任务完成后是否自动弹出下个可接任务", --finishNext
+		"接受任务后是否自动弹出下个可接任务", --acceptNext
+		"完成任务后奖励经验是否播放特效", --expEffect
+		"接任务NPC配置", --prom
+		"交任务NPC配置",--comp
+		"目标列表",--target
+		"奖励列表",--awards
+		"任务条件表",--conds
+		"任务时间限制",--timelimit
+		"任务周期", --interval
+		"每个任务周期内，可以做多少次",--maxcount
+		"如果接了此任务的子任务，则不能再接此任务",--excludetree
+		"可接任务表", --PromMsTalks
+		"可完成任务表", --CompMsTalks
+		"未完成任务表", --CompMsTip
+		"主角的回应", --MyMsTalks
+	}
+
+	for x, y in pairs(title_item) do
+		objexcel:WriteCellAsString(1, x, tostring(y))		
+	end
+
+	--遍历 StdQuest 表
+	local i = 2
+	for k, v in pairs(StdQuest) do
+		print(v.id)
+		objexcel:WriteCellAsString(i, 1, tostring(v.id))
+		objexcel:WriteCellAsString(i, 2, tostring(v.name))
+		objexcel:WriteCellAsString(i, 3, tostring(v.parentid))
+		objexcel:WriteCellAsString(i, 4, tostring(v.xszy))
+		objexcel:WriteCellAsString(i, 5, tostring(v.type))
+		objexcel:WriteCellAsString(i, 6, tostring(v.level))
+		objexcel:WriteCellAsString(i, 7, tostring(v.cangiveup))
+		objexcel:WriteCellAsString(i, 8, tostring(v.automount))
+		objexcel:WriteCellAsString(i, 9, tostring(v.content))
+		objexcel:WriteCellAsString(i, 10, tostring(v.tips))
+		objexcel:WriteCellAsString(i, 11, tostring(v.starid))
+		objexcel:WriteCellAsString(i, 12, tostring(v.finishAction))
+		objexcel:WriteCellAsString(i, 13, tostring(v.finishNext))
+		objexcel:WriteCellAsString(i, 14, tostring(v.acceptNext))
+		objexcel:WriteCellAsString(i, 15, tostring(v.expEffect))
+
+		objexcel:WriteCellAsString(i, 16, tostring(Json.Encode(v.prom))) --"接任务NPC配置", --prom
+		objexcel:WriteCellAsString(i, 17, tostring(Json.Encode(v.comp))) --"交任务NPC配置",--comp
+		objexcel:WriteCellAsString(i, 18, tostring(Json.Encode(v.target))) --"目标列表",--target
+		objexcel:WriteCellAsString(i, 19, tostring(Json.Encode(v.awards))) --"奖励列表",--awards
+		objexcel:WriteCellAsString(i, 20, tostring(Json.Encode(v.conds))) --"任务条件表",--conds
+
+		objexcel:WriteCellAsString(i, 21, tostring(v.timelimit)) --"任务时间限制",--timelimit
+		objexcel:WriteCellAsString(i, 22, tostring(v.interval)) --"任务周期", --interval
+		objexcel:WriteCellAsString(i, 23, tostring(v.maxcount)) --"每个任务周期内，可以做多少次",--maxcount
+		objexcel:WriteCellAsString(i, 24, tostring(v.excludetree)) --"如果接了此任务的子任务，则不能再接此任务",--excludetree
+		objexcel:WriteCellAsString(i, 25, tostring(Json.Encode(v.PromMsTalks))) --"可接任务表", --PromMsTalks
+		objexcel:WriteCellAsString(i, 26, tostring(Json.Encode(v.CompMsTalks))) --"可完成任务表", --CompMsTalks
+		objexcel:WriteCellAsString(i, 27, tostring(Json.Encode(v.CompMsTip))) --"未完成任务表", --CompMsTip
+		
+		objexcel:WriteCellAsString(i, 28, tostring(v.MyMsTalks)) --"主角的回应", --MyMsTalks
+
+		i = i + 1
+	end
+
+	objexcel:Close()
+	objexcel:Quit_App()
+	objexcel:delete()
+end
+
+
+
+
+
+--writeItemExcel()
+--writeEquiptExcel()
+--writeLiquidBufExcel()
+--WriteMonsterToExcel()
+
+--writeQuestxcel()
+
+
+--ReadEquiptItem()
+--ReadActorInitProp()
+--ReadGemConfig()
+--ReadWing()
+
+
+
+
+
+
+
+
+--读取经验表
+function ReadLevelUpExp()
+	local objexcel = CExcelReader:new()
+	if not objexcel then
+		print("objexcel is null")
+		return
+	end
+
+	objexcel:Init_App()
+	objexcel:OpenRead()
+
+	local obj = objexcel:LoadSheetByIndex(1) --经验表.xlsx
+	if not obj then
+		print("LoadSheetByIndex失败!")
+		objexcel:Close()
+		objexcel:Quit_App()
+		return
+	end
+
+	local nCount = objexcel:GetCurrentSheetColCount()
+	local mCount = objexcel:GetCurrentSheetRowCount()
+
+	local strComment = objexcel:ReadComment(1)
+	print("============strComment "..strComment)
+
+
+	local tExp = {}
+	for i = 2, mCount do
+
+		local strValue = objexcel:ReadCellAsString(i, 1)  --等级
+		local nLevel = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 2) --经验
+		tExp[nLevel] = tonumber(strValue) or 0
+	end
+
+	local str = strComment .. "\nLevelUpExp = \n{\n0,\n"
+	for k=1, #tExp do
+		local texp = string.format("%d,\n", tExp[k])
+		str = str .. texp
+	end
+	
+	str = str .. "}\n"
+	print(str)
+
+	objexcel:WriteFile(".\\data\\config\\property\\levelupexp.txt", str)
+
+
+
+	objexcel:Close()
+	objexcel:Quit_App()
+	objexcel:delete()
+end
+
+
+--读取战斗力权重
+function ReadEquipValuation()
+	local objexcel = CExcelReader:new()
+	if not objexcel then
+		print("objexcel is null")
+		return
+	end
+
+	objexcel:Init_App()
+	objexcel:OpenRead()
+
+	local obj = objexcel:LoadSheetByIndex(1) --战斗力.xlsx
+	if not obj then
+		print("LoadSheetByIndex失败!")
+		objexcel:Close()
+		objexcel:Quit_App()
+		return
+	end
+
+	local nCount = objexcel:GetCurrentSheetColCount()
+	local mCount = objexcel:GetCurrentSheetRowCount()
+
+	local strComment = objexcel:ReadComment(1)
+	print("============strComment "..strComment)
+
+
+	local tEquipVal = {}
+	for i = 2, mCount do
+		local strValue = objexcel:ReadCellAsString(i, 1)  --属性
+		local nId = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsDouble(i, 2) --权重
+		local nVal = tonumber(strValue) or 0
+
+		tEquipVal[i] = {}
+		tEquipVal[i].attrId = nId
+		tEquipVal[i].unitVal = nVal
+	end
+
+	local str = strComment .. "\n--#include \"..\\..\\language\\LangCode.txt\"\nEquipValuation = \n{\n"
+
+	for k, v in pairs(tEquipVal) do
+		print(k, v.attrId, v.unitVal)
+		local tAttr = string.format("{attrId = %d, unitVal = %.2f},\n", v.attrId, v.unitVal)
+		str = str .. tAttr
+	end
+	
+	str = str .. "}\n"
+	print(str)
+
+	objexcel:WriteFile(".\\data\\config\\item\\equipvaluation.txt", str)
+
+
+
+	objexcel:Close()
+	objexcel:Quit_App()
+	objexcel:delete()
+end
+
+

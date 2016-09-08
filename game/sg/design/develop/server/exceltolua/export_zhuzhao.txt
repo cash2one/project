@@ -1,0 +1,249 @@
+
+--场景导出
+--导出铸造配置表
+
+----------------------------------------------------------------------------------------
+function sz_T2S(_t)  
+    local szRet = "{"  
+    function doT2S(_i, _v)  
+        if "number" == type(_i) then  
+            szRet = szRet .. "[" .. _i .. "] = "  
+            if "number" == type(_v) then  
+                szRet = szRet .. _v .. ","  
+            elseif "string" == type(_v) then  
+                szRet = szRet .. '"' .. _v .. '"' .. ","  
+            elseif "table" == type(_v) then  
+                szRet = szRet .. sz_T2S(_v) .. ","  
+            else  
+                szRet = szRet .. "nil,"  
+            end  
+        elseif "string" == type(_i) then  
+            szRet = szRet  .. _i .. '= '  
+            if "number" == type(_v) then  
+                szRet = szRet .. _v .. ","  
+            elseif "string" == type(_v) then  
+                szRet = szRet .. '"' .. _v .. '"' .. ","  
+            elseif "table" == type(_v) then  
+                szRet = szRet .. sz_T2S(_v) .. ","  
+            else  
+                szRet = szRet .. "nil,"  
+            end  
+        end  
+    end  
+    table.foreach(_t, doT2S)  
+    szRet = szRet .. "}\n"  
+    return szRet  
+end  
+
+
+local jinjie_key = {
+	"","newItems","money","useItems1","useCount1","useItems2","useCount2","broadcast"
+}
+local function readJinjie( objexcel )
+	local obj = objexcel:LoadSheetByIndex(2)
+	if not obj then
+		print("LoadSheetByIndex失败!")
+		objexcel:Close()
+		objexcel:Quit_App()
+		return
+	end
+
+	local nCount = objexcel:GetCurrentSheetColCount()
+	local mCount = objexcel:GetCurrentSheetRowCount()
+
+	local concent = {}
+	for i=2,mCount do
+		local item_id = tonumber(objexcel:ReadCellAsString(i, 1))
+		concent[item_id] = {}
+		for j=2,#jinjie_key do
+			concent[item_id][jinjie_key[j]] = tonumber(objexcel:ReadCellAsString(i, j))
+		end
+	end
+	local str = ""
+	str = sz_T2S(concent)
+	str = "upgrade ="..str..","
+	
+	objexcel:WriteFile("data/config/item/itemenhance/jinjieConfig.txt", str)
+
+end
+
+local shenzhu_key = {
+	"","newItems","money","useItems","useCount","broadcast",
+}
+local function readShengzhu( objexcel )
+	local obj = objexcel:LoadSheetByIndex(3)
+	if not obj then
+		print("LoadSheetByIndex失败!")
+		objexcel:Close()
+		objexcel:Quit_App()
+		return
+	end
+
+	local nCount = objexcel:GetCurrentSheetColCount()
+	local mCount = objexcel:GetCurrentSheetRowCount()
+
+	local concent = {}
+	for i=2,mCount do
+		local item_id = tonumber(objexcel:ReadCellAsString(i, 1))
+		concent[item_id] = {}
+		for j=2,#shenzhu_key do
+			concent[item_id][shenzhu_key[j]] = tonumber(objexcel:ReadCellAsString(i, j))
+		end
+	end
+	local str = ""
+	str = sz_T2S(concent)
+	str = "shenzhuConfig ="..str ..","
+
+	objexcel:WriteFile("data/config/item/itemenhance/shenzhuConfig.txt", str)
+end
+
+local hecheng_key = {
+	"","newItems","Count","money",
+}
+local function readHeCheng( objexcel )
+	local obj = objexcel:LoadSheetByIndex(4)
+	if not obj then
+		print("LoadSheetByIndex失败!")
+		objexcel:Close()
+		objexcel:Quit_App()
+		return
+	end
+
+	local nCount = objexcel:GetCurrentSheetColCount()
+	local mCount = objexcel:GetCurrentSheetRowCount()
+
+	local concent = {}
+	for i=2,mCount do
+		local item_id = tonumber(objexcel:ReadCellAsString(i, 1))
+		concent[item_id] = {}
+		for j=2,#hecheng_key do
+			concent[item_id][hecheng_key[j]] = tonumber(objexcel:ReadCellAsString(i, j))
+		end
+	end
+	local str = ""
+	str = sz_T2S(concent)
+	str = "mixConfig ="..str..","
+
+	objexcel:WriteFile("data/config/item/itemenhance/hechengConfig.txt", str)
+end
+
+
+local function readRow( index,starti,endi,objexcel,str )
+ 	local result = {}
+ 	local ind = 1
+	for i=starti,endi do
+		
+		result[ind] = (objexcel:ReadCellAsString(i, index))
+		if str then	
+			result[ind] = tostring(result[ind]) 
+		else 
+			result[ind] = tonumber(result[ind]) 
+		end
+		ind = ind + 1
+	end
+	return result
+end
+
+local function readCell( index,starti,endi,objexcel,str )
+ 	local result = {}
+ 	local ind = 1
+	for i=starti,endi do
+		result[ind] = (objexcel:ReadCellAsString(index, i))
+		if str then	
+			result[ind] = tostring(result[ind]) 
+		else 
+			result[ind] = tonumber(result[ind]) 
+		end
+		ind = ind + 1
+	end
+	return result
+end
+
+local function readXilian( objexcel )
+	local obj = objexcel:LoadSheetByIndex(5)
+	if not obj then
+		print("LoadSheetByIndex失败!")
+		objexcel:Close()
+		objexcel:Quit_App()
+		return
+	end
+	
+	local concent = {}
+	--读取属性
+	--为了方便导出 固定的也配过来了 希望以后导入execel
+	concent["lockItem"] = 26119
+	concent["refreshType"] = { 27,23,33,17,19,39,37,35,25,63,}
+	concent["refreshMoneyType"] = 3
+	concent["refreshMoney"] = {0,0,1000,2000,3000,4000}	-- 洗炼需要的金钱 跟品质对应
+	concent["refreshItem"] = {0,0,26111,26112,26113,26114}--洗练材料 索引对应品质 0表示无法洗练
+	concent["refreshItemCount"] = {1,1,1,1,1,1}
+	concent["lockMoney"] = 2
+
+
+	concent["refreshTypeReta"] = readRow(13,2,11,objexcel)
+	concent["refreshXinReta"] = readCell(12,2,11,objexcel)
+	concent["refreshModulus"] = readRow(12,2,11,objexcel)
+	concent["refreshEqiupLevel"] = readRow(14,2,10,objexcel)
+	concent["refreshLevel"] = readRow(15,2,10,objexcel)
+
+	concent["refreshValue"] = {}
+	for i=1,10 do
+		concent["refreshValue"][i] = {}
+		concent["refreshValue"][i] = readCell(i+1,2,11,objexcel)
+	end
+	
+	local str = ""
+	str = sz_T2S(concent)
+	str = "refreshConfig ="..str..","
+
+	objexcel:WriteFile("data/config/item/itemenhance/xilianConfig.txt", str)
+end
+
+local function readQianghua( objexcel )
+	local obj = objexcel:LoadSheetByIndex(1)
+	if not obj then
+		print("LoadSheetByIndex失败!")
+		objexcel:Close()
+		objexcel:Quit_App()
+		return
+	end
+
+	local concent = {}
+	--为了方便导出 固定的也配过来了 希望以后导入execel
+	concent["strongItemId"] = {26101,26102,26103,}--强化道具
+	concent["strongItemExp"]  = {50,500,5000,}--强化经验加成
+	concent["moneyType"] = 0
+	concent["strengthenProbability"] = { 2,10,}
+	concent["strengthenRate"] = { 5,2,}
+
+	concent["uplevelExp"] =readRow(2,2,101,objexcel)
+	concent["moneyValue"] =readRow(3,2,101,objexcel)
+
+	local str = ""
+	str = sz_T2S(concent)
+	str = "strongConfig ="..str..","
+
+	objexcel:WriteFile("data/config/item/itemenhance/qianghuaConfig.txt", str)
+end
+
+function ReadZhuzhaoConfig()
+	local objexcel = CExcelReader:new()
+	if not objexcel then
+		print("objexcel is null")
+
+		return
+	end
+
+	objexcel:Init_App()
+	objexcel:OpenRead()
+
+	readJinjie(objexcel)
+	readShengzhu(objexcel)
+	readHeCheng(objexcel)
+	readXilian(objexcel)
+	readQianghua(objexcel)
+
+	objexcel:Close()
+	objexcel:Quit_App()
+	objexcel:delete()
+end

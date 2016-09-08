@@ -1,0 +1,114 @@
+
+
+
+
+
+function BaGua_Main(sysarg)
+	print("=====八卦地宫")
+	local str = ""
+	local nLastTime = 0
+	local sVal = System.getDyanmicVar()
+	local var = LActor.getStaticVar(sysarg)
+	if sVal.BaGuaActing == 1 then 
+		if var.bagua_entertime ~= nil then
+			nLastTime = var.bagua_entertime + BaGuaConfig.CHENFA_TIME - System.getCurrMiniTime()
+		end
+	end
+	if nLastTime < 0 then
+		nLastTime = 0
+	end
+	str = "8"
+	str= str..Lang.ScriptTips.badg009
+	str = str..string.format("/@%d",nLastTime)
+	--8/@BaGua_Entry/@tiem
+	print(str)
+	return str
+end
+
+function BaGua_Entry( sysarg )
+	print("=====八卦地宫")
+	if LActor.getLevel(sysarg) < BaGuaConfig.LEVEL then
+		print("=====1")
+		local tips = string.format(Lang.ScriptTips.bgdg001, tonumber(BaGuaConfig.LEVEL))
+    	LActor.sendTipmsg(sysarg, tips, ttMessage)
+    	return 
+  	end
+
+  	-- 判断副本活动场景
+	if LActor.getFubenId(sysarg) > 0 then
+		print("=====2")
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.fb0001, ttMessage)
+		return
+	end
+	
+	if LActor.hasState(sysarg, esProtection) then
+		print("=====3")
+    	LActor.sendTipmsg(sysarg, Lang.ScriptTips.sx019, ttMessage)
+    	return 
+  	end
+	local sVal = System.getDyanmicVar()
+	if sVal.BaGuaActing ~= 1 then 
+		print("=====4")
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.bgdg002, ttMessage)
+		return  
+	end
+    
+    if sVal.BaGuaFubenHandle == nil then
+    	print("=====5")
+    	LActor.sendTipmsg(sysarg , Lang.ScriptTips.bgdg002, ttMessage)
+    	return
+    end
+    local var = LActor.getStaticVar(sysarg)
+	if var.bagua_entertime + BaGuaConfig.CHENFA_TIME > System.getCurrMiniTime() then             --判断进入惩罚时间
+		print("惩罚时间",var.bagua_entertime + 180,System.getCurrMiniTime())
+		LActor.sendTipmsg(sysarg,Lang.ScriptTips.badg010,ttMessage)
+		return
+	end
+
+	local var_d = LActor.getStaticVar(sysarg)
+	var_d.BaguaPKMode = LActor.getPkMode(sysarg) -- 保存之前的PK模式
+	LActor.enterFuBen(sysarg,sVal.BaGuaFubenHandle,BaGuaConfig.SCENEID,BaGuaConfig.MAPX,BaGuaConfig.MAPY)
+	var.bagua_entertime = 0
+	var.bagua_enterweek = nil
+	LActor.closeNPCDialog( sysarg ) 
+	BaGua_GiveTask( sysarg )
+	--LActor.setPkMode(sysarg , fpPk ) 
+
+    -- 任务事件触发
+    LActor.OnQuestEvent(44, 0, 1, false, sysarg)
+    -- 活跃度
+    -- ActivationTrigger( sysarg, 18 )
+
+	local npack = DataPack.allocPacket(sysarg,139,91)
+    if npack == nil then return end
+    local rest =  sVal.BaGuaBossRefresh - System.getCurrMiniTime()
+    if rest < 0 then
+    	rest = 0
+    end
+    DataPack.writeInt(npack, rest)
+    DataPack.flush(npack)
+
+    local spack = DataPack.allocPacket(sysarg,139,92)
+    if spack == nil then return end
+    DataPack.flush(spack)
+end
+
+function BaGua_GiveTask( sysarg )
+	local nSys_var = System.getStaticVar()
+	local nVar = LActor.getStaticVar( sysarg )
+	if nSys_var.BaGuaTaskId == nil then
+		print("---琉璃幻境 开启时随机任务错误----")
+		return
+	end
+	if nVar.BaGuaTaskId ~= nil then
+		return
+	end
+	nVar.BaGuaTaskId = {}
+	nVar.BaGuaAward = {}
+	nVar.BaGuaTaskAmount = {}
+	for i = 1 , #nSys_var.BaGuaTaskId do
+		nVar.BaGuaTaskId[i] = nSys_var.BaGuaTaskId[i]
+		nVar.BaGuaTaskAmount[i] = 0
+		nVar.BaGuaAward[i] = 0
+	end
+end

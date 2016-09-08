@@ -1,0 +1,271 @@
+
+--#include "createactorrechagerconfig.txt"
+
+CreateActorRecharget = {}
+
+local oneDaySecond = 24 * 60 * 60
+
+function CreateActorRecharget.getCreateActorDay( sysarg )
+	-- body
+	local nCreateActorTime = LActor.GetActorCreateTime(sysarg)
+	local nCurTime = System.getCurrMiniTime() 
+	local nCreateTime_ = nCreateActorTime - math.fmod(nCreateActorTime , oneDaySecond)
+	local nMyCreateActorDay = nCurTime -  math.fmod(nCurTime , oneDaySecond) + oneDaySecond
+
+	local losttime = nMyCreateActorDay - nCreateTime_
+	local nDay_fff = math.floor( losttime / oneDaySecond)
+	return nDay_fff
+end
+
+function CreateActorRecharget.IsOpenActivity( sysarg )
+	if CreateActorRecharget.getCreateActorDay( sysarg ) > CreateActorRecharge_Conf.day then
+		--LActor.sendTipmsg( sysarg , "不在活动时间内" , ttWarmTip)
+		return false
+	end
+	return true
+end
+
+function CreateActorRecharget.RechargeMoney( sysarg , args )
+	-- body
+	--print( debug.traceback() )
+	--debug.debug()
+	local cout = tonumber( args[1] ) or 0
+	if cout == 0 then
+		return
+	end
+	log_print("=================fasdfs",cout)
+	if CreateActorRecharget.IsOpenActivity( sysarg ) == false then
+		log_print("====活动没开启======")
+		return
+	end
+
+	local nVar = LActor.getStaticVar( sysarg )
+	if nVar == nil then
+		log_print("====活动没开启11111111111======")
+		return
+	end
+	local nContinuDay = nVar.create_continu_recharge_day or 0 --连续充值的天数
+	if nContinuDay > CreateActorRecharge_Conf.continue_day then
+		return
+	end
+	log_print("===========nVar.dailyrechar_cout",nVar.dailyrechar_cout)
+	log_print("===========nVar.createrechar_day",nContinuDay)
+	if nVar.dailyrechar_cout == nil then
+		nVar.create_continu_recharge_day = nContinuDay + 1
+	end
+	local dailyrechar_cout = nVar.dailyrechar_cout or 0
+	nVar.dailyrechar_cout = dailyrechar_cout + cout
+	if nVar.dailyrechar_cout < CreateActorRecharge_Conf.recharge_cout then
+		return
+	end
+	local recharday = nVar.CreateRechar_Day or 0 --标记位
+	if System.bitOPMask(recharday, nVar.create_continu_recharge_day - 1)  == true then
+		log_print("====活动没开启333333333======",recharday,nContinuDay)
+		return
+	end
+	recharday = System.bitOpSetMask(recharday, nVar.create_continu_recharge_day - 1, true)
+	nVar.CreateRechar_Day = recharday
+	CreateActorRecharget.getActivityData( sysarg )
+	
+end
+
+function CreateActorRecharget.getActivityData( sysarg )
+	-- body
+	local isopen = CreateActorRecharget.IsOpenActivity( sysarg )
+	local nVar = LActor.getStaticVar( sysarg )
+	local recharday = nVar.CreateRechar_Day or 0
+	local rewardnum = nVar.CreateRechar_rewardcout or 0
+	local nDay = CreateActorRecharget.getCreateActorDay( sysarg )
+	local npack = DataPack.allocPacket( sysarg , 138 , 131)
+	log_print("=======getActivityData======",recharday,rewardnum,nDay)
+	if isopen == false then
+		DataPack.writeByte(npack , 0)
+		DataPack.writeInt(npack, 0)
+		DataPack.writeInt(npack, 0)
+		DataPack.writeInt(npack, 0)
+		DataPack.flush( npack )
+		CreateActorRecharget.EndActivitySendEmial( sysarg )
+	else
+		DataPack.writeByte(npack , 1)
+		DataPack.writeInt(npack, recharday)
+		DataPack.writeInt(npack, rewardnum)
+		DataPack.writeInt(npack, nDay)
+		DataPack.flush( npack )
+	end
+end
+
+function CreateActorRecharget.EndActivitySendEmial( sysarg )
+	-- body
+	local nVar = LActor.getStaticVar( sysarg )
+	local recharday = nVar.CreateRechar_Day or 0
+	local rewardnum = nVar.CreateRechar_rewardcout or 0
+	local actorId = LActor.getActorId( sysarg )
+	--
+	--local title = "连续充值"
+	log_print("==============",recharday,rewardnum)
+	for i = 1 ,CreateActorRecharge_Conf.continue_day do
+		if System.bitOPMask(recharday, i - 1) then				--没纪录即没达成
+			if not System.bitOPMask(rewardnum, i - 1) then
+				nVar.CreateRechar_rewardcout = System.bitOpSetMask(rewardnum, i - 1, true)
+				rewardnum = nVar.CreateRechar_rewardcout
+				local mailcontext = string.format(Lang.XSRW_Language.carecharge002,i)
+				local config = CreateActorRecharge_Conf.recharge_award[i]
+
+				--{itemid = 0 , count = 50000,type = 2},
+				local t = {}
+				for i , j in pairs ( config ) do
+					local mtp = { type = j.type, id = j.itemid, count = j.count , bind = 0}
+					table.insert( t , mtp )
+				end
+
+				local len = #t
+				local remainder = 5 - math.mod(len , 5)
+				for i = 1 , remainder do
+					local mtp = { type = 0, id = 0, count = 0 , bind = 0}
+					table.insert(t , mtp)
+				end
+				local AwardLen = math.floor(#t / 5)
+				for i = 1 , AwardLen do
+					System.sendGmMailOffLine(actorId, mailcontext , t[i].type, t[i].id, t[i].count, t[i].bind, Lang.XSRW_Language.carecharge001, t[i+1].type, t[i+1].id, t[i+1].count, t[i+1].bind, t[i+2].type, t[i+2].id, t[i+2].count, t[i+2].bind, t[i+3].type, t[i+3].id, t[i+3].count, t[i+3].bind,t[i+4].type, t[i+4].id, t[i+4].count, t[i+4].bind)
+				end
+			end
+		end
+	end
+end
+
+
+function CreateActorRecharget.getRecharAward( sysarg , dp )
+	-- body
+	local nIndex = DataPack.readInt( dp )
+	local nVar = LActor.getStaticVar( sysarg )
+	if nIndex == 0 or nVar == nil  then
+		log_print("======getAward=======")
+		return
+	end
+	local recharday = nVar.CreateRechar_Day or 0
+	local rewardnum = nVar.CreateRechar_rewardcout or 0
+
+	log_print("==============",nIndex,recharday,rewardnum)
+	if not System.bitOPMask(recharday, nIndex - 1) then				--没纪录即没达成
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.osa0004, ttMessage)
+		return
+	end
+	if System.bitOPMask(rewardnum, nIndex - 1) then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.osa0002, ttMessage)	--领过了
+		return
+	end
+	local AwardConfig = CreateActorRecharge_Conf.recharge_award[nIndex]
+	if CreateActorRecharget.BagIsEnough( sysarg , AwardConfig ) == false then
+		LActor.sendTipmsg(sysarg , Lang.ScriptTips.osa0005, ttMessage)
+		return
+	end
+	CreateActorRecharget.additemtobag( sysarg , AwardConfig )
+	nVar.CreateRechar_rewardcout = System.bitOpSetMask(rewardnum, nIndex - 1, true) 
+end
+
+function CreateActorRecharget.BagIsEnough( sysarg , AwardConfig )
+	-- body
+	if AwardConfig == nil or type(AwardConfig) ~= 'table' then
+		log_print("==========配置错误======="..tostring(nIndex))
+		return
+	end
+	local nNeedGrid = 0
+	for k , v in pairs ( AwardConfig ) do
+		if v.type == 1 then
+			nNeedGrid = nNeedGrid + 1
+		end
+	end
+	local bagGrid = Item.getBagEmptyGridCount(sysarg)      --玩家身上有多少个格
+	if bagGrid < nNeedGrid then
+		return false
+	end
+	return true
+end
+function CreateActorRecharget.additemtobag( sysarg , nAward_config )
+	-- body { itemid = 1000 , count = 1, type = 1 },
+	--print_table(nAward_config)
+	for k , v in pairs ( nAward_config ) do
+		if v.type == 1 then -- 物品
+			LActor.addItem(sysarg, v.itemid, 0, 0, v.count, 0, "7 连续充值")
+		elseif v.type == 2 then --货币
+			LActor.changeMoney(sysarg, v.itemid, v.count, 1, true, "pack money", "7 连续充值")
+		elseif v.type == 3 then --宗门贡献值
+			LActor.giveAward(sysarg, 3 , v.count )
+		elseif v.type == 6 then --经验
+			LActor.giveAward(sysarg, 2 , v.count )
+		elseif v.type == 10 then --威望
+			LActor.giveAward(sysarg, 10 , v.count )
+		elseif v.type == 16 then --荣誉值
+			LActor.giveAward(sysarg, 16 , v.count )
+		elseif v.type == 17 then --钥匙
+			LActor.giveAward(sysarg, 17 , v.count )
+		end
+	end
+end
+
+function CreateActorRecharget.getCountinuerechar( sysarg , dp )
+	-- body
+	local nDay = DataPack.readInt( dp )
+	if nDay > CreateActorRecharge_Conf.day then
+		LActor.sendTipmsg( sysarg , "操密码 来个大于活动天数" , ttWarmTip)
+		return
+	end
+	local nVar = LActor.getStaticVar( sysarg )
+	if nVar == nil then
+		return
+	end
+	if nVar.CreateRechar_Day == nil then
+		return
+	end
+	if nVar.CreateRechar_Day < nDay then
+		return
+	end
+	if nVar.ContinueAward == nil then
+		nVar.ContinueAward = {}
+	end
+	if nVar.ContinueAward[nDay] ~= nil then
+		log_print("===============")
+		return
+	end
+	if System.getBitNByte(nVar.CreateRechar_Day , nDay , CreateActorRecharge_Conf.day) == false then
+		log_print("========222=======")
+		return
+	end
+	local nConfig = CreateActorRecharge_Conf.countinuerechar[nDay]
+	if nConfig == nil then
+		log_print("getCountinuerechar配置不存在"..tostring(nDay))
+		return
+	end
+	if reateActorRecharget.BagIsEnough( sysarg , nConfig ) == false then
+		log_print("getCountinuerechar背包不足")
+		return
+	end
+	CreateActorRecharget.additemtobag( sysarg , nConfig )
+end
+
+function CreateActorRecharget.newday ( sysarg , args)
+	local nVar = LActor.getStaticVar( sysarg )
+	nVar.dailyrechar_cout = nil
+end
+
+function  CreateActorRecharget.test( sysarg , args )
+	-- body
+	local type = tonumber( args[1])
+	if type == 1 then
+		local nCurDay = CreateActorRecharget.getCreateActorDay( sysarg )
+		log_print("==========",nCurDay)
+	elseif type == 2 then
+		local nVar = LActor.getStaticVar( sysarg )
+		log_print( nVar.CreateRechar_Day )
+	elseif type == 3 then
+		local nVar = LActor.getStaticVar( sysarg )
+		log_print("...............",nVar.create_continu_recharge_day)
+		log_print("...............",nVar.dailyrechar_cout)
+	elseif type == 4 then
+		CreateActorRecharget.EndActivitySendEmial( sysarg )
+	end
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeRecharge, CreateActorRecharget.RechargeMoney)
+ EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, CreateActorRecharget.newday)
+GmEventFuncList.register( "tst",CreateActorRecharget.test,1)

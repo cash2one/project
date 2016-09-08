@@ -1,0 +1,65 @@
+
+
+
+
+
+all_award = "award_list = {\n"
+
+
+
+function ReadXuanShangTaskAward( )
+	-- body
+	local objexcel = CExcelReader:new()
+	if not objexcel then
+		print("objexcel is null")
+		return
+	end
+	objexcel:Init_App()
+	objexcel:OpenRead()
+	local obj = objexcel:LoadSheetByIndex(1)
+	if not obj then
+		print("LoadSheetByIndex失败!")
+		objexcel:Close()
+		objexcel:Quit_App()
+		return
+	end
+	local nCount = objexcel:GetCurrentSheetColCount()
+	local mCount = objexcel:GetCurrentSheetRowCount()
+	print("nCount", nCount)
+	print("mCount", mCount)
+	for i = 2, mCount do
+		local oneawrd ="\t[%d] = {\n\t\t qid = %d , \n\t\tlist = {\n"
+		local onerecord = "\t\t\t{ type = %d , id = %d , cout = %d , job = %d , group = %d },\n"
+		
+		local taskid = tonumber(objexcel:ReadCellAsString(i, 1))
+		if taskid ~= 0 and nil ~= taskid then
+			local onetaskaward = string.format(oneawrd,taskid,taskid)
+			--print(onetaskaward)
+			local exp = tonumber(objexcel:ReadCellAsString(i, 2))
+			local str = string.format(onerecord , 2, 0, exp, 0 ,0)
+			--print(str)
+			onetaskaward = onetaskaward..str
+			--print(onetaskaward)
+			local coin = tonumber(objexcel:ReadCellAsString(i, 3))
+			str = string.format(onerecord , 128, 0, coin, 0 ,0)
+			--print(str)
+			onetaskaward = onetaskaward..str
+			--print(onetaskaward)
+			local otheraward = objexcel:ReadCellAsString(i, 4)
+			--print(otheraward)
+			if otheraward ~= nil then
+				onetaskaward = onetaskaward..otheraward
+			end
+			onetaskaward = onetaskaward.."\t\t},\n\t},\n"
+			all_award = all_award..onetaskaward
+		end
+	end
+	print("=============end====")
+	all_award = all_award.."}"
+	str = string.format("--#include \"..\\..\\language\\LangCode.txt\"\n%s\n", all_award)
+	objexcel:WriteFile("data\\config\\taskgameplayconfig\\xsrw_award.txt", str)
+	objexcel:Close()
+	objexcel:Quit_App()
+	objexcel:delete()
+end
+

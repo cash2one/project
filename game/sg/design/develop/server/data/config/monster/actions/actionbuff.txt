@@ -1,0 +1,658 @@
+--定义一系列action产生的buff效果
+
+
+function getActionBuffConfigByIndex(index)
+	return ActionBuffConfig[index]; 
+end
+
+ActionBuffConfig =
+{
+	--buffConfigId
+	[1] = {
+				buffs = 
+				{
+					{
+						buffType = 81,	--buff类型
+						groupId = 0,  --buff群组
+						value = 0.8, 	--buff数值
+						times = 60, 	--作用时长
+						interval = 1, 	--作用间隔
+						valueOverlay = false, --是否数值可叠加
+						buffName = "免伤",
+					},
+					{
+						buffType = 82,
+						groupId = 0, 
+						value = 0.8, 
+						times = 60, 
+						interval = 1, 
+						valueOverlay = false,
+						buffName = "免伤",
+					},
+				}
+		  },
+
+	[2] = {
+				buffs = 
+				{
+					{
+						buffType = 22,	--buff类型
+						groupId = 0,  --buff群组
+						value = 0.5, 	--buff数值
+						times = 2, 	--作用时长
+						interval = 1, 	--作用间隔
+						valueOverlay = false, --是否数值可叠加
+						buffName = "物理攻击加成",
+					},
+				}		  
+			},
+    [3] = {
+    			buffs =
+    			{
+    				{
+						buffType = 81,	--buff类型
+						groupId = 0,  --buff群组
+						value = 0.25, 	--buff数值
+						times = -1, 	--作用时长
+						interval = 1, 	--作用间隔
+						valueOverlay = true, --是否数值可叠加
+						buffName = "免伤",
+					},
+					{
+						buffType = 82,
+						groupId = 0, 
+						value = 0.25, 
+						times = -1, 
+						interval = 1, 
+						valueOverlay = true,
+						buffName = "免伤",
+					},
+    			}
+		  },
+	[4] = {
+				buffs = 
+				{
+					{
+						buffType = 81,
+						groupId = 0, 
+						value = -0.2, 
+						times = -1, 
+						interval = 1, 
+						valueOverlay = true,
+						buffName = "免伤",
+					},
+					{
+						buffType = 82,
+						groupId = 0, 
+						value = -0.2, 
+						times = -1, 
+						interval = 1, 
+						valueOverlay = true,
+						buffName = "免伤",
+					},
+				},
+		
+	},
+
+	[5] = {
+				buffs = 
+				{
+					{
+						buffType = 81,	--buff类型
+						groupId = 0,  --buff群组
+						value = 0.15, 	--buff数值
+						times = -1, 	--作用时长
+						interval = 1, 	--作用间隔
+						valueOverlay = true, --是否数值可叠加
+						buffName = "免伤",
+					},
+					{
+						buffType = 82,
+						groupId = 0, 
+						value = 0.15, 
+						times = -1, 
+						interval = 1, 
+						valueOverlay = true,
+						buffName = "免伤",
+					},
+				},
+		
+	},
+
+	[6] = {
+    			buffs =
+    			{
+    				{
+						buffType = 81,	--buff类型
+						groupId = 0,  --buff群组
+						value = -0.25, 	--buff数值
+						times = -1, 	--作用时长
+						interval = 1, 	--作用间隔
+						valueOverlay = true, --是否数值可叠加
+						buffName = "加伤",
+					},
+					{
+						buffType = 82,
+						groupId = 0, 
+						value = -0.25, 
+						times = -1, 
+						interval = 1, 
+						valueOverlay = true,
+						buffName = "加伤",
+					},
+    			}
+		  },
+
+	[7] = {
+    			buffs =
+    			{
+    				{
+						buffType = 81,	--buff类型
+						groupId = 0,  --buff群组
+						value = 0.9, 	--buff数值
+						times = -1, 	--作用时长
+						interval = 1, 	--作用间隔
+						valueOverlay = false, --是否数值可叠加
+						buffName = "冰甲",
+					},
+					{
+						buffType = 82,
+						groupId = 0, 
+						value = 0.9, 
+						times = -1, 
+						interval = 1, 
+						valueOverlay = false,
+						buffName = "冰甲",
+					},
+    			}
+		  },
+
+	[8] = {
+    			buffs =
+    			{
+    				{
+						buffType = 77,	--buff类型
+						groupId = 0,  --buff群组
+						value = 9000, 	--buff数值
+						times = -1, 	--作用时长
+						interval = 1, 	--作用间隔
+						valueOverlay = false, --是否数值可叠加
+						buffName = "火甲",
+					},
+    			}
+		  },
+
+	[9] = {
+    			buffs =
+    			{
+    				{
+						buffType = 77,	--buff类型
+						groupId = 0,  --buff群组
+						value = 50000, 	--buff数值
+						times = 300, 	--作用时长
+						interval = 1, 	--作用间隔
+						valueOverlay = false, --是否数值可叠加
+						buffName = "反伤",
+					},
+    			}
+		  },
+
+	[10] = {
+    			buffs =
+    			{
+    				{
+						buffType = 27,	--buff类型
+						groupId = 0,  --buff群组
+						value = -50000, 	--buff数值
+						times = -1, 	--作用时长
+						interval = 1, 	--作用间隔
+						valueOverlay = true, --是否数值可叠加
+						buffName = "攻击力减少",
+					},
+    			}
+		  },
+
+	[11] = {
+    			buffs =
+    			{
+    				{
+						buffType = 27,	--buff类型
+						groupId = 0,  --buff群组
+						value = 50000, 	--buff数值
+						times = -1, 	--作用时长
+						interval = 1, 	--作用间隔
+						valueOverlay = true, --是否数值可叠加
+						buffName = "攻击力增加",
+					},
+    			}
+		  },
+
+	[12] = {
+    			buffs =
+    			{
+    				{
+						buffType = 77,	--buff类型
+						groupId = 0,  --buff群组
+						value = 9000, 	--buff数值
+						times = 5, 	--作用时长
+						interval = 1, 	--作用间隔
+						valueOverlay = false, --是否数值可叠加
+						buffName = "反弹",
+					},
+    			}
+		  },
+
+	[13] = {
+			buffs =
+			{
+	  			{
+					buffType = 32,
+					groupId = 0, 
+					value = 0.5, 
+					times = 2, 
+					interval = 1, 
+					valueOverlay = false,
+					buffName = "法术攻击增加",
+				},
+			}
+	 	 },
+
+	[14] = {
+			buffs = 
+			{
+				{
+					buffType = 11, 
+					groupId = 0,
+					value = 10000,
+					times = 2,
+					interval = 1,
+					valueOverlay = false,
+					buffName = "每秒回血",
+				},
+			},
+		},
+	--天火buff
+	[15] = {
+			buffs = 
+			{
+				{
+					buffType = 12, 
+					groupId = 0,
+					value = -0.1,
+					times = 1,
+					interval = 1,
+					valueOverlay = false,
+					buffName = "伤血",
+				},
+			},
+		},
+	--天火火墙buff
+	[16] = {
+			buffs = 
+			{
+				{
+					buffType = 12, 
+					groupId = 0,
+					value = -0.01,
+					times = 1,
+					interval = 1,
+					valueOverlay = true,
+					buffName = "伤血",
+				},
+			},
+		},
+
+	[17] = {
+				buffs = 
+				{
+					{
+						buffType = 81,	--buff类型
+						groupId = 0,  --buff群组
+						value = -0.15, 	--buff数值
+						times = -1, 	--作用时长
+						interval = 1, 	--作用间隔
+						valueOverlay = true, --是否数值可叠加
+						buffName = "免伤",
+					},
+					{
+						buffType = 82,
+						groupId = 0, 
+						value = -0.15, 
+						times = -1, 
+						interval = 1, 
+						valueOverlay = true,
+						buffName = "免伤",
+					},
+				},
+		
+	},
+	[18] = {
+				buffs = 
+				{
+					{
+						buffType = 81,
+						groupId = 0, 
+						value = 0.8, 
+						times = -1, 
+						interval = 1, 
+						valueOverlay = true,
+						buffName = "免伤",
+					},
+					{
+						buffType = 82,
+						groupId = 0, 
+						value = 0.8, 
+						times = -1, 
+						interval = 1, 
+						valueOverlay = true,
+						buffName = "免伤",
+					},
+				},
+	},
+	[19] = {
+				buffs = 
+				{
+					{
+						buffType = 11,
+						groupId = 0, 
+						value = 50000, 
+						times = -1, 
+						interval = 1, 
+						valueOverlay = false,
+						buffName = "回血",
+					},
+				},
+	},
+	[20] = {
+				buffs = 
+				{
+					{
+						buffType = 28,
+						groupId = 0, 
+						value = 0.5, 
+						times = -1, 
+						interval = 1, 
+						valueOverlay = false,
+						buffName = "狂暴",
+					},
+				},
+	},
+
+	[21] = {
+				buffs = 
+				{
+					{
+						buffType = 81,
+						groupId = 0, 
+						value = 1.0, 
+						times = -1, 
+						interval = 1, 
+						valueOverlay = true,
+						buffName = "护甲",
+					},
+					{
+						buffType = 82,
+						groupId = 0, 
+						value = 1.0, 
+						times = -1, 
+						interval = 1, 
+						valueOverlay = true,
+						buffName = "护甲",
+					},
+				},
+	},
+	[22] = {
+				buffs = 
+				{
+					{
+						buffType = 81,
+						groupId = 0, 
+						value = -0.2, 
+						times = -1, 
+						interval = 1, 
+						valueOverlay = true,
+						buffName = "护甲",
+					},
+					{
+						buffType = 82,
+						groupId = 0, 
+						value = -0.2, 
+						times = -1, 
+						interval = 1, 
+						valueOverlay = true,
+						buffName = "护甲",
+					},
+				},
+	},
+	[23] = {
+				buffs = 
+				{
+					{
+						buffType = 28,
+						groupId = 0, 
+						value = 1, 
+						times = 10, 
+						interval = 1, 
+						valueOverlay = false,
+						buffName = "狂暴",
+					},
+				},
+	},
+	--歇心光环
+	[24] = {
+				buffs = 
+				{
+					{
+						buffType = 12,
+						groupId = 0, 
+						value = -0.01, 
+						times = 2, 
+						interval = 1, 
+						valueOverlay = false,
+						buffName = "歇心光环",
+					},
+				},
+	},
+	[25] = {
+				buffs = 
+				{
+					{
+						buffType = 113,
+						groupId = 0, 
+						value = 20000, 
+						times = 5, 
+						interval = 1, 
+						valueOverlay = false,
+						buffName = "AOE",
+					},
+				},
+	},
+	--虚弱
+	[26] = {
+				buffs = 
+				{
+					{
+						buffType = 28,
+						groupId = 0, 
+						value = -0.5, 
+						times = 3, 
+						interval = 1, 
+						valueOverlay = false,
+						buffName = "虚弱",
+					},
+				},
+	},
+	--无敌
+	[27] = {
+				buffs = 
+				{
+					{
+						buffType = 81,
+						groupId = 0, 
+						value = 1.0, 
+						times = -1, 
+						interval = 1, 
+						valueOverlay = false,
+						buffName = "无敌",
+					},
+					{
+						buffType = 82,
+						groupId = 0, 
+						value = 1.0, 
+						times = -1, 
+						interval = 1, 
+						valueOverlay = false,
+						buffName = "无敌",
+					},
+				},
+	},
+	[28] = {
+				buffs = 
+				{
+					{
+						buffType = 82,
+						groupId = 0, 
+						value = 0.9, 
+						times = -1, 
+						interval = 1, 
+						valueOverlay = false,
+						buffName = "物理免伤",
+					},
+				},
+	},
+	[29] = {
+				buffs = 
+				{
+					{
+						buffType = 81,
+						groupId = 0, 
+						value = 0.9, 
+						times = -1, 
+						interval = 1, 
+						valueOverlay = false,
+						buffName = "法术免伤",
+					},
+				},
+	},
+	[30] = {
+				buffs = 
+				{
+					{
+						buffType = 28,
+						groupId = 0, 
+						value = 1, 
+						times = -1, 
+						interval = 1, 
+						valueOverlay = false,
+						buffName = "狂暴",
+					},
+				},
+	},
+	[31] = {
+				buffs = 
+				{
+					{
+						buffType = 81,
+						groupId = 0, 
+						value = 1.0, 
+						times = -1, 
+						interval = 1, 
+						valueOverlay = false,
+						buffName = "无敌",
+					},
+					{
+						buffType = 82,
+						groupId = 0, 
+						value = 1.0, 
+						times = -1, 
+						interval = 1, 
+						valueOverlay = false,
+						buffName = "无敌",
+					},
+				},
+	},
+	[32] = {
+				buffs = 
+				{
+					{
+						buffType = 28,
+						groupId = 0, 
+						value = 0.05, 
+						times = -1, 
+						interval = 1, 
+						valueOverlay = true,
+						buffName = "狂暴",
+					},
+				},
+	},
+	[33] = {
+				buffs = 
+				{
+					{
+						buffType = 28,
+						groupId = 0, 
+						value = -0.05, 
+						times = -1, 
+						interval = 1, 
+						valueOverlay = true,
+						buffName = "狂暴",
+					},
+				},
+	},
+	[34] = {
+				buffs = 
+				{
+					{
+						buffType = 11,
+						groupId = 0, 
+						value = 1000000, 
+						times = 1, 
+						interval = 1, 
+						valueOverlay = false,
+						buffName = "回血",
+					},
+				},
+	},
+	[35] = {
+				buffs = 
+				{
+					{
+						buffType = 28,
+						groupId = 0, 
+						value = 0.2, 
+						times = -1, 
+						interval = 1, 
+						valueOverlay = true,
+						buffName = "狂暴",
+					},
+				},
+	},
+	[36] = {
+    			buffs =
+    			{
+    				{
+						buffType = 28,	--buff类型
+						groupId = 0,  --buff群组
+						value = 0.1, 	--buff数值
+						times = -1, 	--作用时长
+						interval = 1, 	--作用间隔
+						valueOverlay = true, --是否数值可叠加
+						buffName = "攻击力增加",
+					},
+    			}
+		  },
+	[37] = {
+    			buffs =
+    			{
+    				{
+						buffType = 28,	--buff类型
+						groupId = 150,  --buff群组
+						value = -0.5, 	--buff数值
+						times = -1, 	--作用时长
+						interval = 1, 	--作用间隔
+						valueOverlay = true, --是否数值可叠加
+						buffName = "攻击力减少",
+					},
+    			}
+		  },
+};

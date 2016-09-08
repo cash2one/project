@@ -1,0 +1,11 @@
+﻿--仓库配置
+DepotConfig = 
+{
+  gridPerRow = 7,	--每行有多少格
+  rowPerPage = 8,	--每页有多少行
+  pageCount = 4,	--页数
+  defaultRow = 5,	--默认开启行数
+  enlargeCount = 5,	--每次扩展的格子数
+  enlargeMoneyType = 5,	--扩展需要的金钱类型
+  enlargeMoney = 25,	--扩展需要的金钱
+}

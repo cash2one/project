@@ -1,0 +1,2709 @@
+﻿-- 圣灵守护副本配置
+
+--#include "data\language\LangCode.txt" once
+
+SlshConf = {
+    fbid = 81,   -- 副本id
+    sceneid = 1145, -- 场景id
+    roundTime = 4 * 60, -- 每波时间
+    dxMonster = 679, -- 圣灵雕像怪物
+    dxPos = { 35, 14 }, -- 雕像的位置
+    tokenType = 0, -- 奖励的代币类型
+    token = 1000, -- 总共可以获得的代币数
+
+    awardSet = {
+
+        [658] = 256,
+        [659] = 256,
+        [660] = 48000,
+        [661] = 48000,
+        [662] = 256,
+        [663] = 256,
+        [664] = 48000,
+        [665] = 48000,
+        [666] = 256,
+        [667] = 256,
+        [668] = 48000,
+        [669] = 48000,
+        [670] = 256,
+        [671] = 256,
+        [672] = 48000,
+        [673] = 48000,
+        [674] = 256,
+        [675] = 256,
+        [676] = 48000,
+        [677] = 48000,
+
+    },
+    refreshMonster = 
+    {
+
+    },
+
+    passEffect = { id = 20024, time = 1 }, -- 通关特效(id,持续时间(秒))
+    failEffect = { id = 20023, time = 1 }, -- 失败特效(id,持续时间(秒))
+    finalEffect = { id = 20022, time = 1 }, -- 最后通关特效
+
+    rounds = { -- 每一波相关配置
+        {
+            nmonster = 252, -- 怪物总数
+            monsters = { 658,659,660,661,678 }, -- 这一波需要杀死的怪物的ID
+
+            token = 200, -- 每人可以获得的代币
+
+            refreshs = {
+                {
+                    delay = 15, -- 延时(秒)
+                    monsters = {
+                        {
+                            id = 658,
+                            mapx1 = 5,   
+                            mapx2 = 5,   
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 658,
+                            mapx1 = 6,   
+                            mapx2 = 6,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 659,
+                            mapx1 = 66,   
+                            mapx2 = 66,
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 659,
+                            mapx1 = 65,   
+                            mapx2 = 65,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 678,
+                            mapx1 = 41,   
+                            mapx2 = 41,
+                            mapy1 = 21,
+                            mapy2 = 21,
+                            count = 1,
+                        },
+                    },
+                },
+                -- 其它时间按上面配置
+                {
+                    delay = 10, -- 延时(秒)
+                    monsters = {
+                        {
+                            id = 658,
+                            mapx1 = 5,   
+                            mapx2 = 5,   
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 658,
+                            mapx1 = 6,   
+                            mapx2 = 6,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 659,
+                            mapx1 = 66,   
+                            mapx2 = 66,
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 659,
+                            mapx1 = 65,   
+                            mapx2 = 65,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 678,
+                            mapx1 = 41,   
+                            mapx2 = 41,
+                            mapy1 = 21,
+                            mapy2 = 21,
+                            count = 1,
+                        },
+                    },
+                },
+                -- 其它时间按上面配置
+                {
+                    delay = 10, -- 延时(秒)
+                    monsters = {
+                        {
+                            id = 658,
+                            mapx1 = 5,   
+                            mapx2 = 5,   
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 658,
+                            mapx1 = 6,   
+                            mapx2 = 6,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 659,
+                            mapx1 = 66,   
+                            mapx2 = 66,
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 659,
+                            mapx1 = 65,   
+                            mapx2 = 65,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 678,
+                            mapx1 = 41,   
+                            mapx2 = 41,
+                            mapy1 = 21,
+                            mapy2 = 21,
+                            count = 1,
+                        },
+                    },
+                },
+                -- 其它时间按上面配置
+                {
+                    delay = 10, -- 延时(秒)
+                    monsters = {
+                        {
+                            id = 658,
+                            mapx1 = 5,   
+                            mapx2 = 5,   
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 658,
+                            mapx1 = 6,   
+                            mapx2 = 6,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 659,
+                            mapx1 = 66,   
+                            mapx2 = 66,
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 659,
+                            mapx1 = 65,   
+                            mapx2 = 65,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 678,
+                            mapx1 = 41,   
+                            mapx2 = 41,
+                            mapy1 = 21,
+                            mapy2 = 21,
+                            count = 1,
+                        },
+                    },
+                },
+                -- 其它时间按上面配置
+                {
+                    delay = 10, -- 延时(秒)
+                    monsters = {
+                        {
+                            id = 658,
+                            mapx1 = 5,   
+                            mapx2 = 5,   
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 658,
+                            mapx1 = 6,   
+                            mapx2 = 6,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 659,
+                            mapx1 = 66,   
+                            mapx2 = 66,
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 659,
+                            mapx1 = 65,   
+                            mapx2 = 65,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 678,
+                            mapx1 = 41,   
+                            mapx2 = 41,
+                            mapy1 = 21,
+                            mapy2 = 21,
+                            count = 1,
+                        },
+                    },
+                },
+                -- 其它时间按上面配置
+                {
+                    delay = 10, -- 延时(秒)
+                    monsters = {
+                        {
+                            id = 658,
+                            mapx1 = 5,   
+                            mapx2 = 5,   
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 658,
+                            mapx1 = 6,   
+                            mapx2 = 6,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 659,
+                            mapx1 = 66,   
+                            mapx2 = 66,
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 659,
+                            mapx1 = 65,   
+                            mapx2 = 65,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 678,
+                            mapx1 = 41,   
+                            mapx2 = 41,
+                            mapy1 = 21,
+                            mapy2 = 21,
+                            count = 1,
+                        },
+                    },
+                },
+                -- 其它时间按上面配置
+                {
+                    delay = 10, -- 延时(秒)
+                    monsters = {
+                        {
+                            id = 658,
+                            mapx1 = 5,   
+                            mapx2 = 5,   
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 658,
+                            mapx1 = 6,   
+                            mapx2 = 6,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 659,
+                            mapx1 = 66,   
+                            mapx2 = 66,
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 659,
+                            mapx1 = 65,   
+                            mapx2 = 65,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 678,
+                            mapx1 = 41,   
+                            mapx2 = 41,
+                            mapy1 = 21,
+                            mapy2 = 21,
+                            count = 1,
+                        },
+                    },
+                },
+                -- 其它时间按上面配置
+                {
+                    delay = 10, -- 延时(秒)
+                    monsters = {
+                        {
+                            id = 658,
+                            mapx1 = 5,   
+                            mapx2 = 5,   
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 658,
+                            mapx1 = 6,   
+                            mapx2 = 6,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 659,
+                            mapx1 = 66,   
+                            mapx2 = 66,
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 659,
+                            mapx1 = 65,   
+                            mapx2 = 65,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 678,
+                            mapx1 = 41,   
+                            mapx2 = 41,
+                            mapy1 = 21,
+                            mapy2 = 21,
+                            count = 1,
+                        },
+                    },
+                },
+                -- 其它时间按上面配置
+                {
+                    delay = 10, -- 延时(秒)
+                    monsters = {
+                        {
+                            id = 658,
+                            mapx1 = 5,   
+                            mapx2 = 5,   
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 658,
+                            mapx1 = 6,   
+                            mapx2 = 6,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 659,
+                            mapx1 = 66,   
+                            mapx2 = 66,
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 659,
+                            mapx1 = 65,   
+                            mapx2 = 65,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 678,
+                            mapx1 = 41,   
+                            mapx2 = 41,
+                            mapy1 = 21,
+                            mapy2 = 21,
+                            count = 1,
+                        },
+                    },
+                },
+                -- 其它时间按上面配置
+                {
+                    delay = 10, -- 延时(秒)
+                    monsters = {
+                        {
+                            id = 658,
+                            mapx1 = 5,   
+                            mapx2 = 5,   
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 658,
+                            mapx1 = 6,   
+                            mapx2 = 6,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 659,
+                            mapx1 = 66,   
+                            mapx2 = 66,
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 659,
+                            mapx1 = 65,   
+                            mapx2 = 65,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 678,
+                            mapx1 = 41,   
+                            mapx2 = 41,
+                            mapy1 = 21,
+                            mapy2 = 21,
+                            count = 1,
+                        },
+                    },
+                },
+                -- 其它时间按上面配置
+                {
+                    delay = 10, -- 延时(秒)
+                    monsters = {
+                        {
+                            id = 660,
+                            mapx1 = 12,   
+                            mapx2 = 12,
+                            mapy1 = 18,
+                            mapy2 = 18,
+                            count = 1,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 661,
+                            mapx1 = 65,   
+                            mapx2 = 65,
+                            mapy1 = 18,
+                            mapy2 = 18,
+                            count = 1,
+                        },
+                    },
+                },
+            },
+        },
+        -- 下面各波按上面配置
+        {
+            nmonster = 252, -- 怪物总数
+            monsters = { 662,663,664,665,678 }, -- 这一波需要杀死的怪物的ID
+
+            token = 200, -- 每人可以获得的代币
+
+            refreshs = {
+                {
+                    delay = 15, -- 延时(秒)
+                    monsters = {
+                        {
+                            id = 662,
+                            mapx1 = 5,   
+                            mapx2 = 5,   
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 662,
+                            mapx1 = 6,   
+                            mapx2 = 6,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 663,
+                            mapx1 = 66,   
+                            mapx2 = 66,
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 663,
+                            mapx1 = 65,   
+                            mapx2 = 65,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 678,
+                            mapx1 = 41,   
+                            mapx2 = 41,
+                            mapy1 = 21,
+                            mapy2 = 21,
+                            count = 1,
+                        },
+                    },
+                },
+                -- 其它时间按上面配置
+                {
+                    delay = 10, -- 延时(秒)
+                    monsters = {
+                        {
+                            id = 662,
+                            mapx1 = 5,   
+                            mapx2 = 5,   
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 662,
+                            mapx1 = 6,   
+                            mapx2 = 6,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 663,
+                            mapx1 = 66,   
+                            mapx2 = 66,
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 663,
+                            mapx1 = 65,   
+                            mapx2 = 65,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 678,
+                            mapx1 = 41,   
+                            mapx2 = 41,
+                            mapy1 = 21,
+                            mapy2 = 21,
+                            count = 1,
+                        },
+                    },
+                },
+                -- 其它时间按上面配置
+                {
+                    delay = 10, -- 延时(秒)
+                    monsters = {
+                        {
+                            id = 662,
+                            mapx1 = 5,   
+                            mapx2 = 5,   
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 662,
+                            mapx1 = 6,   
+                            mapx2 = 6,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 663,
+                            mapx1 = 66,   
+                            mapx2 = 66,
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 663,
+                            mapx1 = 65,   
+                            mapx2 = 65,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 678,
+                            mapx1 = 41,   
+                            mapx2 = 41,
+                            mapy1 = 21,
+                            mapy2 = 21,
+                            count = 1,
+                        },
+                    },
+                },
+                -- 其它时间按上面配置
+                {
+                    delay = 10, -- 延时(秒)
+                    monsters = {
+                        {
+                            id = 662,
+                            mapx1 = 5,   
+                            mapx2 = 5,   
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 662,
+                            mapx1 = 6,   
+                            mapx2 = 6,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 663,
+                            mapx1 = 66,   
+                            mapx2 = 66,
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 663,
+                            mapx1 = 65,   
+                            mapx2 = 65,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 678,
+                            mapx1 = 41,   
+                            mapx2 = 41,
+                            mapy1 = 21,
+                            mapy2 = 21,
+                            count = 1,
+                        },
+                    },
+                },
+                -- 其它时间按上面配置
+                {
+                    delay = 10, -- 延时(秒)
+                    monsters = {
+                        {
+                            id = 662,
+                            mapx1 = 5,   
+                            mapx2 = 5,   
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 662,
+                            mapx1 = 6,   
+                            mapx2 = 6,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 663,
+                            mapx1 = 66,   
+                            mapx2 = 66,
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 663,
+                            mapx1 = 65,   
+                            mapx2 = 65,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 678,
+                            mapx1 = 41,   
+                            mapx2 = 41,
+                            mapy1 = 21,
+                            mapy2 = 21,
+                            count = 1,
+                        },
+                    },
+                },
+                -- 其它时间按上面配置
+                {
+                    delay = 10, -- 延时(秒)
+                    monsters = {
+                        {
+                            id = 662,
+                            mapx1 = 5,   
+                            mapx2 = 5,   
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 662,
+                            mapx1 = 6,   
+                            mapx2 = 6,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 663,
+                            mapx1 = 66,   
+                            mapx2 = 66,
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 663,
+                            mapx1 = 65,   
+                            mapx2 = 65,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 678,
+                            mapx1 = 41,   
+                            mapx2 = 41,
+                            mapy1 = 21,
+                            mapy2 = 21,
+                            count = 1,
+                        },
+                    },
+                },
+                -- 其它时间按上面配置
+                {
+                    delay = 10, -- 延时(秒)
+                    monsters = {
+                        {
+                            id = 662,
+                            mapx1 = 5,   
+                            mapx2 = 5,   
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 662,
+                            mapx1 = 6,   
+                            mapx2 = 6,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 663,
+                            mapx1 = 66,   
+                            mapx2 = 66,
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 663,
+                            mapx1 = 65,   
+                            mapx2 = 65,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 678,
+                            mapx1 = 41,   
+                            mapx2 = 41,
+                            mapy1 = 21,
+                            mapy2 = 21,
+                            count = 1,
+                        },
+                    },
+                },
+                -- 其它时间按上面配置
+                {
+                    delay = 10, -- 延时(秒)
+                    monsters = {
+                        {
+                            id = 662,
+                            mapx1 = 5,   
+                            mapx2 = 5,   
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 662,
+                            mapx1 = 6,   
+                            mapx2 = 6,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 663,
+                            mapx1 = 66,   
+                            mapx2 = 66,
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 663,
+                            mapx1 = 65,   
+                            mapx2 = 65,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 678,
+                            mapx1 = 41,   
+                            mapx2 = 41,
+                            mapy1 = 21,
+                            mapy2 = 21,
+                            count = 1,
+                        },
+                    },
+                },
+                -- 其它时间按上面配置
+                {
+                    delay = 10, -- 延时(秒)
+                    monsters = {
+                        {
+                            id = 662,
+                            mapx1 = 5,   
+                            mapx2 = 5,   
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 662,
+                            mapx1 = 6,   
+                            mapx2 = 6,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 663,
+                            mapx1 = 66,   
+                            mapx2 = 66,
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 663,
+                            mapx1 = 65,   
+                            mapx2 = 65,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 678,
+                            mapx1 = 41,   
+                            mapx2 = 41,
+                            mapy1 = 21,
+                            mapy2 = 21,
+                            count = 1,
+                        },
+                    },
+                },
+                -- 其它时间按上面配置
+                {
+                    delay = 10, -- 延时(秒)
+                    monsters = {
+                        {
+                            id = 662,
+                            mapx1 = 5,   
+                            mapx2 = 5,   
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 662,
+                            mapx1 = 6,   
+                            mapx2 = 6,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 663,
+                            mapx1 = 66,   
+                            mapx2 = 66,
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 663,
+                            mapx1 = 65,   
+                            mapx2 = 65,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 678,
+                            mapx1 = 41,   
+                            mapx2 = 41,
+                            mapy1 = 21,
+                            mapy2 = 21,
+                            count = 1,
+                        },
+                    },
+                },
+                -- 其它时间按上面配置
+                {
+                    delay = 10, -- 延时(秒)
+                    monsters = {
+                        {
+                            id = 664,
+                            mapx1 = 12,   
+                            mapx2 = 12,
+                            mapy1 = 17,
+                            mapy2 = 17,
+                            count = 1,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 665,
+                            mapx1 = 62,   
+                            mapx2 = 62,
+                            mapy1 = 17,
+                            mapy2 = 17,
+                            count = 1,
+                        },
+                    },
+                },
+            },
+        },
+        
+        -- 下面各波按上面配置
+        {
+            nmonster = 252, -- 怪物总数
+            monsters = { 666,667,668,669,678 }, -- 这一波需要杀死的怪物的ID
+
+            token = 200, -- 每人可以获得的代币
+
+            refreshs = {
+                {
+                    delay = 15, -- 延时(秒)
+                    monsters = {
+                        {
+                            id = 666,
+                            mapx1 = 5,   
+                            mapx2 = 5,   
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 666,
+                            mapx1 = 6,   
+                            mapx2 = 6,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 667,
+                            mapx1 = 66,   
+                            mapx2 = 66,
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 667,
+                            mapx1 = 65,   
+                            mapx2 = 65,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 678,
+                            mapx1 = 41,   
+                            mapx2 = 41,
+                            mapy1 = 21,
+                            mapy2 = 21,
+                            count = 1,
+                        },
+                    },
+                },
+                -- 其它时间按上面配置
+                {
+                    delay = 10, -- 延时(秒)
+                    monsters = {
+                        {
+                            id = 666,
+                            mapx1 = 5,   
+                            mapx2 = 5,   
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 666,
+                            mapx1 = 6,   
+                            mapx2 = 6,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 667,
+                            mapx1 = 66,   
+                            mapx2 = 66,
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 667,
+                            mapx1 = 65,   
+                            mapx2 = 65,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 678,
+                            mapx1 = 41,   
+                            mapx2 = 41,
+                            mapy1 = 21,
+                            mapy2 = 21,
+                            count = 1,
+                        },
+                    },
+                },
+                -- 其它时间按上面配置
+                {
+                    delay = 10, -- 延时(秒)
+                    monsters = {
+                        {
+                            id = 666,
+                            mapx1 = 5,   
+                            mapx2 = 5,   
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 666,
+                            mapx1 = 6,   
+                            mapx2 = 6,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 667,
+                            mapx1 = 66,   
+                            mapx2 = 66,
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 667,
+                            mapx1 = 65,   
+                            mapx2 = 65,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 678,
+                            mapx1 = 41,   
+                            mapx2 = 41,
+                            mapy1 = 21,
+                            mapy2 = 21,
+                            count = 1,
+                        },
+                    },
+                },
+                -- 其它时间按上面配置
+                {
+                    delay = 10, -- 延时(秒)
+                    monsters = {
+                        {
+                            id = 666,
+                            mapx1 = 5,   
+                            mapx2 = 5,   
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 666,
+                            mapx1 = 6,   
+                            mapx2 = 6,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 667,
+                            mapx1 = 66,   
+                            mapx2 = 66,
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 667,
+                            mapx1 = 65,   
+                            mapx2 = 65,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 678,
+                            mapx1 = 41,   
+                            mapx2 = 41,
+                            mapy1 = 21,
+                            mapy2 = 21,
+                            count = 1,
+                        },
+                    },
+                },
+                -- 其它时间按上面配置
+                {
+                    delay = 10, -- 延时(秒)
+                    monsters = {
+                        {
+                            id = 666,
+                            mapx1 = 5,   
+                            mapx2 = 5,   
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 666,
+                            mapx1 = 6,   
+                            mapx2 = 6,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 667,
+                            mapx1 = 66,   
+                            mapx2 = 66,
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 667,
+                            mapx1 = 65,   
+                            mapx2 = 65,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 678,
+                            mapx1 = 41,   
+                            mapx2 = 41,
+                            mapy1 = 21,
+                            mapy2 = 21,
+                            count = 1,
+                        },
+                    },
+                },
+                -- 其它时间按上面配置
+                {
+                    delay = 10, -- 延时(秒)
+                    monsters = {
+                        {
+                            id = 666,
+                            mapx1 = 5,   
+                            mapx2 = 5,   
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 666,
+                            mapx1 = 6,   
+                            mapx2 = 6,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 667,
+                            mapx1 = 66,   
+                            mapx2 = 66,
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 667,
+                            mapx1 = 65,   
+                            mapx2 = 65,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 678,
+                            mapx1 = 41,   
+                            mapx2 = 41,
+                            mapy1 = 21,
+                            mapy2 = 21,
+                            count = 1,
+                        },
+                    },
+                },
+                -- 其它时间按上面配置
+                {
+                    delay = 10, -- 延时(秒)
+                    monsters = {
+                        {
+                            id = 666,
+                            mapx1 = 5,   
+                            mapx2 = 5,   
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 666,
+                            mapx1 = 6,   
+                            mapx2 = 6,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 667,
+                            mapx1 = 66,   
+                            mapx2 = 66,
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 667,
+                            mapx1 = 65,   
+                            mapx2 = 65,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 678,
+                            mapx1 = 41,   
+                            mapx2 = 41,
+                            mapy1 = 21,
+                            mapy2 = 21,
+                            count = 1,
+                        },
+                    },
+                },
+                -- 其它时间按上面配置
+                {
+                    delay = 10, -- 延时(秒)
+                    monsters = {
+                        {
+                            id = 666,
+                            mapx1 = 5,   
+                            mapx2 = 5,   
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 666,
+                            mapx1 = 6,   
+                            mapx2 = 6,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 667,
+                            mapx1 = 66,   
+                            mapx2 = 66,
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 667,
+                            mapx1 = 65,   
+                            mapx2 = 65,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 678,
+                            mapx1 = 41,   
+                            mapx2 = 41,
+                            mapy1 = 21,
+                            mapy2 = 21,
+                            count = 1,
+                        },
+                    },
+                },
+                -- 其它时间按上面配置
+                {
+                    delay = 10, -- 延时(秒)
+                    monsters = {
+                        {
+                            id = 666,
+                            mapx1 = 5,   
+                            mapx2 = 5,   
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 666,
+                            mapx1 = 6,   
+                            mapx2 = 6,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 667,
+                            mapx1 = 66,   
+                            mapx2 = 66,
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 667,
+                            mapx1 = 65,   
+                            mapx2 = 65,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 678,
+                            mapx1 = 41,   
+                            mapx2 = 41,
+                            mapy1 = 21,
+                            mapy2 = 21,
+                            count = 1,
+                        },
+                    },
+                },
+                -- 其它时间按上面配置
+                {
+                    delay = 10, -- 延时(秒)
+                    monsters = {
+                        {
+                            id = 666,
+                            mapx1 = 5,   
+                            mapx2 = 5,   
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 666,
+                            mapx1 = 6,   
+                            mapx2 = 6,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 667,
+                            mapx1 = 66,   
+                            mapx2 = 66,
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 667,
+                            mapx1 = 65,   
+                            mapx2 = 65,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 678,
+                            mapx1 = 41,   
+                            mapx2 = 41,
+                            mapy1 = 21,
+                            mapy2 = 21,
+                            count = 1,
+                        },
+                    },
+                },
+                -- 其它时间按上面配置
+                {
+                    delay = 10, -- 延时(秒)
+                    monsters = {
+                        {
+                            id = 668,
+                            mapx1 = 12,   
+                            mapx2 = 12,
+                            mapy1 = 17,
+                            mapy2 = 17,
+                            count = 1,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 669,
+                            mapx1 = 62,   
+                            mapx2 = 62,
+                            mapy1 = 17,
+                            mapy2 = 17,
+                            count = 1,
+                        },
+                    },
+                },
+            },
+        },
+        -- 下面各波按上面配置
+        {
+            nmonster = 252, -- 怪物总数
+            monsters = { 670,671,672,673,678 }, -- 这一波需要杀死的怪物的ID
+
+            token = 200, -- 每人可以获得的代币
+
+            refreshs = {
+                {
+                    delay = 15, -- 延时(秒)
+                    monsters = {
+                        {
+                            id = 670,
+                            mapx1 = 5,   
+                            mapx2 = 5,   
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 670,
+                            mapx1 = 6,   
+                            mapx2 = 6,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 671,
+                            mapx1 = 66,   
+                            mapx2 = 66,
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 671,
+                            mapx1 = 65,   
+                            mapx2 = 65,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 678,
+                            mapx1 = 41,   
+                            mapx2 = 41,
+                            mapy1 = 21,
+                            mapy2 = 21,
+                            count = 1,
+                        },
+                    },
+                },
+                -- 其它时间按上面配置
+                {
+                    delay = 10, -- 延时(秒)
+                    monsters = {
+                        {
+                            id = 670,
+                            mapx1 = 5,   
+                            mapx2 = 5,   
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 670,
+                            mapx1 = 6,   
+                            mapx2 = 6,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 671,
+                            mapx1 = 66,   
+                            mapx2 = 66,
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 671,
+                            mapx1 = 65,   
+                            mapx2 = 65,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 678,
+                            mapx1 = 41,   
+                            mapx2 = 41,
+                            mapy1 = 21,
+                            mapy2 = 21,
+                            count = 1,
+                        },
+                    },
+                },
+                -- 其它时间按上面配置
+                {
+                    delay = 10, -- 延时(秒)
+                    monsters = {
+                        {
+                            id = 670,
+                            mapx1 = 5,   
+                            mapx2 = 5,   
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 670,
+                            mapx1 = 6,   
+                            mapx2 = 6,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 671,
+                            mapx1 = 66,   
+                            mapx2 = 66,
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 671,
+                            mapx1 = 65,   
+                            mapx2 = 65,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 678,
+                            mapx1 = 41,   
+                            mapx2 = 41,
+                            mapy1 = 21,
+                            mapy2 = 21,
+                            count = 1,
+                        },
+                    },
+                },
+                -- 其它时间按上面配置
+                {
+                    delay = 10, -- 延时(秒)
+                    monsters = {
+                        {
+                            id = 670,
+                            mapx1 = 5,   
+                            mapx2 = 5,   
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 670,
+                            mapx1 = 6,   
+                            mapx2 = 6,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 671,
+                            mapx1 = 66,   
+                            mapx2 = 66,
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 671,
+                            mapx1 = 65,   
+                            mapx2 = 65,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 678,
+                            mapx1 = 41,   
+                            mapx2 = 41,
+                            mapy1 = 21,
+                            mapy2 = 21,
+                            count = 1,
+                        },
+                    },
+                },
+                -- 其它时间按上面配置
+                {
+                    delay = 10, -- 延时(秒)
+                    monsters = {
+                        {
+                            id = 670,
+                            mapx1 = 5,   
+                            mapx2 = 5,   
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 670,
+                            mapx1 = 6,   
+                            mapx2 = 6,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 671,
+                            mapx1 = 66,   
+                            mapx2 = 66,
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 671,
+                            mapx1 = 65,   
+                            mapx2 = 65,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 678,
+                            mapx1 = 41,   
+                            mapx2 = 41,
+                            mapy1 = 21,
+                            mapy2 = 21,
+                            count = 1,
+                        },
+                    },
+                },
+                -- 其它时间按上面配置
+                {
+                    delay = 10, -- 延时(秒)
+                    monsters = {
+                        {
+                            id = 670,
+                            mapx1 = 5,   
+                            mapx2 = 5,   
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 670,
+                            mapx1 = 6,   
+                            mapx2 = 6,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 671,
+                            mapx1 = 66,   
+                            mapx2 = 66,
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 671,
+                            mapx1 = 65,   
+                            mapx2 = 65,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 678,
+                            mapx1 = 41,   
+                            mapx2 = 41,
+                            mapy1 = 21,
+                            mapy2 = 21,
+                            count = 1,
+                        },
+                    },
+                },
+                -- 其它时间按上面配置
+                {
+                    delay = 10, -- 延时(秒)
+                    monsters = {
+                        {
+                            id = 670,
+                            mapx1 = 5,   
+                            mapx2 = 5,   
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 670,
+                            mapx1 = 6,   
+                            mapx2 = 6,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 671,
+                            mapx1 = 66,   
+                            mapx2 = 66,
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 671,
+                            mapx1 = 65,   
+                            mapx2 = 65,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 678,
+                            mapx1 = 41,   
+                            mapx2 = 41,
+                            mapy1 = 21,
+                            mapy2 = 21,
+                            count = 1,
+                        },
+                    },
+                },
+                -- 其它时间按上面配置
+                {
+                    delay = 10, -- 延时(秒)
+                    monsters = {
+                        {
+                            id = 670,
+                            mapx1 = 5,   
+                            mapx2 = 5,   
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 670,
+                            mapx1 = 6,   
+                            mapx2 = 6,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 671,
+                            mapx1 = 66,   
+                            mapx2 = 66,
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 671,
+                            mapx1 = 65,   
+                            mapx2 = 65,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 678,
+                            mapx1 = 41,   
+                            mapx2 = 41,
+                            mapy1 = 21,
+                            mapy2 = 21,
+                            count = 1,
+                        },
+                    },
+                },
+                -- 其它时间按上面配置
+                {
+                    delay = 10, -- 延时(秒)
+                    monsters = {
+                        {
+                            id = 670,
+                            mapx1 = 5,   
+                            mapx2 = 5,   
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 670,
+                            mapx1 = 6,   
+                            mapx2 = 6,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 671,
+                            mapx1 = 66,   
+                            mapx2 = 66,
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 671,
+                            mapx1 = 65,   
+                            mapx2 = 65,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 678,
+                            mapx1 = 41,   
+                            mapx2 = 41,
+                            mapy1 = 21,
+                            mapy2 = 21,
+                            count = 1,
+                        },
+                    },
+                },
+                -- 其它时间按上面配置
+                {
+                    delay = 10, -- 延时(秒)
+                    monsters = {
+                        {
+                            id = 670,
+                            mapx1 = 5,   
+                            mapx2 = 5,   
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 670,
+                            mapx1 = 6,   
+                            mapx2 = 6,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 671,
+                            mapx1 = 66,   
+                            mapx2 = 66,
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 671,
+                            mapx1 = 65,   
+                            mapx2 = 65,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 678,
+                            mapx1 = 41,   
+                            mapx2 = 41,
+                            mapy1 = 21,
+                            mapy2 = 21,
+                            count = 1,
+                        },
+                    },
+                },
+                -- 其它时间按上面配置
+                {
+                    delay = 10, -- 延时(秒)
+                    monsters = {
+                        {
+                            id = 672,
+                            mapx1 = 12,   
+                            mapx2 = 12,
+                            mapy1 = 17,
+                            mapy2 = 17,
+                            count = 1,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 673,
+                            mapx1 = 62,   
+                            mapx2 = 62,
+                            mapy1 = 17,
+                            mapy2 = 17,
+                            count = 1,
+                        },
+                    },
+                },
+            },
+        },
+        -- 下面各波按上面配置
+        {
+            nmonster = 252, -- 怪物总数
+            monsters = { 674,675,676,677,678 }, -- 这一波需要杀死的怪物的ID
+
+            token = 200, -- 每人可以获得的代币
+
+            refreshs = {
+                {
+                    delay = 15, -- 延时(秒)
+                    monsters = {
+                        {
+                            id = 674,
+                            mapx1 = 5,   
+                            mapx2 = 5,   
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 674,
+                            mapx1 = 6,   
+                            mapx2 = 6,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 675,
+                            mapx1 = 66,   
+                            mapx2 = 66,
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 675,
+                            mapx1 = 65,   
+                            mapx2 = 65,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 678,
+                            mapx1 = 41,   
+                            mapx2 = 41,
+                            mapy1 = 21,
+                            mapy2 = 21,
+                            count = 1,
+                        },
+                    },
+                },
+                -- 其它时间按上面配置
+                {
+                    delay = 10, -- 延时(秒)
+                    monsters = {
+                        {
+                            id = 674,
+                            mapx1 = 5,   
+                            mapx2 = 5,   
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 674,
+                            mapx1 = 6,   
+                            mapx2 = 6,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 675,
+                            mapx1 = 66,   
+                            mapx2 = 66,
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 675,
+                            mapx1 = 65,   
+                            mapx2 = 65,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 678,
+                            mapx1 = 41,   
+                            mapx2 = 41,
+                            mapy1 = 21,
+                            mapy2 = 21,
+                            count = 1,
+                        },
+                    },
+                },
+                -- 其它时间按上面配置
+                {
+                    delay = 10, -- 延时(秒)
+                    monsters = {
+                        {
+                            id = 674,
+                            mapx1 = 5,   
+                            mapx2 = 5,   
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 674,
+                            mapx1 = 6,   
+                            mapx2 = 6,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 675,
+                            mapx1 = 66,   
+                            mapx2 = 66,
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 675,
+                            mapx1 = 65,   
+                            mapx2 = 65,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 678,
+                            mapx1 = 41,   
+                            mapx2 = 41,
+                            mapy1 = 21,
+                            mapy2 = 21,
+                            count = 1,
+                        },
+                    },
+                },
+                -- 其它时间按上面配置
+                {
+                    delay = 10, -- 延时(秒)
+                    monsters = {
+                        {
+                            id = 674,
+                            mapx1 = 5,   
+                            mapx2 = 5,   
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 674,
+                            mapx1 = 6,   
+                            mapx2 = 6,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 675,
+                            mapx1 = 66,   
+                            mapx2 = 66,
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 675,
+                            mapx1 = 65,   
+                            mapx2 = 65,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 678,
+                            mapx1 = 41,   
+                            mapx2 = 41,
+                            mapy1 = 21,
+                            mapy2 = 21,
+                            count = 1,
+                        },
+                    },
+                },
+                -- 其它时间按上面配置
+                {
+                    delay = 10, -- 延时(秒)
+                    monsters = {
+                        {
+                            id = 674,
+                            mapx1 = 5,   
+                            mapx2 = 5,   
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 674,
+                            mapx1 = 6,   
+                            mapx2 = 6,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 675,
+                            mapx1 = 66,   
+                            mapx2 = 66,
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 675,
+                            mapx1 = 65,   
+                            mapx2 = 65,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 678,
+                            mapx1 = 41,   
+                            mapx2 = 41,
+                            mapy1 = 21,
+                            mapy2 = 21,
+                            count = 1,
+                        },
+                    },
+                },
+                -- 其它时间按上面配置
+                {
+                    delay = 10, -- 延时(秒)
+                    monsters = {
+                        {
+                            id = 674,
+                            mapx1 = 5,   
+                            mapx2 = 5,   
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 674,
+                            mapx1 = 6,   
+                            mapx2 = 6,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 675,
+                            mapx1 = 66,   
+                            mapx2 = 66,
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 675,
+                            mapx1 = 65,   
+                            mapx2 = 65,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 678,
+                            mapx1 = 41,   
+                            mapx2 = 41,
+                            mapy1 = 21,
+                            mapy2 = 21,
+                            count = 1,
+                        },
+                    },
+                },
+                -- 其它时间按上面配置
+                {
+                    delay = 10, -- 延时(秒)
+                    monsters = {
+                        {
+                            id = 674,
+                            mapx1 = 5,   
+                            mapx2 = 5,   
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 674,
+                            mapx1 = 6,   
+                            mapx2 = 6,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 675,
+                            mapx1 = 66,   
+                            mapx2 = 66,
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 675,
+                            mapx1 = 65,   
+                            mapx2 = 65,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 678,
+                            mapx1 = 41,   
+                            mapx2 = 41,
+                            mapy1 = 21,
+                            mapy2 = 21,
+                            count = 1,
+                        },
+                    },
+                },
+                -- 其它时间按上面配置
+                {
+                    delay = 10, -- 延时(秒)
+                    monsters = {
+                        {
+                            id = 674,
+                            mapx1 = 5,   
+                            mapx2 = 5,   
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 674,
+                            mapx1 = 6,   
+                            mapx2 = 6,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 675,
+                            mapx1 = 66,   
+                            mapx2 = 66,
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 675,
+                            mapx1 = 65,   
+                            mapx2 = 65,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 678,
+                            mapx1 = 41,   
+                            mapx2 = 41,
+                            mapy1 = 21,
+                            mapy2 = 21,
+                            count = 1,
+                        },
+                    },
+                },
+                -- 其它时间按上面配置
+                {
+                    delay = 10, -- 延时(秒)
+                    monsters = {
+                        {
+                            id = 674,
+                            mapx1 = 5,   
+                            mapx2 = 5,   
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 674,
+                            mapx1 = 6,   
+                            mapx2 = 6,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 675,
+                            mapx1 = 66,   
+                            mapx2 = 66,
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 675,
+                            mapx1 = 65,   
+                            mapx2 = 65,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 678,
+                            mapx1 = 41,   
+                            mapx2 = 41,
+                            mapy1 = 21,
+                            mapy2 = 21,
+                            count = 1,
+                        },
+                    },
+                },
+                -- 其它时间按上面配置
+                {
+                    delay = 10, -- 延时(秒)
+                    monsters = {
+                        {
+                            id = 674,
+                            mapx1 = 5,   
+                            mapx2 = 5,   
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 674,
+                            mapx1 = 6,   
+                            mapx2 = 6,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 675,
+                            mapx1 = 66,   
+                            mapx2 = 66,
+                            mapy1 = 4,
+                            mapy2 = 4,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 675,
+                            mapx1 = 65,   
+                            mapx2 = 65,
+                            mapy1 = 28,
+                            mapy2 = 28,
+                            count = 6,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 678,
+                            mapx1 = 41,   
+                            mapx2 = 41,
+                            mapy1 = 21,
+                            mapy2 = 21,
+                            count = 1,
+                        },
+                    },
+                },
+                -- 其它时间按上面配置
+                {
+                    delay = 10, -- 延时(秒)
+                    monsters = {
+                        {
+                            id = 676,
+                            mapx1 = 11,   
+                            mapx2 = 11,
+                            mapy1 = 17,
+                            mapy2 = 17,
+                            count = 1,
+                        },
+                        -- 其它怪物按上面配置
+                        {
+                            id = 677,
+                            mapx1 = 62,   
+                            mapx2 = 62,
+                            mapy1 = 17,
+                            mapy2 = 17,
+                            count = 1,
+                        },
+                    },
+                },
+            },
+        },
+    },
+}

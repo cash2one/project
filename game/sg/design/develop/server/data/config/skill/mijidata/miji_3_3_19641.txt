@@ -1,0 +1,806 @@
+{
+	id = 19641,
+	basics = 
+	{
+		{    --LV1
+			score = 33,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=26, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV2
+			score = 66,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=35, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV3
+			score = 99,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=43, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV4
+			score = 132,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=50, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV5
+			score = 165,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=55, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV6
+			score = 198,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=63, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV7
+			score = 231,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=68, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV8
+			score = 264,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=74, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV9
+			score = 297,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=79, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV10
+			score = 330,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=85, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV11
+			score = 363,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=93, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV12
+			score = 396,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=101, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV13
+			score = 429,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=109, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV14
+			score = 462,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=116, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV15
+			score = 495,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=125, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV16
+			score = 528,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=133, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV17
+			score = 561,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=140, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV18
+			score = 594,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=149, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV19
+			score = 627,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=156, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV20
+			score = 660,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=164, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV21
+			score = 693,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=175, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV22
+			score = 726,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=185, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV23
+			score = 759,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=195, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV24
+			score = 792,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=206, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV25
+			score = 825,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=216, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV26
+			score = 858,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=226, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV27
+			score = 891,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=238, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV28
+			score = 924,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=248, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV29
+			score = 957,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=258, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV30
+			score = 990,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=269, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV31
+			score = 1023,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=284, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV32
+			score = 1056,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=300, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV33
+			score = 1089,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=315, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV34
+			score = 1122,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=330, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV35
+			score = 1155,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=346, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV36
+			score = 1188,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=361, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV37
+			score = 1221,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=376, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV38
+			score = 1254,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=393, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV39
+			score = 1287,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=409, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV40
+			score = 1320,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=424, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV41
+			score = 1353,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=445, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV42
+			score = 1386,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=465, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV43
+			score = 1419,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=486, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV44
+			score = 1452,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=506, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV45
+			score = 1485,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=528, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV46
+			score = 1518,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=549, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV47
+			score = 1551,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=569, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV48
+			score = 1584,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=590, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV49
+			score = 1617,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=611, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV50
+			score = 1650,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=631, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV51
+			score = 1683,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=658, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV52
+			score = 1716,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=684, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV53
+			score = 1749,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=710, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV54
+			score = 1782,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=735, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV55
+			score = 1815,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=761, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV56
+			score = 1848,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=788, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV57
+			score = 1881,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=813, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV58
+			score = 1914,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=839, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV59
+			score = 1947,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=865, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV60
+			score = 1980,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=891, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV61
+			score = 2013,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=923, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV62
+			score = 2046,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=954, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV63
+			score = 2079,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=985, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV64
+			score = 2112,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=1016, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV65
+			score = 2145,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=1048, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV66
+			score = 2178,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=1079, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV67
+			score = 2211,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=1110, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV68
+			score = 2244,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=1141, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV69
+			score = 2277,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=1173, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV70
+			score = 2310,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=1204, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV71
+			score = 2343,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=1244, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV72
+			score = 2376,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=1283, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV73
+			score = 2409,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=1321, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV74
+			score = 2442,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=1361, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV75
+			score = 2475,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=1400, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV76
+			score = 2508,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=1439, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV77
+			score = 2541,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=1478, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV78
+			score = 2574,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=1518, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV79
+			score = 2607,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=1556, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV80
+			score = 2640,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=1596, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV81
+			score = 2673,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=1645, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV82
+			score = 2706,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=1695, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV83
+			score = 2739,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=1744, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV84
+			score = 2772,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=1794, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV85
+			score = 2805,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=1844, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV86
+			score = 2838,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=1893, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV87
+			score = 2871,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=1943, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV88
+			score = 2904,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=1993, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV89
+			score = 2937,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=2043, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV90
+			score = 2970,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=2091, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV91
+			score = 3003,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=2150, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV92
+			score = 3036,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=2208, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV93
+			score = 3069,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=2265, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV94
+			score = 3102,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=2324, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV95
+			score = 3135,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=2381, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV96
+			score = 3168,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=2440, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV97
+			score = 3201,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=2498, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV98
+			score = 3234,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=2556, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV99
+			score = 3267,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=2614, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+		{    --LV100
+			score = 3300,
+			attrs = 
+			{
+				{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=27, id=80, rate=0, value=2673, interval=5, vt=0 }},
+				--{ skillid=0, target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1, type=1, delay=0, value={ type=28, id=80, rate=0, value=0, interval=5, vt=1 }},
+			},
+		},
+	},
+},

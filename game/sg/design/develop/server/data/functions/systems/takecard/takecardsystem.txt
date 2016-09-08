@@ -1,0 +1,270 @@
+-- 美人抽卡逻辑处理文件
+--#include "takecardconfig.txt" once
+
+TakeCardSystem = {}
+
+TakeCardSystem.protocol = {
+	DATA = 1,
+	TAKECARD = 2,
+	TIME = 3,
+}
+
+--获取物品数量
+TakeCardSystem.getCount = function(sysarg,cardType)
+	local config = TakeCardConfig.consume[cardType]
+	local consumeType = config[1]
+	local consumeId = config[2]
+	local consumeCount = 0
+
+	if consumeType == 1 then
+		consumeCount = LActor.getItemCount( sysarg, consumeId )
+	end
+
+	if consumeType == 2 then
+		consumeCount = LActor.getMoneyCount( sysarg, consumeId)
+	end
+
+	return consumeCount
+end
+
+--获取剩余时间
+TakeCardSystem.getTime = function(sysarg,cardType)
+	local var = LActor.getStaticVar( sysarg )
+	local curTime = System.getCurrMiniTime()
+	if var.takecard == nil then
+		var.takecard = {}
+
+		for i=1,#TakeCardConfig.time do
+			var.takecard[i] = curTime
+		end
+	end
+
+	local fullTime = TakeCardConfig.time[cardType]
+	local restTime = fullTime - (curTime - var.takecard[cardType]) 
+	if restTime < 0 then restTime = 0 end
+
+	return restTime
+end
+
+--请求抽卡数据
+TakeCardSystem.TakeCardData = function(sysarg)
+	-- 抽卡数量
+	local level = LActor.getLevel(sysarg)
+	if level < TakeCardConfig.level then  -- 等级是否满足
+		return 
+	end
+
+	local cardCount = TakeCardConfig.defaultCount
+	
+	local state = ONLINEREWARD.GetActivityState(TakeCardConfig.activityId)
+	if state ~= 0 then 
+		cardCount = cardCount + 1 
+	end
+
+	local npack = DataPack.allocPacket(sysarg, BaseTypes.SystemId.takeCard, TakeCardSystem.protocol.DATA)
+	DataPack.writeInt(npack, cardCount)		-- 抽卡数量
+	for i=1,cardCount do
+		local count = TakeCardSystem.getCount(sysarg,i)
+		local time = TakeCardSystem.getTime(sysarg,i)
+
+		DataPack.writeInt(npack,i)			-- 抽卡类型
+		DataPack.writeInt(npack,count)		-- 抽卡消耗品数量
+		DataPack.writeInt(npack,time)		-- 免费抽卡剩余时间
+
+		print(string.format("==i: %d==count: %d==time: %d",i,count,time))
+
+	end
+	DataPack.flush(npack)
+end
+
+
+TakeCardSystem.getSum = function(config)
+	local sum = 0
+	for i=1,#config do
+		sum = sum + config[i].prob
+	end
+
+	return sum 
+end
+
+--随机获取物品，返回序列号
+TakeCardSystem.getRandomItem = function(config)
+	local sum = TakeCardSystem.getSum(config)
+	local random = System.getRandomNumber(sum) + 1
+	local tmpSum = 0
+	
+	for i=1,#config do
+		tmpSum = tmpSum + config[i].prob
+		if tmpSum > random then
+			-- 返回序列号
+			return i
+		end
+	end
+end
+
+--1抽
+TakeCardSystem.realTake1Card = function(sysarg,takeType,takeCount,resCount,timeMsk)
+	local config = TakeCardConfig.produce[takeType].one
+	local consumeType = TakeCardConfig.consume[takeType][takeCount][1]
+	
+	if consumeType == 2 and timeMsk == 0 then -- 只有在免费抽的时候重置时间
+		local var = LActor.getStaticVar( sysarg )
+		local curTime = System.getCurrMiniTime()
+		var.takecard[takeType] = curTime
+		-- 下发重置时间
+		local fullTime = TakeCardConfig.time[takeType]
+		local npack = DataPack.allocPacket(sysarg, BaseTypes.SystemId.takeCard, TakeCardSystem.protocol.TIME)
+		DataPack.writeInt(npack, takeType)
+		DataPack.writeInt(npack, fullTime)
+		DataPack.flush(npack)
+		print(string.format("==takeType:  %d===fullTime:  %d",takeType,fullTime))
+	end
+	-- 抽取结果
+	local index = TakeCardSystem.getRandomItem(config)
+	local tmpConfig = config[index]
+	LActor.addItem(sysarg,tmpConfig.id,tmpConfig.quality,	tmpConfig.strong,tmpConfig.count,tmpConfig.bind,"take1card",1)
+
+	if tmpConfig.broadcast ~= nil and tmpConfig.broadcast == 1 then
+		local str = string.format(Lang.ScriptTips.mrck002,LActor.getName(sysarg),Item.getItemName(tmpConfig.id))
+		System.broadcastLevelTipmsg(str, 31, ttScreenCenter)
+	end
+	
+
+	local npack = DataPack.allocPacket(sysarg, BaseTypes.SystemId.takeCard, TakeCardSystem.protocol.TAKECARD)
+	DataPack.writeInt(npack, takeType)  	-- 抽卡的类型
+	DataPack.writeInt(npack, resCount)		-- 消耗品数量
+	DataPack.writeInt(npack, 1)				-- 物品的数量
+	
+	DataPack.writeInt(npack, tmpConfig.id)
+	DataPack.writeInt(npack, tmpConfig.count)
+	DataPack.flush(npack)
+end
+
+--10连抽
+TakeCardSystem.realTake10Card = function(sysarg,takeType,takeCount,resCount)
+	local ten = TakeCardConfig.produce[takeType].ten
+	local card = TakeCardConfig.produce[takeType].card
+
+	local tmpItems = {}
+
+	local index = TakeCardSystem.getRandomItem(card)
+	local tmpConfig = card[index]
+	LActor.addItem(sysarg,tmpConfig.id,tmpConfig.quality,tmpConfig.strong,tmpConfig.count,tmpConfig.bind,"take10card",1)
+	if tmpConfig.broadcast ~= nil and tmpConfig.broadcast == 1 then
+		local str = string.format(Lang.ScriptTips.mrck002,LActor.getName(sysarg),Item.getItemName(tmpConfig.id))
+		System.broadcastLevelTipmsg(str, 31, ttScreenCenter)
+	end
+	
+	local tmpItem = {tmpConfig.id,tmpConfig.count}
+	table.insert(tmpItems,tmpItem)
+
+	for i=1,9 do
+		index = TakeCardSystem.getRandomItem(ten)
+		tmpConfig = ten[index]
+		LActor.addItem(sysarg,tmpConfig.id,tmpConfig.quality,tmpConfig.strong,tmpConfig.count,tmpConfig.bind,"take10card",1)
+		if tmpConfig.broadcast ~= nil and tmpConfig.broadcast == 1 then
+			local str = string.format(Lang.ScriptTips.mrck002,LActor.getName(sysarg),Item.getItemName(tmpConfig.id))
+			System.broadcastLevelTipmsg(str, 31, ttScreenCenter)
+		end
+
+		local tmpItem = {tmpConfig.id,tmpConfig.count}
+		table.insert(tmpItems,tmpItem)
+	end
+
+	local npack = DataPack.allocPacket(sysarg, BaseTypes.SystemId.takeCard, TakeCardSystem.protocol.TAKECARD)
+	DataPack.writeInt(npack, takeType)  	-- 抽卡的类型
+	DataPack.writeInt(npack, resCount)		-- 消耗品数量
+	DataPack.writeInt(npack, 10)			-- 物品的数量
+
+	for i=1,#tmpItems do
+		local itemId = tmpItems[i][1]
+		local itemCount = tmpItems[i][2]
+
+		DataPack.writeInt(npack, itemId)
+		DataPack.writeInt(npack, itemCount)
+	end
+
+	DataPack.flush(npack)
+end
+
+
+--请求抽卡
+TakeCardSystem.TakeCard = function(sysarg,dp)
+	local takeType = DataPack.readInt(dp)
+	local takeCount = DataPack.readInt(dp)
+
+	local timeMsk = 0
+	-- 校验客户端传过来的数据
+	if takeType > 3 or takeType < 1 then
+		return 
+	end
+	if takeCount ~= 1 and takeCount ~= 10 then
+		return 
+	end
+
+	-- 检查时间
+	if TakeCardSystem.getTime(sysarg,takeType) > 0 then
+		timeMsk = 1
+	end
+
+	-- 检查消耗
+	local config = TakeCardConfig.consume[takeType][takeCount]
+	local consumeType = config[1]
+	local consumeId = config[2]
+	local consumeCount = config[3]
+
+	local needCount = consumeCount * takeCount
+	local resCount = 0
+	if consumeType == 1  then
+		if LActor.getItemCount( sysarg, consumeId ) < needCount then
+			local itemName = Item.getItemName(consumeId)
+			local str = string.format(Lang.ScriptTips.mrck001,itemName)
+			LActor.sendTipmsg(sysarg, str, ttMessage)
+			return
+		end
+		-- 够的话就扣掉
+		LActor.removeItem(sysarg, consumeId, needCount)
+		resCount = LActor.getItemCount( sysarg, consumeId )
+	end
+
+	if consumeType == 2 and timeMsk == 1 then
+		if LActor.getMoneyCount( sysarg, consumeId) < needCount then
+			--local str = string.format(Lang.ScriptTips.mrck001,TakeCardConfig.moneyType[consumeId])
+			--LActor.sendTipmsg(sysarg, str, ttMessage)
+			return 
+		end
+		-- 够的话就扣掉
+		LActor.changeMoney(sysarg, consumeId, -needCount, 1, true, "takecard", "takecard")
+		resCount = LActor.getMoneyCount( sysarg, consumeId)
+	end
+
+	if consumeType == 3 then
+		if LActor.getMoneyCount( sysarg, consumeId) < needCount then
+			--local str = string.format(Lang.ScriptTips.mrck001,TakeCardConfig.moneyType[consumeId])
+			--LActor.sendTipmsg(sysarg, str, ttMessage)
+			return 
+		end
+		-- 够的话就扣掉
+		LActor.changeMoney(sysarg, consumeId, -needCount, 1, true, "takecard", "takecard")
+		resCount = LActor.getMoneyCount( sysarg, consumeId)
+	end
+
+	-- 条件满足，进行抽卡
+	if takeCount == 1 then
+		TakeCardSystem.realTake1Card(sysarg,takeType,takeCount,resCount,timeMsk)   -- 1抽
+	elseif takeCount == 10 then
+		TakeCardSystem.realTake10Card(sysarg,takeType,takeCount,resCount)  -- 10连抽
+	end
+end
+
+-- 网络处理函数
+TakeCardSystem.HandlerNetMsg = function (sysarg, systemid, msgid, packet)
+	if msgid == 1 then 			--请求抽卡数据
+		--print("TakeCardSystem:1")
+		TakeCardSystem.TakeCardData(sysarg)
+	elseif msgid == 2 then 		--请求抽卡
+		--print("TakeCardSystem:2")
+		TakeCardSystem.TakeCard(sysarg,packet)
+	end
+	--print("TakeCardSystem:end")
+end

@@ -1,0 +1,68 @@
+
+local MonHpChangedDispatcher = {}
+local MonDamageDispatcher = {} -- 怪物被攻击
+local MonLastHpDispatcher = {} -- 怪物剩下多少血
+
+MonHpChangedDispatcher.register = function(monId, func)
+	if func == nil then return end
+	monId = tonumber(monId)
+	if MonHpChangedDispatcher[monId] == nil then
+		MonHpChangedDispatcher[monId] = {}
+		--注册这个怪物血量变化需要触发脚本 
+      	System.registerMonsterHpChanged(monId,true)
+	end
+	local callTable = MonHpChangedDispatcher[monId]
+	table.insert(callTable, func)
+end
+
+MonHpChangedDispatcher.dispatch = function(monster, rate, monId)
+	local callTable = MonHpChangedDispatcher[monId]
+	if callTable == nil then return end
+	for _, func in ipairs(callTable) do
+		func(monster, rate, monId)
+	end
+end
+
+
+MonDamageDispatcher.register = function(monId, func)
+	if func == nil then return end
+	monId = tonumber(monId)
+	if MonDamageDispatcher[monId] == nil then
+		MonDamageDispatcher[monId] = {}
+		System.registerMonsterBeAttackedChanged(monId, true)
+	end
+	local callTable = MonDamageDispatcher[monId]
+	table.insert(callTable, func)
+end
+
+
+MonDamageDispatcher.dispatch = function(monster, monId, val, et)
+	local callTable = MonDamageDispatcher[monId]
+	if callTable == nil then return end
+	for _, func in ipairs(callTable) do
+		func(monster, monId, val, et)
+	end
+end
+
+MonLastHpDispatcher.register = function ( monsterid , lasthp , pro )
+	-- body
+	if MonLastHpDispatcher[monsterid] == nil then
+		MonLastHpDispatcher[monsterid] = {}
+	end
+	if MonLastHpDispatcher[monsterid][lasthp] == nil then
+		MonLastHpDispatcher[monsterid][lasthp] = pro
+	else
+		print("-------------该怪物已经最少血量已经被注册----------")
+	end
+end
+
+MonLastHpDispatcher.dispatch = function ( monster , lasthp , monsterid )
+	-- body
+	if MonLastHpDispatcher[monsterid] == nil then
+		return
+	end
+	if MonLastHpDispatcher[monsterid][lasthp] == nil then
+		return
+	end
+	MonLastHpDispatcher[monsterid][lasthp]( monster , lasthp , monsterid )
+end

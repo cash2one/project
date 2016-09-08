@@ -1,0 +1,343 @@
+--幸运转盘处理
+--#include "data\functions\systems\timereward\foreveractivity_conf.txt" once
+XingyunZhuanpan = {}
+
+
+
+XingyunZhuanpan.getConf = function()
+	return ForeverActivity_conf.activities[42]
+end
+XingyunZhuanpan.isOpen = function()
+	local state = ONLINEREWARD.GetActivityState(ForeverActivity_conf.activityId)
+	local isOpen = true
+	if state == 0 then
+		isOpen = false
+	end
+	return isOpen
+end
+XingyunZhuanpan.createItem = function( )
+	local xingyunconf = XingyunZhuanpan.getConf()
+	if not xingyunconf then
+		return
+	end
+	local ret = {}
+	local  item_index = {}
+   	local sum = 0
+   	for i=1,#xingyunconf.all_items do
+   		if not xingyunconf.all_items[i].bichu then
+       		sum = sum + xingyunconf.all_items[i].rate_1
+       	end
+   	end
+   	local count = 0
+
+   	for i=1,#xingyunconf.all_items do
+   		if xingyunconf.all_items[i].bichu then
+   			item_index[i] = 1
+   			count = count + 1
+   			table.insert(ret,i)
+   		end
+   	end
+   	while true do
+	   local rands = System.getRandomNumber(sum)
+	   local sum1 = 0
+	   for i=1,#xingyunconf.all_items do
+	   		if not xingyunconf.all_items[i].bichu then
+		       sum1 = sum1 + xingyunconf.all_items[i].rate_1
+		       if rands < sum1 and item_index[i] == nil then
+		          item_index[i] = 1
+		          count = count + 1
+		          table.insert(ret,i)
+		          break
+		       end
+		    end
+	   end
+
+	   if count >= xingyunconf.everyday_item_count then
+	   		return ret
+	   end
+
+   	end
+end
+XingyunZhuanpan.newDay = function(sysarg)
+	if not XingyunZhuanpan.isOpen() then
+		return
+	end
+	local xingyunconf = XingyunZhuanpan.getConf()
+	if not xingyunconf then
+		return
+	end
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then
+		return
+	end
+	if var.xingyunzhuanpan == nil then
+		var.xingyunzhuanpan = {}
+	end
+	if var.xingyunzhuanpan.xy_item_index ~= nil then
+		for i=1,#var.xingyunzhuanpan.xy_item_index do
+			var.xingyunzhuanpan.xy_item_index[i] = nil
+		end
+	end
+	var.xingyunzhuanpan.xy_item_index = {}
+	local item_index = XingyunZhuanpan.createItem()
+	for _,index in ipairs(item_index) do
+		var.xingyunzhuanpan.xy_item_index[#var.xingyunzhuanpan.xy_item_index+1] = index
+	end
+	-- print("--幸运转盘随机到的物品-")
+	-- for i=1,#var.xingyunzhuanpan.xy_item_index do
+	-- 	print(var.xingyunzhuanpan.xy_item_index[i])
+	-- end
+	var.xingyunzhuanpan.free_count = 0
+	var.xingyunzhuanpan.charge_count = 0
+	var.xingyunzhuanpan.free_time = 0 
+	var.xingyunzhuanpan.system_time = System.getCurrMiniTime()
+	XingyunZhuanpan.sendinfo(sysarg)
+	print("---新的一天到来 清理幸运转盘数据--")
+end
+-- XingyunZhuanpan.newDay1 = function(sysarg)
+-- 	for i=1,10 do
+-- 		XingyunZhuanpan.newDay(sysarg)
+-- 	end
+-- end
+XingyunZhuanpan.sendinfo = function(sysarg)
+	if not XingyunZhuanpan.isOpen() then
+		return
+	end
+	local xingyunconf = XingyunZhuanpan.getConf()
+	if not xingyunconf then
+		return
+	end
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then
+		return
+	end
+	var.xingyunzhuanpan.free_time = System.getCurrMiniTime() - var.xingyunzhuanpan.system_time + var.xingyunzhuanpan.free_time
+	-- print("==========================")
+	-- print("---free_count",var.xingyunzhuanpan.free_count)
+	-- print("---charge_count",var.xingyunzhuanpan.charge_count)
+	-- print("---free_time",var.xingyunzhuanpan.free_time)
+	-- print("---system_time",var.xingyunzhuanpan.system_time)
+	var.xingyunzhuanpan.system_time = System.getCurrMiniTime()
+	local npack = DataPack.allocPacket(sysarg,138,88)  --申请一个数据包
+	if npack == nil then return end
+	DataPack.writeInt(npack,var.xingyunzhuanpan.free_count)
+	DataPack.writeInt(npack,var.xingyunzhuanpan.charge_count)
+	DataPack.writeInt(npack,var.xingyunzhuanpan.free_time)
+	DataPack.writeInt(npack,#var.xingyunzhuanpan.xy_item_index)
+	for i=1,#var.xingyunzhuanpan.xy_item_index do
+		DataPack.writeInt(npack,var.xingyunzhuanpan.xy_item_index[i])
+	end
+	DataPack.flush(npack)
+end
+XingyunZhuanpan.getInfo = function(sysarg)
+	XingyunZhuanpan.sendinfo(sysarg)
+end
+
+XingyunZhuanpan.createItemForChouJian = function(item_index_list, type)
+	local xingyunconf = XingyunZhuanpan.getConf()
+	if not xingyunconf then
+		return
+	end
+	local items = {}
+	for i=1,#item_index_list do
+		table.insert(items,xingyunconf.all_items[item_index_list[i]])
+	end
+
+	local  item_index = {}
+   	local sum = 0
+   	for i=1,#items do
+   		local rate = items[i].rate_1
+   		if type == 2 then
+   			rate = items[i].rate_2
+   		end
+
+       sum = sum + rate
+   	end
+    local rands = System.getRandomNumber(sum)
+    local sum1 = 0
+    for i=1,#items do
+    	local rate = items[i].rate_1
+   		if type == 2 then
+   			rate = items[i].rate_2
+   		end
+       sum1 = sum1 + rate
+       if rands < sum1 then
+       		return i
+       end
+      
+	end
+	return 0
+
+end
+XingyunZhuanpan.ChouJianBegin = function(sysarg)
+	if not XingyunZhuanpan.isOpen() then
+		return
+	end
+	local xingyunconf = XingyunZhuanpan.getConf()
+	if not xingyunconf then
+		return
+	end
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then
+		return
+	end
+	if var.xingyunzhuanpan == nil then
+		var.xingyunzhuanpan = {}
+	end
+	if var.xingyunzhuanpan.free_count == nil then
+		var.xingyunzhuanpan.free_count = 0
+	end
+	if var.xingyunzhuanpan.charge_count == nil then
+		var.xingyunzhuanpan.charge_count = 0
+	end
+	if var.xingyunzhuanpan.free_time == nil then
+		var.xingyunzhuanpan.free_time = 0
+	end
+	var.xingyunzhuanpan.free_time = System.getCurrMiniTime() - var.xingyunzhuanpan.system_time + var.xingyunzhuanpan.free_time
+	var.xingyunzhuanpan.system_time = System.getCurrMiniTime()
+	local free_count = var.xingyunzhuanpan.free_count + 1
+	local index = 0
+	if free_count  <= #xingyunconf.need_times and var.xingyunzhuanpan.free_time >= xingyunconf.need_times[free_count] then --免费抽奖
+		index = XingyunZhuanpan.createItemForChouJian(var.xingyunzhuanpan.xy_item_index,1)
+		var.xingyunzhuanpan.free_count = var.xingyunzhuanpan.free_count + 1
+		var.xingyunzhuanpan.free_time = 0
+	else --扣元宝抽奖
+		index = XingyunZhuanpan.createItemForChouJian(var.xingyunzhuanpan.xy_item_index,2)
+		-- if var.xingyunzhuanpan.charge_count >= #xingyunconf.need_money then
+		-- 	return
+		-- end
+		var.xingyunzhuanpan.charge_count = var.xingyunzhuanpan.charge_count + 1
+		local money_index = var.xingyunzhuanpan.charge_count
+
+		if money_index >= #xingyunconf.need_money then
+			money_index = #xingyunconf.need_money
+		end
+		local cost = xingyunconf.need_money[money_index]
+		local money = LActor.getMoneyCount(sysarg, mtYuanbao)
+		if money < cost then
+			LActor.SendGeneralTips(sysarg, 1, mtYuanbao, cost-money)
+			return
+		end
+		LActor.changeMoney(sysarg, 3, -cost, 1, true, "xingyunzhuanpan", "")
+	end
+	
+	if index == 0 or index > 8 then
+		return
+	end
+	var.xingyunzhuanpan.choujianBegin = 1
+	var.xingyunzhuanpan.choujianIndex = index
+	
+	local npack = DataPack.allocPacket(sysarg,138,89)  --申请一个数据包
+	if npack == nil then return end
+	DataPack.writeInt(npack,index)
+	DataPack.flush(npack)
+	--print("---抽奖结束--")
+	XingyunZhuanpan.sendinfo(sysarg)
+
+end
+XingyunZhuanpan.ChouJianEnd = function(sysarg) 
+	local xingyunconf = XingyunZhuanpan.getConf()
+	if not xingyunconf then
+		return
+	end
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then
+		return
+	end
+	if var.xingyunzhuanpan == nil then
+		var.xingyunzhuanpan = {}
+	end
+	if var.xingyunzhuanpan.choujianBegin ~= 1 then
+		return
+	end
+	local index = var.xingyunzhuanpan.choujianIndex
+	local item_index = var.xingyunzhuanpan.xy_item_index[index]
+	local itemid, itemnum = xingyunconf.all_items[item_index].id,xingyunconf.all_items[item_index].count
+	local itemname 
+	if xingyunconf.all_items[item_index].type == 1 then
+		local needspace = Item.getAddItemNeedGridCount( sysarg, itemid, itemnum )
+		if needspace > Item.getBagEmptyGridCount( sysarg ) then --背包不足，发邮件
+			System.sendGmMailOffLine(LActor.getActorId(sysarg), xingyunconf.context, 1, itemid, itemnum, 1, xingyunconf.title)
+		else
+			LActor.addItem(sysarg, itemid, 0, 0, itemnum, 1, "xingyunzhuanpan", 1)
+		end
+		itemname = Item.getColorName(itemid)
+	elseif xingyunconf.all_items[item_index].type == 2 then
+		LActor.changeMoney(sysarg, itemid, itemnum, 1, true, "xingyunzhuanpan", "")
+		if itemid == 0 then
+			itemname = "#cfc883a铜钱"
+		elseif itemid == 2 then
+			itemname = "#cfc883a玉佩"
+		elseif itemid == 3 then
+			itemname = "#cfc883a元宝"
+		end
+	end
+	if xingyunconf.all_items[item_index].broadcast then
+		local actorname = LActor.getName(sysarg)	
+		local broadcastmsg = string.format(Lang.ScriptTips.xingyunzhuanpan001,actorname,itemname)
+        System.broadcastTipmsg(broadcastmsg, ttGmTip)
+
+		local broadcastmsg1 = string.format(Lang.ScriptTips.xingyunzhuanpan002,actorname,itemname)
+        System.broadcastTipmsg(broadcastmsg1, ttChatWindow)
+	end
+	var.xingyunzhuanpan.choujianBegin = nil
+end
+XingyunZhuanpan.Login = function(sysarg)
+	--print("---幸运转盘，玩家登录--")
+	if not XingyunZhuanpan.isOpen() then
+		return
+	end
+	local xingyunconf = XingyunZhuanpan.getConf()
+	if not xingyunconf then
+		return
+	end
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then
+		return
+	end
+	if var.xingyunzhuanpan == nil then
+		var.xingyunzhuanpan = {}
+	end
+	if var.xingyunzhuanpan.free_count == nil then
+		var.xingyunzhuanpan.free_count = 0
+	end
+	if var.xingyunzhuanpan.charge_count == nil then
+		var.xingyunzhuanpan.charge_count = 0
+	end
+	if var.xingyunzhuanpan.free_time == nil then
+		var.xingyunzhuanpan.free_time = 0
+	end
+	if var.xingyunzhuanpan.xy_item_index == nil then
+		var.xingyunzhuanpan.xy_item_index = {}
+	end
+
+	var.xingyunzhuanpan.system_time = System.getCurrMiniTime()
+end
+XingyunZhuanpan.Logout = function(sysarg)
+	if not XingyunZhuanpan.isOpen() then
+		return
+	end
+	local xingyunconf = XingyunZhuanpan.getConf()
+	if not xingyunconf then
+		return
+	end
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then
+		return
+	end
+	if var.xingyunzhuanpan == nil then
+		var.xingyunzhuanpan = {}
+	end
+	if var.xingyunzhuanpan.free_time == nil then
+		var.xingyunzhuanpan.free_time = 0
+	end
+	if var.xingyunzhuanpan.system_time == nil then
+		var.xingyunzhuanpan.system_time = System.getCurrMiniTime()
+	end
+	var.xingyunzhuanpan.free_time = System.getCurrMiniTime() - var.xingyunzhuanpan.system_time + var.xingyunzhuanpan.free_time
+	XingyunZhuanpan.ChouJianEnd(sysarg)
+end
+GmEventFuncList.register( "xyzp",XingyunZhuanpan.newDay,1)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, XingyunZhuanpan.newDay)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, XingyunZhuanpan.Login)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogout, XingyunZhuanpan.Logout)

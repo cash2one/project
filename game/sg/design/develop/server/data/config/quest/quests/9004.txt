@@ -1,0 +1,41 @@
+﻿{
+	quickFinish = false,
+	cangiveup = false,
+	nextacceptqid = 0,
+	timelimit = 0,
+	conds = {
+		{
+			id = 0,
+			type = 0,
+			count = 26,
+		},
+	},
+	target = {
+		{
+			id = 26301,
+			type = 57,
+			count = 1,
+			tarTips = Lang.Quest.t9004_1,
+		},
+	},
+	autofinish = false,
+	excludetree = true,
+	timeoutcleardata = false,
+	awards = {
+		{
+			id = 2,
+			type = 2,
+			count = 20,
+		},
+	},
+	id = 9004,
+	commitjuqingkey = "none",
+	maxcount = 1,
+	acceptjuqingkey = "none",
+	name = Lang.Quest.n9004,
+	parentid = -1,
+	type = 9,
+	finishNext = true,
+	content = Lang.Quest.d9004,
+	interval = 0,
+},

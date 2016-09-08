@@ -1,0 +1,20 @@
+
+-- 区域BOSS召唤小怪技能
+{
+	id=71,
+	name=Lang.Skill.s71Name,
+	desc=Lang.Skill.s71Desc,
+	vocation=0,	
+	skillClass =7,
+	skillType=6,
+	skillSpellType=0,
+	commonCd=0,
+	specialBuffCond =0,
+	skillSubLevel=
+	{
+--#include "Skill_71_1.txt"	
+	}
+},
+
+
+

@@ -1,0 +1,48 @@
+-- 新校武场处理脚本
+--#include "data\functions\globaldefine.txt" once
+--#include "data\functions\config\fubenconfig\newpetfubenconfig.txt" once	--  新校武场副本配置
+
+newPetFubenMon = {}
+-- 单个怪物杀死触发的事件
+newPetFubenMon.OnKillMonster = function(monster,sysarg,monsterid)
+	print("monster killed1 : "..monsterid)
+	local fubenId = LActor.getFubenId(sysarg)
+
+	local isExist = 0
+	for i=1,#NewPetConfig.fubenId do
+		if fubenId == NewPetConfig.fubenId[i] then
+			isExist = 1
+			break
+		end
+	end
+
+	if isExist == 0 then
+		return
+	end
+
+	print("monster killed2 : "..monsterid)
+	local Fhandle = LActor.getFubenHandle(sysarg)
+	CommonFubenJiesuanConfig.OnKillMonster(Fhandle,fubenId,sysarg,monsterid)
+	--print("monster over")
+end
+
+-- 场景所有怪物死亡事件
+newPetFubenMon.OnMonsterAllDie = function(sceneId, scenePtr, flag, monster)
+	print("-----all die")
+	local fubenId = NewPetConfig.fubenId[1]
+	CommonFubenJiesuanConfig.OnMonsterAllDie(fubenId,sceneId,monster)		-- 公用的杀死怪物处理，设置层数，结算
+	print("-----do over")
+end
+
+
+-- 注册怪物
+for i=1,#NewPetConfig.monsterIdList do
+	MonDieDispatcher.register( NewPetConfig.monsterIdList[i],  newPetFubenMon.OnKillMonster)
+end
+
+-- 注册怪物全部杀死
+for i=1,#NewPetConfig.sceneId do
+	MonAllKilledDispatcher.register( NewPetConfig.sceneId[i], newPetFubenMon.OnMonsterAllDie )
+end
+
+

@@ -1,0 +1,137 @@
+		//导航栏相关(游戏导航按钮)
+		static public const NAV_BUTTON_PROPERTY:int = 	1;//角色按钮
+		static public const NAV_BUTTON_BAG:int = 		2;//背包按钮
+		static public const NAV_BUTTON_STRENGTHEN:int = 3;//强化按钮
+		static public const NAV_BUTTON_MOUNT:int = 		4;//坐骑按钮
+		static public const NAV_BUTTON_GEM:int = 		5;//法宝按钮
+		static public const NAV_BUTTON_GUILD:int = 		6;//仙宗按钮
+		static public const NAV_BUTTON_LOTTERY:int = 	7;//抽奖按钮
+		
+		//活动导航按钮
+		static public const NAV_BUTTON_MONEY_TREE:int = 11;//摇钱树按钮
+		static public const NAV_BUTTON_XP:int = 		12;//必杀技按钮
+		static public const NAV_BUTTON_EXIT:int = 		13;//副本出口
+		static public const NAV_BUTTON_DJ:int = 		16;//渡劫按钮
+		
+		//小地图导航按钮
+		static public const NAV_BUTTON_EXCHANGE:int = 	14;//兑换按钮
+		static public const NAV_BUTTON_HOOK:int = 		15;//挂机按钮
+
+		//导航用到的特殊窗口从19开始倒数
+		static public const GUIDE_WIN_PET:int = 19;   //宠物的特殊窗口
+		static public const GUIDE_WIN_MOUNT:int = 18;   //宝物的特殊窗口
+		static public const GUIDE_XP_EQUIP_BTN:int = 17;   //必杀技引导窗口的装备按钮
+		
+		//背包界面相关
+		static public const WIN_BAG:int = 20;//背包窗口
+		
+		//坐骑界面相关
+		static public const WIN_MOUNT:int = 				30;  //坐骑窗口
+		static public const WIN_MOUNT_LEVEL:int = 			31;  //坐骑窗口 升级按钮
+		static public const WIN_MOUNT_CLOSE:int = 			32;  //坐骑窗口 关闭按钮
+		static public const WIN_MOUNT_UPGRADE_BTN:int = 	33;  //坐骑窗口 进阶按钮
+		static public const WIN_MOUNT_UPGRADE:int = 		34;  //坐骑进阶窗口
+		static public const WIN_MOUNT_UPGRADE_XIANBI:int = 	35;  //坐骑进阶窗口 仙币进阶按钮
+		
+		//法宝界面相关
+		static public const WIN_GEM:int = 					40;  //法宝窗口
+		static public const WIN_GEM_UPGRADE_BTN:int = 		41;  //法宝窗口 提升按钮
+		static public const WIN_GEM_UPGRADE:int = 			42;  //法宝提升窗口
+		static public const WIN_GEM_HUNT_BTN:int = 			43;  //法宝炼魂按钮
+		static public const WIN_GEM_HUNT:int = 				44;  //法宝炼魂窗口
+		static public const WIN_GEM_HUNTER_GRID:int = 		45;  //法宝炼魂师网格
+		static public const WIN_GEM_CLOSE:int = 			46;  //法宝窗口 关闭按钮
+
+		//任务导航面板
+		static public const WIN_TRACE:int = 50;     //任务导航
+		static public const WIN_TRACE_NAV:int = 51; //任务导航的导航栏
+		static public const WIN_TRACE_SWITCH_BTN:int = 52;  //切换按钮
+		
+		//人物属性面窗口
+		static public const WIN_PROPERTY:int = 60;     //人物窗口
+		static public const WIN_PROPERTY_NAV:int = 61; //人物窗口选项卡
+		static public const WIN_PROPERTY_ROOTS_STAR:int = 62; //人物窗口 灵根第一颗星
+		static public const WIN_PROPERTY_CLOSE:int = 63; //人物窗口 关闭按钮
+		
+		//经脉窗口
+		static public const WIN_JM:int = 70;  //经脉主窗口
+		static public const WIN_JM_OPEN:int = 71;  //经脉打通窗口
+		static public const WIN_JM_BUTTON_OPEN:int = 72;  //打通经脉按钮
+		static public const WIN_JM_BUTTON_START:int = 73;  //开始冲穴按钮
+		
+		//仙宗窗口
+		static public const WIN_GUILD:int = 80;  //仙宗窗口
+		static public const WIN_GUILD_CLOSE:int = 81;  //仙宗窗口 关闭按钮
+
+		//npc商店
+		static public const WIN_NPC_SHOP:int = 90;  //npc商店窗口
+		static public const WIN_NPC_SHOP_NAV:int = 91;  //npc商店窗口 导航
+		static public const WIN_NPC_SHOP_GRID:int = 92;  //npc商店窗口 网格
+		static public const WIN_NPC_SHOP_CLOSE:int = 93; //npc商店窗口 关闭按钮
+		
+		//普通物品购买的小窗口
+		static public const WIN_BUY_BLUE:int = 100;  //普通物品购买的小窗口
+		static public const WIN_BUY_BLUE_BUTTON_BUY:int = 101;  //普通物品购买的小窗口 购买按钮
+		static public const WIN_BUY:int = 105;  //普通物品购买的小窗口
+		static public const WIN_BUY_BUTTON_BUY:int = 106;  //普通物品购买的小窗口 购买按钮
+		
+		//获得新装备的窗口
+		static public const WIN_NEW_EQUIP:int = 110;  //获得新装备的窗口
+		static public const WIN_NEW_EQUIP_BUTTON_WEAR:int = 111;  //获得新装备的窗口 穿上装备
+		
+		//强化窗口
+		static public const WIN_BOOST:int = 120;  //强化窗口
+		static public const WIN_BOOST_NAV_FUNC:int = 121;  //强化窗口的功能的导航
+		static public const WIN_BOOST_NAV_ITEM:int = 122;  //物品栏的导航
+		static public const WIN_BOOST_EQUIP_GRID:int = 123; //物品网格
+		static public const WIN_BOOST_ITEM_GRID:int = 124; //装备网格
+		static public const WIN_BOOST_SMITH_BUTTON:int = 125; //精锻按钮
+		static public const WIN_BOOST_SMITH_CELL:int = 126;   //精锻装备的cell
+		static public const WIN_BOOST_STRENGTH_BUTTON:int = 127;  //强化的按钮
+		static public const WIN_BOOST_STRENGTH_CELL:int = 128;  //强化的cell
+		static public const WIN_BOOST_OPEN_BUTTON:int = 129;  //打孔的按钮
+		static public const WIN_BOOST_OPEN_CELL:int = 130;  //打孔的cell
+		static public const WIN_BOOST_INSET_BUTTON:int = 131;  //镶嵌的按钮
+		static public const WIN_BOOST_INSET_CELL:int = 132;  //镶嵌的cell
+		static public const WIN_BOOST_INSET_ROCK_CELL:int = 133;  //镶嵌的宝石cell
+//		static public const WIN_BOOST_MIX_LIST_BUTTON:int = 134;  //合成的二级宝石的一级按钮
+//		static public const WIN_BOOST_MIX_LIST:int = 135;  //合成的二级列表
+		static public const WIN_BOOST_MIX_BUTTON:int = 134;  //合成按钮
+		
+		//宝典的
+		static public const WIN_WORLDBOOK:int = 140;   //江湖宝典界面
+		static public const WIN_WORLDBOOK_LEVELUP_BUTTON:int = 141;  //江湖宝典升级按钮
+		static public const WIN_WORLDBOOK_LIST:int = 142;  //江湖宝典 相关列表
+		static public const WIN_WORLDBOOK_DIR:int = 143;  //江湖宝典 列表框
+		
+		//活动面板
+		static public const WIN_ACTIVE:int = 150;     //活动面板
+		static public const WIN_ACTIVE_NAV:int = 151; //活动面板的导航
+		static public const WIN_ACTIVE_FB_LIST:int = 152;   //活动面板副本的列表
+		
+		//任务窗口
+		static public const WIN_QUEST:int = 160;     //任务窗口
+		
+		//战力竞技
+		static public const WIN_HEGEMONY:int = 170;  //战力竞技面板
+		static public const WIN_HEGEMONY_NAV:int = 171;  //战力竞技窗口的导航栏
+		static public const WIN_HEGEMONY_PK_LIST:int = 172;  //战力竞技面板的挑战列表
+		
+		//抽奖窗口
+		static public const WIN_LOTTERY:int = 180;  //抽奖窗口
+
+		//兑换窗口
+		static public const WIN_RENOWN:int = 190;  		//兑换窗口
+		static public const WIN_RENOWN_GRID:int = 191;  //兑换窗口 物品网格
+
+		//渡劫窗口
+		static public const WIN_DJ:int = 200;  		//渡劫窗口
+		static public const WIN_DJ_GRID:int = 201;  //渡劫窗口 渡劫记录网格
+
+		//NPC对话框
+		static public const WIN_NPC_TALK:int = 210;   //npc对话框
+		static public const WIN_NPC_BUTTON_TASK:int = 211;  //npc对话框的按钮
+		static public const WIN_NPC_LIST_FUN:int = 212; //npc对话框的功能列表
+
+		//MsgBox
+		static public const WIN_MSG_BOX:int = 220;   //MsgBox

@@ -1,0 +1,60 @@
+{
+	id = 28,	--行为ID
+	trigger = 1,	--触发类型，血量为1，时间为2
+
+	isInit = 0 ,
+	--创建的时候会调用,和info里的sequence一样
+	initSequence =
+	{
+		
+	},
+
+	infos = 
+	{
+		{
+			sequId = 1,
+			param = 100 ,
+			sequence = {
+				{ type = 31, 
+				  duration = 0,
+				  --需要回调执行的东西
+				  interval = 20 ;
+				  times = -1;
+				  items = 
+				  {
+				  		{ type = 19, duration = 2, mosterId=1200, posX = 0, posY = 0, liveTime = 100000, relative = true },	--召唤怪物(没有怪物拥有者)
+				  },
+				},
+			}
+		},
+		{
+			sequId = 2,
+			param = 50 ,
+			sequence = {
+				{ type = 32, duration = 0 }, --清空时间回调器
+				{ type = 24, duration = 2, addBuffConfigId = 7, } , --向怪物自身添加buff
+			}
+		},
+		{
+			sequId = 3,
+			param = 40 ,
+			sequence = {
+				{ type = 24, duration = 2, addBuffConfigId = 8, } , --向怪物自身添加buff
+			}
+		},
+		{
+			sequId = 4,
+			param = 30 ,
+			sequence = {
+				{ type = 24, duration = 2, addBuffConfigId = 7, } , --向怪物自身添加buff
+			}
+		},
+		{
+			sequId = 5,
+			param = 20 ,
+			sequence = {
+				{ type = 24, duration = 2, addBuffConfigId = 8, } , --向怪物自身添加buff
+			}
+		},
+	},
+},

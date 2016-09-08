@@ -1,0 +1,155 @@
+-- 必杀技副本怪物处理
+
+--#include "data\functions\Tasks\Nirvana\NirvanaSet.txt" once
+--#include "data\language\LangCode.txt" once
+MonDieDispatcher.NirvanaSpecialMonsterDie = function (monster,sysarg,monId)
+
+	for i=1,#NirvanaMonster do
+		if NirvanaMonster[i].monsterId == monId then
+			if NirvanaMonster[i].SpecialMon == "true" then
+			 --特殊怪
+			 local fbPtr = LActor.getFubenPrt(monster)
+			 local ntime = Fuben.GetFubenTime()
+			 local Hfuben = Fuben.getFubenHandle(fbPtr)
+			 local var = Fuben.getDyanmicVar(fbPtr)
+			
+			 var.KillMonCount = var.KillMonCount + 1--已经杀怪的数量
+			 LActor.SendAndChangeCaleValue(sysarg,caleOther3,var.KillMonCount,false)
+			 Fuben.SetFubenTime(Hfuben,ntime + NirvanaMonster[i].GiveTime) --需要设置游戏时间
+			 
+			 LActor.SendAndChangeCaleValue(sysarg,caleFubenTime,ntime + NirvanaMonster[i].GiveTime,false)
+			 break
+			end
+		end
+	end
+end
+MonDieDispatcher.NirvanaMonsterDie = function (monster,sysarg,monId)
+	--print("NirvanaMonsterDie............")
+	local fbPtr = LActor.getFubenPrt(monster)
+	local var = Fuben.getDyanmicVar(fbPtr)
+	if var.NirvanaStep == 1 and var.KillMonCount == 0 then -- 第一波的第一个怪
+		LActor.changeAnger(sysarg,NirvanaSet.fullAnger)
+		LActor.sendTipmsg(sysarg, Lang.TaskTalk.Nv0003, ttScreenCenter)
+	else
+		for i=1,#NirvanaMonster do
+			if NirvanaMonster[i].monsterId == monId then
+				LActor.changeAnger(sysarg,NirvanaMonster[i].Anger)
+				break
+			end
+		end
+	end
+	
+	if nil == var.KillMonCount then
+		return
+	end
+
+	var.KillMonCount = var.KillMonCount + 1--已经杀怪的数量
+	var.MonsterCount = var.MonsterCount - 1
+	LActor.SendAndChangeCaleValue(sysarg,caleOther2,var.MonsterCount,false)
+	LActor.SendAndChangeCaleValue(sysarg,caleOther3,var.KillMonCount,false)
+    --好友分享 之诛仙阵超过9波
+    local zhuxianNirvanaStep = 4 
+end
+
+
+MonAllKilledDispatcher.NirvanaKillAllMonster = function(sceneId, scenePtr, flag, monster)
+	--获得玩家指针
+	local players = LuaHelp.getSceneActorList(monster)
+	if players == nil or #players < 1 then return end
+	local sysarg = players[1]
+	if sysarg == nil then return end
+	
+	if scenePtr == nil then return end
+	local fbPtr = Fuben.getSceneFuben( scenePtr )
+	local hscene = Fuben.getSceneHandleByPtr(scenePtr)
+	if fbPtr == nil then return end
+	local hfbh = Fuben.getFubenHandle(fbPtr)
+	local var = Fuben.getDyanmicVar(fbPtr)
+	--print("var.NirvanaStep"..var.NirvanaStep.." flag="..flag)
+	
+	--if var.NirvanaStep ~= flag then
+		--return
+	--end
+	
+	local nirvanaitemconf = NirvanaItem[var.NirvanaStep]
+	local createmonstertime = 0
+	if nirvanaitemconf ~= nil then
+		if table.getn(nirvanaitemconf) > 0 then
+		 --print("table.getn(nirvanaitemconf).."..table.getn(nirvanaitemconf))
+		 local rand = math.random(1,table.getn(nirvanaitemconf))
+		 --local rand = System.getRandomNumber(table.getn(nirvanaitemconf))
+		 --rand = rand + 1
+		 --发送宝箱列表
+		 --print("table.getn(rand).."..rand)
+		 local Lavar = LActor.getDyanmicVar(sysarg)
+		 Lavar.Nirvanaitem = rand
+		 Lavar.NirvanaitemFbstep = var.NirvanaStep
+		 local npack = DataPack.allocPacket(sysarg,139,47)
+		if npack == nil then return end
+		local itemconf = nirvanaitemconf[rand]
+		DataPack.writeInt(npack,#itemconf)
+		for i=1,#itemconf do
+		DataPack.writeInt(npack,itemconf[i].itemid)
+		DataPack.writeInt(npack,itemconf[i].amount)
+		DataPack.writeInt(npack,itemconf[i].quality)
+		DataPack.writeInt(npack,itemconf[i].strong)
+		DataPack.writeInt(npack,itemconf[i].bind)
+		end
+		DataPack.flush(npack)
+		end
+	end
+
+	EntrustFunc.SetFubenValue(sysarg, NirvanaSet.FBid, var.NirvanaStep) -- 设置副本委托相关值
+	
+	if var.NirvanaStep == NirvanaSet.StepCount then
+		--win了 提示
+		LActor.triggerAchieveEvent( sysarg, 46, NirvanaSet.FBid ) --
+		LActor.sendTipmsg(sysarg,Lang.TaskTalk.Nv0002,ttScreenCenter)
+		Fuben.SetFubenTime(hfbh,15)
+		LActor.SendAndChangeCaleValue(sysarg,caleFubenTime,15,false)
+		return
+	end
+	LActor.registerKillAllMonster(sysarg,true,flag+1)
+	--print("killallmonster..flag.."..flag)
+	Fuben.SetFubenTime(hfbh,NirvanaSet.LimitTime[flag +1])
+	var.NirvanaStep = var.NirvanaStep + 1
+	local npcPtr = Fuben.getNpcPtr(hscene) 
+	 var.MonsterCount = 0
+	for i=1,#NirvanaMonster do
+		if NirvanaMonster[i].bossstep == flag +1 then
+			if NirvanaMonster[i].SpecialMon == "false" then
+				Fuben.postDelayCreateMonsters(npcPtr,NirvanaMonster[i].delaytime*1000,NirvanaMonster[i].monsterId,NirvanaMonster[i].posX1, NirvanaMonster[i].posX2, NirvanaMonster[i].posY1,NirvanaMonster[i].posY2,NirvanaMonster[i].nCount,0)
+				createmonstertime = NirvanaMonster[i].delaytime
+			else
+				Fuben.postDelayCreateMonsters(npcPtr,NirvanaMonster[i].delaytime*1000,NirvanaMonster[i].monsterId,NirvanaMonster[i].posX1, NirvanaMonster[i].posX2, NirvanaMonster[i].posY1,NirvanaMonster[i].posY2,NirvanaMonster[i].nCount,NirvanaMonster[i].LiveTime)
+				
+			end
+			var.MonsterCount = var.MonsterCount + NirvanaMonster[i].nCount
+		end
+	end
+	--local gametime = NirvanaSet.LimitTime[flag +1] - createmonstertime
+	Fuben.SetFubenMonTime(hfbh,createmonstertime)
+	--print("MonsterCount"..MonsterCount)
+	LActor.ChangeCaleValue(sysarg,caleOther2,var.MonsterCount,false)
+	LActor.ChangeCaleValue(sysarg,caleFubenTime,NirvanaSet.LimitTime[flag +1],false)
+	--print("createmonstertime...."..createmonstertime)
+	LActor.ChangeCaleValue(sysarg,caleMonTime,createmonstertime,false)
+	LActor.ChangeCaleValue(sysarg,caleOther1,var.NirvanaStep,false)
+	LActor.SendAllCaleValue(sysarg)
+
+	-- 发送倒计时
+	if createmonstertime > 0 then
+		LActor.sendCountdown(sysarg, createmonstertime, 0)
+	end
+end
+
+-- MonAllKilledDispatcher.register( NirvanaSet.Scene, MonAllKilledDispatcher.NirvanaKillAllMonster )
+-- for i=1,#NirvanaMonster do
+--   --print("i:"..i.." "..table.getn(HSLJMonsterPoint))
+--   --print("register..."..TianYuanMonsterPoint[i].monsterId)
+--   if NirvanaMonster[i].SpecialMon == "true" then
+-- 	MonDieDispatcher.register(NirvanaMonster[i].monsterId,MonDieDispatcher.NirvanaSpecialMonsterDie)
+--   else
+-- 	MonDieDispatcher.register(NirvanaMonster[i].monsterId,MonDieDispatcher.NirvanaMonsterDie)
+--   end
+-- end

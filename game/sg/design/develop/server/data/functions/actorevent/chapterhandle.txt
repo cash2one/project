@@ -1,0 +1,137 @@
+﻿-- 任务章节处理
+--#include "data\config\quest\chapter.txt" once --任务章节
+--#include "data\functions\miscfunc.txt" once
+
+ChapterOpFuncList = {}
+
+ChapterOpFuncList.HandlerChapterOp = function (sysarg, args)
+  if args[1] == nil then return end
+  
+  local func = ChapterOpFuncList[args[1]]
+  if func ~= nil then
+    func(sysarg, args[2]) 
+  end
+end
+
+--登陆初始化
+function OnLoginChapter(sysarg)
+	--print("===========TEST OnLoginChapter")
+
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	if var.chapterstate == nil then
+		var.chapterstate = {}
+	end
+
+	for _, v in ipairs(QuestChapter) do
+		if var.chapterstate[v.cid] == nil then
+    		var.chapterstate[v.cid] = 0
+    	--elseif var.chapterstate[v.cid] == 1 then --兼容之前的
+    	--	var.chapterstate[v.cid] = 2
+    	end
+	end
+
+	--下发章节信息
+	local npack = DataPack.allocPacket(sysarg, 6, 14)
+    if npack == nil then return end
+
+    for i=1,#QuestChapter do
+    	local cid = QuestChapter[i].cid
+		--print("++++++++++++++++",i, cid, var.chapterstate[cid])
+		DataPack.writeInt(npack, var.chapterstate[cid])		
+	end
+	DataPack.flush(npack)
+end
+
+--请求任务章节信息
+ChapterOpFuncList[12] = function(sysarg, dp)
+	OnLoginChapter(sysarg)
+end
+
+--领取章节奖励
+ChapterOpFuncList[13] = function(sysarg, dp)
+	if not sysarg then return end
+	local cid = DataPack.readInt(dp)
+
+--print("=========领取章节奖励 "..cid)
+	if not cid then return end
+
+	local conf = nil
+    for i=1,#QuestChapter do
+    	local tcid = QuestChapter[i].cid
+    	if tcid == cid then
+    		conf = QuestChapter[i]
+    		break
+    	end
+	end
+
+	if not conf then print("ERRRRRRRRR") return end
+
+	local pzy = LActor.getIntProperty(sysarg, PROP_CAMP)
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+
+	--print("var.chapterstate[conf.cid]: "..var.chapterstate[conf.cid])
+	--是否满足条件
+	if not (var.chapterstate[conf.cid] == 2) then
+		print("条件未满足")
+		return
+	end
+
+	--是否已经领取过了奖励
+	if var.chapterstate[conf.cid] == 1 then 
+		print("已经领取过了奖励")
+		return
+	end
+
+	--给奖励
+	for _, n in pairs(conf.award) do
+		local effects = {}
+		local effect = {}
+		if n.type and n.type == 0 then
+			-- 发放物品
+			local grid = Item.getBagEmptyGridCount(sysarg)
+			if grid < Item.getAddItemNeedGridCount(sysarg, n.id, n.count) then
+				System.sendGmMailOffLine(LActor.getActorId(sysarg), Lang.ScriptTips.js002, 1, n.id, n.count, 1)
+			else
+				LActor.addItem(sysarg, n.id, 0, 0, n.count, 1,"finishchapter",1)
+
+				effect.type = 1
+				effect.id = n.id
+				effect.count = n.count
+			end
+		elseif n.type and n.type == 5 then --贝币
+			LActor.changeMoney( sysarg, 0, n.count, 1, true, "finishchapter", "add")
+
+			effect.type = 2
+		    effect.id = 0
+		    effect.count = n.count
+		elseif n.type and n.type == 7 then --绑定天珠
+			LActor.changeMoney( sysarg, 2, n.count, 1, true, "finishchapter", "add")
+			effect.type = 2
+		    effect.id = 2
+		    effect.count = n.count
+		end
+
+		--触发完成成就
+		--LActor.triggerAchieveEvent(sysarg, 74, conf.cid)
+		--设置已经领取
+		var.chapterstate[conf.cid] = 1
+		--播放全屏撒花
+		--System.playScrEffectCode(5, 10)
+
+		--播放特效
+		effects[#effects+1] = effect
+		if #effects > 0 then
+			MiscFunc.PlayItemEffect(sysarg, 10, effects)
+		end
+	end
+
+	--重新下发章节信息
+	OnLoginChapter(sysarg)
+end
+
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeChapterTask, ChapterOpFuncList.HandlerChapterOp)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, OnLoginChapter)
+

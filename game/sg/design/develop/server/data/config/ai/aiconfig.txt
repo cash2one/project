@@ -1,0 +1,102 @@
+AiConfig=
+{
+--#include "aiconfig\aiSample.txt"
+--#include "aiconfig\ai1.txt" -- 近程被动怪
+--#include "aiconfig\ai2.txt" -- 远程被动怪	
+--#include "aiconfig\ai3.txt" -- 精英boss近战
+--#include "aiconfig\ai4.txt" -- 被动超远程
+--#include "aiconfig\ai5.txt" -- 近程主动怪
+--#include "aiconfig\ai6.txt" -- 远程主动怪
+--#include "aiconfig\ai7.txt" -- 高频率检索近程主动怪
+--#include "aiconfig\ai8.txt" -- 高频率检索远程主动怪
+--#include "aiconfig\ai9.txt" -- 不运动近程被动怪
+--#include "aiconfig\ai10.txt" -- 不运动远程被动怪
+--#include "aiconfig\ai11.txt"
+--#include "aiconfig\ai12.txt"
+--#include "aiconfig\ai13.txt"
+--#include "aiconfig\ai14.txt" -- 世界boss远程
+--#include "aiconfig\ai15.txt" -- 火の意志后
+--#include "aiconfig\ai16.txt"
+--#include "aiconfig\ai17.txt" -- 竞技场怪物用到的AI配置
+--#include "aiconfig\ai18.txt" -- 竞技场宠物用到的AI配置
+--#include "aiconfig\ai19.txt"
+--#include "aiconfig\ai20.txt"
+--#include "aiconfig\ai21.txt"
+--#include "aiconfig\ai22.txt"
+--#include "aiconfig\ai23.txt"
+--#include "aiconfig\ai24.txt"
+--#include "aiconfig\ai25.txt"
+--#include "aiconfig\ai26.txt"
+--#include "aiconfig\ai27.txt"
+--#include "aiconfig\ai28.txt"
+--#include "aiconfig\ai29.txt"
+--#include "aiconfig\ai30.txt"
+--#include "aiconfig\ai31.txt"
+--#include "aiconfig\ai32.txt"
+--#include "aiconfig\ai33.txt"
+--#include "aiconfig\ai34.txt"
+--#include "aiconfig\ai35.txt"
+--#include "aiconfig\ai36.txt"
+--#include "aiconfig\ai37.txt" -- 云游巡车
+--#include "aiconfig\ai38.txt" -- 云游巡车
+--#include "aiconfig\ai39.txt" -- 福地之战
+--#include "aiconfig\ai40.txt" -- 云游巡车
+--#include "aiconfig\ai41.txt" -- 聚仙令怪物
+--#include "aiconfig\ai42.txt" -- 历练副本主动攻击怪物
+--#include "aiconfig\ai43.txt" -- 世界BOSS技能特效
+--#include "aiconfig\ai44.txt"
+--#include "aiconfig\ai45.txt"
+--#include "aiconfig\ai46.txt"
+--#include "aiconfig\ai47.txt"
+--#include "aiconfig\ai48.txt"
+--#include "aiconfig\ai49.txt"
+--#include "aiconfig\ai50.txt"
+--#include "aiconfig\ai51.txt"
+--#include "aiconfig\ai52.txt"
+--#include "aiconfig\ai53.txt" -- 巡逻怪AI
+--#include "aiconfig\ai54.txt" -- 巡逻怪AI
+--#include "aiconfig\ai55.txt" -- 巡逻怪AI
+--#include "aiconfig\ai56.txt" -- 从不回归不运动近程被动怪
+--#include "aiconfig\ai57.txt" -- 从不回归不运动近程主动怪
+--#include "aiconfig\ai58.txt" -- 从不回归不运动远程被动怪
+--#include "aiconfig\ai59.txt" -- 从不回归不运动远程主动怪，脱离战斗恢复初始朝向
+--#include "aiconfig\ai60.txt" -- 仙斗会伙伴AI
+--#include "aiconfig\ai61.txt" -- 阵营战神兽青龙AI
+--#include "aiconfig\ai62.txt" -- 阵营战神兽朱雀AI
+--#include "aiconfig\ai63.txt" -- 高频率大范围近程主动怪
+--#include "aiconfig\ai64.txt" -- 高频率大范围远程主动怪
+--#include "aiconfig\ai65.txt" -- 守护玄女上路出兵AI
+--#include "aiconfig\ai66.txt" -- 守护玄女下路出兵AI
+--#include "aiconfig\ai67.txt" -- 守护玄女中路出兵AI
+--#include "aiconfig\ai68.txt" -- 世界boss1AI
+--#include "aiconfig\ai69.txt" -- 世界boss2AI
+--#include "aiconfig\ai70.txt" -- 霜剑分身1AI
+--#include "aiconfig\ai71.txt" -- 霜剑分身2AI
+--#include "aiconfig\ai72.txt" -- BOSS远程攻击效果
+--#include "aiconfig\ai73.txt" -- 扇形技能
+--#include "aiconfig\ai74.txt" -- 自身群体爆发
+--#include "aiconfig\ai75.txt" -- 远程单体
+--#include "aiconfig\ai76.txt" -- 群体眩晕
+--#include "aiconfig\ai77.txt" -- 单体物理秒杀
+--#include "aiconfig\ai78.txt" -- 群体爆发
+--#include "aiconfig\ai79.txt" -- 超宽直线 带减速法伤
+--#include "aiconfig\ai80.txt" -- 超宽直线 带减速法伤
+--#include "aiconfig\ai81.txt" -- 单体 秒杀
+--#include "aiconfig\ai82.txt" -- 秒杀
+--#include "aiconfig\ai83.txt" -- 破甲、秒伤
+--#include "aiconfig\ai84.txt" -- 单体直线 直线、三段
+--#include "aiconfig\ai85.txt" -- 高额伤害
+--#include "aiconfig\ai86.txt" -- 高额伤害
+--#include "aiconfig\ai87.txt" -- 高额伤害
+--#include "aiconfig\ai88.txt" -- 
+--#include "aiconfig\ai89.txt" -- 群体伤害-近程-冰剑特效
+--#include "aiconfig\ai90.txt" -- 群体伤害-远程-龙卷风特效
+--#include "aiconfig\ai91.txt" -- 群体伤害-远程-魔法箭特效
+--#include "aiconfig\ai92.txt" -- 2段自身周围群体伤害-近程-剑光特效
+--#include "aiconfig\ai93.txt" -- 群体伤害-近程-锤子特效
+--#include "aiconfig\ai94.txt" -- 群体伤害-远程-冰锥特效
+--#include "aiconfig\ai95.txt" -- 2段群体伤害-近程-剑光特效2
+--#include "aiconfig\ai96.txt" -- 大范围群体伤害-远程-飞剑特效
+--#include "aiconfig\ai97.txt" -- 大范围自身周围群体伤害-近程-刀光特效
+
+}

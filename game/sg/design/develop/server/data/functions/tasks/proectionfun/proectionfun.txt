@@ -1,0 +1,56 @@
+﻿
+--#include "data\config\quest\ProtectionQuest.txt" once
+function clearProectionMon(sysarg)
+	local svar = LActor.getDyanmicVar(sysarg)
+	local monster = svar.ProtectionMonster
+	print("clearProectionMon")
+	if monster == nil then
+		return
+	end
+		if monster ~= nil then
+			Fuben.clearMonster(monster, false)
+			print("clearProectionMon1")
+		end
+		svar.ProtectionMonster = nil
+		if LActor.hasState(sysarg,17) then
+			LActor.removeState(sysarg,17)
+		end
+		if LActor.hasState(sysarg,18) then
+			LActor.removeState(sysarg,18)
+		end
+		
+		for i = 1,#Protection do 
+			if LActor.hasQuest(sysarg,Protection[i].questid) then
+				if (LActor.hasBuff(sysarg,Protection[i].BuffType,Protection[i].buffGroup)) == true then 
+						LActor.delBuff(sysarg,Protection[i].BuffType,Protection[i].buffGroup)
+				end
+				if (LActor.hasBuff(sysarg,Protection[i].BuffType1,Protection[i].buffGroup)) == true then 
+						LActor.delBuff(sysarg,Protection[i].BuffType1,Protection[i].buffGroup)
+				end
+				if (LActor.hasBuff(sysarg,Protection[i].BuffType2,Protection[i].buffGroup)) == true then 
+						LActor.delBuff(sysarg,Protection[i].BuffType2,Protection[i].buffGroup)
+				end
+			end
+		end
+end
+function loginCreateProectionMon(sysarg)
+		local svar = LActor.getDyanmicVar(sysarg)
+	for i = 1,#Protection do 
+		if LActor.hasQuest(sysarg,Protection[i].questid) then
+			local x, y = LActor.getEntityPosition(sysarg, 0, 0)
+				local monster = LActor.createMonster(sysarg, Protection[i].questmonster, x, y, 0)	
+				if (monster ~= nil) then
+					svar.ProtectionMonster = LActor.getHandle(monster) --怪物句柄
+					LActor.refreshActorObserveList(sysarg)     --刷新观察者，防止客户端延迟 
+					LActor.followActor(monster, sysarg, 1, 30, true) --跟随某个玩家
+					LActor.setEntityTelByOwnderAttr(monster, true)   --设置实体是否跟着归属者传送
+					LActor.setEntityLazyFollow(monster, false)        --设置实体是否惰性跟随
+					LActor.setDenyAttackedByActor(monster, false)     --设置实体是否不可被玩家攻击
+					LActor.setDenyBeAttack(monster,false)
+					--LActor.addState(sysarg,17)
+					--LActor.addState(sysarg,18)
+					break
+				end
+		end
+	end
+end

@@ -1,0 +1,582 @@
+﻿--StarMap_config
+--#include "..\..\language\langCode.txt" once
+
+Roots =
+{
+ {
+     moneyType = 1 ,
+     name = '东青龙' ,
+       root =
+     {
+
+           {
+             name = '角',
+             expr = 400,
+             coin = 0,
+             attri = {{value = 726,type = 17,},{value = 10,type = 19,},{value = 0,type = 27,},{value = 0,type = 23,},{value = 0,type = 33,},{value = 0,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+
+           {
+             name = '亢',
+             expr = 900,
+             coin = 0,
+             attri = {{value = 0,type = 17,},{value = 0,type = 19,},{value = 39,type = 27,},{value = 0,type = 23,},{value = 0,type = 33,},{value = 0,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+
+           {
+             name = '氐',
+             expr = 1500,
+             coin = 0,
+             attri = {{value = 0,type = 17,},{value = 0,type = 19,},{value = 0,type = 27,},{value = 0,type = 23,},{value = 0,type = 33,},{value = 0,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 66,type = 63,},{value = 0,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+
+           {
+             name = '房',
+             expr = 2100,
+             coin = 0,
+             attri = {{value = 1694,type = 17,},{value = 22,type = 19,},{value = 0,type = 27,},{value = 0,type = 23,},{value = 0,type = 33,},{value = 0,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+
+           {
+             name = '心',
+             expr = 2500,
+             coin = 0,
+             attri = {{value = 0,type = 17,},{value = 0,type = 19,},{value = 0,type = 27,},{value = 110,type = 23,},{value = 110,type = 33,},{value = 0,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+
+           {
+             name = '尾',
+             expr = 3000,
+             coin = 0,
+             attri = {{value = 0,type = 17,},{value = 0,type = 19,},{value = 103,type = 27,},{value = 0,type = 23,},{value = 0,type = 33,},{value = 0,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+
+           {
+             name = '箕',
+             expr = 3500,
+             coin = 0,
+             attri = {{value = 0,type = 17,},{value = 0,type = 19,},{value = 0,type = 27,},{value = 0,type = 23,},{value = 0,type = 33,},{value = 0,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0,type = 41,},{value = 0.015,type = 51,},{value = 0.015,type = 49,},},
+         },
+
+     }
+ },
+
+ {
+     moneyType = 1 ,
+     name = '南朱雀' ,
+       root =
+     {
+
+           {
+             name = '井',
+             expr = 5000,
+             coin = 0,
+             attri = {{value = 0,type = 17,},{value = 0,type = 19,},{value = 0,type = 27,},{value = 0,type = 23,},{value = 0,type = 33,},{value = 0,type = 39,},{value = 525,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+
+           {
+             name = '鬼',
+             expr = 5800,
+             coin = 0,
+             attri = {{value = 2903,type = 17,},{value = 37,type = 19,},{value = 0,type = 27,},{value = 0,type = 23,},{value = 0,type = 33,},{value = 0,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+
+           {
+             name = '柳',
+             expr = 6600,
+             coin = 0,
+             attri = {{value = 0,type = 17,},{value = 0,type = 19,},{value = 180,type = 27,},{value = 0,type = 23,},{value = 0,type = 33,},{value = 0,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+
+           {
+             name = '星',
+             expr = 7500,
+             coin = 0,
+             attri = {{value = 4112,type = 17,},{value = 53,type = 19,},{value = 0,type = 27,},{value = 0,type = 23,},{value = 0,type = 33,},{value = 0,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+
+           {
+             name = '张',
+             expr = 8300,
+             coin = 0,
+             attri = {{value = 0,type = 17,},{value = 0,type = 19,},{value = 0,type = 27,},{value = 259,type = 23,},{value = 259,type = 33,},{value = 0,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+
+           {
+             name = '翼',
+             expr = 9200,
+             coin = 0,
+             attri = {{value = 0,type = 17,},{value = 0,type = 19,},{value = 0,type = 27,},{value = 0,type = 23,},{value = 0,type = 33,},{value = 525,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+
+           {
+             name = '轸',
+             expr = 10100,
+             coin = 0,
+             attri = {{value = 0,type = 17,},{value = 0,type = 19,},{value = 257,type = 27,},{value = 0,type = 23,},{value = 0,type = 33,},{value = 0,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+     }
+ },
+
+ {
+     moneyType = 1 ,
+     name = '西白虎' ,
+       root =
+     {
+
+           {
+             name = '奎',
+             expr = 11000,
+             coin = 0,
+             attri = {{value = 0,type = 17,},{value = 0,type = 19,},{value = 0,type = 27,},{value = 0,type = 23,},{value = 0,type = 33,},{value = 0,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0.015,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+
+           {
+             name = '娄',
+             expr = 11900,
+             coin = 0,
+             attri = {{value = 5563,type = 17,},{value = 71,type = 19,},{value = 0,type = 27,},{value = 0,type = 23,},{value = 0,type = 33,},{value = 0,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+
+           {
+             name = '胃',
+             expr = 12800,
+             coin = 0,
+             attri = {{value = 0,type = 17,},{value = 0,type = 19,},{value = 334,type = 27,},{value = 0,type = 23,},{value = 0,type = 33,},{value = 0,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+
+           {
+             name = '昴',
+             expr = 13800,
+             coin = 0,
+             attri = {{value = 0,type = 17,},{value = 0,type = 19,},{value = 0,type = 27,},{value = 0,type = 23,},{value = 0,type = 33,},{value = 0,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 157,type = 63,},{value = 0,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+
+           {
+             name = '毕',
+             expr = 14700,
+             coin = 0,
+             attri = {{value = 7014,type = 17,},{value = 89,type = 19,},{value = 0,type = 27,},{value = 0,type = 23,},{value = 0,type = 33,},{value = 0,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+
+           {
+             name = '觜',
+             expr = 15700,
+             coin = 0,
+             attri = {{value = 0,type = 17,},{value = 0,type = 19,},{value = 0,type = 27,},{value = 440,type = 23,},{value = 440,type = 33,},{value = 0,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+
+           {
+             name = '参',
+             expr = 16700,
+             coin = 0,
+             attri = {{value = 0,type = 17,},{value = 0,type = 19,},{value = 424,type = 27,},{value = 0,type = 23,},{value = 0,type = 33,},{value = 0,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+     }
+ },
+
+ {
+     moneyType = 1 ,
+     name = '北玄武' ,
+       root =
+     {
+
+           {
+             name = '斗',
+             expr = 17700,
+             coin = 0,
+             attri = {{value = 0,type = 17,},{value = 0,type = 19,},{value = 0,type = 27,},{value = 0,type = 23,},{value = 0,type = 33,},{value = 0,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0,type = 41,},{value = 0.03,type = 51,},{value = 0.03,type = 49,},},
+         },
+
+
+           {
+             name = '牛',
+             expr = 18700,
+             coin = 0,
+             attri = {{value = 8707,type = 17,},{value = 111,type = 19,},{value = 0,type = 27,},{value = 0,type = 23,},{value = 0,type = 33,},{value = 0,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+
+           {
+             name = '女',
+             expr = 19700,
+             coin = 0,
+             attri = {{value = 0,type = 17,},{value = 0,type = 19,},{value = 0,type = 27,},{value = 0,type = 23,},{value = 0,type = 33,},{value = 0,type = 39,},{value = 1247,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+
+           {
+             name = '虚',
+             expr = 20700,
+             coin = 0,
+             attri = {{value = 10159,type = 17,},{value = 129,type = 19,},{value = 0,type = 27,},{value = 0,type = 23,},{value = 0,type = 33,},{value = 0,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+
+           {
+             name = '危',
+             expr = 21800,
+             coin = 0,
+             attri = {{value = 0,type = 17,},{value = 0,type = 19,},{value = 0,type = 27,},{value = 628,type = 23,},{value = 628,type = 33,},{value = 0,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+
+           {
+             name = '室',
+             expr = 22800,
+             coin = 0,
+             attri = {{value = 0,type = 17,},{value = 0,type = 19,},{value = 514,type = 27,},{value = 0,type = 23,},{value = 0,type = 33,},{value = 0,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+
+           {
+             name = '壁',
+             expr = 23900,
+             coin = 0,
+             attri = {{value = 0,type = 17,},{value = 0,type = 19,},{value = 0,type = 27,},{value = 0,type = 23,},{value = 0,type = 33,},{value = 1247,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+     }
+ },
+
+ {
+     moneyType = 1 ,
+     name = '太微上垣' ,
+       root =
+     {
+
+           {
+             name = '少微',
+             expr = 24900,
+             coin = 0,
+             attri = {{value = 11852,type = 17,},{value = 150,type = 19,},{value = 0,type = 27,},{value = 0,type = 23,},{value = 0,type = 33,},{value = 0,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+
+           {
+             name = '九卿',
+             expr = 26000,
+             coin = 0,
+             attri = {{value = 0,type = 17,},{value = 0,type = 19,},{value = 617,type = 27,},{value = 0,type = 23,},{value = 0,type = 33,},{value = 0,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+
+           {
+             name = '常陈',
+             expr = 27100,
+             coin = 0,
+             attri = {{value = 0,type = 17,},{value = 0,type = 19,},{value = 0,type = 27,},{value = 0,type = 23,},{value = 0,type = 33,},{value = 0,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0.03,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+
+           {
+             name = '郎将',
+             expr = 28200,
+             coin = 0,
+             attri = {{value = 13787,type = 17,},{value = 175,type = 19,},{value = 0,type = 27,},{value = 0,type = 23,},{value = 0,type = 33,},{value = 0,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+
+           {
+             name = '郎位',
+             expr = 29300,
+             coin = 0,
+             attri = {{value = 0,type = 17,},{value = 0,type = 19,},{value = 0,type = 27,},{value = 832,type = 23,},{value = 832,type = 33,},{value = 0,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+
+           {
+             name = '执法',
+             expr = 30400,
+             coin = 0,
+             attri = {{value = 0,type = 17,},{value = 0,type = 19,},{value = 0,type = 27,},{value = 0,type = 23,},{value = 0,type = 33,},{value = 0,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 261,type = 63,},{value = 0,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+
+           {
+             name = '诸侯',
+             expr = 31500,
+             coin = 0,
+             attri = {{value = 0,type = 17,},{value = 0,type = 19,},{value = 720,type = 27,},{value = 0,type = 23,},{value = 0,type = 33,},{value = 0,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+
+           {
+             name = '太子',
+             expr = 32700,
+             coin = 0,
+             attri = {{value = 15480,type = 17,},{value = 196,type = 19,},{value = 0,type = 27,},{value = 0,type = 23,},{value = 0,type = 33,},{value = 0,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+
+           {
+             name = '太微',
+             expr = 33800,
+             coin = 0,
+             attri = {{value = 0,type = 17,},{value = 0,type = 19,},{value = 822,type = 27,},{value = 0,type = 23,},{value = 0,type = 33,},{value = 0,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+     }
+ },
+
+ {
+     moneyType = 1 ,
+     name = '天市下垣' ,
+       root =
+     {
+
+           {
+             name = '宦者',
+             expr = 35000,
+             coin = 0,
+             attri = {{value = 0,type = 17,},{value = 0,type = 19,},{value = 0,type = 27,},{value = 0,type = 23,},{value = 0,type = 33,},{value = 0,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0,type = 41,},{value = 0.045,type = 51,},{value = 0.045,type = 49,},},
+         },
+
+
+           {
+             name = '斗斛',
+             expr = 36100,
+             coin = 0,
+             attri = {{value = 0,type = 17,},{value = 0,type = 19,},{value = 0,type = 27,},{value = 0,type = 23,},{value = 0,type = 33,},{value = 0,type = 39,},{value = 2071,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+
+           {
+             name = '列肆',
+             expr = 37300,
+             coin = 0,
+             attri = {{value = 17173,type = 17,},{value = 218,type = 19,},{value = 0,type = 27,},{value = 0,type = 23,},{value = 0,type = 33,},{value = 0,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+
+           {
+             name = '屠肆',
+             expr = 38400,
+             coin = 0,
+             attri = {{value = 0,type = 17,},{value = 0,type = 19,},{value = 0,type = 27,},{value = 1052,type = 23,},{value = 1052,type = 33,},{value = 0,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+
+           {
+             name = '车肆',
+             expr = 39600,
+             coin = 0,
+             attri = {{value = 0,type = 17,},{value = 0,type = 19,},{value = 925,type = 27,},{value = 0,type = 23,},{value = 0,type = 33,},{value = 0,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+
+           {
+             name = '宗人',
+             expr = 40800,
+             coin = 0,
+             attri = {{value = 0,type = 17,},{value = 0,type = 19,},{value = 0,type = 27,},{value = 0,type = 23,},{value = 0,type = 33,},{value = 2071,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+
+           {
+             name = '市楼',
+             expr = 42000,
+             coin = 0,
+             attri = {{value = 19107,type = 17,},{value = 242,type = 19,},{value = 0,type = 27,},{value = 0,type = 23,},{value = 0,type = 33,},{value = 0,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+
+           {
+             name = '女床',
+             expr = 43200,
+             coin = 0,
+             attri = {{value = 0,type = 17,},{value = 0,type = 19,},{value = 1041,type = 27,},{value = 0,type = 23,},{value = 0,type = 33,},{value = 0,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+
+           {
+             name = '天市',
+             expr = 44400,
+             coin = 0,
+             attri = {{value = 0,type = 17,},{value = 0,type = 19,},{value = 0,type = 27,},{value = 0,type = 23,},{value = 0,type = 33,},{value = 0,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0.045,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+     }
+ },
+
+ {
+     moneyType = 1 ,
+     name = '紫微左垣' ,
+       root =
+     {
+
+           {
+             name = '左枢',
+             expr = 45600,
+             coin = 0,
+             attri = {{value = 20800,type = 17,},{value = 264,type = 19,},{value = 0,type = 27,},{value = 0,type = 23,},{value = 0,type = 33,},{value = 0,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+
+           {
+             name = '上宰',
+             expr = 46800,
+             coin = 0,
+             attri = {{value = 0,type = 17,},{value = 0,type = 19,},{value = 0,type = 27,},{value = 1280,type = 23,},{value = 1280,type = 33,},{value = 0,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+
+           {
+             name = '少宰',
+             expr = 48000,
+             coin = 0,
+             attri = {{value = 0,type = 17,},{value = 0,type = 19,},{value = 0,type = 27,},{value = 0,type = 23,},{value = 0,type = 33,},{value = 0,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 374,type = 63,},{value = 0,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+
+           {
+             name = '上弼',
+             expr = 49200,
+             coin = 0,
+             attri = {{value = 0,type = 17,},{value = 0,type = 19,},{value = 1143,type = 27,},{value = 0,type = 23,},{value = 0,type = 33,},{value = 0,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+
+           {
+             name = '少弼',
+             expr = 50500,
+             coin = 0,
+             attri = {{value = 22735,type = 17,},{value = 288,type = 19,},{value = 0,type = 27,},{value = 0,type = 23,},{value = 0,type = 33,},{value = 0,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+
+           {
+             name = '上卫',
+             expr = 51700,
+             coin = 0,
+             attri = {{value = 0,type = 17,},{value = 0,type = 19,},{value = 0,type = 27,},{value = 0,type = 23,},{value = 0,type = 33,},{value = 0,type = 39,},{value = 2971,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+
+           {
+             name = '少卫',
+             expr = 53000,
+             coin = 0,
+             attri = {{value = 24670,type = 17,},{value = 313,type = 19,},{value = 0,type = 27,},{value = 0,type = 23,},{value = 0,type = 33,},{value = 0,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+
+           {
+             name = '少丞',
+             expr = 54200,
+             coin = 0,
+             attri = {{value = 0,type = 17,},{value = 0,type = 19,},{value = 0,type = 27,},{value = 1507,type = 23,},{value = 1507,type = 33,},{value = 0,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+
+           {
+             name = '柱史',
+             expr = 55500,
+             coin = 0,
+             attri = {{value = 0,type = 17,},{value = 0,type = 19,},{value = 1259,type = 27,},{value = 0,type = 23,},{value = 0,type = 33,},{value = 0,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+     }
+ },
+
+ {
+     moneyType = 1 ,
+     name = '紫微右垣' ,
+       root =
+     {
+
+           {
+             name = '右枢',
+             expr = 56700,
+             coin = 0,
+             attri = {{value = 0,type = 17,},{value = 0,type = 19,},{value = 0,type = 27,},{value = 0,type = 23,},{value = 0,type = 33,},{value = 0,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0,type = 41,},{value = 0.06,type = 51,},{value = 0.06,type = 49,},},
+         },
+
+
+           {
+             name = '少尉',
+             expr = 58000,
+             coin = 0,
+             attri = {{value = 26605,type = 17,},{value = 337,type = 19,},{value = 0,type = 27,},{value = 0,type = 23,},{value = 0,type = 33,},{value = 0,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+
+           {
+             name = '上辅',
+             expr = 59300,
+             coin = 0,
+             attri = {{value = 0,type = 17,},{value = 0,type = 19,},{value = 1374,type = 27,},{value = 0,type = 23,},{value = 0,type = 33,},{value = 0,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+
+           {
+             name = '少辅',
+             expr = 60600,
+             coin = 0,
+             attri = {{value = 0,type = 17,},{value = 0,type = 19,},{value = 0,type = 27,},{value = 0,type = 23,},{value = 0,type = 33,},{value = 2971,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+
+           {
+             name = '上卫',
+             expr = 61800,
+             coin = 0,
+             attri = {{value = 28782,type = 17,},{value = 365,type = 19,},{value = 0,type = 27,},{value = 0,type = 23,},{value = 0,type = 33,},{value = 0,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+
+           {
+             name = '少卫',
+             expr = 63100,
+             coin = 0,
+             attri = {{value = 0,type = 17,},{value = 0,type = 19,},{value = 0,type = 27,},{value = 1743,type = 23,},{value = 1743,type = 33,},{value = 0,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+
+           {
+             name = '上丞',
+             expr = 64400,
+             coin = 0,
+             attri = {{value = 0,type = 17,},{value = 0,type = 19,},{value = 1490,type = 27,},{value = 0,type = 23,},{value = 0,type = 33,},{value = 0,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+
+           {
+             name = '太乙',
+             expr = 65700,
+             coin = 0,
+             attri = {{value = 0,type = 17,},{value = 0,type = 19,},{value = 0,type = 27,},{value = 0,type = 23,},{value = 0,type = 33,},{value = 0,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0.06,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+
+           {
+             name = '紫微',
+             expr = 67000,
+             coin = 0,
+             attri = {{value = 0,type = 17,},{value = 0,type = 19,},{value = 1605,type = 27,},{value = 0,type = 23,},{value = 0,type = 33,},{value = 0,type = 39,},{value = 0,type = 37,},{value = 0,type = 35,},{value = 0,type = 25,},{value = 0,type = 63,},{value = 0,type = 41,},{value = 0,type = 51,},{value = 0,type = 49,},},
+         },
+
+     }
+ },
+
+}

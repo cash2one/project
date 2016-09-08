@@ -1,0 +1,153 @@
+﻿--折扣商品 通用活动 discountConf.txt
+
+--独立的限购1活动
+Discountconf112 = 
+{
+    --折扣列表
+    sellItemList =
+    {
+         --标签1（法宝）
+        {
+            --第一天
+            {
+                --{itemID = 物品ID, consumeMoney = 消耗的天珠, isBind = 是否绑定, isbroadcast = 是否广播,isLimite: 是否限量， sellcount: 限量 }
+                { itemID = 45009, count = 1, consumeMoney = 198, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 2},
+                { itemID = 45010, count = 1, consumeMoney = 288, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 2},
+                { itemID = 34942, count = 1, consumeMoney = 988, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 1},
+                { itemID = 54957, count = 1, consumeMoney = 1288, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 1},
+            }
+            --第二天
+            ,{
+                 --{itemID = 物品ID, consumeMoney = 消耗的天珠, isBind = 是否绑定, isbroadcast = 是否广播,isLimite: 是否限量， sellcount: 限量 }
+                { itemID = 45009, count = 1, consumeMoney = 198, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 2},
+                { itemID = 45010, count = 1, consumeMoney = 288, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 2},
+                { itemID = 34942, count = 1, consumeMoney = 988, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 1},
+                { itemID = 54957, count = 1, consumeMoney = 1288, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 1},
+            }
+            --第三天
+            ,{
+                 --{itemID = 物品ID, consumeMoney = 消耗的天珠, isBind = 是否绑定, isbroadcast = 是否广播,isLimite: 是否限量， sellcount: 限量 }
+                { itemID = 45009, count = 1, consumeMoney = 198, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 2},
+                { itemID = 45010, count = 1, consumeMoney = 288, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 2},
+                { itemID = 34942, count = 1, consumeMoney = 988, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 1},
+                { itemID = 54957, count = 1, consumeMoney = 1288, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 1},
+            }
+        },
+        --标签2
+        {
+            --第一天
+            {
+                --{itemID = 物品ID, consumeMoney = 消耗的天珠, isBind = 是否绑定, isbroadcast = 是否广播,isLimite: 是否限量， sellcount: 限量 }
+                { itemID = 45009, count = 1, consumeMoney = 198, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 2},
+                { itemID = 45010, count = 1, consumeMoney = 288, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 2},
+                { itemID = 34942, count = 1, consumeMoney = 988, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 1},
+                { itemID = 58214, count = 1, consumeMoney = 518, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 1},
+            }
+            --第二天
+            ,{
+                 --{itemID = 物品ID, consumeMoney = 消耗的天珠, isBind = 是否绑定, isbroadcast = 是否广播,isLimite: 是否限量， sellcount: 限量 }
+                { itemID = 45009, count = 1, consumeMoney = 198, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 2},
+                { itemID = 45010, count = 1, consumeMoney = 288, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 2},
+                { itemID = 34942, count = 1, consumeMoney = 988, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 1},
+                { itemID = 58214, count = 1, consumeMoney = 518, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 1},
+            }
+            --第三天
+            ,{
+                 --{itemID = 物品ID, consumeMoney = 消耗的天珠, isBind = 是否绑定, isbroadcast = 是否广播,isLimite: 是否限量， sellcount: 限量 }
+                { itemID = 45009, count = 1, consumeMoney = 198, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 2},
+                { itemID = 45010, count = 1, consumeMoney = 288, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 2},
+                { itemID = 34942, count = 1, consumeMoney = 988, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 1},
+                { itemID = 58214, count = 1, consumeMoney = 518, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 1},
+            }
+        }, 
+        --标签3
+        {
+            --第一天
+            {
+                --{itemID = 物品ID, consumeMoney = 消耗的天珠, isBind = 是否绑定, isbroadcast = 是否广播,isLimite: 是否限量， sellcount: 限量 }
+                { itemID = 45009, count = 1, consumeMoney = 198, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 2},
+                { itemID = 45010, count = 1, consumeMoney = 288, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 2},
+                { itemID = 45086, count = 1, consumeMoney = 888, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 2},
+                { itemID = 45087, count = 1, consumeMoney = 888, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 2},
+            }
+            --第二天
+            ,{
+                 --{itemID = 物品ID, consumeMoney = 消耗的天珠, isBind = 是否绑定, isbroadcast = 是否广播,isLimite: 是否限量， sellcount: 限量 }
+                { itemID = 45009, count = 1, consumeMoney = 198, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 2},
+                { itemID = 45010, count = 1, consumeMoney = 288, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 2},
+                { itemID = 45086, count = 1, consumeMoney = 888, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 2},
+                { itemID = 45087, count = 1, consumeMoney = 888, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 2},
+            }
+            --第三天
+            ,{
+                 --{itemID = 物品ID, consumeMoney = 消耗的天珠, isBind = 是否绑定, isbroadcast = 是否广播,isLimite: 是否限量， sellcount: 限量 }
+                { itemID = 45009, count = 1, consumeMoney = 198, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 2},
+                { itemID = 45010, count = 1, consumeMoney = 288, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 2},
+                { itemID = 45086, count = 1, consumeMoney = 888, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 2},
+                { itemID = 45087, count = 1, consumeMoney = 888, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 2},
+            }
+        }, 
+        --标签4
+        {
+            --第一天
+            {
+                --{itemID = 物品ID, consumeMoney = 消耗的天珠, isBind = 是否绑定, isbroadcast = 是否广播,isLimite: 是否限量， sellcount: 限量 }
+                { itemID = 45009, count = 1, consumeMoney = 198, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 2},
+                { itemID = 45010, count = 1, consumeMoney = 288, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 2},
+                { itemID = 34942, count = 1, consumeMoney = 988, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 1},
+                { itemID = 18611, count = 1, consumeMoney = 588, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 3},
+            }
+            --第二天
+            ,{
+                 --{itemID = 物品ID, consumeMoney = 消耗的天珠, isBind = 是否绑定, isbroadcast = 是否广播,isLimite: 是否限量， sellcount: 限量 }
+                { itemID = 45009, count = 1, consumeMoney = 198, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 2},
+                { itemID = 45010, count = 1, consumeMoney = 288, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 2},
+                { itemID = 34942, count = 1, consumeMoney = 988, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 1},
+                { itemID = 18611, count = 1, consumeMoney = 588, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 3},
+            }
+            --第三天
+            ,{
+                 --{itemID = 物品ID, consumeMoney = 消耗的天珠, isBind = 是否绑定, isbroadcast = 是否广播,isLimite: 是否限量， sellcount: 限量 }
+                { itemID = 45009, count = 1, consumeMoney = 198, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 2},
+                { itemID = 45010, count = 1, consumeMoney = 288, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 2},
+                { itemID = 34942, count = 1, consumeMoney = 988, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 1},
+                { itemID = 18611, count = 1, consumeMoney = 588, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 3},
+            }
+        }, 
+        --标签5
+        {
+            --第一天
+            {
+                --{itemID = 物品ID, consumeMoney = 消耗的天珠, isBind = 是否绑定, isbroadcast = 是否广播,isLimite: 是否限量， sellcount: 限量 }
+                { itemID = 60077, count = 1, consumeMoney = 368, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 2},
+				{ itemID = 60083, count = 1, consumeMoney = 288, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 2},
+                { itemID = 18615, count = 1, consumeMoney = 88, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 2},
+                { itemID = 18611, count = 1, consumeMoney = 588, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 3},
+            }
+
+            --第二天
+            ,{
+                 --{itemID = 物品ID, consumeMoney = 消耗的天珠, isBind = 是否绑定, isbroadcast = 是否广播,isLimite: 是否限量， sellcount: 限量 }
+                { itemID = 60077, count = 1, consumeMoney = 368, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 2},
+				{ itemID = 60083, count = 1, consumeMoney = 288, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 2},
+                { itemID = 18615, count = 1, consumeMoney = 88, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 2},
+                { itemID = 18611, count = 1, consumeMoney = 588, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 3},
+            }
+            --第三天
+            ,{
+                 --{itemID = 物品ID, consumeMoney = 消耗的天珠, isBind = 是否绑定, isbroadcast = 是否广播,isLimite: 是否限量， sellcount: 限量 }
+                { itemID = 60077, count = 1, consumeMoney = 368, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 2},
+				{ itemID = 60083, count = 1, consumeMoney = 288, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 2},
+                { itemID = 18615, count = 1, consumeMoney = 88, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 2},
+                { itemID = 18611, count = 1, consumeMoney = 588, isBind = 1, isbroadcast = true, isLimite = true, sellcount = 3},
+            }
+        }, 
+    },
+    --活动名字, 用来广播用
+    activityname = "限购",
+    --活动ID, 用来打开链接用
+    activityID = 30,
+    textbuttonID = 1002,
+    --每日是否重置限购
+    isResetDiscount = true,
+}

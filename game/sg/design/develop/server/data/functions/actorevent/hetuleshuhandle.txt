@@ -1,0 +1,1012 @@
+-- 武将系统
+--#include "data\config\collectcard\collectcard.txt" once
+--#include "data\language\LangCode.txt" once
+--#include "data/functions/normalitem/wujiangitemconfig.txt"
+
+HeTuLeShuFunc = {}
+HeTuLeShuMsg = {}
+
+-- 专门转换商城道具id
+function HeTuLeShuFunc.getStoreItemId(itemId)
+	local store_items = GameStore[7].items
+	for k, v in pairs(store_items) do
+	if v.item == itemId then
+		return v.id
+		end
+	end
+	return -1
+end
+
+function HeTuLeShuFunc.getActorVar(actor)
+	if not actor then return end
+	local var = LActor.getStaticVar(actor)
+	if not var then return end
+	if var.HeTuLeShuData == nil then
+		var.HeTuLeShuData = {}
+		var.HeTuLeShuData.tujian = 0	--图鉴的等级
+		var.HeTuLeShuData.cardsCount = 0	--收集了多少个卡牌
+		var.HeTuLeShuData.cards = {}	--武将卡牌的信息
+		var.HeTuLeShuData.series = {}	--武将收集信息，每个系列收集了多少个卡牌
+		var.HeTuLeShuData.skillCount = 0	--激活了多少个技能
+		var.HeTuLeShuData.skill = {}	--武将激活的技能等级，0表示没有激活
+		var.HeTuLeShuData.equipSkill = 0	--装备的技能idx
+	end
+	return var.HeTuLeShuData
+end
+
+--发送信息
+function HeTuLeShuFunc.sendInfo(actor)
+	local var = HeTuLeShuFunc.getActorVar(actor)
+	if var == nil then return end
+
+	local pack = DataPack.allocPacket(actor, BaseTypes.SystemId.heTuLeShuSystem, 1)
+	if pack == nil then return end
+
+	DataPack.writeByte(pack, var.tujian)
+	DataPack.writeByte(pack, var.cardsCount)
+	for idx, _ in pairs(CollectCardConfig.cardConfig) do
+		if var.cards[idx] and var.cards[idx].level then
+			DataPack.writeByte(pack, idx)
+			DataPack.writeByte(pack, var.cards[idx].stage)
+			DataPack.writeInt(pack, var.cards[idx].stageExp)
+			DataPack.writeByte(pack, var.cards[idx].level)
+			DataPack.writeInt(pack, var.cards[idx].levelExp)
+		end
+	end
+	DataPack.writeByte(pack, var.equipSkill)
+	DataPack.writeByte(pack, var.skillCount)
+	for idx, _ in pairs(CollectCardConfig.seriesConfig) do
+		if var.skill[idx] then
+			DataPack.writeByte(pack, idx)
+			DataPack.writeByte(pack, var.skill[idx].level)
+			DataPack.writeInt(pack, var.skill[idx].levelExp)
+			DataPack.writeByte(pack, var.skill[idx].free or 0)
+		end
+	end
+	DataPack.flush(pack)
+end
+
+--发送某个卡牌的信息
+function HeTuLeShuFunc.sendOneCardInfo(actor, cardIdx)
+	local var = HeTuLeShuFunc.getActorVar(actor)
+	if var == nil or var.cards == nil or var.cards[cardIdx] == nil then return end
+
+	local pack = DataPack.allocPacket(actor, BaseTypes.SystemId.heTuLeShuSystem, 2)
+	if pack == nil then return end
+
+	DataPack.writeByte(pack, cardIdx)
+	DataPack.writeByte(pack, var.cards[cardIdx].stage)
+	DataPack.writeInt(pack, var.cards[cardIdx].stageExp)
+	DataPack.writeByte(pack, var.cards[cardIdx].level)
+	DataPack.writeInt(pack, var.cards[cardIdx].levelExp)
+
+	DataPack.flush(pack)
+end
+
+--发送某个技能的信息
+function HeTuLeShuFunc.sendOneSkillInfo(actor, skillIdx)
+	local var = HeTuLeShuFunc.getActorVar(actor)
+	if not var or not var.skill or not var.skill[skillIdx] then return end
+
+	local pack = DataPack.allocPacket(actor, BaseTypes.SystemId.heTuLeShuSystem, 3)
+	if pack == nil then return end
+
+	DataPack.writeByte(pack, skillIdx)
+	DataPack.writeByte(pack, var.skill[skillIdx].level)
+	DataPack.writeInt(pack, var.skill[skillIdx].levelExp)
+	DataPack.writeByte(pack, var.skill[skillIdx].free or 0)
+
+	DataPack.flush(pack)
+end
+
+--发送图鉴等级
+function HeTuLeShuFunc.sendTujianInfo(actor)
+	local var = HeTuLeShuFunc.getActorVar(actor)
+	if not var or not var.tujian then return end
+
+	local pack = DataPack.allocPacket(actor, BaseTypes.SystemId.heTuLeShuSystem, 7)
+	if pack == nil then return end
+
+	DataPack.writeByte(pack, var.tujian)
+
+	DataPack.flush(pack)
+end
+
+--发送当前装备的技能id
+function HeTuLeShuFunc.sendEquipSkill(actor)
+	local var = HeTuLeShuFunc.getActorVar(actor)
+	if not var then return end
+
+	local pack = DataPack.allocPacket(actor, BaseTypes.SystemId.heTuLeShuSystem, 8)
+	if pack == nil then return end
+
+	DataPack.writeByte(pack, var.equipSkill or 0)
+
+	DataPack.flush(pack)
+end
+
+--发送升级或升阶结果
+function HeTuLeShuFunc.sendLevelUpResult(actor, type, result)
+	if not actor or not result then return end
+
+	local pack = DataPack.allocPacket(actor, BaseTypes.SystemId.heTuLeShuSystem, 14)
+	if pack == nil then return end
+
+	DataPack.writeByte(pack, type)
+	DataPack.writeByte(pack, result)
+
+	DataPack.flush(pack)
+end
+
+--属性
+function HeTuLeShuFunc.initCalc(actor)
+	local var = HeTuLeShuFunc.getActorVar(actor)
+	if var == nil or var.cardsCount <= 0  then return end
+
+	LActor.openAttrCalc(actor, actHeTuLeShu, true)
+	local calc = LActor.getAttrCalc(actor, actHeTuLeShu)
+	if calc == nil then return end
+	LActor.resetAttrCalc(calc)
+
+	local attrRate = CollectCardConfig.tujianConfig[var.tujian].attrRate
+
+	local cardConf = CollectCardConfig.cardConfig
+	for idx, conf in pairs(cardConf) do
+		if var.cards[idx] then
+			local cardVar = var.cards[idx]		
+			if conf.levelAttrs and conf.levelAttrs[cardVar.level] then
+				local levelPropertys = conf.levelAttrs[cardVar.level]
+				for _, attr in pairs(levelPropertys) do
+					LActor.addCalcAttr(calc, attr.type, attr.value * attrRate)
+				end
+			else
+				print("card level ERROR    "..idx)
+				print(cardVar.level)
+			end
+
+			if conf.stageAttrs and conf.stageAttrs[cardVar.stage] then
+				local stagePropertys = conf.stageAttrs[cardVar.stage]
+				for _, attr in pairs(stagePropertys) do
+					LActor.addCalcAttr(calc, attr.type, attr.value * attrRate)
+				end
+			else
+				print("card stage ERROR    "..idx.."   level "..cardVar.stage)
+			end
+		end
+	end
+	LActor.refreshActor(actor)
+end
+
+--获得卡牌
+function HeTuLeShuFuncGetCard(actor, cardIdx)
+	if not CollectCardConfig.cardConfig[cardIdx] then
+		print("wujiangCard HeTuLeShuFuncGetCard, not has this cards   "..cardIdx)
+		return
+	end
+
+	local var = HeTuLeShuFunc.getActorVar(actor)
+	if not var or not var.cards or var.cards[cardIdx] then return end
+
+	var.cardsCount = var.cardsCount + 1
+
+	var.cards[cardIdx] = {}
+	var.cards[cardIdx].level = CollectCardConfig.cardConfig[cardIdx].firstLevel	--等级
+	var.cards[cardIdx].stage = CollectCardConfig.cardConfig[cardIdx].firstStage	--阶级
+	var.cards[cardIdx].levelExp = 0	--等级经验
+	var.cards[cardIdx].stageExp = 0	--阶级经验
+
+	--判断是否集齐武将，激活技能	
+	local seriesIds = CollectCardConfig.cardConfig[cardIdx].seriesIds
+	if seriesIds then
+		local conf = CollectCardConfig.seriesConfig
+		for _, seriesId in pairs(seriesIds) do
+			if not conf[seriesId] then break end
+
+			var.series[seriesId] = (var.series[seriesId] or 0) + 1
+			if var.series[seriesId] >= #conf[seriesId].cardIds then
+				var.skillCount = var.skillCount + 1
+				var.skill[seriesId] = {}
+				var.skill[seriesId].level = 1	--技能等级
+				var.skill[seriesId].levelExp = 0	--技能经验
+			end
+		end
+	end
+
+	HeTuLeShuFunc.sendInfo(actor)
+	HeTuLeShuFunc.initCalc(actor)
+end
+
+--检查是否够升级消耗并扣除
+function HeTuLeShuFunc.checkAndRemoveCost(actor, autoBuy, costConf, level, logStr)
+	local hasMoney = LActor.getMoneyCount(actor, costConf.moneyType)
+	local needMoneyCount
+	if level == 0 then
+		if not costConf.moneyCount then
+			print("error not this costConf.moneyCount")
+			return
+		end
+		needMoneyCount = costConf.moneyCount
+	else
+		if not costConf.moneyCounts or not costConf.moneyCounts[level] then
+			print("error not this costConf.moneyCounts  "..level)
+			return
+		end
+		needMoneyCount = costConf.moneyCounts[level]
+	end
+
+	if costConf.moneyType and hasMoney < needMoneyCount then
+		-- LActor.sendTipmsg(actor, Lang.ScriptTips.htls005, ttMessage)
+		LActor.SendGeneralTips(actor, 1, costConf.moneyType, needMoneyCount-hasMoney)
+		return
+	end
+
+	local replaceMoney
+	if costConf.itemId then
+		local hasItem = LActor.getItemCount(actor, costConf.itemId)
+		local needItem = costConf.itemCount
+		if hasItem < needItem then
+			replaceMoney = (needItem-hasItem)*Item.getItemPrice(HeTuLeShuFunc.getStoreItemId(costConf.itemId))
+			if autoBuy == 0 or replaceMoney == 0 then
+				-- LActor.sendTipmsg(actor, Lang.ScriptTips.htls006, ttMessage)
+				LActor.SendGeneralTips(actor, 2, costConf.itemId, needItem-hasItem)
+				return
+			elseif LActor.getMoneyCount(actor, mtYuanbao) < replaceMoney then
+				-- LActor.sendTipmsg(actor, Lang.ScriptTips.htls007, ttMessage)
+				LActor.SendGeneralTips(actor, 1, mtYuanbao, replaceMoney-LActor.getMoneyCount(actor, mtYuanbao))
+				return
+			end
+		end
+	end
+
+	if costConf.itemId then
+		LActor.removeItem(actor, costConf.itemId, costConf.itemCount, -1, -1, -1, logStr or "wujiangCard")
+		if replaceMoney then
+			LActor.changeMoney(actor, mtYuanbao, -replaceMoney, 1, true, logStr.."_replaceMoney" or "wujiangCard")
+		end
+	end
+
+	if costConf.moneyType then
+		LActor.changeMoney(actor, costConf.moneyType, -needMoneyCount, 1, true, logStr or "wujiangCard")
+	end
+
+	return true
+end
+
+--暴击的获得经验
+function HeTuLeShuFunc.baojiExp(baojiConf)
+	local total = 0
+	for i, conf in ipairs(baojiConf) do
+		total = total + conf[1]
+	end
+	local random = System.getRandomNumber(total)
+	local tmp = 0
+	for i, conf in ipairs(baojiConf) do
+		tmp = tmp + conf[1]
+		if random < tmp then
+			return conf[2], i
+		end
+	end
+	print("wujiangCard baojiExp ERROR")
+	return 0
+end
+
+--卡牌升级，加经验
+function HeTuLeShuFunc.cardLevelUp(actor, cardIdx, autoBuy)
+	if not actor or not cardIdx then return end
+
+	local var = HeTuLeShuFunc.getActorVar(actor)
+	if not var or not var.cards or not var.cards[cardIdx] then return end
+
+	local conf = CollectCardConfig.cardConfig[cardIdx]
+	local cardVar = var.cards[cardIdx]
+	if conf.quality[cardVar.stage-conf.firstStage+1] == nil then return end
+
+	local nowMaxLevel = conf.quality[cardVar.stage-conf.firstStage+1]
+	if not conf.levelNeedExp[cardVar.level-conf.firstLevel+1] then
+		LActor.sendTipmsg(actor, Lang.ScriptTips.htls001, ttMessage)
+		return
+	end
+	if nowMaxLevel <= cardVar.level then
+		LActor.sendTipmsg(actor, Lang.ScriptTips.htls002, ttMessage)
+		return
+	end
+
+	if not HeTuLeShuFunc.checkAndRemoveCost(actor, autoBuy, conf.levelCost, cardVar.level, string.format("wujiangCard  cardIdx: %d, level: %d", cardIdx, cardVar.level)) then return end
+
+	-- 活跃度
+	ActivationTrigger( actor, 12 )
+	LActor.OnQuestEvent(qtWujiangLevelUp, 0, 1, true, actor)
+
+	local exp, result = HeTuLeShuFunc.baojiExp(conf.levelCost.exp)
+	if exp <= 0 then return end
+
+	local needExp = conf.levelNeedExp[cardVar.level-conf.firstLevel+1]
+	local nowExp = cardVar.levelExp + exp
+	while nowExp >= needExp do
+		cardVar.level = (cardVar.level or 0) + 1
+		nowExp = nowExp - needExp
+		needExp = conf.levelNeedExp[cardVar.level-conf.firstLevel+1]
+		if nowMaxLevel <= cardVar.level or not needExp then break end
+	end
+	cardVar.levelExp = nowExp
+
+	HeTuLeShuFunc.sendOneCardInfo(actor, cardIdx)
+	HeTuLeShuFunc.initCalc(actor)
+
+	HeTuLeShuFunc.sendLevelUpResult(actor, 1, result)
+end
+
+--一键卡牌升级
+function HeTuLeShuFunc.calcCardLevel(actor, cardIdx, autoBuy)
+	if not actor or not cardIdx then return end
+	if not CollectCardConfig.cardConfig[cardIdx] or not CollectCardConfig.cardConfig[cardIdx].levelCost then return end
+
+	local var = HeTuLeShuFunc.getActorVar(actor)
+	if not var or not var.cards or not var.cards[cardIdx] then return end
+
+	local conf = CollectCardConfig.cardConfig[cardIdx]
+	local cardVar = var.cards[cardIdx]
+	if conf.quality[cardVar.stage-conf.firstStage+1] == nil then return end
+
+	local nowMaxLevel = conf.quality[cardVar.stage-conf.firstStage+1]
+	local needExp = conf.levelNeedExp[cardVar.level-conf.firstLevel+1]
+	if not needExp then
+		LActor.sendTipmsg(actor, Lang.ScriptTips.htls001, ttMessage)
+		return
+	end
+	if nowMaxLevel <= cardVar.level then
+		LActor.sendTipmsg(actor, Lang.ScriptTips.htls002, ttMessage)
+		return
+	end
+
+	HeTuLeShuFunc.checkYijianCost(actor, cardIdx, conf.levelCost, needExp, 1, autoBuy)
+end
+
+function HeTuLeShuFunc.checkYijianCost(actor, cardIdx, costConf, needExp, levelOrStage, autoBuy)
+	local var = HeTuLeShuFunc.getActorVar(actor)
+	if not var or not var.cards or not var.cards[cardIdx] then return end
+
+	if not CollectCardConfig.cardConfig[cardIdx] then return end
+
+	local cardVar = var.cards[cardIdx]
+	local nowLevel
+	local nowExp
+	local firstExp
+	if levelOrStage == 1 then
+		nowLevel = cardVar.level
+		nowExp = cardVar.levelExp
+		firstExp = cardVar.levelExp
+	elseif levelOrStage == 2 then
+		nowLevel = cardVar.stage
+		nowExp = cardVar.stageExp
+		firstExp = cardVar.stageExp
+	else
+		return
+	end
+
+	local totalTimes = 0
+	local hasyuanbao = LActor.getMoneyCount(actor, mtYuanbao)
+	local hasMoney = LActor.getMoneyCount(actor, costConf.moneyType or 0)
+	local hasItem = LActor.getItemCount(actor, costConf.itemId or 0)
+	local needItem = costConf.itemCount or 0
+	local replaceMoney = Item.getItemPrice(HeTuLeShuFunc.getStoreItemId(costConf.itemId or 0))
+
+	while nowExp < needExp do
+		if costConf.moneyType and costConf.moneyCounts[nowLevel] then
+			local needMoneyCount = costConf.moneyCounts[nowLevel]
+
+			if hasMoney < needMoneyCount then
+				if totalTimes == 0 then
+					LActor.SendGeneralTips(actor, 1, costConf.moneyType, hasMoney-needMoneyCount)
+					return
+				end
+				break
+			else
+				hasMoney = hasMoney - needMoneyCount
+			end
+		end
+		if costConf.itemId then
+			if hasItem < needItem then
+				if autoBuy == 0 or replaceMoney == 0 then
+					if totalTimes == 0 then
+						LActor.SendGeneralTips(actor, 2, costConf.itemId, needItem-hasItem)
+						return
+					end
+					break
+				else
+					local tmp = (needItem-hasItem)*replaceMoney
+					if hasyuanbao < tmp then
+						if totalTimes == 0 then
+							LActor.SendGeneralTips(actor, 1, mtYuanbao, tmp-hasyuanbao)
+							return
+						end
+						break
+					end
+					hasyuanbao = hasyuanbao - tmp
+					hasItem = 0
+				end
+			else
+				hasItem = hasItem - needItem
+			end
+		end
+
+		local exp = HeTuLeShuFunc.baojiExp(costConf.exp)
+		if exp <= 0 then return end
+
+		nowExp = nowExp + exp
+		totalTimes = totalTimes + 1
+	end
+
+	if totalTimes == 0 then return end
+
+	local addExp = nowExp - firstExp 	--增加的经验
+	local costItem = LActor.getItemCount(actor, costConf.itemId or 0) - hasItem 	--消耗的物品
+	local costYuanbao = LActor.getMoneyCount(actor, mtYuanbao) - hasyuanbao 	--消耗的元宝
+	local costMoney = LActor.getMoneyCount(actor, costConf.moneyType or 0) - hasMoney 	--消耗的金钱
+
+	if costItem and costItem ~= 0 then
+		LActor.removeItem(actor, costConf.itemId,  costItem, -1, -1, -1, "wujiangCard yijianLevelUp "..levelOrStage)
+	end
+	if costYuanbao and costYuanbao ~= 0 then
+		LActor.changeMoney(actor, mtYuanbao, -costYuanbao, 1, true, "wujiangCard", "yijianLevelUp "..levelOrStage)
+	end
+	if costMoney and costMoney ~= 0 then
+		LActor.changeMoney(actor, costConf.moneyType, -costMoney, 1, true, "wujiangCard", "yijianLevelUp "..levelOrStage)
+	end
+
+	if levelOrStage == 1 then
+		local conf = CollectCardConfig.cardConfig[cardIdx]
+		cardVar.levelExp = cardVar.levelExp + addExp
+		while cardVar.levelExp >= conf.levelNeedExp[cardVar.level-conf.firstLevel+1] do			
+			cardVar.levelExp = cardVar.levelExp - conf.levelNeedExp[cardVar.level-conf.firstLevel+1]
+			cardVar.level = cardVar.level + 1
+
+			if not conf.levelNeedExp[cardVar.level-conf.firstLevel+1] then break end
+		end
+
+		-- 活跃度
+		ActivationTrigger(actor, 12, totalTimes)
+		LActor.OnQuestEvent(qtWujiangLevelUp, 0, 1, true, actor)
+	elseif levelOrStage == 2 then
+		local conf = CollectCardConfig.cardConfig[cardIdx]
+		cardVar.stageExp = cardVar.stageExp + addExp
+		while cardVar.stageExp >= conf.stageNeedExp[cardVar.stage-conf.firstStage+1] do			
+			cardVar.stageExp = cardVar.stageExp - conf.stageNeedExp[cardVar.stage-conf.firstStage+1]
+			cardVar.stage = cardVar.stage + 1
+
+			if not conf.stageNeedExp[cardVar.stage-conf.firstStage+1] then break end
+		end
+		LActor.OnQuestEvent(qtWujiangStageUp, 0, 1, true, actor)
+	end
+
+	HeTuLeShuFunc.initCalc(actor)
+
+	HeTuLeShuFunc.sendOneCardInfo(actor, cardIdx)
+
+	HeTuLeShuFunc.sendLevelUpResult(actor, levelOrStage, 1)
+end
+
+--卡牌进阶
+function HeTuLeShuFunc.cardStageUp( actor, cardIdx, autoBuy)
+	local var = HeTuLeShuFunc.getActorVar(actor)
+	if not var or not var.cards or not var.cards[cardIdx] then return end
+
+	local conf = CollectCardConfig.cardConfig[cardIdx]
+	local cardVar = var.cards[cardIdx]
+	if not conf.stageAttrs[cardVar.stage+1] then
+		LActor.sendTipmsg(actor, Lang.ScriptTips.htls003, ttMessage)
+		return
+	end
+
+	if not HeTuLeShuFunc.checkAndRemoveCost(actor, autoBuy, conf.stageCost, cardVar.stage, string.format("wujiangCard  cardIdx: %d, stageLevel: %d", cardIdx, cardVar.stage)) then return end
+
+	local exp, result = HeTuLeShuFunc.baojiExp(conf.stageCost.exp)
+	if exp <= 0 then return end
+
+	local needExp = conf.stageNeedExp[cardVar.stage-conf.firstStage+1]
+	local nowExp = cardVar.stageExp + exp
+	while nowExp >= needExp do
+		cardVar.stage = cardVar.stage + 1
+		nowExp = nowExp - needExp
+		needExp = conf.stageNeedExp[cardVar.stage-conf.firstStage+1]
+
+		if not conf.quality[cardVar.stage] or not needExp then break end
+	end
+	cardVar.stageExp = nowExp
+
+	HeTuLeShuFunc.sendOneCardInfo(actor, cardIdx)
+	HeTuLeShuFunc.initCalc(actor)
+
+	HeTuLeShuFunc.sendLevelUpResult(actor, 2, result)
+
+	LActor.OnQuestEvent(qtWujiangStageUp, 0, 1, true, actor)
+end
+
+--一键卡牌升阶，计算消耗
+function HeTuLeShuFunc.calcCardStage(actor, cardIdx, autoBuy)
+	local var = HeTuLeShuFunc.getActorVar(actor)
+	if not var or not var.cards or not var.cards[cardIdx] then return end
+
+	local conf = CollectCardConfig.cardConfig[cardIdx]
+	local cardVar = var.cards[cardIdx]
+	if not conf.stageAttrs[cardVar.stage+1] then
+		LActor.sendTipmsg(actor, Lang.ScriptTips.htls003, ttMessage)
+		return
+	end
+	local needExp = conf.stageNeedExp[cardVar.stage-conf.firstStage+1]
+	if not needExp then return end
+
+	HeTuLeShuFunc.checkYijianCost(actor, cardIdx, conf.stageCost, needExp,  2, autoBuy)
+end
+
+--图鉴升级
+function HeTuLeShuFunc.tujianLevelUp(actor, autoBuy)
+	local var = HeTuLeShuFunc.getActorVar(actor)
+	if not var or not var.tujian then return end
+
+	LActor.OnQuestEvent(qtTujianLevelup, 0, 1, true, actor)
+	
+	local conf = CollectCardConfig.tujianConfig
+	if conf[var.tujian+1] == nil then
+		LActor.sendTipmsg(actor, Lang.ScriptTips.htls004, ttMessage)
+		return
+	end
+
+	local replayMoneyCount = 0
+	for _, needConf in pairs(conf[var.tujian+1].needConfig) do
+		if needConf.type == 2 and LActor.getMoneyCount(actor, needConf.id) < needConf.count then
+			-- LActor.sendTipmsg(actor, Lang.ScriptTips.htls005, ttMessage)
+			LActor.SendGeneralTips(actor, 1, needConf.id, needConf.count-LActor.getMoneyCount(actor, needConf.id))
+			return
+		end
+		local hasItem = LActor.getItemCount(actor, needConf.id)
+		if needConf.type == 1 and hasItem < needConf.count then
+			local tmp =  (needConf.count-hasItem)*Item.getItemPrice(HeTuLeShuFunc.getStoreItemId(needConf.id))
+			if autoBuy == 0 or tmp == 0 then
+				-- LActor.sendTipmsg(actor, Lang.ScriptTips.htls006, ttMessage)
+				LActor.SendGeneralTips(actor, 2, needConf.id, needConf.count-hasItem)
+				return
+			else
+				replayMoneyCount = replayMoneyCount + tmp
+			end
+		end
+	end
+
+	if LActor.getMoneyCount(actor, mtYuanbao) < replayMoneyCount then
+		-- LActor.sendTipmsg(actor, Lang.ScriptTips.htls007, ttMessage)
+		LActor.SendGeneralTips(actor, 1, mtYuanbao, replayMoneyCount-LActor.getMoneyCount(actor, mtYuanbao))
+		return
+	end
+
+	for _, needConf in pairs(conf[var.tujian+1].needConfig) do	
+		if needConf.type == 1 then
+			LActor.removeItem(actor, needConf.id,  needConf.count, -1, -1, -1, string.format("wujiangTujian   level: %d", var.tujian))
+		else
+			LActor.changeMoney(actor, needConf.id, -needConf.count, 1, true, "wujiangCard", "tujianLevelUp")
+		end
+		if replayMoneyCount > 0 then
+			LActor.changeMoney(actor, mtYuanbao, -replayMoneyCount, 1, true, "wujiangCard", "tujianLevelUp_replay")
+		end
+	end
+
+	var.tujian = var.tujian + 1
+
+	HeTuLeShuFunc.sendTujianInfo(actor)
+	HeTuLeShuFunc.initCalc(actor)
+end
+
+--刷新属性和发送数据
+function HeTuLeShuFunc.sendAndInitAttr(actor)
+	HeTuLeShuFunc.sendInfo(actor)
+	HeTuLeShuFunc.initCalc(actor)
+end
+
+--装备技能
+function HeTuLeShuFunc.equipSkill(actor, idx)
+	local var = HeTuLeShuFunc.getActorVar(actor)
+	if not var or not var.skill then return end
+
+	if not var.skill[idx] then return end
+
+	if var.equipSkill and var.equipSkill ~= 0 then
+		if not CollectCardConfig.seriesConfig[var.equipSkill] then print("error: wujiangCard the last equipSkill id   "..var.equipSkill) return end
+
+		local oldSkillId = CollectCardConfig.seriesConfig[var.equipSkill].skillId
+		if not LActor.ForgetSkill(actor, oldSkillId) then
+			print("error: wujiangCard forgetskill  "..oldSkillId)
+			return
+		end
+	end
+
+	local newSkillId = CollectCardConfig.seriesConfig[idx].skillId
+	if LActor.learnSkill(actor, newSkillId, var.skill[idx].level) ~= 0 then
+		print("error: wujiangCard learnSkill     "..newSkillId)
+		return
+	end
+
+	LActor.sendTipmsg(actor, Lang.ScriptTips.htls013, ttMessage)
+
+	var.equipSkill = idx
+
+	HeTuLeShuFunc.sendEquipSkill(actor)
+end
+
+--升级技能，加经验
+function HeTuLeShuFunc.skillLevelUp(actor, idx, autoBuy)
+	local var = HeTuLeShuFunc.getActorVar(actor)
+	if not var or not var.skill then return end
+
+	if not var.skill[idx] then return end
+
+	local conf = CollectCardConfig.seriesConfig[idx]
+	if not HeTuLeShuFunc.checkAndRemoveCost(actor, autoBuy, conf.skillCost, 0, string.format("wujiangCard  skillIdx: %d, level: %d", idx, var.skill[idx].level)) then return end
+
+	if var.skill[idx].level > #conf.levelNeedExp then
+		LActor.sendTipmsg(actor, Lang.ScriptTips.htls008, ttMessage)
+		return
+	end
+
+	local needExp = conf.levelNeedExp[var.skill[idx].level]
+	local nowExp = var.skill[idx].levelExp + conf.skillCost.exp
+	while nowExp >= needExp do
+		var.skill[idx].level = var.skill[idx].level + 1
+		nowExp = nowExp - needExp
+		needExp = conf.levelNeedExp[var.skill[idx].level]
+
+		HeTuLeShuFunc.sendLevelUpResult(actor, 3, 1)
+		if not needExp then break end
+	end
+
+	var.skill[idx].levelExp = nowExp
+
+	if var.equipSkill == idx then
+		LActor.learnSkill(actor, conf.skillId, var.skill[idx].level)
+	end
+
+	HeTuLeShuFunc.sendOneSkillInfo(actor, idx)
+end
+
+--一键升级技能
+function HeTuLeShuFunc.onekeySkillLevelUp(actor, idx, autoBuy)
+	if not actor or not idx then return end
+
+	local var = HeTuLeShuFunc.getActorVar(actor)
+	if not var or not var.skill then return end
+	if not var.skill[idx] then return end
+
+	local conf = CollectCardConfig.seriesConfig[idx]
+	if not conf.levelNeedExp[var.skill[idx].level] then
+		LActor.sendTipmsg(actor, Lang.ScriptTips.htls008, ttMessage)
+		return
+	end
+
+	local costConf = conf.skillCost
+	local hasyuanbao = LActor.getMoneyCount(actor, mtYuanbao)
+	local hasMoney = LActor.getMoneyCount(actor, costConf.moneyType or 0)
+	local hasItem = LActor.getItemCount(actor, costConf.itemId or 0)
+	local needItem = costConf.itemCount or 0
+	local replaceMoney = Item.getItemPrice(HeTuLeShuFunc.getStoreItemId(costConf.itemId or 0))
+
+	local totalTimes = 0
+	local needExp = conf.levelNeedExp[var.skill[idx].level]
+	local nowExp = var.skill[idx].levelExp
+	while nowExp < needExp do
+		if hasMoney < costConf.moneyCount then
+			if totalTimes == 0 then
+				LActor.SendGeneralTips(actor, 1, costConf.moneyType, hasMoney-costConf.moneyCount)
+				return
+			end
+			break
+		else
+			hasMoney = hasMoney - costConf.moneyCount
+		end
+		if hasItem < needItem then
+			if autoBuy == 0 or replaceMoney == 0 then
+				if totalTimes == 0 then
+					LActor.SendGeneralTips(actor, 2, costConf.itemId, needItem-hasItem)
+					return
+				end
+				break
+			else
+				local tmp = (needItem-hasItem)*replaceMoney
+				if hasyuanbao < tmp then
+					if totalTimes == 0 then
+						LActor.SendGeneralTips(actor, 1, mtYuanbao, tmp-hasyuanbao)
+						return
+					end
+					break
+				end
+				hasyuanbao = hasyuanbao - tmp
+				hasItem = 0
+			end
+		else
+			hasItem = hasItem - needItem
+		end
+
+		nowExp = nowExp + costConf.exp
+		totalTimes = totalTimes + 1
+	end
+
+	local costItem = LActor.getItemCount(actor, costConf.itemId or 0) - hasItem 	--消耗的物品
+	local costYuanbao = LActor.getMoneyCount(actor, mtYuanbao) - hasyuanbao 	--消耗的元宝
+	local costMoney = LActor.getMoneyCount(actor, costConf.moneyType or 0) - hasMoney 	--消耗的金钱
+
+	if costItem > 0 then
+		LActor.removeItem(actor, costConf.itemId,  costItem, -1, -1, -1, "wujiangCard skill yijianLevelUp")
+	end
+	if costYuanbao > 0 then
+		LActor.changeMoney(actor, mtYuanbao, -costYuanbao, 1, true, "wujiangCard", "skill yijianLevelUp")
+	end
+	if costMoney > 0 then
+		LActor.changeMoney(actor, costConf.moneyType, -costMoney, 1, true, "wujiangCard", "skill yijianLevelUp")
+	end
+
+	if nowExp >= needExp then
+		var.skill[idx].level = var.skill[idx].level + 1
+		var.skill[idx].levelExp = nowExp - needExp
+
+		HeTuLeShuFunc.sendLevelUpResult(actor, 3, 1)
+		if var.equipSkill == idx then
+			LActor.learnSkill(actor, conf.skillId, var.skill[idx].level)
+		end
+	else
+		var.skill[idx].levelExp = nowExp
+	end
+
+	HeTuLeShuFunc.sendOneSkillInfo(actor, idx)
+end
+
+--重置技能
+function HeTuLeShuFunc.replaySkill(actor, idx)
+	local var = HeTuLeShuFunc.getActorVar(actor)
+	if not var or not var.skill or not var.skill[idx] then return end
+
+	local skillVar = var.skill[idx]
+	local conf = CollectCardConfig.seriesConfig[idx]
+	if skillVar.free then
+		local hasMoney = LActor.getMoneyCount(actor, conf.replayMoneyType)
+		if hasMoney < conf.replayMoneyCount then
+			-- LActor.sendTipmsg(actor, Lang.ScriptTips.htls005, ttMessage)
+			LActor.SendGeneralTips(actor, 1, conf.replayMoneyType, conf.replayMoneyCount-hasMoney)
+			return
+		end
+		LActor.changeMoney(actor, conf.replayMoneyType, -conf.replayMoneyCount, 1, true, "wujiangCard", "replaySkill")
+	else
+		skillVar.free = 1
+	end
+
+	local totalExp = skillVar.levelExp
+	for level =2, skillVar.level do
+		totalExp = totalExp + conf.levelNeedExp[level-1]
+	end
+
+	local btCount = totalExp/conf.skillCost.exp
+
+	if var.equipSkill == idx then
+		LActor.learnSkill(actor, conf.skillId, 1)
+	end
+
+	skillVar.level = 1
+	skillVar.levelExp = 0
+	LActor.addItem(actor, conf.skillCost.itemId, 0, 0, btCount, 0, "wujiangCard replaySkill")
+
+	LActor.sendTipmsg(actor, Lang.ScriptTips.htls009, ttMessage)
+
+	HeTuLeShuFunc.sendOneSkillInfo(actor, idx)
+end
+
+--卸下技能
+function HeTuLeShuFunc.unLoadSkill(actor)
+	local var = HeTuLeShuFunc.getActorVar(actor)
+	if not var or not var.equipSkill or var.equipSkill == 0 then return end
+
+	if not CollectCardConfig.seriesConfig[var.equipSkill] then print("error: wujiangCard unLoadSkill  config  "..var.equipSkill) return end
+
+	if not LActor.ForgetSkill(actor, CollectCardConfig.seriesConfig[var.equipSkill].skillId) then
+		print("error: wujiangCard unLoadSkill skillid  "..var.equipSkill)
+		return
+	end
+
+	var.equipSkill = 0
+
+	HeTuLeShuFunc.sendEquipSkill(actor)
+end
+
+--首次卡牌
+function HeTuLeShuFunc.firstCard(actor)
+	local level = LActor.getLevel(actor)
+	if level == CollectCardConfig.openLevel then
+		HeTuLeShuFuncGetCard(actor, CollectCardConfig.firstCard)
+	end
+end
+
+function CheckBuyWujiangCard(actor, itemId, buyCount)
+	if not actor or not itemId then return 1 end
+
+	local cardIdx
+	for _, conf in pairs(WujiangCards) do
+		if conf.itemId == itemId then
+			cardIdx = conf.cardId
+			break
+		end
+	end
+	if not cardIdx then return 0 end
+
+	local var = HeTuLeShuFunc.getActorVar(actor)
+	if var and var.cards and var.cards[cardIdx] then
+		LActor.sendTipmsg(actor, Lang.ScriptTips.htls010, ttMessage)
+		return 2
+	end
+	if LActor.getItemCount(actor, itemId) > 0 then
+		LActor.sendTipmsg(actor, Lang.ScriptTips.htls010, ttMessage)
+		return 2
+	end
+	if buyCount ~= 1 then
+		LActor.sendTipmsg(actor, Lang.ScriptTips.htls011, ttMessage)
+		return 3
+	end
+
+	return 0
+end
+
+--当前最大的武将等级
+function HeTuLeShuFunc.GetMaxWuJiangLevel(actor)
+	local var = HeTuLeShuFunc.getActorVar(actor)
+	local maxLevel= 0
+	for idx, _ in pairs(CollectCardConfig.cardConfig) do
+		if var.cards[idx] and var.cards[idx].level then
+			--debug_print("cardid:"..idx..",level:"..var.cards[idx].level )
+			if var.cards[idx].level > maxLevel then 
+				maxLevel = var.cards[idx].level
+			end
+		end
+	end
+	debug_print("max leve"..maxLevel)
+
+
+	return maxLevel
+
+end
+--武将为某种颜色的个数
+function HeTuLeShuFunc.getWuJiangCountByColor(actor,color)
+	local var = HeTuLeShuFunc.getActorVar(actor)
+	local itemId
+	local itemcolor
+	local count=0
+	for _, conf in pairs(WujiangCards) do
+		if var.cards[conf.cardId] then 
+			itemId=conf.itemId
+			--debug_print("item name"..Item.getItemName(itemId)..",item color:"..Item.getColorName(itemId))
+
+			itemcolor=Item.getColor(itemId)
+			if color==-1 or itemcolor==color then --color==-1不限制颜色
+				count = count+ 1
+			end
+
+		end
+
+	end
+	debug_print("color count"..count)
+	return count
+
+end
+ 
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, HeTuLeShuFunc.sendAndInitAttr)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeLevel, HeTuLeShuFunc.firstCard)
+
+-----------------协议---------------------------
+function HeTuLeShuFunc.NetMsgDispatcher(actor, systemId, proId, packet)
+	local func = HeTuLeShuMsg[proId]
+	if func then
+		func(actor, packet)
+	end
+end
+
+HeTuLeShuMsg[4] = function (actor, packet)
+	local cardIdx = DataPack.readByte(packet)
+	HeTuLeShuFuncGetCard(actor, cardIdx)
+end
+HeTuLeShuMsg[5] = function (actor, packet)
+	local cardIdx = DataPack.readByte(packet)
+	local autoBuy = DataPack.readByte(packet)
+
+	HeTuLeShuFunc.cardLevelUp(actor, cardIdx, autoBuy)
+end
+HeTuLeShuMsg[6] = function (actor, packet)
+	local cardIdx = DataPack.readByte(packet)
+	local autoBuy = DataPack.readByte(packet)
+
+	HeTuLeShuFunc.cardStageUp(actor, cardIdx, autoBuy)
+end
+HeTuLeShuMsg[7] = function (actor, packet)
+	local autoBuy = DataPack.readByte(packet)
+	HeTuLeShuFunc.tujianLevelUp(actor, autoBuy)
+end
+HeTuLeShuMsg[8] = function (actor, packet)
+	local skillIdx = DataPack.readByte(packet)
+	HeTuLeShuFunc.equipSkill(actor, skillIdx)
+end
+HeTuLeShuMsg[9] = function (actor, packet)
+	local skillIdx = DataPack.readByte(packet)
+	local autoBuy = DataPack.readByte(packet)
+	HeTuLeShuFunc.skillLevelUp(actor, skillIdx,  autoBuy)
+end
+HeTuLeShuMsg[10] = function (actor, packet)
+	local skillIdx = DataPack.readByte(packet)
+	HeTuLeShuFunc.replaySkill(actor, skillIdx)
+end
+HeTuLeShuMsg[11] = function (actor, packet)
+	HeTuLeShuFunc.unLoadSkill(actor)
+end
+HeTuLeShuMsg[12] = function (actor, packet)
+	local cardIdx = DataPack.readByte(packet)
+	local autoBuy = DataPack.readByte(packet)
+
+	HeTuLeShuFunc.calcCardLevel(actor, cardIdx, autoBuy)
+end
+HeTuLeShuMsg[13] = function (actor, packet)
+	local cardIdx = DataPack.readByte(packet)
+	local autoBuy = DataPack.readByte(packet)
+
+	HeTuLeShuFunc.calcCardStage(actor, cardIdx, autoBuy)
+end
+HeTuLeShuMsg[15] = function (actor, packet)
+	local skillId = DataPack.readByte(packet)
+	local autoBuy = DataPack.readByte(packet)
+
+	HeTuLeShuFunc.onekeySkillLevelUp(actor, skillId, autoBuy)
+end
+
+SystemHandlerDispatcher.registerSystemHander(BaseTypes.SystemId.heTuLeShuSystem, HeTuLeShuFunc.NetMsgDispatcher)
+
+--gm命令
+function HeTuLeShuFunc.gmFunction(actor, args)
+	local gm1 = tonumber(args[1])
+	if gm1 == 1 then
+		HeTuLeShuFunc.sendInfo(actor)
+	elseif gm1 == 2 then
+		HeTuLeShuFuncGetCard(actor, tonumber(args[2]))	
+	elseif gm1 == 3 then
+		HeTuLeShuFunc.cardLevelUp(actor, tonumber(args[2]))
+	elseif gm1 == 4 then
+		HeTuLeShuFunc.cardStageUp(actor, tonumber(args[2]))
+	elseif gm1 == 5 then
+		HeTuLeShuFunc.tujianLevelUp(actor)
+	elseif gm1 == 6 then
+		HeTuLeShuFunc.equipSkill(actor, tonumber(args[2]))
+	elseif gm1 == 7 then
+		HeTuLeShuFunc.skillLevelUp(actor, tonumber(args[2]))
+	elseif gm1 == 8 then
+		HeTuLeShuFunc.replaySkill(actor, tonumber(args[2]))
+	elseif gm1 == 9 then
+		for i, _ in pairs(CollectCardConfig.cardConfig) do
+			HeTuLeShuFuncGetCard(actor, i)
+		end
+	elseif gm1 == 10 then
+		if args[2] == nil then return end
+		local otherActor = LActor.getActorByName(args[2])
+		if not otherActor then
+			LActor.sendTipmsg(actor, "该玩家不在线 ", ttMessage)
+			return
+		end
+
+		local skillList = LActor.getAllSkillList(otherActor)
+		if not skillList then return end
+
+		local var = HeTuLeShuFunc.getActorVar(otherActor)
+		if not var or not var.skill then return end
+
+		for idx, conf in pairs(CollectCardConfig.seriesConfig) do
+			local flag = false
+			for _, skillInfo in pairs(skillList) do
+				if LActor.getSkillIdBySkillData(skillInfo) == conf.skillId then
+					var.equipSkill = idx
+					LActor.sendTipmsg(actor, "重置成功  "..idx, ttMessage)
+					return
+				end
+			end
+		end
+		LActor.sendTipmsg(actor, "重置错误，找不到技能", ttMessage)
+	end
+end
+GmEventFuncList.register( "hetu", HeTuLeShuFunc.gmFunction,1)

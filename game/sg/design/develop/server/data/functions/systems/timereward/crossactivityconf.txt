@@ -1,0 +1,25 @@
+--开服活动，渡劫配置
+
+CrossActivityConf = {
+	level = {15, 23, 28}, --渡劫等级
+	--level = {1, 2, 3}, --渡劫等级
+	rewardItem = 
+	{
+		item = 
+		{
+			{
+				{id = 28269, count = 1, quality=0, strong=0, bind = 1},     --物品id， 
+				
+				
+			},
+			{
+				{id = 28270, count = 1, quality=0, strong=0, bind = 1},     --物品id， 
+				 
+			},
+			{
+				{id = 28271, count = 1, quality=0, strong=0, bind = 1},     --物品id， 
+				
+			},
+		},
+	},
+}

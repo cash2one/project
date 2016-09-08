@@ -1,0 +1,127 @@
+﻿目标成就原子事件表
+
+eAchieveEventIdNone = 0,        //占位的
+eAchieveEventLogin = 1,        //登陆游戏
+eAchieveEventLevelUp = 2 ,      //等级提升，参数1为等级
+//eAchieveEventWingStage = 3,         //翅膀阶数变化，参数1表示阶数
+eAchieveEventAcceptQuest = 4,   //第1次接任务
+eAchieveEventFinishQuest = 5,   //完成任务， 参数1表示任务ID
+eAchieveEventAttackMonster = 6, //击杀怪物， 参数1表示怪物ID
+eAchieveEventTakenOnEquip = 7,  //穿上装备[装备ID]
+//eAchieveEventWingSkill = 8,         //翅膀技能等级变化，参数1表示技能等级，参数2表示数量
+eAchieveEventPetSkillKy = 9,      //宠物技能刻印
+eAchieveDuJie = 10,    // 获得渡劫称号，参数1表示阶数
+eAchieveEventJoinGuild = 11,    //加入帮派，没参数
+aAchieveEventCastellan = 12,	// 成为城主	--new
+aAchieveEventGlamour = 13,	//魅力值，参数1表示魅力值	--new--
+eAchieveEventEnterFb = 14,      //进入副本
+eAchieveEventPetBattle = 15,       //宠物出战
+eAchieveEventCreateGuild = 16,   //创建帮派
+eAchieveEventPetAttrChange = 17,      //宠物属性改变，参数[等级，悟性，成长]
+eAchieveEventFight = 18,         //仙斗会挑战[是否胜利(1表示胜利，0表示失败)]
+eAchieveEventEquipStrong = 19,   //装备强化，参数1表示强化等级
+eAchieveEventEquipHole = 20,     //装备打孔
+eAchieveEventEquipEnlay = 21,   //嵌入宝石
+eAchieveEventEquipDelay = 22,    //宝石拆卸
+eAchieveEventEquipMakeDiamond = 23,  //合成宝石
+eAchieveEventShopBuy = 24,  //商城购买物品
+eAchieveEventHunt = 25 , //炼魂
+eAchieveEventPetSkillChange = 26, //宠物技能等级变化[等级，数量]
+eAchieveEventPeachEffect = 27,    //十倍蟠桃效果
+eAchieveEventFriendCountChange = 28,    //好友的数量变化, 参数1为好友数量
+eAchieveEventGuildMaster = 29,    //成为帮派的帮主或者副帮主
+eAchieveEventGuildLevelUp = 30,   //所在帮派的等级提升
+eAchieveEventFuBenBoss = 31, //化身副本boss，参数1为怪物ID
+aAchieveEventBaptizeAcitveAll = 32, //装备洗炼属性全部激活 --new--
+eAchieveEventBathHD = 33, //灵泉仙浴互动
+aAchieveEventUseItem = 34 , //使用物品
+aAchieveEventEnterScene = 35 , //进入场景
+aAchieveEventPeach = 36, //吃蟠桃
+aAchieveEventGuildConcChange = 37 , //帮派的累积贡献度发生变化
+aAchieveEventSendFlowr = 38,         //送花,参数1表示数目
+aAchieveEventReceiveFlowr = 39,         //收到花,参数1表示数目
+aAchieveEventCustom = 40,     //特殊需求的成就[类型],一触发就完成
+aAchieveEventSuitCountChange = 41,      //套装的数目发生改变,参数1表示套装的id,参数2表示套装的数目
+aAchieveEventJimaiGainCoin = 42,        //寄卖获得银两,参数1表示银两数目
+aAchieveEventFightSW = 43,        //仙斗会获得威望
+//参加活动 ,参数1表示数目活动的类型 1:参加轻功宗师到达终点(第2个参数名次), (2阵营运镖，其他的以后扩展),3参加华山论剑并获得一定排名(第2个参数名次),
+//4 参加密宗洞(第2个参数名次) 5参加军团长膜拜，6表示千里护送镖 
+aAchieveEventFinishActivity = 44,       
+aAchieveEventMountEquip = 45, // 坐骑装备，没参数
+aAchieveEventFbFinish = 46,             // 通关副本,参数1表示副本ID
+aAchieveEventFbTongJi = 47,             //副本统计[ID,层数]
+aAchieveDeJieFullStar = 48,          // 渡劫1到9阶都是满星，参数1表示那种类型
+aAchieveEventKillEnemy = 49,            //在阵营战或者天元城之战中，累计击杀敌对玩家
+aAchieveEventDiamondCountChange = 50,   //全身%d级的宝石的数目发生改变，参数1表示多少件的的宝石到参数2的等级，参数2表示宝石的数目
+aAchieveEventAllEquipStrongChange = 51,   //全身装备强化等级改变(强化等级最小的装备),参数1表示强化等级
+aAchieveEventGangWar = 52, //参与帮战 --new，现在还没有帮派战
+aAchieveEventOpenRoot = 53,        //开启灵根,参数1表示灵根类型	--new--
+aAchieveEventBecomeVIP = 54,    //成为VIP玩家	--new
+aAchieveEventFightValueChange = 55,        //战斗力, 参数1表示战斗力值	--new--
+aAchieveEventEquipDiamondLevel = 56,        //全身宝石等级之和，参数1表示等级之和	--new--
+aAchieveEventGetMount = 57,        //获取坐骑，参数1表示几阶	--new  -- del这个没用了，其实就是63
+aAchieveEventMountZiZhi = 58,           //坐骑资质变化，参数1表示坐骑资质	--new
+aAchieveEventMountLingXiChange = 59,        //坐骑灵犀值发生变化，参数1表示灵犀值	--new--
+aAchieveEventMountEquipCount = 60,        //坐骑装备数量变化（可以用来触发第一次穿上装备和装备满成就） 参数1表示装备数量--new--
+aAchieveEventKillUser = 61,              //杀死玩家，参数1表示阵营是否相同(1表示相同，0表示不同)
+aAchieveEventGamble = 62,               //盗梦[类型]
+aAchieveEventMountStageUp = 63,	// 坐骑进阶，参数1表示阶段	--new--
+aAchieveEventGemStateChange = 64,        //法宝的境界发生变化，参数1表示法宝的境界	--new--
+aAchieveEventEquipSoul = 65,        //装备仙魂,参数1表示仙魂品质（颜色）,参数2表示装备后该品质仙魂的总数	--new--
+aAchieveEventRelationship = 66,		//人际关系人数变化，参数1表示人际关系人数	--new--
+aAchieveEventFinish = 67,	// 完成成就，参数1表示成就的ID，注：完成成就的类型会作特殊处理 --new--
+aAchieveEventEquipPurple = 68,	// 人物身上紫色装备的数目发生改变,参数1表示紫色装备的数量
+aAchieveEventStarQuest = 69,	// 完成几星级的任务，参数1任务类型，参数2表示任务的星级
+
+aAchieveEventWingStage = 70, // 翅膀等阶达到等级，参数1表示等阶
+aAchieveEventWingLevel = 71, // 翅膀等级达到等级，参数1表示等级
+aAchieveEventWingSkill = 72, // 翅膀技能达到等级，参数1表示等级,参数2表示数量
+aAchieveEventSpiritsLevel = 73, // 式神达到等级，参数1表示等级
+aAchieveEventChapterFinish = 74, //完成章节任务,参数1表示章节ID
+
+aAchieveEventUpgrateSkill = 75, //升级技能
+aAchieveEventBaptize = 76, //装备累计洗炼n次
+aAchieveEventFinishGuildLoop = 77, //完成宗门任务
+aAchieveEventFinishGuildProtect = 78, //完成宗门跑商
+aAchieveEventGetBeibi = 79, //累计获得贝币
+aAchieveEventUseBeibi = 80, //累计消费贝币
+aAchieveEventGetTianZhu = 81, //累计获得天珠
+aAchieveEventUseTianZhu = 82, //累计消费天珠
+aAchieveEventVipLevel = 83, //VIP达到N级
+84, //获得N条10星洗练属性
+85, //获得N件红色品质装备
+aAchieveEventEquipJingjie = 86, //装备进阶N次
+aAchieveEventMountPeiyan = 87, //坐骑累计培养N次
+88, //学习N个坐骑技能
+89, //获得N个坐骑幻化卡
+90, //翅膀累计培养N次
+91, //获得N个翅膀幻化卡
+92, //获得N个伙伴
+93, //累计提升伙伴资质属性N次
+94, //累计提升伙伴成长属性N次
+95, //学习N个伙伴技能
+96, //给伙伴赠送N个蜜饯
+97, //获得N个法宝
+98, //累计修炼法宝N次
+99, //累计升级N次法宝技能
+100, //累计完成琉璃幻境N次活动目标
+101, //阵营战累计获胜N次
+102, //成功击杀N次世界boss
+aAchievePassFuben = 103, //累计通关N次副本
+104, //通关通天试炼N层
+105, //完成日常任务N次
+106, //完成悬赏任务N次
+107, //赠送好友宝箱钥匙N次
+108, //收到好友宝箱钥匙N次
+109, //在排行榜点N个赞
+110, //排行榜获得N个赞
+111, //累计击杀N个玩家
+112, //完成赤影传说精英难度第N章
+113, //累计扩充N次背包
+114, //通缉榜通缉N个玩家
+115, //获得N件橙色品质装备
+116, //完成赤影传说第N章
+aAchieveEventPartInBoss = 117, //参与协助boss
+aAchieveEventDailyJuqing = 118, //通关每日剧情次数
+
+eMaxAtomEventID,      //最大的原子事件的ID   

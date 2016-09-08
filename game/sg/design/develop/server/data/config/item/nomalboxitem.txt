@@ -1,0 +1,181 @@
+﻿--随机礼盒
+NomalBoxItemTbl =
+{
+  --普通的木盒
+  {
+    item_id = 1621,                             --消耗物品ID
+    item_name = Lang.Item.n1621,                --消耗物品名称
+    mustLevel = 1,                              --打开物品最小等级
+    mustBag = 1,                                --打开物品需求包袱空间
+    isRemove = true,                            --打开物品是否消耗 
+    mustItem =                                  --打开物品需要的道具
+    {
+     -- itemId = 1649,                             --需要的道具ID
+     -- mustCount = 1,                             --需要的道具数量
+     -- isRemove = true,                           --需要的道具是否消耗  true消耗，false不消耗 
+     -- itemName = Lang.Item.n1649,               --需要的道具名称
+    },
+    extentItem =                                --货币奖励 不给则填0
+    {                                               --
+      bindGold = 2000,                             --绑定银两
+      gold = 0,                                  --银两
+      bindYuanBao = 0,                              --绑定天珠
+      yuanBao = 0,                                  --天珠
+    },
+    regularItem =                                   --必开物品 不给则置空
+    {
+     -- {itemId = 1, name = Lang.Item.n1002, num = 1, bind = 1, notice = false },         --1绑定 0不绑定
+    },
+    randomItem =                                     --随机开物品 不给则置空 每组一个物品  可以在后面添加组
+    {
+      {                                              --第一组
+        {itemId = 1655, name = Lang.Item.n1655, percent = 300, num = 5, bind = 1, notice = false },  --小型银两袋*5
+      },
+      -- .... 继续加组
+    },
+    chiceItem =                                 ---内外功分配奖励
+    {
+      inItem =     --内功奖励
+      {
+	--    {itemId = 8, name = Lang.Item.n826, percent = 500, num = 1, bind = 1, notice = true },
+	--      {itemId = 9, name = Lang.Item.n796, percent = 500, num = 1, bind = 1, notice = true },
+      },
+     outItem =    --外功奖励
+      {
+	--   {itemId = 10, name = Lang.Item.n816, percent = 500, num = 1, bind = 1, notice = true },
+	--   {itemId = 11, name = Lang.Item.n806, percent = 500, num = 1, bind = 1, notice = true },
+      },
+    },
+  },
+----------------------------------------------------------------------------------------------------------------------
+  --精美的漆盒
+  {
+    item_id = 1622,                             --消耗物品ID
+    item_name = Lang.Item.n1622,                --消耗物品名称
+    mustLevel = 1,                              --打开物品最小等级
+    mustBag = 3,                                --打开物品需求包袱空间
+    isRemove = true,                            --打开物品是否消耗 
+    mustItem =                                  --打开物品需要的道具
+    {
+    },
+    extentItem =                                --货币奖励 不给则填0
+    {                                               --
+      bindGold = 3000,                             --绑定银两
+      gold = 0,                                  --银两
+      bindYuanBao = 0,                              --绑定天珠
+      yuanBao = 0,                                  --天珠
+    },
+    regularItem =                                   --必开物品 不给则置空
+    {
+    },
+    randomItem =                                     --随机开物品 不给则置空 每组一个物品  可以在后面添加组
+    {
+      {                                              --第一组
+        {itemId = 1655, name = Lang.Item.n1655, percent = 300, num = 10, bind = 1, notice = false },  --30%  小型银两袋*10
+        {itemId = 1442, name = Lang.Item.n1442, percent = 150, num = 1, bind = 1, notice = false },  --15%  复活石*1
+        {itemId = 1002, name = Lang.Item.n1002, percent = 150, num = 1, bind = 1, notice = false },  --15%   初级强化石*1
+      },
+      -- .... 继续加组
+    },
+    chiceItem =                                 ---内外功分配奖励
+    {
+      inItem =     --内功奖励
+      {
+      },
+     outItem =    --外功奖励
+      {
+      },
+    },
+  },
+----------------------------------------------------------------------------------------------------------------------
+  --精致的银匣
+  {
+    item_id = 1623,                             --消耗物品ID
+    item_name = Lang.Item.n1623,                --消耗物品名称
+    mustLevel = 1,                              --打开物品最小等级
+    mustBag = 3,                                --打开物品需求包袱空间
+    isRemove = true,                            --打开物品是否消耗 
+    mustItem =                                  --打开物品需要的道具
+    {
+      itemId = 1625,                             --需要的道具ID
+      mustCount = 1,                             --需要的道具数量
+      isRemove = true,                           --需要的道具是否消耗  true消耗，false不消耗 
+      itemName = Lang.Item.n1625,               --需要的道具名称
+    },
+    extentItem =                                --货币奖励 不给则填0
+    {                                               --
+      bindGold = 0,                             --绑定银两
+      gold = 2000,                                  --银两
+      bindYuanBao = 0,                              --绑定天珠
+      yuanBao = 0,                                  --天珠
+    },
+    regularItem =                                   --必开物品 不给则置空
+    {
+    },
+    randomItem =                                     --随机开物品 不给则置空 每组一个物品  可以在后面添加组
+    {
+      {                                              --第一组
+        {itemId = 1002, name = Lang.Item.n1002, percent = 200, num = 2, bind = 1, notice = false },  --20%   初级强化石*2
+      },
+      -- .... 继续加组
+    },
+    chiceItem =                                 ---内外功分配奖励
+    {
+      inItem =     --内功奖励
+      {
+	{itemId = 756, name = Lang.Item.n756, percent = 200, num = 1, bind = 1, notice = true },  --20%   2级内攻宝石*1
+	{itemId = 757, name = Lang.Item.n757, percent = 200, num = 1, bind = 1, notice = true },  --20%   3级内功宝石*1
+      },
+     outItem =    --外功奖励
+      {
+	{itemId = 746, name = Lang.Item.n746, percent = 200, num = 1, bind = 1, notice = true },  --20%   2级外攻宝石*1
+	{itemId = 747, name = Lang.Item.n747, percent = 200, num = 1, bind = 1, notice = true },  --20%   3级外攻宝石*1
+      },
+    },
+  },
+----------------------------------------------------------------------------------------------------------------------
+  --华美的金匣
+  {
+    item_id = 1624,                             --消耗物品ID
+    item_name = Lang.Item.n1624,                --消耗物品名称
+    mustLevel = 1,                              --打开物品最小等级
+    mustBag = 3,                                --打开物品需求包袱空间
+    isRemove = true,                            --打开物品是否消耗 
+    mustItem =                                  --打开物品需要的道具
+    {
+      itemId = 1626,                             --需要的道具ID
+      mustCount = 1,                             --需要的道具数量
+      isRemove = true,                           --需要的道具是否消耗  true消耗，false不消耗 
+      itemName = Lang.Item.n1626,               --需要的道具名称
+    },
+    extentItem =                                --货币奖励 不给则填0
+    {                                               --
+      bindGold = 0,                             --绑定银两
+      gold = 4000,                                  --银两
+      bindYuanBao = 0,                              --绑定天珠
+      yuanBao = 0,                                  --天珠
+    },
+    regularItem =                                   --必开物品 不给则置空
+    {
+    },
+    randomItem =                                     --随机开物品 不给则置空 每组一个物品  可以在后面添加组
+    {
+      {                                              --第一组
+        {itemId = 1002, name = Lang.Item.n1002, percent = 300, num = 5, bind = 1, notice = false },  --30%   初级强化石*5
+        {itemId = 1646, name = Lang.Item.n1646, percent = 200, num = 4, bind = 1, notice = false },  --20%   中级强化石*4
+        {itemId = 1647, name = Lang.Item.n1647, percent = 200, num = 5, bind = 1, notice = false },  --20%   高级强化石*5
+      },
+      -- .... 继续加组
+    },
+    chiceItem =                                 ---内外功分配奖励
+    {
+      inItem =     --内功奖励
+      {
+      },
+     outItem =    --外功奖励
+      {
+      },
+    },
+  },
+----------------------------------------------------------------------------------------------------------------------
+}

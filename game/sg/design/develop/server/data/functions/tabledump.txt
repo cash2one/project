@@ -1,0 +1,75 @@
+-- LUA中table的格式化输出 可打印文件
+-- Author LiaoYuDong 2015.09.08
+-- Modify LiaoYuDong 2015.11.24
+function indentstr(w)
+    local str = ""
+    if w > 0 then
+        for i = 1, w do
+            str = str .. "\t"
+        end
+    end
+    return str
+end
+
+-- 比较特殊 会过滤Lang
+function dump_t(t, b, w)
+    local str = ""
+    if t == nil then
+        return str
+    end
+    if w == nil then
+        w = 1
+    end
+    if type(t) ~= "table" then
+        if type(t) == "number" then
+            str = str .. tostring(t)
+        elseif type(t) == "string" then
+            local s, e = string.find(t, "Lang")
+            if s ~= nil then
+                str = str .. tostring(t)
+            else
+                str = str .. "\"" .. tostring(t) .. "\""
+            end
+        else
+            str = str .. tostring(t)
+        end
+    else
+        str = str .. "{\n"
+        for k, v in pairs(t) do
+            local key = ""
+            if type(k) == "number" then
+                if b ~= nil and b ~= false then
+                    key = "[" .. tostring(k) .. "] = "
+                end
+            else
+                key = tostring(k) .. " = "
+            end
+            str = str .. indentstr(w) .. key .. dump_t(v, b, w + 1) .. ",\n"
+        end
+        str = str .. indentstr(w - 1) .. "}"
+    end
+    return str
+end
+
+function dump(concent, ...)
+    if not concent then
+        return "nil"
+    end
+    if type(concent) == "function" then
+        return "<function>"
+    elseif type(concent) == "userdata" then
+        return "<userdata>"
+    elseif type(concent) == "string" then
+        return concent
+    elseif type(concent) == "number" then
+        return tostring(concent)
+    elseif type(concent) == "table" then
+        return dump_t(concent, ...)
+    elseif type(concent) == "boolean" then
+        return tostring(concent)
+    elseif type(concent) == "thread" then
+        return "<thread>"
+    else
+        return "<undefined type>"
+    end
+end

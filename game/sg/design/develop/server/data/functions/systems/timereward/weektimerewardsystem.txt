@@ -1,0 +1,120 @@
+--在线送元宝奖励实现
+
+--#include "data\language\LangCode.txt" once
+--#include "WeekTimeReward_Const.txt" once
+
+ONLINEREWARD.WeekTimeMoneyRewardImplement =
+{
+  --接收客户端请求，发送领奖信息客户端 
+  sendClientRewardMsg = function(sysarg)
+    if LocalDT.WeekTimeMoneyRewardConst ~= nil then weektimeReward = LocalDT.WeekTimeMoneyRewardConst else return end
+    local time = System.getCurrMiniTime()       --获取当前的mini时间，单位秒
+    local var = LActor.getStaticVar( sysarg )
+    local WeektimeMoneyReward = var.WeektimeMoneyReward	   --在线领取绑定元宝静态变量
+    --如果不存在领取绑定元宝在线数据，则初始化
+	  if ( WeektimeMoneyReward == nil ) then
+			var.WeektimeMoneyReward = {}
+		  WeektimeMoneyReward = var.WeektimeMoneyReward
+		  WeektimeMoneyReward[1] = 0  --在线累计时间
+		  WeektimeMoneyReward[2] = time  --记录登录初始时间
+		  WeektimeMoneyReward[3] = false  --记录这周领了没
+	  end
+	if WeektimeMoneyReward[3] == true then --已经领奖,所有东西清零
+		  WeektimeMoneyReward[1] = 0  --在线累计时间
+		  WeektimeMoneyReward[2] = time  --记录登录初始时间
+		  WeektimeMoneyReward[3] = false  --记录这周领了没
+	else
+    --计算当前累计时间
+		if (time - WeektimeMoneyReward[2]) <= 0 then
+			WeektimeMoneyReward[1] = 0  --在线累计时间
+			WeektimeMoneyReward[2] = time  --记录登录初始时间
+			WeektimeMoneyReward[3] = false  --记录这周领了没
+		else
+			WeektimeMoneyReward[1] = tonumber(time - WeektimeMoneyReward[2])
+		end
+	end
+    --服务端返回在线信息
+	  local npack = DataPack.allocPacket(sysarg,138,4)  --申请一个数据包
+	  if (npack == nil) then
+			print("npack:nil")
+			return
+	  end
+	  --print("npacksend:"..timeReward.REWARDLIMITTIME)
+	  --print("npacksend:"..timeReward.REWARDMONEY)
+	  --print("npacksend:"..timeMoneyReward[4])
+	  --print("npacksend:"..timeMoneyReward[1])
+	  --print(".......WeektimeMoneyReward[1]=="..WeektimeMoneyReward[1])
+	DataPack.writeUInt(npack,WeektimeMoneyReward[1]) 
+	DataPack.writeUInt(npack,weektimeReward.REWARDMONEY) 
+	DataPack.flush(npack)   --发送数据包 
+  end,
+
+	--客户端申请领取送元宝奖励
+	getOnlineMoneyReward = function(sysarg)
+	  if LocalDT.WeekTimeMoneyRewardConst ~= nil then weektimeReward = LocalDT.WeekTimeMoneyRewardConst else return end
+		local level = LActor.getIntProperty( sysarg, PROP_LEVEL )
+	  if ( level < weektimeReward.REWARDLIMLEVEL[1] ) or ( level > weektimeReward.REWARDLIMLEVEL[2] ) then --领取最低等级限制
+      LActor.sendTipmsg( sysarg,Lang.ScriptTips.x00070,ttDialog )
+      return
+    end
+    
+    local time = System.getCurrMiniTime()       --获取当前的mini时间，单位秒
+    local var = LActor.getStaticVar( sysarg )
+    local WeektimeMoneyReward = var.WeektimeMoneyReward	   --在线领取绑定元宝静态变量
+    --如果不存在领取绑定元宝在线数据，则初始化
+	  if ( WeektimeMoneyReward == nil ) then
+		var.WeektimeMoneyReward = {}
+		WeektimeMoneyReward = var.WeektimeMoneyReward
+		WeektimeMoneyReward[1] = 0  --在线累计时间
+		WeektimeMoneyReward[2] = time  --在线累计金钱
+		
+		WeektimeMoneyReward[3] = false --记录这周是否领取了
+	  --print("timeMoneyReward[4]1:"..timeMoneyReward[4])
+    end
+	if WeektimeMoneyReward[3] == true then
+	--提示已经领取了
+		local str = string.format(Lang.ScriptTips.gz001)
+		LActor.sendTipmsg( sysarg,str,ttDialog )
+		return
+	end
+    --计算当前累计时间
+    if (time - WeektimeMoneyReward[2]) <= 0 then
+      WeektimeMoneyReward[1] = 0	--如果现在时间少于前一次领取时间，累积时间置零
+     
+      WeektimeMoneyReward[2] = time  --记录登录初始时间
+     
+     
+	  else
+      WeektimeMoneyReward[1] = tonumber(time - WeektimeMoneyReward[2])	--如果现在时间大于前一次领取时间，累积时间=当前时间-前一次记录时间
+	  end 
+	  if WeektimeMoneyReward[1] >= weektimeReward.REWARDTIME then
+			WeektimeMoneyReward[1] = weektimeReward.REWARDTIME
+	  else
+		--没到40小时不可以领
+	    local str = string.format(Lang.ScriptTips.gz002,weektimeReward.REWARDTIME)
+		LActor.sendTipmsg( sysarg,str,ttDialog )
+		return
+	  end
+	  --获取领取奖励时间
+	  
+
+	  --计算当前累计金钱
+	
+		---给予奖励 
+		local rewardMoney = weektimeReward.REWARDMONEY
+		LActor.changeMoney( sysarg, mtBindYuanbao, rewardMoney)
+		WeektimeMoneyReward[1] = 0	--如果现在时间少于前一次领取时间，累积时间置零
+		WeektimeMoneyReward[2] = time  --在线累计金钱
+		WeektimeMoneyReward[3] = true
+		local str = string.format(Lang.ScriptTips.x00072, rewardMoney)
+		LActor.sendTipmsg( sysarg,str,ttDialog )
+	ONLINEREWARD.WeekTimeMoneyRewardImplement.sendClientRewardMsg(sysarg)
+	  --print("timeMoneyReward[4]:"..timeMoneyReward[4]) 
+    --服务端返回在线信息
+		--换领成功
+		
+	end,
+}
+
+
+--在线送元宝消息分配

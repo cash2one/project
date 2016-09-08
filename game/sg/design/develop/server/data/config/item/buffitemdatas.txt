@@ -1,0 +1,37 @@
+﻿--BUFF道具配置表
+--因为某些BUFF涉及到活动引用 用于判断是否有重复BUFF组
+
+local AtvExpBuffGroups = {130,}		  --活动经验BUFF组表 	--用于区分活动BUFF 防止重叠
+local AtvXiuWeiBuffGroups = {130,}	--活动修为BUFF组表	--用于区分活动BUFF 防止重叠
+
+--常规BUFF道具 <修改需要程序支持>
+AddBuffItems = 
+{
+	{item_id = 1562, buffType= 83, value=1, buffGroup= 85,times =1,interval= 3600,needDelete =true,timeOverlay =true,buffName = "",},  --pk保护的物品，复活符
+	{item_id = 1669, buffType= 15, value=100, buffGroup= 86,times =1,interval= 10,needDelete =true,timeOverlay =true,buffName = "",},
+}
+
+
+--经验丹
+AddExpBuffItems = 
+{
+	{item_id = 18210, buffType= 75, value=0.1, buffGroup= 83,times =1,interval= 3600,needDelete =true,timeOverlay =true,buffName = "",},
+	{item_id = 18211, buffType= 75, value=0.3, buffGroup= 84,times =1,interval= 3600,needDelete =true,timeOverlay =true,buffName = "",},
+	{item_id = 18219, buffType= 75, value=0.5, buffGroup= 85,times =1,interval= 3600,needDelete =true,timeOverlay =true,buffName = "",},
+}
+
+--真气丹
+AddXiuWeiBuffItems = 
+{
+	{item_id = 18229, buffType= 70, value=0.3, buffGroup= 86,times =1,interval= 3600,needDelete =true,timeOverlay =true,buffName = "",},
+	{item_id = 28209, buffType= 70, value=0.5, buffGroup= 87,times =1,interval= 3600,needDelete =true,timeOverlay =true,buffName = "",},
+}
+
+
+--生命药剂
+HPItems =
+{
+	-- item_id:道具ID，hpPower:恢复最大血量的比例
+	{item_id=18403, hpPower=0.4, needDelete=true},
+	{item_id=18404, hpPower=0.8, needDelete=true},
+}

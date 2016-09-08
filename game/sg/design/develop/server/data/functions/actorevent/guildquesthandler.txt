@@ -1,0 +1,1012 @@
+-- 公会任务相关
+--#include "data\functions\taskgameplay\protectquest.txt"
+
+GuildQuestFun = {}
+
+-- 初始化数据
+GuildQuestFun.initguildloopquestdata = function( guild_var )
+	if guild_var.loop_quest_info == nil then
+		guild_var.loop_quest_info = {}
+	end
+	-- 已发布的任务个数
+	if guild_var.loop_quest_info.release_count == nil then
+		guild_var.loop_quest_info.release_count = 0
+	end
+	-- 已被领取的任务个数
+	if guild_var.loop_quest_info.accept_count == nil then
+		guild_var.loop_quest_info.accept_count = 0
+	end
+end
+
+GuildQuestFun.initactorloopquestdata = function( actor_var )
+	if actor_var.guild_loop_quest == nil then
+		actor_var.guild_loop_quest = {}
+	end
+
+	-- 已接取的任务id
+	if actor_var.guild_loop_quest.quest_id == nil then
+		actor_var.guild_loop_quest.quest_id = 0
+	end
+	-- 已接取次数
+	if actor_var.guild_loop_quest.accept_count == nil then
+		actor_var.guild_loop_quest.accept_count = 0
+	end
+	-- 当前跑环进度
+	if actor_var.guild_loop_quest.cur_run == nil then
+		actor_var.guild_loop_quest.cur_run = 0
+	end
+	-- 当前跑环总进度
+	if actor_var.guild_loop_quest.all_run == nil then
+		actor_var.guild_loop_quest.all_run = 0
+	end
+end
+
+-- 广播世族任务数量
+GuildQuestFun.broadcastloopquestdata = function( guild, guild_var )
+	if not guild or not guild_var then return end
+
+	local dp = LDataPack.allocPacket()
+	if dp == nil then return end
+	LDataPack.writeByte(dp, 10)
+	LDataPack.writeByte(dp, 67)
+	LDataPack.writeInt(dp, guild_var.loop_quest_info.release_count or 0)
+	LDataPack.writeInt(dp, guild_var.loop_quest_info.accept_count or 0)
+	LGuild.broadcastData(guild, dp)
+end
+
+-- 下发公会跑环任务信息
+GuildOpFuncList[60] = function(sysarg, dp)
+	local guild = LActor.getGuildPtr(sysarg)
+	if guild == nil then return end -- 为加入公会
+	local guild_lvl = LActor.getGuildLevel(sysarg)
+	local guild_var = LGuild.getStaticVar(guild)
+	if guild_var == nil then return end
+	local actor_var = LActor.getStaticVar(sysarg)
+	if actor_var == nil then return end
+	GuildQuestFun.initguildloopquestdata(guild_var)
+	GuildQuestFun.initactorloopquestdata(actor_var)
+
+	local npack = DataPack.allocPacket(sysarg, 10, 60)
+	if npack == nil then return end
+	DataPack.writeInt(npack, guild_var.loop_quest_info.release_count)
+	DataPack.writeInt(npack, guild_var.loop_quest_info.accept_count)
+
+	DataPack.writeInt(npack, actor_var.guild_loop_quest.quest_id)
+	DataPack.writeInt(npack, actor_var.guild_loop_quest.accept_count)
+	DataPack.writeInt(npack, actor_var.guild_loop_quest.cur_run)
+	DataPack.writeInt(npack, actor_var.guild_loop_quest.all_run)
+	DataPack.flush(npack)
+end
+
+-- 请求发布公会跑环任务
+GuildOpFuncList[61] = function(sysarg, dp)
+	local reqnum = DataPack.readInt(dp)
+	if reqnum == nil or reqnum <= 0 then return end
+
+	local guild = LActor.getGuildPtr(sysarg)
+	if guild == nil then return end -- 为加入公会
+	local guild_lvl = LActor.getGuildLevel(sysarg)
+	local guild_var = LGuild.getStaticVar(guild)
+	if guild_var == nil then return end
+	GuildQuestFun.initguildloopquestdata(guild_var)
+
+	if LActor.getGuildPos(sysarg) ~= smGuildLeader and LActor.getGuildPos(sysarg) ~= smGuildAssistLeader then
+		LActor.sendTipmsg(sysarg, Lang.GuildLang.t201, ttMessage) -- 不是会长
+		return
+	end
+
+	if (guild_var.loop_quest_info.release_count + reqnum) > Guild.guildloopquest.maxreleasecount[guild_lvl] then
+		LActor.sendTipmsg(sysarg, Lang.GuildLang.t202, ttMessage) -- 次数不足
+		return
+	end
+
+	if LGuild.getGuildProperty(guild) < (Guild.guildloopquest.releasecost * reqnum) then
+		LActor.sendTipmsg(sysarg, Lang.GuildLang.t203, ttMessage) -- 公会财产不足
+		return
+	end
+
+	LGuild.addGuildProperty(guild, -(Guild.guildloopquest.releasecost * reqnum)) -- 扣公会财产
+	guild_var.loop_quest_info.release_count = guild_var.loop_quest_info.release_count + reqnum
+	-- 下发公告
+	System.broadcastGuildTipmsg(LActor.getGuildId(sysarg), string.format(Lang.GuildLang.t218, reqnum), ttHearsay)
+
+	-- 下发回调
+	local npack = DataPack.allocPacket(sysarg, 10, 61)
+	if npack == nil then return end
+	DataPack.writeInt(npack, 1)
+	DataPack.flush(npack)
+
+	GuildOpFuncList[60](sysarg)
+	GuildQuestFun.broadcastloopquestdata( guild, guild_var )
+end
+
+-- 请求接受公会跑环任务
+GuildOpFuncList[62] = function(sysarg, dp)
+	local guild = LActor.getGuildPtr(sysarg)
+	if guild == nil then return end -- 为加入公会
+	local guild_lvl = LActor.getGuildLevel(sysarg)
+	local guild_var = LGuild.getStaticVar(guild)
+	if guild_var == nil then return end
+	local actor_var = LActor.getStaticVar(sysarg)
+	if actor_var == nil then return end
+	GuildQuestFun.initguildloopquestdata(guild_var)
+	GuildQuestFun.initactorloopquestdata(actor_var)
+
+	if actor_var.guild_loop_quest.quest_id ~= 0 then
+		LActor.sendTipmsg(sysarg, Lang.GuildLang.t205, ttMessage) -- 已接受
+		return
+	end
+
+	if actor_var.guild_loop_quest.accept_count >= Guild.guildloopquest.maxacceptcount[guild_lvl] then
+		LActor.sendTipmsg(sysarg, Lang.GuildLang.t206, ttMessage) -- 次数不足
+		return
+	end
+
+	if guild_var.loop_quest_info.accept_count >= guild_var.loop_quest_info.release_count then
+		LActor.sendTipmsg(sysarg, Lang.GuildLang.t204, ttMessage) -- 次数不足
+		return
+	end
+
+	-- 查找任务
+	local questconf = Guild.guildloopquest.questlist[1].list
+	local actor_lvl = LActor.getLevel(sysarg)
+	for i=1,#Guild.guildloopquest.questlist do
+		if Guild.guildloopquest.questlist[i].level <= actor_lvl then
+			questconf = Guild.guildloopquest.questlist[i].list
+		else
+			break
+		end
+	end
+
+	-- 从列表中随机一个
+	local rand = System.getRandomNumber(#questconf) + 1
+	if LActor.hasQuest(sysarg, questconf[rand]) then
+		print("GuildOpFuncList[57] 错误")
+		return
+	end
+	local ret = LActor.addQuest(sysarg, questconf[rand], true)
+	if ret == true then
+		actor_var.guild_loop_quest.quest_id = questconf[rand]
+		actor_var.guild_loop_quest.accept_count = actor_var.guild_loop_quest.accept_count + 1
+		guild_var.loop_quest_info.accept_count = guild_var.loop_quest_info.accept_count + 1
+		actor_var.guild_loop_quest.cur_run = 0
+		actor_var.guild_loop_quest.all_run = Guild.guildloopquest.maxruncount[guild_lvl]
+
+		-- 下发回调
+		local npack = DataPack.allocPacket(sysarg, 10, 62)
+		if npack == nil then return end
+		DataPack.writeInt(npack, 1)
+		DataPack.flush(npack)
+
+		GuildOpFuncList[60](sysarg)
+		GuildQuestFun.broadcastloopquestdata( guild, guild_var )
+	end
+end
+
+-- 请求立即完成公会跑环任务
+GuildOpFuncList[63] = function(sysarg, dp)
+	local guild = LActor.getGuildPtr(sysarg)
+	if guild == nil then return end -- 为加入公会
+	local actor_var = LActor.getStaticVar(sysarg)
+	if actor_var == nil then return end
+	GuildQuestFun.initactorloopquestdata(actor_var)
+
+	-- 没有任务
+	if actor_var.guild_loop_quest.quest_id == 0 then
+		LActor.sendTipmsg(sysarg, Lang.GuildLang.t208, ttMessage)
+		return
+	end
+	-- 所需天珠
+	local cost = Guild.guildloopquest.quickfinish[1].cost
+	local actor_lvl = LActor.getLevel(sysarg)
+	for i=1,#Guild.guildloopquest.quickfinish do
+		if Guild.guildloopquest.quickfinish[i].level <= actor_lvl then
+			cost = Guild.guildloopquest.quickfinish[i].cost
+		else
+			break
+		end
+	end
+	if cost < 0 then return end
+	-- 天珠不足
+	local enough = LActor.CheckMoneyEnough(sysarg, mtYuanbao, cost, true)
+    if enough == nil or enough == false then
+        return
+    end
+    LActor.changeMoney(sysarg,mtYuanbao,-cost, 1, true, "guild_loop_quest_quickfini")
+
+    --[[
+    -- 把进度设置到最后一环，剩下的交给任务完成回调
+    actor_var.guild_loop_quest.cur_run = actor_var.guild_loop_quest.all_run - 1
+    LActor.finishQuest(sysarg, actor_var.guild_loop_quest.quest_id, -1, true)
+    ]]
+    -- 原来是完成所有环，现在只完成当前环
+    LActor.finishQuest(sysarg, actor_var.guild_loop_quest.quest_id, -1, true)
+
+	-- 下发回调
+	local npack = DataPack.allocPacket(sysarg, 10, 63)
+	if npack == nil then return end
+	DataPack.writeInt(npack, 1)
+	DataPack.flush(npack)
+
+	GuildOpFuncList[60](sysarg)
+end
+
+GuildQuestFun.OnGuildLoopFinish = function( sysarg, mid )
+	local guild = LActor.getGuildPtr(sysarg)
+	if guild == nil then return end -- 为加入公会
+	local actor_var = LActor.getStaticVar(sysarg)
+	if actor_var == nil then return end
+	GuildQuestFun.initactorloopquestdata(actor_var)
+
+	if actor_var.guild_loop_quest.quest_id == mid then
+		actor_var.guild_loop_quest.quest_id = 0
+		actor_var.guild_loop_quest.cur_run = actor_var.guild_loop_quest.cur_run + 1
+		if actor_var.guild_loop_quest.cur_run >= actor_var.guild_loop_quest.all_run then
+			-- 完成所有环
+			-- actor_var.guild_loop_quest.quest_id = 0
+			actor_var.guild_loop_quest.cur_run = actor_var.guild_loop_quest.all_run
+			--[[ 查找奖励
+			local awardconf = Guild.guildloopquest.award[1]
+			local actor_lvl = LActor.getLevel(sysarg)
+			for i=1,#Guild.guildloopquest.award do
+				if Guild.guildloopquest.award[i].level <= actor_lvl then
+					awardconf = Guild.guildloopquest.award[i]
+				else
+					break
+				end
+			end
+			-- 下发奖励
+			for i=1,#awardconf.item do
+				local canadd = 1
+				local bind_b = false
+				if awardconf.item[i].bind == 1 then
+					bind_b = true
+				end
+				if awardconf.item[i].type == 1 then
+					if LActor.canAddItem(sysarg, awardconf.item[i].id, awardconf.item[i].count, 0, 0 , bind_b) then
+						LActor.addItem(sysarg, awardconf.item[i].id, 0, 0, awardconf.item[i].count, awardconf.item[i].bind, "guild_loop_quest")
+					else
+						canadd = 0
+					end
+				elseif awardconf.item[i].type == 2 then
+					LActor.changeMoney(sysarg, awardconf.item[i].id, awardconf.item[i].count, 1,  true, "guild", "guild_loop_quest")
+				elseif awardconf.item[i].type == 3 then
+
+				elseif awardconf.item[i].type == 4 then -- 公会财产
+					LGuild.addGuildProperty(guild, awardconf.item[i].count)
+				elseif awardconf.item[i].type == 5 then -- 公会繁荣度
+					LGuild.addGuildBuild(guild, awardconf.item[i].count)
+				elseif awardconf.item[i].type == 6 then -- 公会贡献
+					LActor.addGuildContrib(sysarg, awardconf.item[i].count)
+				elseif awardconf.item[i].type == 7 then -- 经验
+					LActor.addExp(sysarg, awardconf.item[i].count, 933, 0)
+				end
+				if canadd == 0 then
+					-- 背包满了发邮件
+					System.sendGmMailOffLine(LActor.getActorId(sysarg), Lang.GuildLang.t207 , awardconf.item[i].type, awardconf.item[i].id, awardconf.item[i].count, awardconf.item[i].bind)
+				end
+			end]]
+			-- 触发成就
+			LActor.SetAchieveProcessByType(sysarg, 77, 1, 1)
+		else
+			-- 查找任务
+			local questconf = Guild.guildloopquest.questlist[1].list
+			local actor_lvl = LActor.getLevel(sysarg)
+			for i=1,#Guild.guildloopquest.questlist do
+				if Guild.guildloopquest.questlist[i].level <= actor_lvl then
+					questconf = Guild.guildloopquest.questlist[i].list
+				else
+					break
+				end
+			end
+			-- 接下一环
+			local rand = System.getRandomNumber(#questconf) + 1
+			-- 限制不连续接到同一个
+			if questconf[rand] == mid then
+				if rand >= #questconf then
+					rand = 1
+				else
+					rand = rand + 1
+				end
+			end
+			-----------------------
+			if LActor.hasQuest(sysarg, questconf[rand]) then
+				print("GuildOpFuncList[57] 错误")
+				return
+			end
+			local ret = LActor.addQuest(sysarg, questconf[rand], true)
+			if ret == true then
+				actor_var.guild_loop_quest.quest_id = questconf[rand]
+			else
+				print("GuildOpFuncList[57] addQuest错误",questconf[rand])
+			end
+		end
+
+		GuildOpFuncList[60](sysarg)
+
+		-- 活跃度
+		ActivationTrigger(sysarg, 31)
+	end
+end
+
+-- 新的一天
+GuildQuestFun.OnActorNewDay_LoopQuest = function (sysarg, arg)
+	local actor_var = LActor.getStaticVar(sysarg)
+	if actor_var == nil then return end
+	GuildQuestFun.initactorloopquestdata(actor_var)
+
+	if actor_var.guild_loop_quest.quest_id ~= 0 then
+		LActor.GiveUpQuest(sysarg, actor_var.guild_loop_quest.quest_id)
+		actor_var.guild_loop_quest.quest_id = 0
+	end
+	actor_var.guild_loop_quest.accept_count = 0
+	actor_var.guild_loop_quest.cur_run = 0
+	actor_var.guild_loop_quest.all_run = 0
+
+	-- GuildOpFuncList[60](sysarg)
+end
+
+-- 新的一天
+function GuildLoopQuestNewDay(  )
+	local guildlist = LGuild.getGuildList()
+	if guildlist == nil then return end
+	for i=1,#guildlist do
+		local guild_var = LGuild.getStaticVar(guildlist[i])
+		if guild_var then
+			GuildQuestFun.initguildloopquestdata( guild_var )
+			guild_var.loop_quest_info.release_count = 0
+			guild_var.loop_quest_info.accept_count = 0
+		end
+	end
+end
+
+-- 退出公会
+GuildQuestFun.OnActorLeftGuild_LoopQuest = function(sysarg, arg)
+	local actor_var = LActor.getStaticVar(sysarg)
+	if actor_var == nil then return end
+	GuildQuestFun.initactorloopquestdata(actor_var)
+
+	if actor_var.guild_loop_quest.quest_id ~= 0 then
+		LActor.GiveUpQuest(sysarg, actor_var.guild_loop_quest.quest_id)
+		actor_var.guild_loop_quest.quest_id = 0
+	end
+	-- actor_var.guild_loop_quest.accept_count = 0
+	actor_var.guild_loop_quest.cur_run = 0
+	actor_var.guild_loop_quest.all_run = 0
+end
+
+-- 登录处理
+GuildQuestFun.OnActorLogin_LoopQuest = function(sysarg, arg)
+	local guild = LActor.getGuildPtr(sysarg)
+	-- 下线过程中退出公会
+	if not guild then
+		local actor_var = LActor.getStaticVar(sysarg)
+		if actor_var == nil then return end
+
+		if actor_var.guild_loop_quest and actor_var.guild_loop_quest.quest_id > 0 then
+			LActor.GiveUpQuest(sysarg, actor_var.guild_loop_quest.quest_id)
+			actor_var.guild_loop_quest.quest_id = 0
+			actor_var.guild_loop_quest.cur_run = 0
+			actor_var.guild_loop_quest.all_run = 0
+		end
+	end
+end
+
+ActorQuestCallDispatcher.registerPlayType(BaseTypes.BaseQuestAction.qaCommit, BaseTypes.BaseQuestPlayType.qptGuildLoop, GuildQuestFun.OnGuildLoopFinish)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, GuildQuestFun.OnActorNewDay_LoopQuest)
+--EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeLeftGuild, GuildQuestFun.OnActorLeftGuild_LoopQuest)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, GuildQuestFun.OnActorLogin_LoopQuest)
+
+--↑跑环任务
+------------------------------------------------------华丽的分割线------------------------------------------------------
+--↓跑商任务
+
+-- 初始化数据
+GuildQuestFun.initguildprotectquestdata = function( guild_var )
+
+end
+
+GuildQuestFun.initactorprotectquestdata = function( actor_var )
+	if actor_var.guild_protect_quest == nil then
+		actor_var.guild_protect_quest = {}
+	end
+
+	-- 任务id，没有为0
+	if actor_var.guild_protect_quest.quest_id == nil then
+		actor_var.guild_protect_quest.quest_id = 0
+	end
+	-- 已接受次数
+	if actor_var.guild_protect_quest.accept_count == nil then
+		actor_var.guild_protect_quest.accept_count = 0
+	end
+	-- 星级
+	if actor_var.guild_protect_quest.star == nil then
+		actor_var.guild_protect_quest.star = 1
+	end
+	-- 被劫次数
+	if actor_var.guild_protect_quest.attacked == nil then
+		actor_var.guild_protect_quest.attacked = 0
+	end
+	-- 劫持次数
+	if actor_var.guild_protect_quest.attack == nil then
+		actor_var.guild_protect_quest.attack = 0
+	end
+end
+
+-- 请求下发公会跑商信息
+GuildOpFuncList[64] = function(sysarg, dp)
+	local guild = LActor.getGuildPtr(sysarg)
+	if guild == nil then return end -- 为加入公会
+	local actor_var = LActor.getStaticVar(sysarg)
+	if actor_var == nil then return end
+	GuildQuestFun.initactorprotectquestdata(actor_var)
+
+	local npack = DataPack.allocPacket(sysarg, 10, 64)
+	if npack == nil then return end
+	DataPack.writeInt(npack, actor_var.guild_protect_quest.quest_id)
+	DataPack.writeInt(npack, actor_var.guild_protect_quest.accept_count)
+	DataPack.writeInt(npack, actor_var.guild_protect_quest.star)
+	DataPack.writeInt(npack, actor_var.guild_protect_quest.attacked)
+	DataPack.writeInt(npack, actor_var.guild_protect_quest.attack)
+	DataPack.flush(npack)
+end
+
+-- 请求接受公会跑商任务
+GuildOpFuncList[65] = function(sysarg, dp)
+	local guild = LActor.getGuildPtr(sysarg)
+	if guild == nil then return end -- 为加入公会
+	local guild_lvl = LActor.getGuildLevel(sysarg)
+	local actor_var = LActor.getStaticVar(sysarg)
+	if actor_var == nil then return end
+	GuildQuestFun.initactorprotectquestdata(actor_var)
+
+	-- 已接受
+	if actor_var.guild_protect_quest.quest_id ~= 0 then
+		LActor.sendTipmsg(sysarg, Lang.GuildLang.t209, ttMessage)
+		return
+	end
+	-- 护送任务状态才处理
+	if LActor.hasState(sysarg, esProtection) == true then
+		LActor.sendTipmsg(sysarg, Lang.GuildLang.t213, ttMessage)
+		return 
+	end
+	-- 组队中
+	if LActor.isInTeam(sysarg) == true then
+		LActor.sendTipmsg(sysarg, Lang.GuildLang.t216, ttMessage)
+		return
+	end
+	-- 次数不足
+	if actor_var.guild_protect_quest.accept_count >= Guild.guildprotectquest.maxacceptcount[guild_lvl] then
+		LActor.sendTipmsg(sysarg, Lang.GuildLang.t210, ttMessage)
+		return
+	end
+
+	if LActor.hasQuest(sysarg, Guild.guildprotectquest.questid[actor_var.guild_protect_quest.star]) then
+		print("GuildOpFuncList[65] 错误")
+		return
+	end
+	-- 接受任务
+	local ret = LActor.addQuest(sysarg, Guild.guildprotectquest.questid[actor_var.guild_protect_quest.star], true)
+	if ret == true then
+		-- 数据保存
+		actor_var.guild_protect_quest.quest_id = Guild.guildprotectquest.questid[actor_var.guild_protect_quest.star]
+		actor_var.guild_protect_quest.accept_count = actor_var.guild_protect_quest.accept_count + 1
+		actor_var.guild_protect_quest.attacked = 0
+		-- 任务相关
+		LActor.setPkMode(sysarg, 2) -- 进入公会pk模式
+		LActor.addState(sysarg, esGuilProtectQuest) -- 进入公会跑商
+		LActor.setIntProperty(sysarg, PROP_GUILD_PROTECT_START, actor_var.guild_protect_quest.star)
+
+		-- 公告
+		local startnum = actor_var.guild_protect_quest.star or 1
+		if startnum >= 4 then
+			System.broadcastTipmsg(string.format(Lang.GuildLang.t217, (LActor.getGuildName(sysarg) or ""), (LActor.getName(sysarg) or ""), startnum), ttChatWindow)
+		end
+	end
+
+	GuildOpFuncList[64](sysarg)
+	-- 下发回调
+	if ret == true then
+		local npack = DataPack.allocPacket(sysarg, 10, 65)
+		if npack == nil then return end
+		DataPack.writeInt(npack, 1)
+		DataPack.flush(npack)
+	end
+end
+
+-- 请求刷公会跑商星级
+GuildOpFuncList[66] = function(sysarg, dp)
+	local allstar = DataPack.readInt(dp) -- 是否一键满星 0否 1是
+	local costtype = DataPack.readInt(dp) -- 消耗类型 0物品 1天珠
+
+	local guild = LActor.getGuildPtr(sysarg)
+	if guild == nil then return end -- 为加入公会
+	local guild_lvl = LActor.getGuildLevel(sysarg)
+	local actor_var = LActor.getStaticVar(sysarg)
+	if actor_var == nil then return end
+	GuildQuestFun.initactorprotectquestdata(actor_var)
+
+	-- 已接受
+	if actor_var.guild_protect_quest.quest_id ~= 0 then
+		LActor.sendTipmsg(sysarg, Lang.GuildLang.t209, ttMessage)
+		return
+	end
+	-- 护送任务状态才处理
+	if LActor.hasState(sysarg, esProtection) == true then
+		LActor.sendTipmsg(sysarg, Lang.GuildLang.t213, ttMessage)
+		return 
+	end
+	-- 组队中
+	if LActor.isInTeam(sysarg) == true then
+		LActor.sendTipmsg(sysarg, Lang.GuildLang.t216, ttMessage)
+		return
+	end
+	-- 次数不足
+	if actor_var.guild_protect_quest.accept_count >= Guild.guildprotectquest.maxacceptcount[guild_lvl] then
+		LActor.sendTipmsg(sysarg, Lang.GuildLang.t210, ttMessage)
+		return
+	end
+	-- 已满星
+	if actor_var.guild_protect_quest.star >= 5 then
+		actor_var.guild_protect_quest.star = 5
+		LActor.sendTipmsg(sysarg, Lang.GuildLang.t212, ttMessage)
+		return
+	end
+	-- 消耗
+	if allstar == 1 then
+		local enough = LActor.CheckMoneyEnough(sysarg, mtYuanbao, Guild.guildprotectquest.allstarmoney, true)
+		if enough == nil or enough == false then
+	        return
+	    end
+	    LActor.changeMoney(sysarg,mtYuanbao,-Guild.guildprotectquest.allstarmoney, 1, true, "guild_protect_quest_allstar")
+	elseif allstar == 0 and costtype == 1 then
+		local enough = LActor.CheckMoneyEnough(sysarg, mtYuanbao, Guild.guildprotectquest.refreshmoney, true)
+		if enough == nil or enough == false then
+	        return
+	    end
+	    LActor.changeMoney(sysarg,mtYuanbao,-Guild.guildprotectquest.refreshmoney, 1, true, "guild_protect_quest_refresh")
+	elseif allstar == 0 and costtype == 0 then
+		-- local itemcount = LActor.getItemCount( sysarg, Guild.guildprotectquest.refreshitem.id )
+  --       if itemcount < Guild.guildprotectquest.refreshitem.count then
+  --           LActor.sendTipmsg(sysarg, Lang.GuildLang.t211, ttMessage)
+  --           return
+  --       end
+  --       LActor.removeItem( sysarg, Guild.guildprotectquest.refreshitem.id, Guild.guildprotectquest.refreshitem.count, -1, -1, -1,  "guild_protect_quest_itemref")
+  		local enough = LActor.CheckMoneyEnough(sysarg, mtBindYuanbao, Guild.guildprotectquest.refreshbindmoney, true)
+		if enough == nil or enough == false then
+	        return
+	    end
+	    LActor.changeMoney(sysarg,mtBindYuanbao,-Guild.guildprotectquest.refreshbindmoney, 1, true, "guild_protect_quest_refresh")
+	else
+		return
+	end
+
+	if allstar == 1 then
+		-- 一键满星
+		actor_var.guild_protect_quest.star = Guild.guildprotectquest.maxstar
+	else
+		-- 计算星级
+		local rateconf = Guild.guildprotectquest.upstar[actor_var.guild_protect_quest.star]
+		if rateconf then
+			local sum = 0
+			local starnum = 0
+			for i=1,#rateconf do
+				sum = sum + rateconf[i].rate
+			end
+			local rand = System.getRandomNumber(sum) + 1
+			sum = 0
+			for i=1,#rateconf do
+				sum = sum + rateconf[i].rate
+				if rand <= sum then
+					starnum = rateconf[i].starnum
+					break
+				end
+			end
+			actor_var.guild_protect_quest.star = actor_var.guild_protect_quest.star + starnum
+		end
+	end
+	-- 防止异常
+	local startnum = actor_var.guild_protect_quest.star or 1
+	if startnum >= 5 then
+		actor_var.guild_protect_quest.star = 5
+	elseif startnum <= 0 then
+		actor_var.guild_protect_quest.star = 1
+	end
+
+	-- 下发回调
+	local npack = DataPack.allocPacket(sysarg, 10, 66)
+	if npack == nil then return end
+	DataPack.writeInt(npack, 1)
+	DataPack.flush(npack)
+
+	GuildOpFuncList[64](sysarg)
+end
+
+-- 新的一天
+GuildQuestFun.OnActorNewDay_ProtectQuest = function (sysarg, arg)
+	local actor_var = LActor.getStaticVar(sysarg)
+	if actor_var == nil then return end
+	GuildQuestFun.initactorprotectquestdata(actor_var)
+
+	if actor_var.guild_protect_quest.quest_id ~= 0 then
+		LActor.GiveUpQuest(sysarg, actor_var.guild_protect_quest.quest_id)
+		actor_var.guild_protect_quest.quest_id = 0
+	end
+	actor_var.guild_protect_quest.accept_count = 0
+	actor_var.guild_protect_quest.star = 1
+	actor_var.guild_protect_quest.attacked = 0
+	actor_var.guild_protect_quest.attack = 0
+	GuildOpFuncList[64](sysarg)
+end
+
+-- 完成回调
+GuildQuestFun.OnFinishProtectQuest = function (sysarg, qid)
+	local guild = LActor.getGuildPtr(sysarg)
+	if guild == nil then return end -- 为加入公会
+	local actor_var = LActor.getStaticVar(sysarg)
+	if actor_var == nil then return end
+	GuildQuestFun.initactorprotectquestdata(actor_var)
+
+	if actor_var.guild_protect_quest ~= nil and actor_var.guild_protect_quest.quest_id == qid then
+		LActor.setPkMode(sysarg, 0)
+		LActor.removeState(sysarg, esGuilProtectQuest) -- 退出公会跑商
+		LActor.setIntProperty(sysarg, PROP_GUILD_PROTECT_START, 0)
+		-- 星级比例
+		local star_rate = 1
+		local star_conf = Guild.guildprotectquest.star_rate
+		if actor_var.guild_protect_quest.star and star_conf[actor_var.guild_protect_quest.star] then
+			star_rate = star_conf[actor_var.guild_protect_quest.star]
+		elseif actor_var.guild_protect_quest.star > #star_conf then
+			star_rate = star_conf[#star_conf]
+		end
+		-- 被劫持剩余比例
+		local attacked_rate = 1
+		local attacked_conf = Guild.guildprotectquest.attacked_rate
+		if actor_var.guild_protect_quest.attacked and actor_var.guild_protect_quest.attacked > #attacked_conf then
+			attacked_rate = attacked_conf[#attacked_conf]
+		elseif attacked_conf[actor_var.guild_protect_quest.attacked] then
+			attacked_rate = attacked_conf[actor_var.guild_protect_quest.attacked]
+		end
+		-- 双倍时间
+		local time_rate = 1
+		local hour,minute,second = 0,0,0
+		hour, minute, second = System.getTime(hour, minute, second)
+		if hour >= Guild.guildprotectquest.doubletime[1] and hour < Guild.guildprotectquest.doubletime[2] then
+			time_rate = 2
+		end
+		-- 奖励
+		local all_rate = star_rate * attacked_rate * time_rate * getAcitivityIsDouble(daGuildQuest)
+		-- print("----------GuildQuestFun.OnFinishQuest----------"..star_rate.." "..attacked_rate.." "..time_rate)
+		-- 下发奖励
+		local awardconf = Guild.guildprotectquest.finish_award[1]
+		local actor_lvl = LActor.getLevel(sysarg)
+		for i=1,#Guild.guildprotectquest.finish_award do
+			if Guild.guildprotectquest.finish_award[i].level <= actor_lvl then
+				awardconf = Guild.guildprotectquest.finish_award[i].item
+			else
+				break
+			end
+		end
+		for i=1,#awardconf do
+			if awardconf[i].type == 1 then
+
+			elseif awardconf[i].type == 2 then
+				LActor.changeMoney(sysarg, awardconf[i].id, awardconf[i].count*all_rate, 1,  true, "guild", "guild_protectquest_finish")
+			elseif awardconf[i].type == 3 then
+
+			elseif awardconf[i].type == 4 then -- 公会财产
+				LGuild.addGuildProperty(guild, awardconf[i].count*all_rate)
+			elseif awardconf[i].type == 5 then -- 公会繁荣度
+				LGuild.addGuildBuild(guild, awardconf[i].count*all_rate)
+			elseif awardconf[i].type == 6 then -- 公会贡献
+				LActor.addGuildContrib(sysarg, awardconf[i].count*all_rate)
+			elseif awardconf[i].type == 7 then -- 经验
+				LActor.addExp(sysarg, awardconf[i].count*all_rate, 934, 0)
+			end
+		end
+		-- 公会跑商日志
+		LGuild.addGuildOtherLog(guild, 1, LActor.getActorId(sysarg), LActor.getName(sysarg), "", "", 1, actor_var.guild_protect_quest.star, actor_var.guild_protect_quest.attacked)
+		-- 重置状态
+		actor_var.guild_protect_quest.quest_id = 0
+		actor_var.guild_protect_quest.star = 1
+		actor_var.guild_protect_quest.attacked = 0
+		-- LActor.removeState(sysarg, esGuilProtectQuest) -- 退出公会跑商
+		-- 触发成就
+		LActor.SetAchieveProcessByType(sysarg, 78, 1, 1)
+
+		GuildOpFuncList[64](sysarg)
+
+		-- 活跃度
+		ActivationTrigger(sysarg, 32)
+	end
+end
+
+-- 放弃任务回调，重置状态
+-- 任务超时回调，重置状态
+GuildQuestFun.OnResetProtectState = function(sysarg, qid)
+	local actor_var = LActor.getStaticVar(sysarg)
+	if actor_var == nil then return end
+	GuildQuestFun.initactorprotectquestdata(actor_var)
+
+	if actor_var.guild_protect_quest ~= nil then
+		actor_var.guild_protect_quest.quest_id = 0
+		actor_var.guild_protect_quest.star = 1
+		actor_var.guild_protect_quest.attacked = 0
+		LActor.setPkMode(sysarg, 0)
+		LActor.removeState(sysarg, esGuilProtectQuest) -- 退出公会跑商
+		LActor.setIntProperty(sysarg, PROP_GUILD_PROTECT_START, 0)
+
+		GuildOpFuncList[64](sysarg)
+	end
+end
+
+-- 切换场景
+GuildQuestFun.OnEnterScene_ProtectQuest = function(sysarg)
+	local guild = LActor.getGuildPtr(sysarg)
+	if guild == nil then return end -- 为加入公会
+	local actor_var = LActor.getStaticVar(sysarg)
+	if actor_var == nil then return end
+	if actor_var.guild_protect_quest ~= nil and actor_var.guild_protect_quest.quest_id ~= nil and actor_var.guild_protect_quest.quest_id > 0 then
+		-- 公会跑商
+		if actor_var.guild_protect_quest.attacked ~= nil and actor_var.guild_protect_quest.attacked < Guild.guildprotectquest.maxattacked then
+			-- 进入公会pk模式
+			LActor.setPkMode(sysarg, 2)
+			LActor.addState(sysarg, esGuilProtectQuest) -- 进入公会跑商
+			LActor.setIntProperty(sysarg, PROP_GUILD_PROTECT_START, actor_var.guild_protect_quest.star)
+		end
+	end
+end
+
+-- 计算劫持奖励
+GuildQuestFun.SendAttackAward = function( attacker, beattcker, killer_var, actor_var, kguild, kguildlvl )
+	if attacker == nil or beattcker == nil or LActor.isActor(attacker) == false or LActor.isActor(beattcker) == false then return end
+	-- 劫持金币达到上限
+	if killer_var.guild_protect_quest.attack >= Guild.guildprotectquest.maxattack[kguildlvl] then
+		LActor.sendTipmsg(attacker, Lang.GuildLang.t220, ttMessage)
+		return
+	end
+
+	local alvl = LActor.getLevel(attacker)
+	local balvl = LActor.getLevel(beattcker)
+	-- 星级比例
+	local star_rate = 1
+	local star_conf = Guild.guildprotectquest.star_rate
+	local star = actor_var.guild_protect_quest.star
+	if star and star_conf[star] then
+		star_rate = star_conf[star]
+	elseif star > #star_conf then
+		star_rate = star_conf[#star_conf]
+	end
+	-- 双倍时间
+	local time_rate = 1
+	local hour,minute,second = 0,0,0
+	hour, minute, second = System.getTime(hour, minute, second)
+	if hour >= Guild.guildprotectquest.doubletime[1] and hour < Guild.guildprotectquest.doubletime[2] then
+		time_rate = 2
+	end
+	local all_rate = star_rate * time_rate
+
+	local awardconf = Guild.guildprotectquest.finish_award[1]
+	local actor_lvl = balvl
+	for i=1,#Guild.guildprotectquest.finish_award do
+		if Guild.guildprotectquest.finish_award[i].level <= actor_lvl then
+			awardconf = Guild.guildprotectquest.finish_award[i].item
+		else
+			break
+		end
+	end
+	-- print("===========GuildQuestFun.SendAttackAward")
+	for i=1,#awardconf do
+		-- print("===========GuildQuestFun.SendAttackAward"..i)
+		local count = awardconf[i].count
+		if awardconf[i].type == 1 then
+
+		elseif awardconf[i].type == 2 then
+			count = count*(100+balvl-alvl)*15/10000*all_rate
+			-- 金币上限
+			local cur_attack = killer_var.guild_protect_quest.attack
+			if (cur_attack + count) > Guild.guildprotectquest.maxattack[kguildlvl] then
+				count = Guild.guildprotectquest.maxattack[kguildlvl] - cur_attack
+			end
+			killer_var.guild_protect_quest.attack = cur_attack + count
+			LActor.changeMoney(attacker, awardconf[i].id, count, 1,  true, "guild", "attack_guild_protectquest")
+		elseif awardconf[i].type == 3 then
+
+		elseif awardconf[i].type == 4 then -- 公会财产
+			count = count*math.min(math.max((20+balvl-alvl),0),30)*15/2000*all_rate
+			LGuild.addGuildProperty(kguild, count)
+		elseif awardconf[i].type == 5 then -- 公会繁荣度
+			count = count*math.min(math.max((20+balvl-alvl),0),30)*15/2000*all_rate
+			LGuild.addGuildBuild(kguild, count)
+		elseif awardconf[i].type == 6 then -- 公会贡献
+			count = count*math.min(math.max((20+balvl-alvl),0),30)*15/2000*all_rate
+			LActor.addGuildContrib(attacker, count)
+		elseif awardconf[i].type == 7 then -- 经验
+			count = count*(100+balvl-alvl)*15/10000*all_rate
+			LActor.addExp(attacker, count, 935, 0)
+		end
+	end
+end
+
+-- 玩家死亡
+GuildQuestFun.OnActorDie_ProtectQuest = function(sysarg, arg)
+	local guild = LActor.getGuildPtr(sysarg)
+	if guild == nil then return end -- 为加入公会
+	local actor_var = LActor.getStaticVar(sysarg)
+	if actor_var == nil then return end
+	if actor_var.guild_protect_quest ~= nil and actor_var.guild_protect_quest.quest_id ~= nil and actor_var.guild_protect_quest.quest_id > 0 then
+		GuildQuestFun.initactorprotectquestdata(actor_var)
+		-- 劫持者
+		local killer = arg[1]
+		-- 如果是伙伴算在主人身上
+		if LActor.isPet(killer) then
+			killer = LActor.getMonsterOwner(killer)
+		end
+		-- 公会
+		-- print("===========GuildQuestFun.OnActorDie_ProtectQuest")
+		local kguild = LActor.getGuildPtr(killer)
+		local kguildlvl = LActor.getGuildLevel(killer)
+		-- 劫持者要有公会
+		if killer ~= nil and kguild ~= nil and kguildlvl > 0 and LActor.isActor(killer) == true then
+			-- print("===========GuildQuestFun.OnActorDie_ProtectQuest 劫持者要有公会")
+			local killer_var = LActor.getStaticVar(killer)
+			if killer_var == nil then return end
+			GuildQuestFun.initactorprotectquestdata(killer_var)
+			-- 双方是否有次数，都有才算
+			if actor_var.guild_protect_quest.attacked < Guild.guildprotectquest.maxattacked then
+				-- print("===========GuildQuestFun.OnActorDie_ProtectQuest 双方有次数")
+				actor_var.guild_protect_quest.attacked = actor_var.guild_protect_quest.attacked + 1
+				-- 下发劫持奖励
+				GuildQuestFun.SendAttackAward(killer, sysarg, killer_var, actor_var, kguild, kguildlvl)
+				-- 公会跑商日志
+				local name = LActor.getName(sysarg) or ""
+				local kname = LActor.getName(killer) or ""
+				local kguildname = LActor.getGuildName(killer) or ""
+				LGuild.addGuildOtherLog(guild, 1, LActor.getActorId(sysarg), name, kname, kguildname, 2, actor_var.guild_protect_quest.star, actor_var.guild_protect_quest.attacked)
+			
+				GuildOpFuncList[64](sysarg)
+				GuildOpFuncList[64](killer)
+				-- 公告
+				local posname = Guild.position_name[LActor.getGuildPos(sysarg)+1] or ""
+				System.broadcastGuildTipmsg(LActor.getGuildId(sysarg), string.format(Lang.GuildLang.t219, posname, name, actor_var.guild_protect_quest.star, kguildname, kname), ttHearsay)
+			else
+				LActor.sendTipmsg(sysarg, Lang.GuildLang.t221, ttMessage)
+			end
+		end
+		-- pk状态 跑商状态
+		if actor_var.guild_protect_quest.attacked < Guild.guildprotectquest.maxattacked then
+			-- 进入公会pk模式
+			LActor.setPkMode(sysarg, 2)
+			LActor.addState(sysarg, esGuilProtectQuest) -- 进入公会跑商
+			LActor.setIntProperty(sysarg, PROP_GUILD_PROTECT_START, actor_var.guild_protect_quest.star)
+		else
+			-- peace
+			LActor.setPkMode(sysarg, 0)
+			LActor.addState(sysarg, esGuilProtectQuest) -- 进入公会跑商
+			LActor.setIntProperty(sysarg, PROP_GUILD_PROTECT_START, actor_var.guild_protect_quest.star)
+		end
+	end
+end
+
+-- 离开公会
+GuildQuestFun.OnActorLeftGuild_ProtectQuest = function(sysarg, arg)
+	local actor_var = LActor.getStaticVar(sysarg)
+	if actor_var == nil then return end
+	GuildQuestFun.initactorprotectquestdata(actor_var)
+
+	if actor_var.guild_protect_quest.quest_id ~= 0 then
+		LActor.GiveUpQuest(sysarg, actor_var.guild_protect_quest.quest_id)
+		actor_var.guild_protect_quest.quest_id = 0
+	end
+	-- actor_var.guild_protect_quest.accept_count = 0
+	actor_var.guild_protect_quest.star = 1
+	actor_var.guild_protect_quest.attacked = 0
+	actor_var.guild_protect_quest.attack = 0
+end
+
+-- 登录
+GuildQuestFun.OnActorLogin_ProtectQuest = function(sysarg, arg)
+	local guild = LActor.getGuildPtr(sysarg)
+	-- if guild == nil then return end -- 为加入公会
+	local actor_var = LActor.getStaticVar(sysarg)
+	if actor_var == nil then return end
+	if actor_var.guild_protect_quest ~= nil and actor_var.guild_protect_quest.quest_id ~= nil and actor_var.guild_protect_quest.quest_id > 0 then
+		if guild then -- 有公会
+			GuildQuestFun.initactorprotectquestdata(actor_var)
+			-- pk状态 跑商状态
+			if actor_var.guild_protect_quest.attacked < Guild.guildprotectquest.maxattacked then
+				-- 进入公会pk模式
+				LActor.setPkMode(sysarg, 2)
+				LActor.addState(sysarg, esGuilProtectQuest) -- 进入公会跑商
+				LActor.setIntProperty(sysarg, PROP_GUILD_PROTECT_START, actor_var.guild_protect_quest.star)
+			else
+				-- peace
+				LActor.setPkMode(sysarg, 0)
+				LActor.addState(sysarg, esGuilProtectQuest) -- 进入公会跑商
+				LActor.setIntProperty(sysarg, PROP_GUILD_PROTECT_START, actor_var.guild_protect_quest.star)
+			end
+		else -- 没有公会 说明下线的过程中离开公会
+			LActor.GiveUpQuest(sysarg, actor_var.guild_protect_quest.quest_id)
+			actor_var.guild_protect_quest.quest_id = 0
+			actor_var.guild_protect_quest.star = 1
+			actor_var.guild_protect_quest.attacked = 0
+			actor_var.guild_protect_quest.attack = 0
+		end
+	end
+end
+
+-- 登出
+GuildQuestFun.OnActorLogout_ProtectQuest = function(sysarg, arg)
+	if LActor.hasState(sysarg, esGuilProtectQuest) == false then
+		return
+	end
+	LActor.setPkMode(sysarg, 0)
+	LActor.removeState(sysarg, esGuilProtectQuest)
+	LActor.setIntProperty(sysarg, PROP_GUILD_PROTECT_START, 0)
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, GuildQuestFun.OnActorNewDay_ProtectQuest)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeEnterScene, GuildQuestFun.OnEnterScene_ProtectQuest)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeOnActorDeath, GuildQuestFun.OnActorDie_ProtectQuest)
+--EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeLeftGuild, GuildQuestFun.OnActorLeftGuild_ProtectQuest)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, GuildQuestFun.OnActorLogin_ProtectQuest) 
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogout, GuildQuestFun.OnActorLogout_ProtectQuest)
+
+ActorQuestCallDispatcher.registerPlayType(BaseTypes.BaseQuestAction.qaCommit, BaseTypes.BaseQuestPlayType.qptGuildProtect, GuildQuestFun.OnFinishProtectQuest)
+ActorQuestCallDispatcher.registerPlayType(BaseTypes.BaseQuestAction.qaGiveUp, BaseTypes.BaseQuestPlayType.qptGuildProtect, GuildQuestFun.OnResetProtectState)
+ActorQuestCallDispatcher.registerPlayType(BaseTypes.BaseQuestAction.qaTimeOut, BaseTypes.BaseQuestPlayType.qptGuildProtect, GuildQuestFun.OnResetProtectState)
+
+function myquest(sysarg, args)
+	GuildQuestFun.OnActorLeftGuild_LoopQuest(sysarg)
+end
+function mypk(sysarg, args)
+	local arg = tonumber(args[1])
+	if arg == nil then
+		-- print("=======mypk========"..LActor.getPkMode(sysarg))
+		LActor.sendTipmsg(sysarg, "当前pk模式："..LActor.getPkMode(sysarg), ttMessage)
+	else
+		LActor.setPkMode(sysarg, arg)
+		LActor.sendTipmsg(sysarg, "当前pk模式："..LActor.getPkMode(sysarg), ttMessage)
+	end
+end
+function myt1(sysarg, args)
+	local Fhandle = LActor.getFubenHandle(sysarg)
+    local hscene = Fuben.getSceneHandleById(LActor.getSceneId(sysarg), Fhandle)
+    local x,y = 0,0
+    x,y = LActor.getEntityPosition(sysarg, x, y)
+    Fuben.createMonster(hscene, 3, x, y, 0)
+end
+function addlog( sysarg, args )
+	local arg = tonumber(args[1])
+	if arg == nil then return end
+	local guild = LActor.getGuildPtr(sysarg)
+	if guild == nil then return end
+	LGuild.addGuildOtherLog(guild, arg, LActor.getActorId(sysarg), LActor.getName(sysarg), "aa", "bb", 2, 3, 4)
+end
+
+function clearguildquest( sysarg, args )
+	if not args[1] then return end
+	local actor = LActor.getActorByAccountName(tostring(args[1]))
+	if not actor then return end
+	sysarg = actor
+
+	local actor_var = LActor.getStaticVar(sysarg)
+	-- if actor_var and actor_var.guild_protect_quest then
+	-- 	actor_var.guild_protect_quest.accept_count = 0
+	-- end
+	if actor_var and actor_var.guild_loop_quest then
+		actor_var.guild_loop_quest.accept_count = 0
+		if actor_var.guild_loop_quest.quest_id ~= 0 then
+			LActor.GiveUpQuest(sysarg, actor_var.guild_loop_quest.quest_id)
+		end
+		actor_var.guild_loop_quest.quest_id = 0
+		actor_var.guild_loop_quest.cur_run = 0
+		print("----------clearguildquest")
+	end
+end
+
+GmEventFuncList.register( "myquest", myquest, 1)
+GmEventFuncList.register( "mypk", mypk, 1)
+GmEventFuncList.register( "myt1", myt1, 1)
+GmEventFuncList.register( "addlog", addlog, 1)
+GmEventFuncList.register( "clearguildquest", clearguildquest, 1)

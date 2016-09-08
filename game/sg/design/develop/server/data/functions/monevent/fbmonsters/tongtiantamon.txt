@@ -1,0 +1,85 @@
+﻿-- 过关斩将副本怪物脚本处理
+--#include "data\config\misc\tongtiantaconf.txt"
+--#include "data\functions\systems\miscs\tongtiantafunc.txt" once
+--#include "data\config\monster\monsterconfig.txt" once
+
+TongTianTaMon = {}	-- 过关斩将怪物函数处理
+
+-- 杀死怪物处理
+TongTianTaMon.OnKillMonster = function(monster,sysarg,mid)
+	-- print( string.format("%s TongTianTaMon.OnKillMonster %d", LActor.getName(sysarg), mid))
+	if sysarg == nil then return end
+	if LActor.getFubenId(sysarg) ~= TongTianTaConf.fbid then return end
+
+	local pfb = LActor.getFubenPrt(sysarg)
+	if pfb == nil then return end
+
+	local layer = Fuben.getFubenProgress(pfb) -- 第几层
+
+	local sconf = TongTianTaConf.scenes[layer]
+	if sconf == nil then
+		print("tongtianta scene id error")
+		return
+	end
+
+	-- 统计用
+	local var = Fuben.getDyanmicVar(pfb)
+	if var ~= nil then
+		if sconf.conds.type ~= nil and sconf.conds.type == 1 then
+			if var.fbRestMonster ~= nil then
+				var.fbRestMonster = var.fbRestMonster - 1 
+
+				if var.fbRestMonster <= 0 then
+					TongTianTaPublic.OnTongGuan(sysarg, layer, sconf)
+					var.fbLayerPass = layer
+				end
+			end
+		elseif sconf.conds.type ~= nil and sconf.conds.type == 2 and mid == sconf.conds.mid then
+			TongTianTaPublic.OnTongGuan(sysarg, layer, sconf)
+			var.fbLayerPass = layer
+		elseif sconf.conds.type ~= nil and sconf.conds.type == 4 then
+			local sceneptr = LActor.getScenePtr(sysarg)
+			local hscene = Fuben.getSceneHandleByPtr(sceneptr)
+			local count = 0
+			for i,monsterid in ipairs(sconf.monster.ids) do
+				count = count + Fuben.getMyMonsterCount(hscene, monsterid)
+			end
+			local count2 = 0
+			if mid == sconf.conds.mid then
+				var.fbRestMonster = var.fbRestMonster - 1 
+			end
+			if sconf.conds.mid ~= nil then
+				count2 = var.fbRestMonster
+			end
+			-- print( string.format("live(%d) left(%d)", count, count2))
+			if count == 0 and  count2 <= 0  then
+				TongTianTaPublic.OnTongGuan(sysarg, layer, sconf)
+				var.fbLayerPass = layer
+			end
+		end
+	end
+end
+
+
+-- 采集回血
+TongTianTaMon.onGatherFinish = function (monster,sysarg,monId)
+	-- 回复血
+	local maxHp = LActor.getIntProperty(sysarg, PROP_MAXHP);
+	LActor.changeHp(sysarg, maxHp);
+end
+
+-- 副本初始化
+for i=1, #TongTianTaConf.scenes do
+	local scene = TongTianTaConf.scenes[i]
+
+	-- 怪物配置
+	if scene.monster ~= nil then
+		local ids = scene.monster.ids
+		for j=1,#ids do
+			MonDieDispatcher.register( ids[j], TongTianTaMon.OnKillMonster )
+		end
+	end
+end
+
+
+GatherFinishDispatcher.register(TongTianTaGatherId, TongTianTaMon.onGatherFinish)

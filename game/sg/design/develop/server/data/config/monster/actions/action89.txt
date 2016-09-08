@@ -1,0 +1,48 @@
+{
+	id = 89,	--行为ID
+	trigger = 1,	--触发类型，血量为1，时间为2
+
+	isInit = 1 ,
+	--创建的时候会调用,和info里的sequence一样
+	initSequence =
+	{
+		{
+			type = 12,	--动作列表
+			duration = 0,
+			--可以设置条件列表(只有符合所有条件才会执行items操作)
+			conditions = 
+		  	{
+		  		{ conditionType = 2, targetMonster = {1215} },--是否目标怪物在该场景存在
+		  	},
+			items =
+			{
+				{ type = 24, duration = 0, addBuffConfigId = 10, } , --向怪物自身添加buff
+			} ,
+		},
+
+		{
+			type = 12,	--动作列表
+			duration = 0,
+			--可以设置条件列表(只有符合所有条件才会执行items操作)
+			conditions = 
+		  	{
+		  		{ conditionType = 2, targetMonster = {1211} },--是否目标怪物在该场景存在
+		  	},
+			items =
+			{
+				{ type = 24, duration = 0, addBuffConfigId = 11, } , --向怪物自身添加buff
+			} ,
+		},
+	},
+
+	infos = 
+	{
+		{
+			sequId = 1,
+			param = 100 ,
+			sequence = {
+				
+			}
+		},
+	},
+},

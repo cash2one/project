@@ -1,0 +1,36 @@
+
+
+
+MiscsImplement.bugfankui = function(sysarg,msgid,packet)
+	print("---玩家反馈bug--")
+	-- local bug_type = DataPack.readInt(packet)
+	-- local telephone = DataPack.readString(packet)
+	-- local bug_content = DataPack.readString(packet)
+	local bug_type = 1
+	local telephone = "13632563566"
+	local bug_content = "有一个bug,好严重哦，给我元宝--"
+	local find_time = "2016-4-22 14:21:00"
+	if string.len(telephone) ~= 0 then
+		return
+	end
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then
+		return
+	end
+	if var.fankui_time == nil then
+		var.fankui_time = 0
+	end
+	local cur_time = System.getCurrMiniTime()
+	if cur_time - var.fankui_time < 5 then
+		local  remain_time = 5 - (cur_time - var.fankui_time)
+		LActor.sendTipmsg(sysarg, string.format(Lang.ScriptTips.fankui001,remain_time), ttMessage)
+		return
+	end
+	System.logCounter(LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), 
+	 		"bugfankui", tostring(bug_type), bug_content, telephone,find_time, "", "", "", lfDB)
+	var.fankui_time = cur_time
+	print("---玩家反馈bug--完成--")
+end
+--EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeLevel, MiscsImplement.tejiaUpLevel)
+
+MiscsImplement.registerMsgHandler(222, MiscsImplement.bugfankui)

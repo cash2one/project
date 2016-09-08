@@ -1,0 +1,61 @@
+--lua script
+--#include "data\language\LangCode.txt" once
+--#include "NormalItemDatas.txt" once
+--#include "data\envir\FuBen.txt" once
+--#include "data\functions\config\FubenConfig\FubenCountConfig.txt" once
+--#include "data\config\task\TianYuanConfig.txt" once
+
+--回城卷的物品效果
+
+--sysarg:实体的指针
+--itemidx: 物品的ID
+--itemPtr: 物品的指针
+--ItemTable: 配置的参数列表 
+function LianGongFangEffect(sysarg,itemdx,itemPtr,ItemTable)
+
+	-- 已经在此副本中
+	if LActor.getFubenId(sysarg) == ItemTable.fbid then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.lgf00026, ttMessage)
+		return
+	end 
+
+	--此为单人副本，不允许组队
+	local teamid = LActor.getTeamId(sysarg)
+	if teamid > 0 then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.lgf00025, ttMessage)
+		return
+	end
+
+	--护送任务中
+	if LActor.hasState(sysarg, esProtection) then
+	    LActor.sendTipmsg(sysarg, Lang.ScriptTips.sx019, ttMessage)
+	    return 
+	end
+
+	-- 在别的副本中
+	if LActor.isInFuben(sysarg) or LActor.getSceneId(sysarg) == TianYuanConfig.SCENEID then --在其它副本不能渡劫，14是雁门关的场景ID，这里特殊处理
+		LActor.sendTipmsg(sysarg,Lang.ScriptTips.lgf00028,ttMessage)
+		return
+	end
+	local fb = FuBen[ItemTable.fbid]
+	local actorLevel = LActor.getIntProperty( sysarg, PROP_LEVEL )
+
+	-- 等级不够
+	if actorLevel < fb.minLevel then
+		LActor.sendTipmsg(sysarg,Lang.ScriptTips.lgf00027,ttMessage)
+		return
+	end
+
+	LActor.removeItemByPtr( sysarg, itemPtr, 1, true, "clLianGongFang", 0 )
+	local Hfuben = Fuben.createFuBen(ItemTable.fbid)         --1:表示副本ID	 
+    LActor.enterFuBen(sysarg,Hfuben,-1,-1,-1)	             --将玩家传进副本
+end
+
+function LianGongFangEffectItemInit(sysarg)
+	for i = 1,table.getn(LianGongFangItems) do
+		local x = LianGongFangItems[i]
+		GlobalItemFn[x.item_id] = { func = LianGongFangEffect, params = x }
+	end
+end
+
+table.insert(InitFnTable,LianGongFangEffectItemInit)

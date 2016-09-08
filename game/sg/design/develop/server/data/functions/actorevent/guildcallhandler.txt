@@ -1,0 +1,1236 @@
+﻿--lua script
+--#include "data\language\LangCode.txt" once
+--#include "data\config\guild\Guild.txt" once
+--#include "data\functions\Tasks\TianYuan\TianYuanSet.txt" once
+--#include "data\functions\gmevent.txt" once
+--#include "data\functions\tasks\fudi\fudi_public.txt" once
+--#include "data\functions\systems\timereward\activityreturnarrayhandler.txt" once
+
+GuildOpFuncList = {}
+
+EventCallDispatcher.handlerGuildCallImplement = function (sysarg,arg)
+	if arg[1] == nil then return end
+	local func = GuildOpFuncList[arg[1]]
+	if func ~= nil then
+		func(sysarg,arg[2])
+	end
+end
+
+-- 捐献
+GuildOpFuncList[17] = function(sysarg, dp)
+	local money = DataPack.readInt(dp)
+	local type = DataPack.readInt(dp)
+	local guild = LActor.getGuildPtr(sysarg)
+	if guild == nil then return end -- 为加入公会
+	local actor_var = LActor.getStaticVar(sysarg)
+	if actor_var == nil then return end
+	if actor_var.guild_donate_bindcoin == nil then
+		actor_var.guild_donate_bindcoin = 0
+	end
+
+	local config = Guild.donation[type]
+	if config == nil then
+		print("没有这个类型")
+		return
+	end
+	if money < config.mincount then 
+		print("小于最小数量")
+		return
+	end
+
+	local enough = LActor.CheckMoneyEnough(sysarg, type, money, true)
+	if enough == false then return end
+
+	-- 是否达到上限
+	if type == 0 then
+		local level = LActor.getLevel(sysarg)
+		local limitnum = 0
+		for i = 1, #Guild.donationlimit[0] do
+			if Guild.donationlimit[0][i].level > level then
+				break
+			else
+				limitnum = Guild.donationlimit[0][i].money
+			end
+		end
+		if actor_var.guild_donate_bindcoin + money > limitnum then
+			LActor.sendTipmsg(sysarg, Lang.GuildLang.t394, ttMessage)
+			return
+		end
+		actor_var.guild_donate_bindcoin = actor_var.guild_donate_bindcoin + money
+	end
+
+	LActor.changeMoney(sysarg, type, -money, 1, true, "guild", "guild_donate")
+
+	local contribCount = money * config.contirbRatio
+	local buildCount = money * config.buildRatio
+	local propertyCount = money * config.propertyRatio
+
+	LActor.addGuildContrib(sysarg, contribCount)
+	LGuild.addGuildBuild(guild, buildCount)
+	LGuild.addGuildProperty(guild, propertyCount)
+
+	-- 公告
+	if type == 3 and money >= 100 then
+		System.broadcastGuildTipmsg(LActor.getGuildId(sysarg), string.format(Lang.GuildLang.t4, LActor.getName(sysarg), money, buildCount, propertyCount), ttHearsay)
+	elseif type == 0 and money >= 100000 then
+		System.broadcastGuildTipmsg(LActor.getGuildId(sysarg), string.format(Lang.GuildLang.t5, LActor.getName(sysarg), money, buildCount, propertyCount), ttHearsay)
+	end
+
+	LActor.notifyUpdateGuildInfo(sysarg, 1)
+	LActor.notifyUpdateGuildInfo(sysarg, 2)
+	GuildOpFuncList[93](sysarg)
+
+	-- local guildid = LActor.getGuildId(sysarg)
+	-- local str = string.format(Lang.GuildLang.t3, LActor.getName(sysarg), stoneCount, contributioneCount)
+	-- LGuild.sendChannelMsg(guildid, str, ttHearsay)
+
+	-- 军团事件
+	LGuild.addGuildLog(guild, 5, LActor.getActorId(sysarg), LActor.getName(sysarg), "", money, contribCount, propertyCount)
+	activityFunc.onAddGuildContribute(sysarg,type,money,contribCount)
+	
+end
+
+-- 捐献信息
+GuildOpFuncList[93] = function(sysarg, dp)
+	local guild = LActor.getGuildPtr(sysarg)
+	if guild == nil then return end -- 为加入公会
+	local actor_var = LActor.getStaticVar(sysarg)
+	if actor_var == nil then return end
+	if actor_var.guild_donate_bindcoin == nil then
+		actor_var.guild_donate_bindcoin = 0
+	end
+	local npack = DataPack.allocPacket(sysarg,10,93)
+    if npack == nil then return end
+    DataPack.writeInt(npack, actor_var.guild_donate_bindcoin or 0)
+    DataPack.flush(npack)
+end
+
+--离开帮派的操作
+GuildOpFuncList[gLeft] = function(sysarg,arg)
+end
+
+-- 发送玩家神兽祭坛信息
+GuildOpFuncList.SendActorBeastInfo = function(sysarg)
+	local var = LActor.getStaticVar(sysarg)
+
+	local ct = var.xgleft -- 今天可以献果次数
+	local bk = var.xgbackcnt -- 可以找回的献果次数
+	local fm = var.guildtouchcnt -- 今天抚摸次数
+
+	if ct == nil then ct = 0 end
+	if bk == nil then bk = 0 end
+	if fm == nil then fm = 0 end
+
+	local npack = DataPack.allocPacket(sysarg,10,32)
+    if npack == nil then return end
+
+    DataPack.writeInt(npack, ct)
+    DataPack.writeInt(npack, bk)
+    DataPack.writeInt(npack, fm)
+    DataPack.flush(npack)
+end
+
+-- 获取帮派神兽信息
+-- 分别是灵珠，灵珠经验，神兽等级，神兽经验，触摸次数，献果次数
+GuildOpFuncList.GetBeastInfo = function(var_guild)
+	local jewelidx = var_guild.jewelidx
+	local jewelexp = var_guild.jewelexp
+	local beastlevel = var_guild.beastlevel
+	local beastexp = var_guild.beastexp
+	local touchcnt = var_guild.touchcnt
+	local xianguocnt = var_guild.xianguocnt
+
+	-- 数据的初始化
+	if jewelidx == nil then jewelidx = 1 end
+	if jewelexp == nil then jewelexp = 0 end
+	if beastlevel == nil then beastlevel = 0 end
+	if beastexp == nil then beastexp = 0 end
+	if touchcnt == nil then touchcnt = 0 end
+	if xianguocnt == nil then xianguocnt = 0 end
+
+	return jewelidx, jewelexp, beastlevel, beastexp, touchcnt, xianguocnt
+end
+
+-- 广播帮派的神兽信息
+GuildOpFuncList.BroadcastBeastInfo = function(guildptr)
+	local var_guild = LGuild.getStaticVar(guildptr)
+	if var_guild == nil then return end
+
+	local dp = LDataPack.allocPacket()
+	if dp == nil then return end
+
+	local jewelidx, jewelexp, beastlevel, beastexp, touchcnt, xianguocnt = GuildOpFuncList.GetBeastInfo(var_guild)
+
+	-- 剩余次数
+	touchcnt = Guild.totalTouch - touchcnt
+	xianguocnt = Guild.totalXianGuo - xianguocnt
+
+	-- 调用的时候要保证下面这些值不能为空
+	LDataPack.writeByte(dp, 10)
+	LDataPack.writeByte(dp, 31)
+	LDataPack.writeByte(dp, jewelidx - 1) -- 发给客户端的会减1
+    LDataPack.writeInt(dp, jewelexp)
+    LDataPack.writeByte(dp, beastlevel)
+    LDataPack.writeInt(dp, beastexp)
+    LDataPack.writeInt(dp, touchcnt)
+    LDataPack.writeInt(dp, xianguocnt)
+
+	LGuild.broadcastData(guildptr, dp)
+end
+
+-- 发送神兽信息
+GuildOpFuncList[31] = function(sysarg, arg)
+	local guildptr = LActor.getGuildPtr(sysarg)
+	if guildptr == nil then -- 还没加入军团
+		return
+	end
+
+	local var_guild = LGuild.getStaticVar(guildptr)
+	if var_guild == nil then return end
+
+	local jewelidx, jewelexp, beastlevel, beastexp, touchcnt, xianguocnt = GuildOpFuncList.GetBeastInfo(var_guild)
+
+	-- 剩余次数
+	touchcnt = Guild.totalTouch - touchcnt
+	xianguocnt = Guild.totalXianGuo - xianguocnt
+
+	local npack = DataPack.allocPacket(sysarg,10,31)
+    if npack == nil then return end
+
+    DataPack.writeByte(npack, jewelidx - 1) -- 发给客户端的会减1
+    DataPack.writeInt(npack, jewelexp)
+    DataPack.writeByte(npack, beastlevel)
+    DataPack.writeInt(npack, beastexp)
+    DataPack.writeInt(npack, touchcnt)
+    DataPack.writeInt(npack, xianguocnt)
+    DataPack.flush(npack)
+
+    GuildOpFuncList.SendActorBeastInfo(sysarg)
+end
+
+-- 抚摸 (废弃)
+GuildOpFuncList[32] = function(sysarg, arg)
+	local guildptr = LActor.getGuildPtr(sysarg)
+	if guildptr == nil then -- 不在帮派中
+		LActor.sendTipmsg(sysarg, Lang.GuildLang.t101, ttMessage)
+		return 
+	end
+
+	local var_guild = LGuild.getStaticVar(guildptr)
+	if var_guild == nil then
+		LActor.sendTipmsg(sysarg, Lang.GuildLang.t101, ttMessage)
+		return
+	end
+
+	local blevel = var_guild.beastlevel -- 神兽等级
+	if blevel == nil then
+		blevel = 0
+	end
+	if blevel > 0 then -- 神兽已经出现
+		LActor.sendTipmsg(sysarg, Lang.GuildLang.t111, ttMessage)
+		return 
+	end
+
+	-- 总次数
+	local touchcnt = var_guild.touchcnt
+	if touchcnt == nil then
+		touchcnt = 0
+	end
+	if touchcnt >= Guild.totalTouch then
+		LActor.sendTipmsg(sysarg, Lang.GuildLang.t102, ttMessage)
+		return 
+	end
+
+	-- 每个成员的次数
+	local var = LActor.getStaticVar(sysarg)
+	if var.guildtouchcnt > 0 then 
+		LActor.sendTipmsg(sysarg, Lang.GuildLang.t103, ttMessage)
+		return
+	end
+
+	-- 可以抚摸蛋蛋啦
+	local jexp = var_guild.jewelexp -- 灵珠经验
+	local jidx = var_guild.jewelidx -- 第几颗灵珠
+	if jexp == nil then
+		jexp = 0
+	end
+	if jidx == nil then
+		jidx = 1
+	end
+	jexp = jexp + Guild.touchEggExp
+
+	local ecnt = #Guild.upEggExp
+
+	-- 处理升级
+	for i=1,ecnt do
+		if jidx >= ecnt then break end -- 最高等级了
+
+		if jexp < Guild.upEggExp[jidx] then
+			break
+		end
+		-- 可以升级了
+		jexp = jexp - Guild.upEggExp[jidx]
+		jidx = jidx + 1
+	end
+
+	-- 神兽出现了
+	if jidx >= ecnt and jexp >= Guild.upEggExp[ecnt] then -- 等级达到最高，而且经验也达到最高等级的升级经验
+		var_guild.beastlevel = 1
+		var_guild.beastexp = 0
+		var_guild.beasttime = System.getCurrMiniTime()
+
+		LGuild.setBeastLevel(guildptr, 1)
+	end
+
+	-- 获得贝币
+	LActor.changeMoney(sysarg, 0, Guild.touchEggXb)
+
+	local tips = string.format(Lang.GuildLang.t114, Guild.touchEggXb)
+	LActor.sendTipmsg(sysarg, tips, ttMessage)
+
+	-- 保存帮派数据
+	var_guild.touchcnt = touchcnt+1
+	var_guild.jewelidx = jidx
+	var_guild.jewelexp = jexp
+
+	var.guildtouchcnt = var.guildtouchcnt + 1
+
+	LGuild.setUpdate(guildptr)
+	GuildOpFuncList.SendActorBeastInfo(sysarg)
+
+	-- LGuild.addBeastLog(guildptr, 0, LActor.getActorId(sysarg), LActor.getName(sysarg), Guild.touchEggExp, Guild.touchEggXb)
+
+	GuildOpFuncList.BroadcastBeastInfo(guildptr)
+
+	-- 日志
+	System.logCounter(
+		LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), 
+		"xianzong", LActor.getGuildName(sysarg), "",
+		"shenshou", "mo", "",
+		"", "", lfBI)
+end
+
+-- 献果（废弃）
+GuildOpFuncList[33] = function(sysarg, dp)
+	local idx = DataPack.readInt(dp) -- 仙果的类型
+
+	local cexpr = Guild.xianGuoExp[idx]
+	local crenown = Guild.xianGuoRenown[idx]
+	local cmoney = Guild.xianGuoMoney[idx]
+	local cmoneyType = Guild.xianGuoMoneyType[idx]
+
+	if cexpr == nil then
+		LActor.sendTipmsg(sysarg, Lang.GuildLang.t104, ttMessage)
+		return
+	end
+
+	local guildptr = LActor.getGuildPtr(sysarg)
+	if guildptr == nil then
+		LActor.sendTipmsg(sysarg, Lang.GuildLang.t101, ttMessage)
+		return
+	end
+
+	local cur_t = System.getCurrMiniTime()
+	local var = LActor.getStaticVar(sysarg)
+
+	--[[
+	print(var.joinguildtime)
+	local y, m, d, h, min, s = 0, 0, 0, 0, 0, 0
+	y, m, d, min, s = System.timeDecode(var.joinguildtime, y, m, d, h, min, s)
+	print(string.format("%d-%d-%d %d:%d:%d", y, m, d, h, min, s))
+	]]
+
+	if var.joinguildtime == nil or (cur_t-var.joinguildtime) < 24*3600 then -- 前24小时不能献果
+		LActor.sendTipmsg(sysarg, Lang.GuildLang.t113, ttMessage)
+		return 
+	end
+
+	local var_guild = LGuild.getStaticVar(guildptr)
+	if var_guild == nil then return end
+
+	-- 判断献果总次数
+	local xianguocnt = var_guild.xianguocnt
+	if xianguocnt == nil then xianguocnt = 0 end
+
+	if xianguocnt >= Guild.totalXianGuo then
+		local tips = string.format(Lang.GuildLang.t109, Guild.totalXianGuo)
+		LActor.sendTipmsg(sysarg, tips, ttMessage)
+		return
+	end
+
+	-- 每人每天次数
+	local xgleft = var.xgleft -- 玩家剩余献果的次数
+	if xgleft == nil then
+		xgleft = 0
+	end
+	if xgleft < 1 then
+		LActor.sendTipmsg(sysarg, Lang.GuildLang.t105, ttMessage)
+		return
+	end
+
+	local buildLevel = LGuild.getGuildLevel(sysarg, 4) -- 神兽祭坛等级
+	local levelLimit = buildLevel * Guild.ssLevelLimit
+	local level = var_guild.beastlevel -- 神兽等级
+	local expr = var_guild.beastexp -- 神兽经验
+
+	if level == nil then level = 0 end
+	if expr == nil then expr = 0 end
+
+	local ecnt = #Guild.ssLevels
+
+	if level >= levelLimit and cexpr + expr >= Guild.ssLevels[level].upExp then -- 达到等级上限
+		LActor.sendTipmsg(sysarg, Lang.GuildLang.t106, ttMessage)
+		return
+	end
+
+	-- 够不够钱
+	if LActor.getMoneyCount(sysarg, cmoneyType) < cmoney then
+		local tips = string.format(Lang.GuildLang.t107, MoneyName[cmoneyType+1])
+		LActor.sendTipmsg(sysarg, tips, ttMessage)
+		return 
+	end
+
+	LActor.changeMoney(sysarg, cmoneyType, -cmoney, 1, true, "guild", "xianguo")
+	LActor.giveAward(sysarg, 10, crenown)
+	local tips = string.format(Lang.GuildLang.t112, cexpr, crenown)
+	LActor.sendTipmsg(sysarg, tips, ttMessage)
+
+	-- 可以献果了
+
+	expr = expr + cexpr
+
+	local isUp = false
+
+	-- 处理升级
+	for i=1,ecnt do
+		if level >= ecnt then break end -- 最高等级了
+
+		local upExp = Guild.ssLevels[level].upExp
+		if expr < upExp then
+			break
+		end
+		-- 可以升级了
+		level = level + 1
+		expr = expr - upExp
+
+		isUp = true
+	end
+
+	-- 保存帮派数据
+	var_guild.beastlevel = level
+	var_guild.beastexp = expr
+	var_guild.xianguocnt = xianguocnt + 1
+	LGuild.setUpdate(guildptr)
+
+	var.xgleft = xgleft - 1
+	var.lastxg = cur_t
+
+	GuildOpFuncList.SendActorBeastInfo(sysarg)
+
+	-- LGuild.addBeastLog(guildptr, idx, LActor.getActorId(sysarg), LActor.getName(sysarg), crenown, cexpr)
+
+	GuildOpFuncList.BroadcastBeastInfo(guildptr)
+
+	if isUp then
+		LGuild.setBeastLevel(guildptr, level)
+		local tips = string.format(Lang.GuildLang.t110, level)
+		System.broadcastGuildTipmsg(LActor.getGuildId(sysarg), tips, ttChatWindow)
+	end
+
+	-- 日志
+	System.logCounter(
+		LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), 
+		"xianzong", LActor.getGuildName(sysarg), "",
+		"shenshou", "xianguo", "",
+		"", "", lfBI)
+end
+
+-- 找回献果次数
+GuildOpFuncList[34] = function(sysarg, dp)
+	print("GuildOpFuncList xgbackcnt")
+	local cnt = DataPack.readInt(dp) -- 找回多少次
+	if cnt < 1 then return end
+
+	print("GuildOpFuncList xgbackcnt:"..cnt)
+
+	local var = LActor.getStaticVar(sysarg)
+
+	local nday = var.xgbackcnt
+	if nday == nil then
+		nday = 0
+	end
+
+	if nday < cnt then -- 次数不够
+		LActor.sendTipmsg(sysarg, Lang.GuildLang.t108, ttMessage)
+		return
+	end
+
+	local money = Guild.xianGuoBackMoney * cnt
+	if LActor.getMoneyCount(sysarg, mtYuanbao) < money then
+		LActor.sendTipmsg(sysarg, Lang.GuildLang.t1, ttMessage)	-- 天珠不足
+		return
+	end
+
+	LActor.changeMoney(sysarg, mtYuanbao, -money, 1, true, "guild", "xianguoback")
+
+	var.xgbackcnt = var.xgbackcnt - cnt
+	var.xgleft = var.xgleft + cnt
+
+	GuildOpFuncList.SendActorBeastInfo(sysarg)
+end
+
+GuildOpFuncList[43] = function (sysarg, dp)
+	local st = LActor.getStaticVar( sysarg )
+	if st.guilddepotcnt == nil then
+		st.guilddepotcnt = 0
+	end
+
+	local cnt = GlobalConfig.guildDepotCount - st.guilddepotcnt
+	if cnt < 0 then
+		cnt = 0
+	end 
+	if cnt > GlobalConfig.guildDepotCount then
+		cnt = GlobalConfig.guildDepotCount
+	end
+	local npack = DataPack.allocPacket(sysarg, 10, 43)
+	if npack == nil then return end
+	DataPack.writeInt(npack, cnt)
+	DataPack.flush(npack)
+end
+
+-- 获取玩家失去的献果次数
+GuildOpFuncList.GetLostXgCnt = function(sysarg, var, var_guild, cur_t)
+	if var_guild.beasttime == nil then return 0 end -- 神兽还没出现
+	if var.joinguildtime == nil then return 0 end -- 没有加入军团时间
+
+	local logout_t = LActor.getLastLogoutTime(sysarg)
+	if logout_t < var_guild.beasttime then -- 出现神兽的时间
+		logout_t = var_guild.beasttime
+	end
+	local join_t = var.joinguildtime + 24 * 3600
+	if logout_t < join_t then -- 加入军团时间
+		logout_t = join_t
+	end
+	local diff = System.getDayDiff(cur_t, logout_t)
+	if diff < 1 then return 0 end
+
+	local cnt = diff - 1
+	if var.lastxg == nil or System.isSameDay(var.lastxg, logout_t) == false then -- 上次下线当天没献过，找回次数加一天
+		cnt = cnt + 1
+	end
+	return cnt
+end
+
+-- 获取领地之战数据
+GuildOpFuncList[37] = function(sysarg, dp)
+	FudiPublic.getFudiData(sysarg)
+end
+
+-- 开启领地之战
+GuildOpFuncList[38] = function(sysarg, dp)
+	FudiPublic.openFudi(sysarg, dp)
+end
+
+-- 获取俸禄信息
+GuildOpFuncList[82] = function(sysarg, dp)
+	local actor_var = LActor.getStaticVar(sysarg)
+	if not actor_var then return end
+
+	-- 0未领取 1已领取
+	if actor_var.guild_fenglu == nil then
+		actor_var.guild_fenglu = 0
+	end
+
+	local npack = DataPack.allocPacket(sysarg, 10, 82)
+	if npack == nil then return end
+	DataPack.writeByte(npack, actor_var.guild_fenglu or 0)
+	DataPack.flush(npack)
+end
+
+-- 请求领取俸禄
+GuildOpFuncList[83] = function(sysarg, dp)
+	local guild = LActor.getGuildPtr(sysarg)
+	if not guild then return end
+
+	local actor_var = LActor.getStaticVar(sysarg)
+	if not actor_var then return end
+
+	-- 0未领取 1已领取
+	if actor_var.guild_fenglu == nil then
+		actor_var.guild_fenglu = 0
+	end
+
+	-- 是否可领取
+	if actor_var.guild_fenglu ~= nil and actor_var.guild_fenglu == 1 then
+		LActor.sendTipmsg(sysarg, Lang.GuildLang.t390, ttMessage)
+		return
+	end
+
+	local guild_lvl = LActor.getGuildLevel(sysarg)
+	local guild_pos = (actor_var.guild_fenglu_pos or 0) + 1
+	if Guild.fenglu.award[guild_lvl] and Guild.fenglu.award[guild_lvl][guild_pos] then
+		actor_var.guild_fenglu = 1
+		-- 下发祈福奖励
+		local conf = Guild.fenglu.award[guild_lvl][guild_pos]
+		for i=1,#conf do
+			if conf[i].type == 1 then
+
+			elseif conf[i].type == 2 then
+				LActor.changeMoney(sysarg, conf[i].id, conf[i].count, 1,  true, "guild", "guild_fenglu")
+			elseif conf[i].type == 3 then
+
+			elseif conf[i].type == 4 then -- 公会财产
+				LGuild.addGuildProperty(guild, conf[i].count)
+			elseif conf[i].type == 5 then -- 公会繁荣度
+				LGuild.addGuildBuild(guild, conf[i].count)
+			elseif conf[i].type == 6 then -- 公会贡献
+				LActor.addGuildContrib(sysarg, conf[i].count)
+			elseif conf[i].type == 7 then -- 经验
+				LActor.addExp(sysarg, conf[i].count, 936, 0)
+			end
+		end
+	end
+
+	-- 通知更新数据
+	local npack = DataPack.allocPacket(sysarg, 10, 83)
+	if npack == nil then return end
+	DataPack.flush(npack)
+
+	GuildOpFuncList[82](sysarg)
+end
+
+-- 请求宗门邮件信息
+GuildOpFuncList[84] = function(sysarg, dp)
+	local actor_var = LActor.getStaticVar(sysarg)
+	if not actor_var then return end
+
+	local npack = DataPack.allocPacket(sysarg, 10, 84)
+	if npack == nil then return end
+	DataPack.writeInt(npack, actor_var.guild_mail_count or 0)
+	DataPack.flush(npack)
+end
+
+-- 请求发送宗门邮件
+GuildOpFuncList[85] = function(sysarg, dp)
+	local guild = LActor.getGuildPtr(sysarg)
+	if not guild then return end
+
+	local actor_var = LActor.getStaticVar(sysarg)
+	if not actor_var then return end
+
+	local title = DataPack.readString(dp) or ""
+	local content = DataPack.readString(dp) or ""
+	if title == "" or content == "" then
+		return
+	end
+
+	-- 职位
+	local guild_pos = LActor.getGuildPos(sysarg)
+	if guild_pos ~= 4 and guild_pos ~= 3 then
+		LActor.sendTipmsg(sysarg, Lang.GuildLang.t391, ttMessage)
+		return
+	end
+	-- 次数
+	if actor_var.guild_mail_count == nil then
+		actor_var.guild_mail_count = 0
+	end
+	local allcount = 0
+	if guild_pos == 3 then
+		allcount = Guild.guildmail.count[1]
+	elseif guild_pos == 4 then
+		allcount = Guild.guildmail.count[2]
+	end
+	if actor_var.guild_mail_count >= allcount then
+		LActor.sendTipmsg(sysarg, Lang.GuildLang.t392, ttMessage)
+		return
+	end
+	-- 消耗财产
+	local guild_pro = LGuild.getGuildProperty(guild)
+	if guild_pro < Guild.guildmail.property then
+		LActor.SendGeneralTips(sysarg, 4, 0, Guild.guildmail.property-guild_pro)
+		return
+	end
+	LGuild.addGuildProperty(guild, -Guild.guildmail.property)
+	actor_var.guild_mail_count = actor_var.guild_mail_count + 1
+
+	-- 发送
+	LGuild.sendGuildMail(guild, sysarg, title, content)
+
+	local npack = DataPack.allocPacket(sysarg, 10, 85)
+	if npack == nil then return end
+	DataPack.flush(npack)
+
+	GuildOpFuncList[84](sysarg)
+end
+
+-- 获取招募信息
+GuildOpFuncList[86] = function(sysarg, dp)
+	local guild = LActor.getGuildPtr(sysarg)
+	if not guild then return end
+	local guild_var = LGuild.getStaticVar(guild)
+	if not guild_var then return end
+	local actor_var = LActor.getStaticVar(sysarg)
+	if not actor_var then return end
+	if actor_var.guild_recruit_count == nil then
+		actor_var.guild_recruit_count = 0
+	end
+	-- 默认内容
+	if guild_var.recruit_content == nil then
+		guild_var.recruit_content = string.format(Guild.guildrecruit.defaultcontent, LActor.getGuildName(sysarg))
+	end
+
+	local npack = DataPack.allocPacket(sysarg, 10, 86)
+	if npack == nil then return end
+	DataPack.writeInt(npack, actor_var.guild_recruit_count or 0)
+	DataPack.writeString(npack, guild_var.recruit_content or "")
+	DataPack.flush(npack)
+end
+
+-- 修改招募信息
+GuildOpFuncList[87] = function(sysarg, dp)
+	local guild = LActor.getGuildPtr(sysarg)
+	if not guild then return end
+	local guild_var = LGuild.getStaticVar(guild)
+	if not guild_var then return end
+
+	local content = DataPack.readString(dp) or ""
+	if content == "" then return end
+
+	-- 长度
+	if System.getStrLenUtf8(content) > 60 then
+		LActor.sendTipmsg(sysarg, Lang.GuildLang.t404, ttMessage)
+		return
+	end
+
+	-- 职位
+	local guild_pos = LActor.getGuildPos(sysarg)
+	if guild_pos ~= 4 and guild_pos ~= 3 then
+		LActor.sendTipmsg(sysarg, Lang.GuildLang.t395, ttMessage)
+		return
+	end
+
+	guild_var.recruit_content = content
+
+	local npack = DataPack.allocPacket(sysarg, 10, 87)
+	if npack == nil then return end
+	DataPack.flush(npack)
+
+	GuildOpFuncList[86](sysarg)
+end
+
+-- 发布世族招募
+GuildOpFuncList[88] = function(sysarg, dp)
+	local guild = LActor.getGuildPtr(sysarg)
+	if not guild then return end
+	-- local guild_var = LGuild.getStaticVar(guild)
+	-- if not guild_var then return end
+	local actor_var = LActor.getStaticVar(sysarg)
+	if not actor_var then return end
+
+	-- if guild_var.recruit_content == nil then
+	-- 	guild_var.recruit_content = string.format(Guild.guildrecruit.defaultcontent, LActor.getGuildName(sysarg))
+	-- end
+	-- if guild_var.recruit_content == "" then
+	-- 	return
+	-- end
+	local content = DataPack.readString(dp) or ""
+	if content == "" then return end
+
+	-- 职位
+	local guild_pos = LActor.getGuildPos(sysarg)
+	if guild_pos ~= 4 and guild_pos ~= 3 then
+		LActor.sendTipmsg(sysarg, Lang.GuildLang.t391, ttMessage)
+		return
+	end
+	-- 次数
+	if actor_var.guild_recruit_count == nil then
+		actor_var.guild_recruit_count = 0
+	end
+	local allcount = 0
+	if guild_pos == 3 then
+		allcount = Guild.guildrecruit.count[1]
+	elseif guild_pos == 4 then
+		allcount = Guild.guildrecruit.count[2]
+	end
+	if actor_var.guild_recruit_count >= allcount then
+		LActor.sendTipmsg(sysarg, Lang.GuildLang.t393, ttMessage)
+		return
+	end
+	-- 发送
+	actor_var.guild_recruit_count = actor_var.guild_recruit_count + 1
+	-- System.broadcastTipmsg(guild_var.recruit_content..Guild.guildrecruit.teleportcontent, ttChatWindow)
+	-- System.broadcastTipmsg(content..Guild.guildrecruit.teleportcontent, ttChatWindow)
+	content = content..Guild.guildrecruit.teleportcontent
+
+	local npack = DataPack.allocPacket(sysarg, 10, 88)
+	if npack == nil then return end
+	DataPack.writeString(npack, content or "")
+	DataPack.flush(npack)
+
+	GuildOpFuncList[86](sysarg)
+end
+
+-- 登录
+GuildOpFuncList.OnLogin = function(sysarg, arg)
+	--[[
+	local var = LActor.getStaticVar(sysarg)
+	if var.xgleft == nil then
+		var.xgleft = 1
+	end
+	if var.guildtouchcnt == nil then
+		var.guildtouchcnt = 0
+	end
+
+	local cur_t = System.getCurrMiniTime()
+	if LActor.getGuildId(sysarg) > 0 then
+		local guildptr = LActor.getGuildPtr(sysarg)
+		if guildptr ~= nil then
+			local var_guild = LGuild.getStaticVar(guildptr)
+			if var_guild ~= nil and var_guild.beastlevel ~= nil then
+				LActor.setIntPropertyHi16(sysarg, PROP_FOOT_EFFECT, var_guild.beastlevel)
+			end
+		end
+
+	end
+	-- 可找回的献果次数
+	if var.xgbackcnt == nil then
+		var.xgbackcnt = 0
+	end
+
+	-- 加入军团的才做这些判断
+	if LActor.getGuildId(sysarg) > 0 then
+		if var.joinguildtime == nil then
+			var.joinguildtime = cur_t
+		end
+		local guildptr = LActor.getGuildPtr(sysarg)
+		if guildptr ~= nil then
+			local var_guild = LGuild.getStaticVar(guildptr)
+			if var_guild.beastlevel ~= nil and var_guild.beastlevel > 0 then
+				if var_guild.beasttime == nil then -- 一般不会
+					var_guild.beasttime = cur_t
+					LGuild.setUpdate(guildptr)
+				end
+				local nlost = GuildOpFuncList.GetLostXgCnt(sysarg, var, var_guild, cur_t)
+				if nlost > 0 then
+					var.xgbackcnt = var.xgbackcnt + nlost
+					if var.xgbackcnt > Guild.xianGuoBackDay then
+						var.xgbackcnt = Guild.xianGuoBackDay
+					end
+				end
+			end
+		end
+	end]]
+end
+
+-- 新的一天
+GuildOpFuncList.OnNewDay = function(sysarg, arg)
+	local var = LActor.getStaticVar(sysarg)
+	-- var.guildtouchcnt = 0  -- 触摸次数
+	-- var.xgleft = 1 -- 剩余献果次数
+
+	var.guild_fenglu = 0
+	var.guild_fenglu_pos = LActor.getGuildPos(sysarg)
+	var.guild_mail_count = 0
+	var.guild_recruit_count = 0
+	var.guild_donate_bindcoin = 0
+
+	GuildOpFuncList[82](sysarg)
+
+	-- if LActor.getGuildId(sysarg) <= 0 then return end -- 还没加入军团
+	
+	--[[
+	if arg[1] == nil or arg[1] == 1 then return end -- 登录的在上面处理
+
+	if var.xgbackcnt == nil then
+		var.xgbackcnt = 0
+	end
+	local guildptr = LActor.getGuildPtr(sysarg)
+	if guildptr == nil then return end
+	local var_guild = LGuild.getStaticVar(guildptr)
+	if var_guild.beastlevel == nil or var_guild.beastlevel < 1 then return end -- 神兽还没出现
+
+	local cur_t = System.getCurrMiniTime()
+
+	-- 昨天没献果，累计献果次数
+	if var.xgbackcnt < Guild.xianGuoBackDay and var.joinguildtime ~= nil and (cur_t - var.joinguildtime) > 24*3600 then
+		if var.lastxg == nil or System.isSameDay(var.lastxg, System.getYesterday()) == false then
+			var.xgbackcnt = var.xgbackcnt + 1
+		end
+	end
+
+	GuildOpFuncList.SendActorBeastInfo(sysarg)]]
+end
+
+-- 加入帮派
+GuildOpFuncList.OnJoinGuild = function(sysarg, arg)
+	local guildptr = arg[1]
+
+	local var = LActor.getStaticVar(sysarg)
+	var.xgbackcnt = 0
+	if var.guildtouchcnt == nil then
+		var.guildtouchcnt = 0
+	end
+	var.joinguildtime = System.getCurrMiniTime() -- 记录加入军团的时间
+
+	var.guild_fenglu_pos = LActor.getGuildPos(sysarg)
+
+	-- 日志
+	local pByActor = arg[2]
+	System.logCounter(
+		LActor.getActorId(pByActor), LActor.getAccountName(pByActor), tostring(LActor.getLevel(pByActor)), 
+		"xianzong", LActor.getGuildName(pByActor), LActor.getAccountName(sysarg),
+		"manage", "add", tostring(LActor.getGuildLevel(pByActor)),
+		tostring(LGuild.getGuildRank(guildptr)), tostring(LGuild.getGuildMemberCount(guildptr)), lfBI)	
+end
+
+-- 离开帮派
+GuildOpFuncList.OnLeftGuild = function(sysarg, arg)
+	--FudiPublic.onLeftGuild(sysarg)
+
+	local var = LActor.getStaticVar(sysarg)
+	var.xgbackcnt = nil
+	-- var.guildtouchcnt = nil
+	var.joinguildtime = nil
+end
+
+-- 登录延时处理
+GuildOpFuncList.OnLoginDelay = function(sysarg, arg)
+	local level = arg[2]
+	if level == nil then return end
+
+	LActor.setIntPropertyHi16(sysarg, PROP_FOOT_EFFECT, level)
+end
+
+-- 增加献果次数
+GuildOpFuncList.GmAddXg = function(sysarg, arg)
+	local cnt = arg[1]
+	if cnt == nil then
+		LActor.sendTipmsg(sysarg, "param error", ttMessage)
+		return
+	end
+	cnt = tonumber(cnt)
+
+	local var = LActor.getStaticVar(sysarg)
+	if var.xgleft == nil then
+		var.xgleft = 0
+	end
+	var.xgleft = var.xgleft + cnt
+
+	GuildOpFuncList.SendActorBeastInfo(sysarg)
+end
+
+-- 增加找回献果次数
+GuildOpFuncList.GmAddZhXg = function(sysarg, arg)
+	local cnt = arg[1]
+	if cnt == nil then
+		LActor.sendTipmsg(sysarg, "param error", ttMessage)
+		return
+	end
+	cnt = tonumber(cnt)
+
+	local var = LActor.getStaticVar(sysarg)
+	if var.xgbackcnt == nil then
+		var.xgbackcnt = 0
+	end
+	var.xgbackcnt = var.xgbackcnt + cnt
+
+	GuildOpFuncList.SendActorBeastInfo(sysarg)
+end
+
+-- 重置抚摸次数
+GuildOpFuncList.GmResetFm = function(sysarg, arg)
+	local var = LActor.getStaticVar(sysarg)
+	var.guildtouchcnt = 0
+
+	GuildOpFuncList.SendActorBeastInfo(sysarg)
+end
+
+-- 设置神兽等级
+GuildOpFuncList.GmSetBeast = function(sysarg, arg)
+	local level = arg[1]
+	local jewlevel = arg[2]
+	local jewexp = arg[3]
+	if level == nil then
+		print("param error")
+		return 
+	end
+
+	level = tonumber(level)
+
+	local guildptr = LActor.getGuildPtr(sysarg)
+	if guildptr == nil then return end
+
+	local var_guild = LGuild.getStaticVar(guildptr)
+	var_guild.beastlevel = level
+
+	if level > 0 and var_guild.beasttime == nil then
+		var_guild.beasttime = System.getCurrMiniTime()
+		var_guild.jewelidx = #Guild.upEggExp
+		var_guild.jewelexp = Guild.upEggExp[#Guild.upEggExp]
+		print("GuildOpFuncList.GmSetBeast level:"..level..", jewlevel:"..var_guild.jewelidx..",jewelexp:"..var_guild.jewelexp)
+	end
+
+	if level == 0 then
+		if jewlevel ~= nil then var_guild.jewelidx = tonumber(jewlevel) end
+		if jewexp ~= nil then var_guild.jewelexp = tonumber(jewexp) end
+		print("GuildOpFuncList.GmSetBeast level:0, jewlevel:"..var_guild.jewelidx..",jewelexp:"..var_guild.jewelexp)
+	end
+
+	LGuild.setUpdate(guildptr)
+	LGuild.setBeastLevel(guildptr, level)
+
+	GuildOpFuncList.BroadcastBeastInfo(guildptr)
+end
+
+-- 设置帮派建筑等级
+GuildOpFuncList.GmSetGuildLevel = function(sysarg, arg)
+	local name = arg[1]
+	local idx = arg[2]
+	local level = arg[3]
+
+	if name == nil or idx == nil or level == nil then
+		LActor.sendTipmsg(sysarg, "param error", ttTipmsgWindow)
+		return
+	end
+
+	local guildptr = LGuild.getGuildByName(name)
+	if guildptr == nil then
+		LActor.sendTipmsg(sysarg, "guild not found", ttTipmsgWindow)
+		return
+	end
+
+	idx = tonumber(idx)
+	level = tonumber(level)
+
+	LGuild.setGuildLevel(guildptr, idx, level)
+end
+
+-- 设置加入帮派时间
+GuildOpFuncList.GmSetJoinGuildTime = function(sysarg, arg)
+	local num = arg[1]
+	if num == nil then num = 1 end
+
+	local var = LActor.getStaticVar(sysarg)
+
+	var.joinguildtime = System.getCurrMiniTime() - num * 86400
+end
+
+-- 设置帮主
+GuildOpFuncList.GmSetGuildLeader = function(sysarg, arg)
+	local lname = arg[1]
+	local name = arg[2]
+
+	if lname == nil or name == nil then
+		LActor.sendTipmsg(sysarg, "param error", ttTipmsgWindow)
+		return
+	end
+
+	local guildptr = LGuild.getGuildByName(lname)
+	if guildptr == nil then
+		LActor.sendTipmsg(sysarg, "guild not found", ttTipmsgWindow)
+		return
+	end
+
+	if not LGuild.setLeader(guildptr, name) then
+		LActor.sendTipmsg(sysarg, "setGuildLevel error", ttTipmsgWindow)
+		return
+	end
+end
+
+-- 增加军团灵石
+GuildOpFuncList.GmaddGuildContrib = function(sysarg, arg)
+	local num = arg[1]
+	if num == nil then
+		LActor.sendTipmsg(sysarg, "param error", ttTipmsgWindow)
+		return
+	end
+
+	LActor.addGuildContrib(sysarg, num)
+	-- LActor.addGuildStone(sysarg, num)
+end
+
+-- 使用军团长弹劾令
+GuildOpFuncList.quickKickLeader = function(sysarg, itemidx, itemPtr, Itemid)
+	local guildptr = LActor.getGuildPtr(sysarg)
+	if guildptr == nil then
+		LActor.sendTipmsg(sysarg, "no guild!", ttTipmsgWindow)
+		return
+	end
+	local var_guild = LGuild.getStaticVar(guildptr)
+	if var_guild == nil then return end
+	if var_guild.guildstate == nil then var_guild.guildstate = 0 end
+	if System.bitOPMask(var_guild.guildstate, 0) then
+		--提示不要重复使用
+		LActor.sendTipmsg(sysarg, Lang.GuildLang.t30, ttMessage)
+		return
+	end
+	local delnum = LActor.removeItem(sysarg,Guild.quickKickLeaderItem,1,-1,-1,-1,"quickKickGuildLeader",5)
+
+	if delnum ~= 1 then return end
+
+	var_guild.guildstate = System.bitOpSetMask(var_guild.guildstate, 0, true)
+
+	LGuild.setGuildState(guildptr, 0, true)
+
+	--给军团长发邮件
+	local leaderid = LActor.getGuildLeaderId(sysarg)
+	System.sendGmMailOffLine(leaderid, Lang.GuildLang.t31, 0, 0, 0, 0)
+end
+
+
+-- 军团数据初始化
+function OnLuaGuildInit(guildptr)
+	if guildptr == nil then return end
+
+	local var_guild = LGuild.getStaticVar(guildptr)
+	if var_guild == nil then return end
+
+	local change = false
+	if var_guild.jewelidx == nil then
+		var_guild.jewelidx = 1
+		change = true
+	end
+	if var_guild.jewelexp == nil then
+		var_guild.jewelexp = 0
+		change = true
+	end
+	if var_guild.beastlevel == nil then
+		var_guild.beastlevel = 0
+		change = true
+	end
+	if var_guild.beastexp == nil then
+		var_guild.beastexp = 0
+		change = true
+	end
+	if var_guild.touchcnt == nil then
+		var_guild.touchcnt = 0
+		change = true
+	end
+	if var_guild.xianguocnt == nil then
+		var_guild.xianguocnt = 0
+		change = true
+	end
+	if var_guild.invite_fight_id == nil then
+		var_guild.invite_fight_id = 0
+		change = true
+	end
+	if var_guild.invite_fight_score == nil then
+		var_guild.invite_fight_score = 0
+		change = true
+	end
+	if var_guild.fight_time_out == nil then
+		var_guild.fight_time_out = 0
+		change = true
+	end
+	if var_guild.inviting_id == nil then
+		var_guild.inviting_id = 0
+		change = true
+	end
+	if var_guild.invited_id == nil then
+		var_guild.invited_id = 0
+		change = true
+	end
+	if var_guild.invite_time_out == nil then
+		var_guild.invite_time_out = 0
+		change = true
+	end
+
+	if var_guild.guildstate == nil then
+		var_guild.guildstate = 0
+	end
+
+	if change then
+		LGuild.setUpdate(guildptr)
+	end
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeGuildCall, EventCallDispatcher.handlerGuildCallImplement)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, GuildOpFuncList.OnLogin)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, GuildOpFuncList.OnNewDay)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeJoinGuild, GuildOpFuncList.OnJoinGuild)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeLeftGuild, GuildOpFuncList.OnLeftGuild)
+table.insert(LocalDT.ScriptDelayConfig[25], GuildOpFuncList.OnLoginDelay)
+GlobalItemFn[Guild.quickKickLeaderItem] = { func = GuildOpFuncList.quickKickLeader, params = Guild.quickKickLeaderItem }
+
+-- 重置帮派数据
+function OnResetGuild()
+	local guillist = LGuild.getGuildList()
+	if guillist ~= nil then
+		for i=1,#guillist do
+			local guildptr = guillist[i]
+			local var_guild = LGuild.getStaticVar(guildptr)
+			var_guild.xianguocnt = 0
+			var_guild.touchcnt = 0
+			LGuild.setUpdate(guildptr)
+			GuildOpFuncList.BroadcastBeastInfo(guildptr) -- 通知所有人
+		end
+	end
+end 
+
+--[[
+function testguild(sysarg)
+	local guildptr = LActor.getGuildPtr(sysarg)
+	-- LGuild.addBeastLog(guildptr, 0, 111, "111", Guild.touchEggXb, Guild.touchEggExp)
+
+	-- LGuild.setBeastLevel(guildptr, 1)
+
+	-- GuildOpFuncList[34](sysarg)
+
+	local var = LActor.getStaticVar(sysarg)
+	-- LActor.sendTipmsg(sysarg, tostring(var.guilddepotcnt), ttMessage)
+
+	-- GuildOpFuncList.OnNewDay(sysarg, {0})
+
+	-- GuildOpFuncList.OnNewDay(sysarg, {0})
+	print("back:"..var.xgbackcnt)
+	print("cnt:"..var.xgleft)
+end
+]]
+
+function clearFudiCount()
+	local list = LGuild.getGuildList() or {}
+	for _, pGuild in ipairs(list) do
+		local var = LGuild.getStaticVar(pGuild, true)
+		var.fudi_handle = nil 
+		var.fudi_level = nil
+		var.fudi_count = nil
+		var.fudi_time = nil
+	end
+end
+
+function resetGuildRelation()
+	local list = LGuild.getGuildList() or {}
+	for _, pGuild in ipairs(list) do
+		if LGuild.getAllianceID(pGuild) ~= 0 then
+			LGuild.resetAllianceGuild(pGuild)
+		end
+	end
+end
+
+GuildOpFuncList.Gmresetguildrecruitcount = function( sysarg )
+	local actor_var = LActor.getStaticVar(sysarg)
+	if not actor_var then return end
+	actor_var.guild_recruit_count = 0
+end
+
+GmEventFuncList.register( "addxgcnt", GuildOpFuncList.GmAddXg, 1) -- 增加献果次数
+GmEventFuncList.register( "resetfmcnt", GuildOpFuncList.GmResetFm, 1) -- 增加献果次数
+GmEventFuncList.register( "setbeast", GuildOpFuncList.GmSetBeast, 1) -- 增加献果次数
+GmEventFuncList.register( "guildlevel", GuildOpFuncList.GmSetGuildLevel, 1) -- 设置军团建筑等级
+GmEventFuncList.register( "guildleader", GuildOpFuncList.GmSetGuildLeader, 1) -- 设置军团建筑等级
+GmEventFuncList.register( "joinguildtime", GuildOpFuncList.GmSetJoinGuildTime, 1) -- 设置军团建筑等级
+GmEventFuncList.register( "addzhxgcnt", GuildOpFuncList.GmAddZhXg, 1) -- 增加找回献果次数
+GmEventFuncList.register( "addguildcontrib", GuildOpFuncList.GmaddGuildContrib, 1) -- 增加军团贡献
+GmEventFuncList.register( "deleteguild", GuildOpFuncList.GmDeleteGuild, 1) -- 增加军团灵石
+GmEventFuncList.register( "resetrecruit", GuildOpFuncList.Gmresetguildrecruitcount, 1)
+
+--返回剩余可完成次数（0没有次数）
+function GuildOpFuncList.leftCount(sysarg)
+	if not LActor.isActorSystemOpen(sysarg, siGuildSys) then return 0 end
+
+	local guild = LActor.getGuildPtr(sysarg)
+	if guild then return 0 end
+
+	return 1
+end
+GetQuestTargetCount.register(qtJoinZongMen, GuildOpFuncList.leftCount)

@@ -1,0 +1,73 @@
+{
+	id = 37,	--行为ID
+	trigger = 1,	--触发类型，血量为1，时间为2
+
+	isInit = 0 ,
+	--创建的时候会调用,和info里的sequence一样
+	initSequence =
+	{
+		
+	},
+
+	infos = 
+	{
+		{
+			sequId = 1,
+			param = 90 ,
+			sequence = {
+				{ type = 26, duration = 2,  BuffConfigId = 12, }, --释放一个buff，且将玩家拉到自己身边
+			}
+		},
+
+		{
+			sequId = 2,
+			param = 80 ,
+			sequence = {
+				{ type = 26, duration = 2,  BuffConfigId = 12, }, --释放一个buff，且将玩家拉到自己身边
+			}
+		},
+
+		{
+			sequId = 3,
+			param = 70 ,
+			sequence = {
+				{ type = 26, duration = 2,  BuffConfigId = 12, }, --释放一个buff，且将玩家拉到自己身边
+			}
+		},
+
+		{
+			sequId = 4,
+			param = 60 ,
+			sequence = {
+				{ type = 26, duration = 2,  BuffConfigId = 12, }, --释放一个buff，且将玩家拉到自己身边
+			}
+		},
+
+
+		{
+			sequId = 5,
+			param = 50 ,
+			sequence = {
+				{ type = 19, duration = 2, mosterId=1229, posX = 2, posY = 2, liveTime = 100000, relative = true },	--召唤怪物(没有怪物拥有者)
+			}
+		},
+
+		{
+			sequId = 6,
+			param = 40 ,
+			sequence = {
+				{ type = 19, duration = 2, mosterId=1229, posX = 8, posY = 11, liveTime = 100000, relative = false },	--召唤怪物(没有怪物拥有者)
+			}
+		},
+
+
+		{
+			sequId = 7,
+			param = 20 ,
+			sequence = {
+				{ type = 30, duration = 0, skillId = 39, level = 1, event =0, firstDelay = 0, cd = 500, dist = 6,},--为怪物添加一个额外技能
+				{ type = 24, duration = 2, addBuffConfigId = 20, } , --向怪物自身添加buff
+			}
+		},
+	},
+},

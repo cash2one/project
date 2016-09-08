@@ -1,0 +1,238 @@
+
+--#include "data\config\task\fudi_conf.txt" once
+
+
+FudiFuncTable = {}
+
+--#include "data\functions\tasks\fudi\fudi_public.txt" once
+
+FudiFuncTable.onEnterFudi = function(pChar, hFudi, way)
+	local pFudi = Fuben.getFubenPtr(hFudi)
+	local pGuild = LActor.getGuildPtr(pChar)
+	local var = LGuild.getStaticVar(pGuild)
+	local time = System.getCurrMiniTime() - var.fudi_time
+	if time < 60 then
+		-- 开启副本60s内登陆，发生倒数
+		local hlScene = LActor.getSceneHandle(pChar)
+		Fuben.sendCountDown(hlScene, 60 - time, 0)
+	end
+
+	-- 通知一次统计
+	local fvar = Fuben.getDyanmicVar(pFudi)
+	LActor.addExp(pChar, 0, 0, 0)
+	LActor.ChangeCaleValue(pChar, 6, 0)
+	LActor.ChangeCaleValue(pChar, 8, fvar.fudi_remaindMonster, false)
+	LActor.ChangeCaleValue(pChar, 10, Fuben.getFbTime(pFudi), false)
+	local index = 13
+	for i = 1, 4 do 
+		LActor.ChangeCaleValue(pChar, index + i, fvar["fudi_hp"..(index + i)], false)
+	end
+	LActor.SendAllCaleValue(pChar)
+
+	-- 日志
+	System.logCounter(
+		LActor.getActorId(pChar), LActor.getAccountName(pChar), tostring(LActor.getLevel(pChar)),
+		"xianzong", LActor.getGuildName(pChar), "",
+		"fuben", tostring(Fuben.getFubenIdbyFuBenPtr(pFudi)), "",
+		"", "")
+
+	print("enter fudi:"..LActor.getActorId(pChar))
+end
+
+
+
+FudiFuncTable.onFudiOpened = function(fLevel)
+	return function(hlFuben)
+		-- 副本开始后，注册副本事件
+		local pFudi = Fuben.getFubenPtr(hlFuben)
+		local config = FudiPublic.getFudiConfig(fLevel)
+		local hlScene = Fuben.getSceneHandleById(config.sceneid, hlFuben)
+		local pFudi = Fuben.getFubenPtr(hlFuben)
+		local remaind = Fuben.getFbTime(pFudi)
+		Fuben.postSceneTimeCall(hlScene, TimerMsg.FudiWarnning, remaind - 60, 1)
+		for index, eConfig in ipairs(config.effects) do
+			Fuben.postSceneTimeCall(hlScene, TimerMsg.FudiEffect, eConfig.delay, 1, 1, fLevel, index)
+		end
+
+		local var = Fuben.getDyanmicVar(pFudi)
+		var.fudi_remaindMonster = config.totalMonsterCount
+	end
+end
+
+--领地副本结束后处理
+FudiFuncTable.onFudiFubenTimeout = function(pFuben)
+	print("[ FudiFuncTable.onFudiFubenTimeout ]");
+	local fvar = Fuben.getDyanmicVar(pFuben) ;
+	if fvar == nil then
+		return ;
+	end
+	local guildId = fvar.guildId;
+	local pGuild = LGuild.getGuildById(guildId);
+	if pGuild == nil then
+		return ;
+	end
+
+	local guild_var = LGuild.getStaticVar(pGuild);
+	if guild_var == nil then 
+		return ;
+	end
+	guild_var.fudi_handle = nil ;
+
+
+end
+
+-- 注册副本通用事件
+for level, config in ipairs(FudiConf) do
+	if config.fbid == nil then break end
+	EventCallDispatcher.registerFubenEnter(config.fbid, FudiFuncTable.onEnterFudi)
+	EventCallDispatcher.registerFubenInit(config.fbid, FudiFuncTable.onFudiOpened(level))
+	EventCallDispatcher.registerFubenTimeout(config.fbid,FudiFuncTable.onFudiFubenTimeout)
+end
+
+
+FudiFuncTable.onWarnningTime = function(msgId, pScene)
+	local hlScene = Fuben.getSceneHandleByPtr(pScene)
+	Fuben.sendCountDown(hlScene, 60, 1)
+
+	local pFudi = Fuben.getSceneFuben(pScene)
+	local fvar = Fuben.getDyanmicVar(pFudi)
+	if fvar == nil or fvar.guildId == nil then return end
+	System.broadcastGuildTipmsg(fvar.guildId, Lang.GuildLang.t18, ttChatWindow)
+end
+
+FudiFuncTable.onEffectStart = function(msgId, pScene, fLevel, eIndex)
+	local config = FudiPublic.getFudiConfig(fLevel)
+	local eConfig = config.effects[eIndex]
+	if eConfig == nil then return end
+	local hlScene = Fuben.getSceneHandleByPtr(pScene)
+	Fuben.postSceneTimeCall(hlScene, TimerMsg.FudiEffect, eConfig.interval, eConfig.times, 2, fLevel, eIndex)
+end
+
+FudiFuncTable.actorHit = function(pScene, eTemplate, fLevel, eIndex, eConfig)
+	local area = eConfig.area
+	local list = LuaHelp.getEntityListFromRange(pScene, area[1], area[2], area[3], area[4])
+	if list == nil or #list == 0 then return end
+	local index = math.random(#list)
+	
+	local pChar = list[index]
+	local x = LActor.getIntProperty(pChar, PROP_ENTITY_POSX)
+	local y = LActor.getIntProperty(pChar, PROP_ENTITY_POSY)
+	for _, ef in ipairs(eTemplate) do
+		LActor.addSceneEffect(pChar, ef.id, ef.type, ef.time, ef.delay, x, y, false)
+	end
+	LActor.postEntityScriptCallbackMsg(pChar, EntityCallbackMsg.FudiEffect, eTemplate[#eTemplate].delay, 1, fLevel, eIndex, x, y)
+end
+
+FudiFuncTable.sceneHit = function(pScene, eTemplate, fLevel, eIndex, eConfig)
+	local area = eConfig.area
+	local x = math.random(area[1], area[3])
+	local y = math.random(area[2], area[4])
+
+	local pFuben = Fuben.getSceneFuben(pScene)
+	local hFuben = Fuben.getFubenHandle(pFuben)
+	local pChar = Fuben.getFbActorPtr(hFuben)
+	for _, ef in ipairs(eTemplate) do
+		LActor.addSceneEffect(pChar, ef.id, ef.type, ef.time, ef.delay, x, y, false)
+	end
+	LActor.postEntityScriptCallbackMsg(pChar, EntityCallbackMsg.FudiEffect, eTemplate[#eTemplate].delay, 2, fLevel, eIndex, x, y)
+end
+
+FudiFuncTable.onEffect = function(msgId, pScene, fLevel, eIndex)
+	local config = FudiConf[fLevel]
+	if config == nil then return end
+	local eConfig = config.effects[eIndex]
+	if eConfig == nil then return end
+
+	if eConfig.hittype == 1 then
+		FudiFuncTable.actorHit(pScene, config.effect[eConfig.type], fLevel, eIndex, eConfig)
+	else
+		FudiFuncTable.sceneHit(pScene, config.effect[eConfig.type], fLevel, eIndex, eConfig)
+	end
+end
+
+FudiFuncTable.onEffectTimer = function(msgId, pScene, step, ...)
+	if step == 1 then
+		FudiFuncTable.onEffectStart(msgId, pScene, ...)
+	elseif step == 2 then
+		FudiFuncTable.onEffect(msgId, pScene, ...)
+	end
+end
+
+FudiFuncTable.onEffectHit = function(pChar, hittype, fLevel, eIndex, x, y)
+	local config = FudiPublic.getFudiConfig(fLevel)
+	if config == nil then return end
+	local eConfig = config.effects[eIndex]
+	if eConfig == nil then return end
+
+	if hittype == 1 then
+		local nx = LActor.getIntProperty(pChar, PROP_ENTITY_POSX)
+		local ny = LActor.getIntProperty(pChar, PROP_ENTITY_POSY)
+		if nx ~= x or nx ~= y then return end
+	else
+		local pScene = LActor.getScenePtr(pChar)
+		local list = LuaHelp.getNearEntityListFromXY(pScene, x, y)
+		if list == nil then return end
+		pChar = list[1]
+	end
+	local buffs = eConfig.results
+	for _, buff in ipairs(buffs) do
+		LActor.addBuff(pChar, buff.bufftype, buff.group, buff.value, buff.times, buff.interval, buff.name, buff.timeOverlay)
+	end
+end
+
+TimerMsgFunc.register(TimerMsg.FudiWarnning, FudiFuncTable.onWarnningTime)
+TimerMsgFunc.register(TimerMsg.FudiEffect, FudiFuncTable.onEffectTimer)
+EventCallDispatcher.regEntityCallbackMsg(EntityCallbackMsg.FudiEffect, FudiFuncTable.onEffectHit)
+
+
+-- *********************************************************************
+
+FudiFuncTable.personalFudiNotify = function(pChar, pGuild)
+	local isOpen, pFudi = FudiPublic.isOpenFudi(pGuild)
+	if not isOpen then return end
+	-- 如果领地副本已开启，通知进入
+	-- local remaindTime = Fuben.getFbTime(pFudi)
+	-- 活动
+	-- local dp = DataPack.allocPacket(pChar, 26, 36)
+	-- DataPack.writeInt(dp, 1)
+	-- DataPack.writeInt(dp, 19)
+	-- DataPack.writeInt(dp, 2)
+	-- DataPack.writeInt(dp, remaindTime)
+	-- DataPack.flush(dp)
+
+	local var = LGuild.getStaticVar(pGuild)
+	local dp = DataPack.allocPacket(pChar, 10, 39)
+	if dp == nil then return end
+	DataPack.writeByte(dp, var.fudi_level)
+	DataPack.flush(dp)
+end
+
+FudiFuncTable.onUserLogin = function(pChar)
+	local var = LActor.getStaticVar(pChar)
+	if var.fudi_time ~= nil then
+		-- 上次进入时间与当前时间跨周，重置上次时间与次数
+		local curTime = System.getCurrMiniTime()
+		if not System.isSameWeek_new(var.fudi_time, curTime) then
+			var.fudi_time = curTime
+			var.fudi_count = 0
+
+			FudiPublic.getFudiData(pChar)
+		end
+	end
+
+	local pGuild = LActor.getGuildPtr(pChar)
+	if pGuild == nil then return end
+	FudiFuncTable.personalFudiNotify(pChar, pGuild)
+end
+
+FudiFuncTable.onNewDayArrive = function(pChar)
+	FudiFuncTable.onUserLogin(pChar)
+end
+
+FudiFuncTable.onJoinGuild = function(pChar, arg)
+	FudiFuncTable.personalFudiNotify(pChar, arg[1])
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, FudiFuncTable.onUserLogin)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, FudiFuncTable.onNewDayArrive)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeJoinGuild, FudiFuncTable.onJoinGuild)

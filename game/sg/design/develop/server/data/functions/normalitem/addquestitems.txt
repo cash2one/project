@@ -1,0 +1,49 @@
+﻿--lua script
+--for item add buffs
+
+--#include "NormalItemDatas.txt" once
+
+--使用物品给玩家添加对应的任务 
+function AddQuestItemsFunc(sysarg,itemidx,itemPtr,ItemTable)
+  --判断是否有这个物品 
+  --print("add quest !!")
+	if(LActor.getItemCount(sysarg,ItemTable.item_id) == 0) then
+	 LActor.sendTipmsg( sysarg,Lang.ScriptTips.x00013,ttTipmsgWindow )
+	 return
+  end
+	--判断是否已完成这个任务 
+  if(LActor.isFinishQuest(sysarg,ItemTable.taskid)) then
+    LActor.sendTipmsg( sysarg,Lang.ScriptTips.x00016,ttTipmsgWindow )
+    return
+  else
+    if(LActor.hasQuest(sysarg,ItemTable.taskid)) then
+      LActor.sendTipmsg( sysarg,Lang.ScriptTips.x00017,ttTipmsgWindow )
+      return
+    else
+      LActor.messageBox(sysarg,0,0,ItemTable.taskTalk,""..Lang.ScriptTips.m00037.."/OnGetItemTask,"..ItemTable.taskid..","..ItemTable.taskname..","..itemidx.."","取消/cancelOnGetItemTask",nil)
+    end
+  end
+ 
+end
+--给玩家添加对应的任务 
+function OnGetItemTask(sysarg,task_id,task_name,itemid)
+  local taskid = tonumber(task_id) 
+  local itemid = tonumber(itemid)
+  local str = task_name
+  if LActor.addQuest(sysarg,taskid) then
+    --LActor.sendTipmsg( sysarg,str,ttDialog )
+    LActor.removeItem(sysarg,itemid,1)
+  end
+end
+
+function cancelOnGetItemTask(sysarg)
+end
+
+function AddQuestItemsInit(sysarg)
+  for i = 1,table.getn(AddTaskItems) do
+	  local x = AddTaskItems[i]
+	  GlobalItemFn[x.item_id] = { func = AddQuestItemsFunc, params = x }
+  end
+end
+
+table.insert(InitFnTable,AddQuestItemsInit)

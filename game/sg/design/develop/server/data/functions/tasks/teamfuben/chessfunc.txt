@@ -1,0 +1,723 @@
+--#include "data\config\task\chessconfig.txt" once
+--0 表示没有棋子 棋子的颜色 1 黑 2 白 3 红
+local Row = 6
+local Col = 6
+
+ChessFunc = {}
+
+ChessFunc.InitTemp = function (hfb)
+	local fbPtr = Fuben.getFubenPtr(hfb)
+	local var = Fuben.getDyanmicVar(fbPtr)
+	if var.Temp == nil then
+		var.Temp = {}
+		for i=1,Row do
+			var.Temp[i] = {}
+		end
+	end	
+	for i=1,Row do
+		for j=1,Col do
+			var.Temp[i][j] = 0
+		end
+	end
+end
+
+ChessFunc.InitAppear = function (hfb)
+	local fbPtr = Fuben.getFubenPtr(hfb)
+	local var = Fuben.getDyanmicVar(fbPtr)
+	if var.Appear == nil then
+		var.Appear = {}
+		for i=1,Row do
+			var.Appear[i] = {}
+		end
+	end	
+	for i=1,Row do
+		for j=1,Col do
+			var.Appear[i][j] = 0
+		end
+	end
+end
+
+ChessFunc.InitKill = function (hfb)
+	local fbPtr = Fuben.getFubenPtr(hfb)
+	local var = Fuben.getDyanmicVar(fbPtr)
+	if var.Kill == nil then
+		var.Kill = {}
+		for i=1,Row do
+			var.Kill[i] = {}
+		end
+	end	
+	for i=1,Row do
+		for j=1,Col do
+			var.Kill[i][j] = 0
+		end
+	end
+end
+
+ChessFunc.InitMonster = function (hfb)
+	local fbPtr = Fuben.getFubenPtr(hfb)
+	local var = Fuben.getDyanmicVar(fbPtr)
+	if var.Monster == nil then
+		var.Monster = {}
+		for i=1,Row do
+			var.Monster[i] = {}
+		end
+	end	
+	for i=1,Row do
+		for j=1,Col do
+			var.Monster[i][j] = 0
+		end
+	end
+end
+
+ChessFunc.Init = function (hfb)
+	local fbPtr = Fuben.getFubenPtr(hfb)
+	local var = Fuben.getDyanmicVar(fbPtr)
+	var.Board = {}
+	var.Appear = {}
+	var.Kill = {}
+	var.Monster = {}
+	var.Temp = {}
+	for i=1,Row do
+		var.Board[i] = {}
+		var.Appear[i] = {}
+		var.Kill[i] = {}
+		var.Monster[i] = {}
+		var.Temp[i] = {}
+		for j=1,Col do
+			var.Board[i][j] = 0
+			var.Appear[i][j] = 0
+			var.Kill[i][j] = 0
+			var.Monster[i][j] = 0
+			var.Temp[i][j] = 0
+		end
+	end
+end
+
+ChessFunc.IsValid = function (hfb,posX, posY)
+	if posX < 1 or posX > Row or posY < 1 or posY > Col then
+		return true
+	end
+	local fbPtr = Fuben.getFubenPtr(hfb)
+	local var = Fuben.getDyanmicVar(fbPtr)
+	if var.Board == nil then
+		print("ChessFunc.IsValid Board ============== nil")
+		return true
+	end
+	if var.Board[posX][posY] ~= 0 then
+		return true
+	end
+	return false
+end
+
+ChessFunc.IsFull = function (hfb)
+	local fbPtr = Fuben.getFubenPtr(hfb)
+	local var = Fuben.getDyanmicVar(fbPtr)
+	if var.Board == nil then
+		print("ChessFunc.IsFull Board ============== nil")
+		return false
+	end
+	for i=1,Row do
+		for j=1,Col do
+			if var.Board[i][j] == 0 then
+				return false
+			end
+		end
+	end
+	return true
+end
+
+ChessFunc.HorizontalCheck = function (hfb,posX, posY, point)
+	local fbPtr = Fuben.getFubenPtr(hfb)
+	local var = Fuben.getDyanmicVar(fbPtr)
+	if var.Board == nil then
+		print("ChessFunc.HorizontalCheck Board ============== nil")
+		return false
+	end
+	local num = 0
+	for i=1,Col - posY do
+		if point ~= var.Board[posX][posY+i] then
+			break
+		end
+		num = num + 1
+	end
+	for i=1,posY-1 do
+		if point ~= var.Board[posX][posY-i] then
+			break
+		end
+		num = num + 1
+	end
+	if num > 3 then
+		return true
+	end
+	return false
+end
+
+ChessFunc.VerticalCheck = function (hfb,posX, posY, point)
+	local fbPtr = Fuben.getFubenPtr(hfb)
+	local var = Fuben.getDyanmicVar(fbPtr)
+	if var.Board == nil then
+		print("ChessFunc.VerticalCheck Board ============== nil")
+		return false
+	end
+	local num = 0
+	for i=1,Row - posX do
+		if point ~= var.Board[posX+i][posY] then
+			break
+		end
+		num = num + 1
+	end
+	for i=1,posX-1 do
+		if point ~= var.Board[posX-i][posY] then
+			break
+		end
+		num = num + 1
+	end
+	if num > 3 then
+		return true
+	end
+	return false
+end
+
+ChessFunc.LeftObliqueCheck = function (hfb,posX, posY, point)
+	local fbPtr = Fuben.getFubenPtr(hfb)
+	local var = Fuben.getDyanmicVar(fbPtr)
+	if var.Board == nil then
+		print("ChessFunc.LeftObliqueCheck Board ============== nil")
+		return false
+	end
+	local num = 0
+	local count = math.min(Row - posX, Col - posY)
+	for i=1,count do
+		if point ~= var.Board[posX+i][posY+i] then
+			break
+		end
+		num = num + 1
+	end
+	count = math.min(posX - 1, posY - 1)
+	for i=1,count do
+		if point ~= var.Board[posX-i][posY-i] then
+			break
+		end
+		num = num + 1
+	end
+	if num > 3 then
+		return true
+	end
+	return false
+end
+
+ChessFunc.RightObliqueCheck = function (hfb,posX, posY, point)
+	local fbPtr = Fuben.getFubenPtr(hfb)
+	local var = Fuben.getDyanmicVar(fbPtr)
+	if var.Board == nil then
+		print("ChessFunc.RightObliqueCheck Board ============== nil")
+		return false
+	end
+	local num = 0
+	local count = math.min(Row - posX, posY - 1)
+	for i=1,count do
+		if point ~= var.Board[posX+i][posY-i] then
+			break
+		end
+		num = num + 1
+	end
+	count = math.min(posX - 1, Col - posY)
+	for i=1,count do
+		if point ~= var.Board[posX-i][posY+i] then
+			break
+		end
+		num = num + 1
+	end
+	if num > 3 then
+		return true
+	end
+	return false
+end
+
+ChessFunc.Reversion = function ( chessColor )
+	if chessColor == 1 then
+		return 2
+	end
+	return 1
+end
+
+ChessFunc.Check = function (hfb, posX, posY, point)
+	local one = ChessFunc.HorizontalCheck(hfb, posX, posY, point)
+	local two = ChessFunc.VerticalCheck(hfb, posX, posY, point)
+	local three = ChessFunc.LeftObliqueCheck(hfb, posX, posY, point)
+	local four = ChessFunc.RightObliqueCheck(hfb, posX, posY, point)
+	if one or two or three or four then
+		return true
+	end
+	return false
+end
+
+ChessFunc.CreateBoard = function ( hfb)
+	local fbPtr = Fuben.getFubenPtr(hfb)
+	local var = Fuben.getDyanmicVar(fbPtr)
+	if var.Board == nil then
+		print("ChessFunc.CreateBoard Board ============== nil")
+		return 
+	end
+	local count = 0
+	while count < Row*Col do
+		local randChess = System.getRandomNumber(2) + 1
+		local x = System.getRandomNumber(Row) + 1;
+		local y = System.getRandomNumber(Col) + 1;
+		while ChessFunc.IsValid(hfb,x , y) do
+			x = System.getRandomNumber(Row) + 1;
+			y = System.getRandomNumber(Col) + 1;
+		end
+		local flag = ChessFunc.Check(hfb,x,y,randChess)
+		if flag then
+			randChess = ChessFunc.Reversion(randChess)
+			flag = ChessFunc.Check(hfb,x,y,randChess)
+			if flag then
+				randChess = 3
+			end
+		end
+		var.Board[x][y] = randChess
+		--print ( "x ====== "..x.." , y ======= "..y.." , randChess =========== "..randChess)
+		count = count + 1
+	end
+end
+
+ChessFunc.IsAppear = function (hfb,posX, posY)
+	local fbPtr = Fuben.getFubenPtr(hfb)
+	local var = Fuben.getDyanmicVar(fbPtr)
+	if var.Appear[posX][posY] == 0 then
+		return false
+	end
+	return true
+end
+
+ChessFunc.HorizontalAppearCheck = function (hfb,posX, posY, point)
+	local fbPtr = Fuben.getFubenPtr(hfb)
+	local var = Fuben.getDyanmicVar(fbPtr)
+	local num = 0
+	for i=1,Col - posY do
+		if ChessFunc.IsAppear(hfb,posX, posY+i) == false then
+			break
+		end
+		if point ~= var.Board[posX][posY+i] then
+			break
+		end
+		num = num + 1
+	end
+	for i=1,posY-1 do
+		if ChessFunc.IsAppear(hfb,posX, posY-i) == false then
+			break
+		end
+		if point ~= var.Board[posX][posY-i] then
+			break
+		end
+		num = num + 1
+	end
+	if num > 3 then
+		return true
+	end
+	return false
+end
+
+ChessFunc.VerticalAppearCheck = function (hfb,posX, posY, point)
+	local fbPtr = Fuben.getFubenPtr(hfb)
+	local var = Fuben.getDyanmicVar(fbPtr)
+	local num = 0
+	for i=1,Row - posX do
+		if ChessFunc.IsAppear(hfb,posX+i, posY) == false then
+			break
+		end
+		if point ~= var.Board[posX+i][posY] then
+			break
+		end
+		num = num + 1
+	end
+	for i=1,posX-1 do
+		if ChessFunc.IsAppear(hfb,posX-i, posY) == false then
+			break
+		end
+		if point ~= var.Board[posX-i][posY] then
+			break
+		end
+		num = num + 1
+	end
+	if num > 3 then
+		return true
+	end
+	return false
+end
+
+ChessFunc.LeftObliqueAppearCheck = function (hfb,posX, posY, point)
+	local fbPtr = Fuben.getFubenPtr(hfb)
+	local var = Fuben.getDyanmicVar(fbPtr)
+	local num = 0
+	local count = math.min(Row - posX, Col - posY)
+	for i=1,count do
+		if ChessFunc.IsAppear(hfb,posX+i, posY+i) == false then
+			break
+		end
+		if point ~= var.Board[posX+i][posY+i] then
+			break
+		end
+		num = num + 1
+	end
+	count = math.min(posX - 1, posY - 1)
+	for i=1,count do
+		if ChessFunc.IsAppear(hfb,posX-i, posY-i) == false then
+			break
+		end
+		if point ~= var.Board[posX-i][posY-i] then
+			break
+		end
+		num = num + 1
+	end
+	if num > 3 then
+		return true
+	end
+	return false
+end
+
+ChessFunc.RightObliqueAppearCheck = function (hfb,posX, posY, point)
+	local fbPtr = Fuben.getFubenPtr(hfb)
+	local var = Fuben.getDyanmicVar(fbPtr)
+	local num = 0
+	local count = math.min(Row - posX, posY - 1)
+	for i=1,count do
+		if ChessFunc.IsAppear(hfb,posX+i, posY-i) == false then
+			break
+		end
+		if point ~= var.Board[posX+i][posY-i] then
+			break
+		end
+		num = num + 1
+	end
+	count = math.min(posX - 1, Col - posY)
+	for i=1,count do
+		if ChessFunc.IsAppear(hfb,posX-i, posY+i) == false then
+			break
+		end
+		if point ~= var.Board[posX-i][posY+i] then
+			break
+		end
+		num = num + 1
+	end
+	if num > 3 then
+		return true
+	end
+	return false
+end
+
+ChessFunc.AppearCheck = function ( hfb,x, y, point)
+	local one = ChessFunc.HorizontalAppearCheck(hfb, x, y, point)
+	local two = ChessFunc.VerticalAppearCheck(hfb, x, y, point)
+	local three = ChessFunc.LeftObliqueAppearCheck(hfb, x, y, point)
+	local four = ChessFunc.RightObliqueAppearCheck(hfb, x, y, point)
+	if one or two or three or four then
+		return true
+	end
+	return false
+end
+
+ChessFunc.AppearOneChess = function (hfb,x, y)
+	local fbPtr = Fuben.getFubenPtr(hfb)
+	local var = Fuben.getDyanmicVar(fbPtr)
+	if var.Board == nil then
+		print("ChessFunc.AppearOneChess Board ============== nil")
+		return 0
+	end
+	local randChess = System.getRandomNumber(2) + 1
+	local flag = ChessFunc.AppearCheck(hfb,x,y,randChess)
+	if flag then
+		randChess = ChessFunc.Reversion(randChess)
+		flag = ChessFunc.AppearCheck(hfb,x,y,randChess)
+		if flag then
+			randChess = 3
+		end
+	end
+	var.Board [x][y] = randChess
+	return randChess
+end
+
+ChessFunc.DisAppearOneChess = function (hfb, x, y, point)
+	local fbPtr = Fuben.getFubenPtr(hfb)
+	local var = Fuben.getDyanmicVar(fbPtr)
+	if var.Board == nil then
+		print("ChessFunc.DisAppearOneChess Board ============== nil")
+		return 
+	end
+	if var.Appear == nil then
+		print("ChessFunc.DisAppearOneChess Appear ============== nil")
+		return 
+	end
+	var.Appear [x][y] = point
+	var.Board [x][y] = 0
+end
+
+ChessFunc.HorizontalMatch = function (hfb, posX, posY, point)
+	local fbPtr = Fuben.getFubenPtr(hfb)
+	local var = Fuben.getDyanmicVar(fbPtr)
+	if var.Board == nil then
+		print("ChessFunc.HorizontalMatch Board ============== nil")
+		return false
+	end
+	local num = 0
+	for i=1,Col - posY do
+		if point ~= var.Board[posX][posY+i] then
+			break
+		end
+		num = num + 1
+	end
+	for i=1,posY-1 do
+		if point ~= var.Board[posX][posY-i] then
+			break
+		end
+		num = num + 1
+	end
+	if num > 3 then
+		for i=1,Col - posY do
+			if point ~= var.Board[posX][posY+i] then
+				break
+			end
+			ChessFunc.DisAppearOneChess(hfb, posX, posY+i, point)
+		end
+		for i=1,posY-1 do
+			if point ~= var.Board[posX][posY-i] then
+				break
+			end
+			ChessFunc.DisAppearOneChess(hfb, posX, posY-i, point)
+		end
+		return true
+	end
+	return false
+end
+
+ChessFunc.VerticalMatch = function (hfb, posX, posY, point)
+	local fbPtr = Fuben.getFubenPtr(hfb)
+	local var = Fuben.getDyanmicVar(fbPtr)
+	if var.Board == nil then
+		print("ChessFunc.VerticalMatch Board ============== nil")
+		return false
+	end
+	local num = 0
+	for i=1,Row - posX do
+		if point ~= var.Board[posX+i][posY] then
+			break
+		end
+		num = num + 1
+	end
+	for i=1,posX-1 do
+		if point ~= var.Board[posX-i][posY] then
+			break
+		end
+		num = num + 1
+	end
+	if num > 3 then
+		for i=1,Row - posX do
+			if point ~= var.Board[posX+i][posY] then
+				break
+			end
+			ChessFunc.DisAppearOneChess(hfb, posX+i, posY, point)
+		end
+		for i=1,posX-1 do
+			if point ~= var.Board[posX-i][posY] then
+				break
+			end
+			ChessFunc.DisAppearOneChess(hfb, posX-i, posY, point)
+		end
+		return true
+	end
+	return false
+end
+
+ChessFunc.LeftObliqueMatch = function (hfb, posX, posY, point)
+	local fbPtr = Fuben.getFubenPtr(hfb)
+	local var = Fuben.getDyanmicVar(fbPtr)
+	if var.Board == nil then
+		print("ChessFunc.LeftObliqueMatch Board ============== nil")
+		return false
+	end
+	local num = 0
+	local count = math.min(Row - posX, Col - posY)
+	for i=1,count do
+		if point ~= var.Board [posX+i][posY+i] then
+			break
+		end
+		num = num + 1
+	end
+	count = math.min(posX-1, posY-1)
+	for i=1,count do
+		if point ~= var.Board [posX-i][posY-i] then
+			break
+		end
+		num = num + 1
+	end
+	if num > 3 then
+		local count = math.min(Row - posX, Col - posY)
+		for i=1,count do
+			if point ~= var.Board [posX+i][posY+i] then
+				break
+			end
+			ChessFunc.DisAppearOneChess(hfb, posX+i, posY+i, point)
+		end
+		count = math.min(posX-1, posY-1)
+		for i=1,count do
+			if point ~= var.Board [posX-i][posY-i] then
+				break
+			end
+			ChessFunc.DisAppearOneChess(hfb, posX-i, posY-i, point)
+		end
+		return true
+	end
+	return false
+end
+
+ChessFunc.RightObliqueMatch = function (hfb, posX, posY, point)
+	local fbPtr = Fuben.getFubenPtr(hfb)
+	local var = Fuben.getDyanmicVar(fbPtr)
+	if var.Board == nil then
+		print("ChessFunc.RightObliqueMatch Board ============== nil")
+		return false
+	end
+	local num = 0
+	local count = math.min(Row - posX, posY - 1)
+	for i=1,count do
+		if point ~= var.Board[posX+i][posY-i] then
+			break
+		end
+		num = num + 1
+	end
+	count = math.min(posX - 1, Col - posY)
+	for i=1,count do
+		if point ~= var.Board[posX-i][posY+i] then
+			break
+		end
+		num = num + 1
+	end
+	if num > 3 then
+		local count = math.min(Row - posX, posY - 1)
+		for i=1,count do
+			if point ~= var.Board[posX+i][posY-i] then
+				break
+			end
+			ChessFunc.DisAppearOneChess(hfb, posX+i, posY-i, point)
+		end
+		count = math.min(posX - 1, Col - posY)
+		for i=1,count do
+			if point ~= var.Board[posX-i][posY+i] then
+				break
+			end
+			ChessFunc.DisAppearOneChess(hfb, posX-i, posY+i, point)
+		end
+		return true
+	end
+	return false
+end
+
+ChessFunc.Match = function (hfb, x, y, point)
+    if point < 1 or point > 2 then
+		return
+    end
+	local one = ChessFunc.HorizontalMatch(hfb, x, y, point)
+	local two = ChessFunc.VerticalMatch(hfb, x, y, point)
+	local three = ChessFunc.LeftObliqueMatch(hfb, x, y, point)
+	local four = ChessFunc.RightObliqueMatch(hfb, x, y, point)
+	if one or two or three or four then
+		ChessFunc.DisAppearOneChess(hfb, x, y, point)
+	end
+end
+
+ChessFunc.KillOneChess = function (hfb, x, y, point)
+	if point == 0 then
+		return 0
+	end
+	local fbPtr = Fuben.getFubenPtr(hfb)
+	local var = Fuben.getDyanmicVar(fbPtr)
+	if var.Board == nil then
+		print("ChessFunc.KillOneChess Board ============== nil")
+		return 0
+	end
+	if var.Kill == nil then
+		print("ChessFunc.KillOneChess Kill ============== nil")
+		return 0
+	end
+	var.Kill[x][y] = point
+	var.Board[x][y] = 0
+	local num = 1
+	if point == 3 then
+		num = ChessFunc.RedDieChange (hfb, x, y) + 1
+	end
+	return num
+end
+
+ChessFunc.IsNormal = function (posX, posY)
+	if posX < 1 or posX > Row or posY < 1 or posY > Col then
+		return false
+	end
+	return true
+end
+
+ChessFunc.RedDieChange = function (hfb,x, y)
+	local fbPtr = Fuben.getFubenPtr(hfb)
+	local var = Fuben.getDyanmicVar(fbPtr)
+	if var.Board == nil then
+		print("ChessFunc.RedDieChange Board ============== nil")
+		return 0
+	end
+	local num = 0
+	local count = 0
+	if ChessFunc.IsNormal(x, y) then
+		if var.Board[x][y] ~= 0 then
+			var.Kill[x][y] = var.Board[x][y]
+			var.Board[x][y] = 0
+		end
+	end
+	if ChessFunc.IsNormal(x-1, y-1) then
+		count = ChessFunc.KillOneChess(hfb,x-1, y-1, var.Board[x-1][y-1])
+		num = num + count
+	end
+	if ChessFunc.IsNormal(x-1, y) then
+		count = ChessFunc.KillOneChess(hfb,x-1, y, var.Board[x-1][y])
+		num = num + count
+	end
+	if ChessFunc.IsNormal(x-1, y+1) then
+		count = ChessFunc.KillOneChess(hfb,x-1, y+1, var.Board[x-1][y+1])
+		num = num + count
+	end
+	if ChessFunc.IsNormal(x, y-1) then
+		count = ChessFunc.KillOneChess(hfb,x, y-1, var.Board[x][y-1])
+		num = num + count
+	end
+	if ChessFunc.IsNormal(x, y+1) then
+		count = ChessFunc.KillOneChess(hfb,x, y+1, var.Board[x][y+1])
+		num = num + count
+	end
+	if ChessFunc.IsNormal(x+1, y-1) then
+		count = ChessFunc.KillOneChess(hfb,x+1, y-1, var.Board[x+1][y-1])
+		num = num + count
+	end
+	if ChessFunc.IsNormal(x+1, y) then
+		count = ChessFunc.KillOneChess(hfb,x+1, y, var.Board[x+1][y])
+		num = num + count
+	end
+	if ChessFunc.IsNormal(x+1, y+1) then
+		count = ChessFunc.KillOneChess(hfb,x+1, y+1, var.Board[x+1][y+1])
+		num = num + count
+	end
+	for i=1,Row do
+		for j=1,Col do
+			if var.Kill[i][j] ~= 0 then
+				--删除怪物
+				local actors = LuaHelp.getFbActorList(fbPtr)
+				if actors ~= nil then 
+					for t = 1,#actors do
+						local actor = actors[t]
+						LActor.addSceneEffectByPix(actor, ChessConfig.chesseffect.id, ChessConfig.chesseffect.type, ChessConfig.chesseffect.time, 0, ChessConfig.pos[i][j].pixx, ChessConfig.pos[i][j].pixy)
+					end
+				end
+				Fuben.clearMonster(var.Monster[i][j], true)
+				var.Monster[i][j] = 0
+			end
+		end
+	end
+	return num
+end

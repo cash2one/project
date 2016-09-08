@@ -1,0 +1,74 @@
+
+
+
+
+
+
+--#include "tabledump.txt"
+
+local ttsl_award = {}
+
+
+local nStr = ""
+
+function ReadTTSLAward( )
+	-- body
+	local objexcel = CExcelReader:new()
+	if not objexcel then
+		print("objexcel is null")
+		return
+	end
+	objexcel:Init_App()
+	objexcel:OpenRead()
+	local obj = objexcel:LoadSheetByIndex(1)
+	if not obj then
+		print("LoadSheetByIndex失败!")
+		objexcel:Close()
+		objexcel:Quit_App()
+		return
+	end
+	local nCount = objexcel:GetCurrentSheetColCount()
+	local mCount = objexcel:GetCurrentSheetRowCount()
+	print("nCount", nCount)
+	print("mCount", mCount)
+	--local nAwardList = "[%d] = { % s}"
+	--local nAward = ""
+	for i = 2, mCount do
+		--local fubenid_index = tonumber(objexcel:ReadCellAsString(i, 1))
+		local nlayer = tonumber(objexcel:ReadCellAsString(i, 1)) --强化等级
+		local type = tonumber(objexcel:ReadCellAsString(i, 2))
+		local itemid= tonumber(objexcel:ReadCellAsString(i, 3))
+		local itemnum = tonumber(objexcel:ReadCellAsString(i, 4))
+		local rate = tonumber(objexcel:ReadCellAsString(i, 5))
+		local awardgroup = tonumber(objexcel:ReadCellAsString(i, 6))
+		if ttsl_award[nlayer] == nil then
+			ttsl_award[nlayer] = {}
+		end
+		local nIndex = awardgroup + 1
+		if ttsl_award[nlayer][nIndex] == nil then
+			ttsl_award[nlayer][nIndex] = {}
+		end
+		local ntemp = {
+		fubenid_ = nlayer,
+		fuben_diff_ = fuben_diff,
+		type_ = type,
+		itemid_ = itemid,
+		itemnum_ = itemnum,
+		rate_ = rate,
+		gropu_ = awardgroup,
+		}
+		table.insert( ttsl_award[nlayer][nIndex] , ntemp)
+
+	end
+	local str = dump(ttsl_award, true)
+	-- str = string.sub(str, 1, string.len(str) - 1)
+	str = string.format("TTSL_Award_Config = %s\n", str)
+	objexcel:WriteFile("tongtianshilianawardconfig.txt", str)
+	objexcel:Close()
+	objexcel:Quit_App()
+	objexcel:delete()
+end
+----------------------------------------------------------------------------------------
+
+
+

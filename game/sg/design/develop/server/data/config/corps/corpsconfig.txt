@@ -1,0 +1,229 @@
+-- 战队系统配置
+--#include "..\..\language\LangCode.txt" 
+
+corpsconfig = 
+{
+	-- 创建战队所需贝币
+	createcost = 50000,
+
+	-- 退出惩罚时间
+	quittimelimit = 0,
+
+	-- 组队天梯配置
+	zdtt = {
+		-- 副本id
+		fbid = 10,
+		-- 场景id
+		sceneid = 90,
+		-- 位置
+		position = {
+			[1] = {
+				{49, 21}, 
+				{47, 21}, 
+				{48, 22},
+			},
+			[2] = {
+				{19, 14}, 
+				{20, 15}, 
+				{20, 14},
+			},
+		},
+		-- 一队几个人
+		teammembercount = 3,
+		-- 等级现在
+		limitlevel = 31,
+		-- 奖励
+		award = {
+			win_award = {
+				{type = 2, id = 0, count = 3000,  bind = 0},--贝币
+			},
+			lose_award = {
+				{type = 2, id = 0, count = 2000,  bind = 0},--贝币
+			},
+			peace_award = {	
+				{type = 2, id = 0, count = 2000,  bind = 0},--贝币
+			},
+			rank_award = {
+			{
+rank = { 1,1 } , 
+item = { 
+{type = 22, id = 0, count = 10000,  bind = 0},--荣誉
+{type = 5, id = 0, count = 4000,  bind = 0},
+
+ }, 
+ }, 
+{
+rank = { 2,2 } , 
+item = { 
+{type = 22, id = 0, count = 8000,  bind = 0},--荣誉
+{type = 5, id = 0, count = 2000,  bind = 0},
+ }, 
+ }, 
+ {
+rank = { 3,3 } , 
+item = { 
+{type = 22, id = 0, count = 7000,  bind = 0},--荣誉
+{type = 5, id = 0, count = 1000,  bind = 0},
+ }, 
+ }, 
+{
+rank = { 4,5 } , 
+item = { 
+{type = 22, id = 0, count = 6000,  bind = 0},--荣誉
+{type = 5, id = 0, count = 800,  bind = 0},
+ }, 
+ }, 
+{
+rank = { 6,10 } , 
+item = { 
+{type = 22, id = 0, count = 5000,  bind = 0},--荣誉
+{type = 5, id = 0, count = 600,  bind = 0},
+ }, 
+ }, 
+{
+rank = { 11,15 } , 
+item = { 
+{type = 22, id = 0, count = 4500,  bind = 0},--荣誉
+{type = 5, id = 0, count = 500,  bind = 0},
+ }, 
+ }, 
+{
+rank = { 16,25 } , 
+item = { 
+{type = 22, id = 0, count = 4000,  bind = 0},--荣誉
+
+ }, 
+ }, 
+{
+rank = { 26,50 } , 
+item = { 
+{type = 22, id = 0, count = 3500,  bind = 0},--荣誉
+ }, 
+ }, 
+{
+rank = { 51,100 } , 
+item = { 
+{type = 22, id = 0, count = 3000,  bind = 0},--荣誉
+ }, 
+ }, 
+{
+rank = { 101,200 } , 
+item = { 
+{type = 22, id = 0, count = 2500,  bind = 0},--荣誉
+ }, 
+ }, 
+			{
+			rank = { 201,1000 } , 
+			item = { 
+					{type = 22, id = 0, count = 2000,  bind = 0},--荣誉
+					 }, 
+			 }, 
+		
+
+},
+		},
+		buff = {
+			[1] = {
+				modelid = 1,
+				cd = 120,
+				list = {
+					{type=43,id=80,rate=0,value=10000,interval=20,vt=0,buffRate=10000, name="恢复"},
+				},
+			},
+			[2] = {
+				modelid = 2,
+				cd = 120,
+				list = {
+			    	{type=16,id=80,rate=0,value=-2308,interval=20,vt=1,buffRate=10000, name="加速"},
+			    },
+			},
+		},
+		buffpositioncount = 5,
+	},
+	-- 战队商店
+	store = {
+			{
+limitcount = 20 , 
+ item = { id = 26101 , count = 1 , bind = 0},
+ cost = {
+{ type = 1, id = 0 ,count = 60 }, } , 
+-- 购买条件 评级
+ condition = 0 ,
+} ,
+{
+limitcount = 40 , 
+ item = { id = 26111 , count = 1 , bind = 0},
+ cost = {
+{ type = 1, id = 0 ,count = 150 }, 
+} , 
+-- 购买条件 评级
+ condition = 0 ,
+} ,
+{
+limitcount = 10 , 
+ item = { id = 26119 , count = 1 , bind = 0},
+ cost = {
+{ type = 1, id = 0 ,count = 300 }, 
+} , 
+-- 购买条件 评级
+ condition = 0 ,
+} ,
+{
+limitcount = 20 , 
+ item = { id = 26151 , count = 1 , bind = 0},
+ cost = {
+{ type = 1, id = 0 ,count = 300 }, 
+} , 
+-- 购买条件 评级
+ condition = 0 ,
+} ,
+{
+limitcount = 10 , 
+ item = { id = 26152 , count = 1 , bind = 0},
+ cost = {
+{ type = 1, id = 0 ,count = 600 }, 
+} , 
+-- 购买条件 评级
+ condition = 0 ,
+} ,
+{
+limitcount = 1 , 
+ item = { id = 24201 , count = 1 , bind = 0},
+ cost = {
+{ type = 1, id = 0 ,count = 3000 }, 
+} , 
+-- 购买条件 评级
+ condition = 10 ,
+} ,
+{
+limitcount = 1 , 
+ item = { id = 24202 , count = 1 , bind = 0},
+ cost = {
+{ type = 1, id = 0 ,count = 3000 }, 
+} , 
+-- 购买条件 评级
+ condition = 10 ,
+} ,
+{
+limitcount = 1 , 
+ item = { id = 24203 , count = 1 , bind = 0},
+ cost = {
+{ type = 1, id = 0 ,count = 3000 }, 
+} , 
+-- 购买条件 评级
+ condition = 10 ,
+} ,
+{
+limitcount = 1 , 
+ item = { id = 24204 , count = 1 , bind = 0},
+ cost = {
+{ type = 1, id = 0 ,count = 3000 }, 
+} , 
+-- 购买条件 评级
+ condition = 10 ,
+} ,
+
+
+
+	},
+}

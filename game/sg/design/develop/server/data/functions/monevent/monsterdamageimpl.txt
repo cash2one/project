@@ -1,0 +1,38 @@
+function OnMonsterDamage( monster, mid ,val ,sysarg )
+	MonsterDamageDispatch.dispatch(monster, mid ,val ,sysarg)
+end
+
+MonsterDamageDispatch = {}
+
+MonsterDamageDispatch.register = function( mid, fun )
+	mid = tonumber(mid)
+	if mid == nil then return end
+	if fun == nil then return end
+	if MonsterDamageDispatch[mid] == nil then
+		MonsterDamageDispatch[mid] = {}
+		System.registerMonsterDamage(mid,true)
+	end
+	table.insert(MonsterDamageDispatch[mid], fun)
+end
+
+MonsterDamageDispatch.dispatch = function( monster, mid ,val ,sysarg )
+	local calltable = MonsterDamageDispatch[mid]
+	if calltable == nil then return end
+	for i,v in ipairs(calltable) do
+		v(monster, mid ,val ,sysarg)
+	end
+end
+
+MonsterDamageDispatch.unregister = function (monId, proc)  
+  monId = tonumber(monId)   
+  local i
+  local callTable = MonsterDamageDispatch[monId]
+  for i,v in ipairs(callTable) do
+    if callTable[i] == proc then
+      --这里不能从局部table中删除，否则不会修改到MonDieDispatcher中
+      table.remove(MonsterDamageDispatch[monId], i)
+      return true
+    end
+  end
+  return false
+end

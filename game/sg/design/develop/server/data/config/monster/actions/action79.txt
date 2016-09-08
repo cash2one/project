@@ -1,0 +1,25 @@
+--玩法8，B怪物AI
+{
+	id = 79,	--行为ID
+	trigger = 1,	--触发类型，血量为1，时间为2
+	isInit = 1 , --是否执行initSequence的操作
+
+	--与sequence定义相同
+	initSequence =
+	{
+		{ type = 20, duration = 2, target= { { monsterId = 1138, addBuffConfigId = 5},{ monsterId = 1139, addBuffConfigId = 5}, } },
+		{ type = 35, monsterId = 1138, addBuffConfigId = 5,},
+	},
+
+	infos =
+	{
+		{
+			sequId = 1,
+			param = 0,
+			sequence = 
+			{
+				{ type = 20, duration = 2, target= { { monsterId = 1138, addBuffConfigId = 17},{ monsterId = 1139, addBuffConfigId = 17}, } },
+			}
+		},
+	},
+},

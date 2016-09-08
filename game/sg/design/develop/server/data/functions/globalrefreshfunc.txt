@@ -1,0 +1,146 @@
+-- 全局刷新
+
+--#include "data\config\globlerefreshfunconfig.txt"
+GlobalRefreshFuncs = {}
+
+GlobalRefreshFuncs.regList = {}
+
+GlobalRefreshFuncs.registerTimeClock = function (timeClock, func)
+	if timeClock == nil or type(timeClock) ~= "number" or func == nil or type(func) ~= "function" then
+		debug_print("=========================> 全局刷新中该方法未注册成功 timeClock, func", timeClock, func)
+		return
+	end
+	if GlobalRefreshFuncs.regList[timeClock] == nil then
+		GlobalRefreshFuncs.regList[timeClock] = {}
+	end
+	table.insert(GlobalRefreshFuncs.regList[timeClock], func)
+end
+
+GlobalRefreshFuncs.getTimeClockFuncs = function (timeClock)
+	if timeClock == nil then return nil end
+	return GlobalRefreshFuncs.regList[timeClock]
+end
+
+GlobalRefreshFuncs.doTimeClockWake = function (timeClock, actorobj)
+	if timeClock == nil or type(timeClock) ~= "number" then
+		return
+	end
+	if actorobj and type(actorobj) ~= "userdata" then
+		return
+	end
+	local funcs = GlobalRefreshFuncs.regList[timeClock]
+	if funcs == nil then
+		return
+	end
+	debug_print("================================== doTimeClockWake ===================================", timeClock, actorobj, dump(funcs))
+	for k, v in ipairs(funcs) do
+		v(actorobj, timeClock)
+	end
+end
+
+GlobalRefreshFuncs.doActorLogin = function (actorobj)
+	local actorLogoutTime = LActor.getLastLogoutTime(actorobj)
+	local actorLoginTime = LActor.getLoginTime(actorobj)
+	local year = 0
+	local mon = 0
+	local logout_day = 0
+	local login_day = 0
+	local logout_hour = 0
+	local login_hour = 0
+	local min = 0
+	local sec = 0
+	year, mon, logout_day, logout_hour, min, sec = System.timeDecode(actorLogoutTime, year, mon, logout_day, logout_hour, min, sec)
+	year, mon, login_day, login_hour, min, sec = System.timeDecode(actorLoginTime, year, mon, login_day, login_hour, min, sec)
+	debug_print("================================== doActorLogin ===================================", actorLogoutTime, logout_day, logout_hour, login_day, login_hour)
+
+	if login_day == logout_day then
+		local t = login_hour - logout_hour
+		if t > 0 then
+			debug_print("================================== doActorLogin 进行当日正常操作 ===================================", actorLogoutTime, logout_hour, login_hour)
+			local loop = logout_hour + t
+			for i = logout_hour + 1, loop do
+				GlobalRefreshFuncs.doTimeClockWake(i, actorobj)
+			end
+		end
+	end
+end
+
+
+GlobalRefreshFuncs.clearfbcout = function ( actorobj , timeclock )
+	local time_conf = Refresh_config.cleandata[timeclock]
+	if time_conf == nil then
+		debug_print("=================clearfb============配置错误=====", timeclock)
+		return
+	end
+	for k , v in pairs ( time_conf.clearfb ) do
+		LActor.clearOneFubenCout(actorobj ,v )
+	end
+end
+
+GlobalRefreshFuncs.clearquestcout = function ( actorobj , timeclock)
+	if actorobj == nil or timeclock == nil then
+		return
+	end
+	local time_conf = Refresh_config.cleandata[timeclock]
+	if time_conf == nil then
+		return
+	end
+	local nVar = LActor.getStaticVar( actorobj )
+	for k , v in pairs ( time_conf.questtype ) do
+		if v == 3 then
+			if nVar.XuanShangRenWu_Finsh_count ~= nil then
+				nVar.XuanShangRenWu_Finsh_count = nil
+
+				xuanshangrenwu.sendcanAcceptquestlist(actorobj)
+			end
+		end
+	end
+end
+
+-- c++ 调用
+OnTimeClockWake = function (timeClock, actorobj)
+	debug_print("================================== OnTimeClockWake ===================================", timeClock, actorobj)
+	if actorobj == nil then -- 针对全服
+		local actorList = LuaHelp.getAllActorList()
+		if actorList == nil then return end
+		for i = 1, #actorList do
+			GlobalRefreshFuncs.doTimeClockWake(timeClock, actorList[i])
+		end
+	elseif type(actorobj) == "userdata" then
+		GlobalRefreshFuncs.doTimeClockWake(timeClock, actorobj)
+	end
+end
+
+GlobalRefreshFuncs.StarServer = function ( )
+	-- body
+	for k , v in pairs ( Refresh_config.time_conf ) do
+		for i , j in pairs ( v.dothing ) do
+			if j == 1 then
+				GlobalRefreshFuncs.registerTimeClock ( v.time , GlobalRefreshFuncs.clearfbcout)
+			elseif j == 2 then
+				GlobalRefreshFuncs.registerTimeClock ( v.time , GlobalRefreshFuncs.clearquestcout )
+			end
+		end
+	end
+end
+
+
+GlobalRefreshFuncs.StarServer()
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, GlobalRefreshFuncs.doActorLogin)
+
+
+
+
+GlobalRefreshFuncs.JM = function ( actorobj , args)
+	-- body
+	local time = tonumber(args[2])
+	local type = tonumber(args[1])
+	if type == 1 then
+		OnTimeClockWake(time, actorobj)
+	elseif type == 2 then
+		OnTimeClockWake( time )
+	end
+end
+
+GmEventFuncList.register("jm",GlobalRefreshFuncs.JM,1)

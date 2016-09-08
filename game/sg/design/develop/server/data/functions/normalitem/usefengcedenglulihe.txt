@@ -1,0 +1,106 @@
+--lua script
+local FENGCEREWARDINDEX = 30
+local GETREWARDING = 33	--打开抽奖界面标识 
+
+--#include "data\language\LangCode.txt" once
+--#include "data\config\item\FengCeReward.txt" once
+
+function FengCeRewardFunc(sysarg,itemidx,itemPtr,ItemTable)
+  --通知客户端
+  --140 使用成就系统子系统 1
+  if ItemTable.item_id == 1615 then
+		--LActor.sendTipmsg(sysarg,"getRTIntValue:"..LActor.getRTIntValue(sysarg,GETREWARDING),ttTipmsgWindow)
+		--判断是否已打开抽奖界面，防止用户狂点物品
+		if LActor.getRTIntValue(sysarg,GETREWARDING) == 1 then 
+			return 
+		else 
+			LActor.setRTIntValue(sysarg,GETREWARDING,1)
+		end
+		--
+	  local npack = DataPack.allocPacket(sysarg,140,1)  --申请一个数据包
+	  if (npack == nil) then
+	   ----print("npack:nil")
+	   return
+	  end
+	  DataPack.writeByte(npack,16)
+	  local rand = 0
+	  --31保存组数 32保存结果
+	  if(LActor.getRTIntValue(sysarg,FENGCEREWARDINDEX+1) == 0) then
+	    rand = math.random(1,table.getn(FengCeReward))
+	  else
+	    rand = LActor.getRTIntValue(sysarg,FENGCEREWARDINDEX+1)
+	  end
+	  LActor.setRTIntValue(sysarg,FENGCEREWARDINDEX+1,rand)  --记录奖励组数
+	  local c = FengCeReward[rand]
+	  for i=1,16 do
+	    local x = c[i]
+	    ----print(x.itemid)
+	    DataPack.writeWord(npack,x.itemid)
+	    DataPack.writeWord(npack,x.count)
+	    DataPack.writeByte(npack,x.quality)
+	    DataPack.writeByte(npack,x.strong)
+	    DataPack.writeByte(npack,x.bind)
+	  end
+	  local result = 0
+	  if(LActor.getRTIntValue(sysarg,FENGCEREWARDINDEX+2) == 0) then
+	    result = math.random(1,16)
+	  else
+	    result = LActor.getRTIntValue(sysarg,FENGCEREWARDINDEX+2)
+	  end
+	  LActor.setRTIntValue(sysarg,FENGCEREWARDINDEX+2,result)  --记录奖励结果
+
+	  DataPack.writeString(npack,Lang.Item.n1615) --抽奖界面显示
+	  DataPack.writeByte(npack,result)
+	  DataPack.writeShort(npack,1615) --抽奖物品ID
+	  ----print("result:"..result)
+	  DataPack.flush(npack)
+  end
+end
+
+function getFengCeReward(sysarg)
+	  local npack = DataPack.allocPacket(sysarg,140,1)  --申请一个数据包
+	  if (npack == nil) then
+	   ----print("npack:nil")
+	   return
+	  end
+	  DataPack.writeByte(npack,16)
+	  local rand = 0
+	  --31保存组数 32保存结果
+	  if(LActor.getRTIntValue(sysarg,FENGCEREWARDINDEX+1) == 0) then
+	    rand = math.random(1,table.getn(FengCeReward))
+	  else
+	    rand = LActor.getRTIntValue(sysarg,FENGCEREWARDINDEX+1)
+	  end
+	  LActor.setRTIntValue(sysarg,FENGCEREWARDINDEX+1,rand)  --记录奖励组数
+	  local c = FengCeReward[rand]
+	  for i=1,16 do
+	    local x = c[i]
+	    ----print(x.itemid)
+	    DataPack.writeWord(npack,x.itemid)
+	    DataPack.writeWord(npack,x.count)
+	    DataPack.writeByte(npack,x.quality)
+	    DataPack.writeByte(npack,x.strong)
+	    DataPack.writeByte(npack,x.bind)
+	  end
+	  local result = 0
+	  if(LActor.getRTIntValue(sysarg,FENGCEREWARDINDEX+2) == 0) then
+	    result = math.random(1,16)
+	  else
+	    result = LActor.getRTIntValue(sysarg,FENGCEREWARDINDEX+2)
+	  end
+	  LActor.setRTIntValue(sysarg,FENGCEREWARDINDEX+2,result)  --记录奖励结果
+	  DataPack.writeString(npack,Lang.Item.n1615) --抽奖界面显示
+	  DataPack.writeByte(npack,result)
+	  DataPack.writeShort(npack,1615) --抽奖物品ID
+	  ----print("result:"..result)
+	  DataPack.flush(npack)
+end
+
+function FengCeRewardItemsInit(sysarg)
+  for i = 1,table.getn(FengCeRewardItems) do
+	local x = FengCeRewardItems[i]
+	GlobalItemFn[x.item_id] = { func = FengCeRewardFunc, params = x }
+  end
+end
+
+table.insert(InitFnTable,FengCeRewardItemsInit)

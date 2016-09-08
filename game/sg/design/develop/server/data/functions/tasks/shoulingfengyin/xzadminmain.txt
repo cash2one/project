@@ -1,0 +1,100 @@
+﻿--lua script
+--活动：仙灵封印
+--NPC: 军团管理员
+
+--#include "data\language\LangCode.txt" once
+--#include "data\config\task\SLFYConf.txt" once
+--#include "data\config\activity\GuildActivity.txt" once
+--#include "data\functions\tasks\gatherpeach\peachpublic.txt" once
+--#include "data\functions\bifunc.txt" once
+--#include "data\functions\tasks\fengcereward\fcactivefunc.txt" once
+--#include "data\functions\tasks\fudi\fudi_public.txt" once
+
+function XZAdmin_Main(sysarg)
+	--进入军团领地
+	local guildPtr = LActor.getGuildPtr(sysarg)
+	if guildPtr ~= nil then
+		--local str = "\\"..Lang.ScriptTips.f00063.."/@EnterLingDi"   --副本ID
+		local str = Lang.ScriptTips.f00063.."/@EnterLingDi"   --副本ID
+		if FudiPublic.isOpenFudi(guildPtr) then
+			str = str.."\\"..Lang.ScriptTips.fdzz001.."/@enterFudi"
+		end
+		return str
+	else
+		return ""
+	end
+end
+
+--前往军团领地
+function EnterLingDi(sysarg)
+	--未加入军团
+	local guildPtr = LActor.getGuildPtr(sysarg)
+	if guildPtr == nil then
+		LActor.sendTipmsg(sysarg, Lang.TaskTalk.slfy0010, ttMessage)
+		return 
+	end
+
+	-- 检查护送任务状态
+	if LActor.hasState(sysarg, esProtection) then
+    	LActor.sendTipmsg(sysarg, Lang.ScriptTips.sx019, ttMessage)
+    	return 
+  	end
+
+	-- 创建帮派副本
+	local hFuBen = Fuben.createGuildFuBen(GuildActivity.Fbid,0,sysarg)
+	if hFuBen == nil then
+		print( "can't create shoulingfengyin fuben:"..GuildActivity.Fbid )
+		return 
+	end
+
+	LActor.enterGuildFuBen(sysarg,GuildActivity.Sceneid,GuildActivity.startx,GuildActivity.starty)
+
+	local aid = LGuild.getActivityId()
+
+	if aid == 0 then -- 蟠桃盛宴活动
+		-- 触发蟠桃盛宴活跃奖励
+		LActor.triggerTarget(sysarg, enATPanTao)
+		FCActivityHandler.ActivityReward (sysarg)
+		BiFunc.LogEnterPanTao(sysarg)
+	elseif aid == 1 then -- 仙灵封印活动
+		BiFunc.LogEnterFengYin(sysarg)
+	end
+
+
+	LActor.closeNPCDialog(sysarg)
+end
+
+function enterFudi(sysarg)
+	LActor.messageBox(sysarg,LActor.getNpc(sysarg),0,Lang.ScriptTips.fdzz003,Lang.ScriptTips.x00050.."/enterFudiOk",Lang.ScriptTips.x00051.."/enterFudiCancel", "")
+end
+
+function enterFudiOk(sysarg)
+	FudiPublic.enterFudi(sysarg)
+end
+
+function enterFudiCancel(sysarg)
+	-- body
+end
+
+function openFudi(pChar)
+	FudiPublic.openFudi(pChar, 1)
+end
+
+
+function enterYmmy(sysarg)
+	LActor.messageBox(sysarg,LActor.getNpc(sysarg),0,Lang.ScriptTips.ymmy003,Lang.ScriptTips.x00050.."/enterYmmyOk",Lang.ScriptTips.x00051.."/enterYmmyCancel", "")
+end
+
+function enterYmmyOk(sysarg)
+	YmmyPublic.EnterFuben(sysarg)
+end
+
+function enterYmmyCancel(sysarg)
+	-- body
+end
+
+function openYmmy(pChar)
+
+end
+
+table.insert(MainFnTable,XZAdmin_Main)

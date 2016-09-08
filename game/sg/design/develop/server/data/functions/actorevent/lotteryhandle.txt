@@ -1,0 +1,652 @@
+﻿-- 处理抽奖系统相关的操作
+--#include "data\config\lottery\lottery.txt" once --
+--#include "data\config\lottery\lottery_sy.txt" once --
+--#include "data\functions\GlobalDefine.txt" once
+--#include "data\functions\tasks\fengcereward\fcactivefunc.txt" once
+--#include "data\functions\miscfunc.txt" once
+--#include "data\functions\systems\timereward\activityautorun.txt" once
+--#include "data\functions\systems\timereward\activityhandler.txt" once
+
+--#include "data\functions\systems\timereward\magicdragonfunc.txt" once 		--神龙密塔	
+
+LotteryOpFuncList = {}
+
+EventCallDispatcher.HandlerLotteryOp = function (sysarg, args)
+	if args[1] == nil then return end   --
+	local func = LotteryOpFuncList[args[1]]
+	if func ~= nil then
+		func(sysarg, args[2]) 
+	end
+end
+
+LotteryOpFuncList[11] = function(sysarg)
+	local var = LActor.getStaticVar( sysarg )
+	if var.freelotterycount == nil then var.freelotterycount = 1 end
+	local npack = DataPack.allocPacket(sysarg, 36, 11)
+    if npack ~= nil then 
+    	DataPack.writeInt(npack,var.freelotterycount )
+    	DataPack.flush(npack)
+    end
+end
+
+
+-- mj 第几个梦境 ，ltype 哪种形式的抽奖
+LotteryOpFuncList[1] = function( sysarg,dp )
+	local mj = DataPack.readByte(dp)
+	local ltype = DataPack.readByte(dp)
+
+	local priceConf = LotteryConf.price[mj]
+	
+	if priceConf == nil then 
+		print("invalid data， mj:" .. mj)
+		return
+	end
+	local countConf = {1, 10, 50}	-- 抽奖的次数
+	local count = countConf[ltype]
+	local pc = priceConf[ltype]
+
+	if pc == nil then
+		print("invalid data， ltype:" .. ltype)
+		return
+	end
+	-- 检查等级够不够开放
+	local level = LActor.getIntProperty(sysarg, PROP_LEVEL)
+	if level < LotteryConf.openLevel[mj] then 
+		print("user level is not enough" .. level)
+		LActor.sendTipmsg( sysarg, Lang.ScriptTips.cj006, ttMessage )
+		return
+	end
+	-- 探宝10和探宝50次需要检查VIP等级
+	if ltype == 2 or ltype == 3 then
+		if LActor.getVIPLevel( sysarg ) < LotteryConf.vipLevel[ltype-1] then
+			LActor.sendTipmsg( sysarg, Lang.ScriptTips.cj005, ttMessage )
+			return 
+		end
+	end
+
+	-- 检查天珠和物品够不够
+	local fee = 0 	-- 1表示扣物品，2表示扣天珠，0表示物品和天珠都不够, 3表示免费次数
+
+	local var = LActor.getStaticVar( sysarg )
+	if var.freelotterycount == nil then var.freelotterycount = 1 end
+
+
+	--一个物品对应一次抽奖，所以这里是物品个数和priceConf.count对比
+	if ltype == 1 then
+		if mj == 1 and var.freelotterycount == 1 then
+			fee = 3
+			--print("有免费次数为1")
+		elseif LActor.getItemCount(sysarg, LotteryConf.itemId[mj], -1, -1) < count then
+			if LActor.getMoneyCount( sysarg, mtYuanbao ) >= pc then
+				fee = 2
+			else
+				fee = 0
+			end
+		else
+			fee = 1
+		end
+	else
+		if LActor.getMoneyCount( sysarg, mtYuanbao ) >= pc then
+			fee = 2
+		else
+			fee = 0
+		end
+	end
+
+	if fee == 3 then
+		var.freelotterycount = 0
+		--print("免费次数为0")
+	elseif fee == 0 then 
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.cj001, ttMessage)
+		return
+	end	
+
+	-- 检查仓库满了没
+	if LActor.getLotteryStoreRestCount(sysarg) < count then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.cj002, ttMessage)
+		return
+	end
+	-- 扣钱
+	if fee == 1 then
+		LActor.removeItem(sysarg, LotteryConf.itemId[mj], count)
+	elseif fee == 2 then 
+		local mjstr = string.format("%d", mj)
+		local countstr = string.format("%d", count)
+		LActor.changeMoney( sysarg, mtYuanbao, -pc, 1, true, "lottery", mjstr, countstr )
+	end
+	
+	local itemCount = table.getn(LotteryConf.itemList[mj])
+	local zy = LActor.getIntProperty(sysarg, PROP_CAMP)
+	
+	for i = 1, count do
+		-- 每抽一次获得一个物品，放入仓库
+		local r = System.getRandomNumber(10000)
+		local total = 0
+		for j = 1, itemCount do
+			local itemConf = LotteryConf.itemList[mj][j]
+			total = total + itemConf.present
+			if r < total then
+				local isbind = itemConf.bind
+				if fee == 1 or fee == 3 then	-- 用物品抽奖的获得的东西肯定是绑定
+					isbind = 1
+				end
+				LActor.addLotteryItem(sysarg, itemConf.itemid, itemConf.count, 0, itemConf.strong, isbind, itemConf.broadcast)
+				MagicTragonFunc.addMagicTragonItem(sysarg,1,itemConf.itemid,itemConf.count)
+				if itemConf.broadcast then
+					local str = string.format(Lang.ScriptTips.cj003, CampColor[zy], CampShortName[zy], LActor.getName(sysarg), LotteryConf.names[mj] , Item.getColorName(itemConf.itemid))
+					--System.broadcastTipmsg(str, ttScreenCenter)
+					str = string.format(str..Lang.ScriptTips.cj004, mj-1)
+					--System.broadcastTipmsg(str, ttHearsay)
+				end
+				break
+			end
+		end
+	end
+
+	-- 触发探宝活跃事件
+	LActor.triggerTarget( sysarg, enATTanbao, count )
+	FCActivityHandler.ActivityReward (sysarg)
+
+	-- 触发目标成就事件
+	LActor.triggerAchieveEvent(sysarg, 62, mj, 0, 0, count)
+
+	-- 日志
+	local strType = mj == 1 and "xing" or "yue"
+	System.logCounter(
+		LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), 
+		"dream", tostring(count), "",
+		strType, "", "",
+		"", "", lfBI)
+
+end
+
+function GetLotterySYConfIndex()
+	local confIndex = 1
+	--[[if System.getServerId() >= LotterySYConf.mark then
+		confIndex = 2
+	end]]
+	local serverId = System.getServerId()
+    if LotterySYConf.serveropen ~= nil then
+		for j=1,#LotterySYConf.serveropen do
+			if serverId >= LotterySYConf.serveropen[j][1] and serverId <= LotterySYConf.serveropen[j][2] then
+				confIndex = j
+				break
+			end 
+		end
+	end
+	return confIndex
+end
+
+-- 国庆抽宝箱活动
+-- mj 第几个梦境 ，ltype 哪种形式的抽奖
+LotteryOpFuncList[8] = function( sysarg,dp )
+	-- 判断是否活动时间
+	local mj = DataPack.readByte(dp)	
+	local cur_t = System.getCurrMiniTime()
+	local _,Stime,Etime = ONLINEREWARD.GetActivityState(LotterySYConf.qingmingrank.activityId)
+	local _,starttime,endtime = ONLINEREWARD.GetActivityState(LotterySYConf.zhenbaoxuan.activityId)
+	local  Script = Lang.ScriptTips.sy00002  --默认是淘宝树
+	local  Scriptname = LotterySYConf.taobaoshu.name --默认是淘宝树
+	if mj == 3 then
+		--add wupeng 公告处理
+        Script = Lang.ScriptTips.sy00004 --聚宝袋
+        Scriptname = LotterySYConf.qingmingrank.name
+		if cur_t < Stime or cur_t > Etime then
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.sy00003, ttMessage)
+			return
+		end
+		mj = 2
+	elseif mj == 4 then
+		Script = Lang.ScriptTips.sy00005 --珍宝轩
+        Scriptname = LotterySYConf.zhenbaoxuan.name
+        if cur_t < starttime or cur_t > endtime then
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.sy00003, ttMessage)
+			return
+		end
+		mj = 3
+	else
+		if cur_t < LotteryOpFuncList.LotteryStart or cur_t > LotteryOpFuncList.LotteryEnd then
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.sy00003, ttMessage)
+			return 
+		end
+	end
+	
+	local ltype = DataPack.readByte(dp)
+    local mjType = mj   
+    --mj = 1 -- 梦境类型只能为1
+	-- ltype = 1 -- 测试
+	--add wupeng
+	local conf = LotterySYConf
+	local confIndex = GetLotterySYConfIndex()
+	local server_conf = conf.servers[confIndex]
+	
+	local priceConf = LotterySYConf.price[mj]
+	
+	if priceConf == nil then 
+		print("invalid data， mj:" .. mj)
+		return
+	end
+	local countConf = {1, 10, 50}	-- 抽奖的次数
+	local count = countConf[ltype]
+	local pc = priceConf[ltype]
+
+	if pc == nil then
+		print("invalid data， ltype:" .. ltype)
+		return
+	end
+	-- 检查等级够不够开放
+	local level = LActor.getIntProperty(sysarg, PROP_LEVEL)
+	if level < LotterySYConf.openLevel[mj] then 
+		print("user level is not enough" .. level)
+		LActor.sendTipmsg( sysarg, Lang.ScriptTips.cj009, ttMessage )
+		return
+	end
+	-- 探宝10和探宝50次需要检查VIP等级
+	if ltype == 2 or ltype == 3 then
+		if LActor.getVIPLevel( sysarg ) < LotterySYConf.vipLevel[ltype-1] then
+			LActor.sendTipmsg( sysarg, Lang.ScriptTips.cj005, ttMessage )
+			return 
+		end
+	end
+
+	-- 检查天珠和物品够不够
+	local fee = 0 	-- 1表示扣物品，2表示扣天珠，0表示物品和天珠都不够, 
+
+	--一个物品对应一次抽奖，所以这里是物品个数和priceConf.count对比
+	if ltype == 1 then
+		if LActor.getItemCount(sysarg, LotterySYConf.itemId[mj], -1, -1) < count then
+			if LActor.getMoneyCount( sysarg, mtYuanbao ) >= pc then
+				fee = 2
+			else
+				fee = 0
+			end
+		else
+			fee = 1
+		end
+	else
+		if LActor.getMoneyCount( sysarg, mtYuanbao ) >= pc then
+			fee = 2
+		else
+			fee = 0
+		end
+	end
+
+	if fee == 0 then 
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.cj008, ttMessage)
+		return
+	end	
+
+	-- 检查仓库满了没
+	if LActor.getLotteryStoreRestCount(sysarg) < count then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.cj002, ttMessage)
+		return
+	end
+	-- 扣钱
+	if fee == 1 then
+		LActor.removeItem(sysarg, LotterySYConf.itemId[mj], count)
+	elseif fee == 2 then 
+		local mjstr = string.format("%d", mj)
+		local countstr = string.format("%d", count)
+		LActor.changeMoney( sysarg, mtYuanbao, -pc, 128, true, "lottery_sy", mjstr, countstr )
+	end
+	
+	local itemCount = table.getn(server_conf.itemList[mj])
+	local zy = LActor.getIntProperty(sysarg, PROP_CAMP)
+	
+	for i = 1, count do
+		-- 每抽一次获得一个物品，放入仓库
+		local r = System.getRandomNumber(10000)
+		local total = 0
+		for j = 1, itemCount do
+			local itemConf = server_conf.itemList[mj][j]
+			total = total + itemConf.present
+			if r < total then
+				local isbind = itemConf.bind
+				if fee == 1 then	-- 用物品抽奖的获得的东西肯定是绑定
+					isbind = 1
+				end			
+				LActor.addLotteryItemSY(sysarg, itemConf.itemid, itemConf.count, 0, itemConf.strong, isbind, itemConf.broadcast, tonumber(mjType))
+				if itemConf.broadcast then
+					local str = string.format(Lang.ScriptTips.sy00001, CampColor[LActor.getCampId(sysarg)], CampShortName[zy], LActor.getName(sysarg), Scriptname , Item.getColorName(itemConf.itemid))
+					--System.broadcastLevelTipmsg(str, 31, ttScreenCenter)
+					str = string.format(str..Script, mj-1)
+					--System.broadcastLevelTipmsg(str, 31, ttHearsay)
+
+					local actors = LuaHelp.getAllActorList()
+				    if actors ~= nil then
+				      for i=1,#actors do
+				        local actor = actors[i]
+				        System.notifyUpdateLotteryLog(actor)
+				      end
+				    end
+				end
+				break
+			end
+		end
+	end
+
+	--add wupeng 清明节活动，积分处理 ，在相应的活动里面才处理 begin
+    local  nows = System.getCurrMiniTime()    
+	--先查看排行文件是否存在，不存在则创建
+	if  nows >= Stime and nows < Etime then
+		local rank = Ranking.getRanking(LotterySYConf.qingmingrank.CharmRankName)
+
+		if rank == nil then
+		   rank = MiscFunc.InitRank(LotterySYConf.qingmingrank.CharmRankName, LotterySYConf.qingmingrank.CharmRankName, 5, {"aname", "get"})
+		end
+		local aid = LActor.getActorId(sysarg)
+		local name = LActor.getName(sysarg)
+		local point = count
+		local item = Ranking.addItem(rank, aid, point)
+		Ranking.setSub(item, 0, name)
+		if item == nil then   
+	       item = Ranking.updateItem(rank, aid, point)
+	    else    	
+	    	Ranking.save(rank, LotterySYConf.qingmingrank.CharmRankName)
+		end	
+	    
+	    --add wupeng 实时发送抽奖积分排名
+	    local npack = DataPack.allocPacket(sysarg, 138, 110)
+		if npack == nil then return end	
+		local Column = Ranking.getRankItemCount(rank)
+		if Column >= 5 then
+           Column = 5
+		end
+		DataPack.writeInt(npack, Column)
+	    for i=1,Column do
+	    	local rankItem = Ranking.getItemFromIndex(rank, i-1)
+	    	local Aid = Ranking.getId(rankItem)
+			DataPack.writeInt(npack, Aid) -- ID
+			local aname = Ranking.getSub(rankItem, 0)
+			DataPack.writeString(npack, aname) -- 玩家名
+	        
+	        local rankItem = Ranking.getItemPtrFromId(rank, Aid)
+			local point = Ranking.getPoint(rankItem)
+			DataPack.writeInt(npack, point)  --玩家积分			
+	    end
+	    local idx = Ranking.getItemIndexFromId(rank, aid)
+		DataPack.writeInt(npack, idx)
+		local actorrankItem = Ranking.getItemPtrFromId(rank, aid)
+		local actorpoint = Ranking.getPoint(actorrankItem)		
+		DataPack.writeInt(npack, actorpoint)		
+	    DataPack.flush(npack)	    
+		--add wupeng 清明节活动，积分处理 ， 在相应的活动里面才处理 end
+	end
+    
+    --add wupeng 珍宝轩 begin    
+    if nows >= starttime and nows < endtime then
+       LotteryOpFuncList.ZhenBaoXuanfunction(sysarg, count)
+    end
+    --add wupeng 珍宝轩 end 
+end
+
+LotteryOpFuncList.Ranking = function ( sysarg )
+	local rank = Ranking.getRanking(LotterySYConf.qingmingrank.CharmRankName)
+    local actorID = LActor.getActorId(sysarg)
+	local npack = DataPack.allocPacket(sysarg, 138, 110)
+	if npack == nil then return end	
+	local Column = Ranking.getRankItemCount(rank)
+	if Column >= 5 then
+        Column = 5
+	end
+	DataPack.writeInt(npack, Column)
+	for i=1,Column do
+	    local rankItem = Ranking.getItemFromIndex(rank, i-1)
+	    local Aid = Ranking.getId(rankItem)
+		DataPack.writeInt(npack, Aid) -- ID
+		local aname = Ranking.getSub(rankItem, 0)
+		DataPack.writeString(npack, aname) -- 玩家名
+	        
+	    local rankItem = Ranking.getItemPtrFromId(rank, Aid)
+		local point = Ranking.getPoint(rankItem)
+		DataPack.writeInt(npack, point)  --玩家积分
+	end
+	local idx = Ranking.getItemIndexFromId(rank, actorID)
+	DataPack.writeInt(npack, idx)
+	local actorrankItem = Ranking.getItemPtrFromId(rank, actorID)
+	local actorpoint = Ranking.getPoint(actorrankItem)
+	DataPack.writeInt(npack, actorpoint)    
+    DataPack.flush(npack)	
+end
+
+--add wupeng 珍宝轩 begin
+LotteryOpFuncList.ZhenBaoXuanfunction = function ( sysarg, count )
+	local st = LActor.getStaticVar(sysarg)
+	if st == nil then return end
+    if st.zhenbaoxuanpoint == nil then st.zhenbaoxuanpoint = 0 end
+    if st.ZhenBaoXuanState == nil then st.ZhenBaoXuanState = {} end  
+
+    if count == nil then count = 0 end
+   
+    for i=1,#LotterySYConf.zhenbaoxuan.Getpoint do
+    	if count == LotterySYConf.zhenbaoxuan.Getpoint[i][1] then
+    		st.zhenbaoxuanpoint = st.zhenbaoxuanpoint + LotterySYConf.zhenbaoxuan.Getpoint[i][2]
+    	end
+    end
+    --add wupeng 
+    local conf = LotterySYConf.zhenbaoxuan
+	local confIndex = GetLotterySYConfIndex()
+	local Getaward_conf = conf.Getaward[confIndex]
+    --奖品可领取状态
+    for i=1,#Getaward_conf do 
+        if st.ZhenBaoXuanState[i] == nil then st.ZhenBaoXuanState[i] = 0 end     	
+    	if st.zhenbaoxuanpoint >= Getaward_conf[i][1] and st.ZhenBaoXuanState[i] == 0 then
+           st.ZhenBaoXuanState[i] = 1
+    	end
+    end
+
+    local npack = DataPack.allocPacket(sysarg, 138, 156)
+    DataPack.writeInt(npack, st.zhenbaoxuanpoint)
+    for i=1,#Getaward_conf do
+     	DataPack.writeInt(npack, st.ZhenBaoXuanState[i])
+    end 
+    DataPack.flush(npack)
+end
+
+LotteryOpFuncList.GetZhenBaoXuanAward = function ( sysarg, packet )
+    local index = DataPack.readInt(packet)
+	local st = LActor.getStaticVar(sysarg)
+	if st == nil then return end
+    if st.zhenbaoxuanpoint == nil then st.zhenbaoxuanpoint = 0 end
+    if st.ZhenBaoXuanState == nil then st.ZhenBaoXuanState = {} end
+    
+    if st.ZhenBaoXuanState[index] == nil then st.ZhenBaoXuanState[index] = 0 end 
+    
+    --判断是否可以领
+    if st.ZhenBaoXuanState[index] == 0 then
+    	return
+    end
+    --判断是否已经领取
+    if  st.ZhenBaoXuanState[index] == 2 then
+    	LActor.sendTipmsg(sysarg, Lang.ScriptTips.zbx001, ttMessage)
+    	return
+    end
+    --判断背包是否有格子
+    if Item.getBagEmptyGridCount(sysarg) < 1 then
+        LActor.sendTipmsg( sysarg, Lang.ScriptTips.sclib03, ttMessage )
+		return
+    end
+    --add wupeng 
+    local conf = LotterySYConf.zhenbaoxuan
+	local confIndex = GetLotterySYConfIndex()
+	local Getaward_conf = conf.Getaward[confIndex]
+    --置状态给奖励
+    st.ZhenBaoXuanState[index] = 2
+    local itemid = Getaward_conf[index][2] 
+    LActor.addItem(sysarg,itemid,0,0,1,1,"zhenbaoxuan",1) 
+    
+    -- 播放特效
+    local effects = {}
+    local effect = {}
+    effect.type = 1  -- 1为物品,暂时只支持发物品所以写死
+    effect.id = itemid
+    effect.count = 1
+    effects[#effects+1] = effect
+    if #effects > 0 then
+        MiscFunc.PlayItemEffect(sysarg, 11, effects)
+    end
+    local npack = DataPack.allocPacket(sysarg, 138, 156)
+    DataPack.writeInt(npack, st.zhenbaoxuanpoint)
+    for i=1,#Getaward_conf do
+     	DataPack.writeInt(npack, st.ZhenBaoXuanState[i])
+    end 
+    DataPack.flush(npack)
+end
+
+LotteryOpFuncList.ZhenBaoXuanmail = function ( sysarg )	
+ 	local nowtime = System.getCurrMiniTime()
+    local _,starttime,endtime = ONLINEREWARD.GetActivityState(LotterySYConf.zhenbaoxuan.activityId)
+    --print("starttime:"..starttime..", endtime:"..endtime..", nowtime:"..nowtime)
+    if nowtime < endtime then
+        return
+    end
+	local st = LActor.getStaticVar(sysarg)
+	if st == nil then return end
+    if st.zhenbaoxuanpoint == nil then st.zhenbaoxuanpoint = 0 end
+    if st.ZhenBaoXuanState == nil then st.ZhenBaoXuanState = {} end
+    --add wupeng 
+    local conf = LotterySYConf.zhenbaoxuan
+	local confIndex = GetLotterySYConfIndex()
+	local Getaward_conf = conf.Getaward[confIndex]
+
+    --没有领取的奖励处理
+    for i=1,#Getaward_conf do
+    	if st.ZhenBaoXuanState[i] == nil then st.ZhenBaoXuanState[i] = 0 end
+    	if st.ZhenBaoXuanState[i] == 1 then
+    		local itemid = Getaward_conf[i][2] 
+    		--发邮件置状态
+    		System.sendGmMailOffLine(LActor.getActorId(sysarg), Lang.ScriptTips.zbx002 , 1, itemid, 1, 1);
+    		st.ZhenBaoXuanState[i] = 2
+    	end  
+    end    
+end
+--add wupeng 珍宝轩 end
+
+
+LotteryOpFuncList.JuBaoDai = function (  )
+    local sysvar = System.getStaticVar()
+    local  nows = System.getCurrMiniTime() 
+    local _,Stime,Etime = ONLINEREWARD.GetActivityState(LotterySYConf.qingmingrank.activityId)   
+    --add wupeng 
+	if nows < Etime then
+	   return
+    end
+    if LotterySYConf.qingmingrank.awards == nil then    	
+    	return
+    end    
+    local rank = Ranking.getRanking(LotterySYConf.qingmingrank.CharmRankName)
+    local Column = Ranking.getRankItemCount(rank)
+    if Column == 0 then
+    	return
+    end
+    --add wupeng
+    local conf = LotterySYConf.qingmingrank
+	local confIndex = GetLotterySYConfIndex()
+	local awards_conf = conf.awards[confIndex]
+	local point_conf = conf.point[confIndex]
+
+    for i=1,LotterySYConf.qingmingrank.charmcount do
+    	local awards = awards_conf
+    	local rankItem = Ranking.getItemFromIndex(rank, i-1)
+    	local Aid = Ranking.getId(rankItem)
+    	local rankItem = Ranking.getItemPtrFromId(rank, Aid)
+        local point = Ranking.getPoint(rankItem)  --获取玩家积分
+    	local aname = Ranking.getSub(rankItem, 0)
+		local gt = Ranking.getSubInt(rankItem, 1)
+		if gt ~= 2 then -- 未领取，邮件
+			local rankindex = 0
+			for j=1,#awards do
+				if i <= awards[j][1] then 
+					rankindex = j
+					break
+				end
+			end	
+			--mod wupeng 增加排行榜前几名获取奖励最低积分要求 begin
+			local rankpoint = 0
+			if LotterySYConf.qingmingrank.point ~= nil then				
+				for k=1,#point_conf do
+					if i <= point_conf[k][1] then 
+						rankpoint = k
+						break
+					end
+				end	
+		    end
+			
+			local content = string.format(Lang.ActivityMail.content, Lang.ActivityMail.activityName[33], Lang.ActivityMail.childrenName[33])
+			if LotterySYConf.qingmingrank.point ~= nil then
+	            if rankpoint ~= 0 and point >= point_conf[rankpoint][2] then
+				   System.sendGmMailOffLine(aname, content, 1, awards[rankindex][2], 1, 1)
+				else
+	               System.sendGmMailOffLine(aname, Lang.ScriptTips.jbd001, 0, 0, 0, 0)
+			    end
+			else
+				System.sendGmMailOffLine(aname, content, 1, awards[rankindex][2], 1, 1)
+			end
+			Ranking.setSub(rankItem, 1, "2") -- 已领取
+			--mod wupeng 增加排行榜前几名获取奖励最低积分要求 end
+		end
+    end
+    Ranking.clearRanking(rank)
+	Ranking.save(rank, LotterySYConf.qingmingrank.CharmRankName)	
+end
+
+LotteryOpFuncList.OnTime = function ( )
+    --add wupeng 聚宝袋处理 
+    LotteryOpFuncList.JuBaoDai() 
+   
+    local actors = LuaHelp.getAllActorList()
+    if actors ~= nil then
+       for i=1,#actors do
+          local actor = actors[i]
+          --珍宝轩奖励没领取处理
+          LotteryOpFuncList.ZhenBaoXuanmail(actor)          
+       end
+    end   
+	
+end
+
+function openservers( )
+   local openServer = false
+   local serverId = System.getServerId()
+   if LotterySYConf.taobaoshuserveropen == nil then
+	    openServer = true
+	else
+		for j=1,#LotterySYConf.taobaoshuserveropen do
+			if serverId >= LotterySYConf.taobaoshuserveropen[j][1] and serverId <= LotterySYConf.taobaoshuserveropen[j][2] then
+				openServer = true
+				break
+			end 
+		end
+	end
+	return openServer
+end
+
+--add wupeng 一分钟定时器
+table.insert(TimeFnTable, LotteryOpFuncList.OnTime)
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeLottery, EventCallDispatcher.HandlerLotteryOp)
+
+-- 活动时间
+LotteryOpFuncList.LotteryStart = System.toMiniTime(LotterySYConf.startTime)
+LotteryOpFuncList.LotteryEnd = System.toMiniTime(LotterySYConf.endTime)
+
+function CreateTaoBaoShuNpc()
+	local openservers = openservers()
+	if openservers then
+        local fbnpc = Fuben.getNpcPtrByName(LotterySYConf.taobaoshu.scene, LotterySYConf.taobaoshu.name)
+        if fbnpc then return end
+		System.createnpc(LotterySYConf.taobaoshu.name, LotterySYConf.taobaoshu.script, LotterySYConf.taobaoshu.scene,
+			LotterySYConf.taobaoshu.posx, LotterySYConf.taobaoshu.posy, LotterySYConf.taobaoshu.modelid, LotterySYConf.taobaoshu.icon)
+	end
+end
+
+function DestroyTaoBaoShuNpc()
+	local openservers = openservers()
+	if openservers then
+		Fuben.deleteEntity(LotterySYConf.taobaoshu.scene,0,LotterySYConf.taobaoshu.name);
+	end
+end
+
+function testLottery( sysarg )
+	LotteryOpFuncList[8](sysarg)
+end

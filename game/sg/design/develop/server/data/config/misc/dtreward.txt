@@ -1,0 +1,39 @@
+﻿--大厅连续登录奖励配置
+--#include "..\..\language\LangCode.txt"
+
+
+DtRewardConf = {
+	sysFlag = 1, -- 系统开启标志,每次重新开始系统要修改这个标志,默认为不开启
+	rewards = { -- 连续登录领取奖励礼包配置，多少天就配多少个
+	{{ type = 0, id = 18210, count = 1},{ type = 5, id = 0, count = 2000},},--第1天
+	{{ type = 0, id = 18710, count = 1},{ type = 5, id = 0, count = 2500},},--第2天
+	{{ type = 0, id = 18520, count = 1},{ type = 5, id = 0, count = 3000},},--第3天
+	{{ type = 0, id = 18530, count = 1},{ type = 5, id = 0, count = 3500},},--第4天
+	{{ type = 0, id = 18540, count = 1},{ type = 5, id = 0, count = 4000},},--第5天
+	{{ type = 0, id = 18510, count = 1},{ type = 5, id = 0, count = 4500},},--第6天
+	{{ type = 0, id = 18606, count = 1},{ type = 5, id = 0, count = 5000},},--第7天
+	{{ type = 0, id = 18211, count = 1},{ type = 5, id = 0, count = 5500},},--第8天
+	{{ type = 0, id = 18600, count = 1},{ type = 5, id = 0, count = 6000},},--第9天
+	{{ type = 0, id = 18810, count = 1},{ type = 5, id = 0, count = 6500},},--第10天
+	{{ type = 0, id = 18521, count = 1},{ type = 5, id = 0, count = 7000},},--第11天
+	{{ type = 0, id = 18531, count = 1},{ type = 5, id = 0, count = 7500},},--第12天
+	{{ type = 0, id = 18541, count = 1},{ type = 5, id = 0, count = 8000},},--第13天
+	{{ type = 0, id = 18511, count = 1},{ type = 5, id = 0, count = 8500},},--第14天
+	{{ type = 0, id = 18711, count = 1},{ type = 5, id = 0, count = 9000},},--第15天
+	{{ type = 0, id = 18720, count = 1},{ type = 5, id = 0, count = 9500},},--第16天
+	{{ type = 0, id = 18603, count = 1},{ type = 5, id = 0, count = 10000},},--第17天
+	{{ type = 0, id = 18603, count = 1},{ type = 5, id = 0, count = 10500},},--第18天
+	{{ type = 0, id = 18800, count = 1},{ type = 5, id = 0, count = 11000},},--第19天
+	{{ type = 0, id = 18522, count = 1},{ type = 5, id = 0, count = 11500},},--第20天
+	{{ type = 0, id = 18532, count = 1},{ type = 5, id = 0, count = 12000},},--第21天
+	{{ type = 0, id = 18542, count = 1},{ type = 5, id = 0, count = 12500},},--第22天
+	{{ type = 0, id = 18512, count = 1},{ type = 5, id = 0, count = 13000},},--第23天
+	{{ type = 0, id = 18219, count = 1},{ type = 5, id = 0, count = 13500},},--第24天
+	{{ type = 0, id = 18712, count = 1},{ type = 5, id = 0, count = 14000},},--第25天
+	{{ type = 0, id = 18604, count = 1},{ type = 5, id = 0, count = 14500},},--第26天
+	{{ type = 0, id = 18607, count = 1},{ type = 5, id = 0, count = 15000},},--第27天
+	{{ type = 0, id = 18605, count = 1},{ type = 5, id = 0, count = 15500},},--第28天
+	{{ type = 0, id = 18543, count = 1},{ type = 5, id = 0, count = 16000},},--第29天
+	{{ type = 0, id = 18602, count = 1},{ type = 5, id = 0, count = 16500},},--第30天
+	},
+}

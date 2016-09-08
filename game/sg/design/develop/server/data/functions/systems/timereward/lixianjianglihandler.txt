@@ -1,0 +1,185 @@
+--#include "data\functions\systems\timereward\lixianjiangliconf.txt" once
+
+LixianJiangli = {}
+
+LixianJiangli.getInfo = function (sysarg)
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then
+		return
+	end
+	if var.logoutTimes == nil then
+		return
+	end
+	local npack = DataPack.allocPacket(sysarg,138,10)  
+	if npack == nil then return end
+	DataPack.writeInt(npack,var.logoutTimes)
+	DataPack.writeInt(npack,var.logoutexp)
+	DataPack.writeInt(npack,#LixianJiangli_Conf.pay_type)
+	for i,v in ipairs(LixianJiangli_Conf.pay_type) do
+		--DataPack.writeInt(npack,v[1])
+		DataPack.writeString(npack,tostring(v[1]))
+		DataPack.writeInt(npack,v[2])
+		DataPack.writeString(npack,tostring(v[3]))
+	end
+	--DataPack.writeInt(npack,LixianJiangli_Conf.need_gold)
+	DataPack.writeInt(npack,#var.logouteven)
+	for i=#var.logouteven,1,-1 do
+		DataPack.writeString(npack,var.logouteven[i])
+	end
+	DataPack.flush(npack)
+	
+end
+LixianJiangli.getReward = function ( sysarg, packet)
+
+	local index = DataPack.readInt(packet)
+	--print("---领取离线经验",index)
+	--local index = 1
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then
+		return
+	end
+	if index > #LixianJiangli_Conf.pay_type then
+		return
+	end
+	if var.logoutTimes == nil or var.logoutTimes < 3600 then
+		return
+	end
+	local beishu, type, rate = LixianJiangli_Conf.pay_type[index][1],LixianJiangli_Conf.pay_type[index][2],LixianJiangli_Conf.pay_type[index][3]
+	local  consume = math.floor(math.floor(var.logoutTimes/60) * rate) 
+	if consume <= 1 then
+		consume = 1
+	end
+	local add_exp = math.floor(var.logoutexp * LixianJiangli_Conf.pay_type[index][1])
+	--print("----type",type)
+	if type == 2 then --vip等级
+		if LActor.getVIPLevel(sysarg) < rate then
+			return
+		end
+	elseif type == 3 then  --元宝
+		local user_yuanbao = LActor.getMoneyCount(sysarg, mtYuanbao)
+		--判断元宝是否足够
+		if consume > user_yuanbao then
+	   		--LActor.sendTipmsg( sysarg, "天珠不足，购买失败!", ttMessage )
+	   		LActor.SendGeneralTips(sysarg, 1, mtYuanbao, 0)
+		    return 
+		end
+		LActor.changeMoney(sysarg, 3, -consume, 1, true, "lixianjingyanreward", "")
+
+	elseif type == 4 then  --铜钱
+		local user_tongqian = LActor.getMoneyCount(sysarg, 0)
+		--判断铜钱是否足够
+		if consume > user_tongqian then
+	   		LActor.SendGeneralTips(sysarg, 1, 0, 0)
+		    return 
+		end
+		LActor.changeMoney(sysarg, 0, -consume, 1, true, "lixianjingyanreward", "")
+	elseif type == 5 then  --玉佩
+		local user_yupei = LActor.getMoneyCount(sysarg, 2)
+		--判断玉佩是否足够
+		if consume > user_yupei then
+	   		--LActor.sendTipmsg( sysarg, "天珠不足，购买失败!", ttMessage )
+	   		LActor.SendGeneralTips(sysarg, 1, 2, 0)
+		    return 
+		end
+		LActor.changeMoney(sysarg, 2, -consume, 1, true, "lixianjingyanreward", "")
+	end
+	
+	--print("===获得离线经验",add_exp)
+	LActor.addExp(sysarg, add_exp, 215, 0)
+	var.logoutTimes = 0
+	var.logoutexp = 0
+end
+LixianJiangli.create_event = function()
+	local ret = {}
+	local count = #LixianJiangli_Conf.event
+	local num = 0
+	while true do
+		local rands = System.getRandomNumber(count) + 1
+		if ret[rands] == nil then
+			ret[rands] = 1
+			num = num + 1
+		end
+		if num >= 4 then
+			break
+		end
+	end
+	return ret
+end
+LixianJiangli.login = function ( sysarg )
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then
+		return
+	end
+	if var.logoutTimes == nil then
+		 var.logouteven = {}
+		 var.logoutTimes = 0
+		 var.logoutexp = 0
+	end
+	local li_times = 0
+	if LActor.getLastLogoutTime(sysarg) == 0 then
+		return
+	end
+	li_times =System.getCurrMiniTime() - LActor.getLastLogoutTime(sysarg)	--上次下线的时间
+	
+	local flag = false
+	if var.logoutTimes + li_times > 43200 then
+		li_times = 43200 - var.logoutTimes
+		flag = true
+	end
+	if li_times < 60  then
+		if flag == true then
+			var.logoutTimes = 43200
+		end
+		return
+	end
+	local level = LActor.getLevel(sysarg)
+	if not LixianJiangli_Conf.level_exp[level] then
+		return
+	end
+	local add_exp = math.floor(li_times/60) * LixianJiangli_Conf.level_exp[level]
+	local last_time = var.logoutTimes
+	var.logoutexp = var.logoutexp + add_exp
+	var.logoutTimes = var.logoutTimes + li_times
+	
+	--生成趣闻事件
+	--if var.logoutTimes >= 3600 then
+		local b = math.floor(li_times/3600)
+		if b == 0 then
+			b = 1
+		end
+		local add_total_exp = 0
+		if last_time < 3600 then
+			add_total_exp = var.logoutexp
+		else
+			add_total_exp = add_exp
+		end
+		local count1 = math.floor(add_total_exp/8)
+		local count2 = math.floor(add_total_exp/4) - math.floor(add_total_exp/8)
+		if #var.logouteven >= 12 then
+			for i=1,#var.logouteven do
+				var.logouteven[i] = var.logouteven[i+4]
+				if i == 8 then
+					break
+				end
+			end
+		end
+		local events = LixianJiangli.create_event()
+		local tmp = 1
+		for index,_ in pairs(events) do
+			local rand_a = System.getRandomNumber(20) + 1
+			local x = rand_a * b
+			local y =  System.getRandomNumber(count1) + count2
+			local str = LixianJiangli_Conf.event[index]
+			local str1 = string.format(str,x,y)
+ 			if #var.logouteven >= 12 then
+ 				var.logouteven[8+tmp] = str1
+ 				tmp = tmp + 1
+ 				
+			else
+				var.logouteven[#var.logouteven+1] = str1		
+			end
+		end
+	--end
+
+end
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, LixianJiangli.login)

@@ -1,0 +1,1075 @@
+﻿ShangJinSet = {
+  NextInterval = 10, --下一波的间隔
+  limitLevel = 25, --进入级数
+  BuffType = 92, --赏金buff类型
+  buffValue = 0, --buff值
+  buffTimes = 1, --buff次数
+  interval = 15, --buff时间
+  buffName = "赏金", --buff名字
+  maxyuanbao = 0, --最大天珠获取量
+  maxbinyingliang = 7000, --最大银两获得量
+  CLEARMAPID = {1052},  --活动结束清除人物场景ID1 
+  RETURNMAPID = 1052, --返回的地图id
+  RETURNMAPX = 10, --返回地图的x坐标
+  RETURNMAPY = 8, --返回地图的y坐标
+  LimitTime = {350,320,210,190,180,170,160,150,140,130}, -- 副本第几波剩余时间,秒
+  --GameStartTime = 20, --游戏开始时间  游戏时间在开始时间和结束时间里面取一个随机
+  --GameEndTime = 60, --游戏结束时间值
+  GameTime = {30,32,34,36,38,40,42,44,46,48,50,52,54,56,58,60},
+  Fbid = 8, --副本id
+  Scene = 1052, --场景id
+  nx = 9, --进入场景开始x坐标
+  ny = 8, --进入场景开始y坐标
+}
+ShangJinkillMonSet = {
+{
+	killmoncount = 5,  --杀小于10个怪时,buff时间为15秒
+	buffTimes = 10,
+},
+{
+	killmoncount = 10, --杀小于20个怪时,buff时间为15秒
+	buffTimes = 8,
+},
+{
+	killmoncount = 15, --杀小于20个怪时,buff时间为15秒
+	buffTimes = 6,
+},
+{
+	killmoncount = 1000, --杀小于20个怪时,buff时间为15秒
+	buffTimes = 4,
+},
+
+}
+ShangJinMonster = {
+
+	{
+	monsterId = 103, --怪物id
+	posX1 = 10, --怪物x坐标范围
+	posX2 = 20,
+	posY1 = 16,
+	posY2 = 19,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 5, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 108, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 1, --第几波怪
+	}, 
+	{
+	monsterId = 103, --怪物id
+	posX1 = 16, --怪物x坐标范围
+	posX2 = 28,
+	posY1 = 19,
+	posY2 = 22,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 10, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 108, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 1, --第几波怪
+	},
+	{
+	monsterId = 103, --怪物id
+	posX1 = 28, --怪物x坐标范围
+	posX2 = 29,
+	posY1 = 17,
+	posY2 = 18,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 108, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 1, --第几波怪
+	}, 
+	{
+	monsterId = 103, --怪物id
+	posX1 = 29, --怪物x坐标范围
+	posX2 = 30,
+	posY1 = 16,
+	posY2 = 17,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 108, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 1, --第几波怪
+	}, 
+	{
+	monsterId = 103, --怪物id
+	posX1 = 31, --怪物x坐标范围
+	posX2 = 32,
+	posY1 = 14,
+	posY2 = 15,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 108, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 1, --第几波怪
+	}, 
+	{
+	monsterId = 103, --怪物id
+	posX1 = 33, --怪物x坐标范围
+	posX2 = 34,
+	posY1 = 12,
+	posY2 = 13,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 108, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 1, --第几波怪
+	}, 
+	{
+	monsterId = 103, --怪物id
+	posX1 = 35, --怪物x坐标范围
+	posX2 = 36,
+	posY1 = 10,
+	posY2 = 11,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 108, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 1, --第几波怪
+	},
+	{
+	monsterId = 108, --怪物id
+	posX1 = 39, --怪物x坐标范围
+	posX2 = 40,
+	posY1 = 5,
+	posY2 = 6,
+	monsterYuanBao = 3600, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "true", --是否boss 是,打死时的处理不同
+	ShJYuanBao = 0, --递增额外的天珠
+	bossstep = 1, --第几波怪
+	}, 
+	{
+	monsterId = 98, --怪物id
+	posX1 = 10, --怪物x坐标范围
+	posX2 = 20,
+	posY1 = 16,
+	posY2 = 19,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 5, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 109, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 2, --第几波怪
+	}, 
+	{
+	monsterId = 98, --怪物id
+	posX1 = 16, --怪物x坐标范围
+	posX2 = 28,
+	posY1 = 19,
+	posY2 = 22,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 10, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 109, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 2, --第几波怪
+	},
+	{
+	monsterId = 98, --怪物id
+	posX1 = 28, --怪物x坐标范围
+	posX2 = 29,
+	posY1 = 17,
+	posY2 = 18,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 109, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 2, --第几波怪
+	}, 
+	{
+	monsterId = 98, --怪物id
+	posX1 = 29, --怪物x坐标范围
+	posX2 = 30,
+	posY1 = 16,
+	posY2 = 17,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 109, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 2, --第几波怪
+	}, 
+	{
+	monsterId = 98, --怪物id
+	posX1 = 31, --怪物x坐标范围
+	posX2 = 32,
+	posY1 = 14,
+	posY2 = 15,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 109, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 2, --第几波怪
+	}, 
+	{
+	monsterId = 98, --怪物id
+	posX1 = 33, --怪物x坐标范围
+	posX2 = 34,
+	posY1 = 12,
+	posY2 = 13,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 109, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 2, --第几波怪
+	}, 
+	{
+	monsterId = 98, --怪物id
+	posX1 = 35, --怪物x坐标范围
+	posX2 = 36,
+	posY1 = 10,
+	posY2 = 11,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 109, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 2, --第几波怪
+	},
+	{
+	monsterId = 109, --怪物id
+	posX1 = 39, --怪物x坐标范围
+	posX2 = 40,
+	posY1 = 5,
+	posY2 = 6,
+	monsterYuanBao = 3600, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "true", --是否boss 是,打死时的处理不同
+	ShJYuanBao = 0, --递增额外的天珠
+	bossstep = 2, --第几波怪
+	}, 
+	{
+	monsterId = 104, --怪物id
+	posX1 = 10, --怪物x坐标范围
+	posX2 = 20,
+	posY1 = 16,
+	posY2 = 19,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 5, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 110, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 3, --第几波怪
+	}, 
+	{
+	monsterId = 104, --怪物id
+	posX1 = 16, --怪物x坐标范围
+	posX2 = 28,
+	posY1 = 19,
+	posY2 = 22,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 10, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 110, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 3, --第几波怪
+	},
+	{
+	monsterId = 104, --怪物id
+	posX1 = 28, --怪物x坐标范围
+	posX2 = 29,
+	posY1 = 17,
+	posY2 = 18,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 110, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 3, --第几波怪
+	}, 
+	{
+	monsterId = 104, --怪物id
+	posX1 = 29, --怪物x坐标范围
+	posX2 = 30,
+	posY1 = 16,
+	posY2 = 17,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 110, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 3, --第几波怪
+	}, 
+	{
+	monsterId = 104, --怪物id
+	posX1 = 31, --怪物x坐标范围
+	posX2 = 32,
+	posY1 = 14,
+	posY2 = 15,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 110, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 3, --第几波怪
+	}, 
+	{
+	monsterId = 104, --怪物id
+	posX1 = 33, --怪物x坐标范围
+	posX2 = 34,
+	posY1 = 12,
+	posY2 = 13,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 110, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 3, --第几波怪
+	}, 
+	{
+	monsterId = 104, --怪物id
+	posX1 = 35, --怪物x坐标范围
+	posX2 = 36,
+	posY1 = 10,
+	posY2 = 11,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 110, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 3, --第几波怪
+	},
+	{
+	monsterId = 110, --怪物id
+	posX1 = 39, --怪物x坐标范围
+	posX2 = 40,
+	posY1 = 5,
+	posY2 = 6,
+	monsterYuanBao = 3600, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "true", --是否boss 是,打死时的处理不同
+	ShJYuanBao = 0, --递增额外的天珠
+	bossstep = 3, --第几波怪
+	}, 
+		{
+	monsterId = 99, --怪物id
+	posX1 = 10, --怪物x坐标范围
+	posX2 = 20,
+	posY1 = 16,
+	posY2 = 19,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 5, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 111, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 4, --第几波怪
+	}, 
+	{
+	monsterId = 99, --怪物id
+	posX1 = 16, --怪物x坐标范围
+	posX2 = 28,
+	posY1 = 19,
+	posY2 = 22,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 10, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 111, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 4, --第几波怪
+	},
+	{
+	monsterId = 99, --怪物id
+	posX1 = 28, --怪物x坐标范围
+	posX2 = 29,
+	posY1 = 17,
+	posY2 = 18,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 111, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 4, --第几波怪
+	}, 
+	{
+	monsterId = 99, --怪物id
+	posX1 = 29, --怪物x坐标范围
+	posX2 = 30,
+	posY1 = 16,
+	posY2 = 17,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 111, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 4, --第几波怪
+	}, 
+	{
+	monsterId = 99, --怪物id
+	posX1 = 31, --怪物x坐标范围
+	posX2 = 32,
+	posY1 = 14,
+	posY2 = 15,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 111, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 4, --第几波怪
+	}, 
+	{
+	monsterId = 99, --怪物id
+	posX1 = 33, --怪物x坐标范围
+	posX2 = 34,
+	posY1 = 12,
+	posY2 = 13,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 111, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 4, --第几波怪
+	}, 
+	{
+	monsterId = 99, --怪物id
+	posX1 = 35, --怪物x坐标范围
+	posX2 = 36,
+	posY1 = 10,
+	posY2 = 11,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 111, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 4, --第几波怪
+	},
+	{
+	monsterId = 111, --怪物id
+	posX1 = 39, --怪物x坐标范围
+	posX2 = 40,
+	posY1 = 5,
+	posY2 = 6,
+	monsterYuanBao = 3600, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "true", --是否boss 是,打死时的处理不同
+	ShJYuanBao = 0, --递增额外的天珠
+	bossstep = 4, --第几波怪
+	}, 
+	{
+	monsterId = 105, --怪物id
+	posX1 = 10, --怪物x坐标范围
+	posX2 = 20,
+	posY1 = 16,
+	posY2 = 19,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 5, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 112, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 5, --第几波怪
+	}, 
+	{
+	monsterId = 105, --怪物id
+	posX1 = 16, --怪物x坐标范围
+	posX2 = 28,
+	posY1 = 19,
+	posY2 = 22,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 10, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 112, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 5, --第几波怪
+	},
+	{
+	monsterId = 105, --怪物id
+	posX1 = 28, --怪物x坐标范围
+	posX2 = 29,
+	posY1 = 17,
+	posY2 = 18,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 112, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 5, --第几波怪
+	}, 
+	{
+	monsterId = 105, --怪物id
+	posX1 = 29, --怪物x坐标范围
+	posX2 = 30,
+	posY1 = 16,
+	posY2 = 17,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 112, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 5, --第几波怪
+	}, 
+	{
+	monsterId = 105, --怪物id
+	posX1 = 31, --怪物x坐标范围
+	posX2 = 32,
+	posY1 = 14,
+	posY2 = 15,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 112, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 5, --第几波怪
+	}, 
+	{
+	monsterId = 105, --怪物id
+	posX1 = 33, --怪物x坐标范围
+	posX2 = 34,
+	posY1 = 12,
+	posY2 = 13,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 112, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 5, --第几波怪
+	}, 
+	{
+	monsterId = 105, --怪物id
+	posX1 = 35, --怪物x坐标范围
+	posX2 = 36,
+	posY1 = 10,
+	posY2 = 11,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 112, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 5, --第几波怪
+	},
+	{
+	monsterId = 112, --怪物id
+	posX1 = 39, --怪物x坐标范围
+	posX2 = 40,
+	posY1 = 5,
+	posY2 = 6,
+	monsterYuanBao = 3600, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "true", --是否boss 是,打死时的处理不同
+	ShJYuanBao = 0, --递增额外的天珠
+	bossstep = 5, --第几波怪
+	}, 
+		{
+	monsterId = 100, --怪物id
+	posX1 = 10, --怪物x坐标范围
+	posX2 = 20,
+	posY1 = 16,
+	posY2 = 19,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 5, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 113, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 6, --第几波怪
+	}, 
+	{
+	monsterId = 100, --怪物id
+	posX1 = 16, --怪物x坐标范围
+	posX2 = 28,
+	posY1 = 19,
+	posY2 = 22,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 10, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 113, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 6, --第几波怪
+	},
+	{
+	monsterId = 100, --怪物id
+	posX1 = 28, --怪物x坐标范围
+	posX2 = 29,
+	posY1 = 17,
+	posY2 = 18,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 113, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 6, --第几波怪
+	}, 
+	{
+	monsterId = 100, --怪物id
+	posX1 = 29, --怪物x坐标范围
+	posX2 = 30,
+	posY1 = 16,
+	posY2 = 17,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 113, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 6, --第几波怪
+	}, 
+	{
+	monsterId = 100, --怪物id
+	posX1 = 31, --怪物x坐标范围
+	posX2 = 32,
+	posY1 = 14,
+	posY2 = 15,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 113, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 6, --第几波怪
+	}, 
+	{
+	monsterId = 100, --怪物id
+	posX1 = 33, --怪物x坐标范围
+	posX2 = 34,
+	posY1 = 12,
+	posY2 = 13,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 113, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 6, --第几波怪
+	}, 
+	{
+	monsterId = 100, --怪物id
+	posX1 = 35, --怪物x坐标范围
+	posX2 = 36,
+	posY1 = 10,
+	posY2 = 11,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 113, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 6, --第几波怪
+	},
+	{
+	monsterId = 113, --怪物id
+	posX1 = 39, --怪物x坐标范围
+	posX2 = 40,
+	posY1 = 5,
+	posY2 = 6,
+	monsterYuanBao = 3600, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "true", --是否boss 是,打死时的处理不同
+	ShJYuanBao = 0, --递增额外的天珠
+	bossstep = 6, --第几波怪
+	},  
+	{
+	monsterId = 106, --怪物id
+	posX1 = 10, --怪物x坐标范围
+	posX2 = 20,
+	posY1 = 16,
+	posY2 = 19,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 5, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 114, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 7, --第几波怪
+	}, 
+	{
+	monsterId = 106, --怪物id
+	posX1 = 16, --怪物x坐标范围
+	posX2 = 28,
+	posY1 = 19,
+	posY2 = 22,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 10, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 114, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 7, --第几波怪
+	},
+	{
+	monsterId = 106, --怪物id
+	posX1 = 28, --怪物x坐标范围
+	posX2 = 29,
+	posY1 = 17,
+	posY2 = 18,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 114, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 7, --第几波怪
+	}, 
+	{
+	monsterId = 106, --怪物id
+	posX1 = 29, --怪物x坐标范围
+	posX2 = 30,
+	posY1 = 16,
+	posY2 = 17,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 114, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 7, --第几波怪
+	}, 
+	{
+	monsterId = 106, --怪物id
+	posX1 = 31, --怪物x坐标范围
+	posX2 = 32,
+	posY1 = 14,
+	posY2 = 15,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 114, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 7, --第几波怪
+	}, 
+	{
+	monsterId = 106, --怪物id
+	posX1 = 33, --怪物x坐标范围
+	posX2 = 34,
+	posY1 = 12,
+	posY2 = 13,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 114, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 7, --第几波怪
+	}, 
+	{
+	monsterId = 106, --怪物id
+	posX1 = 35, --怪物x坐标范围
+	posX2 = 36,
+	posY1 = 10,
+	posY2 = 11,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 114, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 7, --第几波怪
+	},
+	{
+	monsterId = 114, --怪物id
+	posX1 = 39, --怪物x坐标范围
+	posX2 = 40,
+	posY1 = 5,
+	posY2 = 6,
+	monsterYuanBao = 3600, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "true", --是否boss 是,打死时的处理不同
+	ShJYuanBao = 0, --递增额外的天珠
+	bossstep = 7, --第几波怪
+	}, 
+		{
+	monsterId = 101, --怪物id
+	posX1 = 10, --怪物x坐标范围
+	posX2 = 20,
+	posY1 = 16,
+	posY2 = 19,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 5, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 115, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 8, --第几波怪
+	}, 
+	{
+	monsterId = 101, --怪物id
+	posX1 = 16, --怪物x坐标范围
+	posX2 = 28,
+	posY1 = 19,
+	posY2 = 22,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 10, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 115, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 8, --第几波怪
+	},
+	{
+	monsterId = 101, --怪物id
+	posX1 = 28, --怪物x坐标范围
+	posX2 = 29,
+	posY1 = 17,
+	posY2 = 18,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 115, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 8, --第几波怪
+	}, 
+	{
+	monsterId = 101, --怪物id
+	posX1 = 29, --怪物x坐标范围
+	posX2 = 30,
+	posY1 = 16,
+	posY2 = 17,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 115, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 8, --第几波怪
+	}, 
+	{
+	monsterId = 101, --怪物id
+	posX1 = 31, --怪物x坐标范围
+	posX2 = 32,
+	posY1 = 14,
+	posY2 = 15,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 115, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 8, --第几波怪
+	}, 
+	{
+	monsterId = 101, --怪物id
+	posX1 = 33, --怪物x坐标范围
+	posX2 = 34,
+	posY1 = 12,
+	posY2 = 13,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 115, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 8, --第几波怪
+	}, 
+	{
+	monsterId = 101, --怪物id
+	posX1 = 35, --怪物x坐标范围
+	posX2 = 36,
+	posY1 = 10,
+	posY2 = 11,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 115, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 8, --第几波怪
+	},
+	{
+	monsterId = 115, --怪物id
+	posX1 = 39, --怪物x坐标范围
+	posX2 = 40,
+	posY1 = 5,
+	posY2 = 6,
+	monsterYuanBao = 3600, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "true", --是否boss 是,打死时的处理不同
+	ShJYuanBao = 0, --递增额外的天珠
+	bossstep = 8, --第几波怪
+	}, 
+	{
+	monsterId = 107, --怪物id
+	posX1 = 10, --怪物x坐标范围
+	posX2 = 20,
+	posY1 = 16,
+	posY2 = 19,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 5, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 116, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 9, --第几波怪
+	}, 
+	{
+	monsterId = 107, --怪物id
+	posX1 = 16, --怪物x坐标范围
+	posX2 = 28,
+	posY1 = 19,
+	posY2 = 22,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 10, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 116, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 9, --第几波怪
+	},
+	{
+	monsterId = 107, --怪物id
+	posX1 = 28, --怪物x坐标范围
+	posX2 = 29,
+	posY1 = 17,
+	posY2 = 18,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 116, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 9, --第几波怪
+	}, 
+	{
+	monsterId = 107, --怪物id
+	posX1 = 29, --怪物x坐标范围
+	posX2 = 30,
+	posY1 = 16,
+	posY2 = 17,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 116, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 9, --第几波怪
+	}, 
+	{
+	monsterId = 107, --怪物id
+	posX1 = 31, --怪物x坐标范围
+	posX2 = 32,
+	posY1 = 14,
+	posY2 = 15,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 116, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 9, --第几波怪
+	}, 
+	{
+	monsterId = 107, --怪物id
+	posX1 = 33, --怪物x坐标范围
+	posX2 = 34,
+	posY1 = 12,
+	posY2 = 13,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 116, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 9, --第几波怪
+	}, 
+	{
+	monsterId = 107, --怪物id
+	posX1 = 35, --怪物x坐标范围
+	posX2 = 36,
+	posY1 = 10,
+	posY2 = 11,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 116, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 9, --第几波怪
+	},
+	{
+	monsterId = 116, --怪物id
+	posX1 = 39, --怪物x坐标范围
+	posX2 = 40,
+	posY1 = 5,
+	posY2 = 6,
+	monsterYuanBao = 3600, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "true", --是否boss 是,打死时的处理不同
+	ShJYuanBao = 0, --递增额外的天珠
+	bossstep = 9, --第几波怪
+	},  	
+		{
+	monsterId = 102, --怪物id
+	posX1 = 10, --怪物x坐标范围
+	posX2 = 20,
+	posY1 = 16,
+	posY2 = 19,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 5, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 117, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 10, --第几波怪
+	}, 
+	{
+	monsterId = 102, --怪物id
+	posX1 = 16, --怪物x坐标范围
+	posX2 = 28,
+	posY1 = 19,
+	posY2 = 22,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 10, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 117, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 10, --第几波怪
+	},
+	{
+	monsterId = 102, --怪物id
+	posX1 = 28, --怪物x坐标范围
+	posX2 = 29,
+	posY1 = 17,
+	posY2 = 18,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 117, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 10, --第几波怪
+	}, 
+	{
+	monsterId = 102, --怪物id
+	posX1 = 29, --怪物x坐标范围
+	posX2 = 30,
+	posY1 = 16,
+	posY2 = 17,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 117, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 10, --第几波怪
+	}, 
+	{
+	monsterId = 102, --怪物id
+	posX1 = 31, --怪物x坐标范围
+	posX2 = 32,
+	posY1 = 14,
+	posY2 = 15,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 117, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 10, --第几波怪
+	}, 
+	{
+	monsterId = 102, --怪物id
+	posX1 = 33, --怪物x坐标范围
+	posX2 = 34,
+	posY1 = 12,
+	posY2 = 13,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 117, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 10, --第几波怪
+	}, 
+	{
+	monsterId = 102, --怪物id
+	posX1 = 35, --怪物x坐标范围
+	posX2 = 36,
+	posY1 = 10,
+	posY2 = 11,
+	monsterYuanBao = 210, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "false", --是否boss 是,打死时的处理不同
+	bossid = 117, --召唤boss的id
+	ShJYuanBao = 25, --递增额外的天珠
+	bossstep = 10, --第几波怪
+	},
+	{
+	monsterId = 117, --怪物id
+	posX1 = 39, --怪物x坐标范围
+	posX2 = 40,
+	posY1 = 5,
+	posY2 = 6,
+	monsterYuanBao = 3600, --怪物绑定天珠
+	nCount = 1, --怪物数量
+	bboss = "true", --是否boss 是,打死时的处理不同
+	ShJYuanBao = 0, --递增额外的天珠
+	bossstep = 10, --第几波怪
+	},  	
+}

@@ -1,0 +1,29 @@
+﻿{
+	id = 44965,
+	name = Lang.Item.n44965,
+	desc = Lang.Item.i44965,
+	type = 82,
+    sellType = 82,			
+	icon = 1036,
+	shape = {0,0,0,0,0,0,0,0},
+	color = 3,
+	dura = 0,
+	dup = 99,
+	colGroup = 0,
+	dealType = 0,
+	dealPrice = 0,
+	time = 0,
+	suitId = 0,
+	staitcAttrs = {  
+	},
+	strongAttrs = {  
+	},
+	flags = { 
+		recordLog = true,
+		denySell = true, 
+        denyDestroy = true,
+        denyDeal = true,
+	},
+	conds = { 
+	},
+},

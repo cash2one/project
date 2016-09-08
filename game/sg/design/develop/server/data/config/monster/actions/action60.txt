@@ -1,0 +1,58 @@
+{
+	id = 60,	--行为ID
+	trigger = 1,	--触发类型，血量为1，时间为2
+
+	isInit = 0 ,
+	--创建的时候会调用,和info里的sequence一样
+	initSequence =
+	{
+		
+	},
+
+	infos = 
+	{
+		{
+			sequId = 1,
+			param = 80 ,
+			sequence = {
+				{ type = 19, duration = 0, mosterId=1152, posX = 18, posY = 12, liveTime = 100000, relative = false },	--召唤怪物(没有怪物拥有者)
+				{ type = 19, duration = 0, mosterId=1152, posX = 29, posY = 12, liveTime = 100000, relative = false },	--召唤怪物(没有怪物拥有者)
+				{ type = 19, duration = 0, mosterId=1152, posX = 18, posY = 18, liveTime = 100000, relative = false },	--召唤怪物(没有怪物拥有者)
+				{ type = 19, duration = 0, mosterId=1152, posX = 29, posY = 18, liveTime = 100000, relative = false },	--召唤怪物(没有怪物拥有者)
+			}
+		},
+
+		{
+			sequId = 2,
+			param = 60 ,
+			sequence = {
+				{ type = 19, duration = 0, mosterId=1152, posX = 18, posY = 12, liveTime = 100000, relative = false },	--召唤怪物(没有怪物拥有者)
+				{ type = 19, duration = 0, mosterId=1152, posX = 29, posY = 12, liveTime = 100000, relative = false },	--召唤怪物(没有怪物拥有者)
+				{ type = 19, duration = 0, mosterId=1152, posX = 18, posY = 18, liveTime = 100000, relative = false },	--召唤怪物(没有怪物拥有者)
+				{ type = 19, duration = 0, mosterId=1152, posX = 29, posY = 18, liveTime = 100000, relative = false },	--召唤怪物(没有怪物拥有者)
+			}
+		},
+
+		{
+			sequId = 3,
+			param = 40 ,
+			sequence = {
+				{ type = 19, duration = 0, mosterId=1152, posX = 18, posY = 12, liveTime = 100000, relative = false },	--召唤怪物(没有怪物拥有者)
+				{ type = 19, duration = 0, mosterId=1152, posX = 29, posY = 12, liveTime = 100000, relative = false },	--召唤怪物(没有怪物拥有者)
+				{ type = 19, duration = 0, mosterId=1152, posX = 18, posY = 18, liveTime = 100000, relative = false },	--召唤怪物(没有怪物拥有者)
+				{ type = 19, duration = 0, mosterId=1152, posX = 29, posY = 18, liveTime = 100000, relative = false },	--召唤怪物(没有怪物拥有者)
+			}
+		},
+
+		{
+			sequId = 4,
+			param = 20 ,
+			sequence = {
+				{ type = 19, duration = 0, mosterId=1152, posX = 18, posY = 12, liveTime = 100000, relative = false },	--召唤怪物(没有怪物拥有者)
+				{ type = 19, duration = 0, mosterId=1152, posX = 29, posY = 12, liveTime = 100000, relative = false },	--召唤怪物(没有怪物拥有者)
+				{ type = 19, duration = 0, mosterId=1152, posX = 18, posY = 18, liveTime = 100000, relative = false },	--召唤怪物(没有怪物拥有者)
+				{ type = 19, duration = 0, mosterId=1152, posX = 29, posY = 18, liveTime = 100000, relative = false },	--召唤怪物(没有怪物拥有者)
+			}
+		},
+	},
+},

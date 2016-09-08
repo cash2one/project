@@ -1,0 +1,28 @@
+﻿-- 合服相关操作
+
+--#include "data/config/merge.txt"
+
+--[[
+标志:
+1 : 王城之战
+2 : 阵营之战
+3 : 点将台
+]]
+
+-- 判断是否需要合并某些数据
+function NeedMerge(flag)
+	local sys_var = System.getStaticVar()
+	if sys_var == nil then return false end
+
+	if sys_var.mergeNeed == 0 then return false end -- 不需要合服
+
+	if flag == 1 then
+		return (sys_var.merge_tianyuan == 0)
+	elseif flag == 2 then
+		return (sys_var.merge_camp == 0)
+	elseif flag == 3 then
+		return (sys_var.merge_fight == 0)
+	end
+
+	return false
+end

@@ -1,0 +1,474 @@
+
+----守护玄女副本
+
+
+shouhuxuannvfuben = {}
+
+
+--初始化副本
+shouhuxuannvfuben.OnInitCopy = function(sysarg, Fhandle)
+	debug_print("-----------初始化副本-------1111----")
+	--for i = 1,table.getn( sysarg ) do
+	--local i = 1
+	local nTeam = LActor.getTeamId( sysarg )
+	if nTeam > 0 then
+		local nActionList = LuaHelp.getTeamMemberList(sysarg)
+		for i = 1 , #nActionList do
+			LActor.OnQuestEvent(51, 0, 1, true, nActionList[i])
+      		LActor.enterFuBen( nActionList[i], Fhandle, ShouhuXuanNvConfig.sceneId[1], ShouhuXuanNvConfig.playerPos[1][1], ShouhuXuanNvConfig.playerPos[1][2] )
+      	end
+ 	else
+ 		LActor.OnQuestEvent(51, 0, 1, true, sysarg)
+ 		LActor.enterFuBen(sysarg, Fhandle, ShouhuXuanNvConfig.sceneId[1], ShouhuXuanNvConfig.playerPos[1][1], ShouhuXuanNvConfig.playerPos[1][2] )
+  	end
+    --end
+	Fuben.SetFubenTime(Fhandle,ShouhuXuanNvConfig.limitTime)
+	fubenbase.Init(sysarg,ShouhuXuanNvConfig.fubenId[1],ShouhuXuanNvConfig.sceneId[1])
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+	local hscene = Fuben.getSceneHandleById(ShouhuXuanNvConfig.sceneId[1], Fhandle)
+	local nDiff = Fuben.getFubenDifficulty(Fhandle)
+	if nDiff == nil or ( nDiff <=0 and nDiff > 3 )  then
+		debug_print("守护玄女难度错误")
+		return
+	end
+	if ShouhuXuanNvConfig.NPCMonster == nil then
+		debug_print("守护玄女配置错误1111")
+		return
+	end
+	if ShouhuXuanNvConfig.NPCMonster[nDiff] == nil then
+		debug_print("守护玄女配置错误222")
+		return
+	end
+	local nCurNPCConfig =  ShouhuXuanNvConfig.NPCMonster[nDiff]
+	local mptr = Fuben.createMonster(hscene, nCurNPCConfig.monsterId, nCurNPCConfig.posX1, nCurNPCConfig.posX2, 0)
+	if mptr ~= nil then
+		LActor.addState(mptr, esStateAttackedForbid)
+		LActor.setDenyMove(mptr,true)
+		LActor.setDenyBeMove(mptr,true)
+		LActor.setOwner(mptr , sysarg)
+	end
+	if fbVar.Average_Level == nil then
+		if nTeam > 0 then
+			fbVar.Average_Level = TeamFun.getTeamAvergeLeve( nTeam )
+		else
+			fbVar.Average_Level = LActor.getLevel( sysarg )
+		end
+	end
+	fbVar.MonsterWave = 0
+	debug_print("----------MonsterWave------------",fbVar.MonsterWave)
+	local nCurTime = System.getCurrMiniTime()
+--	print("===================first time========",nCurTime)
+	local fpt = LActor.getFubenPrt( sysarg )
+	local nfubentime = Fuben.getFbTime(fpt)
+	--print("=============nfubentime=========================",nfubentime)
+	Fuben.postSceneTimeCall(hscene, TimerMsg.SHXNMosterRefresh, ShouhuXuanNvConfig.RefreshMonsterTime, 1)
+end
+
+function shouhuxuannvfuben.OnEnterFuben(sysarg, hfb, way)
+	if not sysarg or not hfb then return end
+
+	local fbPtr = Fuben.getFubenPtr(hfb)
+	if not fbPtr then return end
+
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+	if not fbVar then return end
+
+	local nDiff = Fuben.getFubenDifficulty(hfb)
+	if not  ShouhuXuanNvConfig.monsterWavediff[nDiff] then return end
+
+	shouhuxuannvfuben.sendwavetoclient(sysarg, fbVar.MonsterWave or 0, ShouhuXuanNvConfig.monsterWavediff[nDiff])
+end
+
+-- 刷新怪物
+shouhuxuannvfuben.OnRefreshMonster = function ( msgid, pscene)
+	local pfb = Fuben.getSceneFuben(pscene)
+	local actors = LuaHelp.getFbActorList(pfb)
+	local hfb = Fuben.getFubenHandle(pfb)
+	local fbVar = Fuben.getDyanmicVar(pfb)
+	fbVar.MonsterWave = fbVar.MonsterWave + 1
+
+	local nCurMonster = fbVar.MonsterWave
+	local ndiff = Fuben.getFubenDifficulty(hfb)
+	if actors then
+		for i = 1 , #actors do
+			shouhuxuannvfuben.sendwavetoclient(actors[i] , nCurMonster, ShouhuXuanNvConfig.monsterWavediff[ndiff])
+		end
+	end
+
+	local nCurCreateMonsterList = ShouhuXuanNvConfig.RefreshMonster[ndiff][nCurMonster]
+	if nCurCreateMonsterList == nil then
+		debug_print("守护玄女 怪物配置错误")
+		return
+	end
+	local hScene = Fuben.getSceneHandleById(ShouhuXuanNvConfig.sceneId[1], hfb)
+	if fbVar.CurWaveMonsterCout == nil then
+		fbVar.CurWaveMonsterCout = 0
+	end
+
+	--设置定时器 并且波数累加
+	if ShouhuXuanNvConfig.monsterWavediff[ndiff] == nil then
+		debug_print("===========配置错误，此难度没有怪物波数")
+		return
+	end
+	if fbVar.MonsterWave < ShouhuXuanNvConfig.monsterWavediff[ndiff] then
+		Fuben.postSceneTimeCall(hScene, TimerMsg.SHXNMosterRefresh, ShouhuXuanNvConfig.RefreshMonsterTime, 1)
+	end
+	if ShouhuXuanNvConfig.NPCMonster == nil then
+		debug_print("----配置错误00000000000-----")
+		return
+	end
+	--[[
+	local nNpcMosterConfig = ShouhuXuanNvConfig.NPCMonster[ndiff]
+	if nNpcMosterConfig == nil then
+		debug_print("----配置错误1111111111-----")
+		return
+	end
+	local target = Fuben.getMonsterPtrById( hScene , nNpcMosterConfig.monsterId)
+	]]
+	if ndiff == 3 then
+		local monsterconfig = nil
+		if fbVar.Average_Level == nil then
+			monsterconfig = nCurCreateMonsterList[#nCurCreateMonsterList]
+		end
+		if  monsterconfig == nil then
+			--maxLevel = 50,
+			--minLevel = 40,
+			for k , v in pairs ( nCurCreateMonsterList ) do
+				if fbVar.Average_Level >= v.minLevel and fbVar.Average_Level <= v.maxLevel then
+					monsterconfig = v
+					break
+				end
+			end
+		end
+		if monsterconfig == nil then
+			monsterconfig = nCurCreateMonsterList[#nCurCreateMonsterList]
+		end
+		for k , v in pairs ( monsterconfig.curmosnttabe ) do
+			Fuben.createMonsters(hScene, v.monsterId, v.posX1, v.posX2, v.posY1, v.posY2, v.nCount,0)
+		end
+		fbVar.CurWaveMonsterCout = fbVar.CurWaveMonsterCout + monsterconfig.monstercount
+		return
+	end
+	fbVar.CurWaveMonsterCout = fbVar.CurWaveMonsterCout + nCurCreateMonsterList.monstercount
+	for k , v in pairs (nCurCreateMonsterList.curmosnttabe) do
+		Fuben.createMonsters(hScene, v.monsterId, v.posX1, v.posX2, v.posY1, v.posY2, v.nCount,0)
+		if target ~= nil then
+			--LActor.setMonsterFinalTarget( hScene , v.monsterId , target)
+		end
+	end
+end
+
+-- 当前波所有的怪杀死
+shouhuxuannvfuben.OnMonsterAllDie = function ( sceneId, scenePtr, flag, monster )
+	-- body
+	local nFubenid = LActor.getFubenId( monster )
+	if nFubenid ~= ShouhuXuanNvConfig.fubenId[1] then
+		return
+	end
+
+	local pfb = LActor.getFubenPrt(monster)
+	local Fhandle =	Fuben.getFubenHandle(pfb)
+	local hscene = Fuben.getSceneHandleById(sceneId, Fhandle)
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+	if fbVar.MonsterWave == nil then
+		return
+	end
+	local ndiff = Fuben.getFubenDifficulty(Fhandle)
+	if ShouhuXuanNvConfig.monsterWavediff[ndiff] == nil then
+		debug_print("此难度没怪物波数，配置错误")
+		return
+	end
+	debug_print("-----shouhuxuannvfuben.OnMonsterAllDie------",fbVar.MonsterWave)
+	if fbVar.MonsterWave >= ShouhuXuanNvConfig.monsterWavediff[ndiff] then
+		debug_print("设置通关")
+		fbVar.IsTongguan = 1
+		fbVar.nStart = 1
+		local nActorList = LuaHelp.getFbActorList(pfb)
+		if nActorList == nil then
+			return
+		end
+		for i = 0 , #nActorList do
+			LActor.OnQuestEvent(51, 1, 1, true, nActorList[i])
+		end
+		fubenjiesuan.OnMonsterAllDie(sceneId, scenePtr, flag, monster)
+	else
+		--fbVar.MonsterWave = fbVar.MonsterWave + 1
+		--shouhuxuannvfuben.OnRefreshMonster(hscene,fbVar.MonsterWave,fbVar)
+	end
+end
+
+-- 怪物死亡
+shouhuxuannvfuben.OnMonsterDie = function ( monster, sysarg, monId )
+	-- body
+	--fubenjiesuan.OnKillMonster( monster, sysarg, monId )
+	local nFubenid = LActor.getFubenId( sysarg )
+	if nFubenid ~= ShouhuXuanNvConfig.fubenId[1] then
+		return
+	end
+
+	local Fhandle = LActor.getFubenHandle(sysarg)
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+
+	if fbVar.CurWaveMonsterCout == nil then
+		fbVar.CurWaveMonsterCout = 0
+	end
+	fbVar.CurWaveMonsterCout = fbVar.CurWaveMonsterCout - 1
+	local nstr = string.format(" --------当前波剩余怪物数量 =%d",fbVar.CurWaveMonsterCout)
+	if fbVar.CurWaveMonsterCout <= 0 then
+		local sceneId = LActor.getSceneId( sysarg )
+		local scenePtr = LActor.getScenePtr( sysarg )
+		print("---yyyyyyyy")
+		shouhuxuannvfuben.OnMonsterAllDie( sceneId, scenePtr, 1, monster )
+	end
+
+end
+
+--玩家死亡
+--[[
+shouhuxuannvfuben.OnActorDie = function ( sysarg, nkiller )
+	
+	local nFubenId = LActor.getFubenId( sysarg )
+	if nFubenId ~= ShouhuXuanNvConfig.fubenId[1] then
+		return
+	end
+	local nteamid = LActor.getTeamId( sysarg )
+	if nteamid >= 0 then
+
+		local teamptr = TeamFun.getTeam( nteamid )
+		if teamptr ~= nil then
+			local nMemberCout = TeamFun.getMemberCount(teamptr)
+			local TeamActorList = TeamFun.getMemberList( teamptr )
+			local nDieCount = 0
+			if TeamActorList ~= nil then
+				for i = 1, #TeamActorList do
+					if LActor.ActorIsDie( TeamActorList[i] ) == false then
+						nDieCount = nDieCount + 1
+					end
+				end
+			end
+
+			if nDieCount >= nMemberCout then
+				local sceneId = LActor.getSceneId( sysarg )
+				local scenePtr = LActor.getScenePtr( sysarg )
+				--fubenjiesuan.OnMonsterAllDie(sceneId, scenePtr, 1, sysarg)
+			end
+		end
+	end
+end
+]]
+shouhuxuannvfuben.OnXuannvDie = function ( monster, sysarg, monId  )
+	-- 玄女死亡
+	debug_print("---------玄女死亡--------",monId)
+	local actorname = LActor.getName( sysarg )
+	
+	LActor.sendTipmsg( sysarg, actorname, ttWarmTip )
+
+	local nFubenid = LActor.getFubenId( sysarg )
+	if nFubenid ~= ShouhuXuanNvConfig.fubenId[1] then
+		return
+	end
+	local Fhandle = LActor.getFubenHandle(sysarg)
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+	fbVar.IsTongguan = 1
+	local sceneId = LActor.getSceneId( sysarg )
+	local scenePtr = LActor.getScenePtr( sysarg )
+	fubenjiesuan.OnMonsterAllDie(sceneId, scenePtr, 1, monster)
+end
+
+--玩家死亡
+shouhuxuannvfuben.OnActorDie = function ( sysarg, nkiller )
+	local nFubenId = LActor.getFubenId( sysarg )
+	print("---fffffffff: fubenId:"..ShouhuXuanNvConfig.fubenId[1])
+	if nFubenId ~= ShouhuXuanNvConfig.fubenId[1] then
+		return
+	end
+	local Fhandle = LActor.getFubenHandle(sysarg)
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+	
+	local nteamid = LActor.getTeamId( sysarg )
+	if nteamid > 0 then
+
+		local teamptr = TeamFun.getTeam( nteamid )
+		if teamptr ~= nil then
+			if TeamFun.TeamMemerIsDieAll(teamptr) == true then 
+				fbVar.IsTongguan = 1
+				fubenjiesuan.OnMonsterAllDie(sceneId, scenePtr, 1, sysarg)
+			end
+		end
+	else
+		local sceneId = LActor.getSceneId( sysarg )
+		local scenePtr = LActor.getScenePtr( sysarg )
+		fbVar.IsTongguan = 1
+		fubenjiesuan.OnMonsterAllDie(sceneId, scenePtr, 1, sysarg)
+	end
+end
+
+
+shouhuxuannvfuben.OnExitFuben = function ( sysarg , hfb ,way)
+	-- body
+	debug_print("-------------退出副本-----------")
+	if not way or way ~= 1 or not sysarg or not hfb then
+		debug_print(" ---------退出副本--------"..tostring(way))
+		return
+	end
+
+	-- local nteamid = LActor.getTeamId( sysarg )
+	-- debug_print(string.format("----------nteamid = %d----------",nteamid))
+	-- if nteamid >= 0 then
+	-- 	local nTeamptr = TeamFun.getTeam( nteamid )
+	-- 	--debug_print(string.format("----------nTeamptr = %s----------",nTeamptr))
+	-- 	if nTeamptr ~= nil then
+	-- 		local aid = LActor.getActorId( sysarg )
+	-- 		TeamFun.delMember(nTeamptr, aid)
+	-- 	end
+	-- end
+	--local fbVar = Fuben.getDyanmicVar(hfb)
+	local actors = LuaHelp.getFbActorList(pfb)
+	local nMemberCount = 0
+	if actors ~= nil then
+		for i = 1,#actors do
+			nMemberCount = nMemberCount + 1
+		end
+	end
+	if nMemberCount < 1 then
+		debug_print("-----清理副本数据-----")
+		fubenbase.clearfubenDyamicData(pfb)
+	end
+	fubenbase.ExitFubenRestore( sysarg )
+end
+shouhuxuannvfuben.IsInSHXNFB = function ( sysarg )
+	-- body
+	local fubenId = LActor.getFubenId(sysarg)
+	if fubenId == ShouhuXuanNvConfig.fubenId[1] then
+		return true
+	end
+end
+
+shouhuxuannvfuben[12] = function ( sysarg , dp )
+	if true then
+		return
+	end
+	if sysarg == nil then
+		return
+	end
+	
+	if shouhuxuannvfuben.IsInSHXNFB( sysarg ) == nil then
+		debug_print("该死的家伙 发错协议 这是守护玄女啊")
+		return
+	end
+	local Fhandle = LActor.getFubenHandle( sysarg )
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+	local nCurWave = 0
+	if fbVar.MonsterWave ~= nil then
+		nCurWave = fbVar.MonsterWave
+	end
+	local nLastTime  = Fuben.getFbTime( fbPtr )
+	local fubenId = LActor.getFubenId(sysarg)
+	local npack = DataPack.allocPacket( sysarg , 167 , 11)
+	if npack == nil then
+		return
+	end
+	DataPack.writeInt(npack , fubenId)
+	DataPack.writeInt(npack , 12)
+	DataPack.writeInt(npack , nCurWave)
+	DataPack.writeInt(npack , nLastTime)
+	DataPack.flush( npack )
+end
+
+shouhuxuannvfuben.DropHp = function (monster, mid ,val ,sysarg)
+	local nfubenid = LActor.getFubenId( sysarg )
+	if nfubenid ~= ShouhuXuanNvConfig.fubenId[1] then
+		return
+	end
+	local fubenptr = LActor.getFubenPrt(sysarg)
+	if fubenptr == nil then
+		debug_print("获取副本指针错误")
+		return
+	end
+	local actorList = LuaHelp.getFbActorList( fubenptr)
+	if actorList == nil then
+		--debug_print("=============获取副本玩家错误======")
+		return
+	end
+	local handle = LActor.getHandle( monster )
+	local maxhp = LActor.getIntProperty(monster ,PROP_MAXHP)
+	local hp = LActor.getIntProperty(monster ,PROP_HP)
+	local maxmp = LActor.getIntProperty(monster ,PROP_MAXMP)
+	local mp = LActor.getIntProperty(monster ,PROP_MP)
+	for i = 1 , #actorList do
+		local npack = DataPack.allocPacket( actorList[i] , 167 , 11)
+		DataPack.writeInt(npack , nfubenid)
+		DataPack.writeInt(npack , 10)
+		DataPack.writeInt64( npack , handle)
+		DataPack.writeInt( npack , hp)
+		DataPack.writeInt( npack , maxhp)
+		DataPack.writeInt( npack , mp)
+		DataPack.writeInt( npack , maxmp)
+		DataPack.flush( npack )
+	end
+end
+
+shouhuxuannvfuben.HandleNetworkData = function ( sysarg, dp)
+
+	local cmdid = DataPack.readInt(dp)
+	if shouhuxuannvfuben[cmdid] then
+		shouhuxuannvfuben[cmdid](sysarg,dp)
+	else
+		debug_print(" 守护没有该命令",cmdid)
+	end
+end
+
+shouhuxuannvfuben.sendwavetoclient = function ( sysarg, wave, totalWave)
+	-- body
+	if wave == nil or type( wave ) ~= 'number' then
+		return
+	end
+	local nfbid = LActor.getFubenId( sysarg )
+	local npack = DataPack.allocPacket( sysarg , 167 , 11)
+	if npack == nil then
+		return
+	end
+	DataPack.writeInt( npack , nfbid)
+	DataPack.writeInt( npack , 12)
+	DataPack.writeInt( npack , wave)
+	DataPack.writeInt( npack , totalWave)
+	DataPack.flush( npack )
+end
+
+ShouhuXuanNvConfig.OnSetMonsterAttack = function(monster, monId)
+	LActor.setCanAttackMonster(monster,true)
+end
+
+-- 注册怪物被杀死事件
+for i=1,#ShouhuXuanNvConfig.monsterIdList do
+	MonDieDispatcher.register( ShouhuXuanNvConfig.monsterIdList[i],  shouhuxuannvfuben.OnMonsterDie)
+	MonMobDispatcher.register(ShouhuXuanNvConfig.monsterIdList[i], ShouhuXuanNvConfig.OnSetMonsterAttack)
+end
+
+
+for k , v in pairs ( ShouhuXuanNvConfig.NPCMonster) do
+	MonDieDispatcher.register( v.monsterId,  shouhuxuannvfuben.OnXuannvDie)
+	MonsterDamageDispatch.register(v.monsterId , shouhuxuannvfuben.DropHp)
+end
+
+-- 注册怪物全部杀死
+for i=1,#ShouhuXuanNvConfig.sceneId do
+	MonAllKilledDispatcher.register( ShouhuXuanNvConfig.sceneId[i], shouhuxuannvfuben.OnMonsterAllDie )
+end
+
+--注册副本初始化函数
+for k, v in pairs ( ShouhuXuanNvConfig.fubenId ) do
+	fubenbase.registerEnterFuben(v,shouhuxuannvfuben.OnInitCopy)
+	EventCallDispatcher.registerFubenExit(v,shouhuxuannvfuben.OnExitFuben)
+	EventCallDispatcher.registerFubenEnter(v, shouhuxuannvfuben.OnEnterFuben)
+end
+--注册定时器
+
+TimerMsgFunc.register(TimerMsg.SHXNMosterRefresh, shouhuxuannvfuben.OnRefreshMonster)
+--EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeOnActorDeath, shouhuxuannvfuben.OnActorDie)

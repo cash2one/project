@@ -1,0 +1,482 @@
+-- 每日剧情
+-- Author: LiaoYuDong
+-- Date: 2016-06-16
+
+--#include "data\config\plot\dayplotconfig.txt" once
+--#include "data\config\plot\dayplotmonsterconfig.txt" once
+
+DayPlotFuncs = {}
+
+DayPlotFuncs.netMsgs = {
+	viewDayPlot = 20, -- 请求每日剧情副本详情
+	enterDayPlot = 21, -- 请求进入每日剧情副本
+	changeJuQingState = 101, -- 跟剧情副本通用的
+}
+
+-- 处理网络请求
+DayPlotFuncs.processNetData = function (actorobj, params)
+	if actorobj == nil or params == nil or type(params) ~= "table" then return end
+	local nCmd = tonumber(params[1]) or 0
+	local packet = params[2]
+	if DayPlotFuncs[nCmd] ~= nil and type(DayPlotFuncs[nCmd]) == "function" then
+		DayPlotFuncs[nCmd](actorobj, packet)
+	end
+end
+
+-- 通过每日时间字符串查找对应的配置表
+DayPlotFuncs.findConfigByDayString = function (dayStr)
+	for k, v in pairs(DayPlotConfig) do
+		if v.openTimeStr ~= nil and v.openTimeStr == dayStr then
+			return v
+		end
+	end
+	return nil
+end
+
+-- 获取今日的每日剧情配置
+-- DayPlotFuncs.getTodayConfig = function ()
+-- 	local year = 0
+-- 	local month = 0
+-- 	local day = 0
+-- 	year, month, day = System.getDate(year, month, day)
+-- 	local dayStr = string.format("%d-%d-%d", year, month, day)
+-- 	return DayPlotFuncs.findConfigByDayString(dayStr)
+-- end
+
+-- 获取今日的每日剧情配置
+DayPlotFuncs.getTodayConfig = function ()
+	local openDay = System.getOpenServerDay()
+	debug_print("====================> DayPlotFuncs.getTodayConfig[openDay]:" .. tostring(openDay))
+	-- return DayPlotConfig[openDay]
+
+	local confLen = #DayPlotConfig -- 总共有多少天的每日剧情
+	local t = math.modf((openDay - 1) / confLen)
+	local toDay = openDay - confLen * t
+	debug_print("====================> DayPlotFuncs.getTodayConfig[toDay]:" .. tostring(toDay))
+	return DayPlotConfig[toDay]
+end
+
+-- 通过副本id获取配置文件
+DayPlotFuncs.getConfigByFubenId = function (fubenId)
+	for k, v in pairs(DayPlotConfig) do
+		if v. fubenId == fubenId then
+			return v
+		end
+	end
+	return nil
+end
+
+DayPlotFuncs.isJuQingEndedKey = function (key)
+	for k, v in pairs(DayPlotMonsterConfig) do
+		if v.endedJuQingKey == key then
+			return true, v
+		end
+	end
+	return false, nil
+end
+
+-- 创建怪物
+DayPlotFuncs.createFubenMonsters = function (fubenPtr, monsterStage)
+	if fubenPtr == nil or tonumber(monsterStage) == nil then
+		debug_print("======================> 创建怪物参数错误!")
+		return
+	end
+	local fubenId = Fuben.getFubenIdbyFuBenPtr(fubenPtr)
+	local fubenHandle = Fuben.getFubenHandle(fubenPtr)
+	local monsterConfig = DayPlotMonsterConfig[fubenId]
+	local todayConfig = DayPlotFuncs.getConfigByFubenId(fubenId)
+	if monsterConfig == nil or todayConfig == nil then
+		debug_print("======================> DayPlotFuncs.createFubenMonsters 无对应创建怪物配置!")
+		return
+	end
+
+	local createMonsterList = monsterConfig.monsterList
+
+	if createMonsterList[monsterStage] == nil then
+		debug_print("======================> DayPlotFuncs.createFubenMonsters 副本动态变量出现异常怪物波数")
+		return
+	end
+
+	local sceneHandle = Fuben.getSceneHandleById(todayConfig.sceneId, fubenHandle)
+	for k, v in pairs(createMonsterList[monsterStage]) do
+		Fuben.createMonsters(sceneHandle, v.monsterId, v.position[1], v.position[2], v.position[3], v.position[4], v.monsterNum, 0, true)
+	end
+end
+
+-- 怪物死亡处理
+DayPlotFuncs.onMonsterAllDie = function (sceneId, scenePtr, flag, monsterEntity)
+	local fubenPtr = Fuben.getSceneFuben(scenePtr)
+	local fubenId = Fuben.getFubenIdbyFuBenPtr(fubenPtr)
+	local dayConfig = DayPlotFuncs.getConfigByFubenId(fubenId)
+	if dayConfig ~= nil then
+		debug_print("======================== DayPlotFuncs 触发怪物全部死亡事件 ========================")
+		local fubenHandle = Fuben.getFubenHandle(fubenPtr)
+		local fbVar = Fuben.getDyanmicVar(fubenPtr)
+		if fbVar and fbVar.dayplot_var ~= nil then
+			fbVar.dayplot_var.monsterStage = fbVar.dayplot_var.monsterStage + 1
+			local monsterStage = fbVar.dayplot_var.monsterStage
+			local monsterConfig = DayPlotMonsterConfig[fubenId]
+			if monsterConfig == nil or monsterConfig.monsterList == nil then
+				debug_print("======================> 没有怪物列表配置 异常")
+				return
+			end
+			local monsterList = DayPlotMonsterConfig[fubenId].monsterList
+
+			local actorobj = Fuben.getActorListbySceneInPlayFuben(scenePtr)
+			-- 是否是最后一波已经打完
+			if monsterList[monsterStage] == nil then
+				if monsterConfig.endedJuQingKey ~= nil and monsterConfig.endedJuQingKey ~= "none" and fbVar.dayplot_var.startPlot == nil then
+					debug_print("======================== 需要播放结尾剧情 ========================", actorobj, fubenId)
+					fbVar.dayplot_var.startPlot = 1
+					LActor.setActorGoJuQing(actorobj, monsterConfig.endedJuQingKey)
+					fbVar.dayplot_var.endTime = System.getCurrMiniTime()
+					-- 推送计时
+					DayPlotFuncs.sendTimeStatistics(actorobj, 3)
+				else
+					debug_print("======================== 不需要播放结尾剧情 ========================", actorobj, fubenId)
+					fbVar.dayplot_var.endTime = System.getCurrMiniTime()
+					-- 推送计时
+					DayPlotFuncs.sendTimeStatistics(actorobj, 3)
+					-- 结算
+					DayPlotFuncs.successReport(actorobj)
+				end
+			else
+				DayPlotFuncs.createFubenMonsters(fubenPtr, monsterStage)
+				DayPlotFuncs.sendJuQingStage(actorobj, 0, fubenId, 1, monsterStage)
+			end
+		else
+			debug_print("==================== fbVar.dayplot_var = nil")
+		end
+	end
+end
+
+-- 注册怪物死亡事件
+DayPlotFuncs.registerAllMonsterKill = function ()
+	for k, v in ipairs(DayPlotConfig) do
+		MonAllKilledDispatcher.register(v.sceneId, DayPlotFuncs.onMonsterAllDie)
+		EventCallDispatcher.registerFubenExit(v.fubenId, DayPlotFuncs.exitJuQingFuben)
+	end
+end
+
+-- 请求每日剧情详情
+--[[
+今日主角 = {
+	模型ID
+	主角名字
+	主角介绍
+},
+今日剧情介绍,
+明日剧情预告,
+通关奖励列表 = {
+	{
+		奖励物品类型,
+		奖励物品ID,
+		奖励物品数量,
+	},
+},
+
+--]]
+DayPlotFuncs[DayPlotFuncs.netMsgs.viewDayPlot] = function (actorobj, packet)
+	if LActor.getLevel(actorobj) < LevelOpenPlaySys.mr_jq_lvl then
+		return
+	end
+	local dayConfig = DayPlotFuncs.getTodayConfig()
+	if dayConfig == nil then
+		debug_print("===========> DayPlotFuncs[DayPlotFuncs.netMsgs.viewDayPlot] 无当天的每日剧情配置")
+		return
+	end
+	local actorVar = LActor.getStaticVar(actorobj)
+	if actorVar == nil then
+		return
+	end
+	local today_has_cross = 0
+	if actorVar.dayplot_var ~= nil then
+		today_has_cross = actorVar.dayplot_var.today_has_cross or 0
+	end
+	local pack = DataPack.allocPacket(actorobj, 53, 20)
+	DataPack.writeUInt(pack, dayConfig.todayActor.modelId)
+	DataPack.writeString(pack, dayConfig.todayActor.actorName)
+	DataPack.writeString(pack, dayConfig.todayActor.actorDesc)
+	DataPack.writeString(pack, dayConfig.todayDesc)
+	DataPack.writeString(pack, dayConfig.tomorrowDesc)
+	DataPack.writeUInt(pack, today_has_cross)
+	DataPack.writeUInt(pack, #dayConfig.todayAwards)
+	for k, v in ipairs(dayConfig.todayAwards) do
+		DataPack.writeUInt(pack, v.itemType)
+		DataPack.writeUInt(pack, v.itemId)
+		DataPack.writeUInt(pack, v.itemNum)
+	end
+	DataPack.flush(pack)
+	debug_print("===========> 发送每日剧情信息")
+end
+
+-- 请求进入每日剧情副本
+DayPlotFuncs[DayPlotFuncs.netMsgs.enterDayPlot] = function (actorobj, packet)
+	if LActor.getLevel(actorobj) < LevelOpenPlaySys.mr_jq_lvl then
+		return
+	end
+	if LActor.isDeath(actorobj) == true then
+		LActor.sendTipmsg(actorobj, Lang.ScriptTips.ttt009, ttMessage)
+		return
+	end
+	if LActor.isInFuben(actorobj) == true then
+		LActor.sendTipmsg(actorobj, Lang.ScriptTips.f00013, ttMessage)
+		return
+	end
+	if LActor.getTeamId(actorobj) > 0 then
+		LActor.sendTipmsg(actorobj, Lang.ScriptTips.f00100, ttMessage)
+		return
+	end
+	local dayConfig = DayPlotFuncs.getTodayConfig()
+	if dayConfig == nil then
+		debug_print("===========> DayPlotFuncs[DayPlotFuncs.netMsgs.enterDayPlot] 无当天的每日剧情配置")
+		return
+	end
+
+	local monsterConfig = DayPlotMonsterConfig[dayConfig.fubenId]
+	if monsterConfig == nil then
+		debug_print("=============> DayPlotFuncs[DayPlotFuncs.netMsgs.enterDayPlot] 无副本配置 无法进入")
+		return
+	end
+
+	-- 检查次数
+	local actorVar = LActor.getStaticVar(actorobj)
+	if actorVar.dayplot_var ~= nil and actorVar.dayplot_var.today_has_cross > 0 then
+		LActor.sendTipmsg(actorobj, Lang.ScriptTips.f00098, ttMessage)
+		return
+	end
+
+	local fubenHandle = Fuben.createFuBen(dayConfig.fubenId)
+	local fubenPtr = Fuben.getFubenPtr(fubenHandle)
+	DayPlotFuncs.createFubenMonsters(fubenPtr, 1)
+	if LActor.enterFuBen(actorobj, fubenHandle, dayConfig.sceneId, monsterConfig.enterPos[1], monsterConfig.enterPos[2]) == true then
+		local scenePtr = LActor.getScenePtr(actorobj)
+		local sceneHandle = LActor.getSceneHandle(actorobj)
+		local fbVar = Fuben.getDyanmicVar(fubenPtr)
+		fbVar.dayplot_var = {}
+		fbVar.dayplot_var.monsterStage = 1 -- 初始化第一波
+
+		local actorVar = LActor.getStaticVar(actorobj)
+		if actorVar.dayplot_var == nil then
+			actorVar.dayplot_var = {}
+			actorVar.dayplot_var.today_has_cross = 0 -- 未通关今天的
+		end
+
+		if monsterConfig.beganJuQingKey ~= nil and monsterConfig.beganJuQingKey ~= "none" then
+			LActor.setActorGoJuQing(actorobj, monsterConfig.beganJuQingKey)
+		else					
+			-- 没有剧情的直接就设定时间
+			fbVar.dayplot_var.startTime = System.getCurrMiniTime()
+			-- 推送计时
+			DayPlotFuncs.sendTimeStatistics(actorobj, 1)
+		end
+		-- 设置结界区域
+		Fuben.initDyanmicObstacleData(sceneHandle)
+		Fuben.setDyanmicObstacleDataBySquare(scenePtr , -1, monsterConfig.blockArea)
+
+		-- 记录HP和MP
+		fbVar.dayplot_var.oldHP = LActor.getIntProperty(actorobj, PROP_HP)
+		fbVar.dayplot_var.oldMP = LActor.getIntProperty(actorobj, PROP_MP)
+
+		-- 为了兼容剧情副本那套机制
+		DayPlotFuncs.sendJuQingStage(actorobj, 0, dayConfig.fubenId, 1, 1)
+
+		-- 触发任务事件
+		LActor.OnQuestEvent(qtDayPlotEvent, 0, 1, true, actorobj)
+	else -- 销毁副本
+		Fuben.closeFuben(fubenHandle)
+	end
+end
+
+-- 服务器通知前端进行时间显示
+-- state: 1：重新计时 2：恢复计时 3：停止计时
+DayPlotFuncs.sendTimeStatistics = function (actorobj, state)
+	state = state or 1 -- 默认重新计时
+	local npack = DataPack.allocPacket(actorobj, 53, 7)
+	DataPack.writeUInt(npack, state)
+	DataPack.flush(npack)
+end
+
+-- 通知前端当前剧情副本到了第几波
+DayPlotFuncs.sendJuQingStage = function (actorobj, enterId, fubenId, difficul, stage)
+	local npack = DataPack.allocPacket(actorobj, 53, 6)
+	DataPack.writeInt(npack, enterId)
+	DataPack.writeInt(npack, fubenId)
+	DataPack.writeInt(npack, difficul)
+	DataPack.writeInt(npack, stage)
+	DataPack.flush(npack)
+end
+
+DayPlotFuncs.exitJuQingFuben = function (actorobj, fubenHandle, exitWay)
+	local fbPtr = Fuben.getFubenPtr(fubenHandle)
+	if fbPtr then
+		local fubenId = Fuben.getFubenIdbyFuBenPtr(fbPtr)
+		local dayConfig = DayPlotFuncs.getConfigByFubenId(fubenId)
+		if dayConfig == nil then
+			return
+		end
+		local fbVar = Fuben.getDyanmicVar(fbPtr)
+		if fbVar ~= nil and fbVar.dayplot_var ~= nil then
+			-- 保留原有的变身变回来接口
+			local npack = DataPack.allocPacket(actorobj,139, 185)
+			DataPack.writeInt(npack, 0)
+			DataPack.flush(npack)
+
+			local oldHP = fbVar.dayplot_var.oldHP
+			local oldMP = fbVar.dayplot_var.oldMP
+
+			debug_print(string.format("=================> 玩家退出剧情副本 HP:%d, MP:%d", oldHP, oldMP))
+
+			if LActor.isDeath(actorobj) then
+				LActor.relive(actorobj)
+			end
+
+			LActor.setIntProperty(actorobj, PROP_HP, oldHP)
+			LActor.setIntProperty(actorobj, PROP_MP, oldMP)
+		end
+	end
+end
+
+DayPlotFuncs.isExitFuben = function (actorobj)
+	local fbPtr = LActor.getFubenPrt(actorobj)
+	local fubenId = Fuben.getFubenIdbyFuBenPtr(fbPtr)
+	if FuBen[fubenId] and 2 == FuBen[fubenId].type then
+    	LActor.exitFuben(actorobj)
+    end
+end
+
+DayPlotFuncs.actorLogout = function (actorobj)
+	local fubenHandle = LActor.getFubenHandle(actorobj)
+	DayPlotFuncs.exitJuQingFuben(actorobj, fubenHandle)
+	DayPlotFuncs.isExitFuben(actorobj)
+end
+
+-- 失败
+DayPlotFuncs.failReport = function (actorobj)
+	DayPlotFuncs.crossJieSuan(actorobj, 0)
+end
+
+-- 失败
+DayPlotFuncs.successReport = function (actorobj)
+	DayPlotFuncs.crossJieSuan(actorobj, 1)
+end
+
+DayPlotFuncs.crossJieSuan = function (actorobj, isTongGuan)
+	local fubenPtr = LActor.getFubenPrt(actorobj)
+	local fubenId = Fuben.getFubenIdbyFuBenPtr(fubenPtr)
+	local fubenHandle = Fuben.getFubenHandle(fubenPtr)
+	local dayConfig = DayPlotFuncs.getConfigByFubenId(fubenId)
+	if dayConfig == nil then
+		return
+	end
+	local fbVar = Fuben.getDyanmicVar(fubenPtr)
+	if fbVar == nil or fbVar.dayplot_var == nil then
+		return
+	end
+	local actorVar = LActor.getStaticVar(actorobj)
+	if actorVar.dayplot_var == nil then
+		return
+	end
+
+	if fbVar.dayplot_var.endTime == nil then
+		fbVar.dayplot_var.endTime = System.getCurrMiniTime()
+	end
+
+	local costTime = fbVar.dayplot_var.endTime - fbVar.dayplot_var.startTime
+
+	-- 整理奖励
+	local exp = 0
+	local coin = 0
+	local yuanbao = 0
+	local notMoneyAwards = {}
+
+	-- 通关并且是首次即可有奖励
+	if isTongGuan == 1 and actorVar.dayplot_var.today_has_cross == 0 then
+		actorVar.dayplot_var.today_has_cross = actorVar.dayplot_var.today_has_cross + 1 -- 标记已通过
+
+		if dayConfig.todayAwards ~= nil then
+			CommAwardFunc.giveToActor(actorobj, dayConfig.todayAwards, "dayplot_win", "dayplot_jiesuan")
+		end
+
+		for k, v in ipairs(dayConfig.todayAwards) do
+			if v.itemType == catItem then -- 物品
+				table.insert(notMoneyAwards, v)
+			elseif v.itemType == catMoney then
+				table.insert(notMoneyAwards, v)
+			end
+		end
+
+		-- 触发任务事件
+		LActor.OnQuestEvent(qtDayPlotEvent, 1, 1, true, actorobj)
+		-- 触发成就事件
+		LActor.SetAchieveProcessByType(actorobj, 118, 1, 1)
+	end
+
+	local pack = DataPack.allocPacket(actorobj, 167, 10)
+	DataPack.writeInt(pack, fubenId)
+	DataPack.writeInt(pack, exp)
+	DataPack.writeInt(pack, coin)
+	DataPack.writeInt(pack, costTime)
+	DataPack.writeChar(pack, isTongGuan)
+	local awardSize = #notMoneyAwards
+	DataPack.writeInt(pack, awardSize)
+	for k , v in pairs (notMoneyAwards) do
+		DataPack.writeWord(pack, v.itemType)
+		DataPack.writeWord(pack, v.itemId)
+		DataPack.writeInt(pack, v.itemNum)
+	end
+	DataPack.writeChar(pack, 0)
+	DataPack.writeChar(pack, 0)
+	DataPack.writeInt(pack, 0)
+	DataPack.flush(pack)
+
+	Fuben.SetFubenTime(fubenHandle, 12) -- 默认12秒后踢出来
+	-- 触发活跃
+	ActivationTrigger(actorobj, 36)
+end
+
+DayPlotFuncs.doJuQingStateChangeFunc = function (actorobj, key)
+	if key ~= nil and key ~= "none" then
+		local fubenId = LActor.getFubenId(actorobj)
+		if fubenId > 0 then
+			local dayConfig = DayPlotFuncs.getConfigByFubenId(fubenId)
+			if dayConfig ~= nil then
+				local fbPtr = LActor.getFubenPrt(actorobj)
+				local fbVar = Fuben.getDyanmicVar(fbPtr)
+				if fbVar.dayplot_var and fbVar.dayplot_var.monsterStage == 1 then
+					local sceneHandle = LActor.getSceneHandle(actorobj)
+					-- 有剧情的播完后就设定时间
+					fbVar.dayplot_var.startTime = System.getCurrMiniTime()
+					-- 推送计时
+					DayPlotFuncs.sendTimeStatistics(actorobj, 1)
+				end
+				if DayPlotFuncs.isJuQingEndedKey(key) == true then
+					-- 播完剧情才进行结算
+					if fbVar ~= nil and fbVar.dayplot_var ~= nil and fbVar.dayplot_var.startPlot == 1 then
+						fbVar.dayplot_var.startPlot = 0
+						-- 结算
+						DayPlotFuncs.successReport(actorobj)
+					end
+				end
+			end
+		end
+	end
+end
+
+DayPlotFuncs.onNewDayArrive = function (actorobj)
+	debug_print("=========== 每日剧情重置次数 =============")
+	local actorVar = LActor.getStaticVar(actorobj)
+	if actorVar == nil or actorVar.dayplot_var == nil then
+		return
+	end
+	debug_print("=========== 每日剧情重置次数 start =============")
+	actorVar.dayplot_var.today_has_cross = 0
+	debug_print("=========== 每日剧情重置次数 ended =============")
+end
+
+DayPlotFuncs.registerAllMonsterKill()
+ThePlotHandleFuncs.registerJuQingStateFunc(DayPlotFuncs.doJuQingStateChangeFunc)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeCiYing, DayPlotFuncs.processNetData)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeOnActorDeath, DayPlotFuncs.failReport)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogout, DayPlotFuncs.actorLogout)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, DayPlotFuncs.onNewDayArrive)

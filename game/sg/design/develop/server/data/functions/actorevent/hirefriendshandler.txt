@@ -1,0 +1,262 @@
+--雇用好友逻辑处理
+--#include "data\config\team\hirefriendsconf.txt" once
+--#include "data\functions\fubennpcfunc\normalfubennpcfunc.txt" once
+
+HirefriendsList = {}
+
+
+--请求列表信息
+HirefriendsList.gethirefriendslist = function ( sysarg, msgid, dp )
+    local sys = System.getStaticVar()  
+    if sys == nil then return end
+    if sys.hirefriendsum == nil then sys.hirefriendsum = {} end --统计好友每天被雇用次数
+    local st = LActor.getStaticVar(sysarg)
+    if st == nil then return end
+    if st.alreadyhirefriend == nil then st.alreadyhirefriend = {} end
+    if st.alreadycount == nil then st.alreadycount = 0 end
+
+    local actorid = LActor.getActorId(sysarg)
+    if sys.hirefriendsum[actorid] == nil then sys.hirefriendsum[actorid] = 0 end
+
+    local npack = DataPack.allocPacket(sysarg,139,153)
+    if npack == nil then return end
+    DataPack.writeInt(npack, Hirefriends.count - sys.hirefriendsum[actorid])
+    DataPack.writeInt(npack, st.alreadycount)
+    for i=1,st.alreadycount do
+        DataPack.writeInt(npack, st.alreadyhirefriend[i])
+    end
+    DataPack.flush(npack)
+end
+
+--玩家进入副本，雇用好友
+HirefriendsList.Enterfuben = function ( sysarg, msgid, dp )
+	local friendsid = DataPack.readInt(dp) -- 好友id
+	local fubenid = DataPack.readInt(dp)   --副本id，雇用好友的时候标记一下，玩家掉线还在副本里面时需要重新创建实体
+    local friendslevel = DataPack.readInt(dp)
+	local st = LActor.getStaticVar(sysarg)
+	if st == nil then return end
+	if st.hirefriends == nil then st.hirefriends = {} end
+    if st.hirefriendcountday == nil then st.hirefriendcountday = {} end --每天雇用同一个好友的次数
+    if st.alreadyhirefriend == nil then st.alreadyhirefriend = {} end
+    if st.alreadycount == nil then st.alreadycount = 0 end
+    if st.hirefriendid == nil then st.hirefriendid = 0 end  
+
+    local sys = System.getStaticVar()  
+    if sys == nil then return end
+    if sys.hirefriendsum == nil then sys.hirefriendsum = {} end --统计好友每天被雇用次数
+
+    if  LActor.getIntProperty(sysarg, PROP_LEVEL) < Hirefriends.level then
+        --雇用等级不足
+        LActor.sendTipmsg(sysarg, Lang.ScriptTips.gyhy004, ttMessage)
+        return
+    end
+
+    --判断好友今天被雇用的次数
+    if sys.hirefriendsum[friendsid] == nil then sys.hirefriendsum[friendsid] = 0 end
+    if sys.hirefriendsum[friendsid] >= Hirefriends.count then
+       LActor.sendTipmsg(sysarg, Lang.ScriptTips.gyhy006, ttMessage)
+       return
+    end
+    
+    local actorid = LActor.getActorId(sysarg)
+    if st.hirefriendcountday[actorid..friendsid] == nil then st.hirefriendcountday[actorid..friendsid] = 0 end
+    --判断雇用的好友是否达到上限
+    if st.hirefriendcountday[actorid..friendsid] >= Hirefriends.countday then
+       LActor.sendTipmsg(sysarg, Lang.ScriptTips.gyhy005, ttMessage)
+       return
+    end
+    
+    local sign = 0
+    for i=1,#Hirefriends.fubenid do
+    	if fubenid == Hirefriends.fubenid[i] then
+    	   sign = 1
+        end
+    end
+    if sign ~= 1 then
+    	--这个副本是不可以雇用好友的
+    	return
+    end
+
+    --判断实体是否已经存在
+    local monster = LActor.getBattleFriend(sysarg)
+    if monster ~= nil then
+       --已经有雇用了好友了,先删除下面在创建      
+       LActor.deleteBattleFriend(sysarg)
+    end
+
+    local hirefriendsmoney = Hirefriends.money + friendslevel*Hirefriends.Ascending
+    if LActor.getMoneyCount( sysarg, Hirefriends.CoinType ) < hirefriendsmoney then
+       --金钱不足无法雇用
+       LActor.sendTipmsg(sysarg, Lang.ScriptTips.gyhy003, ttMessage)
+       return
+    end
+    
+    local fbdata = FuBen[fubenid]
+    local daycount = fbdata.daycount 
+    local enterCount, addCount = Fuben.getEnterFubenInfo( sysarg, fubenid )
+    if enterCount == nil or addCount == nil or enterCount >= daycount+addCount then
+        LActor.sendTipmsg( sysarg, Lang.ScriptTips.f00015, ttDialog )
+        return 
+    end
+
+    local teamid = LActor.getTeamId(sysarg)
+    if teamid > 0 then
+        LActor.sendTipmsg( sysarg, Lang.ScriptTips.gyhy008, ttDialog )
+        return
+    end
+
+	local x, y = LActor.getEntityPosition(sysarg, 0, 0)
+	local en = FightFun.createFriendMonster(sysarg, friendsid, x, y, Hirefriends.time)
+	if en == nil then
+        LActor.sendTipmsg(sysarg, Lang.ScriptTips.gyhy002, ttMessage)
+		print("can not create fight monster")
+		return 
+	end	
+
+    --成功之后把玩家拉进去副本
+    OnEnterFubenFunc(sysarg,fubenid) 
+    
+    --创建之后扣除钱
+    LActor.changeMoney( sysarg, Hirefriends.CoinType, -hirefriendsmoney, 1, true, "Hirefriends", "Hirefriends" )
+	LActor.addBattleFriend(en, sysarg)           --保存新创建的实体	
+	LActor.followActor(en, sysarg, 1, 15, false)  --跟随某个玩家	
+	LActor.setEntityTelByOwnderAttr(en, true)    --设置实体是否跟着归属者传送
+	LActor.setEntityLazyFollow(en, false)        --设置实体是否惰性跟随
+	LActor.setDenyAttackedByActor(en, true)     --设置实体是否不可被玩家攻击
+    LActor.setDenyAttackActor(en, true)         --设置能否攻击玩家
+
+    --统计每天雇用好友的次数        
+    st.hirefriendcountday[actorid..friendsid] = st.hirefriendcountday[actorid..friendsid] + 1
+    --统计该玩家被雇用的次数
+    sys.hirefriendsum[friendsid] = sys.hirefriendsum[friendsid] + 1
+    --把雇用的玩家加到列表里面
+    st.alreadycount = st.alreadycount + 1
+    st.alreadyhirefriend[st.alreadycount] = friendsid
+    
+
+	--标记在这个副本内有雇用这个好友
+	if st.hirefriends[fubenid] == nil then st.hirefriends[fubenid] = 0 end
+	st.hirefriends[fubenid] = 2
+    st.hirefriendid = friendsid        
+
+	local npack = DataPack.allocPacket(sysarg,139,150)
+    if npack == nil then return end
+    DataPack.writeInt64(npack, LActor.getHandle(en))  --雇用成功返回好友的handle
+    DataPack.flush(npack)
+        
+end
+
+--请求镜像技能
+HirefriendsList.getAttackTarget = function ( sysarg, msgid, dp )
+    local x = DataPack.readInt(dp)
+    local y = DataPack.readInt(dp)
+
+    local monster = LActor.getBattleFriend(sysarg)
+    LActor.AttackTargetFriend(monster, sysarg, x, y)
+end
+
+--获取在线好友的战力，并且进行排序
+HirefriendsList.getCombatpower = function ( sysarg, msgid, dp )
+    -- body
+end
+
+--玩家从新登陆的时候
+HirefriendsList.OnActorLoginHirefriends = function ( sysarg )
+    local st = LActor.getStaticVar(sysarg)
+    if st == nil then return end
+    if st.hirefriends == nil then st.hirefriends = {} end
+    if st.hirefriendid == nil then st.hirefriendid = 0 end
+	-- body
+	local FbID = LActor.getFubenId(sysarg)
+	if FbID == nil then return end
+
+	local sign = 0
+    for i=1,#Hirefriends.fubenid do
+    	if FbID == Hirefriends.fubenid[i] then
+    	   sign = 1
+        end
+    end
+    --玩家掉线前在这个副本内有雇用好友
+    if sign ~= 1 or st.hirefriends[FbID] ~= 2 then return end
+
+    --判断实体是否已经存在
+    local monster = LActor.getBattleFriend(sysarg)
+    if monster ~= nil then
+       --已经有雇用了好友了,先删除下面在创建      
+       LActor.deleteBattleFriend(sysarg)
+    end
+    --玩家重新登陆从新创建这个好友
+    local x, y = LActor.getEntityPosition(sysarg, 0, 0)
+	local en = FightFun.createFriendMonster(sysarg, st.hirefriendid, x, y, Hirefriends.time)
+	if en == nil then
+		print("can not create fight monster")
+		return 
+	end	
+	LActor.addBattleFriend(en, sysarg)           --保存新创建的实体	
+	LActor.followActor(en, sysarg, 1, 15, false)  --跟随某个玩家 
+    LActor.setEntityTelByOwnderAttr(en, true)    --设置实体是否跟着归属者传送
+    LActor.setEntityLazyFollow(en, false)        --设置实体是否惰性跟随
+    LActor.setDenyAttackedByActor(en, true)     --设置实体是否不可被玩家攻击
+    LActor.setDenyAttackActor(en, true)
+
+end
+
+--玩家离开副本的时候处理
+HirefriendsList.Hirefriends_Exit = function(sysarg, hfb, way)    
+
+	local monster = LActor.getBattleFriend(sysarg)
+    if monster == nil then return end
+    --删除这个实体
+    LActor.deleteBattleFriend(sysarg)
+
+    --只处理正常退出副本
+    if way ~= 1 then return end
+    local st = LActor.getStaticVar(sysarg)
+    if st == nil then return end
+    --清空雇用记录
+    st.hirefriends = nil
+    local npack = DataPack.allocPacket(sysarg,139,151)
+    if npack == nil then return end
+    DataPack.writeInt(npack, 0)
+    DataPack.flush(npack)    
+end
+
+HirefriendsList.NewDayAcrrivefriendsInit = function ( sysarg )
+    local st = LActor.getStaticVar(sysarg)
+    if st == nil then return end
+    if st.hirefriendcountday == nil then st.hirefriendcountday = {} end
+    if st.alreadyhirefriend == nil then st.alreadyhirefriend = {} end
+    if st.alreadycount == nil then st.alreadycount = 0 end
+    st.hirefriendcountday = nil
+    st.alreadyhirefriend = nil
+    st.alreadycount = nil
+
+    local sys = System.getStaticVar()  
+    if sys == nil then return end
+    if sys.hirefriendsum == nil then sys.hirefriendsum = {} end
+    local actorid = LActor.getActorId(sysarg)
+    local friendslevel = LActor.getIntProperty(sysarg, PROP_LEVEL)
+    if sys.hirefriendsum[actorid] == nil then sys.hirefriendsum[actorid] = 0 end
+    if sys.hirefriendsum[actorid] > 0 then
+       --发送邮件
+       local getmoney = (Hirefriends.money + friendslevel*Hirefriends.Ascending)*Hirefriends.hiremoney
+       local moneycount = sys.hirefriendsum[actorid] * getmoney
+
+       System.sendGmMailOffLine(actorid, Lang.ScriptTips.gyhy007 , 2, Hirefriends.CoinType, moneycount, 1);
+       sys.hirefriendsum[actorid] = nil
+    end    
+end
+
+if System.getServerId() < 400 then
+    --MiscsImplement.registerMsgHandler(150, HirefriendsList.Enterfuben)
+   -- MiscsImplement.registerMsgHandler(152, HirefriendsList.getAttackTarget)
+   -- MiscsImplement.registerMsgHandler(153, HirefriendsList.gethirefriendslist)
+
+    --副本进入退出注册
+    for i=1,#Hirefriends.fubenid do
+    	--EventCallDispatcher.registerFubenEnter(Hirefriends.fubenid[i], HirefriendsList.Hirefriends_Fuben_Enter)
+        --ventCallDispatcher.registerFubenExit(Hirefriends.fubenid[i], HirefriendsList.Hirefriends_Exit)
+    end
+    --EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, HirefriendsList.OnActorLoginHirefriends)
+    --EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, HirefriendsList.NewDayAcrrivefriendsInit)
+end

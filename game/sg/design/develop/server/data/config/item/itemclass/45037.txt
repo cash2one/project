@@ -1,0 +1,32 @@
+﻿{
+	id = 45037,
+	name = Lang.Item.n45037,
+	desc = Lang.Item.i45037,
+	type = 82,	
+	bagClass = 1,
+    sellType = 82,		
+	icon = 20004,
+	shape = {0,0,0,0,0,0,0,0},
+	color = 3,
+	dura = 0,
+	dup = 200, 
+	colGroup = 0,
+	dealType = 0,
+	dealPrice = 0,
+	time = 86400,  --1天
+	suitId = 0,
+	staitcAttrs = {  
+	},
+	strongAttrs = {  
+	},
+	flags = { 
+		recordLog = true,
+		autoStartTime = true, 		
+		denyDeal = true,
+		denySell = true, 
+	},
+	conds = { 
+	},
+},
+
+

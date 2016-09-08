@@ -1,0 +1,141 @@
+﻿--场景相关的配置 组队天梯
+{
+	--场景1
+	--这个id必须每次递增，比如第一个场景id是0，下一个一定是1，类推
+	scenceid = 90,
+	--场景名称
+	scencename = Lang.SceneName.s90,
+	--场景对应的地图,只需要填文件名，不需要写路径和后缀名，比如这个地图文件是map/demo.jxm，只需要写demo
+	mapfilename = "ywc",
+	--限制等级,低于这个等级无法进入
+	minlevel = 0,
+	--限制物品，这是一个数字列表，代表有这些物品的玩家不能进入
+	forbiddenitem = {1,2},
+	--限制的技能列表，有这些技能的玩家不能进入
+	forbiddenskill = {100,20},
+	--0表示可以pk，1表示不可以，默认是0
+	nopk = 0,
+	progress = 0,
+	music = "zhandou.mp3",
+	-- triggerkillallmonster = true,
+	musicInterval=5,
+        --在世界地图上的坐标x
+        worldmapPosx =0,
+        worldmapPosy =0,
+		--场景的长宽,是指格子数的长宽
+        -- sceneWidth =91,
+        -- sceneHeight =52,
+        sceneWidth =58,
+        sceneHeight =32,
+
+	area = 
+	{
+		{ name = Lang.SceneName.s90, range = { 0,0,58,0,58,32,0,32}, center = {9,29},
+		     attri = { -- 全图属性
+				{type=6,value = {}}, -- 重配地图，掉线会退出副本
+				{type=67,value = {}}, -- 禁止复活
+                                                        {type=34 ,value = {22101,22102,22103,22104,22105,22106,22107,22108,22151,22152,22153,22154,22155,22156,22157,22158,22201,22202,22203,22251,22252,22253,}},
+			}
+	    },	
+	    -- -- 左上角buff脚本触发区域
+     --    { name = Lang.SceneName.s90, range = { 15,10,27,10,15,13,27,13 }, center = { 20,11 },
+     --        attri = 
+     --        {
+     --            {type=68,value = {1}, fun = "ZDTTBuff"},
+     --        },
+     --    },
+     --    -- 右上上角buff脚本触发区域
+     --    { name = Lang.SceneName.s90, range = { 34,7,47,7,34,11,47,11 }, center = { 40,9 },
+     --        attri = 
+     --        {
+     --            {type=68,value = {2}, fun = "ZDTTBuff"},
+     --        },
+     --    },
+        -- 中间buff脚本触发区域
+        { name = Lang.SceneName.s90, range = { 16,10,47,10,16,26,47,26 }, center = { 28,18 },
+            attri = 
+            {
+                {type=68,value = {1}, fun = "ZDTTBuff"},
+            },
+        },
+        -- -- 左下角buff脚本触发区域
+        -- { name = Lang.SceneName.s90, range = { 9,23,25,23,9,33,25,33 }, center = { 16,27 },
+        --     attri = 
+        --     {
+        --         {type=68,value = {4}, fun = "ZDTTBuff"},
+        --     },
+        -- },
+        -- -- 右下角buff脚本触发区域
+        -- { name = Lang.SceneName.s90, range = { 69,26,86,26,89,36,86,36 }, center = { 76,29 },
+        --     attri = 
+        --     {
+        --         {type=68,value = {5}, fun = "ZDTTBuff"},
+        --     },
+        -- },	
+	},
+    -- area = 
+    -- {
+    --     { name = Lang.SceneName.s90, range = { 0,0,91,0,91,52,0,52}, center = {1,26},
+    --          attri = { -- 全图属性
+    --             {type=6,value = {}}, -- 重配地图，掉线会退出副本
+    --             {type=67,value = {}}, -- 禁止复活
+    --         }
+    --     },  
+    --     -- 左上角buff脚本触发区域
+    --     { name = Lang.SceneName.s90, range = { 19,9,27,9,16,19,27,19 }, center = { 21,14 },
+    --         attri = 
+    --         {
+    --             {type=68,value = {1}, fun = "ZDTTBuff"},
+    --         },
+    --     },
+    --     -- 右上上角buff脚本触发区域
+    --     { name = Lang.SceneName.s90, range = { 66,6,72,6,66,18,72,18 }, center = { 69,12 },
+    --         attri = 
+    --         {
+    --             {type=68,value = {2}, fun = "ZDTTBuff"},
+    --         },
+    --     },
+    --     -- 中间buff脚本触发区域
+    --     { name = Lang.SceneName.s90, range = { 40,18,57,18,40,28,57,28 }, center = { 49,22 },
+    --         attri = 
+    --         {
+    --             {type=68,value = {3}, fun = "ZDTTBuff"},
+    --         },
+    --     },
+    --     -- 左下角buff脚本触发区域
+    --     { name = Lang.SceneName.s90, range = { 9,23,25,23,9,33,25,33 }, center = { 16,27 },
+    --         attri = 
+    --         {
+    --             {type=68,value = {4}, fun = "ZDTTBuff"},
+    --         },
+    --     },
+    --     -- 右下角buff脚本触发区域
+    --     { name = Lang.SceneName.s90, range = { 69,26,86,26,89,36,86,36 }, center = { 76,29 },
+    --         attri = 
+    --         {
+    --             {type=68,value = {5}, fun = "ZDTTBuff"},
+    --         },
+    --     },  
+    -- },
+	--refresh项用来配置这个场景的刷怪点，每个场景可以有多个刷怪点，可以用include包含多个刷怪点
+
+     
+ refresh =
+{
+  
+},
+	--这里配置这个场景出现的NPC，如果有多个NPC，这配置多行，每一项（行）表示一个NPC
+	npc = 
+	{
+		--name表示npc的名称，
+		--posx和posy分别表示出现的位置坐标
+		--script是对应的脚本名字，需要用相对路径
+		--modelid表示外观模型id
+                --camp表示是阵营的id，默认是0表示所有的阵营都能用，1 无忌 2逍遥  3日月，如果是0可以不配置
+
+  },
+  teleport = 
+  {    
+
+  },
+},

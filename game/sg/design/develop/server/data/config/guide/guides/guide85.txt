@@ -1,0 +1,43 @@
+﻿{
+  maxLevel = 40,
+  
+  --接受任务后引导炼器
+  trigger = 
+  { 
+    type = 1,
+    value = 211,
+  },
+
+  --引导中锁定的窗口ID
+  lockUI = 
+  {
+    120,
+  },
+
+  --引导的步骤 
+  steps = 
+  {
+
+	--第1步 引导点击炼器导航按钮
+    {
+      cond = { type = 17,  helpId = 0, data = 211 },
+
+      action = { type = 1, helpId = 3, data = 0, desc = "",showType = 2 },
+    },
+
+	--第2步 引导点击炼器界面关闭按钮
+    {
+      cond = { type = 1, helpId = 120, data = 0 },
+
+      action = { type = 16, helpId = 0, data = Lang.GuideLang.func59, desc = "" },
+    },
+
+	--第3步 关闭炼器界面结束引导
+    {
+      cond = { type = 2, helpId = 120, data = 0 },
+
+      action = { type = 16, helpId = 0, data = Lang.GuideLang.func37, desc = "" },
+    },
+  } 
+}
+

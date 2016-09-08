@@ -1,0 +1,310 @@
+﻿--脚本用到的定时执行的一些逻辑的配置
+--比如定时发公告，定时执行脚本
+--month表示月份，{}表示匹配所有,其他有效范围是[1,12],比如1月3月执行用{1,3}
+--day表示一个月的哪天有效，{}表示匹配所有,其他有效范围是[1,31]，1日和3日用{1,3}
+--week就是一个星期的哪几天有效，{}表示匹配所有，其他有效范围是[0,6]注意周日是0，1表示周1,比如周1和周日执行就是{1,0}
+--hour 表示那个时间点,{}表示匹配所有，其他有效范围是[0,23]，比如1点和3点,5点执行就是{1,3,5}
+--minute 表示是哪个分钟，{}空表示所有，那么每分钟都将执行,{0,1,2}表示0,1,2分执行，有效范围[0,59]
+--npcScene表示npc所在的场景，全局NPC或者全局的怪物 使用sys
+--npcName 表示npc的名字,全局的npc使用function ，全局的怪物使用monster，其他的话填写NPC的名字
+--npcFunc表示在该npc身上执行的函数，支持带参数的，单数一,分隔，比如TestBroadCast,1,2,"ss"之类的
+
+--！！Note1 本功能不要在副本的npc身上执行，因为副本NPC会有很多
+--！！Note2 因为实现方式的限制，一个括号里只能最多容纳8个，如果有特殊情况超过8个，请分2个来配置
+
+--[[
+	--自动执行公告函数
+	tipsType: 公告类型 (1世界公告，2场景公告，3阵营公告)
+	tipmsgID: 提示的ID
+	nParam:	 额外参数 (例如：阵营公告时填入阵营ID，场景公告时填入场景ID) 无用则置-1
+	noticeIndex:	 为表 NoticeMsg中的项号
+	notice:  提示内容 ，如果为数字 则代表NoticeMsg表中的项值
+	...：提示参数
+	NoticeAutoRun(tipsType,tipmsgID,nParam,noticeIndex,notice,...)
+	------------------
+	--自动刷怪函数 
+	index为表 CreateMonster中的组号
+	bRand:	是否进行随机刷怪 会在组中随机选择一个进行刷怪 1不随机 否则随机
+	CreateMonstersAutoRun(index,bRand)
+	----------------------
+	--刷怪加公告函数 
+	tipsType: 公告类型 (1世界公告，2场景公告，3阵营公告)
+	tipmsgID: 提示的ID
+	nParam:	 额外参数 (例如：阵营公告时填入阵营ID，场景公告时填入场景ID)
+	notice:  提示内容 ，如果为数字 则代表NoticeMsg表中的项值
+	noticeIndex: 为表 NoticeMsg中的项号
+	mobIndex: 为表 CreateMonster中的项号
+	bRand:	是否进行随机刷怪	1不随机 否则随机
+	CreateMonstersAndNoticeAutoRun(tipsType,tipmsgID,nParam,noticeIndex,mobIndex,bRand)
+	-----------------------
+	--注册定时 刷怪加公告函数 
+	--
+	nInterval：执行间隔
+	nTimes：执行次数
+	tipsType: 公告类型 (1世界公告，2场景公告，3阵营公告)
+	tipmsgID: 提示的ID
+	nParam:	 额外参数 (例如：阵营公告时填入阵营ID，场景公告时填入场景ID)
+	notice:  提示内容 ，如果为数字 则代表NoticeMsg表中的项值
+	noticeIndex: 为表 NoticeMsg中的项号
+	mobIndex: 为表 CreateMonster中的项号
+	bRand:	是否进行随机刷怪
+	RegCreateMonstersAndNoticeAutoRun(nInterval, nTimes, tipsType,tipmsgID,nParam,noticeIndex,mobIndex,bRand)
+	
+	level：表示多少级以上的用户才可以收到，不填默认是0，表示所有用户
+	type : 0表示调用脚本函数,1表示全服公告，默认是0
+	noticeText : 公告文字
+	noticeType : 公告类型(与tagTipmsgType对应),默认是2
+	如下：
+	    ttInvalidTmType = -1, // 无效的Tipmsg类型
+    ttTipmsgWindow = 1, //只在右侧提示栏显示
+    ttScreenCenter = 2, //屏幕中央，用于xxx把xxx强化到6级之类的全服公告
+    ttDialog = 4,     //弹出框
+    ttBroadcast = 8, //公告栏，用于GM发通知
+    ttMessage = 16,	//短消息，在屏幕中央悬挂，点击后查看内容，
+    ttWarmTip  = 32,  //温馨提示
+    ttGmTip = 64,	// Gm提示信息
+    ttChatWindow = 128, //左侧聊天栏里，用于一些系统公告在聊天栏显示
+--]]
+
+TimerConfig=
+{
+	--中秋节
+	--花好月圆--
+	--[[	--屏蔽
+	{ month={},day={},week={},hour={10},minute ={55},npcScene="sys",npcName="function",npcFunc= "NoticeAutoRun,1,3,-1,1"},	--花好月圆前5分钟公告
+	{ month={},day={},week={},hour={15,21},minute ={25},npcScene="sys",npcName="function",npcFunc= "NoticeAutoRun,1,3,-1,1"},--花好月圆前5分钟公告
+	{ month={},day={},week={},hour={11},minute ={0}, npcScene="sys",npcName="function",npcFunc= "RegCreateMonstersAndNoticeAutoRun,60,30,1,3,-1,2,1,1"},	--花好月圆刷肠粉怪加公告	
+	{ month={},day={},week={},hour={15,21},minute ={30},npcScene="sys",npcName="function",npcFunc= "RegCreateMonstersAndNoticeAutoRun,60,30,1,3,-1,2,1,1"},--花好月圆刷肠粉怪加公告	
+	{ month={},day={},week={},hour={11},minute ={30},npcScene="sys",npcName="function",npcFunc= "NoticeAutoRun,1,3,-1,4"},	--花好月圆结束公告
+	{ month={},day={},week={},hour={16,22},minute ={0},npcScene="sys",npcName="function",npcFunc= "NoticeAutoRun,1,3,-1,4"},	--花好月圆结束公告	
+	--]] 
+	--玉兔闹刀剑---
+	--[[
+	{ month={},day={},week={},hour={11},minute ={40},npcScene="sys",npcName="function",npcFunc= "NoticeMidAutumn,5"},	--公告的同时会注册一个刷怪函数
+	{ month={},day={},week={},hour={11},minute ={42},npcScene="sys",npcName="function",npcFunc= "NoticeMidAutumnAuto,3"},	--公告 倒数3分公告
+	{ month={},day={},week={},hour={11},minute ={44},npcScene="sys",npcName="function",npcFunc= "NoticeMidAutumnAuto,1"},	--公告 倒数1分公告
+	{ month={},day={},week={},hour={12},minute ={15},npcScene="sys",npcName="function",npcFunc= "NoticeMidAutumnOver"},	--公告 玉兔闹刀剑结束
+	{ month={},day={},week={},hour={20},minute ={55},npcScene="sys",npcName="function",npcFunc= "NoticeMidAutumn,5"},	--公告的同时会注册一个刷怪函数 
+	{ month={},day={},week={},hour={20},minute ={57},npcScene="sys",npcName="function",npcFunc= "NoticeMidAutumnAuto,3"},	--公告 倒数3分公告
+	{ month={},day={},week={},hour={20},minute ={59},npcScene="sys",npcName="function",npcFunc= "NoticeMidAutumnAuto,1"},	--公告 倒数1分公告
+	{ month={},day={},week={},hour={21},minute ={30},npcScene="sys",npcName="function",npcFunc= "NoticeMidAutumnOver"},	--公告 玉兔闹刀剑结束
+	---
+
+	
+	-- 军团长弹劾
+	{ month={}, day={}, week={}, hour={21},minute={0}, npcScene="sys", npcName="function", npcFunc="CampKingImpeachHandler"},
+	
+	-- 圣火守卫战
+	{ month={},day={},week={},hour={21},minute ={30},npcScene="sys",npcName="function",npcFunc= "HolyFlameDefendFight"},	--圣火守卫战 活动 开始 初始化
+	{ month={},day={},week={},hour={22},minute ={0},npcScene="sys",npcName="function",npcFunc= "HolyFlameDefendOver"},	--圣火守卫战 活动 结束 结果处理
+	--]]
+	
+	--仙灵封印
+	--{ month={},day={},week={},hour={17},minute ={46},type=1,noticeText=Lang.ScriptTips.slfy0006,noticeType={2},	--仙灵封印活动预告
+	--{ month={},day={},week={},hour={17},minute ={47},type=1,noticeText=Lang.ScriptTips.slfy0003,noticeType={2}},	--仙灵封印活动开始
+	--{ month={},day={},week={},hour={17},minute ={48},npcScene="sys",npcName="function",npcFunc= "SLFYActivityEnd"},	--仙灵封印活动结束事件
+
+	-- 世界boss相关的提示和创建怪物的函数执行，注意，只有世界boss在这里配置，精英boss不用，因为不发提示
+	
+	--15点世界boss活动提示
+	--[[ level=30表示30级以上用户才收到这信息，
+	{ month={},day={},week={},hour={14},minute ={50},type=1, level = 35, noticeText=Lang.TaskTalk.wb01,noticeType={2,128}},	-- 这里表示每天的14点50分发提示,2和128表示在屏幕中央和左下角聊天显示
+	]]
+	{ month={},day={},week={},hour={11},minute ={55},npcScene="sys",npcName="function",npcFunc= "OnReadyWorldBossTips,1,99"},	--	活动就快开始的要提示
+	
+	{ month={},day={},week={},hour={12},minute ={0},npcScene="sys",npcName="function",npcFunc= "OnStartWorldBossTips,1,1"},	--	活动开始的要提示
+	
+	{ month={},day={},week={},hour={12},minute ={0},npcScene="sys",npcName="function",npcFunc= "OnWorldBossCreate,1,99"},	-- 表示每天15点执行一个脚本函数 OnWorldBossCreate,1 ，1是参数，表示WorldBoss.txt里面配置的id
+
+	-- { month={},day={},week={},hour={15},minute ={25},npcScene="sys",npcName="function",npcFunc= "OnWorldBossEscTip,1,2"},	-- 15点15分执行函数提示boss就快消失
+
+	{ month={},day={},week={},hour={12},minute ={30},npcScene="sys",npcName="function",npcFunc= "OnWorldBossGone,1,99"},		-- 15点20分执行函数提示boss消失
+
+	--后面的世界boss按照上面4项配置就可以，需要改对应的时间，以及函数里面的id参数，比如OnWorldBossGone,1里面的1
+
+	--[[22点的世界boss活动提示
+	
+	{ month={},day={},week={},hour={21},minute ={50},type=1, level = 50, noticeText=Lang.TaskTalk.wb01,noticeType={2,128}},	-- 这里表示每天的14点50分发提示,2和128表示在屏幕中央和左下角聊天显示
+	]]
+	{ month={},day={},week={},hour={18},minute ={55},npcScene="sys",npcName="function",npcFunc= "OnReadyWorldBossTips,2,99"},	--	活动就快开始的要提示
+	
+	{ month={},day={},week={},hour={19},minute ={0},npcScene="sys",npcName="function",npcFunc= "OnStartWorldBossTips,1,1"},	--	活动开始的要提示
+	
+	{ month={},day={},week={},hour={19},minute ={0},npcScene="sys",npcName="function",npcFunc= "OnWorldBossCreate,2,99"},	-- 表示每天15点执行一个脚本函数 OnWorldBossCreate,1 ，1是参数，表示WorldBoss.txt里面配置的id
+
+	-- { month={},day={},week={},hour={22},minute ={25},npcScene="sys",npcName="function",npcFunc= "OnWorldBossEscTip,1,2"},	-- 15点15分执行函数提示boss就快消失
+
+	{ month={},day={},week={},hour={19},minute ={30},npcScene="sys",npcName="function",npcFunc= "OnWorldBossGone,2,99"},		-- 15点20分执行函数提示boss消失
+
+	-- 七夕boss
+	{ month={},day={},week={},hour={12},minute ={25},npcScene="sys",npcName="function",npcFunc= "OnReadyQixiBossTips,8"},	--	活动就快开始的要提示	
+	{ month={},day={},week={},hour={12},minute ={30},npcScene="sys",npcName="function",npcFunc= "OnStartQixiBossTips,1,1"},
+	{ month={},day={},week={},hour={12},minute ={30},npcScene="sys",npcName="function",npcFunc= "OnQixiBossCreate,8"},	-- 表示每天15点执行一个脚本函数 OnWorldBossCreate,1 ，1是参数，表示WorldBoss.txt里面配置的id
+	{ month={},day={},week={},hour={13},minute ={00},npcScene="sys",npcName="function",npcFunc= "OnQixiBossGone,8"},
+
+			-- 15点20分执行函数提示boss消失
+	
+	--[[ 答题活动
+	{ month={},day={},week={},hour={12},minute ={10},npcScene="sys",npcName="function",npcFunc= "answerInit"},	-- 开始
+	{ month={},day={},week={},hour={23},minute ={10},npcScene="sys",npcName="function",npcFunc= "answerInit"},	-- 开始]]
+
+	--公会献果
+	--{ week={},hour={23},minute ={59},npcScene="sys",npcName="function",npcFunc= "OnResetGuild"}, -- 重置帮派献果次数
+
+	--洞府
+	--{ week={},hour={23},minute ={59},npcScene="sys",npcName="function",npcFunc= "Dongfu_OnNewDay"}, -- 洞府每天凌晨回调
+
+	-- 国庆活动，在国庆期间，给予充值优惠比如充1000得到1100天珠，等国庆结束后，恢复原价
+	--{ month={10},day={9},week={},hour={23},minute ={59},npcScene="sys",npcName="function",npcFunc= "SetChargeConfigAfterGQ"},
+
+	--后面的世界boss按照上面4项配置就可以，需要改对应的时间，以及函数里面的id参数，比如OnWorldBossGone,1里面的1
+
+	--22点的世界boss活动提示
+	
+	--{ month={},day={},week={},hour={21},minute ={50},type=1, level = 50, noticeText=Lang.TaskTalk.wb01,noticeType={2,128}},	-- 这里表示每天的14点50分发提示,2和128表示在屏幕中央和左下角聊天显示
+	
+	--{ month={},day={},week={},hour={22},minute ={0},npcScene="sys",npcName="function",npcFunc= "OnWorldBossCreate,1,2"},	-- 表示每天15点执行一个脚本函数 OnWorldBossCreate,1 ，1是参数，表示WorldBoss.txt里面配置的id
+
+	--{ month={},day={},week={},hour={22},minute ={15},npcScene="sys",npcName="function",npcFunc= "OnWorldBossEscTip,1,2"},	-- 15点15分执行函数提示boss就快消失
+
+	--{ month={},day={},week={},hour={22},minute ={20},npcScene="sys",npcName="function",npcFunc= "OnWorldBossGone,1,2"},		-- 15点20分执行函数提示boss消失
+	
+	-- 万圣节活动
+	--{ month={10},day={26},week={},hour={0},minute ={0},npcScene="sys",npcName="function",npcFunc= "WanShengJieStart"},	-- 开始
+	--{ month={10},day={30},week={},hour={23},minute ={59},npcScene="sys",npcName="function",npcFunc= "WanShengJieEnd"},	-- 结束
+
+	-- 这个是配置开服第几天几点执行的操作,openSrv填1,另外只有day和hour填，其他时间如month不用填
+	-- 比如这个表示开服第7天的22点执行函数
+	-- 这个不要随便改，如果修改，同时要修改对应的脚本
+	{ openSrv = 1, month={},day={7},week={},hour={22},minute ={},npcScene="sys",npcName="function",npcFunc= "DbRankTakeSnapShot"},		-- 
+
+	--[[淘宝树 
+	{ month={6},day={19},week={},hour={0},minute ={0},npcScene="sys",npcName="function",npcFunc= "CreateTaoBaoShuNpc"},	-- 开始
+	{ month={6},day={21},week={},hour={23},minute ={59},npcScene="sys",npcName="function",npcFunc= "DestroyTaoBaoShuNpc"},-- 结束]]
+
+	--国庆副本中宝箱每天全服只能刷新一个怪物,add wupeng 移植
+	--{ month={},day={},week={},hour={0},minute ={0},npcScene="sys",npcName="function",npcFunc= "GuoqingRefreshMon"},	
+
+	--日常清理数据
+	{ month={},day={},week={},hour={0},minute ={0},npcScene="sys",npcName="function",npcFunc= "clearDailyDate"},
+
+	--[[仙道会
+	{ week={2, 4},hour={20},minute ={10},npcScene="sys",npcName="function",npcFunc= "OnZysStart, 0"}, -- 自由赛开始
+	{ week={6},hour={20},minute ={08},type=1, noticeText="本届争霸赛即将开始，请诸位少侠准备参战！",noticeType={2,128}},	-- 争霸赛开始前2分钟世界公告，可能要热更，文字先不写语言包
+	{ week={6},hour={20},minute ={10},npcScene="sys",npcName="function",npcFunc= "OnZbsStart"}, -- 争霸赛开始
+	{ week={0},hour={23},minute ={59},npcScene="sys",npcName="function",npcFunc= "OnZbsReset"}, -- 清空争霸赛数据]]
+
+	--通天塔
+	{ week={1},hour={0},minute={0},npcScene="sys",npcName="function",npcFunc="TongTianTaClear"},	-- 每周一00:00:00清除过关斩将数据
+
+	--封测活动
+	--{ week={},hour={0},minute ={0},npcScene="sys",npcName="function",npcFunc= "FCPerDay"}, -- 封测活动每天的更新
+	
+	-- 秦皇地宫活动
+	
+	{ month={},day={},week={},hour={13},minute ={30},npcScene="sys",npcName="function",npcFunc= "BaGua_Start"},	-- 开始
+	{ month={},day={},week={},hour={14},minute ={30},npcScene="sys",npcName="function",npcFunc= "BaGua_End"},	-- 结束
+	{ month={},day={},week={},hour={20},minute ={30},npcScene="sys",npcName="function",npcFunc= "BaGua_Start"},	-- 开始
+	{ month={},day={},week={},hour={21},minute ={30},npcScene="sys",npcName="function",npcFunc= "BaGua_End"},	-- 结束
+	--[[
+	{ month={},day={},week={},hour={10},minute ={0},npcScene="sys",npcName="function",npcFunc= "BaGua_Start"},	-- 开始
+	{ month={},day={},week={},hour={22},minute ={0},npcScene="sys",npcName="function",npcFunc= "BaGua_End"},	-- 结束
+	--]]
+	{ month={},day={},week={},hour={0},minute ={0},npcScene="sys",npcName="function",npcFunc= "BaGua_SysNewDay"},	-- 结束
+	
+	--[[精英boss
+	{ month={},day={},week={},hour={11},minute ={00},npcScene="sys",npcName="function",npcFunc= "OnJYBossCreate"},	-- 刷新精英怪
+	{ month={},day={},week={},hour={16},minute ={30},npcScene="sys",npcName="function",npcFunc= "OnJYBossCreate"},
+	{ month={},day={},week={},hour={18},minute ={00},npcScene="sys",npcName="function",npcFunc= "OnJYBossCreate"},
+	{ month={},day={},week={},hour={22},minute ={30},npcScene="sys",npcName="function",npcFunc= "OnJYBossCreate"},]]
+	
+	--公会福地
+	--{ week={1},hour={0},minute={0},npcScene="sys",npcName="function",npcFunc="clearFudiCount"},	-- 每周一00:00:00定时清除领地之战次数
+
+	--至尊特惠
+	--{ month={},day={},week={},hour={0},minute ={0},npcScene="sys",npcName="function",npcFunc= "TeHuiKuangHuanSystemNewDayInit"},
+
+	-- 仙斗会每日00:00奖励
+
+	{ month={},day={},week={},hour={0},minute ={0},npcScene="sys",npcName="function",npcFunc= "FightSysNewDayGetAward"},
+--[[
+	-- 尤乌战场(大乱斗)开启 每周五20:00~20:30
+	{ month={},day={},week={},hour={10},minute ={0},npcScene="sys",npcName="function",npcFunc= "DaLuanDouStart"},
+	-- 尤乌战场(大乱斗)结束 每周五20:00~20:30
+	{ month={},day={},week={},hour={22},minute ={0},npcScene="sys",npcName="function",npcFunc= "DaLuanDouEnd"},
+--]]	
+	-- 尤乌战场(大乱斗)开启 每周五20:00~20:30
+	{ month={},day={},week={5},hour={20},minute ={0},npcScene="sys",npcName="function",npcFunc= "DaLuanDouStart"},
+	-- 尤乌战场(大乱斗)结束 每周五20:00~20:30
+	{ month={},day={},week={5},hour={20},minute ={30},npcScene="sys",npcName="function",npcFunc= "DaLuanDouEnd"},
+	
+	
+	--单人天梯 每周一 周三 20:00 开启
+	{ month={},day={},week={1,3},hour={20},minute ={0},npcScene="sys",npcName="function",npcFunc= "DanRenTianTiOpenActivity"},
+	--单人天梯 每周一 周三 20:30 结束
+	{ month={},day={},week={1,3},hour={20},minute ={30},npcScene="sys",npcName="function",npcFunc= "DanRenTianTiEndActivity"},
+	{ month={},day={},week={1,3},hour={20},minute ={35},npcScene="sys",npcName="function",npcFunc= "DanRenTianTiRankWard"},
+	--[[
+	--单人天梯 每周一 周三 20:00 开启
+	{ month={},day={},week={},hour={10},minute ={0},npcScene="sys",npcName="function",npcFunc= "DanRenTianTiOpenActivity"},
+	--单人天梯 每周一 周三 20:30 结束
+	{ month={},day={},week={},hour={22},minute ={0},npcScene="sys",npcName="function",npcFunc= "DanRenTianTiEndActivity"},
+	{ month={},day={},week={},hour={22},minute ={5},npcScene="sys",npcName="function",npcFunc= "DanRenTianTiRankWard"},
+	--]]
+	-- 公会跑环任务 每天重置数据
+	{ month={},day={},week={},hour={0},minute ={0},npcScene="sys",npcName="function",npcFunc= "GuildLoopQuestNewDay"},
+	-- 公会祈福 每天重置数据
+	{ month={},day={},week={},hour={0},minute ={0},npcScene="sys",npcName="function",npcFunc= "GuildBlessNewDay"},
+	-- 公会boss 每天重置数据
+	{ month={},day={},week={},hour={0},minute ={0},npcScene="sys",npcName="function",npcFunc= "GuildBossNewDay"},
+
+	-- 组队天梯活动
+	
+	{ month={},day={},week={2},hour={20},minute ={0},npcScene="sys",npcName="function",npcFunc= "OnZDTTStart"},
+	{ month={},day={},week={2},hour={20},minute ={30},npcScene="sys",npcName="function",npcFunc= "OnZDTTEnd"},
+	{ month={},day={},week={4},hour={20},minute ={0},npcScene="sys",npcName="function",npcFunc= "OnZDTTStart"},
+	{ month={},day={},week={4},hour={20},minute ={30},npcScene="sys",npcName="function",npcFunc= "OnZDTTEnd"},
+	{ month={},day={},week={1},hour={0},minute ={0},npcScene="sys",npcName="function",npcFunc= "OnZDTTClearScroe"},
+	--月卡新的一天
+	--{ month={},day={},week={},hour={0},minute ={0},npcScene="sys",npcName="function",npcFunc= "YuekaNewDay"},
+
+	--活动新的一天
+	{ month={},day={},week={},hour={0},minute ={1},npcScene="sys",npcName="function",npcFunc= "notice_newday"},
+
+	--{ month={},day={},week={},hour={0},minute ={5},npcScene="sys",npcName="function",npcFunc= "WangzheNewDay"},
+	{ month={},day={},week={},hour={0},minute ={0},npcScene="sys",npcName="function",npcFunc= "MeirichongzhiNewDay"},
+	-- 组队天梯测试
+	--[[
+	{ month={},day={},week={},hour={10},minute ={0},npcScene="sys",npcName="function",npcFunc= "OnZDTTStart"},
+	{ month={},day={},week={},hour={22},minute ={0},npcScene="sys",npcName="function",npcFunc= "OnZDTTEnd"},
+	]]
+
+	{ month={},day={},week={},hour={22},minute ={0},npcScene="sys",npcName="function",npcFunc= "FightRankActivityTimer, 0"}, --结算战力排行
+	{ month={},day={},week={},hour={22},minute ={1},npcScene="sys",npcName="function",npcFunc= "FightRankActivityTimer, 1"}, --战力排行活动发每日奖励
+
+	{ month={},day={},week={},hour={22},minute ={0},npcScene="sys",npcName="function",npcFunc= "LevelRankActivityTimer, 0"}, --结算等级排行
+	{ month={},day={},week={},hour={22},minute ={1},npcScene="sys",npcName="function",npcFunc= "LevelRankActivityTimer, 1"}, --等级排行活动发每日奖励
+
+	{ month={},day={},week={},hour={0},minute ={0},npcScene="sys",npcName="function",npcFunc= "RankActivityTimer, 0, 11"}, --结算演武场排行
+	{ month={},day={},week={},hour={0},minute ={1},npcScene="sys",npcName="function",npcFunc= "RankActivityTimer, 1, 11"}, --演武场排行活动发每日奖励
+	{ month={},day={},week={},hour={22},minute ={0},npcScene="sys",npcName="function",npcFunc= "RankActivityTimer, 0, 13"}, --结算送花收花排行
+	{ month={},day={},week={},hour={22},minute ={1},npcScene="sys",npcName="function",npcFunc= "RankActivityTimer, 1, 13"}, --收花排行活动发每日奖励
+	{ month={},day={},week={},hour={22},minute ={1},npcScene="sys",npcName="function",npcFunc= "RankActivityTimer, 1, 14"}, --送花排行活动发每日奖励
+
+	-- 活跃度系统
+	{ month={},day={},week={},hour={0},minute ={0},npcScene="sys",npcName="function",npcFunc= "ActivationClearData"},
+
+	{ month={},day={},week={1,3,5},hour={12},minute ={30},npcScene="sys",npcName="function",npcFunc= "quickAnswerActivity, 1"}, --快速答题活动每天开启时间
+	{ month={},day={},week={1,3,5},hour={13},minute ={0},npcScene="sys",npcName="function",npcFunc= "quickAnswerActivity, 2"}, --快速答题活动每天结束时间
+	{ month={},day={},week={2,4,6},hour={20},minute ={0},npcScene="sys",npcName="function",npcFunc= "quickAnswerActivity, 1"}, --快速答题活动每天开启时间
+	{ month={},day={},week={2,4,6},hour={20},minute ={30},npcScene="sys",npcName="function",npcFunc= "quickAnswerActivity, 2"}, --快速答题活动每天结束时间
+
+	{ month={},day={},week={},hour={0},minute ={0},npcScene="sys",npcName="function",npcFunc= "RankTitleUpdate"}, --排行榜称号
+
+	{ month={},day={},week={},hour={0},minute ={0},npcScene="sys",npcName="function",npcFunc= "DuobaoNewActivity"}, --x元夺宝
+	
+	{ month={},day={},week={3,4},hour={12},minute ={0},npcScene="sys",npcName="function",npcFunc= "timelimitRecharge, 1"}, --限时充值
+    { month={},day={},week={3,4},hour={22},minute ={0},npcScene="sys",npcName="function",npcFunc= "timelimitRecharge, 2"}, --限时充值
+
+ 
+}

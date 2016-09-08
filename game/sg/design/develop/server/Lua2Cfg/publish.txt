@@ -1,0 +1,1360 @@
+zh_CNDefines = 
+{
+	LANGUAGE = "zh-CN",
+}
+
+zh_TWDefines = 
+
+{
+	LANGUAGE = "zh-TW",
+}
+
+files = 
+{
+	-- 先导出语言包的定义
+	{
+		source = "..\\data\\language\\langcode.txt", 
+		dest = "..\\config\\lang.lua",
+		table = "lang",	-- 这个不要修改
+	},
+
+	-- 道具
+	{
+		source = "..\\data\\Config\\item\\StdItems.txt", 
+		dest = "..\\config\\std_items.lua",
+		table = "StdItems",
+	},
+
+	-- 技能
+	{
+		source = "..\\data\\Config\\skill\\SkillConfig.txt", 
+		dest = "..\\config\\std_skill.lua",
+		table = "SkillConfig",
+	},
+
+	-- 宠物
+	{
+		source = "..\\data\\config\\pet\\pet.txt", 
+		dest = "..\\config\\std_pet.lua",
+		table = "petConf",
+	},
+
+	-- 翅膀
+	{
+		source = "..\\data\\config\\wings\\wings.txt", 
+		dest = "..\\config\\std_wing.lua", 
+		table = "Wings",
+	},
+
+	-- 坐骑
+	{
+		source = "..\\data\\config\\mounts\\Mounts.txt", 
+		dest = "..\\config\\std_mount.lua", 
+		table = "Mounts",
+	},
+
+	-- 灵根
+	{
+		source = "..\\data\\config\\roots\\Roots.txt", 
+		dest = "..\\config\\roots.lua", 
+		table = "Roots",
+	},
+
+	-- 领取累计
+	{
+		source = "..\\data\\config\\roots\\rootexp.txt", 
+		dest = "..\\config\\rootexp.lua", 
+		table = "RootExp",
+	},
+
+
+	-- 装备增强
+	{
+		source = "..\\data\\config\\item\\itemEnhance\\EquipEnhanceConfig.txt", 
+		dest = "..\\config\\equip_enhance_config.lua", 
+		table = "EquipEnhance",
+	},
+
+	-- 场景
+	{
+		source = "..\\data\\envir\\staticZone.txt", 
+		dest = "..\\config\\std_scene.lua", 
+		table = "FuBens",
+	},
+
+	-- 副本
+	{
+		source = "..\\data\\envir\\FuBen.txt", 
+		dest = "..\\config\\std_fuben.lua", 
+		table = "FuBen",
+	},
+	-- 琴棋书画配置
+	{
+		source = "..\\data\\\config\\gameplay\\qinqishuhuaconfig.txt", 
+		dest = "..\\config\\qinqishuhuaconfig.lua", 
+		table = "QQSH_ALL_ConFig",
+	},
+	
+		-- 轩辕战场
+	{
+		source = "..\\data\\config\\task\\tianyuanreardconfig.txt", 
+		dest = "..\\config\\tianyuanreardconfig.lua", 
+		table = "TianYuanReward",
+	},
+
+	
+	--套装属性
+	{
+		source = "..\\data\\Config\\item\\SuitConfig.txt", 
+		dest = "..\\config\\suitConfig.lua", 
+		table = "SuitConfig",
+	},
+
+	-- 商城
+	{
+		source = "..\\data\\Config\\store\\Store.txt", 
+		dest = "..\\config\\store.lua", 
+		table = "GameStore",
+	},
+
+	--商城刷新
+	{
+		source = "..\\data\\Config\\store\\Refreshstore.txt", 
+		dest = "..\\config\\refreshstore.lua", 
+		table = "RefreshStore",
+	},
+	-- npc商店
+	{
+		source = "..\\data\\Config\\store\\npcstore.txt", 
+		dest = "..\\config\\npcstore.lua", 
+		table = "NPCStore",
+	},
+
+	-- 成就分组
+	{
+		--该配置必须在achieve.cfg之前
+		source = "..\\data\\config\\achieve\\achieveGroup.txt", 
+		dest = "..\\config\\achieve_group.lua", 
+		table = "AchieveGroups",
+	},
+
+	-- 成就
+	{
+		--该配置必须在ahcieveGroup.cfg之后
+		source = "..\\data\\config\\achieve\\achieve.txt", 
+		dest = "..\\config\\std_achieves.lua", 
+		table = "Achieves",
+	},
+
+	-- VIP
+	{
+		source = "..\\data\\config\\vip\\vip.txt", 
+		dest = "..\\config\\vip.lua", 
+		table = "VIPConfig",
+	},
+
+	-- 在线奖励
+	{
+		source = "..\\data\\config\\vip\\online_reward.txt", 
+		dest = "..\\config\\online_reward.lua", 
+		table = "OnlineReward",
+	},
+	
+	-- 在线奖励时间
+	{
+		source = "..\\data\\config\\vip\\online_reward.txt", 
+		dest = "..\\config\\online_reward_time.lua", 
+		table = "LOGINTIMEINTERVALS",
+	},
+	
+	
+	-- 签到奖励
+	{
+		source = "..\\data\\config\\vip\\sign_reward_config.txt", 
+		dest = "..\\config\\sign_reward_config.lua", 
+		table = "SignReward",
+	},
+	
+	-- 累计登陆奖励
+	{
+		source = "..\\data\\config\\vip\\total_login_reward.txt", 
+		dest = "..\\config\\total_login_reward.lua", 
+		table = "TotalLoginReward",
+	},
+
+	-- 副本统计配置
+	{
+		source = "..\\data\\envir\\fubentongjiclient.txt",
+		dest = "..\\config\\fuben_tongji.lua",
+		table = "FuBenTongjiClient",
+	},
+	-- 全局配置
+	{
+		source = "..\\data\\config\\ClientGlobalConfig.txt", 
+		dest = "..\\config\\client_global_config.lua", 
+		table = "ClientGlobalConfig",
+	},
+	
+	-- 装备值
+    { 
+		source = "..\\data\\config\\item\\equipValuation.txt", 
+		dest = "..\\config\\equip_value.lua", 
+		table = "EquipValuation"
+	},
+	-- 任务
+	{
+		source = "..\\data\\Config\\quest\\StdQuests.txt", 
+		dest = "..\\config\\std_quest.lua", 
+		table = "StdQuest",
+	},
+	-- 斩妖除魔
+	{
+		source = "..\\data\\config\\quest\\RefreshQuests.txt", 
+		dest = "..\\config\\refresh_quests.lua", 
+		table = "RefreshQuests",
+	},
+	-- 怪物
+	{
+		source = "..\\data\\config\\monster\\MonsterConfig.txt", 
+		dest = "..\\config\\monster.lua",
+		table = "Monster",
+	},
+	-- 仙宗
+	{
+		source = "..\\data\\config\\guild\\Guild.txt", 
+		dest = "..\\config\\guild.lua", 
+		table = "Guild",
+	},
+	--娓″姭
+	{
+		source = "..\\data\\functions\\tasks\\crosssystem\\crossset.txt", 
+		dest = "..\\config\\djConfig.lua", 
+		table = "DjConfig",
+	},
+
+	--副本拆分
+	{
+		source = "..\\data\\functions\\config\\fubenconfig\\fubencountconfig.txt", 
+		dest = "..\\config\\fuben_count_config.lua", 
+		table = "FubenLinkConfig",
+	},
+	
+	--副本增加费用
+	{
+		source = "..\\data\\functions\\config\\fubenconfig\\fubencountconfig.txt", 
+		dest = "..\\config\\fuben_addCountMoney.lua", 
+		table = "FubenAddCountMoney",
+	},
+
+	-- 兑换
+	{
+		source = "..\\data\\Config\\store\\RenownShopConfig.txt", 
+		dest = "..\\config\\renown_shop_config.lua", 
+		table = "RenwnShopConfig",
+	},
+	--聚仙令兑换
+	{
+		source = "..\\data\\Config\\store\\teampointshopconfig.txt", 
+		dest = "..\\config\\teampoint_shop_config.lua", 
+		table = "TeamPointShopConfig",
+		define = zh_CNDefines,
+		filters = nil,
+	},
+
+	-- 活动
+	{
+		source = "..\\data\\config\\activity\\activity.txt", 
+		dest = "..\\config\\activity_config.lua", 
+		table = "ActivityConfig",
+	},
+	-- 日常副本
+	{
+		source = "..\\data\\config\\activity\\dailyfubenconfig.txt", 
+		dest = "..\\config\\dailyfubenconfig.lua", 
+		table = "DailyFuben",
+	},
+	-- 委托
+	{
+		source = "..\\data\\config\\misc\\entrustconf.txt", 
+		dest = "..\\config\\entrustconf.lua", 
+		table = "entrustconf",
+	},
+	
+	-- 副本统计
+	{
+		source = "..\\data\\envir\\fubenconfig.txt", 
+		dest = "..\\config\\fubenconfig.lua", 
+		table = "FuBenRewardConfig",
+	},
+
+	-- 新副本委托
+	{
+		source = "..\\data\\config\\misc\\newentrustconf.txt", 
+		dest = "..\\config\\newentrustconf.lua", 
+		table = "NewEntrustConf",
+	},
+
+	-- 世界boss
+	{
+		source = "..\\data\\config\\activity\\WorldBoss.txt", 
+		dest = "..\\config\\world_boss.lua", 
+		table = "WorldBoss",
+	},
+	
+	-- 活跃奖励
+	{
+		source = "..\\data\\config\\misc\\activityaward.txt", 
+		dest = "..\\config\\activity_award.lua", 
+		table = "ActivityAward",
+	},
+	-- 梦境
+	{
+		source = "..\\data\\config\\lottery\\lottery.txt", 
+		dest = "..\\config\\lottery.lua", 
+		table = "LotteryConf",
+		filters = 
+		{
+			"itemList",
+		},
+	},
+	--寄售
+	{
+		source = "..\\data\\config\\consignment\\consignmenttype.txt",
+		dest = "..\\config\\consignmenttype.lua",
+		table = "ConsignmentType",
+	},
+	--洞府
+	{
+		source = "..\\data\\config\\dongfu\\dongfu_conf.txt",
+		dest = "..\\config\\dongfu_conf.lua",
+		table = "DongfuConf",
+	},
+	-- 神秘商店
+	{
+		source = "..\\data\\config\\store\\liudaoshop.txt", 
+		dest = "..\\config\\liudaoshop.lua", 
+		table = "LiudaoShop",
+	},
+	-- 法宝
+	{
+		source = "..\\data\\config\\gem\\gemconfig.txt", 
+		dest = "..\\config\\gem_config.lua", 
+		table = "GemConfig",
+	},
+	-- 伙伴
+	{
+		source = "..\\data\\config\\partner\\partnerconfig.txt", 
+		dest = "..\\config\\partner_config.lua", 
+		table = "PartnerConfig",
+	},
+	-- 仙斗会
+	{
+		source = "..\\data\\config\\fight\\fightconf.txt", 
+		dest = "..\\config\\fight_conf.lua", 
+		table = "FightConf",
+	},
+	-- 日常任务独立配置文件
+	{
+		source = "..\\data\\config\\taskgameplayconfig\\normaldayquestconfig.txt", 
+		dest = "..\\config\\normaldayquest_config.lua", 
+		table = "NormalDayQuestConfig",
+	},
+	-- 物品分解配置文件
+	{
+		source = "..\\data\\config\\itemsplit\\itemsplitconf.txt", 
+		dest = "..\\config\\itemsplit_config.lua", 
+		table = "ItemSplitConf",
+	},
+	--seven day award
+	{
+		source = "..\\data\\config\\activity\\qiriliucun.txt",
+		dest = "..\\config\\qiriliucun_conf.lua",
+		table = "LiucunAwardConfig",
+	},
+	-- 开服活动
+	{
+		source = "..\\data\\config\\activity\\newserveraward.txt", 
+		dest = "..\\config\\newseraward_config.lua", 
+		table = "NewServerAwardConfig",
+		filters = nil,
+	},
+
+	--vip特权配置
+	{
+		source = "..\\data\\config\\vip\\vipconfig.txt", 
+		dest = "..\\config\\vipconfig.lua", 
+		table = "VipConfig",
+		filters = nil,
+	},
+	
+	--淘宝树活动
+	{
+		source = "..\\data\\config\\lottery\\lottery_sy.txt",
+		dest = "..\\config\\taobao_tree.lua",
+		table = "LotterySYConf",
+		filters = nil,
+	},
+	--结婚配置
+	{
+		source = "..\\data\\config\\misc\\marryconf.txt",
+		dest = "..\\config\\marryconfig.lua",
+		table = "marryConf",
+		
+	},
+	--封测活动
+	{
+		source = "..\\data\\config\\activity\\fcactivityconf.txt",
+		dest = "..\\config\\fcactivityconf.lua",
+		table = "FCActivityConf",
+	},
+	--渡劫分享配置
+	{
+		source = "..\\data\\config\\share\\djshareconfig.txt",
+		dest = "..\\config\\djshareconf.lua",
+		table = "djshareconfig",
+		
+	},
+	--蓝钻
+	{
+		source = "..\\data\\config\\activity\\lanzuan.txt",
+		dest = "..\\config\\lanzuan.lua",
+		table = "LanzuanAwardConfig",
+	},
+
+	--每天限购
+	{
+		source = "..\\data\\config\\activity\\meirixiangou.txt",
+		dest = "..\\config\\meirixiangouconf.lua",
+		table = "meirixiangouConf",
+	},
+
+	--淘宝树活动
+	{
+		source = "..\\data\\config\\lottery\\lottery_sy.txt",
+		dest = "..\\config\\taobao_tree.lua",
+		table = "LotterySYConf",
+		filters = nil,
+	},
+
+	-- 幸运转盘
+	{
+		source = "..\\data\\config\\misc\\russia_rotarytable_conf.txt",
+		dest = "..\\config\\russia_conf.lua",
+		table = "RussiaRotaryTableConf",
+	},
+
+	-- 变身
+	{
+		source = "..\\data\\config\\super\\superconfigs.txt",
+		dest = "..\\config\\std_super_config.lua",
+		table = "SuperConfigs",
+	},
+
+	-- 变身总表
+	{
+		source = "..\\data\\config\\super\\superconfig.txt",
+		dest = "..\\config\\superconfig.lua",
+		table = "SkillConfig",
+	},
+
+	-- 秘籍
+	{
+		source = "..\\data\\config\\super\\supermjs.txt",
+		dest = "..\\config\\std_super_mj.lua",
+		table = "SuperMjConfigs",
+	},
+
+
+	-- 返还活动
+	{
+		source = "..\\data\\config\\fanhuan\\fanhuan.txt",
+		dest = "..\\config\\fanhuanconfig.lua",
+		table = "fanhuanconfig",
+	},	
+	-- 投资基金
+	{
+		source = "..\\data\\config\\misc\\investment_fund_conf.txt",
+		dest = "..\\config\\investment_fund_conf.lua",
+		table = "InvestmentFundConf",
+	},	
+	
+	-- 30天活动
+	{
+		source = "..\\data\\config\\dailyattendance\\dailyloginrewardconf.txt",
+		dest = "..\\config\\dailyloginrewardconf.lua",
+		table = "DailyLoginRewardConf",
+	},
+
+	-- 首充翅膀Tips的等级、等阶、星数
+	{
+		source = "..\\data\\config\\wings\\wingitems.txt",
+		dest = "..\\config\\wingitems.lua",
+		table = "WingItems",
+	},
+	
+	-- 跑环
+	{
+		source = "..\\data\\config\\looptask\\looptaskconfig.txt", 
+		dest = "..\\config\\looptaskconfig.lua", 
+		table = "loopTaskConfig",
+	},
+	-- 任务章节奖励
+	{
+		source = "..\\data\\config\\quest\\chapter.txt", 
+		dest = "..\\config\\chapter_award.lua", 
+		table = "QuestChapter",
+	},
+	-- 真气修炼配置
+	{
+		source = "..\\data\\functions\\systems\\root\\rootconfig.txt", 
+		dest = "..\\config\\root_config.lua", 
+		table = "RootConfig",
+	},
+	-- 招唤密友
+	{
+		source = "..\\data\\config\\misc\\callfriendconf.txt", 
+		dest = "..\\config\\callfriendconf.lua", 
+		table = "CallFriendConf",
+	},
+	-- 兑换活动
+	{
+		source = "..\\data\\functions\\systems\\timereward\\exchangeconf.txt", 
+		dest = "..\\config\\exchange_conf.lua", 
+		table = "ExchangeConf",
+	},
+	--美人后宫
+	{
+		source = "..\\data\\config\\collectcard\\collectcard.txt", 
+		dest = "..\\config\\collectcard.lua", 
+		table = "CollectCardConfig",
+		filters = nil,
+	},
+        	-- 秘籍
+	{
+		source = "..\\data\\config\\skill\\mijiconfig.txt",
+		dest = "..\\config\\miji_config.lua",
+		table = "MijiConf",
+	},
+	
+
+	-- 秘籍配置（客户端用）
+	{
+		source = "..\\data\\config\\skill\\mijidata.txt", 
+		dest = "..\\config\\miji_score_data.lua", 
+		table = "MijiScore",
+		--define = zh_CNDefines,
+	},
+
+	-- 秘籍配置（客户端用）
+	{
+		source = "..\\data\\config\\skill\\mijidata.txt", 
+		dest = "..\\config\\miji_src_data.lua", 
+		table = "MijiData",
+		--define = zh_CNDefines,
+		filters = 
+		{
+			"*.basics.*.score",
+			"*.basics.*.attrs.*.skillid",
+			"*.basics.*.attrs.*.target",
+			"*.basics.*.attrs.*.actionType",
+			"*.basics.*.attrs.*.timeParam",
+			--"*.basics.*.attrs.*.type",
+			"*.basics.*.attrs.*.delay",
+			"*.basics.*.attrs.*.value.type",
+			--"*.basics.*.attrs.*.value.id",
+			"*.basics.*.attrs.*.value.interval",
+			--"*.basics.*.attrs.*.value.vt",
+			"*.extras.*.score",
+			"*.extras.*.actions.*.event",
+			"*.extras.*.actions.*.tp",
+			"*.extras.*.actions.*.target",
+			"*.extras.*.actions.*.attrtype",
+			"*.extras.*.actions.*.attrgroup",
+			"*.extras.*.actions.*.effect",
+			"*.extras.*.actions.*.attrtypeCheck",
+			"*.extras.*.actions.*.attrgroupCheck",
+			"*.extras.*.actions.*.skilllevel",
+		},
+	},
+	--昆仑神树
+	{
+		source = "..\\data\\functions\\systems\\timereward\\magictreeconf.txt", 
+		dest = "..\\config\\magictreeconf.lua", 
+		table = "MagicTreeConf",
+		filters = nil,
+	},
+	--神龙密塔
+	{
+		source = "..\\data\\functions\\systems\\timereward\\magicdragonconf.txt", 
+		dest = "..\\config\\magicdragonconf.lua", 
+		table = "MagicDragonConf",
+		filters = nil,
+	},
+	--美人后宫
+	{
+		source = "..\\data\\config\\collectcard\\collectcard.txt", 
+		dest = "..\\config\\collectcard.lua", 
+		table = "CollectCardConfig",
+		filters = nil,
+	},
+	{
+		source = "..\\data\\config\\misc\\tongtiantaconf.txt", 
+		dest = "..\\config\\tongtiantaconf.lua", 
+		table = "TongTianTaConf",
+		filters = nil,
+	},
+	--美人抽卡
+	{
+		source = "..\\data\\functions\\systems\\takecard\\takecardconfig.txt", 
+		dest = "..\\config\\takecardconfig.lua", 
+		table = "TakeCardConfig",
+		filters = nil,
+	},
+	-- 神器
+	{
+		source = "..\\data\\config\\artifact\\actifacts.txt", 
+		dest = "..\\config\\actifactsconf.lua",
+		table = "Actifacts",
+	},
+	--赤影传说
+	{
+		source = "..\\data\\config\\ciying\\ciying.txt", 
+		dest = "..\\config\\ciying.lua", 
+		table = "CiYing",
+	},
+	--寻宝
+	{
+		source = "..\\data\\config\\treasure\\treasureconfig.txt", 
+		dest = "..\\config\\treasureconfig.lua", 
+		table = "Treasure",
+		filters = nil,
+	},
+	-- 灵宠副本
+	{
+		source = "..\\data\\functions\\config\\fubenconfig\\linchongbaodaoconfig.txt", 
+		dest = "..\\config\\linchongbaodaoconfig.lua", 
+		table = "linchongbaodaoconfig",
+	},
+	-- 仙羽副本
+	{
+		source = "..\\data\\functions\\config\\fubenconfig\\xianyumijingconfig.txt", 
+		dest = "..\\config\\xianyumijingconfig.lua", 
+		table = "xianyumijingconfig",
+	},
+	-- 副本奖励
+	{
+		source = "..\\data\\functions\\config\\fubenconfig\\fubenaward.txt", 
+		dest = "..\\config\\fubenaward.lua", 
+		table = "FuBenAward",
+	},
+	-- 扑捉玩法
+	{
+		source = "..\\data\\config\\taskgameplayconfig\\puzhuaconfig.txt", 
+		dest = "..\\config\\puzhuaconfig.lua", 
+		table = "PuZhua_config",
+	},
+	-- 护送玩法
+	{
+		source = "..\\data\\config\\taskgameplayconfig\\protectquestconfig.txt", 
+		dest = "..\\config\\protectquestconfig.lua", 
+		table = "protectquestconfig",
+	},
+	-- 讨债玩法
+	{
+		source = "..\\data\\config\\taskgameplayconfig\\taozhaiconfig.txt", 
+		dest = "..\\config\\taozhaiconfig.lua", 
+		table = "TaoZhai_config",
+	},
+	-- 通天试炼配置
+	{
+		source = "..\\data\\\config\\gameplay\\tongtianshilianconfig.txt", 
+		dest = "..\\config\\tongtianshilianconfig.lua", 
+		table = "TTSL_Config",
+	},
+	--通天试炼扫荡奖励配置
+	{
+		source = "..\\data\\\config\\gameplay\\tongtianshilianawardconfig.txt", 
+		dest = "..\\config\\tongtianshilianawardconfig.lua", 
+		table = "TTSL_Award_Config",
+	},
+	-- 通天试炼怪物配置
+	{
+		source = "..\\data\\\config\\gameplay\\tongtianshilianmonster.txt", 
+		dest = "..\\config\\tongtianshilianmonster.lua", 
+		table = "TTSL_Monster",
+	},
+	-- 通天试炼额外奖励配置
+	{
+		source = "..\\data\\\config\\gameplay\\tongtianshilianextraaward.txt", 
+		dest = "..\\config\\tongtianshilianextraaward.lua", 
+		table = "TTSL_Extra_Award",
+	},
+	-- 琉璃幻境客户端配置
+	{
+		source = "..\\data\\config\\task\\baguadigongclientconfig.txt", 
+		dest = "..\\config\\baguadigongclient.lua", 
+		table = "BaGuaConfig",
+	},
+	--悬赏任务配置
+	{
+		source = "..\\data\\config\\taskgameplayconfig\\xuanshuangrenwuconfig.txt", 
+		dest = "..\\config\\xuanshuangrenwuconfig.lua", 
+		table = "XSRW_Config",
+		filters = nil,
+	},
+	-- 单人天梯客户端配置
+	{
+		source = "..\\data\\config\\gameplay\\danrentianticonfig.txt", 
+		dest = "..\\config\\danrentianticonfig.lua", 
+		table = "DRTT_Config",
+	},
+	-- 封测活动
+	{
+		source = "..\\data\\functions\\systems\\timereward\\fengcehuodong.txt", 
+		dest = "..\\config\\fengcehuodong.lua", 
+		table = "FengCeHuoDong_Conf",
+	},
+	-- 周活动
+	{
+		source = "..\\data\\functions\\systems\\timereward\\newweekactivity.txt", 
+		dest = "..\\config\\newweekactivity.lua", 
+		table = "NewWeekActivity_conf",
+	},
+	-- 创建活动
+	{
+		source = "..\\data\\functions\\systems\\timereward\\createactor_conf.txt", 
+		dest = "..\\config\\createactor_conf.lua", 
+		table = "CreateActivity_conf",
+	},
+	-- 礼包配置表
+	{
+		source = "..\\data\\config\\item\\scriptitemconfig\\staticaward.txt", 
+		dest = "..\\config\\staticaward.lua", 
+		table = "StaticAwardConfig",
+	},
+	-- 悬赏任务奖励
+	{
+		source = "..\\data\\config\\taskgameplayconfig\\xsrw_award.txt", 
+		dest = "..\\config\\xsrw_award.lua", 
+		table = "award_list",
+	},
+	-- 7天连续充值
+	{
+		source = "..\\data\\functions\\systems\\secondactivity\\createactorrechagerconfig.txt", 
+		dest = "..\\config\\createactorrechagerconfig.lua", 
+		table = "award_list",
+	},
+	-- 活动表
+	{
+		source = "..\\data\\config\\activity\\activitycontrol.txt", 
+		dest = "..\\config\\activitycontrol.lua", 
+		table = "ActivityControl",
+	},
+	-- 时装配置
+	{
+		source = "..\\data\\\config\\fashion\\yiguiconf.txt", 
+		dest = "..\\config\\yiguiconf.lua", 
+		table = "YiguiConf",
+	},
+
+	-- 好友配置
+	{
+		source = "..\\data\\config\\misc\\friendrelevantconfig.txt", 
+		dest = "..\\config\\friendrelevantconfig.lua", 
+		table = "friendconfig",
+	},
+
+	-- 通缉板
+	{
+		source = "..\\data\\config\\wanted\\wanted.txt", 
+		dest = "..\\config\\wanted.lua", 
+		table = "wanted",
+	},
+
+	-- 阵营战
+	{
+		source = "..\\data\\config\\camp\\campbattleconf.txt", 
+		dest = "..\\config\\campbattleconf.lua", 
+		table = "CampBattleConf",
+	},
+		-- 尤乌战场配置文件
+	{
+		source = "..\\data\\config\\gameplay\\daluandouconfig.txt", 
+		dest = "..\\config\\daluandou_conf.lua", 
+		table = "daluandouconfig",
+	},
+
+	-- 称号配置
+	{
+		source = "..\\data\\config\\achieve\\titles.txt", 
+		dest = "..\\config\\titles.lua", 
+		table = "Titles",
+	},
+		-- 卤盲脡铆脠脦脦帽脥忙路篓脜盲脰脙脦脛录镁
+	{
+		source = "..\\data\\config\\taskgameplayconfig\\bianshenconfig.txt", 
+		dest = "..\\config\\bianshen_conf.lua", 
+		table = "BianShen_Config",
+	},
+	-- 战队
+	{
+		source = "..\\data\\config\\corps\\corpsconfig.txt", 
+		dest = "..\\config\\corpsconfig.lua", 
+		table = "corpsconfig",
+	},
+	{
+		source = "..\\data\\config\\misc\\tejialibconf.txt", 
+		dest = "..\\config\\tejialibconf.lua", 
+		table = "TejiaConf",
+	},
+	{
+		source = "..\\data\\config\\misc\\viplibconf.txt", 
+		dest = "..\\config\\viplibconf.lua", 
+		table = "ViplibConf",
+	},
+	{
+		source = "..\\data\\config\\misc\\moneycardconf.txt", 
+		dest = "..\\config\\moneycardconf.lua", 
+		table = "MoneyCardConf",
+	},
+	--永久活动
+	{
+		source = "..\\data\\functions\\systems\\timereward\\foreveractivity_conf.txt", 
+		dest = "..\\config\\foreveractivity_conf.lua", 
+		table = "ForeverActivity_conf",
+	},
+	--开服7天
+	{
+		source = "..\\data\\functions\\systems\\timereward\\newserver7_conf.txt", 
+		dest = "..\\config\\newserver7_conf.lua", 
+		table = "NewServer7_conf",
+	},
+	--开服5天
+	{
+		source = "..\\data\\functions\\systems\\timereward\\newserver5_conf.txt", 
+		dest = "..\\config\\newserver5_conf.lua", 
+		table = "NewServer5_conf",
+	},
+--[[
+
+	{
+		source = "..\\data\\config\\looptask\\looptaskconfig.txt", 
+		dest = "..\\..\\client\\data\\looptaskconfig.cfg", 
+		table = "loopTaskConfig",
+		define = zh_CNDefines,
+		filters = 
+		{
+			"SYSTEM_SWITCH",
+			"OPEN_LEVEL",
+			"resetLoopDay",
+			"maxLoopId",
+			"finishItemId",
+			"finishNeedYb",
+			"delay",
+			"loopTaskStarId",
+			"grade",
+			"expRate",
+			"awards",
+			"itemAwards",
+		},
+	},
+	
+	{
+		source = "..\\data\\functions\\Tasks\\CrossSystem\\CrossSet.txt", 
+		dest = "..\\..\\client\\data\\dj_config.cfg", 
+		table = "CrossSet",
+	},
+
+
+	{
+		source = "..\\data\\config\\lottery\\lottery.txt", 
+		dest = "..\\..\\client\\data\\lottery.cfg", 
+		table = "LotteryConf",
+		define = zh_CNDefines,
+		filters = 
+		{
+			"itemList",
+		},
+	},
+
+	{
+		source = "..\\data\\config\\lottery\\lottery_sy.txt", 
+		dest = "..\\..\\client\\data\\lotteryactivity.cfg", 
+		table = "LotterySYConf",
+		define = zh_CNDefines,
+		filters = 
+		{
+			"itemList",
+		},
+	},
+	{
+		source = "..\\data\\config\\activity\\activity.txt", 
+		dest = "..\\..\\client\\data\\activity_config.cfg", 
+		table = "ActivityConfig",
+		define = zh_CNDefines,
+		filters = nil,
+		matchers = nil,	
+	},
+
+	{
+		source = "..\\data\\config\\mounts\\Mounts.txt", 
+		dest = "..\\..\\client\\data\\mount_config.cfg", 
+		table = "Mounts",
+		define = zh_CNDefines,
+		filters = 
+		{
+			"ybToPoint",
+			"xbToPoint",
+			"attriBase",
+			"xilianSuccYb",
+			"xilianSuccXb",
+			"xilianFailYb",
+			"xilianFailXb",
+			"jinjiefuItem",
+			"*.tip",
+		},	
+	},
+
+
+       
+    {
+		source = "..\\data\\Config\\quest\\StdQuests.txt", 
+		dest = "..\\..\\client\\data\\std_quest.cfg", 
+		table = "StdQuest",
+		define = zh_CNDefines,
+		filters = 
+		{
+			"*.CompMsTip",
+			"*.PromMsTalks",
+			"*.CompMsTalks",
+			"*.PromCheck",
+			"*.PromCheckArg",
+			"*.PromCallBack",
+			"*.PromCallBackArg",
+			"*.CompCheck",
+			"*.CompCallBack",
+			"*.CompCallbackArg",
+			"*.GiveUpCallBack",
+			"*.GiveUpCallBackArg",
+			"*.PassMsTip",
+			"*.automount",
+			"*.AnswerTip",
+			"*.expEffect",
+		}
+	},
+	{
+		source = "..\\data\\Config\\skill\\SkillLearn\\DeputySkillLearn.txt", 
+		dest = "..\\..\\client\\data\\deputy_skill_learn.cfg", 
+		table = "DeputySkillLearn",
+		define = zh_CNDefines,
+		filters = nil,
+	},
+
+	{
+		source = "..\\data\\Config\\item\\SuitConfig.txt", 
+		dest = "..\\..\\client\\data\\suit_config.cfg", 
+		table = "SuitConfig",
+		define = zh_CNDefines,
+		filters = nil,
+	},
+	
+	{
+		source = "..\\data\\config\\monster\\MonsterConfig.txt", 
+		dest = "..\\..\\client\\data\\monster.cfg", 
+		table = "Monster",
+		define = zh_CNDefines,
+		filters = 
+		{
+			--"*.*", --过滤所有，允许的在matchers表中
+			"*.hprenew",
+			"*.mprenew",
+			"*.innercriticalstrikesrate",
+			"*.innerdodgerate",
+			"*.innerhitrate",
+			"*.outdodgerate",
+			"*.outhitrate",
+			"*.outcriticalstrikesrate",
+			"*.moveoneslottime",
+			"*.attackSpeed",
+			"*.attackInterval",
+			"*.maxDropHp",
+			"*.maxhp",
+			"*.maxmp",
+			"*.innerattack",
+			"*.outattack",
+			"*.outdefence",
+			"*.innerdefence",
+			"*.cure",
+			"*.exp",
+			"*.lilian",
+			"*.reSelTargetRate",
+			"*.aiConfigId",
+			"*.camp",
+			"*.attackLevel",
+			"*.nNearAttackRate",
+			"*.dontCountConsecutiveKill",
+			"*.bDeathTriggerScript",
+			"*.bCreateRank",
+			"*.monstercolor",
+			"*.drops",
+			"*.flags",
+			"*.priorTarget",
+			"*.nNearAttackType",
+			"*.talk",
+			"*.gatherTime",
+			"*.gatherDie",
+			"*.defcriticalstrikes",
+			"*.actionId",
+			"*.gatherCheck",
+			"*.color",
+			"*.lastKill",
+			"*.share",
+			"*.expMode",
+			"*.expRange",
+			"*.expFactor",
+		},
+	},
+       {
+		source = "..\\data\\config\\skill\\NormalAttackEffects.txt", 
+		dest = "..\\..\\client\\data\\normal_attack_effects.cfg", 
+		table = "NormalAttackEffects",
+		define = zh_CNDefines,
+		filters = nil,
+	},
+  
+
+   {
+		source = "..\\data\\config\\consignment\\ConsignmentType.txt", 
+		dest = "..\\..\\client\\data\\consignment_type.cfg", 
+		table = "ConsignmentType",
+		define = zh_CNDefines,
+		filters = nil,
+	},
+
+	{
+		source = "..\\data\\config\\achieve\\achieveEvent.txt", 
+		dest = "..\\..\\client\\data\\achieve_events.cfg", 
+		table = "AchieveEvents",
+		define = zh_CNDefines,
+		filters = 
+		{
+			"*.logicop",
+			"*.atomEventId", 
+			"*.conds", 
+			"*.plusParamId",
+		},
+	},
+
+	{
+		source = "..\\data\\config\\rank\\RankConfig.txt", 
+		dest = "..\\..\\client\\data\\rank_config.cfg", 
+		table = "RankConfig",
+		define = zh_CNDefines,
+		filters = { "*.type" , "*.mapping" },		
+	},
+
+       {
+		source = "..\\data\\config\\vocation\\VocationConfig.txt", 
+		dest = "..\\..\\client\\data\\vocation_config.cfg", 
+		table = "VocationConfig",
+		define = zh_CNDefines,
+		filters = 
+		{
+		  "*.*", 
+		},
+		matchers = 
+		{
+		  "*.nDefaultMaleModelID", 
+		  "*.nDefaultFemaleModelID", 
+		},	
+	},
+
+       {
+		source = "..\\data\\config\\achieve\\titles.txt", 
+		dest = "..\\..\\client\\data\\titles.cfg", 
+		table = "Titles",
+		define = zh_CNDefines,
+		filters = nil,
+		matchers = nil,	
+	},
+
+ {
+		source = "..\\data\\config\\guide\\Guide.txt", 
+		dest = "..\\..\\client\\data\\guide.cfg", 
+		table = "Guide",
+		define = zh_CNDefines,
+		filters = nil,
+		matchers = nil,	
+	},
+
+		source = "..\\data\\config\\vocation\\VocationConfig.txt", 
+		dest = "..\\config\\vocation_config.lua", 
+		table = "VocationConfig",
+	},
+
+  {
+		source = "..\\data\\config\\guide\\SCIntroduction.txt",
+		dest = "..\\..\\client\\data\\sc_introduction.cfg",
+		table = "SCIntroduction",
+		define = zh_CNDefines,
+		filters = nil,
+		matchers = nil,
+	},
+
+       {
+		source = "..\\data\\config\\misc\\ChuansongPoint.txt", 
+		dest = "..\\..\\client\\data\\chuansong_point.cfg", 
+		table = "ChuansongPoint",
+		define = zh_CNDefines,
+		filters = nil,
+		matchers = nil,	
+	},
+
+	 {
+		source = "..\\data\\config\\guide\\SystemNotifyConfig.txt", 
+		dest = "..\\..\\client\\data\\system_notify_config.cfg", 
+		table = "SystemNotifyConfig",
+		define = zh_CNDefines,
+		filters = nil,
+		matchers = nil,	
+	},
+ 
+      
+	{
+		source = "..\\data\\Config\\store\\RenownShopConfig.txt", 
+		dest = "..\\..\\client\\data\\renown_shop_config.cfg", 
+		table = "RenwnShopConfig",
+		define = zh_CNDefines,
+		filters = nil,
+	},
+
+	{
+		source = "..\\data\\config\\camp\\CampTitle.txt", 
+		dest = "..\\..\\client\\data\\camp_title.cfg", 
+		table = "CampTitle",
+		define = zh_CNDefines,
+		filters = 
+		{
+			"*.chatCD",
+			"*.setTitleInterval",
+		}			
+	},
+
+	{
+		source = "..\\data\\config\\camp\\CampJiangHuDiWei.txt", 
+		dest = "..\\..\\client\\data\\camp_jianghudiwei.cfg", 
+		table = "CampJHDW",
+		define = zh_CNDefines,
+		filters = nil,
+		matchers = nil,	
+	},
+	
+	{
+		source = "..\\data\\config\\camp\\CampConfig.txt", 
+		dest = "..\\..\\client\\data\\camp_config.cfg", 
+		table = "CampConfig",
+		define = zh_CNDefines,
+		filters = nil,
+		matchers = nil,	
+	},
+
+	{
+		source = "..\\data\\config\\camp\\CampActivities.txt", 
+		dest = "..\\..\\client\\data\\camp_activities.cfg", 
+		table = "CampActivities",
+		define = zh_CNDefines,
+		filters = 
+    {
+		 "*.apply",
+		 "*.enableLevel",
+    },
+		matchers = nil,	
+	},
+
+       {
+		source = "..\\data\\config\\misc\\MapLabels.txt", 
+		dest = "..\\..\\client\\data\\map_labels.cfg", 
+		table = "MapLabels",
+		define = zh_CNDefines,
+		filters = nil,
+		matchers = nil,	
+	},
+	
+	{
+		source = "..\\data\\config\\vip\\vip.txt", 
+		dest = "..\\..\\client\\data\\vip.cfg", 
+		table = "VIPConfig",
+		define = zh_CNDefines,
+		filters = 
+		{
+			"*.vipCardLevel",
+		},
+		matchers = nil,	
+	},
+	{
+		source = "..\\data\\config\\gem\\GemConfig.txt", 
+		dest = "..\\..\\client\\data\\gem_config.cfg", 
+		table = "GemConfig",
+		define = zh_CNDefines,
+		filters = nil,
+		matchers = nil,	
+	},
+	
+	{
+		source = "..\\data\\config\\misc\\UiAwardItems.txt", 
+		dest = "..\\..\\client\\data\\ui_award_items.cfg", 
+		table = "UiAwardItems",
+		define = zh_CNDefines,
+		filters = nil,
+		matchers = nil,	
+	},
+	
+	{
+		source = "..\\data\\config\\guild\\Guild.txt", 
+		dest = "..\\..\\client\\data\\guild.cfg", 
+		table = "Guild",
+		define = zh_CNDefines,
+		filters = nil,
+		matchers = nil,	
+	},
+        {
+		source = "..\\data\\config\\misc\\ActivityAward.txt", 
+		dest = "..\\..\\client\\data\\activity_award.cfg", 
+		table = "ActivityAward",
+		define = zh_CNDefines,
+		filters = nil,
+		matchers = nil,	
+	},
+	{
+		source = "..\\data\\config\\plot\\Plot.txt", 
+		dest = "..\\..\\client\\data\\plot.cfg", 
+		table = "Plot",
+		define = zh_CNDefines,
+		filters = nil,
+		matchers = nil,	
+	},
+	{
+		source = "..\\data\\envir\\FuBenTongjiClient.txt", 
+		dest = "..\\..\\client\\data\\fuben_tongji_client.cfg", 
+		table = "FuBenTongjiClient",
+		define = zh_CNDefines,
+		filters = nil,
+	},
+	{
+		source = "..\\data\\config\\misc\\MoneyTree.txt", 
+		dest = "..\\..\\client\\data\\money_tree.cfg", 
+		table = "MoneyTree",
+		define = zh_CNDefines,
+		filters = nil,
+	},
+	{
+		source = "..\\data\\functions\\Tasks\\ShangJin\\ShangJinClient.txt", 
+		dest = "..\\..\\client\\data\\shangjin_client.cfg", 
+		table = "ShangJinClient",
+		define = zh_CNDefines,
+		filters = nil,
+	},
+
+	{
+		source = "..\\data\\config\\activity\\WorldBoss.txt", 
+		dest = "..\\..\\client\\data\\world_boss.cfg", 
+		table = "WorldBoss",
+		define = zh_CNDefines,
+		filters = {
+			"*.firstTime",
+			"*.reliveTime",
+			"*.liveTime",
+			"*.x",
+			"*.y",
+		},
+	},
+	
+	{
+		source = "..\\data\\config\\quest\\RefreshQuests.txt", 
+		dest = "..\\..\\client\\data\\refresh_quests.cfg", 
+		table = "RefreshQuests",
+		define = zh_CNDefines,
+		filters = {
+			"*.activityAward",
+			"*.type",
+			"*.infos",
+			"*.itemQuest",
+			},
+	},
+	{
+		source = "..\\data\\config\\startFlight\\StartFlight.lua", 
+		dest = "..\\..\\client\\data\\start_flight.cfg", 
+		table = "StartFlight",
+		define = zh_CNDefines,
+		filters = nil,
+	},
+	{
+		source = "..\\data\\language\\Zh-CN\\buff_desc.txt", 
+		dest = "..\\..\\client\\data\\buff_desc.cfg", 
+		table = "buff_descs",
+		define = zh_CNDefines,
+		filters = nil,
+	},
+	{
+		source = "..\\data\\config\\map_effect_config.lua", 
+		dest = "..\\..\\client\\data\\map_effect_config.cfg", 
+		table = "map_effect_config",
+		define = zh_CNDefines,
+		filters = nil,
+	},
+	{
+		source = "..\\data\\config\\item\\hpmpstore.txt", 
+		dest = "..\\..\\client\\data\\medicine_config.cfg", 
+		table = "HpMpStore",
+		define = zh_CNDefines,
+		filters = nil,
+		matchers = nil,	
+	},
+	{
+		source = "..\\data\\config\\summonxe.txt", 
+		dest = "..\\..\\client\\data\\summonxe_config.cfg", 
+		table = "Summon",
+		define = zh_CNDefines,
+		filters = nil,
+	},
+	{
+		source = "..\\data\\config\\store\\liudaoshop.txt", 
+		dest = "..\\..\\client\\data\\liudao_shop.cfg", 
+		table = "LiudaoShop",
+		define = zh_CNDefines,
+		filters = {"*.userCountLinit", "*.totalCountLimit", "*.showAreaId" }
+	},
+	
+	{
+		source = "..\\data\\config\\activity\\newserveraward.txt", 
+		dest = "..\\..\\client\\data\\newserveraward_config.cfg", 
+		table = "NewServerAwardConfig",
+		define = zh_CNDefines,
+		filters = nil,
+	},
+
+{
+		source = "..\\data\\config\\task\\baguadigongconfig.txt", 
+		dest = "..\\..\\client\\data\\baguadigongconfig.cfg", 
+		table = "BaGuaConfig",
+		define = zh_CNDefines,
+		filters = 
+		{
+			"LEVEL",
+			"SCENEID",
+			"MAPX",
+			"MAPY",
+			"KILLSCORE",
+			"CLEARMAPID",
+			"ACTTIME",
+			"RETURNMAPID",
+			"RETURNMAPX",
+			"RETURNMAPY",
+			"BOSS",
+			"TASK",
+			"EXP",
+			
+		},
+	},
+--]]
+}

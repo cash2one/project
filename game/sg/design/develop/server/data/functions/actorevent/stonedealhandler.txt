@@ -1,0 +1,56 @@
+﻿--lua script
+--宝石材料
+--#include "data\config\item\itemenhance\stoneitemconfig.txt" once --宝石材料配置
+--#include "data\functions\actorevent\stonehandler.txt" once
+
+--拉取可获得宝石材料数量
+EnhanceTable.getBagStoneMaterialNum = function(sysarg)
+	--print("EnhanceTable.getBagStoneMaterialNum ")
+	local npack = DataPack.allocPacket(sysarg, 139, 131)
+	for i=1,4 do
+		local num = EnhanceTable.getOneTypeBagStoneMaterialNum(sysarg, i)
+		DataPack.writeInt(npack, num)
+		--print("EnhanceTable.getBagStoneMaterialNum index:"..i..",num:"..num)
+	end
+	DataPack.flush(npack)
+end
+
+--拉取可获得宝石材料数量
+EnhanceTable.getOneTypeBagStoneMaterialNum = function(sysarg, type)
+	if stoneItemConfig[type] == nil then return 0 end
+	local num = 0
+	for i,v in ipairs(stoneItemConfig[type]) do
+		num = num + LActor.getItemCount(sysarg, v[1], 0, 0, -1) * v[2]
+	end
+	return num
+end
+
+--使用宝石,获得宝石材料
+EnhanceTable.useBagStoneMaterialNum = function(sysarg, msgid, packet)
+	local stonetype = DataPack.readInt(packet)
+	if stonetype == nil then return end
+	--print("EnhanceTable.getBagStoneMaterialNum stonetype:"..stonetype)
+	local stonetypelist = {}
+	for i=1,4 do
+		if System.bitOPMask(stonetype, i - 1) then
+			table.insert(stonetypelist, i)
+		end
+	end
+	for i,v in ipairs(stonetypelist) do
+		local num = 0
+		for p,k in ipairs(stoneItemConfig[v]) do
+			local itemnum = LActor.getItemCount(sysarg, k[1], 0, 0, -1)
+			num = num + itemnum * k[2]
+			LActor.removeItem(sysarg, k[1], itemnum, 0, 0, -1, "use_stone_item")
+		end
+		EnhanceTable.changeStoneMaterialNum(sysarg, v, num)
+	end
+
+	local npack = DataPack.allocPacket(sysarg, 139, 132)
+	DataPack.writeInt(npack, stonetype)
+	DataPack.flush(npack)
+	MiscsImplement.GetStoneMaterialNum(sysarg)
+end
+
+--MiscsImplement.registerMsgHandler(131, EnhanceTable.getBagStoneMaterialNum)
+--MiscsImplement.registerMsgHandler(132, EnhanceTable.useBagStoneMaterialNum)

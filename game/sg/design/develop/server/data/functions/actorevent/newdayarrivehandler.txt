@@ -1,0 +1,110 @@
+﻿--#include "data\functions\config\FubenConfig\FubenCountConfig.txt" once
+
+LocalDT.NEWDAY = {}
+LocalDT.NEWDAY.FBBC = 3                                                                           
+LocalDT.NEWDAY.GETCAMPAWARDCOUNT = 1
+
+EventCallDispatcher.NewDayAcrriveDataInit = function (sysarg,arg)
+  local var = LActor.getStaticVar( sysarg ) 
+  var.freelotterycount = 1 --梦境免费抽取次数重置
+  
+  --副本挑战书的次数
+  local fbBC = var.fbBC
+  if fbBC == nil then 
+    var.fbBC = {}
+    fbBC = var.fbBC
+  end
+  fbBC[1] = LocalDT.NEWDAY.FBBC  
+  
+  --清空采集上限和采集次数
+  var.getherpeachMaxcount = nil
+  var.subyuanbaoaddmax = nil
+  var.getherpeachcount = nil
+
+  -- 每天护镖次数 
+  if (var.guardCount ~= nil) then
+  	var.guardCount = 0
+  end
+  
+  --每天领取阵营俸禄的次数
+  if (var.ZYcount ~= nil ) then
+    var.ZYcount = LocalDT.NEWDAY.GETCAMPAWARDCOUNT
+  end 
+  var.expbox1 = nil
+  var.expbox2 = nil
+  var.xiuweiBoxTime = nil
+  var.isVoteForImpeach = nil
+
+  if var.openYellowFromMe == nil then var.openYellowFromMe = 0 end
+  if var.openBBTFromMe == nil then var.openBBTFromMe = 0 end
+
+  if var.yellowVip ~= nil then    
+    -- 将每日礼包的位变成0
+    var.yellowVip = System.bitOpSetMask(var.yellowVip, 1, false)
+    var.yellowVip = System.bitOpSetMask(var.yellowVip, 3, false)
+    
+    -- 临时做法，让用户可以重复领取黄钻伙伴
+    var.yellowVip = System.bitOpSetMask(var.yellowVip, 2, false)
+
+    local npack = DataPack.allocPacket(sysarg, 138, 17)
+    if npack == nil then return end
+    DataPack.writeInt(npack, var.yellowVip)
+    DataPack.writeInt(npack, var.openYellowFromMe)  -- 这里应该是发 openYellowFromMe,屏蔽功能，先发0
+    DataPack.writeInt(npack, var.openBBTFromMe)
+    DataPack.flush(npack)
+  end
+
+  if var.blueVip ~= nil then
+    -- 将每日礼包的位变成0
+    var.blueVip = System.bitOpSetMask(var.blueVip, 1, false)
+    var.blueVip = System.bitOpSetMask(var.blueVip, 3, false)
+    
+    -- 临时做法，让用户可以重复领取黄钻伙伴
+    --var.blueVip = System.bitOpSetMask(var.blueVip, 2, false)
+
+    local openBlueFromMe = var.openBlueFromMe
+    if openBlueFromMe == nil then openBlueFromMe = 0 end
+
+    local npack = DataPack.allocPacket(sysarg, 138, 37)
+    if npack == nil then return end
+    DataPack.writeInt(npack, var.blueVip)
+    DataPack.writeInt(npack, 0)  -- 这里应该是发 openBlueFromMe,屏蔽功能，先发0
+    DataPack.flush(npack)
+  end
+
+  --仙浴
+  var.BathPaopaoTimes = nil --打泡泡次数
+  var.LastPaopaoTime = nil --上次打泡泡时间
+  var.AcceptPaopaoTimes = nil --接受了几次打泡泡
+  var.BathXishuiTimes = nil --戏水次数
+  var.LastXishuiTime = nil --上次戏水时间
+  var.AcceptXishuiTimes = nil -- 接受了几次戏水
+
+  --六道限购次数
+  var.LiuDaoTrader = nil
+
+  --每天是否第一次登录
+  var.firstLoginPerDay = nil
+
+  --每天参加答题活动的次数
+  if var.answerData ~= nil then var.answerData.attendNum = 0 end 
+
+  --每天幸运转盘抽奖次数 , add wupeng 移植辛运转盘
+  if var.CurLotteryCount ~= nil then var.CurLotteryCount = 0 end 
+
+  if var.fubenlistprocess ~= nil then
+    for i=0,#FubenLinkConfig do
+      if speFubenDayNum[i] ~= nil then
+        if var.fubenlistprocess[i] ~= nil then
+          var.fubenlistprocess[i].addCount = nil
+          var.fubenlistprocess[i].enterCount = nil
+          var.fubenlistprocess[i].process = nil 
+          var.fubenlistprocess[i].ifcant = nil 
+        end
+      end
+    end
+  end
+  
+end
+                                              
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, EventCallDispatcher.NewDayAcrriveDataInit)

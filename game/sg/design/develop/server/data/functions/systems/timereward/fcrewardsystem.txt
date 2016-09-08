@@ -1,0 +1,158 @@
+﻿--封测奖励系统实现 
+
+--#include "data\language\LangCode.txt" once
+
+ONLINEREWARD.FcRewardImplement = 
+{
+	-- 每次领取封测的时间，单位秒
+	fcawardtime = 
+	{
+		10,
+		600,
+		1800,		--距离下次领奖的时间
+		3600,
+		7200,	
+		18000,	--半小时
+	},
+	--每次领取的天珠数量
+	fcyb = 
+	{
+		388,
+		388,
+		488,
+		488, 
+		588,
+		888,
+	},
+
+	getFengceReward = function ( sysarg, systemid, msgid, packet )
+		local configData = ONLINEREWARD.FcRewardImplement.fcawardtime
+		local fcyb = ONLINEREWARD.FcRewardImplement.fcyb
+
+		local var = LActor.getStaticVar( sysarg )
+		local actorfcreward = var.actorfcreward
+		if actorfcreward == nil or actorfcreward[1] == nil then return end -- 正常情况这个是不会为空的，登录的时候会初始化
+
+		local t = System.getCurrMiniTime()
+
+		-- 今天领奖次数是否已经用完
+	  	if actorfcreward[1] > #configData then
+	  		LActor.sendTipmsg(sysarg,Lang.ScriptTips.f00017,ttMessage)
+	  		return 
+	  	end
+	  
+		-- 领奖时间未到
+		if t - actorfcreward[4] < actorfcreward[2] then
+			LActor.sendTipmsg(sysarg,Lang.ScriptTips.f00004,ttMessage)
+			return
+		end
+
+		-- 获取奖励配置
+		local amount = fcyb[actorfcreward[1]]
+		if amount == nil then return end
+
+		LActor.changeMoney(sysarg, mtYuanbao, amount, 1, true, "fengce", "award")
+		local tipstr = string.format(Lang.ScriptTips.f00009, amount)
+		LActor.sendTipmsg(sysarg, tipstr,ttMessage)
+
+		--跨日处理
+		if System.isSameDay(actorfcreward[3], t) == false then  
+			-- 不是当天，按第一次
+			actorfcreward[1] = 1
+			actorfcreward[2] = configData[1]
+			actorfcreward[3] = t
+			actorfcreward[4] = t
+		else
+			--是当天领奖了
+			actorfcreward[1] = actorfcreward[1] + 1
+			if actorfcreward[1] <= #configData then
+				actorfcreward[2] = configData[actorfcreward[1]]
+				actorfcreward[3] = t -- 更新领奖时间
+				actorfcreward[4] = t
+			end
+		end
+
+		--138 通知客户端一次在线奖励 1
+		local npack = DataPack.allocPacket(sysarg,138,15)  --申请一个数据包
+		if npack == nil then return end
+
+		DataPack.writeByte(npack, actorfcreward[1]) -- 第几次领奖
+		DataPack.writeUInt(npack, actorfcreward[2]) -- 剩余领奖时间
+		DataPack.writeInt(npack, #configData - actorfcreward[1] + 1) -- 剩余领奖次数
+		DataPack.flush(npack)
+	end,
+}
+
+-----------------------------------------------------------
+-- 以下部分是领取封测天珠的，封测完可随时删掉这部分代码
+EventCallDispatcher._NoviceLoginFcReward = function ( sysarg )
+	local configData = ONLINEREWARD.FcRewardImplement.fcawardtime
+
+	local t = System.getCurrMiniTime()
+     
+     --获得上次剩余的在线奖励记录
+	local var = LActor.getStaticVar( sysarg )
+	local actorfcreward = var.actorfcreward	
+	if actorfcreward == nil then --初始化
+		var.actorfcreward = {}
+		actorfcreward = var.actorfcreward
+		actorfcreward[1] = 1 
+		actorfcreward[2] = configData[1]
+		actorfcreward[3] = t -- 还没领过奖，将上次领奖时间设为登录时间
+	end
+	
+	--跨日处理
+	if System.isSameDay(actorfcreward[3], t) == false then--第二天初始化
+		actorfcreward[1] = 1 
+		actorfcreward[2] = configData[1]
+		actorfcreward[3] = t
+	end
+
+	actorfcreward[4] = t -- 开始累加在线时间
+
+	EventCallDispatcher.SendRewardMsg(sysarg, 15, actorfcreward[1], actorfcreward[2], #configData - actorfcreward[1] + 1)
+end
+
+--上线奖励的情况的下线存储
+EventCallDispatcher._LogoutRecordFcAwardTime = function ( sysarg )
+	local configData = ONLINEREWARD.FcRewardImplement.fcawardtime
+	local actorfcreward = LActor.getStaticVar( sysarg ).actorfcreward	--获得上次剩余的在线奖励记录
+	if actorfcreward == nil then return end
+
+	if actorfcreward[1] > #configData then return end -- 可能是领奖次数已经用完
+
+	local t = System.getCurrMiniTime()
+
+	-- 保存剩余领奖时间，下次登录时候继续使用这个时间
+	actorfcreward[2] = actorfcreward[2] - (t - actorfcreward[4])
+	if actorfcreward[2] < 0 then
+		actorfcreward[2] = 0
+	end
+end
+
+-- 新一天到来的处理
+EventCallDispatcher.NewDayAcrriveTimeFcReward = function (sysarg, arg)
+	local configData = ONLINEREWARD.FcRewardImplement.fcawardtime
+	if arg == nil or arg[1] == nil then return end
+
+	if arg[1] == 1 then return end -- 登录时的检查，不在这里处理
+
+	local var = LActor.getStaticVar(sysarg)
+	local actorfcreward = var.actorfcreward
+
+	if actorfcreward == nil then return end
+
+	local tm = System.getCurrMiniTime()
+
+	if actorfcreward[1] > #configData then -- 上次全部奖品已经领完, 初始值
+		actorfcreward[1] = 1 
+		actorfcreward[2] = configData[1]
+		actorfcreward[3] = tm
+		actorfcreward[4] = tm
+		EventCallDispatcher.SendRewardMsg(sysarg, 15, actorfcreward[1], actorfcreward[2], #configData - actorfcreward[1] + 1)
+	end
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, EventCallDispatcher._NoviceLoginFcReward)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogout, EventCallDispatcher._LogoutRecordFcAwardTime)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, EventCallDispatcher.NewDayAcrriveTimeFcReward)

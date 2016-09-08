@@ -1,0 +1,12 @@
+﻿-- 王城之战相关函数
+
+TianYuanFunc = {}
+
+-- 初始化王城之战排行榜项
+TianYuanFunc.InitRankItem = function (rank_item, sysarg)
+	Ranking.setSub(rank_item, 0, LActor.getName(sysarg))
+	Ranking.setSub(rank_item, 2, LActor.getAccountName(sysarg))
+	Ranking.setSub(rank_item, 3, tostring(LActor.getCampId(sysarg)))
+	Ranking.setSub(rank_item, 4, tostring(LActor.getLevel(sysarg)))
+	Ranking.setSub(rank_item, 5, tostring(LActor.getIntProperty(sysarg,PROP_ACTOR_FIGHT_VALUE)))
+end

@@ -1,0 +1,33 @@
+﻿{
+	id = 39608,
+	name = Lang.Item.n39608,
+	desc = Lang.Item.i39608,
+	type = 82,
+	sellType = 31,
+	icon = 961,
+	shape = {0,0,0,0,0,0,0,0},
+	color = 4,
+	dura = 0,
+	dup = 99,
+	colGroup = 0,
+	dealType = 0,
+	dealPrice = 0,
+	time = 0,
+	suitId = 0,
+	maxStage = true,
+	experience = 42000,
+	staitcAttrs = {  
+	},
+	strongAttrs = {  
+	},
+	qualityAttrs = {  
+	},
+	flags = { 
+		recordLog = true,
+		denyDeal = true,
+		denySell = true,
+	},
+	conds = { 
+		{ cond = 1, value = 1, }, 
+	},
+},

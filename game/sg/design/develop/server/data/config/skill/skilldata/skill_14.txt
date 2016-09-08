@@ -1,0 +1,41 @@
+{
+	id = 14,
+	name = Lang.Skill.s14Name,
+	desc = Lang.Skill.s14Desc,
+	vocation = 2,
+	skillType = 2,
+	skillSpellType = 0,
+	skillClass = 1,
+	commonCd = 0,
+	canbeDefault = false,
+	specialBuffCond = 0,
+	notAutoUse = false,
+ 	actions=
+{
+
+	{act=2,effect=1601,type=2},
+		
+},
+	skillSubLevel = { 
+--#include "Skill_14_1.txt"
+--#include "Skill_14_2.txt"
+--#include "Skill_14_3.txt"
+--#include "Skill_14_4.txt"
+--#include "Skill_14_5.txt"
+--#include "Skill_14_6.txt"
+--#include "Skill_14_7.txt"
+--#include "Skill_14_8.txt"
+--#include "Skill_14_9.txt"
+--#include "Skill_14_10.txt"
+--#include "Skill_14_11.txt"
+--#include "Skill_14_12.txt"
+--#include "Skill_14_13.txt"
+--#include "Skill_14_14.txt"
+--#include "Skill_14_15.txt"
+--#include "Skill_14_16.txt"
+--#include "Skill_14_17.txt"
+--#include "Skill_14_18.txt"
+--#include "Skill_14_19.txt"
+--#include "Skill_14_20.txt" 
+	},
+},

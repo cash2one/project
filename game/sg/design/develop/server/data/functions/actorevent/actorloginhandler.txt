@@ -1,0 +1,1165 @@
+﻿--lua script
+--To do something about Login and Logout
+
+--#include "ActorDataFunc.txt" once
+--#include "data\functions\Systems\FlowerSystem\config.txt" once
+--#include "data\config\task\TianYuanConfig.txt" once
+--#include "data\functions\Tasks\ProectionFun\ProectionFun.txt" once
+--#include "data\config\activity\newserveraward.txt" once
+--#include "data\config\activity\comsumebox.txt" once
+--#include "data\config\vip\vip.txt" once
+--#include "data\functions\globalpfhandler.txt" once
+--#include "data\envir\FuBen.txt" once
+
+-------------------------------------------------------------------------------------------
+local LoginCheckFunc = {}
+
+--死亡后重新登录的判断
+EventCallDispatcher._LoginLoginResurrection = function (sysarg)
+	if LActor.getIntProperty(sysarg,PROP_HP) == 0 then
+		local nfbid = LActor.getFubenId( sysarg )
+
+		if nfbid > 0 then
+			local nfbData = FuBen[nfbid]
+			if nfbData == nil then
+				return
+			end
+			if nfbData.maxPlayCount > 1 and nfbData.dailycopy ~= nil and nfbData.dailycopy == 1 and LActor.getTeamId( sysarg ) > 0 then
+				return
+			end
+		end
+		
+		if LActor.getIntProperty(sysarg,PROP_HP) == 0 then
+			if LActor.hasMapAreaAttri(sysarg, aaNotRelive) == true then
+				return
+			end
+			LActor.relive(sysarg)
+			local maxhp = LActor.getIntProperty(sysarg,PROP_MAXHP) 
+			LActor.changeHp(sysarg,maxhp*0.5)
+			local actorMp = LActor.getIntProperty(sysarg,PROP_MP)
+			local maxmp = LActor.getIntProperty(sysarg,PROP_MAXMP)
+			--print("actorMp:"..actorMp)
+			LActor.changeMp(sysarg,-(actorMp-maxmp*0.5))
+			LActor.addBuff(sysarg,69,1,1,1,8,"复活保护")
+		end
+	end
+end
+
+--通知领取鲜花系统的时装
+LoginCheckFunc.noticeGetFlowerAward = function(sysarg)
+--[[
+	local week = System.getDayOfWeek()
+	if week == 1 then
+		local awardRank = Ranking.getRanking(FlowerConfig.awardRank) 
+		if awardRank == nil then return	end
+		
+		local id = LActor.getIntProperty(sysarg,PROP_ENTITY_ID)
+		local item = Ranking.getItemPtrFromId(awardRank,id)
+		if item ~= nil then
+			if Ranking.getSub(item,1) == "-" then
+				local sex = LActor.getIntProperty(sysarg,PROP_SEX)
+				local sexNotice = FlowerConfig.noticTip[sex+1]
+				local str = string.format(Lang.Flower.f028,sexNotice)
+				LActor.messageBox(sysarg,0,0,str,Lang.Flower.f029.."/telportScene,"..FlowerConfig.scenePos[1]..","..FlowerConfig.scenePos[2]..","..FlowerConfig.scenePos[3],Lang.Flower.f030.."/cancelFunction,", nil, 0,1,Lang.Flower.f031,24)
+				Ranking.setSub(item,1,"n")
+				Ranking.save(awardRank,FlowerConfig.awardRank..".txt")
+			end
+		end
+	end]]
+end
+
+LoginCheckFunc.GetTianYuanTilte = function(sysarg)
+--[[
+	local userId = LActor.getIntProperty( sysarg, PROP_ENTITY_ID )    --获取角色ID
+		
+	if userId == LGuild.getTianYuanStaicLeaderId() then--是天元城城主全服广播
+		local name = LActor.getName(sysarg)
+		local camp = LActor.getCampId(sysarg)
+		local tipmsg = string.format(Lang.TaskTalk.ty0018, CampColor[camp], CampShortName[camp], name)
+		System.broadcastTipmsg(tipmsg,ttScreenCenter)
+		if LActor.HasTitle(sysarg, TianYuanConfig.TITLEID) == false then
+			LActor.GiveTitle(sysarg, TianYuanConfig.TITLEID, 0)
+		end
+	else -- 不是城主又有称号的，删除
+		if LActor.HasTitle(sysarg, TianYuanConfig.TITLEID) then
+			LActor.GiveupTitle(sysarg, TianYuanConfig.TITLEID)
+		end
+	end]]
+end
+-------------------------------------------------------------------------------------------
+LoginCheckFunc.FirstLoginToLearnSkill = function(sysarg, arg)
+	if arg == nil then return end
+
+	--默认学习技能普通攻击
+	local isFirstLogin = arg[1]
+	if (isFirstLogin == 1) then
+		local job = LActor.getIntProperty(sysarg,PROP_VOCATION)
+		if job == 1 then	    					--如果是刀客 
+		 	LActor.learnSkill(sysarg,5,1)		--学会技能4，初始是1级的技能	 
+		elseif job == 2 then	    	--如果是枪士 
+		 	LActor.learnSkill(sysarg,15,1)		--学会技能4，初始是1级的技能	     
+		elseif job == 3 then	    	--如果是弓手 
+		 	LActor.learnSkill(sysarg,25,1)		--学会技能5，初始是1级的技能	 
+		elseif job == 4 then	    	--如果是贤儒 
+		 	LActor.learnSkill(sysarg,35,1)		--学会技能5，初始是1级的技能	 
+		end  
+	end 
+end
+
+LoginCheckFunc.ProtectionQuest = function(sysarg)
+	-- loginCreateProectionMon(sysarg)
+end
+
+LoginCheckFunc.CanGetFirstRechargeAward = function(sysarg)
+--[[
+	local st = LActor.getStaticVar(sysarg)
+	if st.sclb == nil then
+		st.sclb = 0
+	end
+	--add wupeng 玩家首冲小礼包是否领取标志
+	if st.sclbsmall == nil then
+		st.sclbsmall = 0
+	end
+	if st.maxsclb == nil then
+		local rechargeCnt = LActor.getRecharge(sysarg)
+		local rechargeLimit = rechargeLimitNum
+		for i=1,#rechargeLimit do
+			if rechargeCnt >= rechargeLimit[i] then
+				st.maxsclb = i  --add wupeng vip.txt  1表示首冲礼包
+			end
+		end
+	end	
+	if st.maxsclb == nil then st.maxsclb = 0 end 
+	
+	return st.sclb, st.maxsclb, st.sclbsmall
+]]
+end
+
+-- 离线充值
+LoginCheckFunc.ActorRechargeOffline = function( sysarg, msgType, dp, num )
+	if msgType == nil or dp == nil then return end
+	if msgType ~= omChargeEvent then return end
+
+	local actVar = LActor.getStaticVar(sysarg)
+	if actVar == nil then return end
+
+	-- cycs 各个金额首次双倍
+	-- print("---离线充值",num)
+	-- LActor.recharge(sysarg,num)
+	-- LActor.changeMoney(sysarg, mtYuanbao, num, 186, true, "payment")
+
+	if actVar.cycs_sclb_double == nil then
+		actVar.cycs_sclb_double = {}
+	end
+	local chargeidx = 0
+	if num and num > 0 then
+		for i=1,#rechargeLimitNum do
+			if rechargeLimitNum[i] == num then
+				chargeidx = i
+				break
+			end
+		end
+	end
+	if chargeidx ~= 0 and actVar.cycs_sclb_double[chargeidx] ~= 1 then
+		LActor.changeMoney(sysarg, mtYuanbao, num, 186, true, "payment", "double")
+		actVar.cycs_sclb_double[chargeidx] = 1
+		LActor.sendTipmsg(sysarg, string.format(Lang.ScriptTips.scsb01, num), ttMessage)
+		LoginCheckFunc.FirstRechargeAward(sysarg)
+	end
+
+	--cycs 首充奖励 直接发
+	if num and num > 0 and actVar.cycs_sclb_award ~= 1 then
+		System.sendGmMailOffLine(LActor.getActorId(sysarg), Lang.ScriptTips.sclib05, NewServerAwardConfig.cycs_sclb.type, NewServerAwardConfig.cycs_sclb.id, 
+			NewServerAwardConfig.cycs_sclb.count, 0, Lang.ScriptTips.sclib06)
+		actVar.cycs_sclb_award = 1
+		local status = actVar.cycs_sclb_award or 0
+		local npack = DataPack.allocPacket(sysarg, 138, 76)
+		if npack == nil then return end
+		DataPack.writeInt(npack, status)
+
+		DataPack.flush(npack)
+	end
+end
+
+-- 用户充值 
+LoginCheckFunc.ActorRecharge = function( sysarg, arg)
+--[[
+	-- 第一个是1天珠，不要改,下面没判断充值金额
+	local rechargeLimit = rechargeLimitNum
+	local restTime = System.getRestTimeFromOpenServer(7)
+	local st = LActor.getStaticVar(sysarg)
+	if st.logincount == nil then
+		st.logincount = 0
+	end
+	if st.loginsumstate == nil then
+    	st.loginsumstate = 0
+    end  
+	restTime = restTime - 7200
+	if restTime < 0 then restTime = 0 end
+	
+	if restTime > 0 then
+		local rechargeCnt = LActor.getRecharge(sysarg)
+		
+		local change = false
+
+		-- 现在还是首充礼包的活动时间内
+		-- 判断达到了哪个级别的礼包
+		
+		for i=1,#rechargeLimit do
+			if rechargeCnt >= rechargeLimit[i] then
+				st.maxsclb = i
+				change = true
+			end
+		end
+
+		if change then
+			--add wupeng 用户充值的时候，给一天
+			if st.logincount == 0 then
+				st.logincount = 1
+				st.loginsumstate = System.bitOpSetMask(st.loginsumstate, 0, true)
+			end            
+			LoginCheckFunc.FirstRechargeAward(sysarg)
+		end
+	else		
+		if st.maxsclb == nil or st.maxsclb <= 0 then
+			st.maxsclb = 1 		-- 活动时间过了，就只能领第一个礼包了
+		end
+		--add wupeng 活动时间过了，首冲礼包还需要处理
+		if LActor.getRecharge(sysarg) > 0 then
+			if st.logincount == 0 then
+				st.logincount = 1
+				st.loginsumstate = System.bitOpSetMask(st.loginsumstate, 0, true)
+			end            
+			LoginCheckFunc.FirstRechargeAward(sysarg)
+		end
+	end
+
+	-- 第二轮充值
+	local sysVar = System.getStaticVar()
+	local actVar = LActor.getStaticVar(sysarg)
+
+	local addYB = arg[1]
+	if addYB == nil then
+		addYB = 0
+	end
+
+	-- round2PayEndTime 第二轮充值返利结束时间
+	if sysVar.round2PayClose == 0 and actVar and sysVar and sysVar.round2PayEndTime and (System.getCurrMiniTime() < sysVar.round2PayEndTime) and ( addYB > 0 ) and ( System.getOpenServerDay() > 7 ) then
+		if actVar.round2PayYB == nil then 
+			actVar.round2PayYB = 0
+		end
+		actVar.round2PayYB = actVar.round2PayYB + addYB
+		LoginCheckFunc.Round2PayAward(sysarg)
+	end
+]]
+	local actVar = LActor.getStaticVar(sysarg)
+	if actVar == nil then return end
+
+	-- cycs 各个金额首次双倍
+	if actVar.cycs_sclb_double == nil then
+		actVar.cycs_sclb_double = {}
+	end
+	local chargeidx = 0
+	if arg[1] and arg[1] > 0 then
+		for i=1,#rechargeLimitNum do
+			if rechargeLimitNum[i] == arg[1] then
+				chargeidx = i
+				break
+			end
+		end
+	end
+	if chargeidx ~= 0 and actVar.cycs_sclb_double[chargeidx] ~= 1 then
+		LActor.changeMoney(sysarg, mtYuanbao, arg[1], 186, true, "payment", "double")
+		actVar.cycs_sclb_double[chargeidx] = 1
+		LActor.sendTipmsg(sysarg, string.format(Lang.ScriptTips.scsb01, arg[1]), ttMessage)
+		LoginCheckFunc.FirstRechargeAward(sysarg)
+	end
+
+	--cycs 首充奖励 直接发
+	if arg[1] and arg[1] > 0 and actVar.cycs_sclb_award ~= 1 then
+		System.sendGmMailOffLine(LActor.getActorId(sysarg), Lang.ScriptTips.sclib05, NewServerAwardConfig.cycs_sclb.type, NewServerAwardConfig.cycs_sclb.id, 
+			NewServerAwardConfig.cycs_sclb.count, 0, Lang.ScriptTips.sclib06)
+		actVar.cycs_sclb_award = 1
+		System.logCounter(
+						  LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), 
+						  "activityreward",tostring(0) , tostring(1002),"", "",
+						  tostring(LActor.getName(sysarg)), actVar.download_from, "", lfDB
+						 )
+		local status = actVar.cycs_sclb_award or 0
+		local npack = DataPack.allocPacket(sysarg, 138, 76)
+		if npack == nil then return end
+		DataPack.writeInt(npack, status)
+
+		DataPack.flush(npack)
+	end
+end
+
+-- 是否可以领取首充礼包
+LoginCheckFunc.FirstRechargeAward = function (sysarg)
+--[[
+    --add wupeng 玩家首冲小礼包修改 begin
+	local ret,maxsclb,sclbsmall = LoginCheckFunc.CanGetFirstRechargeAward(sysarg)
+	if maxsclb == nil then maxsclb = 0 end
+    local st = LActor.getStaticVar(sysarg)
+    if st == nil then return end 
+	--add wupeng 玩家首冲小礼包修改 end
+
+	local npack = DataPack.allocPacket(sysarg, 138, 16)
+	if npack == nil then return end
+	local restTime = System.getRestTimeFromOpenServer(7)
+	restTime = restTime - 7200
+	if restTime < 0 then restTime = 0 end    
+	DataPack.writeInt(npack, maxsclb) --能领的最大礼包
+	DataPack.writeInt(npack, ret)     --领礼包的情况
+	DataPack.writeInt(npack, restTime)   -- 剩余时间
+	DataPack.writeInt(npack, sclbsmall)
+	DataPack.writeInt(npack, st.loginsumstate)
+	DataPack.flush(npack)
+]]
+	local actVar = LActor.getStaticVar(sysarg)
+	if actVar == nil then return end
+
+	-- cycs 各个金额首次双倍
+	if actVar.cycs_sclb_double == nil then
+		actVar.cycs_sclb_double = {}
+	end
+	local npack = DataPack.allocPacket(sysarg, 138, 119)
+	if npack == nil then return end
+	DataPack.writeInt(npack, #rechargeLimitNum)
+	for i=1,#rechargeLimitNum do
+		DataPack.writeInt(npack, actVar.cycs_sclb_double[i] or 0)
+	end
+	DataPack.flush(npack)
+end
+
+--add wupeng 首冲礼包跨天处理
+LoginCheckFunc.sclbAward = function ( sysarg )    
+--[[
+	local st = LActor.getStaticVar(sysarg)
+    if st == nil then return end 
+    if st.loginsumstate == nil then
+    	st.loginsumstate = 0
+    end  
+    if st.logintiem == nil then
+    	st.logintiem = System.getToday()
+    end 
+    if st.loginstate == nil then
+    	st.loginstate = 0
+    end
+    --一天处理
+    if LActor.getRecharge(sysarg) > 0 then
+	    if st.logincount < 3 then
+	       if System.getToday() - st.logintiem < 86400*2 then    	
+		   		st.logincount = st.logincount + 1
+		   elseif System.getToday() - st.logintiem >= 86400*2 then
+		   	  if st.logincount == 2 then
+                 st.logincount = st.logincount + 1
+		   	  elseif st.logincount == 1 then
+		   	  	 st.logincount = st.logincount + 2
+		   	  end		   	    
+		   end
+		   	--两天处理
+		   	if st.logincount == 2 then
+		        st.loginsumstate = System.bitOpSetMask(st.loginsumstate, 1, true)
+		        st.loginstate = 1
+		   	end
+		   	--三天处理
+		   	if st.logincount == 3 then
+		   		if st.loginstate == 0 then
+			   		st.loginsumstate = System.bitOpSetMask(st.loginsumstate, 1, true)
+			   	end
+		        st.loginsumstate = System.bitOpSetMask(st.loginsumstate, 2, true)
+		   	end
+	    end 
+    end
+    st.logintiem = System.getToday()
+    LoginCheckFunc.FirstRechargeAward(sysarg)
+]]
+end
+-- 第二轮充值礼包领取情况及剩余时间
+LoginCheckFunc.Round2PayAward = function (sysarg)   
+--[[
+	-- 第一个是100天珠，不要改,下面没判断充值金额
+	local rechargeLimitRound2 = {100, 500, 2000, 5000, 10000, 30000, 60000, 90000}
+	local sysVar = System.getStaticVar()
+	if sysVar.round2PayClose == 1 then
+		local npack = DataPack.allocPacket(sysarg, 138, 41)
+		if npack == nil then return end
+		DataPack.writeInt(npack, 0)
+		DataPack.writeInt(npack, 0)
+		DataPack.writeInt(npack, 0)   -- 剩余时间
+		DataPack.writeInt(npack, 0)   -- 第二轮充值总充值天珠数
+		DataPack.flush(npack)
+		return
+	end
+
+	local actVar = LActor.getStaticVar(sysarg)
+	-- round2PayEndTime 第二轮充值返利结束时间
+	if actVar and sysVar and sysVar.round2PayEndTime then
+		if actVar.round2PayYB == nil then 
+			actVar.round2PayYB = 0
+		end
+		if actVar.curGetRound2PayGift == nil then
+			actVar.curGetRound2PayGift = 0
+		end
+		local rechargeLv = 0 
+		-- 判断达到了哪个级别的礼包
+		for i=1,#rechargeLimitRound2 do
+			if actVar.round2PayYB >= rechargeLimitRound2[i] then
+				rechargeLv = i
+			end
+		end
+		local diffTime = sysVar.round2PayEndTime - System.getCurrMiniTime()
+		-- 已经过期或还未开始
+		if diffTime < 0 or diffTime > 7 * 86400 then
+			diffTime = 0
+		end
+		local npack = DataPack.allocPacket(sysarg, 138, 41)
+		if npack == nil then return end
+		DataPack.writeInt(npack, rechargeLv)
+		DataPack.writeInt(npack, actVar.curGetRound2PayGift)
+		DataPack.writeInt(npack, diffTime)   -- 剩余时间
+		DataPack.writeInt(npack, actVar.round2PayYB)   -- 第二轮充值总充值天珠数
+		DataPack.flush(npack)
+	end
+
+	--add wupeng QQ特权
+	LoginCheckFunc.QQNewday(sysarg)]]
+end
+
+-- 下发领取黄钻礼包的信息
+LoginCheckFunc.SendYellowVipAward = function (sysarg)
+--[[
+	local st = LActor.getStaticVar(sysarg)
+	if st.yellowVip == nil then st.yellowVip = 0 end
+
+	-- 临时做法，让用户可以重复领取黄钻伙伴
+    st.yellowVip = System.bitOpSetMask(st.yellowVip, 2, false)	
+	local ret = st.yellowVip
+	
+	if st.openYellowFromMe == nil then st.openYellowFromMe = 0 end
+	if st.openBBTFromMe == nil then st.openBBTFromMe = 0 end
+
+	local npack = DataPack.allocPacket(sysarg, 138, 17)
+	if npack == nil then return end
+	DataPack.writeInt(npack, ret)
+	DataPack.writeInt(npack, st.openYellowFromMe)	-- 这里应该是发 openYellowFromMe,屏蔽功能，先发0
+	DataPack.writeInt(npack, st.openBBTFromMe)
+	DataPack.flush(npack)]]
+end
+
+-- 下发领取蓝钻礼包的信息
+LoginCheckFunc.SendBlueVipAward = function (sysarg)
+--[[
+	local st = LActor.getStaticVar(sysarg)
+	if st.blueVip == nil then st.blueVip = 0 end
+	
+	-- 临时做法，让用户可以重复领取黄钻伙伴
+    --st.blueVip = System.bitOpSetMask(st.blueVip, 2, false)	
+	local ret = st.blueVip
+	
+	local openBlueFromMe = st.openBlueFromMe
+	if openBlueFromMe == nil then openBlueFromMe = 0 end
+
+	local npack = DataPack.allocPacket(sysarg, 138, 37)
+	if npack == nil then return end
+	DataPack.writeInt(npack, ret)
+	DataPack.writeInt(npack, 0)	-- 这里应该是发 openBlueFromMe,屏蔽功能，先发0
+	DataPack.flush(npack)]]
+end
+
+-- 设置用户是否蓝钻的信息
+LoginCheckFunc.SetBlueInfo = function (sysarg)
+--[[
+	--用一个int表示，低2字节表示蓝钻的信息，高2字节表示黄钻信息，
+	--每两个字节再分别这样定：第一位表示是否蓝钻，第二为表示是否年费，第三个位表示是否超级蓝钻，第四位是否3366
+	--第二个字节表示蓝钻的等级。黄钻的2个字节也是如此类推
+	local st = LActor.getStaticVar(sysarg)
+	local ret = 0
+	if st.is_blue_vip then
+		ret = System.bitOpSetMask(ret, 0, true)
+	end
+	if st.is_blue_year_vip then
+		ret = System.bitOpSetMask(ret, 1, true)
+	end
+	if st.is_super_blue_vip then
+		ret = System.bitOpSetMask(ret, 2, true)
+	end
+	if st.pf == "3366" then
+		ret = System.bitOpSetMask(ret, 3, true)
+	else
+		ret = System.bitOpSetMask(ret, 3, false)
+	end
+
+	if st.blue_vip_level ~= nil then
+		ret = System.makeInt16(ret, st.blue_vip_level)
+	end
+
+	LActor.setIntPropertyLo16(sysarg, PROP_QQ_VIP, ret)
+
+	-- local dating = 0
+	-- if st.pf == "qqgame" and st.qqgameDating == nil then
+	-- 	dating = 1
+	-- end
+	-- local npack = DataPack.allocPacket(sysarg, 138, 43)
+	-- if npack == nil then return end
+	-- DataPack.writeInt(npack, dating)
+	-- DataPack.flush(npack)]]
+end
+
+--设置是否是黄钻会员信息
+--[[
+LoginCheckFunc.SetYellowInfo = function(sysarg)
+	local st = LActor.getStaticVar(sysarg)
+	local ret = 0
+	if st.is_yellow_vip then
+		ret = System.bitOpSetMask(ret, 0, true)
+	end
+	if st.is_yellow_year_vip then
+		ret = System.bitOpSetMask(ret, 1, true)
+	end
+	if st.is_super_yellow_vip then
+		ret = System.bitOpSetMask(ret, 2, true)
+	end
+	if st.yellow_vip_level ~= nil then
+		ret = System.makeInt16(ret, st.yellow_vip_level)
+	end
+	LActor.setIntPropertyHi16(sysarg, PROP_QQ_VIP, ret)
+end
+]]
+
+--[[
+--add wupeng QQ特权 begin
+LoginCheckFunc.SetQQPLInfo = function ( sysarg )
+	local st = LActor.getStaticVar(sysarg)
+	if st == nil then return end
+	if st.QQPrivilegeVipstate == nil then st.QQPrivilegeVipstate = 0 end --QQ特权标志
+	if st.QQNewdayPrivilegeVip == nil then st.QQNewdayPrivilegeVip = 0 end --每天礼包状态
+	if st.GetQQPrivilege == nil then st.GetQQPrivilege = 0 end --游戏内开通QQ特权，礼包标志
+	if st.QQplstate == nil then st.QQplstate = 0 end
+	if st.QQfristLogin == nil then st.QQfristLogin = 0 end
+	local ret = 0
+    if st.is_qqpl_vip or st.QQPrivilegeVipstate == 1 or LActor.getVIPLevel(sysarg) >= 1 then
+    	ret = System.bitOpSetMask(ret, 0, true)
+    	st.QQPrivilegeVipstate = 1
+    	if st.QQNewdayPrivilegeVip == 0 then st.QQNewdayPrivilegeVip = 1 end
+    	if st.GetQQPrivilege == 0 then st.GetQQPrivilege = 1 end    	
+
+        --QQ特权等级
+        local viplevel = LActor.getVIPLevel(sysarg)
+        ret = System.makeInt16(ret, viplevel)
+        LActor.setIntPropertyHi16(sysarg, PROP_QQ_PROVOLEGE, ret)
+    end
+    st.QQplstate = 1    
+
+    if LActor.getVIPLevel(sysarg) >= 1 and st.QQfristLogin == 0 then --玩家是仙尊，处理一次
+    	LoginCheckFunc.QQplfirst(sysarg, 3)    	
+    end
+    st.QQfristLogin = 1
+end
+]]
+
+--升级弹框处理
+--[[
+LoginCheckFunc.UpLevel = function ( sysarg )
+	local st = LActor.getStaticVar(sysarg)
+	if st == nil then return end
+	if st.QQPrivilegeVipstate == nil then st.QQPrivilegeVipstate = 0 end 
+	if st.QQfristLogin == nil then st.QQfristLogin = 0 end
+
+	if LActor.getLevel(sysarg) == 30 and LActor.getVIPLevel(sysarg) == 0 then 
+        if st.QQPrivilegeVipstate == 1 then 
+          LoginCheckFunc.QQplfirst(sysarg, 0) --大于等于30级处理,本身是贵族，处理一次
+        else
+          LoginCheckFunc.QQplfirst(sysarg, 4) --大于等于30级处理，不是贵族，处理一次
+        end 
+    end
+end
+]]
+
+--游戏内部充值
+--[[
+LoginCheckFunc.QQplCharege = function ( sysarg, money)    
+    local st = LActor.getStaticVar(sysarg)
+	if st == nil then return end
+	if st.GetQQPrivilege == nil then st.GetQQPrivilege = 0 end --游戏内开通QQ特权，礼包标志
+	if st.QQPrivilegeVipstate == nil then st.QQPrivilegeVipstate = 0 end --QQ特权标志
+	if st.QQNewdayPrivilegeVip == nil then st.QQNewdayPrivilegeVip = 0 end  --每天礼包状态
+	if st.QQplstate == nil then st.QQplstate = 0 end
+	if st.QQfirstCharege == nil then st.QQfirstCharege = 0 end
+
+    if st.QQplstate ~= 1 then return end --不是QQ登陆的  充值不处理
+	if tonumber(money) >= 10 and st.GetQQPrivilege == 0 then
+		if st.QQPrivilegeVipstate == 0 then 
+			st.QQfirstCharege = 1
+		    LoginCheckFunc.QQplfirst(sysarg, 1) 
+	    end
+		st.GetQQPrivilege = 1
+		st.QQPrivilegeVipstate  = 1 
+		st.QQNewdayPrivilegeVip  = 1 		 
+	end		
+    
+    local ret = 0
+	local viplevel = LActor.getVIPLevel(sysarg)
+	if st.QQPrivilegeVipstate == 1 then
+		ret = System.bitOpSetMask(ret, 0, true)		
+
+        ret = System.makeInt16(ret, viplevel)
+        LActor.setIntPropertyHi16(sysarg, PROP_QQ_PROVOLEGE, ret)
+	end	
+end
+]]
+
+--vip升级处理
+LoginCheckFunc.vipUpdate = function ( sysarg, arg )
+--[[
+	local st = LActor.getStaticVar( sysarg )
+	if st == nil then return end
+
+	if st.QQfirstCharege == nil then st.QQfirstCharege = 0 end
+
+	if st.QQfirstCharege == 1 or  st.QQPrivilegeVipstate == 1 then
+		LoginCheckFunc.QQplfirst(sysarg, 2) 
+	end]]
+end
+
+--新的一天处理
+LoginCheckFunc.QQNewday = function ( sysarg )
+--[[
+	local st = LActor.getStaticVar(sysarg)
+    if st == nil then return end
+	if st.QQPrivilegeVipstate == nil then st.QQPrivilegeVipstate = 0 end --QQ特权标志
+	if st.QQNewdayPrivilegeVip == nil then st.QQNewdayPrivilegeVip = 0 end  --每天礼包状态
+
+	if st.QQPrivilegeVipstate == 1 then
+	   st.QQNewdayPrivilegeVip = 1
+    end]]   
+end
+
+LoginCheckFunc.QQplfirst = function ( sysarg , state)
+--[[
+    local st = LActor.getStaticVar(sysarg)
+	if st == nil then return end
+    if st.QQplVipfirst == nil then st.QQplVipfirst = 0 end
+    if st.QQplVipfirsts == nil then st.QQplVipfirsts = 0 end
+    if st.QQPrivilegeVipstate == nil then st.QQPrivilegeVipstate = 0 end  
+    local viplevle =  LActor.getVIPLevel(sysarg) 
+    if st.QQplVipfirst == 0 and state ~= 1 and state ~=2 then
+       st.QQplVipfirst = 1
+       local npack = DataPack.allocPacket(sysarg, 139, 176)
+	   if npack == nil then return end
+	   DataPack.writeInt(npack, state)
+	   DataPack.writeInt(npack, viplevle)
+	   DataPack.flush(npack)
+	elseif state == 1 and st.QQplVipfirsts == 0 then
+       st.QQplVipfirsts = 1
+       local npack = DataPack.allocPacket(sysarg, 139, 176)
+	   if npack == nil then return end
+	   DataPack.writeInt(npack, state)
+	   DataPack.writeInt(npack, viplevle)
+	   DataPack.flush(npack)
+	elseif  state == 2 then
+	   local npack = DataPack.allocPacket(sysarg, 139, 176)
+	   if npack == nil then return end
+	   DataPack.writeInt(npack, 2)
+	   DataPack.writeInt(npack, viplevle)
+	   DataPack.flush(npack)
+    end ]]   
+end
+--add wupeng QQ特权 end
+
+-- 下发领取QQ会员礼包的信息
+LoginCheckFunc.SendQQHYVipAward = function (sysarg)
+--[[
+	local st = LActor.getStaticVar(sysarg)
+	if st.qqhyVip == nil then st.qqhyVip = 0 end
+	
+	-- 临时做法，让用户可以重复领取QQ会员伙伴
+    --st.qqhyVip = System.bitOpSetMask(st.qqhyVip, 2, false)
+
+    -- 不能重复领取
+    if st.opeNQQHYfromMe and st.opeNQQHYfromMe == 0 then
+      st.qqhyVip = System.bitOpSetMask(st.qqhyVip, 2, true)       --已领取
+    else
+      st.qqhyVip = System.bitOpSetMask(st.qqhyVip, 2, false)       --还没领取或者还没充值
+    end
+
+	local ret = st.qqhyVip
+	
+	--if st.openQQHYFromMe == nil then st.openQQHYFromMe = 0 end
+	local tempNum = 0
+	if st.opeNQQHYfromMe == nil then
+		tempNum = 0 
+	else
+		tempNum = 1
+	end
+
+	if st.openBBTFromMe_QQHY == nil then st.openBBTFromMe_QQHY = 0 end
+
+	local npack = DataPack.allocPacket(sysarg, 138, 56)
+	if npack == nil then return end
+	DataPack.writeInt(npack, ret)
+	--DataPack.writeInt(npack, st.openQQHYFromMe)	-- 这里应该是发 openQQHYFromMe,屏蔽功能，先发0
+	DataPack.writeInt(npack, tempNum)
+	DataPack.writeInt(npack, st.openBBTFromMe_QQHY)
+	DataPack.flush(npack)]]
+end
+
+--[[
+-- 设置用户是否QQ会员的信息 低16位为QQ会员，高16位为手游贵族
+LoginCheckFunc.SetQQHYInfo = function (sysarg)
+	--每两个字节再分别这样定：第一位表示是否会员，第二为表示是否年费会员
+	--第二个字节表示会员的等级。
+	local st = LActor.getStaticVar(sysarg)
+	local ret = 0
+	if st.is_qq_vip then
+		ret = System.bitOpSetMask(ret, 0, true)
+	end
+	if st.is_qq_year_vip then
+		ret = System.bitOpSetMask(ret, 1, true)
+	end
+	if st.is_super_qq_vip then
+		ret = System.bitOpSetMask(ret, 2, true)
+	end
+	if st.qq_vip_level ~= nil then
+		ret = System.makeInt16(ret, st.qq_vip_level)
+	end
+	
+	if st.is_qq_vip or st.is_super_qq_vip then
+		--设置领取礼包状态
+		if not st.getrewardstate or st.getrewardstate == 1 then 
+			LoginCheckFunc.GetQQVipAward(sysarg)
+		end
+	end
+	LActor.setIntPropertyLo16(sysarg, PROP_QQ_PROVOLEGE, ret)
+end
+]]
+
+--获取领取礼包
+LoginCheckFunc.GetQQVipAward = function(sysarg)
+--[[
+	local st = LActor.getStaticVar(sysarg)
+	if st == nil then return end 
+	local itemID = QQvipconf.itemID
+	--塞物品
+	System.sendGmMailOffLine(LActor.getActorId(sysarg), Lang.ScriptTips.qqvip001, 1, itemID, 1, 1)	
+	st.getrewardstate = 0]]
+end
+
+LoginCheckFunc.SendRankActivityData = function (sysarg)
+--[[
+	local day7_t = System.getRestTimeFromOpenServer(7)
+	day7_t = day7_t - 7200	-- 计算距离开服7天22时的时间
+	if day7_t < 0 then day7_t = 0 end
+
+	local day9_t = System.getRestTimeFromOpenServer(10)
+	day9_t = day9_t - 7200		--第10天的22点
+	if day9_t < 0 then day9_t = 0 end
+	
+	local st = LActor.getStaticVar(sysarg)
+	local hasAward = 0
+	if day7_t > 0 then 
+		-- 如果没到7日22点，肯定没有奖励
+		hasAward = 0 
+	else
+		-- 遍历排行榜的数据，看看有没有上榜
+		
+		if st.rankactivityHasAward == nil then
+			-- 只计算一次，以后就不用计算了
+			DbRankActivityFunc.getActorHasAward(sysarg)
+			if st.rankactivityHasAward == nil then
+				hasAward = 0
+			else 
+				hasAward = st.rankactivityHasAward
+			end
+		else
+			hasAward = st.rankactivityHasAward
+		end
+	end 
+
+	local getAward = 0
+	if st.rankactivityGetAward ~= nil then getAward = st.rankactivityGetAward end
+
+	local npack = DataPack.allocPacket(sysarg, 138, 18)
+	if npack == nil then return end
+	DataPack.writeInt(npack, day7_t)
+	DataPack.writeInt(npack, day9_t)
+	DataPack.writeInt(npack, hasAward)
+	DataPack.writeInt(npack, getAward)
+	DataPack.flush(npack)]]
+end
+
+--检查是否为发虚假广告的玩家，是则让其自言自语
+LoginCheckFunc.checkZyzy = function (sysarg)
+	local var = LActor.getStaticVar(sysarg)
+   	if var and var.zyzyState ~= nil then
+   		LActor.setZyzyState(sysarg, true)
+   	else
+   		LActor.setZyzyState(sysarg, false)
+   	end
+end
+
+--检查是否为发虚假广告的玩家，是则让其自言自语
+LoginCheckFunc.checkZyzy = function (sysarg)
+	local var = LActor.getStaticVar(sysarg)
+   	if var and var.zyzyState ~= nil then
+   		LActor.setZyzyState(sysarg, true)
+   	else
+   		LActor.setZyzyState(sysarg, false)
+   	end
+end
+
+-- 下发小有成就的信息
+LoginCheckFunc.sendJuniorEffort = function (sysarg)
+--[[
+	local st = LActor.getStaticVar(sysarg)
+	if st == nil then return end
+	local count = #NewServerAwardConfig.JuniorEffort
+	if st.juniorEffort == nil then
+		st.juniorEffort = {}
+		for i=1,count do
+			st.juniorEffort[i] = 0
+		end
+	end
+	local npack = DataPack.allocPacket(sysarg, 138, 47)
+	if npack == nil then return end
+	local restTime = System.getRestTimeFromOpenServer(7)
+	restTime = restTime - 7200
+	if restTime < 0 then restTime = 0 end
+	DataPack.writeInt(npack, count)
+	DataPack.writeInt(npack, restTime)
+	for i=1,count do
+		DataPack.writeInt(npack, i)
+		DataPack.writeInt(npack, st.juniorEffort[i])
+	end
+	DataPack.flush(npack)]]
+end
+
+--消费礼包充值
+LoginCheckFunc.OnConsumeYuanbao = function (sysarg, arg)
+--[[
+	local sys = System.getStaticVar()
+	if sys.comsumeBoxEndTime == nil or sys.comsumeBoxStartTime == nil
+		or System.getCurrMiniTime() > sys.comsumeBoxEndTime or System.getCurrMiniTime() < sys.comsumeBoxStartTime then
+		-- 活动没开启
+		return
+	end
+
+   	local val = arg[1]
+	local phy = arg[2]
+
+	if val == nil or phy == nil or phy == "consignment" or phy == "deal" or phy == "groupon" then return end -- 不处理寄售，交易和团购的消耗 
+
+	local var = LActor.getStaticVar(sysarg)
+   	if var.comsumptionBoxRecharge == nil then
+   		var.comsumptionBoxRecharge = 0
+   	end
+
+   	var.comsumptionBoxRecharge = var.comsumptionBoxRecharge + val
+
+   	LoginCheckFunc.ComsumptionBoxAward(sysarg)]]
+end
+
+LoginCheckFunc.CanComsumptionBoxAward = function(sysarg)
+--[[
+	local st = LActor.getStaticVar(sysarg)
+	if st.sflb == nil then -- 是否已经领取
+		st.sflb = 0
+	end
+	if st.maxsflb == nil then -- 可以领多少个消费礼包
+		st.maxsflb = 0 
+	end
+	if st.comsumptionBoxRecharge == nil then  -- 消费天珠数
+		st.comsumptionBoxRecharge = 0
+	end
+
+	local recharge = st.comsumptionBoxRecharge
+	for i=1,#ComsumeBox.limit do
+		if recharge >= ComsumeBox.limit[i] then
+			st.maxsflb = i
+		end
+	end
+	
+	return st.sflb, st.maxsflb]]
+end
+
+-- 是否可以领取消费礼包
+LoginCheckFunc.ComsumptionBoxAward = function (sysarg)
+--[[
+	local sys = System.getStaticVar()
+	if sys.comsumeBoxStartTime == nil then
+		sys.comsumeBoxStartTime = 0
+	end
+	if sys.comsumeBoxEndTime == nil then
+		sys.comsumeBoxEndTime = 0
+	end
+	local var = LActor.getStaticVar(sysarg)
+	if var.comsumeTime == nil or var.comsumeTime ~= sys.comsumeBoxStartTime then -- 清掉以前的数据
+		var.comsumeTime = sys.comsumeBoxStartTime
+		var.sflb = 0
+		var.maxsflb = 0
+		var.comsumptionBoxRecharge = 0
+	end
+
+	local ret,max = LoginCheckFunc.CanComsumptionBoxAward(sysarg)
+
+	if max == nil then max = 0 end
+
+	local npack = DataPack.allocPacket(sysarg, 138, 51)
+	if npack == nil then return end
+
+	local restTime = sys.comsumeBoxEndTime - System.getCurrMiniTime()
+	if restTime < 0 then 
+		restTime = 0 
+	end
+
+   	if var.comsumptionBoxRecharge == nil then
+   		var.comsumptionBoxRecharge = 0
+   	end
+
+   	if System.getCurrMiniTime() > sys.comsumeBoxEndTime or System.getCurrMiniTime() < sys.comsumeBoxStartTime then 
+   		restTime = 0
+   	end
+
+	DataPack.writeInt(npack, max)
+	DataPack.writeInt(npack, ret)
+	DataPack.writeInt(npack, restTime)   		   
+	DataPack.writeInt(npack, var.comsumptionBoxRecharge)   
+	DataPack.flush(npack)]]
+end
+
+-- 给封测玩家发邮件奖励
+LoginCheckFunc.SendTestActorAward = function (sysarg)
+--[[
+	if LActor.isFirstLogin(sysarg) then
+		local st = LActor.getStaticVar(sysarg)
+
+		st.globalCdKey = LActor.getAccountName(sysarg)
+		--print("st.globalCdKey ====================== "..st.globalCdKey)
+		local  pfstr = GlobalPf.checkcdkeypf(st.download_from).."/cdkey.jsp"
+		--print("acoount login cdkey pfstr ====================== "..pfstr)
+
+		--LActor.txSendScriptUrl(LActor.getAccountName(sysarg), pfstr, "&type=1&keyType=2&cdkey="..st.globalCdKey, 1, true)
+	end]]
+end
+
+-- 灵器开启
+LoginCheckFunc.OpenGem = function (sysarg)
+	if not LActor.isActorSystemOpen(sysarg, siGem)  and LActor.getLevel(sysarg) >= 43 then
+		LActor.openActorSystem(sysarg, siGem)
+	end
+end
+
+LoginCheckFunc.GetActivityFinishInfo = function (sysarg)
+--[[
+	local fubens = {4,8,11,12,58,60,63,64,65,66}
+	local fbCount = 0
+	local enterCount = 0
+	local addCount = 0
+	local left = 0
+	local lefttotal = 0
+	local fbdata = nil
+	local level = LActor.getIntProperty(sysarg,PROP_LEVEL)
+	for i=1,#fubens do
+		fbid = fubens[i]
+		fbdata = FuBen[fbid]
+		if fbdata == nil then
+		    print( "GetActivityFinishInfo fbdata is nil:"..fbid )
+		    return 
+		end
+		if level >= fbdata.minLevel then
+			fbCount = fbdata.daycount
+			enterCount, addCount = Fuben.getEnterFubenInfo(sysarg, fbid)
+			left = addCount + fbCount - enterCount
+			if left < 0 then left = 0 end
+			lefttotal = lefttotal + left
+		end
+	end
+
+	local npack = DataPack.allocPacket(sysarg, 139, 125)
+	if npack == nil then return end
+	DataPack.writeInt(npack, lefttotal)
+	DataPack.flush(npack)]]
+end
+
+function MiJiConsumptionItemsFunc(sysarg,itemidx,itemPtr,ItemTable)
+	if ItemTable == nil then return end
+	local id = ItemTable.itemId
+	local job = LActor.getIntProperty( sysarg, PROP_VOCATION )
+	local jobItems = ItemTable.jobs[job]
+	if jobItems == nil then
+		LActor.sendTipmsg( sysarg, Lang.ScriptTips.mjci001, ttMessage )
+		return
+	end
+
+	--local nextItem = Item.getItemById(sysarg, id, 1)
+	--if nextItem == nil then
+	--	LActor.sendTipmsg( sysarg, "背包内没有这个物品", ttMessage )
+	--	return
+	--end
+
+	if Item.getBagEmptyGridCount(sysarg) < #jobItems then
+		LActor.sendTipmsg( sysarg, Lang.ScriptTips.sclib03, ttMessage )
+		return
+	end
+
+	-- 用于播放特效
+	local effects = {}
+	
+	for i=1, #jobItems do
+		LActor.addItem(sysarg, jobItems[i], 0, 0, 1, 1,"MiJiConsumptionItemsLiBao",1)
+		local itemName = Item.getItemName(jobItems[i])
+		LActor.sendTipmsg( sysarg, Lang.ScriptTips.sclib04 .. itemName, ttMessage )
+
+		local effect = {}
+		effect.type = 1  -- 1为物品,暂时只支持发物品所以写死
+		effect.id = jobItems[i]
+		effect.count = 1
+		effects[#effects+1] = effect
+	end
+		-- 播放特效
+	if #effects > 0 then
+		MiscFunc.PlayItemEffect(sysarg, 4, effects)
+	end
+
+	LActor.removeItemByPtr(sysarg,itemPtr,1,true,"MiJiConsumptionItems",5)      --删除一个物品
+
+end
+
+--纪录在线时刻
+LoginCheckFunc.RecordLoginTick = function(sysarg)
+	local st = LActor.getStaticVar(sysarg)
+	st.logintick = System.getCurrMiniTime()
+end
+
+EventCallDispatcher.defaultHandlerPlayerLogin = function (sysarg, arg)
+	loadActorData(sysarg)
+	EventCallDispatcher._LoginLoginResurrection(sysarg)
+
+	local isFirstLogin = arg[1]
+	if (isFirstLogin == 1) then
+		LoginCheckFunc.FirstLoginToLearnSkill(sysarg, arg)
+	end
+
+	-- LoginCheckFunc.noticeGetFlowerAward(sysarg)
+	-- LoginCheckFunc.GetTianYuanTilte(sysarg)
+	-- LoginCheckFunc.ProtectionQuest(sysarg)
+	LoginCheckFunc.FirstRechargeAward(sysarg)
+	-- LoginCheckFunc.Round2PayAward(sysarg)
+	-- LoginCheckFunc.SendYellowVipAward(sysarg)
+	-- LoginCheckFunc.SendBlueVipAward(sysarg)
+	-- LoginCheckFunc.SendRankActivityData(sysarg)
+	-- LoginCheckFunc.SetBlueInfo(sysarg)
+	LoginCheckFunc.checkZyzy(sysarg)
+	-- LoginCheckFunc.sendJuniorEffort(sysarg)
+	-- LoginCheckFunc.ComsumptionBoxAward(sysarg)
+	-- LoginCheckFunc.SendTestActorAward(sysarg)
+	LoginCheckFunc.OpenGem(sysarg)
+	-- LoginCheckFunc.GetActivityFinishInfo(sysarg)
+	-- LoginCheckFunc.RecordLoginTick(sysarg)
+	-- LoginCheckFunc.SetQQPLInfo(sysarg)
+	
+	--登陆时下发角色的创建时间
+	local npack = DataPack.allocPacket(sysarg, 26, 51)
+	if npack == nil then return end
+	local tmActor = LActor.GetActorCreateTime(sysarg)
+	--print("++++++++++++++++tmActor "..tmActor)
+	if tmActor == nil then tmActor = 0 end
+	DataPack.writeInt(npack, tmActor)
+	DataPack.flush(npack)
+end
+
+------------------------------------------------------------------------------------
+--秘籍消费礼包
+function  MiJiConsumptionItemsInit(sysarg) 
+	--[[
+	local scroll = MiJiConsumptionItem
+  for i = 1, #scroll do
+	local x = scroll[i]
+	GlobalItemFn[x.itemId] = { func = MiJiConsumptionItemsFunc, params = x }
+  end]]
+end
+
+function MiJiConsumptionItemsFunc(sysarg,itemidx,itemPtr,ItemTable)
+	--[[
+	if ItemTable == nil then return end
+	local id = ItemTable.itemId
+	local job = LActor.getIntProperty( sysarg, PROP_VOCATION )
+	local jobItems = ItemTable.jobs[job]
+	if jobItems == nil then
+		LActor.sendTipmsg( sysarg, Lang.ScriptTips.mjci001, ttMessage )
+		return
+	end
+
+	--local nextItem = Item.getItemById(sysarg, id, 1)
+	--if nextItem == nil then
+	--	LActor.sendTipmsg( sysarg, "背包内没有这个物品", ttMessage )
+	--	return
+	--end
+
+	if Item.getBagEmptyGridCount(sysarg) < #jobItems then
+		LActor.sendTipmsg( sysarg, Lang.ScriptTips.sclib03, ttMessage )
+		return
+	end
+
+	-- 用于播放特效
+	local effects = {}
+	
+	for i=1, #jobItems do
+		LActor.addItem(sysarg, jobItems[i], 0, 0, 1, 1,"MiJiConsumptionItemsLiBao",1)
+		local itemName = Item.getItemName(jobItems[i])
+		LActor.sendTipmsg( sysarg, Lang.ScriptTips.sclib04 .. itemName, ttMessage )
+
+		local effect = {}
+		effect.type = 1  -- 1为物品,暂时只支持发物品所以写死
+		effect.id = jobItems[i]
+		effect.count = 1
+		effects[#effects+1] = effect
+	end
+		-- 播放特效
+	if #effects > 0 then
+		MiscFunc.PlayItemEffect(sysarg, 4, effects)
+	end
+
+	LActor.removeItemByPtr(sysarg,itemPtr,1,true,"MiJiConsumptionItems",5)      --删除一个物品]]
+end
+activityFunc.getshouchonglibao = function ( sysarg )
+	local actVar = LActor.getStaticVar(sysarg)
+	if actVar == nil then return end
+	if actVar.cycs_sclb_award ~= 1 then
+		local bagGrid = Item.getBagEmptyGridCount(sysarg)      --玩家身上有多少个格子
+		if bagGrid == 0 then
+			LActor.SendGeneralTips(sysarg, 7, 0, 0)	
+			return
+		end
+		local itemid,itemnum = NewServerAwardConfig.cycs_sclb.id,NewServerAwardConfig.cycs_sclb.count	
+		LActor.addItem(sysarg, itemid, 0, 0, itemnum, 1, "shouchonglib", 1)
+		actVar.cycs_sclb_award = 1
+	end
+	activityFunc.sendshouchonglibaoinfo(sysarg)
+end
+activityFunc.sendshouchonglibaoinfo = function ( sysarg )
+
+	local actVar = LActor.getStaticVar(sysarg)
+	if actVar == nil then return end
+	local status = actVar.cycs_sclb_award or 0
+	local npack = DataPack.allocPacket(sysarg, 138, 76)
+	if npack == nil then return end
+	DataPack.writeInt(npack, status)
+
+	DataPack.flush(npack)
+
+end
+-- table.insert(InitFnTable, MiJiConsumptionItemsInit)
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, EventCallDispatcher.defaultHandlerPlayerLogin)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeRecharge, LoginCheckFunc.ActorRecharge)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, LoginCheckFunc.Round2PayAward)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeConsumeYuanbao, LoginCheckFunc.OnConsumeYuanbao)
+--add wupeng首充礼包处理
+--EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, LoginCheckFunc.sclbAward)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUpdateVipInfo, LoginCheckFunc.vipUpdate)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeLevel, LoginCheckFunc.UpLevel)
+OffLineMsgDispatcher.registerEventCall(omChargeEvent, LoginCheckFunc.ActorRechargeOffline)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, activityFunc.sendshouchonglibaoinfo)
+--MiscsImplement.registerMsgHandler(222, MiscsImplement.getshouchonglibao)

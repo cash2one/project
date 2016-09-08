@@ -1,0 +1,260 @@
+﻿--lua script
+--本文件是用于实现杂七杂八的任务类型
+
+--副本通关判断的任务配置，其实其他任务配置表的格式都差不多
+FbFinishQuest = 
+{
+	--这里配置的意思是：当完成任意一次的副本通关，则可完成以下各任务
+	--{qid = 1234, id = 40001,count=1},	--qid是任务id，id和count对应任务目标配置的id和count字段
+	
+}
+
+--副本通关评价到特等
+FbAwardQuest = 
+{
+	{qid = 8044, id = 31049,count=1},
+}
+
+--完成一次阵营押镖任务,跟副本通关任务配置一样
+CampDartQuest = 
+{
+	{qid = 8046, id = 31051,count=1},
+}
+
+--完成一次阵营刺探任务
+CampSpyQuest = 
+{
+	{qid = 8045, id = 31050,count=1},
+}
+
+--击杀敌对阵营守卫
+DefendMonQuest = 
+{
+	{qid = 8051, id = 31052,count=1},
+}
+
+--击杀阵营首领
+ZyBossQuest = 
+{
+	{qid = 8052, id = 31053,count=1},
+}
+
+--击杀敌对玩家
+ZyEnemyQuest = 
+{
+	{qid = 9148, id = 20347,count=1},
+	{qid = 9149, id = 20348,count=1},
+	{qid = 9150, id = 20349,count=1},
+	{qid = 9151, id = 20350,count=1},
+	{qid = 9152, id = 20351,count=1},
+	{qid = 9153, id = 20352,count=1},
+	{qid = 9154, id = 20353,count=1},
+	{qid = 9155, id = 20354,count=1},
+	{qid = 9156, id = 20355,count=1},
+	{qid = 9157, id = 20356,count=1},
+	{qid = 9158, id = 20357,count=1},
+	{qid = 9159, id = 20358,count=1},
+	{qid = 9160, id = 20359,count=1},
+	{qid = 9161, id = 20360,count=1},
+	{qid = 9162, id = 20361,count=1},
+	{qid = 9163, id = 20362,count=1},
+	{qid = 9164, id = 20363,count=1},
+	{qid = 9165, id = 20364,count=1},
+	{qid = 9166, id = 20365,count=1},
+	{qid = 9167, id = 20366,count=1},
+	{qid = 9168, id = 20367,count=1},
+	{qid = 9169, id = 20368,count=1},
+	{qid = 9170, id = 20369,count=1},
+	{qid = 9171, id = 20370,count=1},
+	{qid = 9172, id = 20371,count=1},
+	{qid = 9173, id = 20372,count=1},
+	{qid = 9174, id = 20373,count=1},
+	{qid = 9175, id = 20374,count=1},
+	{qid = 9176, id = 20375,count=1},
+	{qid = 9177, id = 20376,count=1},
+	{qid = 9178, id = 20377,count=1},
+	{qid = 9179, id = 20378,count=1},
+	{qid = 9180, id = 20379,count=1},
+	{qid = 9181, id = 20380,count=1},
+	{qid = 9182, id = 20381,count=1},
+	{qid = 9183, id = 20382,count=1},
+	{qid = 9184, id = 20383,count=1},
+	{qid = 9185, id = 20384,count=1},
+	{qid = 9186, id = 20385,count=1},
+	{qid = 9187, id = 20386,count=1},
+	{qid = 9188, id = 20387,count=1},
+	{qid = 9189, id = 20388,count=1},
+	{qid = 9190, id = 20389,count=1},
+	{qid = 9191, id = 20390,count=1},
+	{qid = 9192, id = 20391,count=1},
+	{qid = 9193, id = 20392,count=1},
+	{qid = 9194, id = 20393,count=1},
+	{qid = 9195, id = 20394,count=1},
+	{qid = 9196, id = 20395,count=1},
+	{qid = 9197, id = 20396,count=1},
+	{qid = 9198, id = 20397,count=1},
+	{qid = 9199, id = 20398,count=1},
+	{qid = 9200, id = 20399,count=1},
+	{qid = 9201, id = 20400,count=1},
+	{qid = 9202, id = 20401,count=1},
+	{qid = 9203, id = 20402,count=1},
+	{qid = 9204, id = 20403,count=1},
+	{qid = 9205, id = 20404,count=1},
+	{qid = 9206, id = 20405,count=1},
+	{qid = 9207, id = 20406,count=1},
+	{qid = 9208, id = 20407,count=1},
+	{qid = 9209, id = 20408,count=1},
+	{qid = 9210, id = 20409,count=1},
+	{qid = 9211, id = 20410,count=1},
+}
+
+--击杀野外BOSS判断
+KillBossQuest = 
+{
+	{qid = 8053, id = 31054,count=1},
+}
+
+--赠送鲜花
+FlowerQuest = 
+{
+	{qid = 9084, id = 20283,count=1},
+	{qid = 9085, id = 20284,count=1},
+	{qid = 9086, id = 20285,count=1},
+	{qid = 9087, id = 20286,count=1},
+	{qid = 9088, id = 20287,count=1},
+	{qid = 9089, id = 20288,count=1},
+	{qid = 9090, id = 20289,count=1},
+	{qid = 9091, id = 20290,count=1},
+	{qid = 9092, id = 20291,count=1},
+	{qid = 9093, id = 20292,count=1},
+	{qid = 9094, id = 20293,count=1},
+	{qid = 9095, id = 20294,count=1},
+	{qid = 9096, id = 20295,count=1},
+	{qid = 9097, id = 20296,count=1},
+	{qid = 9098, id = 20297,count=1},
+	{qid = 9099, id = 20298,count=1},
+	{qid = 9100, id = 20299,count=1},
+	{qid = 9101, id = 20300,count=1},
+	{qid = 9102, id = 20301,count=1},
+	{qid = 9103, id = 20302,count=1},
+	{qid = 9104, id = 20303,count=1},
+	{qid = 9105, id = 20304,count=1},
+	{qid = 9106, id = 20305,count=1},
+	{qid = 9107, id = 20306,count=1},
+	{qid = 9108, id = 20307,count=1},
+	{qid = 9109, id = 20308,count=1},
+	{qid = 9110, id = 20309,count=1},
+	{qid = 9111, id = 20310,count=1},
+	{qid = 9112, id = 20311,count=1},
+	{qid = 9113, id = 20312,count=1},
+	{qid = 9114, id = 20313,count=1},
+	{qid = 9115, id = 20314,count=1},
+	{qid = 9116, id = 20315,count=1},
+	{qid = 9117, id = 20316,count=1},
+	{qid = 9118, id = 20317,count=1},
+	{qid = 9119, id = 20318,count=1},
+	{qid = 9120, id = 20319,count=1},
+	{qid = 9121, id = 20320,count=1},
+	{qid = 9122, id = 20321,count=1},
+	{qid = 9123, id = 20322,count=1},
+	{qid = 9124, id = 20323,count=1},
+	{qid = 9125, id = 20324,count=1},
+	{qid = 9126, id = 20325,count=1},
+	{qid = 9127, id = 20326,count=1},
+	{qid = 9128, id = 20327,count=1},
+	{qid = 9129, id = 20328,count=1},
+	{qid = 9130, id = 20329,count=1},
+	{qid = 9131, id = 20330,count=1},
+	{qid = 9132, id = 20331,count=1},
+	{qid = 9133, id = 20332,count=1},
+	{qid = 9134, id = 20333,count=1},
+	{qid = 9135, id = 20334,count=1},
+	{qid = 9136, id = 20335,count=1},
+	{qid = 9137, id = 20336,count=1},
+	{qid = 9138, id = 20337,count=1},
+	{qid = 9139, id = 20338,count=1},
+	{qid = 9140, id = 20339,count=1},
+	{qid = 9141, id = 20340,count=1},
+	{qid = 9142, id = 20341,count=1},
+	{qid = 9143, id = 20342,count=1},
+	{qid = 9144, id = 20343,count=1},
+	{qid = 9145, id = 20344,count=1},
+	{qid = 9146, id = 20345,count=1},
+	{qid = 9147, id = 20346,count=1},
+}
+
+--得到鲜花
+GetFlowerQuest = 
+{
+  {qid = 9084, id = 20283,count=1},
+	{qid = 9085, id = 20284,count=1},
+	{qid = 9086, id = 20285,count=1},
+	{qid = 9087, id = 20286,count=1},
+	{qid = 9088, id = 20287,count=1},
+	{qid = 9089, id = 20288,count=1},
+	{qid = 9090, id = 20289,count=1},
+	{qid = 9091, id = 20290,count=1},
+	{qid = 9092, id = 20291,count=1},
+	{qid = 9093, id = 20292,count=1},
+	{qid = 9094, id = 20293,count=1},
+	{qid = 9095, id = 20294,count=1},
+	{qid = 9096, id = 20295,count=1},
+	{qid = 9097, id = 20296,count=1},
+	{qid = 9098, id = 20297,count=1},
+	{qid = 9099, id = 20298,count=1},
+	{qid = 9100, id = 20299,count=1},
+	{qid = 9101, id = 20300,count=1},
+	{qid = 9102, id = 20301,count=1},
+	{qid = 9103, id = 20302,count=1},
+	{qid = 9104, id = 20303,count=1},
+	{qid = 9105, id = 20304,count=1},
+	{qid = 9106, id = 20305,count=1},
+	{qid = 9107, id = 20306,count=1},
+	{qid = 9108, id = 20307,count=1},
+	{qid = 9109, id = 20308,count=1},
+	{qid = 9110, id = 20309,count=1},
+	{qid = 9111, id = 20310,count=1},
+	{qid = 9112, id = 20311,count=1},
+	{qid = 9113, id = 20312,count=1},
+	{qid = 9114, id = 20313,count=1},
+	{qid = 9115, id = 20314,count=1},
+	{qid = 9116, id = 20315,count=1},
+	{qid = 9117, id = 20316,count=1},
+	{qid = 9118, id = 20317,count=1},
+	{qid = 9119, id = 20318,count=1},
+	{qid = 9120, id = 20319,count=1},
+	{qid = 9121, id = 20320,count=1},
+	{qid = 9122, id = 20321,count=1},
+	{qid = 9123, id = 20322,count=1},
+	{qid = 9124, id = 20323,count=1},
+	{qid = 9125, id = 20324,count=1},
+	{qid = 9126, id = 20325,count=1},
+	{qid = 9127, id = 20326,count=1},
+	{qid = 9128, id = 20327,count=1},
+	{qid = 9129, id = 20328,count=1},
+	{qid = 9130, id = 20329,count=1},
+	{qid = 9131, id = 20330,count=1},
+	{qid = 9132, id = 20331,count=1},
+	{qid = 9133, id = 20332,count=1},
+	{qid = 9134, id = 20333,count=1},
+	{qid = 9135, id = 20334,count=1},
+	{qid = 9136, id = 20335,count=1},
+	{qid = 9137, id = 20336,count=1},
+	{qid = 9138, id = 20337,count=1},
+	{qid = 9139, id = 20338,count=1},
+	{qid = 9140, id = 20339,count=1},
+	{qid = 9141, id = 20340,count=1},
+	{qid = 9142, id = 20341,count=1},
+	{qid = 9143, id = 20342,count=1},
+	{qid = 9144, id = 20343,count=1},
+	{qid = 9145, id = 20344,count=1},
+	{qid = 9146, id = 20345,count=1},
+	{qid = 9147, id = 20346,count=1},
+}
+
+--接完一个主线任务后自动接另一个任务
+autogetquest =
+{
+	--[接完的主线任务id] = [自动接的另一个任务id]
+	[47] = 909,
+}

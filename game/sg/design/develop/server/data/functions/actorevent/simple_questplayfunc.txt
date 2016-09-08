@@ -1,0 +1,43 @@
+-- --[[
+-- 任务玩法里边任务系统只会传入玩家对象和任务id，玩法里面根据任务id去配置文件里面获取对应的playType参数(定义在basequesttype.txt的BaseQuestPlayType)
+-- 注意：任务玩法需要自行维护自身玩法的配置文件，让任务id和玩法配置文件对应起来，任务系统不维护玩法配置文件
+-- --]]
+
+-- local Simple_funcs = {}
+
+-- EventCallDispatcher.HandlerQuestOp = function (actorobj, args)
+--     if args[1] == nil then
+--         return
+--     end
+--     local func = Simple_funcs[args[1]]
+--     if func ~= nil and type(func) == "function" then
+--         func(actorobj, args[2])
+--     end
+-- end 
+
+-- function Simple_funcs.accept_callback_function (actorobj, qid)
+--     print("测试成功进入玩法接受任务处理函数...")
+-- end
+
+-- function Simple_funcs.commit_callback_function (actorobj, qid)
+-- end
+
+-- function Simple_funcs.giveup_callback_function (actorobj, qid)
+-- end
+
+-- EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeQuest, EventCallDispatcher.HandlerQuestOp) -- 注册网络消息事件
+-- -- basequesttype.txt 定义类型
+-- ActorQuestCallDispatcher.registerPlayType(BaseTypes.BaseQuestAction.qaAccept, BaseTypes.BaseQuestPlayType.qptLatent, Simple_funcs.accept_callback_function) -- 注册接受任务的侦听
+-- ActorQuestCallDispatcher.registerPlayType(BaseTypes.BaseQuestAction.qaCommit, BaseTypes.BaseQuestPlayType.qptLatent, Simple_funcs.commit_callback_function) -- 注册完成任务的侦听
+-- ActorQuestCallDispatcher.registerPlayType(BaseTypes.BaseQuestAction.qaGiveUp, BaseTypes.BaseQuestPlayType.qptLatent, Simple_funcs.giveup_callback_function) -- 注册放弃任务的侦听
+-- ActorQuestCallDispatcher.registerPlayType(BaseTypes.BaseQuestAction.qaTimeOut, BaseTypes.BaseQuestPlayType.qptLatent, Simple_funcs.giveup_callback_function) -- 注册超时任务的侦听
+
+
+--#include "data\functions\taskgameplay\taozhai.txt" once
+--#include "data\functions\taskgameplay\bingjianzuozhan.txt" once
+--#include "data\functions\taskgameplay\puzhua.txt" once
+--#include "data\functions\taskgameplay\bianshen.txt" once
+--#include "data\functions\taskgameplay\xuanshangrenwu.txt" once
+--#include "data\functions\taskgameplay\jiuyuan.txt" once
+--#include "data\functions\taskgameplay\zhaohuan.txt" once
+--#include "data\functions\taskgameplay\zhuibu.txt" once

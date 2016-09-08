@@ -1,0 +1,180 @@
+﻿--全局的配置，一些零散的配置放在这里读取
+
+GlobalConfig=
+{
+  	monsterItemRefreshTime = 45, --怪物掉落物品的刷新时间，单位秒
+  	monsterItemProtectTime = 30, -- 怪物掉落物品的保护时间
+
+	transferDistanceSquareX =2,      --实体和传送门的X距离，如果是0格填0，1格就填1,2就填2,3就填3
+	transferDistanceSquareY = 1,	--实体和传送门的X距离，如果是0格填0，1格就填1,2就填2,3就填3
+	teamLootMaxDistanceSquare = 400,--队伍杀怪拾取的共享的最大的距离的平分
+	sceneRefreshMonsterTime = 4,	--场景中刷怪的时间限制，单位：毫秒
+	entityRunTime = 4,				--每次逻辑循环非玩家实体执行runone的限制总时间，单位：毫秒
+
+	petCommonSkill = 78,			-- 伙伴的普通技能id,同时要在伙伴配置表pet.txt里配置
+
+	loopTaskTargetId = 9999, --跑环任务的大环进度目标ID(对应跑环任务配置的target的最后一项的id值)
+
+	--副本系统相关
+	daySingleCount = 4, 	--玩家每天可进入单人副本的次数
+	dayTeamCount = 4,		--玩家每天可进入队伍副本的次数
+	dayTeamHeroCount = 4,	--玩家每天可进入英雄队伍副本的次数        
+	dayGroupCount = 4,		--玩家每天可进入团队副本的次数
+	dayGroupHeroCount = 4,	--玩家每天可进入英雄团队副本的次数  
+	fubenDestoryTime = 5,	--当副本没有人，则过一段时间会删除这个副本（释放内存），单位：分钟
+	fubenbebeforeJieSuan = 10, --副本时间到了 提前10秒钟结算 在销毁副本
+
+	petTxTime  = 8,        -- 伙伴提神技能的持续时间
+	petGwTime = 8, -- 伙伴鼓舞的持续时间
+	petTlTime = 8,  -- 伙伴提灵的持续时间
+	petGrjtTime = 15,   -- 伙伴固若金汤的持续时间
+	petSkillBuffGroup = 79,	-- 伙伴给玩家加的buff，都用这个特殊的buff组id.这个值不要修改，在伙伴配置表也有
+	-- 伙伴提神、鼓舞，提灵，固若金汤4个技能的资质系数和常数n，用于计算概率，这里配8个数字，分别是4个技能的系数和常数
+	petSkillRate = {0.008, 6, 0.008, 6, 0.008, 6, 0.008, 6},	
+	reboundAttackRate = 15,    -- 反弹的概率
+	damage2HpRate = 15, -- 吸血的概率
+	
+	fCriticalStrikesDamage =1.5, --默认的暴击的伤害比例
+  
+	baseMaxXiuwei  = 60000,            --玩家不学习经脉需要的修为
+	baseXiuweiRenew  =10,          --基础的修为的回复速度，24秒回复多少点
+	openFcm = false,               --是否开启防沉迷
+	fcmHalfExpMoneyTime = 10800,  --防沉迷开始经验、金钱减半的时间(单位秒)
+	fcmZeroExpMoneyTime = 18000,  --防沉迷开始经验、金钱没有的时间(单位秒)
+	teamMosterExp_Rate = 6000,	--怪物死亡时 组队系数
+	worldChatItemItem =18201,      --世界喊话大喇叭的物品ID
+	gatherbasevalue	= 100,			-- 采集体力基础值
+	silenceTime = 3,           --被打成沉默的持续时间
+	dizzyTime = 3,       -- 被打成晕眩的时间
+	maxPlayerLevel = 100,					-- 玩家最大等级
+	hpSourceDelayTime = 10000,		-- pk中加血源泉生效延迟时间（单位秒）
+	mpSourceDelayTime = 10000,		-- pk中加蓝源泉生效延迟时间（单位秒）    
+	allChannelChatCD = 5,				-- 全服聊天（非大喇叭）频道聊天CD（秒为单位）
+	worldChannelChatCD = 0,				-- 世界频道聊天CD（秒为单位）
+	guideChannelChatCD = 5,				-- 公会(帮派)频道聊天CD（秒为单位）
+	localMapChannelChatCD = 5,		-- 本地图聊天CD	（秒为单位）
+	occupationChannelChatCD = 5,	-- 门派频道聊天CD（秒为单位）
+	worldChatCoin = 500,			-- 每次全服聊天扣除的银两
+	noteamsceneid = { 89,90,91,93,94,},--特殊场景不能 使用组队功能，填场景id
+	hpmp_chang_to_lua = {87, 89, 90},
+	SpecialSceneNoPeaceMode = { 88}, --特殊场景不能 切换成和平模式
+
+	-- 各个聊天频道发言最低等级限制 
+	-- 1,(取消）附近频道，同屏 ; 2,世界,喇叭频道;  3,工会，帮派;  4,队伍频道,5人; 5,团队,20人; 6,地图，本地图可见; 7,全服聊天; 8,阵营频道; 9,系统频道
+	chatLevelLmt = {10, 1, 1, 1, 1, 1, 10, 5, 25, 0},
+	leaveBattleTime = 4,					-- 玩家空闲状态后到脱离战斗所需要的时间（秒为单位）
+	
+	minStoreBuyYuanbaoCount =100,         --一次消费多少天珠将全服播报
+
+        chatActorPosFee = 100,            --在聊天频道发送自己坐标要扣除的金钱	
+		stopServerNoticeTime = 15,		--停服前每隔多少时间发布一次公告，单位是秒
+        guiderTitleId =141,                  --新手管理员的称号的ID
+		bindYuanbaoLimit = 5000,		--绑定天珠上限
+        maxPetAptitude= 1200,                 --最大的伙伴资质的上限
+       
+        fcmCloseHourSinceOpen =72,             --服务器开服的多少小时关闭防沉迷
+        
+	freeBaptizeCount = 5,						--每天免费洗炼的次数
+	
+	--击杀各种怪物获得的怒气值，分别对应 普通怪,精英怪,头目,boss
+	monsterAngers = { 1, 1, 3, 5 },	
+	enemyZyAnger = 3,							--击杀敌对阵营玩家获得的怒气值
+	maxActorAnger = 100,						--玩家最大的怒气值
+
+	--BLUE蓝钻副本增加次数
+	blueFubenAddCounts = 1,
+	blueFubenAddYuanbaos = 100,
+	--BLUE蓝钻商城购买的折扣
+	blueShopDiscount = 80,
+	--VIP用户副本增加次数配置
+	vipFubenAddCounts = { 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1 }, --每个VIP等级每天可以增加的进入副本次数
+	vipFubenAddYuanbaos = { 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100 }, --每个VIP等级增加的进入副本次数需要的天珠数
+	npcColor = 65280,-- npc的名字颜色
+	-- 死亡后被击飞的概率
+	dieFlyRate = {
+			{s=1 , e=10, rate=100},				-- 每行配置3个数字，分别表示起始等级，结束等级，概率，比如这个，表示1到10等级的击飞概率是5
+			{s=11, e=20, rate=40},
+			{s=21, e=30, rate=30},	-- 注意，起始的等级一定是上一行的结束等级+1
+			{s=31, e=40, rate=20},
+			{s=41, e=70, rate=15},
+		},	
+
+	normalAttactSkill = {41, 42, 43, 44}, --四个职业体术，蜀山，忍术，幻术普通攻击释放的技能ID
+
+	masterEquipId = 11500, -- 真龙之魂装备的物品ID
+
+	guildDepotCount = 10,	-- 普通成员每天使用军团仓库次数,0表示不限制
+
+	battleKeep = 6,	-- 没战斗多长时间(秒)后取消战斗状态,
+	-- yellowVipPetId = 28259,	-- 黄钻的伙伴id
+	yellowVipPetId = 11200,	-- 黄钻的伙伴id
+	petSkillFightValue = {60, 150, 300, 600}, -- 伙伴技能的评分，4个数字，分别对应不同等级的分值
+
+	expEffectLevel = 0, -- 在这个等级以上完成任务获得经验会播放特效
+	
+	skillOnAttack = {
+		{isEnemy=true,skillid=110},--isEnemy为true表示对手，为false表示自己
+		{isEnemy=true,skillid=111},
+		{isEnemy=false,skillid=113},
+		{isEnemy=true,skillid=114},
+		{isEnemy=true,skillid=115},
+	}, -- 攻击时触发的技能
+	skillOnBeAttacked = {
+		{isEnemy=false,skillid=112},
+		{isEnemy=false,skillid=116},
+		{isEnemy=false,skillid=117},
+	},
+
+	chargeList = 
+	{
+		--[[
+		amt			套餐中所有道具的总价格，单位是Q点
+		payitem		套餐中道具的信息表，每个道具使用“;”隔开，每个道具信息的格式为：道具id*单价*数量
+		goodsmeta	套餐的名称和描述信息，格式为：名称（最多8个字符）*描述
+		goodsurl	套餐的图标地址，编号：00050.jpg - 00053.jpg，共4个
+		--]]
+		{amt="100", amtval = 100, itemid=1, payitem="1*100*1", goodsmeta="100天珠套餐*（单价：100Q点）", 
+			goodsurl="http://app100634204.imgcache.qzoneapp.com/app100634204/frontend/data/interface/others/00050.jpg"},
+			
+		{amt="1000", amtval = 1000, itemid=2, payitem="2*1000*1", goodsmeta="1000天珠套餐*（单价：1000Q点）", 
+			goodsurl="http://app100634204.imgcache.qzoneapp.com/app100634204/frontend/data/interface/others/00051.jpg"},
+			
+		{amt="5000", amtval = 5000, itemid=3, payitem="3*5000*1", goodsmeta="5000天珠套餐*（单价：5000Q点）", 
+			goodsurl="http://app100634204.imgcache.qzoneapp.com/app100634204/frontend/data/interface/others/00052.jpg"},
+			
+		{amt="20000", amtval = 20000, itemid=4, payitem="4*20000*1", goodsmeta="20000天珠套餐*（单价：20000Q点）", 
+			goodsurl="http://app100634204.imgcache.qzoneapp.com/app100634204/frontend/data/interface/others/00053.jpg"},	
+			
+	},
+
+	txMissionUri = "/mk_inform_completion.jsp",		-- 这个由程序修改
+
+	-- 腾讯API返回的任务奖励
+	missionAward = 
+	{
+		--[[
+		payitem
+		content			给离线玩家提示的内容		
+		itemid			物品id
+		bind 			是否绑定，0为非绑定，1绑定
+		count 			物品数量
+		]]
+		{ payitem = "48201*1", content = "领取任务集市奖励", itemid = 48201, bind = 1, count = 1 },
+	},
+
+	pfList ={
+		["qzone"] = 1,
+		["pengyou"] = 2,
+		["tapp"] = 3,
+		["qplus"] = 4,
+		["qqgame"] = 10,
+		["qzone_m"] = 8,
+		["pengyou_m"] = 9,
+		["3366"] = 11,
+		["website"] = 12,
+	},
+	beKillLostMoney = 1,	--在野外地图被玩家击杀，损失的铜钱数量 百分比
+	index_partner_open = {	--第N个伙伴出战的等级，从左到右递增，一一对应
+		1, 35, 45,
+	}	
+}

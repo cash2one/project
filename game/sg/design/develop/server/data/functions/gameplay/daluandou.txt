@@ -1,0 +1,488 @@
+-- 大乱斗（尤乌战场）
+
+--#include "data\config\gameplay\daluandouconfig.txt" once
+--#include "data\config\achieve\titleway.txt" once
+
+DaLuanDouFun = {}
+
+DaLuanDouFun.msgids = {
+	send_rank_list = 187, -- 请求/发送战场积分排行榜信息
+	send_actor_info = 188, -- 请求/返回尤乌战场自身排名积分信息
+}
+
+DaLuanDouFun.saverankfile = "daluandouranking.txt"
+DaLuanDouFun.rankname = "daluandouranking"
+DaLuanDouFun.maxsendnum = 20
+
+DaLuanDouFun.OnDldInit = function()
+	local rank = Ranking.getRanking(DaLuanDouFun.rankname)
+	if rank == nil then
+		rank = Ranking.add(DaLuanDouFun.rankname, DaLuanDouFun.maxsendnum, 0)
+		if rank == nil then return end
+		if Ranking.load(rank, DaLuanDouFun.saverankfile) == false then
+		-- 初始化排行榜
+		-- print("=======初始化排行榜======")
+		Ranking.addColumn(rank, "name") -- 角色名
+		Ranking.addColumn(rank, "camp") -- 阵营
+		Ranking.addColumn(rank, "sex") -- 性别
+		Ranking.addColumn(rank, "job") -- 职业
+		Ranking.addColumn(rank, "level") -- 等级
+		Ranking.addColumn(rank, "kill") -- 击杀
+		Ranking.addColumn(rank, "assist") -- 助攻
+		Ranking.addColumn(rank, "account") -- 账户
+		Ranking.addColumn(rank, "fight") -- 战力
+	end
+	end
+end
+
+-- 战场开启
+function DaLuanDouStart(  )
+	local sys_var = System.getDyanmicVar()
+	if sys_var == nil then return end
+	if sys_var.dld_data == nil then
+		sys_var.dld_data = {}
+	else
+		sys_var.dld_data = {} -- 存在上次的也重置数据
+	end
+	if sys_var.dld_data.state == 1 then -- 已开启
+		return
+	end
+	-- 创建副本
+	local hfb = Fuben.createFuBen(daluandouconfig.fbid)
+	if hfb == 0 then return end
+
+	-- 初始化buff点数据
+	local pfb = Fuben.getFubenPtr( hfb )
+	if pfb == nil then return end
+	local fb_var = Fuben.getDyanmicVar(pfb)
+	if fb_var == nil then return end
+	fb_var.dld_buff = {}
+	for i=1,#daluandouconfig.buff do
+		fb_var.dld_buff[i] = {}
+		local rand = System.getRandomNumber(#daluandouconfig.bufflist) + 1
+		fb_var.dld_buff[i].buffidx = rand
+	end
+
+	-- 初始化排行榜
+	local rank = Ranking.getRanking(DaLuanDouFun.rankname)
+	if rank then
+		Ranking.clearRanking(rank)
+	end
+
+	sys_var.dld_data.state = 1
+	sys_var.dld_data.fbhandle = hfb
+
+	-- 公告
+	System.broadcastTipmsg(Lang.ScriptTips.dld007, ttGmTip)
+end
+
+-- 战场结束
+function DaLuanDouEnd(  )
+	local sys_var = System.getDyanmicVar()
+	if sys_var == nil then return end
+	if sys_var.dld_data == nil or sys_var.dld_data.state ~= 1 then -- 未开启
+		return 
+	end
+	-- 释放副本
+	if sys_var.dld_data.fbhandle then
+		Fuben.closeFuben(sys_var.dld_data.fbhandle)
+	end
+
+	-- 保存排行榜
+	local rank = Ranking.getRanking(DaLuanDouFun.rankname)
+	if rank then
+		Ranking.save(rank, DaLuanDouFun.saverankfile)
+	end
+
+	sys_var.dld_data.state = 0
+	sys_var.dld_data.fbhandle = nil
+
+	if rank == nil then return end
+	-- 发放排名奖励
+	local conf = daluandouconfig.rank_award
+	local count = Ranking.getRankItemCount(rank)
+	for i=1,#conf do
+		if conf[i].rank[2] < conf[i].rank[1] then return end -- 配置错误
+		local from_, to_
+		if count >= conf[i].rank[2] then
+			from_ = conf[i].rank[1]
+			to_ = conf[i].rank[2]
+		elseif count >= conf[i].rank[1] and count < conf[i].rank[2] then
+			from_ = conf[i].rank[1]
+			to_ = count
+		end
+		if from_ and to_ then
+			-- 发放排名from_到to_的奖励
+			for j=from_,to_ do -- j为排名
+				local item = Ranking.getItemFromIndex(rank, j-1)
+				local aid = Ranking.getId(item)
+				local point = Ranking.getPoint(item)
+				local award_conf = conf[i].item
+				if point > daluandouconfig.lowest then -- 
+					local t = {}
+					for k = 1,5 do
+						t[k] = {}
+						if award_conf[k] then
+							t[k].type = award_conf[k].type or 0
+							t[k].id = award_conf[k].id or 0
+							t[k].count = award_conf[k].count or 0
+							t[k].bind = award_conf[k].bind or 0
+						else
+							t[k] = {type = 0, id = 0, count = 0, bind = 0}
+						end
+					end
+
+					System.sendGmMailOffLine(aid, string.format(Lang.ScriptTips.dld006, j) , t[1].type, t[1].id, t[1].count, t[1].bind, Lang.ScriptTips.dld010, t[2].type, t[2].id, t[2].count, t[2].bind, t[3].type, t[3].id, t[3].count, t[3].bind, t[4].type, t[4].id, t[4].count, t[4].bind, t[5].type, t[5].id, t[5].count, t[5].bind)
+				end
+				-- 第一名获得称号
+				if j == 1 then
+					local sys_s_var = System.getStaticVar()
+					if sys_s_var == nil then return end
+					local actor = LActor.getActorById(aid)
+					if actor then
+						LActor.GiveTitle(actor, titleway.WLZC_first)
+					else
+						sys_s_var.dld_first_title = aid
+					end
+				end
+			end
+		end
+	end
+
+	-- 公告
+	local first_item = Ranking.getItemFromIndex(rank, 0)
+	local name = Ranking.getSub(first_item, 0)
+	local score = Ranking.getPoint(first_item)
+	if score > 10 then
+		System.broadcastTipmsg(string.format(Lang.ScriptTips.dld008, name), ttGmTip)
+	else
+		System.broadcastTipmsg(Lang.ScriptTips.dld009, ttGmTip)
+	end
+end
+
+-- 战场buff点
+function DaLuanDouBuff( sysarg, index )
+	-- print("-------DaLuanDouBuff-------"..index)
+	index = tonumber(index) or 0
+	local hsc = LActor.getSceneHandle(sysarg)
+	if hsc == 0 then return end
+	local pfb = LActor.getFubenPrt(sysarg)
+	if pfb == nil then return end
+	local fb_var = Fuben.getDyanmicVar(pfb)
+	if fb_var == nil or fb_var.dld_buff == nil or fb_var.dld_buff[index] == nil then return end
+	-- 可以加buff
+	if fb_var.dld_buff[index].buffidx then
+		local conf = daluandouconfig.bufflist[fb_var.dld_buff[index].buffidx].list
+		-- 循环添加buff
+		for k, v in ipairs(conf) do
+			local value = v.value
+			if v.vt == 1 then
+				value = value / 10000
+			end
+			LActor.addBuff(sysarg, v.type, v.id, value, 1, v.interval, v.name, true, nil, 0, true)
+		end
+		-- 去掉地图上的buff,设置cd
+		fb_var.dld_buff[index].buffidx = nil
+		Fuben.postSceneTimeCall(hsc, TimerMsg.DLDBuffRefresh, daluandouconfig.buff[index].cd, 1, index)
+		-- 下发buff信息
+		local psc = LActor.getScenePtr(sysarg)
+		local playerlist = LuaHelp.getSceneActorListByPtr(psc)
+		for i=1,#playerlist do
+			DaLuanDouFun.SendBuffInfo(playerlist[i], fb_var)
+		end
+	end
+end
+
+-- 战场刷新buff
+DaLuanDouFun.RefreshBuff = function( msgid, pscene, index )
+	-- print("--------RefreshBuff-------"..index)
+	-- local hsc = Fuben.getSceneHandleByPtr(pscene)
+	-- if hsc == nil then return end
+	local pfb = Fuben.getSceneFuben(pscene)
+	if pfb == nil then return end
+	local fb_var = Fuben.getDyanmicVar(pfb)
+	if fb_var == nil or fb_var.dld_buff == nil or fb_var.dld_buff[index] == nil then return end
+	-- 随机生成buff
+	local rand = System.getRandomNumber(#daluandouconfig.bufflist) + 1
+	fb_var.dld_buff[index].buffidx = rand
+
+	-- 下发buff信息
+	local playerlist = LuaHelp.getSceneActorListByPtr(pscene)
+	if not playerlist then return end
+	
+	for i=1,#playerlist do
+		DaLuanDouFun.SendBuffInfo(playerlist[i], fb_var)
+	end
+end
+
+-- 下发战场buff点信息
+DaLuanDouFun.SendBuffInfo = function( sysarg, fb_var )	
+	if not sysarg or not fb_var then return end
+
+	local npack = DataPack.allocPacket(sysarg, BaseTypes.SystemId.miscsSystem, 186) -- 尤乌战场BUFF信息
+	DataPack.writeChar(npack, #daluandouconfig.buff)
+	for i = 1, #daluandouconfig.buff do -- daluandouconfig.buff 个buff信息
+		DataPack.writeChar(npack, i)
+		DataPack.writeChar(npack, fb_var.dld_buff[i].buffidx or 0)
+	end
+	DataPack.flush(npack)
+end
+
+-- 玩家退出战场
+DaLuanDouFun.OnExitDLD = function(sysarg, hfb, way)
+	local pfb = Fuben.getFubenPtr(hfb)
+    local fb_var = Fuben.getDyanmicVar(pfb)
+    if fb_var == nil then return end
+
+    if fb_var.exitdldtime == nil then
+        fb_var.exitdldtime = {}
+    end
+    if way == 2 then
+		LActor.exitFuben(sysarg)
+	end
+
+	-- 退出时间限制
+	fb_var.exitdldtime[LActor.getActorId(sysarg)] = System.getCurrMiniTime()
+
+	-- 标记自己需要开启记录攻击我的玩家列表
+	LActor.setAttackLog(sysarg, false)
+end
+
+-- 玩家下线
+DaLuanDouFun.OnActorLogout = function(sysarg, args)
+	local fbid = LActor.getFubenId(sysarg)
+	if fbid > 0 and fbid == daluandouconfig.fbid then -- 在副本中 并且副本就是尤乌战场的副本
+	    local sys_var = System.getDyanmicVar()
+	    if sys_var == nil then return end
+	    if sys_var.dld_data == nil or sys_var.dld_data.state ~= 1 then
+	        return
+	    end
+
+	    if sys_var.dld_data.fbhandle == nil or sys_var.dld_data.fbhandle == 0 then
+	    	return
+	    end
+	    local pfb = Fuben.getFubenPtr(sys_var.dld_data.fbhandle)
+	    if not pfb then
+	        print("玩家尤乌战场下线, 但副本指针不存在")
+	        return
+	    end
+	    DaLuanDouFun.OnExitDLD(sysarg, sys_var.dld_data.fbhandle, 2) -- 2 表示退出方式 xfwLogout 玩家下线方式
+	end
+end
+
+DaLuanDouFun.OnEnterDLD = function(sysarg, hfb, way)
+	local pfb = Fuben.getFubenPtr( hfb )
+	if pfb == nil then return end
+	local fb_var = Fuben.getDyanmicVar(pfb)
+	if fb_var == nil then return end
+	-- 下发buff信息
+	DaLuanDouFun.SendBuffInfo(sysarg, fb_var)
+
+	-- 排行榜
+	local aid = LActor.getActorId(sysarg)
+	local rank = Ranking.getRanking(DaLuanDouFun.rankname)
+	if rank == nil then return end
+	local rankItem = Ranking.getItemPtrFromId(rank, aid)
+	if rankItem == nil then -- 新进来的用户
+		rankItem = Ranking.addItem(rank, aid, 0)
+		if rankItem == nil then
+			print("can not add rank item")
+			return
+		end
+		Ranking.setSub(rankItem, 0, LActor.getName(sysarg)) -- 角色名
+		Ranking.setSub(rankItem, 1, tostring(LActor.getIntProperty(sysarg, PROP_CAMP))) -- 阵营
+		Ranking.setSub(rankItem, 2, tostring(LActor.getIntProperty(sysarg, PROP_SEX))) -- 性别
+		Ranking.setSub(rankItem, 3, tostring(LActor.getIntProperty(sysarg, PROP_VOCATION))) -- 职业
+		Ranking.setSub(rankItem, 4, tostring(LActor.getIntProperty(sysarg, PROP_LEVEL))) -- 等级
+		Ranking.setSub(rankItem, 5, "0") -- 击杀
+		Ranking.setSub(rankItem, 6, "0") -- 助攻
+		Ranking.setSub(rankItem, 7, LActor.getAccountName(sysarg)) -- 账户
+		Ranking.setSub(rankItem, 8, tostring(LActor.getIntProperty(sysarg, PROP_ACTOR_FIGHT_VALUE))) -- 战力
+		-- 活跃度
+		ActivationTrigger( sysarg, 22 )
+	else -- 重新进入的用户
+		Ranking.setSub(rankItem, 4, tostring(LActor.getIntProperty(sysarg, PROP_LEVEL))) -- 等级
+		Ranking.setSub(rankItem, 8, tostring(LActor.getIntProperty(sysarg, PROP_ACTOR_FIGHT_VALUE))) -- 战力
+	end
+	-- 下发前三名排行榜数据
+	DaLuanDouFun.SendRankList(sysarg, 3, 1, 3) -- 1前五名排名 2 前二十名排名 3 实时面板前三名
+
+	-- 下发自身积分
+	DaLuanDouFun.SendActorRankInfo(sysarg, aid)
+
+	-- 标记自己需要开启记录攻击我的玩家列表
+	LActor.setAttackLog(sysarg, true)
+end
+
+-- 玩家死亡
+DaLuanDouFun.OnPlayerDie = function(sysarg, arg)
+	-- print("============> 玩家在尤乌战场死亡触发")
+	if LActor.getFubenId(sysarg) ~= daluandouconfig.fbid then return end -- 是否在阵营之战副本中
+
+	local killer = arg[1]
+	if killer == nil then
+		print("killer is nil")
+		return 
+	end
+
+	-- 如果是伙伴算在主人身上
+	if LActor.isPet(killer) then
+		killer = LActor.getMonsterOwner(killer)
+		if killer == nil then
+			print("pet kill actor, but owner is nil")
+			return 
+		end
+	end
+	-- 
+	-- 获取排行榜对象
+	local rankList = Ranking.getRanking(DaLuanDouFun.rankname)
+	if rankList == nil then
+		print("camp battle rank is nil")
+		return 
+	end
+
+	-- killer
+	local eType = LActor.getEntityType(killer)
+
+	if eType == enActor then 
+		local score = daluandouconfig.killScore -- 击杀获得的积分
+		-- 更新到排行榜
+		local killerId = LActor.getIntProperty(killer, PROP_ENTITY_ID)
+		local rankItem = Ranking.getItemPtrFromId(rankList, killerId)
+		local rankId = Ranking.getId(rankItem)
+		Ranking.updateItem(rankList, rankId, score) -- 积分
+		local killnum = tonumber(Ranking.getSub(rankItem, 5)) -- 总击杀
+		if killnum then
+			Ranking.setSub(rankItem, 5, tostring(killnum+1))
+		end
+
+		-- 更新killer的分数
+		DaLuanDouFun.SendActorRankInfo (killer, killerId)
+
+		-- 被杀的玩家获得积分
+		local aid = LActor.getIntProperty(sysarg, PROP_ENTITY_ID)
+		local dieItem = Ranking.getItemPtrFromId(rankList, aid)
+		local dieId = Ranking.getId(dieItem)
+		Ranking.updateItem(rankList, dieId, daluandouconfig.deathScore)
+		DaLuanDouFun.SendActorRankInfo (sysarg, aid)
+
+		-- 更新自身的分数
+	end
+
+	-- 助攻
+	local score = daluandouconfig.zhuGongScore -- 助攻玩家获得的积分
+	local actorList = LActor.getAttackList(sysarg)
+	if actorList ~= nil then
+		for i=1,#actorList do
+			local actor = actorList[i]
+			if actor ~= killer then -- 不是最后击杀的玩家
+				local actor_id = LActor.getActorId(actor)
+				local actor_item = Ranking.getItemPtrFromId(rankList, actor_id)
+				if actor_item ~= nil then
+					-- 增加积分
+					Ranking.updateItem(rankList, Ranking.getId(actor_item), score)
+					-- 增加助攻次数
+					local zg_count = tonumber(Ranking.getSub(actor_item, 6))
+					if zg_count then
+						Ranking.setSub(actor_item, 6, tostring(zg_count+1))
+					end
+					DaLuanDouFun.SendActorRankInfo (actor, actor_id)
+				end
+			end
+		end
+	end
+end
+
+DaLuanDouFun.SendRankList = function (sysarg, panel_type, start_index, rank_num)
+	local rank = Ranking.getRanking(DaLuanDouFun.rankname)
+	if not rank then return end -- 非法 没有这个排行榜
+	local start = start_index - 1
+
+	if start < 0 then return end
+
+	if rank_num > 0 then
+		local lists = {}
+		for i = start, rank_num - 1 do
+			local rankItem = Ranking.getItemFromIndex(rank, i)
+			if rankItem == nil then
+				break
+			end
+			local name = Ranking.getSub(rankItem, 0) -- 玩家名
+			local score = Ranking.getPoint(rankItem) -- 积分
+
+			if score <= daluandouconfig.lowest then -- 低于多少分无视
+				break
+			end
+
+			local t = {}
+			t.rank = i + 1
+			t.name = name
+			t.score = score
+			table.insert(lists, t)
+			print(string.format("========尤乌战场排行榜======= [%d] name = %s score = %d", t.rank, t.name, t.score))
+		end
+		local npack = DataPack.allocPacket(sysarg, BaseTypes.SystemId.miscsSystem, 187) -- 返回尤乌战场排行榜数据
+		DataPack.writeByte(npack, panel_type)
+		DataPack.writeUInt(npack, start_index)
+		DataPack.writeUInt(npack, #lists)
+		for k, v in ipairs(lists) do
+			DataPack.writeUInt(npack, v.rank)
+			DataPack.writeString(npack, v.name)
+			DataPack.writeUInt(npack, v.score)
+		end
+		DataPack.flush(npack)
+	end
+end
+
+DaLuanDouFun.SendActorRankInfo = function (sysarg, aid)
+	aid = tonumber(aid) or 0
+	if aid <= 0 then
+		return
+	end
+	local rank = Ranking.getRanking(DaLuanDouFun.rankname)
+	if rank == nil then return end
+	local rankItem = Ranking.getItemPtrFromId(rank, aid)
+	if rankItem ~= nil then
+		local ridx = 0
+		-- 获取分数
+		local score = Ranking.getPoint(rankItem)
+		if score > daluandouconfig.lowest then -- 不超过配置的分数没有排名
+			ridx = Ranking.getIndexFromPtr(rankItem) + 1
+		end
+		local npack = DataPack.allocPacket(sysarg, BaseTypes.SystemId.miscsSystem, 188) -- 返回尤乌战场自身排名积分信息
+		DataPack.writeUInt(npack, ridx)
+		DataPack.writeUInt(npack, Ranking.getPoint(rankItem))
+		DataPack.flush(npack)
+	end
+end
+
+-- 发送积分排行榜数据
+DaLuanDouFun.OnSendRankList = function (sysarg, msgid, packet)
+	local panel_type = DataPack.readByte(packet)
+	local start_index = DataPack.readUInt(packet)
+	local rank_num = DataPack.readUInt(packet)
+	DaLuanDouFun.SendRankList(sysarg, panel_type, start_index, rank_num)
+end
+
+DaLuanDouFun.OnSendActorRankInfo = function (sysarg, msgid, packet)
+	local aid = LActor.getActorId(sysarg)
+	DaLuanDouFun.SendActorRankInfo(sysarg, aid)
+end
+
+table.insert(InitFnTable,DaLuanDouFun.OnDldInit)
+TimerMsgFunc.register(TimerMsg.DLDBuffRefresh, DaLuanDouFun.RefreshBuff)
+EventCallDispatcher.registerFubenExit(daluandouconfig.fbid, DaLuanDouFun.OnExitDLD)
+EventCallDispatcher.registerFubenEnter(daluandouconfig.fbid, DaLuanDouFun.OnEnterDLD)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeOnActorDeath, DaLuanDouFun.OnPlayerDie) -- 玩家死亡事件
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogout, DaLuanDouFun.OnActorLogout) -- 玩家下线事件
+
+MiscsImplement.registerMsgHandler(DaLuanDouFun.msgids.send_rank_list, DaLuanDouFun.OnSendRankList)
+MiscsImplement.registerMsgHandler(DaLuanDouFun.msgids.send_actor_info, DaLuanDouFun.OnSendActorRankInfo)
+
+-- GM 
+GmEventFuncList.register( "dldstart", DaLuanDouStart, 1)
+GmEventFuncList.register( "dldend", DaLuanDouEnd, 1)
+GmEventFuncList.register( "dldbuff", function (sysarg, args)
+	local idx = args[1] or 0
+	DaLuanDouBuff(sysarg, idx)
+end, 1)

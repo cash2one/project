@@ -1,0 +1,15 @@
+﻿--宽直线 带减速法伤
+{
+	id = 88,
+	name = Lang.Skill.s88Name,
+	desc = Lang.Skill.s88Desc,
+	vocation = 9,
+	skillType = 0,
+	skillSpellType = 3,
+	skillClass = 7,
+	commonCd = 0,
+	specialBuffCond = 0,
+	skillSubLevel = { 
+--#include "Skill_88_1.txt"
+	},
+},

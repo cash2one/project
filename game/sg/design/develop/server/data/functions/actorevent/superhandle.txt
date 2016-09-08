@@ -1,0 +1,402 @@
+﻿--处理变身相关的操作
+
+--#include "data\config\super\superconfig.txt" once
+
+SuperOpFuncList = {}
+
+EventCallDispatcher.HandlerSuperOp = function (sysarg, args)
+	--print("SuperOpFuncList.HandlerSuperOp")
+	if args[1] == nil then return end   --
+	local func = SuperOpFuncList[args[1]]
+	if func ~= nil then
+		if args[1] < 100 then
+			func(sysarg, args[2]) 
+		else
+			func(sysarg, args)
+		end
+	end
+end
+
+-- 初始化变身培养数据，计算基本属性
+SuperOpFuncList[101] = function (sysarg, args)
+	--print("SuperOpFuncList.101")
+	local superid = args[2]
+	local trainstage = args[3]
+	local trainlevel = args[4]
+	local ifinit = args[5]
+	--print("SuperOpFuncList.101 superid:"..superid..",trainstage:"..trainstage..",trainlevel:"..trainlevel)
+
+	local attrnum = SuperConfig.SuperTrains.stagelv
+	local trainattrs = {}
+	for i=1,attrnum do
+		local stage = trainstage + 1
+		if i > trainlevel then stage = stage - 1 end
+		if stage >= 1 then
+		 	trainattrs[i] = SuperConfig.SuperTrains.trains[stage][i].value
+		 else
+		 	trainattrs[i] = 0
+		end
+		--print("SuperOpFuncList.101 i:"..i..",stage:"..stage..",trainattrs:"..trainattrs[i])
+	end
+
+	--print("SuperOpFuncList.101 trainattrs:"..trainattrs[1]..","..trainattrs[2]..","..trainattrs[3]..","..trainattrs[4]..","..trainattrs[5]..","..trainattrs[6]..","..trainattrs[7]..","..trainattrs[8])
+	
+	LActor.setSuperTrainAttrs(sysarg, superid, trainattrs[1], trainattrs[2], trainattrs[3], trainattrs[4], 
+		trainattrs[5], trainattrs[6], trainattrs[7], trainattrs[8], ifinit)
+end
+
+-- 变身培养
+SuperOpFuncList[4] = function (sysarg, dp)
+	--print("SuperOpFuncList.4")
+	local superid = DataPack.readWord(dp)
+	if superid == nil then return end
+	local traindata = LActor.GetSuperTrainData(sysarg, superid)
+	if traindata == -1 then return end
+
+	--print("SuperOpFuncList.4 1")
+	local trainstage = System.bitOpAnd(traindata, 0xffff)
+	local trainlevel = System.bitOpRig(traindata, 16)
+	if trainstage >= #SuperConfig.SuperTrains.trains and trainlevel >= #SuperConfig.SuperTrains.trains[trainstage + 1] then
+		return
+	end
+
+	--print("SuperOpFuncList.4 2")
+
+	--检测金钱是否足够
+	local needmoney = SuperConfig.SuperTrains.trains[trainstage + 1][trainlevel + 1].coin
+	if needmoney > 0 then
+		if LActor.getMoneyCount(sysarg, mtCoin) < needmoney then
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.n00012, ttMessage)
+			return
+		end
+	end
+
+	--真气是否足够
+	local needroot = SuperConfig.SuperTrains.trains[trainstage + 1][trainlevel + 1].expr
+	local rootnum = LActor.getIntProperty(sysarg, PROP_ROOT_EXP)
+	if rootnum < needroot then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.su002, ttMessage)
+		return
+	end		
+
+	--扣真气
+	if not LActor.giveAward(sysarg, qatRootExp, -needroot, 930) then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.su002, ttMessage)
+		return
+	end
+
+	--扣钱
+	if needmoney > 0 then
+		LActor.changeMoney(sysarg, mtCoin, -needmoney, 930, true, "super_train")
+	end
+
+	local succrate = SuperConfig.SuperTrains.succrate[trainstage + 1]
+
+	if succrate < System.getRandomNumber(10000) then
+		--print("SuperOpFuncList.4 fail")
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.su006, ttMessage)
+		return
+	end
+
+
+	--加等级
+	trainlevel = trainlevel + 1
+	if trainlevel >= SuperConfig.SuperTrains.stagelv then
+		trainlevel = 0
+		trainstage = trainstage + 1
+	end
+
+	traindata = System.makeInt32(trainstage, trainlevel)
+
+	LActor.SetSuperTrainData(sysarg, superid, traindata)
+
+	local args = {101, superid, trainstage, trainlevel, false}
+	SuperOpFuncList[101](sysarg, args)
+
+	local npack = DataPack.allocPacket(sysarg, 44, 4)
+	if npack == nil then return end
+	DataPack.writeWord(npack, superid)
+	DataPack.writeInt(npack, traindata)
+	DataPack.flush(npack)
+
+	-- BI
+    local actorId = LActor.getActorId(sysarg)
+    local actorAccount = LActor.getAccountName(sysarg)
+    local actorLevel = tostring(LActor.getLevel(sysarg))
+
+    System.logCounter(actorId, actorAccount, actorLevel, 
+        "super", "", "", "peiyang", tostring(superid), "", tostring(trainlevel), tostring(trainstage), lfBI+lfDB)
+
+	--print("SuperOpFuncList.4 9")
+end
+
+-- 秘术进阶
+SuperOpFuncList[5] = function (sysarg, dp)
+	--print("SuperOpFuncList.5")
+	local mjid = DataPack.readWord(dp)
+	local useyb = DataPack.readByte(dp)
+	local moneytype = DataPack.readByte(dp)
+	if mjid == nil or moneytype == nil then return end
+	local jinjiedata = LActor.GetSuperMjLevel(sysarg, mjid)
+	if jinjiedata == -1 then return end
+	--print("SuperOpFuncList.5 mjid:"..mjid..",useyb:"..useyb..",moneytype:"..moneytype)
+	local level = System.bitOpAnd(jinjiedata, 0xffff)
+	local zhufu = System.bitOpRig(jinjiedata, 16)
+	if level == 0 then return end
+	--print("SuperOpFuncList.5 level:"..level..",zhufu:"..zhufu..",moneytype:"..moneytype)
+	if level >= SuperConfig.maxMjlv then return end
+	local itemnum = LActor.getItemCount(sysarg, SuperConfig.jinjieitem)
+	if moneytype ~= mtYuanbao and moneytype ~= mtBindYuanbao then return end
+	local ybnum = 0
+	if itemnum < SuperConfig.jinjieNeedNum[level] then
+		if useyb ~= nil and useyb == 1 then
+			ybnum = (SuperConfig.jinjieNeedNum[level] - itemnum) * SuperConfig.jinjieyuanbao
+			if not LActor.CheckMoneyEnough(sysarg, moneytype, ybnum) then
+				return
+			end
+		else
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.su001, ttMessage)
+			return
+		end
+	end
+	if LActor.changeMoney(sysarg, mtBindCoin, -SuperConfig.jinjieconsume, 930, true, "supermj_jinjie") == false then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.n00012, ttMessage)
+		return
+	end
+	if ybnum > 0 then 
+		LActor.changeMoney(sysarg, moneytype, -ybnum, 930, true, "supermj_jinjie")
+	end
+
+	--print("SuperOpFuncList.5 3")
+
+	LActor.removeItem(sysarg, SuperConfig.jinjieitem, SuperConfig.jinjieNeedNum[level], -1, -1, -1, "super_jinjie", 5)
+
+	local succrate = 0
+	--祝福值满了，必成功
+	if zhufu >= SuperConfig.jinjiemod[level][2] then
+		succrate = 10000
+	--有概率成功
+	elseif zhufu >= SuperConfig.jinjiemod[level][1] then
+		succrate = SuperConfig.jinjiebasesucc[level] + (zhufu - SuperConfig.jinjiemod[level][1])  * SuperConfig.jinjieaddsucc[level]
+	end
+	local ifsucc = false
+	if succrate > System.getRandomNumber(10000) then
+		ifsucc = true
+	end
+	if ifsucc then
+		--成功
+		zhufu = zhufu - SuperConfig.jinjiemod[level][2]
+		zhufu = zhufu > 0 and zhufu or 0
+		level = level + 1
+	else
+		local randomnum = System.getRandomNumber(10000)
+		local tmpnum = 0
+		local zhufuindex = 1
+		for i,v in ipairs(SuperConfig.jinjieaddzhufu[level]) do
+			tmpnum = tmpnum + v[2]
+			if tmpnum > randomnum then
+				zhufuindex = i
+				break
+			end
+		end
+		zhufu = zhufu + SuperConfig.jinjieaddzhufu[level][zhufuindex][1]
+	end
+	LActor.SetSuperMjLevel(sysarg, mjid, level, zhufu)
+
+	local npack = DataPack.allocPacket(sysarg, 44, 5)
+	if npack == nil then return end
+	DataPack.writeWord(npack, mjid)
+	DataPack.writeWord(npack, level)
+	DataPack.writeWord(npack, zhufu)
+	DataPack.flush(npack)
+
+	-- BI
+    local actorId = LActor.getActorId(sysarg)
+    local actorAccount = LActor.getAccountName(sysarg)
+    local actorLevel = tostring(LActor.getLevel(sysarg))
+
+    System.logCounter(actorId, actorAccount, actorLevel, 
+        "super", "", "", "jinjie", tostring(mjid), "", tostring(zhufu), tostring(level), lfBI+lfDB)
+
+	--print("SuperOpFuncList.5 9")
+end
+
+-- 开启变身/倒计时
+SuperOpFuncList[7] = function (sysarg, dp)
+	--print("SuperOpFuncList.7")
+	--变身系统已开启?
+	local traindata = LActor.GetSuperTrainData(sysarg, superid)
+	if traindata >= 0 then return end
+	--类型
+	local opentype = DataPack.readInt(dp)
+	if opentype == nil then return end
+
+	--print("SuperOpFuncList.7 opentype:"..opentype)
+	local var = LActor.getStaticVar(sysarg)
+	--开启倒计时
+	if opentype == 1 then
+		if var.superopentime ~= nil then return end
+		var.superopentime = SuperConfig.opentime
+		LActor.SetSuperOpenTime(sysarg, SuperConfig.opentime)
+		SuperOpFuncList.sendOpenSuperTime(sysarg, var.superopentime)
+	--开启变身
+	else
+		if var.superopentime == nil then return end
+		var.superopentime = LActor.GetSuperOpenTime(sysarg)
+		--允许5秒的时间误差
+		if var.superopentime > 5 then
+			SuperOpFuncList.sendOpenSuperTime(sysarg)
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.su009, ttMessage)
+			return
+		end
+		LActor.openActorSystem(sysarg, siSuperSys)
+		var.superopentime = nil
+		local npack = DataPack.allocPacket(sysarg, 44, 10)
+		if npack == nil then return end
+		DataPack.writeInt(npack, 0)
+		DataPack.flush(npack)
+	end
+end
+
+-- 使用体验道具
+SuperOpFuncList.useTiyanItem = function (sysarg, itemidx, itemPtr, ItemTable)
+	if ItemTable == nil then return false end
+
+	local var = LActor.getStaticVar(sysarg)
+	local endtime = System.getCurrMiniTime() + ItemTable[3]
+	LActor.removeItem(sysarg, itemidx, 1, -1, -1, -1, "super_useTiyanItem", 932)
+	if LActor.SetSuperTiyan(sysarg, ItemTable[2], endtime) then
+		if var.supertiyanitem == nil then var.supertiyanitem = {} end
+		var.supertiyanitem.superid = ItemTable[2]
+		var.supertiyanitem.endtime = endtime
+		SuperOpFuncList.sendTiyanTime(sysarg, ItemTable[2], ItemTable[3])
+		return true
+	else
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.su011, ttMessage)
+		return false
+	end
+end
+
+SuperOpFuncList.sendTiyanTime = function (sysarg, superid, time)
+	local npack = DataPack.allocPacket(sysarg, 44, 11)
+	if npack == nil then return end
+	DataPack.writeWord(npack, superid)
+	DataPack.writeInt(npack, time)
+	DataPack.flush(npack)
+end
+
+--新的一天清理数据
+SuperOpFuncList.onNewDayForSuper = function (sysarg, arg)
+	--print("SuperOpFuncList.onNewDayForSuper")
+	--进阶祝福值
+	LActor.ClearSuperMjJinjie(sysarg, 3)
+end
+
+--登陆
+SuperOpFuncList.onLoginForSuper = function (sysarg, arg)
+	--print("SuperOpFuncList.onLoginForSuper")
+	SuperOpFuncList.sendOpenSuperTime(sysarg)
+
+	local var = LActor.getStaticVar(sysarg)
+	if var.supertiyanitem ~= nil and var.supertiyanitem.endtime ~= nil and var.supertiyanitem.superid ~= nil then
+		local now_sec = System.getCurrMiniTime()
+		if var.supertiyanitem.endtime > now_sec then
+			--print("SuperOpFuncList.onLoginForSuper have")
+			LActor.SetSuperTiyan(sysarg, var.supertiyanitem.superid, var.supertiyanitem.endtime)
+			SuperOpFuncList.sendTiyanTime(sysarg, var.supertiyanitem.superid, var.supertiyanitem.endtime - now_sec)
+		else
+			--print("SuperOpFuncList.onLoginForSuper not have")
+			local currsuper = LActor.getIntProperty(sysarg, PROP_SUPER)
+			if currsuper == var.supertiyanitem.superid then
+				--print("SuperOpFuncList.onLoginForSuper not have 1")
+				LActor.SetSuperTiyan(sysarg, 0, 0)
+				var.supertiyanitem = nil
+			end
+		end
+	end
+end
+
+-- 取消变身体验
+SuperOpFuncList[8] = function (sysarg, reason)
+	local var = LActor.getStaticVar(sysarg)
+	var.supertiyanitem = nil
+	local tips = {Lang.ScriptTips.su012, Lang.ScriptTips.su013}
+	if tips[reason] ~= nil then
+		LActor.sendTipmsg(sysarg, tips[reason], ttMessage)
+	end
+	SuperOpFuncList.sendTiyanTime(sysarg, 0, 0)
+end
+
+-- 使用当前体验的变身
+SuperOpFuncList[9] = function (sysarg, dp)
+	--print("SuperOpFuncList 9")
+	local tiyantype = DataPack.readChar(dp)
+	if tiyantype == nil then return end
+	--print("SuperOpFuncList tiyantype:"..tiyantype)
+	local var = LActor.getStaticVar(sysarg)
+	local now_sec = System.getCurrMiniTime()
+	--副本体验
+	if tiyantype == 1 then
+		local fbid = LActor.getFubenId(sysarg)
+		if fbid ~= SuperConfig.fubentiyansuper[1] then return end
+		local endtime = now_sec + SuperConfig.fubentiyansuper[3]
+		if LActor.SetSuperTiyan(sysarg, SuperConfig.fubentiyansuper[2], endtime) then
+			if var.supertiyanitem == nil then var.supertiyanitem = {} end
+			var.supertiyanitem.superid = SuperConfig.fubentiyansuper[2]
+			var.supertiyanitem.endtime = endtime
+			SuperOpFuncList.sendTiyanTime(sysarg, SuperConfig.fubentiyansuper[2], SuperConfig.fubentiyansuper[3])
+		end
+	else
+		if var.supertiyanitem ~= nil and var.supertiyanitem.endtime ~= nil and var.supertiyanitem.superid ~= nil and var.supertiyanitem.endtime > now_sec then
+			if LActor.SetSuperTiyan(sysarg, var.supertiyanitem.superid, var.supertiyanitem.endtime) then
+				SuperOpFuncList.sendTiyanTime(sysarg, var.supertiyanitem.superid, var.supertiyanitem.endtime - now_sec)
+			else
+				LActor.sendTipmsg(sysarg, Lang.ScriptTips.su011, ttMessage)
+				var.supertiyanitem = nil
+			end
+		else
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.su010, ttMessage)
+			return
+		end
+	end
+end
+
+-- 请求变身系统开启倒计时时间
+SuperOpFuncList[10] = function (sysarg, dp)
+	SuperOpFuncList.sendOpenSuperTime(sysarg)
+end
+
+--下发倒计时
+SuperOpFuncList.sendOpenSuperTime = function (sysarg, time)
+	--print("SuperOpFuncList.sendOpenSuperTime")
+	local opentime = -2
+	if time ~= nil then
+		opentime = time
+	else
+		local traindata = LActor.GetSuperTrainData(sysarg, superid)
+		if traindata == -1 then
+			local var = LActor.getStaticVar(sysarg)
+			if var.superopentime == nil then 
+				opentime = -1
+			else
+				var.superopentime = LActor.GetSuperOpenTime(sysarg)
+				opentime = var.superopentime
+			end
+		end
+	end
+	local npack = DataPack.allocPacket(sysarg, 44, 9)
+	if npack == nil then return end
+	DataPack.writeInt(npack, opentime)
+	DataPack.flush(npack)
+	--print("SuperOpFuncList.sendOpenSuperTime opentime:"..opentime)
+end
+
+--注释去掉变身
+--for i,v in ipairs(SuperConfig.tiyanitem) do
+--	GlobalItemFn[v[1]] = { func = SuperOpFuncList.useTiyanItem, params = v }
+--end
+--[[
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeSuper, EventCallDispatcher.HandlerSuperOp)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, SuperOpFuncList.onNewDayForSuper)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, SuperOpFuncList.onLoginForSuper)
+]]

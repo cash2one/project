@@ -1,0 +1,30 @@
+﻿{
+	id = 24995,
+	name = Lang.Item.n24995,
+	desc = Lang.Item.i24995,
+	type = 82,	
+    sellType = 82,		
+	icon = 10057,
+	shape = {0,0,0,0,0,0,0,0},
+	color = 1,
+	dura = 0,
+	dup = 99,
+	colGroup = 0,
+	dealType = 0,
+	dealPrice = 0,
+	time = 0,
+	suitId = 0,
+	staitcAttrs = {  
+	},
+	strongAttrs = {  
+	},
+	flags = { 
+		recordLog = true,		
+		denyDeal = true,
+		denySell = true, 
+	},
+	conds = { 
+		--职业
+		{ cond = 3, value = 1, }, 	
+	},
+},

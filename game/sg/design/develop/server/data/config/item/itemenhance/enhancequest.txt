@@ -1,0 +1,8 @@
+﻿--装备增强任务配置
+--#include "..\..\..\language\LangCode.txt" once
+
+-- 装备强化任务配置
+-- iid : 强化的物品id, 0表示任意物品, value : 物品强化到该等级或以上， qid : 任务ID, tid, count：对应任务配置的值
+StrongQuest = {
+	{ iid = 0, value = 3, qid = 308, tid = 20206, count = 1, },
+}

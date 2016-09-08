@@ -1,0 +1,177 @@
+--#include "data\functions\Tasks\Nirvana\NirvanaSet.txt" once
+--#include "data\language\LangCode.txt" once
+--#include "data\functions\systems\timereward\baoitemhandler.txt" once
+
+--通用副本结算处理
+local Nirvarfunc = {}
+
+Nirvarfunc.NirvanaFubenOver = function(sysarg,fbPtr)
+	
+	--[[local actorid = LActor.getActorId(sysarg)
+	local var = Fuben.getDyanmicVar(fbPtr)
+	if var == nil or var.fbstarttime == nil then 
+		return 
+	end
+	
+	if var.nirunique == nil then var.nirunique = 0 end --此变量用来限制结算次数
+
+	if var.nirunique == 1 then 
+		return
+	end
+
+	local doubi
+	local tplist  = {}
+	if var.baoitem == nil and  var.nirunique == 0 then 
+		tplist  = {}
+		doubi = BaohandleFun.getreward(sysarg,tplist)
+		var.baoitem = doubbi
+		var.nirunique = 1
+	end
+
+	local Fhandle = LActor.getFubenHandle(sysarg)
+	--清除场景内所有的怪
+	local sceneid = LActor.getSceneId(sysarg)
+    local Fhandle = LActor.getFubenHandle(sysarg)
+    local hscene = Fuben.getSceneHandleById(sceneid,Fhandle)
+    Fuben.clearMonster(hscene,0)
+ 
+	local nowtime = System.getCurrMiniTime()
+	local usetime = nowtime - var.fbstarttime
+	if usetime < 0 then usetime = 0 end
+	if var.nirvanagetexp == nil then var.nirvanagetexp = 0 end
+	if var.KillMonCount == nil then var.KillMonCount = 0 end
+	
+	local index 
+	for i,v in ipairs(Gradelist) do
+		if var.NirvanaStep >= v.floor  then
+			index = i
+		end
+	end
+
+	if index == nil then 
+		LActor.exitFuben(sysarg)
+		return 
+	end
+ 
+	local djreward = 0 
+
+	djreward = var.nirvanagetexp * (Gradelist[index].value/100.0)
+
+	local doubleexp = 0
+	if var.fubenjiesuandoubleexp ~= nil and var.fubenjiesuandoubleexp ~= 0 then 
+		doubleexp = var.nirvanagetexp * (var.fubenjiesuandoubleexp/100.0)
+	end
+	LActor.addExp(sysarg, var.nirvanagetexp + doubleexp + djreward, 214, 0, true)
+
+
+	local count = 0
+	for i=1,var.NirvanaStep do
+		local nirvanaitemconf = NirvanaItem[i]
+		if table.getn(nirvanaitemconf) > 0 then
+			count = count + 1
+			local itemconf =  nirvanaitemconf[1]
+			for j=1,#itemconf do
+				--背包满了怎么办
+				local ret_num = LActor.addItem(sysarg, itemconf[j].itemid, 0, 0, itemconf[j].amount, itemconf[j].bind, "fuben_jiesuan", 1)
+				--放入仓库
+				if ret_num < itemconf[j].amount then
+					local remainnum = itemconf[j].amount - ret_num
+					System.sendGmMailOffLine(actorid, "副本物品", 1, itemconf[j].itemid, remainnum, itemconf[j].bind)
+				end
+			end
+		end
+	end
+
+	local npack = DataPack.allocPacket(sysarg, 20, 11)
+	if npack == nil then 
+		return 
+	end
+	DataPack.writeInt(npack, doubi)
+	--print("doubi:"..doubi)
+	DataPack.writeInt(npack, #tplist)
+	--print("tplist:"..#tplist)
+	for m = 1,#tplist do
+		DataPack.writeInt(npack, tplist[m].itemid)
+		--print("tplist[m].itemi:"..tplist[m].itemid)
+		DataPack.writeInt(npack, tplist[m].count)
+		--print("tplist[m].count:"..tplist[m].count)
+	end
+
+	DataPack.writeInt(npack, index)
+	DataPack.writeInt(npack, 11)
+	DataPack.writeInt(npack, usetime)
+	DataPack.writeInt(npack, djreward)
+	--print("djreward=============:"..djreward)
+	DataPack.writeInt(npack, var.nirvanagetexp)
+	--print("var.nirvanagetexp=============:"..var.nirvanagetexp)
+	DataPack.writeInt(npack, doubleexp)
+	--print("doubleexp=============:"..doubleexp)
+
+	DataPack.writeInt(npack,count)
+	for i=1,var.NirvanaStep do
+		local nirvanaitemconf = NirvanaItem[i]
+		if table.getn(nirvanaitemconf) > 0 then
+			local itemconf =  nirvanaitemconf[1]
+			for j = 1,#itemconf do
+				DataPack.writeInt(npack,itemconf[j].itemid)
+				--print("itemconf[j].itemid:"..itemconf[j].itemid)
+				DataPack.writeInt(npack,itemconf[j].amount)
+				--print("itemconf[j].amount:"..itemconf[j].amount)
+			end
+		end
+	end
+
+	DataPack.flush(npack)]]
+
+end 
+
+--全局函数供C++调用
+function OnJieSuan(sysarg, fbPtr)
+	-- 根据fubenId进行
+	--现在的副本都不用此结算方式 屏蔽日期 2015.12.24  hwl
+	--此处写法别吐槽 为了快速热更
+	local i = 10
+	if i == 10 then
+		return
+	end
+	
+	local fubenId = Fuben.getFubenIdbyFuBenPtr(fbPtr)
+	local fubenHandle = LActor.getFubenHandle(sysarg)
+	print(string.format("----------------fubenId:   %d",fubenId))
+
+	if fubenId == 11 then
+		Nirvarfunc.NirvanaFubenOver(sysarg,fbPtr)					-- 必杀技副本结算处理
+	else 
+		CommonFubenJiesuanConfig.onFubenOver(sysarg,fubenHandle)	-- 其他特殊副本结算处理
+	end
+end
+
+--再来一次
+function  retenterfuben_common(sysarg,fbId)
+	if sysarg == nil and fbId == nil  then return end
+	local fbid = fbId
+	local fbdata = FuBen[fbid]
+	if fbdata == nil then
+	   print( "fbdata is nil:"..fbid )
+	   return 
+	end
+	local enterCount, addCount = Fuben.getEnterFubenInfo( sysarg, fbid )
+	if addCount == nil  then
+	    addCount = 0
+	end
+	if enterCount == nil then
+	   enterCount = 0
+	end
+
+	local daycount = fbdata.daycount      
+
+	if daycount == 0 or daycount + addCount - enterCount >= 1 then
+	   	reEnterFubenFunc(sysarg,fbid)
+	else 
+		LActor.exitFuben(sysarg) 
+	    LActor.sendTipmsg( sysarg, Lang.ScriptTips.f00085, ttDialog )
+	end
+end
+
+
+

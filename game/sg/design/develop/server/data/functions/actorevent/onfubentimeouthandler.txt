@@ -1,0 +1,201 @@
+--lua script
+--#include "data\config\quest\fubenquest.txt" once
+--#include "data\functions\bifunc.txt" once
+--#include "data\functions\tasks\fengcereward\fcactivefunc.txt" once
+--#include "data\functions\fubennpcfunc\commonfuben.txt" once
+
+FbActivity = {
+	[58] = enATXinMo, -- 破狱之战
+	[60] = enATMoJie, -- 魔界入口
+	[63] = enATPet,  -- 伙伴岛
+	[64] = enATTianMoTa, -- 密宗佛塔
+	[65] = enATMiJing, -- 皇陵秘境
+	[66] = enATXuanTian, -- 玄天封印
+	[69] = enATDiGong, -- 秦皇地宫
+}
+
+EventCallDispatcher.FubenTimeoutHandler = {}
+EventCallDispatcher.FubenEnter = {}
+EventCallDispatcher.FubenLogout = {}
+EventCallDispatcher.FubenExit = {}
+EventCallDispatcher.SceneEnter = {}
+EventCallDispatcher.SceneExit = {}
+EventCallDispatcher.FubenInit = {}
+EventCallDispatcher.TeleportEvent = {}
+
+EventCallDispatcher.OnFubenTimeout = function (sysarg,arg)
+	
+	--结束之前的处理
+	local fbId = arg[1]
+	--print("--------OnFubenTimeout"..fbId)
+	local handlers = EventCallDispatcher.FubenTimeoutHandler
+	if handlers[fbId] ~= nil then
+		handlers[fbId]( sysarg )
+	end
+
+	--副本超时处理,对于特殊副本要查看标志位，对其进行结算处理，而不是立即退出
+	local fbHandle = Fuben.getFubenHandle(sysarg)
+	local fbPtr = Fuben.getFubenPtr(fbHandle)
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+	
+				
+							
+	--print("----exit:  "..fbId)
+	--sysarg是副本指针,获取副本所有玩家的指针，并让其退出副本
+	local actorList = LuaHelp.getFbActorList(sysarg)
+	if actorList ~= nil then
+		for i = 1,#actorList do
+			LActor.exitFuben(actorList[i])		-- 此处退出副本
+		end
+	end
+end
+
+-- 注册副本结束处理
+EventCallDispatcher.registerFubenTimeout = function ( fbId, func )
+	if EventCallDispatcher.FubenTimeoutHandler[ fbId ] ~= nil then
+		print( "fuben timeout handle has register:"..fbId )
+		return
+	end
+	EventCallDispatcher.FubenTimeoutHandler[ fbId ] = func 		--一个副本Id只能注册一个函数
+end
+
+-- 初始化副本
+function OnInitFuben(fbId,  hfb)
+	if fbId == 0 then return end -- 不处理静态副本
+
+	local handlers = EventCallDispatcher.FubenInit
+	if handlers[fbId] ~= nil then
+		handlers[fbId](hfb)
+	end
+end
+
+-- 注册初始化副本函数
+EventCallDispatcher.registerFubenInit = function (fbId, func)
+	if EventCallDispatcher.FubenInit[fbId] ~= nil then
+		print( "fuben init handle has register:"..fbId )
+		return
+	end
+	EventCallDispatcher.FubenInit[fbId] = func 		--一个副本Id只能注册一个函数
+end
+
+
+-- 进入副本
+function OnActorEnterFuben(fbId, sysarg, hfb, way)
+	ZhaoHuanFuncs.OnEnterScene(sysarg) -- 召唤任务的场景切换
+	ZhuiBuFuncs.OnEnterScene(sysarg) -- 追捕任务的场景切换
+	BianShenFuncs.OnEnterScene(sysarg) -- 变身任务的场景切换
+	local fbId = LActor.getFubenId(sysarg)
+	if fbId == 0 then return end -- 不处理静态副本
+
+	local handlers = EventCallDispatcher.FubenEnter
+	if handlers[fbId] ~= nil then
+		handlers[fbId](sysarg, hfb, way)
+	end
+
+	-- 处理进入副本完成任务
+	local qData = EnterFbQuest[fbId]
+	if qData then
+		for i=1,#qData do
+			LActor.setQuestValue(sysarg, qData[i].qid, qData[i].tid, qData[i].count)			
+		end
+	end
+
+	-- 正常进入副本的记录日志
+	if way == 1 then
+		local act = FbActivity[fbId]
+		if act ~= nil then
+			LActor.triggerTarget(sysarg, act)
+			FCActivityHandler.ActivityReward (sysarg)
+		end
+		
+		local logname = BiFubenName[fbId]
+		if logname ~= nil then
+			BiFunc.LogFubenEnter(system, logname, "")
+		end
+	end
+end
+
+
+-- 注册进入副本函数
+EventCallDispatcher.registerFubenEnter = function (fbId, func)
+	if EventCallDispatcher.FubenEnter[fbId] ~= nil then
+		print( "fuben relogin handle has register:"..fbId )
+		return
+	end
+	EventCallDispatcher.FubenEnter[fbId] = func 		--一个副本Id只能注册一个函数
+end
+
+-- 玩家退出副本处理
+function OnActorExitFuben(fbId, sysarg, hfb, way)
+	local handlers = EventCallDispatcher.FubenExit
+	if handlers[fbId] ~= nil then
+		handlers[fbId](sysarg, hfb, way)
+	end
+end
+
+-- 进入场景
+function OnActorEnterScene(sid, sysarg, hdl)
+	bingjianzuozhan.EntryScene( sid, sysarg, hdl)
+	ZhaoHuanFuncs.OnEnterScene(sysarg) -- 召唤任务的场景切换
+	ZhuiBuFuncs.OnEnterScene(sysarg) -- 追捕任务的场景切换
+	BianShenFuncs.OnEnterScene(sysarg) -- 变身任务的场景切换
+	taozhai.EntryScene( sid, sysarg, hdl)
+	local handlers = EventCallDispatcher.SceneEnter
+	if handlers[sid] ~= nil then
+		handlers[sid](sysarg, hdl)
+	end
+end
+
+-- 退出场景
+function OnActorExitScene(sid, sysarg, hdl)
+	local handlers = EventCallDispatcher.SceneExit
+	if handlers[sid] ~= nil then
+		handlers[sid](sysarg, hdl , sid)
+	end
+end
+
+-- 注册进入场景函数
+EventCallDispatcher.registerSceneEnter = function (sid, func)
+	if EventCallDispatcher.SceneEnter[sid] ~= nil then
+		print( "scene enter handle has register:"..sid )
+		return
+	end
+	EventCallDispatcher.SceneEnter[sid] = func
+end
+
+-- 注册退出副本
+EventCallDispatcher.registerFubenExit = function (fbId, func)  
+	if EventCallDispatcher.FubenExit[fbId] ~= nil then
+		print( "fuben logout handle has register:"..fbId )
+		return
+	end
+	EventCallDispatcher.FubenExit[fbId] = func 		--一个副本Id只能注册一个函数
+end
+
+-- 注册退出场景函数
+EventCallDispatcher.registerSceneExit = function (sid, func)
+	if EventCallDispatcher.SceneExit[sid] ~= nil then
+		print( "scene exit handle has register:"..sid )
+		return
+	end
+	EventCallDispatcher.SceneExit[sid] = func
+end
+
+-- 退出场景
+function OnActorTeleport(eventId, sysarg, scenePtr)
+	local handlers = EventCallDispatcher.TeleportEvent
+	if handlers[eventId] ~= nil then
+		handlers[eventId](sysarg, scenePtr)
+	end
+end
+
+-- 注册进入传送门事件
+EventCallDispatcher.registerTeleport = function (eventId, func)
+	if EventCallDispatcher.TeleportEvent[eventId] ~= nil then
+		print( "teleport handle has register:"..eventId )
+		return
+	end
+	EventCallDispatcher.TeleportEvent[eventId] = func
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeFubenTimeOut, EventCallDispatcher.OnFubenTimeout)

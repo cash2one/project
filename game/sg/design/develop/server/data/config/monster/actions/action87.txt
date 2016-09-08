@@ -1,0 +1,22 @@
+{
+	id = 87,	--行为ID
+	trigger = 1,	--触发类型，血量为1，时间为2
+
+	isInit = 0 ,
+	--创建的时候会调用,和info里的sequence一样
+	initSequence =
+	{
+		
+	},
+
+	infos = 
+	{
+		{
+			sequId = 1,
+			param = 0 ,
+			sequence = {
+				{ type = 22, duration = 2, resurrectTime = 10, monsterId=1197, liveTime = 100000, }, --必须与某目标在一定时间内一起死,否则重生 与monsterId共同死亡, 否则重生liveTime重生后存活时间
+			}
+		},
+	},
+},

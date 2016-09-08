@@ -1,0 +1,23 @@
+{
+	id = 29,	--行为ID
+	trigger = 2,	--触发类型，血量为1，时间为2
+	loop = 9999,
+
+	isInit = 0 ,
+	--创建的时候会调用,和info里的sequence一样
+	initSequence =
+	{
+		
+	},
+
+	infos = 
+	{
+		{
+			sequId = 1,
+			param = 100 ,
+			sequence = {
+				{ type = 19, duration = 2, mosterId=1201, posX = 0, posY = 0, liveTime = 100000, relative = true },	--召唤怪物(没有怪物拥有者)
+			}
+		},
+	},
+},

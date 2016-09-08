@@ -1,0 +1,22 @@
+{
+	id = 15,
+	name = Lang.Skill.s15Name,
+	desc = Lang.Skill.s15Desc,
+	vocation = 2,
+	skillType = 8,
+	skillSpellType = 0,
+	skillClass = 1,
+	commonCd = 0,
+	canbeDefault = false,
+	specialBuffCond = 0,
+	notAutoUse = false,
+ 	actions=
+{
+
+	{act=2,effect=1601,type=2},
+		
+},
+	skillSubLevel = { 
+--#include "Skill_15_1.txt"
+	},
+},

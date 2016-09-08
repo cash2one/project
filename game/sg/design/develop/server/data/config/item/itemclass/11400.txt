@@ -1,0 +1,30 @@
+{
+	id = 11400,
+	name = Lang.Item.n11400,
+	desc = Lang.Item.i11400,
+	type = 14,
+	sellType = 14,
+	icon = 11400,
+	shape = {0,0,0,0,0,0,0,0},
+	color = 3,
+	dura = 0,
+	dup = 0,
+	colGroup = 0,
+	dealType = 0,
+	dealPrice = 0,
+	time = 0,
+	suitId = 0,
+	staitcAttrs = {  
+	},
+	strongAttrs = {  
+	},
+	flags = { 
+		recordLog = true,
+		denyDeal = true,
+		denySell = true, 
+                denyDestroy = true,
+	},
+	conds = { 
+		{ cond = 1, value = 1, }, 
+	},
+},

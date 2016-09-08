@@ -1,0 +1,52 @@
+{
+	id = 13,
+	name = Lang.Skill.s13Name,
+	desc = Lang.Skill.s13Desc,
+	vocation = 2,
+	skillType = 6,
+	skillSpellType = 0,
+	skillClass = 1,
+	commonCd = 0,
+	canbeDefault = false,
+	specialBuffCond = 0,
+	notAutoUse = false,
+	trainCondAddtions=
+{
+	{addtionsid=1,cond=1,value=12,consume=false},
+	{addtionsid=2,cond=1,value=21,consume=false},
+},
+	
+	trainCondAdddesc=
+{
+	{addtionid=1,iconid=206,name=Lang.Skill.s13_21Name,desc=Lang.Skill.s13_21Desc},
+	{addtionid=2,iconid=207,name=Lang.Skill.s13_22Name,desc=Lang.Skill.s13_22Desc},
+},
+ 	actions=
+{
+
+	{act=2,effect=1601,type=2},
+		
+},
+	skillSubLevel = { 
+--#include "Skill_13_1.txt"
+--#include "Skill_13_2.txt"
+--#include "Skill_13_3.txt"
+--#include "Skill_13_4.txt"
+--#include "Skill_13_5.txt"
+--#include "Skill_13_6.txt"
+--#include "Skill_13_7.txt"
+--#include "Skill_13_8.txt"
+--#include "Skill_13_9.txt"
+--#include "Skill_13_10.txt" 
+--#include "Skill_13_11.txt"
+--#include "Skill_13_12.txt"
+--#include "Skill_13_13.txt"
+--#include "Skill_13_14.txt"
+--#include "Skill_13_15.txt"
+--#include "Skill_13_16.txt"
+--#include "Skill_13_17.txt"
+--#include "Skill_13_18.txt"
+--#include "Skill_13_19.txt"
+--#include "Skill_13_20.txt" 
+	},
+},

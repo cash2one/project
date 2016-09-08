@@ -1,0 +1,441 @@
+-- 过关斩将副本函数
+
+--#include "data\functions\entrustfunc.txt" once
+--#include "data\functions\GlobalDefine.txt" once
+--#include "data\config\misc\TongTianTaConf.txt" once
+
+TongTianTaPublic = {}
+TongTianTaPublic.RankSize = 100
+TongTianTaPublic.IsMaster = 1
+TongTianTaPublic.NotMaster = 0
+
+-- 通关处理
+TongTianTaPublic.OnTongGuan = function(sysarg, layer, sconf)
+	print(string.format("%s TongTianTaPublic.OnTongGuan %d", LActor.getName(sysarg), layer))
+
+	--消耗时间
+	local timeleft = 0
+	local pfb = LActor.getFubenPrt(sysarg)
+	if pfb ~= nil then
+		timeleft = Fuben.GetFubenGameTime(pfb)
+	end
+
+	--更新层主
+	if timeleft > 0 and timeleft < TongTianTaConf.scenes[layer].gametime then
+		TongTianTaPublic.trySetMaster(sysarg, layer, timeleft, sconf)
+		if sconf.broadcast ~= nil and System.bitOPMask(sconf.broadcast, 0) then
+			local name = TongTianTaConf.scenes[layer].boss or ""
+			local tips = string.format(Lang.ScriptTips.ttt006, LActor.getName(sysarg), layer, name)
+			--System.broadcastTipmsg( tips, ttGmTip )
+		end
+	else
+		local npack = DataPack.allocPacket(sysarg, 48, 10)
+		if npack ~= nil then
+			DataPack.flush(npack)
+		end
+	end
+end
+
+--尝试更新层主
+TongTianTaPublic.trySetMaster = function(sysarg, layer, timeleft, sconf)
+	--更新玩家通关层数
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	if var.tongtianta == nil then
+		var.tongtianta = {}
+	end
+	local baward = 0
+	if var.tongtianta.maxlayer == nil then
+		if layer == 1 then
+			var.tongtianta.maxlayer = layer
+			baward = 1
+		else
+			print(string.format("trySetMaster error layer(%d)",layer))
+			return
+		end
+	elseif var.tongtianta.maxlayer == layer - 1 then
+		var.tongtianta.maxlayer = layer
+		baward = 1
+	end
+
+	--[[BI
+	if var.tongtianta.historylayer == nil then
+		var.tongtianta.historylayer = var.tongtianta.maxlayer
+		System.logCounter(LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), "tongtianta", "", "", "", "histLayer", tostring(var.tongtianta.historylayer), "", "", lfBI)
+	elseif var.tongtianta.historylayer < var.tongtianta.maxlayer then
+		var.tongtianta.historylayer = var.tongtianta.maxlayer
+		System.logCounter(LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), "tongtianta", "", "", "", "histLayer", tostring(var.tongtianta.historylayer), "", "", lfBI)
+	end]]
+
+	-- 保存旧层主信息
+	local rankName = TongTianTaPublic.getRandName(layer)
+	local thisRank = TongTianTaPublic.InitRank(rankName, rankName, TongTianTaPublic.RankSize, {"master", "name", "sex", "vocation", "icon"})
+	local count = Ranking.getRankItemCount(thisRank)
+	local oldtime = 0
+	local oldmaster = 0
+	for i=1,count do
+		local rankItem = Ranking.getItemFromIndex(thisRank, i-1)
+		if Ranking.getSubInt(rankItem, 0) == 1 then
+			oldtime = Ranking.getPoint(rankItem)
+			oldmaster = Ranking.getId(rankItem)
+			break
+		end
+	end
+
+	--奖励
+	local award = {}
+	if baward == 1 and sconf.award ~= nil then
+		for i,item in ipairs(sconf.award) do
+			if (item.probability == nil or item.probability >= math.random(TongTianTaConf.dropRatio)) and
+			(item.vocation == nil or item.vocation == 0 or item.vocation == LActor.getIntProperty(sysarg, PROP_VOCATION) ) then
+				local bbind = 1
+				if item.bind == 0 then bbind = 0 end
+
+				-- 背包是否为空
+				if Item.getAddItemNeedGridCount(sysarg, item.itemid, item.count) > Item.getBagEmptyGridCount(sysarg) then
+					LActor.sendTipmsg(sysarg, "背包空间不足，奖励将以邮件形式发送", ttMessage) 
+					--System.sendGmMailOffLine(LActor.getName(sysarg), "过关斩将奖励", 1, item.itemid, item.count, 1)
+					System.sendGmMailOffLine(LActor.getActorId(sysarg), "过关斩将奖励" , 1, item.itemid, item.count, 1)
+				else
+					LActor.addItem(sysarg, item.itemid, 0,0,item.count,bbind, "tongtiantarewardsitem", 1)
+				end
+
+				--LActor.addTongTiantaItem(sysarg, item.itemid, item.count, item.strong, bbind)
+				award[#award+1] = {item.itemid, item.count}
+				if item.broadcast then
+					local boss = TongTianTaConf.scenes[layer].boss or ""
+					local str = string.format(Lang.ScriptTips.ttt008, LActor.getName(sysarg), layer, boss, Item.getColorName(item.itemid))
+					--System.broadcastTipmsg(str, ttGmTip)
+					System.broadcastTipmsg(str, ttChatWindow)
+				end
+			end
+		end
+	end
+
+	local aid = LActor.getActorId(sysarg)
+
+	--更新排行榜
+	local rankItem = Ranking.getItemPtrFromId(thisRank, aid)
+	if rankItem == nil then
+		rankItem = Ranking.addItem(thisRank, aid, timeleft)
+		Ranking.setSub(rankItem, 0, TongTianTaPublic.NotMaster)
+		Ranking.setSub(rankItem, 1, LActor.getName(sysarg))
+		Ranking.setSubInt(rankItem, 2, LActor.getIntProperty(sysarg, PROP_SEX))
+		Ranking.setSubInt(rankItem, 3, LActor.getIntProperty(sysarg, PROP_VOCATION))
+		Ranking.setSubInt(rankItem, 4, LActor.getIntProperty(sysarg, PROP_ICON))
+	else
+		if Ranking.getPoint(rankItem) < timeleft then
+			rankItem = Ranking.setItem(thisRank, aid, timeleft)
+			TongTianTaPublic.updateLayerTime(sysarg, layer, timeleft)
+		end
+	end
+	Ranking.save(thisRank, rankName)
+
+	local var_d = LActor.getDyanmicVar(sysarg)
+	if var_d == nil or var_d.tongtianta == nil then return end
+	local bmaster = false
+	if var_d.tongtianta.layer < layer and oldtime < timeleft then
+		bmaster = TongTianTaPublic.setLayerMaster(layer, true)
+	end
+
+	-- 通关面板
+	if bmaster then
+		bmaster = 1
+	else
+		if var_d.tongtianta.layer >= layer then
+			bmaster = 2
+		else
+			bmaster = 0
+		end
+	end
+	if oldtime == 0 then oldtime = sconf.gametime end
+	TongTianTaPublic.sendPassPanel(sysarg, baward, sconf.gametime - oldtime, sconf.gametime - timeleft, layer, bmaster, var_d.tongtianta.layer, award)
+	
+end
+
+--卸任层主之位
+TongTianTaPublic.unsetMaster = function(aid, layer)
+	print(string.format("unsetMaster %d %d", aid, layer))
+	if layer <= 0 then return end
+
+	local rankName = TongTianTaPublic.getRandName(layer)
+	local thisRank = TongTianTaPublic.InitRank(rankName, rankName, TongTianTaPublic.RankSize, {"master", "name", "sex", "vocation", "icon"})
+	local rankItem = Ranking.getItemPtrFromId(thisRank, aid)
+	if rankItem == nil then return end
+	Ranking.setSub(rankItem, 0, TongTianTaPublic.NotMaster)
+	Ranking.save(thisRank, rankName)
+
+	local actor = LActor.getActorById(aid)
+	if actor ~= nil then
+		local var_d = LActor.getDyanmicVar(actor)
+		if var_d ~= nil and var_d.tongtianta ~= nil and var_d.tongtianta.layer ~= nil and var_d.tongtianta.layer == layer then
+			var_d.tongtianta.layer = 0
+			var_d.tongtianta.timeleft = 0
+		end
+	end
+
+	local sysVar = System.getStaticVar()
+	if sysVar ~= nil and sysVar.tongtianta ~= nil and sysVar.tongtianta[layer] ~= nil and 
+		sysVar.tongtianta[layer].aid ~= nil and sysVar.tongtianta[layer].aid == aid then
+		sysVar.tongtianta[layer].aid = 0
+		sysVar.tongtianta[layer].name = ""
+		sysVar.tongtianta[layer].sex = 0
+		sysVar.tongtianta[layer].vocation = 0
+		sysVar.tongtianta[layer].icon = 0
+		sysVar.tongtianta[layer].timeleft = 0
+
+		--设置新层主
+		TongTianTaPublic.setLayerMaster(layer, false)
+	end
+end
+
+--根据排行榜，设置某一层的层主
+TongTianTaPublic.setLayerMaster = function(layer, broadcast)
+	print(string.format("setLayerMaster %d", layer))
+	local rankName = TongTianTaPublic.getRandName(layer)
+	local thisRank = TongTianTaPublic.InitRank(rankName, rankName, TongTianTaPublic.RankSize, {"master", "name", "sex", "vocation", "icon"})
+	local count = Ranking.getRankItemCount(thisRank)
+	local newmaster = 0
+	local name = ""
+	local sex = 0
+	local vocation = 0
+	local icon = 0
+	local timeleft = 0
+	local oldlayer = 0
+	local bret = false
+	for i=1,count do
+		local rankItem = Ranking.getItemFromIndex(thisRank, i-1)
+		local aid = Ranking.getId(rankItem)
+		oldlayer = TongTianTaPublic.getActorMasterLayer(aid)
+		if oldlayer < layer then
+			Ranking.setSub(rankItem, 0, TongTianTaPublic.IsMaster)
+			newmaster = aid
+			name = Ranking.getSub(rankItem, 1)
+			sex = Ranking.getSubInt(rankItem, 2)
+			vocation = Ranking.getSubInt(rankItem, 3)
+			icon = Ranking.getSubInt(rankItem, 4)
+			timeleft = Ranking.getPoint(rankItem)
+			break
+		end
+	end
+	Ranking.save(thisRank, rankName)
+
+	if newmaster ~= 0 then
+		local sysVar = System.getStaticVar()
+		if sysVar ~= nil then
+			if sysVar.tongtianta == nil then
+				sysVar.tongtianta = {}
+			end
+			if sysVar.tongtianta[layer] == nil then
+				sysVar.tongtianta[layer] = {}
+			end
+			print(string.format("%s(%d) become master(%d:%d)", name, newmaster, layer, timeleft))
+			sysVar.tongtianta[layer].oldaid = sysVar.tongtianta[layer].aid
+			sysVar.tongtianta[layer].aid = newmaster
+			sysVar.tongtianta[layer].name = name
+			sysVar.tongtianta[layer].sex = sex
+			sysVar.tongtianta[layer].vocation = vocation
+			sysVar.tongtianta[layer].icon = icon
+			sysVar.tongtianta[layer].timeleft = timeleft
+
+			if sysVar.tongtianta[layer].oldaid ~= nil and sysVar.tongtianta[layer].oldaid ~= 0 then
+				TongTianTaPublic.unsetMaster(sysVar.tongtianta[layer].oldaid, layer)
+			end
+
+			--通知老层主
+			local oldmaster = LActor.getActorById(sysVar.tongtianta[layer].oldaid or 0)
+			if oldmaster ~= nil then
+				local npack = DataPack.allocPacket(oldmaster, 48, 11)
+				if npack ~= nil then
+					DataPack.writeInt(npack, layer)
+					DataPack.writeString(npack, (name or "玩家") )
+					DataPack.flush(npack)
+					sysVar.tongtianta[layer].oldaid = 0
+				end
+			end
+
+			--成为层主公告
+			local  sconf = TongTianTaConf.scenes[layer]
+			if broadcast and sconf ~= nil and sconf.broadcast ~= nil and System.bitOPMask(sconf.broadcast, 1) then
+				local boss = TongTianTaConf.scenes[layer].boss or ""
+				local tips = string.format(Lang.ScriptTips.ttt007, (name or "玩家"), layer, boss, sconf.gametime-timeleft)
+				--System.broadcastTipmsg( tips, ttGmTip )
+			end
+
+			bret = true
+		end
+
+		local actor = LActor.getActorById(newmaster)
+		if actor ~= nil then
+			local var_d = LActor.getDyanmicVar(actor)
+			if var_d ~= nil then
+				if var_d.tongtianta == nil then
+					var_d.tongtianta = {}
+				end
+				var_d.tongtianta.layer = layer
+				var_d.tongtianta.timeleft = timeleft
+			end
+		end
+
+		if oldlayer ~= 0 then
+			TongTianTaPublic.unsetMaster(newmaster, oldlayer)
+		end
+	end
+	return bret
+end
+
+TongTianTaPublic.updateLayerTime = function(sysarg, layer, timeleft)
+	local var_d = LActor.getDyanmicVar(sysarg)
+	if var_d ~= nil and var_d.tongtianta ~= nil and var_d.tongtianta.layer ~= nil and 
+		var_d.tongtianta.layer == layer then
+		var_d.tongtianta.timeleft = timeleft
+	end
+
+	local sysVar = System.getStaticVar()
+	if sysVar == nil or sysVar.tongtianta == nil or sysVar.tongtianta[layer] == nil then
+		return
+	end
+	if sysVar.tongtianta[layer].aid ~= nil and sysVar.tongtianta[layer].aid == LActor.getActorId(sysarg) then
+		sysVar.tongtianta[layer].timeleft = timeleft
+	end
+end
+
+--排行榜名称
+TongTianTaPublic.getRandName = function(layer)
+	return string.format("tongtiantarank%d.txt", layer)
+end
+
+--获取玩家是哪一层的层主
+TongTianTaPublic.getActorMasterLayer = function(aid)
+	local actor = LActor.getActorById(aid)
+	if actor ~= nil then
+		local var_d = LActor.getDyanmicVar(actor)
+		return var_d.tongtianta.layer
+	end
+
+	local sysVar = System.getStaticVar()
+	if sysVar == nil or sysVar.tongtianta == nil then return 0 end
+	for i=1,50 do
+		if sysVar.tongtianta[i] == nil then
+			return 0
+		end
+		if sysVar.tongtianta[i].aid == aid then
+			return i
+		end
+	end
+	return 0
+end
+
+--获取层主信息
+TongTianTaPublic.getMasterInfo = function(layer)
+	local sysVar = System.getStaticVar()
+	if sysVar == nil or sysVar.tongtianta == nil or sysVar.tongtianta[layer] == nil then return nil end
+	if sysVar.tongtianta[layer].aid == nil or sysVar.tongtianta[layer].aid == 0 then return nil end
+	return sysVar.tongtianta[layer]
+end
+
+--发送通关面板
+TongTianTaPublic.sendPassPanel = function(sysarg, awardMark, masterTime, actorTime, layer, masterMark, oldlayer, award)
+ --print(string.format("==============================TongTianTaPublic.sendPassPanel %d", oldlayer))
+	local npack = DataPack.allocPacket(sysarg, 48, 9)
+	if npack ~= nil then
+		DataPack.writeByte(npack, awardMark)
+		DataPack.writeInt(npack, masterTime)
+		DataPack.writeInt(npack, actorTime)
+		DataPack.writeInt(npack, layer)
+		DataPack.writeByte(npack, masterMark)
+		DataPack.writeInt(npack, oldlayer)
+		DataPack.writeInt(npack, #award)
+		for i=1,#award do
+			DataPack.writeInt(npack, award[i][1])
+			DataPack.writeInt(npack, award[i][2])
+			--print(string.format("award item(%d) count(%d)", award[i][1], award[i][2]))
+		end
+		DataPack.flush(npack)
+	end
+end
+
+-- 初始化排行榜
+TongTianTaPublic.InitRank = function(rankName, rankFile, maxNum, coloumns)
+	local rank = Ranking.getRanking(rankName)
+	if rank == nil then
+		rank = Ranking.add(rankName, maxNum, 0)
+		if rank == nil then
+			print("can not add rank:"..rankName..","..rankFile)
+			return 
+		end
+		if Ranking.load(rank, rankFile) == false then
+			-- 创建排行榜
+			for i=1, #coloumns do
+				Ranking.addColumn( rank, coloumns[i] )
+			end
+		end
+		Ranking.addRef(rank)
+	end
+
+	local col = Ranking.getColumnCount(rank)
+	for i=col+1,#coloumns do
+		Ranking.addColumn(rank, coloumns[i])
+	end
+
+	return rank
+end
+
+--数据修复
+TongTianTaPublic.fix = function(diffTime)
+	print(string.format("tongtianta fix %d", diffTime))
+	--修复排行榜
+	for i=1,#TongTianTaConf.scenes do
+		local tmp = {}
+		local rankName = TongTianTaPublic.getRandName(i)
+		local thisRank = TongTianTaPublic.InitRank(rankName, rankName, TongTianTaPublic.RankSize, {"master", "name", "sex", "vocation", "icon"})
+		if thisRank ~= nil then
+			local count = Ranking.getRankItemCount(thisRank)
+			for i=1,count do
+				tmp[i] = {}
+				local rankItem = Ranking.getItemFromIndex(thisRank, i-1)
+				tmp[i].aid = Ranking.getId(rankItem)
+				tmp[i].timeleft = Ranking.getPoint(rankItem)+diffTime
+				tmp[i].master = Ranking.getSub(rankItem, 0)
+				tmp[i].name = Ranking.getSub(rankItem, 1)
+				tmp[i].sex = Ranking.getSubInt(rankItem, 2)
+				tmp[i].vocation = Ranking.getSubInt(rankItem, 3)
+				tmp[i].icon = Ranking.getSubInt(rankItem, 4)
+			end
+			Ranking.clearRanking(thisRank)
+			Ranking.save(thisRank, rankName)
+			for i=1,count do
+				local rankItem = Ranking.addItem(thisRank, tmp[i].aid, tmp[i].timeleft)
+				Ranking.setSub(rankItem, 0, tmp[i].master)
+				Ranking.setSub(rankItem, 1, tmp[i].name)
+				Ranking.setSubInt(rankItem, 2, tmp[i].sex)
+				Ranking.setSubInt(rankItem, 3, tmp[i].vocation)
+				Ranking.setSubInt(rankItem, 4, tmp[i].icon)
+			end
+			Ranking.save(thisRank, rankName)
+		end
+	end
+
+	--修复静态数据
+	local sysVar = System.getStaticVar()
+	if sysVar ~= nil and sysVar.tongtianta ~= nil then
+		for i=1,#TongTianTaConf.scenes do
+			if sysVar.tongtianta[i] ~= nil and sysVar.tongtianta[i].timeleft ~= nil and sysVar.tongtianta[i].timeleft ~= 0 then
+				--print(string.format("%d %d %d", i, sysVar.tongtianta[i].timeleft, sysVar.tongtianta[i].timeleft+diffTime))
+				sysVar.tongtianta[i].timeleft = sysVar.tongtianta[i].timeleft + diffTime
+			end
+		end
+	end
+
+	--修复玩家数据
+	local actors = LuaHelp.getAllActorList()
+	if actors ~= nil then
+		for i=1,#actors do
+			local actor = actors[i]
+			local var_d = LActor.getDyanmicVar(actor)
+			if var_d ~= nil and var_d.tongtianta ~= nil and var_d.tongtianta.timeleft ~= nil then
+				var_d.tongtianta.timeleft = var_d.tongtianta.timeleft + diffTime
+			end
+		end
+	end
+end

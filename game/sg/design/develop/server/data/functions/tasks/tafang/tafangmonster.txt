@@ -1,0 +1,68 @@
+﻿-- 塔防中的怪物死亡的处理
+
+--#include "data\language\LangCode.txt" once
+--#include "data\config\task\tafang.txt" once
+
+MonDieDispatcher.TafangTreeDie = function (monster, sysarg, monId)
+	-- 灵树死亡，副本失败
+	--print("MonDieDispatcher.TafangTreeDie")
+	local ptr = LActor.getFubenPrt(monster)
+	local st = Fuben.getDyanmicVar(ptr)
+	if st.idx ~= nil and st.idx >= 15 then
+		local str = string.format(Lang.TaskTalk.tf02, LActor.getName(sysarg), st.idx)
+		-- System.broadcastTipmsg(str, ttHearsay)
+		st.finish = true
+	end
+	LActor.exitFuben(sysarg)
+end
+
+MonDieDispatcher.TafangMonsterDie = function ( monster, sysarg, monId )
+	-- 统计杀怪的数量
+	--print("-----die:  "..monId)
+	LActor.SendAndChangeCaleValue(sysarg, caleOther2, 1, true)
+	local killmonster = LActor.getCaleData(sysarg, caleOther2)
+	local index = math.modf(killmonster/TafangConf.monsterNumPer)
+	if index > TafangConf.maxTime then index = TafangConf.maxTime end
+	if index > 0 then
+		EntrustFunc.SetFubenValue(sysarg, TafangConf.fubenid, index) -- 设置副本委托相关值
+	end	
+	if killmonster >= 739 then
+	        local fbPtr = LActor.getFubenPrt(sysarg)
+		if fbPtr == nil then return end
+		local hfbh = Fuben.getFubenHandle(fbPtr)
+		--st.finish = true
+		--st.maxHearSay = 1
+		LActor.sendTipmsg(sysarg,Lang.TaskTalk.tf04,ttScreenCenter)
+		LActor.sendCountdown(sysarg, 10, 0)
+		Fuben.SetFubenTime(hfbh,10)
+		LActor.SendAndChangeCaleValue(sysarg,caleFubenTime,10,false)
+	end
+end
+
+for i=1, #TafangConf.enemyId do
+	MonDieDispatcher.register(TafangConf.enemyId[i], MonDieDispatcher.TafangMonsterDie)
+end
+
+-- 杀死副本内所有怪物
+MonAllKilledDispatcher.TfKillAllMonster = function (sceneId, scenePtr, flag, monster)
+	-- 是否到了最后一波
+	local ptr = LActor.getFubenPrt(monster)
+	local st = Fuben.getDyanmicVar(ptr)
+
+	if st.idx >= TafangConf.maxTime and st.maxHearSay == nil then
+		local players = LuaHelp.getSceneActorList( monster )
+     		if players == nil or #players < 1 then return end
+
+		local str = string.format(Lang.TaskTalk.tf02, LActor.getName(players[1]), st.idx)
+		-- System.broadcastTipmsg(str, ttHearsay)
+		st.finish = true
+		st.maxHearSay = 1
+		--LActor.exitFuben(sysarg)
+	end
+	--print("TfKillAllMonster idx:"..st.idx)
+
+	EntrustFunc.SetFubenValue(actor, TafangConf.fubenid, st.idx) -- 设置副本委托相关值
+end
+
+MonAllKilledDispatcher.register( TafangConf.sceneid, MonAllKilledDispatcher.TfKillAllMonster )
+MonDieDispatcher.register(TafangConf.treeid, MonDieDispatcher.TafangTreeDie)

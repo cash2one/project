@@ -1,0 +1,60 @@
+--日常活动达标处理，为活动系统服务
+--#include "dailyactivityconf.txt" once
+
+activityFunc.dailyActivitylist = {}
+
+--加达标次数
+ONLINEREWARD.dailyActivityAddNum = function(sysarg, typeid, num)
+	if num == nil or typeid == nil or sysarg == nil then return end
+	print("ONLINEREWARD.dailyActivityAddNum typeid:"..typeid..",num:"..num)
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+
+	for i,v in ipairs(activityFunc.dailyActivitylist) do
+		local oneConf = activityConf[v]
+
+		--如果活动还没开始则不累加天数
+		local state = ONLINEREWARD.GetActivityState(oneConf.activityId)
+
+		if state ~= 0 then
+			--是否重置
+			ONLINEREWARD.CheckResetActivityInfo(sysarg, oneConf.activityId)
+
+			--print("activityFunc.dailyActivityAddNum activeid:"..v)
+			if var.activityList == nil then var.activityList = {} end
+			if var.activityList[v] == nil then var.activityList[v] = {} end
+
+			if var.dailyactivitycount == nil then var.dailyactivitycount = {} end
+
+			if var.dailyactivitycount[typeid] == nil then var.dailyactivitycount[typeid] = 0 end
+
+			var.dailyactivitycount[typeid] = var.dailyactivitycount[typeid] + num
+
+			for p,k in ipairs(dailyActivityConf.typelist) do
+				if oneConf.activities[k]~= nil and oneConf.activities[k].id ~= nil and oneConf.activities[k].typeid == typeid then
+					if var.dailyactivitycount[typeid] >= dailyActivityConf.dailyaction[typeid][2] and 
+						(var.activityList[v].dailyactivityflag == nil or var.activityList[v].dailyactivityflag == 0) then 
+						var.activityList[v].dailyactivityflag = 1 
+						if var.activityList[v].dailyactivitynum == nil then var.activityList[v].dailyactivitynum = 0 end
+						var.activityList[v].dailyactivitynum = var.activityList[v].dailyactivitynum + 1
+					end
+			    end
+			end
+		end
+	end
+end
+
+activityFunc.dailyActivityinit = function()
+	for i,v in ipairs(activityidlist) do
+		local oneConf = activityConf[v]
+		if oneConf ~= nil then 
+			for p,k in ipairs(dailyActivityConf.typelist) do
+				if oneConf.activities[k] ~= nil and oneConf.activities[k].id ~= nil then
+					table.insert(activityFunc.dailyActivitylist, v)
+				end
+			end
+		end
+	end
+end
+
+table.insert(InitFnTable, activityFunc.dailyActivityinit)

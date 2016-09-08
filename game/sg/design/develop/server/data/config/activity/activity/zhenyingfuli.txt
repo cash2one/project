@@ -1,0 +1,57 @@
+--全天：阵营福利
+   {
+       --活动的名字
+       name =Lang.ActivityName.name00007,
+       --活动的描述
+       desc=Lang.ActivityName.desc00007,
+       timeDesc = Lang.ActivityName.timeDesc00001,
+       level =1, --活动的等级
+       icon =1,   --活动的图标
+       --活动的开启时间
+       openTimes=
+       {
+            {
+                 months={}, 
+                 days ={}, 
+                 weeks={0}, 
+                 minutes=  --时和分，使用起始和结束的时间格式,这个一定要填，	全天开放使用00:00-33:59
+                 {
+                    "00:00-23:59",
+                  }
+             },
+        },
+       awards=
+       {
+            {type=0,id=599,count=20,bind=1,strong=0,quality=0}, -- 止血散*20  
+            {type=0,id=600,count=20,bind=1,strong=0,quality=0}, -- 补血散*20  
+            {type=0,id=601,count=20,bind=1,strong=0,quality=0}, -- 赤凝散*20  
+            {type=0,id=605,count=20,bind=1,strong=0,quality=0}, -- 回气散*20  
+            {type=0,id=606,count=20,bind=1,strong=0,quality=0}, -- 益气散*20  
+            {type=0,id=607,count=20,bind=1,strong=0,quality=0}, -- 养气散*20  
+       },
+       npc= 
+       {
+		--1无忌，2逍遥，3日月
+           {
+               sceneId=120,name=Lang.EntityName.n00386, --无忌城 林子傲
+               conds=
+	       {
+		{condType=1,values={1}}
+               },
+	    },
+           {
+               sceneId=122,name=Lang.EntityName.n00402, --逍遥城 莫依水
+               conds=
+	       {
+		{condType=1,values={2}}
+               },
+	    },
+           {
+               sceneId=124,name=Lang.EntityName.n00418, --日月城 明月幽
+               conds=
+	       {
+		{condType=1,values={3}}
+               },
+	    },
+       },
+   }, 

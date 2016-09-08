@@ -1,0 +1,76 @@
+--小活动配置表
+activity6Conf = {
+	activityId = 6,
+	
+	activities =
+	{
+		{
+			-- 活动id,连续登陆
+			--id = 1,
+		},
+		{
+			-- 活动id,充值活动,无
+			--id = 2,
+			--充值奖励额度及奖励id列表  {充值额度,奖励礼包id}
+			--rechargerewards = {{588, 60013}, {1588, 60014}, {3888, 60015}, {8888, 60016}, {18888, 60017}, {38888, 60018},{78888, 60019},{138888, 60020},},
+		},
+		{
+			-- 活动id,消费活动
+			--id = 3,
+		},
+
+		{
+			-- 活动id,每日充值
+			--id = 4,
+		},
+		{
+			-- 活动id,每日消费,无
+			--id = 5,
+		},
+		{
+			-- 活动id,排行榜活动
+			--id = 6,
+		},
+		{
+			-- 活动id,充值活动,重复单礼包
+			--id = 7,
+			--rechargeLimit = 1000, --充值额度
+			--awardId = 64948,     --礼包
+			--ifrepeat = 1,
+		},
+		{
+			-- 活动id,消费活动,重复单礼包
+			--id = 8,
+			--consumeLimit = 198, --消费额度
+			--awardId = 44730,     --礼包
+			--ifrepeat = 1,
+		},
+
+		{
+			-- 活动id,每日充值,多礼包
+			--id = 9,
+		},
+		{
+			-- 活动id,每日消费,多礼包
+			--id = 10,
+		},
+	},
+
+	--BOSS袭礼相关
+	bossConfig =
+	{	
+		--monsterId：怪物ID,sceneId:场景ID,boxCount:掉落数量,boxID：掉落宝箱ID,liveTime:存活时间,x:X坐标,y：Y坐标
+		{monsterId = 193,sceneId = 15, boxCount = 6,boxID = 1464,liveTime = 1,x = 31,y = 13 },
+		{monsterId = 194,sceneId = 16, boxCount = 6,boxID = 1464,liveTime = 1,x = 39,y = 16 },
+		{monsterId = 890,sceneId = 21, boxCount = 6,boxID = 1464,liveTime = 1,x = 54,y = 8 },
+	},
+	--天降宝箱
+	giftBoxConf = 
+	{	
+		--sceneId:场景ID,boxCount:掉落数量,boxID：掉落宝箱ID,liveTime:存活时间
+		boxConf = {sceneId = 11, boxCount = 60,boxID = 1465,liveTime = 10},
+		--刷新时间 {小时，分钟，秒}
+		refreshTime = { {9,0,0},{10,0,0},{11,0,0},{12,0,0},{16,0,0},{17,0,0},{18,0,0}, }
+	}
+
+}

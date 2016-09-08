@@ -1,0 +1,130 @@
+-- 七夕boss
+
+QixiTitleFun = {}
+QixiTitleFun.ActivityId = 0
+QixiTitleFun.SubActivityId = 103
+
+-- 下发信息
+QixiTitleFun.SendInfo = function( sysarg )
+	-- 活动是否开启
+	if ONLINEREWARD.GetActivityState(QixiTitleFun.ActivityId) ~= 1 then return end
+
+	local var = LActor.getStaticVar(sysarg)
+	if not var then return end
+	if var.qixi_title_data == nil then
+		var.qixi_title_data = {}
+	end
+	if var.qixi_title_data.target == nil then
+		var.qixi_title_data.target = {}
+	end
+
+	local conf = activityConf[QixiTitleFun.ActivityId].activities[QixiTitleFun.SubActivityId]
+	if not conf or not conf.target then return end
+
+	local npack = DataPack.allocPacket(sysarg, 138, 122)
+	if npack == nil then return end
+	DataPack.writeInt(npack, var.qixi_title_data.award or 0)
+	DataPack.writeInt(npack, #conf.target)
+	for i=1,#conf.target do
+		DataPack.writeByte(npack, i)
+		DataPack.writeInt(npack, var.qixi_title_data.target[i] or 0)
+	end
+	DataPack.flush(npack)
+end
+
+-- 请求领取奖励
+QixiTitleFun.GetReward = function( sysarg )
+	-- 活动是否开启
+	if ONLINEREWARD.GetActivityState(QixiTitleFun.ActivityId) ~= 1 then return end
+
+	local var = LActor.getStaticVar(sysarg)
+	if not var then return end
+	if var.qixi_title_data == nil then
+		var.qixi_title_data = {}
+	end
+	if var.qixi_title_data.target == nil then
+		var.qixi_title_data.target = {}
+	end
+
+	local conf = activityConf[QixiTitleFun.ActivityId].activities[QixiTitleFun.SubActivityId]
+	if not conf or not conf.target then return end
+
+	-- 是否已领取
+	if var.qixi_title_data.award == 1 then 
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.qixititle002, ttMessage)
+		return
+	end
+
+	-- 检查目标
+	local isfinish = true
+	for i=1,#conf.target do
+		local val = var.qixi_title_data.target[i] or 0
+		if conf.target[i].count > val then
+			isfinish = false
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.qixititle001, ttMessage)
+			return
+		end
+	end
+
+	-- 奖励
+	var.qixi_title_data.award = 1
+	LActor.GiveTitle(sysarg, conf.title or 0)
+	-- 下发消息
+	activityFunc.getActivityInfo(sysarg, QixiTitleFun.ActivityId,QixiTitleFun.SubActivityId)
+end
+
+-- 触发目标 way 1增加2赋值 idx 目标索引 val 值
+function QixiTitleTriggerTarget( sysarg, idx, way, val )
+	-- 活动是否开启
+	if ONLINEREWARD.GetActivityState(QixiTitleFun.ActivityId) ~= 1 then return end
+
+	if not sysarg or idx < 1 or way < 1 or way > 3 or val < 0 then return end
+
+	local var = LActor.getStaticVar(sysarg)
+	if not var then return end
+	if var.qixi_title_data == nil then
+		var.qixi_title_data = {}
+	end
+	if var.qixi_title_data.target == nil then
+		var.qixi_title_data.target = {}
+	end
+	local conf = activityConf[QixiTitleFun.ActivityId].activities[QixiTitleFun.SubActivityId]
+	if conf and conf.target[idx] then
+		if var.qixi_title_data.target[idx] == nil then
+			var.qixi_title_data.target[idx] = 0
+		end
+		local oldval = var.qixi_title_data.target[idx]
+		-- 达到最大值
+		if oldval >= conf.target[idx].count then return end
+		local newval = oldval
+		if way == 1 then
+			newval = newval + val
+		elseif way == 2 then
+			if val > oldval then
+				newval = val
+			end
+		end
+		-- 达到最大值
+		if newval > conf.target[idx].count then
+			newval = conf.target[idx].count
+		end
+		-- 
+		var.qixi_title_data.target[idx] = newval
+		-- 下发消息
+		activityFunc.getActivityInfo(sysarg, QixiTitleFun.ActivityId,QixiTitleFun.SubActivityId)
+	end
+end
+
+-- 通过QixiTitleFun.SubActivityId找QixiTitleFun.ActivityId
+QixiTitleFun.Init = function()
+	for i,v in pairs(activityConf) do
+		for j,w in pairs(v.activities) do
+			if w and w.id == QixiTitleFun.SubActivityId then
+				QixiTitleFun.ActivityId = tonumber(v.activityId)
+				return
+			end
+		end
+	end
+end
+
+table.insert(InitFnTable, QixiTitleFun.Init)

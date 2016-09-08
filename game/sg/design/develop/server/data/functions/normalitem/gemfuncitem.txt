@@ -1,0 +1,56 @@
+--宝物功能道具，使用后为玩家添加一个宝物
+
+local function sendGetGemTip(sysarg, gemId, gemGrade)
+	if (gemGrade < 4) then	return end
+	
+	local campName 	= Camp.getCampName(LActor.getCamp(sysarg))
+	local actorName = LActor.getName(sysarg)
+	local gemName		= GemConfig[gemId+1].gemGradeConfig[gemGrade].name
+	local str = string.format(Lang.Gem.t00026, campName, actorName, gemGrade, gemName)
+	System.broadcastTipmsg(str, ttScreenCenter)
+end
+
+--[[
+--宝物道具物品使用处理函数
+--sysarg:实体的指针
+--itemidx: 物品的ID
+--itemPtr: 物品的指针
+--ItemTable: 配置的参数列表 { item_id=1972, gemId=1, gemGrade=1,}
+--]]
+function GemFuncItemUseHandler(sysarg, itemIdx, itemPtr, conf)
+	if (conf == nil) then return end
+	local gemId 		= conf.gemId
+	local gemGrade 	= conf.gemGrade
+	if (gemId < 0) then 
+		print(string.format("GemFuncItemUseHandler error, invalid gemId", gemId))
+		return 
+	end
+	if (gemGrade < 1) then
+		print(string.format("GemFuncItemUseHandler error, invalid gemGrade", gemGrade))
+		return
+	end
+		
+	if (LActor.getAvailGemSlot(sysarg) < 0) then
+		LActor.sendTipmsg(sysarg, Lang.Gem.t00012, ttTipmsgWindow)
+		print("no available gem slot")
+		return
+	end
+	
+	if (LActor.removeItemByPtr(sysarg, itemPtr, 1, true, "vip charge", 71) ~= 1) then
+		return
+	end
+	
+	LActor.addGemItem(sysarg, gemId, gemGrade)
+	sendGetGemTip(sysarg, gemId, gemGrade)
+end
+
+
+-- @brief: 注册宝物道具物品使用Handler
+function GemFuncItemInit(sysarg)
+	for i = 1, table.getn(GemFuncItem) do
+		local conf = GemFuncItem[i]
+		GlobalItemFn[conf.item_id] = { func = GemFuncItemUseHandler, params = conf, }
+	end
+end
+
+table.insert(InitFnTable, GemFuncItemInit)

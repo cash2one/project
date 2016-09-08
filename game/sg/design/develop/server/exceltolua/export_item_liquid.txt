@@ -1,0 +1,215 @@
+--导出药水配置表
+
+
+--格式模板
+--[[
+{
+	id = 18400,
+	name = Lang.Item.n18400,
+	desc = Lang.Item.i18400,
+	type = 84,
+    sellType = 84,	
+	icon = 384,
+	shape = {0,0,0,0,0,0,0,0},
+	color = 1,
+	dura = 180000,
+	dup = 99,
+	colGroup = 7,
+	dealType = 0,
+	dealPrice = 0,
+	time = 0,
+	suitId = 0,
+	staitcAttrs = { 
+    {type=11, value =5000},   	
+	},
+	strongAttrs = {  
+	},
+	flags = { 
+		recordLog = true, 
+	},
+	conds = { 
+		{ cond = 1, value = 20, }, 
+	},
+},
+--]]
+
+local strLangTemplate = "n%d=\"%s\",i%d=\"%s\","
+
+local strTemplete = [[
+{
+	id = %d,
+	name = Lang.Item.n%d,
+	desc = Lang.Item.i%d,
+	type = %d,
+    sellType = %d,
+	icon = %d,
+	shape = %s,
+	color = %d,
+	dura = %d,
+	dup = %d,
+	colGroup = %d,
+	dealType = %d,
+	dealPrice = %d,
+	time = %d,
+	suitId = %d,
+	staitcAttrs = {%s},
+	strongAttrs = {},
+	flags = {%s},
+	conds = {%s},
+	event = %s,
+},
+
+]]
+
+function ReadItemLiquid()
+	local objexcel = CExcelReader:new()
+	if not objexcel then
+		print("objexcel is null")
+		return
+	end
+
+	objexcel:Init_App()
+	objexcel:OpenRead()
+
+	local obj = objexcel:LoadSheetByIndex(5) --道具总表.xlsx 第五个sheet
+	if not obj then
+		print("LoadSheetByIndex失败!")
+		objexcel:Close()
+		objexcel:Quit_App()
+		return
+	end
+
+	local nCount = objexcel:GetCurrentSheetColCount()
+	local mCount = objexcel:GetCurrentSheetRowCount()
+
+
+	print("nCount", nCount)
+	print("mCount", mCount)
+
+	local strAllLang = "\n------------------------------------liquid------------------------\n"
+	local strAllStdItem = "\n------------------------------------liquid------------------------\n"
+	
+	for i = 2, mCount do
+		local concent = {} --第一行构造成一个table
+
+		local strValue = objexcel:ReadCellAsString(i, 1) --物品ID
+		local itemfile = string.format(".\\data\\config\\item\\itemclass\\%d.txt", tonumber(strValue))
+		print(itemfile)	
+
+		concent.id = tonumber(strValue)
+		
+		strValue = objexcel:ReadCellAsString(i, 2) --道具名称
+		concent.name = tostring(strValue) or ""
+
+		strValue = objexcel:ReadCellAsString(i, 3) --描述
+		concent.desc = tostring(strValue) or ""
+			
+		strValue = objexcel:ReadCellAsString(i, 4) --物品类型
+		concent.type = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 5) --寄卖系统的物品类型
+		concent.sellType = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 6) --物品图标图片编号
+		concent.icon = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 7) --外观
+		concent.shape = "{0,0,0,0,0,0,0,0}"
+
+		strValue = objexcel:ReadCellAsString(i, 8) --物品颜色
+		concent.color = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 9)  --耐久度(冷却时间）
+		concent.dura = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 10) --叠加数量
+		concent.dup = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 11) --冷却组
+		concent.colGroup = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 12) --售出的货币类型
+		concent.dealType = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 13) --售出的价格
+		concent.dealPrice = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 14) --使用时限
+		concent.time = tonumber(strValue) or 0
+		
+		strValue = objexcel:ReadCellAsString(i, 15) --套装的ID
+		concent.suitId = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 16) --静态属性
+		if strValue and strValue ~= "" then
+			concent.staitcAttrs = tostring(strValue) or ""
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 18) --使用标记
+		if strValue and strValue ~= "" then
+			concent.flags = tostring(strValue) or ""
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 19) --使用条件
+		if strValue and strValue ~= "" then
+			concent.conds = tostring(strValue) or ""
+		end
+		
+		strValue = objexcel:ReadCellAsString(i, 20) --tips跳转事件
+		concent.event = tostring(strValue) or "\"\""
+
+		if not concent.event or concent.event == "" then
+			concent.event = "\"\""
+		end
+
+		local str = string.format(strTemplete, 
+										concent.id,
+										concent.id,
+										concent.id,
+										concent.type,
+										concent.sellType,
+										concent.icon,
+										concent.shape,
+										concent.color,
+										concent.dura,
+										concent.dup,
+										concent.colGroup,
+										concent.dealType,
+										concent.dealPrice,
+										concent.time,
+										concent.suitId,
+										concent.staitcAttrs,
+										concent.flags,
+										concent.conds,
+										concent.event)
+
+		--写文件
+		--print(str)
+		objexcel:WriteFile(itemfile, str)
+
+
+
+		--语言包
+		local strLang = string.format(strLangTemplate, concent.id, concent.name, concent.id, concent.desc)
+		strAllLang = strAllLang..strLang.."\n"
+		if mCount == i then
+			objexcel:WriteFile(".\\data\\language\\zh-cn\\item.txt", strAllLang, "a+")
+		end
+
+		--生成include文件名
+		local strStdItem = string.format("--#include \"itemclass\\%d.txt\"", concent.id)
+		strAllStdItem = strAllStdItem..strStdItem.."\n"
+		if mCount == i then
+			objexcel:WriteFile(".\\data\\config\\item\\stditems.txt", strAllStdItem, "a+")
+		end
+	end
+
+
+	objexcel:Close()
+	objexcel:Quit_App()
+	objexcel:delete()
+end
+----------------------------------------------------------------------------------------
+
+
+

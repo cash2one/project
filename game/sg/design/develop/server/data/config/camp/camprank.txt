@@ -1,0 +1,55 @@
+﻿-- 阵营排行榜相关的描述文字
+--#include "..\..\language\LangCode.txt"
+CampRank = 
+{
+	deductContr = 5,										-- 每日扣除的阵营贡献值比例
+	MaxdecuctContr = 1800,								-- 每日扣除的阵营贡献值上限
+	campStrengthOfTop1 = 1000,					-- 排名第一阵营的实力值
+	rankname = Lang.Misc.m000212,				-- 当前阵营贡献值排行榜名称
+	wordrankname = Lang.Misc.m000213,		-- 世界阵营贡献值排行榜名称
+	
+  -- 性别描述： 男 女
+	sex_desc = { Lang.TaskTalk.n00010, Lang.TaskTalk.n00009 },
+	
+	-- 职业描述
+	occu_desc = 
+	{
+		Lang.Misc.m000203,								-- 这个是占位用的，无意义。
+		Lang.Misc.m000203,
+		Lang.Misc.m000204,
+		Lang.Misc.m000205,
+		Lang.Misc.m000206,
+		Lang.Misc.m000207,
+		Lang.Misc.m000208,
+		Lang.Misc.m000209,
+		Lang.Misc.m000210,
+	},
+	
+	-- 阵营描述
+	camp_desc = {
+		Lang.Misc.m000200,								-- 这个是占位用的，无意义。
+		Lang.Misc.m000200,								-- 无忌
+		Lang.Misc.m000201,								-- 逍遥
+		Lang.Misc.m000202,								-- 日月
+	},
+	
+	-- 本阵营贡献值排行榜列头描述
+	camp_column_desc = 
+	{
+		Lang.Misc.m000214,
+		Lang.Misc.m000215,
+		Lang.Misc.m000216,
+		Lang.Misc.m000217,
+		Lang.Misc.m000218,
+	},
+	
+	-- 世界阵营贡献值排行榜列头描述
+	world_camp_column_desc = 
+	{
+		Lang.Misc.m000214,								-- "排名"
+		Lang.Misc.m000215,								-- "贡献值"
+		Lang.Misc.m000216,								-- "性别"
+		Lang.Misc.m000219,								-- "阵营"
+		Lang.Misc.m000218,								-- "角色名"		
+	},	
+}

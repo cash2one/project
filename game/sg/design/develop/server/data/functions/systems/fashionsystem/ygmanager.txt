@@ -1,0 +1,182 @@
+--#include "data\config\fashion\yiguiconf.txt" once
+
+YiguiManager = {}
+
+--
+-- 常用辅助函数
+--
+
+YiguiManager.ItemList = {}
+
+YiguiManager.Init = function()
+	-- 角色时装
+	for i, id in ipairs(YiguiConf.fashionIdList) do
+		if YiguiManager.ItemList[id] == nil then
+			YiguiManager.ItemList[id] = {
+				id = id,
+				type = 1,
+			}
+		end
+	end
+
+	-- 武器时装
+	for i, id in ipairs(YiguiConf.wushiIdList) do
+		if YiguiManager.ItemList[id] == nil then
+			YiguiManager.ItemList[id] = {
+				id = id,
+				type = 2,
+			}
+		end
+	end
+end
+
+table.insert(InitFnTable, YiguiManager.Init)
+
+--
+-- 事件触发函数
+--
+
+-- 登录时发送数据
+YiguiManager.onLogin = function( pChar )
+	if not LActor.isActorSystemOpen(pChar, siFashionDeal) then return end
+
+	-- 发送衣柜数据
+	YiguiManager.sendYiguiInfo(pChar)
+end
+
+-- 升级时开启衣柜系统
+YiguiManager.onLevelUp = function( pChar, arg )
+	if arg[1] >= YiguiConf.openLevel then
+		if not LActor.isActorSystemOpen(pChar, siFashionDeal) then
+			LActor.openActorSystem(pChar, siFashionDeal)
+		end
+	end
+end
+
+-- 穿上时装时开启衣柜系统
+YiguiManager.onEquipFashion = function( pChar, arg )
+	local equId, type, pos = unpack(arg)
+
+	if type ~= VesselActor then return end
+
+	if LActor.isActorSystemOpen(pChar, siFashionDeal) then
+		return
+	end
+
+	if pos == itFashionDressPos or pos == itFashionWeaponPos or pos == itFootPos then
+		LActor.openActorSystem(pChar, siFashionDeal)
+	end
+end
+
+
+
+-- 时装幻化（换装）
+YiguiManager.huanhua = function(pChar, ygType, id)
+	if ygType ~= 1 and ygType ~= 2 and ygType ~= 3 then
+		return
+	end
+
+	local curItemId = LActor.getHuanhuaId(pChar, ygType)
+	if curItemId == id then
+		print("==========相同的itemid,不用幻化")
+		return
+	end
+
+	if id ~= 0 and not LActor.isHaveFashion(pChar, id) then
+		local tipsTbl = {Lang.ScriptTips.yg002, Lang.ScriptTips.yg013, Lang.ScriptTips.yg017}
+		LActor.sendTipmsg(pChar, tipsTbl[ygType], ttMessage)
+		return
+	end
+
+	if not LActor.changeFashion(pChar, ygType, id) then
+		return
+	end
+
+	YiguiManager.sendHuanhuaResult(pChar, ygType, 1, id)
+	
+	LActor.refreshFeature(pChar) -- 刷新人物形象
+
+	if id == 0 then
+		local tipsTbl = {Lang.ScriptTips.yg011, Lang.ScriptTips.yg016, Lang.ScriptTips.yg018}
+		LActor.sendTipmsg(pChar, tipsTbl[ygType], ttMessage)
+	else	
+		local tipsTbl = {Lang.ScriptTips.yg003, Lang.ScriptTips.yg014, Lang.ScriptTips.yg019}
+		LActor.sendTipmsg(pChar, tipsTbl[ygType], ttMessage)
+	end
+end
+
+
+
+--
+-- 发送数据相关函数
+--
+
+-- 发送衣柜图鉴数据
+YiguiManager.sendYiguiInfo = function(pChar)
+	local dp = DataPack.allocPacket(pChar, 51, 1)
+	LActor.writeYiguiInfo(pChar, dp)
+	DataPack.flush(dp)
+
+	--print("============发送衣柜图鉴数据=================")
+end
+
+-- 发送衣柜换装结果
+YiguiManager.sendHuanhuaResult = function(pChar, ygType, result, id)
+	local dp = DataPack.allocPacket(pChar, 139, 120)
+	DataPack.writeByte(dp, ygType)
+	DataPack.writeByte(dp, result)
+	DataPack.writeInt(dp, id)
+	DataPack.flush(dp)
+
+	local dp2 = DataPack.allocPacket(pChar, 51, 2)
+	DataPack.writeByte(dp2, ygType)
+	DataPack.writeByte(dp2, result)
+	DataPack.writeInt(dp2, id)
+	DataPack.flush(dp2)
+end
+
+-- 发送升星结果
+YiguiManager.sendUpStarResult = function(pChar, ygType, result, star)
+	local dp = DataPack.allocPacket(pChar, 139, 181)
+	DataPack.writeByte(dp, ygType)
+	DataPack.writeByte(dp, result)
+	DataPack.writeInt(dp, star)
+	DataPack.flush(dp)
+end
+
+
+--计算时装收集加成的属性
+YiguiManager.RecalcFashionStarAttribute = function(pChar , nStar)
+	local nStar = tonumber(nStar) or 0
+	--print("nStar:"..tostring(nStar))
+
+	local val1 , val2 , val3 , val4 = 0,0,0,0
+	for needStar = 1 , #(YiguiConf.starCountList) do
+		if nStar < needStar then
+			break
+		end
+
+		local currAttributeUnion = YiguiConf.starAddList[needStar]
+		if currAttributeUnion then
+			if currAttributeUnion[1] and currAttributeUnion[1].value then
+				val1 = val1 + currAttributeUnion[1].value or 0
+			end
+			if currAttributeUnion[2] and currAttributeUnion[2].value then
+				val2 = val2 + currAttributeUnion[2].value or 0
+			end
+			if currAttributeUnion[3] and currAttributeUnion[3].value then
+				val3 = val3 + currAttributeUnion[3].value or 0
+			end
+			if currAttributeUnion[4] and currAttributeUnion[4].value then
+				val4 = val4 + currAttributeUnion[4].value or 0
+			end
+		end
+	end
+	LActor.setYiguiStarAttr(pChar , val1 , val2 , val3 , val4)
+end
+
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, YiguiManager.onLogin)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeLevel, YiguiManager.onLevelUp)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeAddEquiment, YiguiManager.onEquipFashion)
+

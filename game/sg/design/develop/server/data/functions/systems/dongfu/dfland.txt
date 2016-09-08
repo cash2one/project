@@ -1,0 +1,66 @@
+
+
+DongfuManager.runLand = function(ownerId, list, curTime)
+	if list == nil then return end
+	for landId = 1, 9 do
+		local lInfo = list[landId]
+		if lInfo ~= nil then
+			if lInfo.plantFlag == 1 then
+				if lInfo.endTime <= curTime then
+					if lInfo.isGrown == nil then
+						lInfo.isGrown = 1
+						-- 成熟
+						DongfuManager.onGrown(ownerId, landId, lInfo, lInfo.endTime)				
+					end
+				else
+					-- 长草、生虫检测
+					DongfuManager.detectSick(ownerId, landId, lInfo, curTime)
+				end
+			end
+		end
+	end
+end
+
+--#include "dfplant.txt" once
+--#include "dfharvest.txt" once
+
+DongfuManager.remove = function(pChar, landId)
+	local atHome, ownerId = DongfuManager.isAtHome(pChar)
+	if not atHome then return end
+
+	local dfData = DongfuManager.getDongfuData(ownerId)
+	local info = dfData.info
+	local list = info.list
+	if list == nil or list[landId] == nil then return end
+	local lInfo = list[landId]
+	if lInfo.plantFlag == 0 then return end
+
+	list[landId] = nil
+	DongfuManager.onChanged(ownerId)
+
+	local removeNoti = function(pChar)
+		local dp = DataPack.allocPacket(pChar, 157, 14)
+		DataPack.writeByte(dp, landId)
+		DataPack.flush(dp)
+	end
+	DongfuManager.broadcast(dfData.playerSet, removeNoti)
+
+	DongfuManager.resetLandFlag(dfData)
+end
+
+DongfuManager.resetLandFlag = function(dfData)
+	local info = dfData.info
+	local hasXianlu = (info.usedXianluValue or 0) < DongfuConf.maxXianluValue[info.level or 1]
+	local list = info.list
+	local canPlant, canHarvest = false, false
+	for landId = 1, 9 do
+		local plant = list[landId]
+		if plant == nil and hasXianlu then
+			canPlant = true
+		elseif plant ~= nil and plant.isGrown == 1 then
+			canHarvest = true
+		end
+	end
+	DongfuManager.setStateFlag(dfData, 4, canPlant)
+	DongfuManager.setStateFlag(dfData, 5, canHarvest)
+end

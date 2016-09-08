@@ -1,0 +1,185 @@
+SpecialFubenMonsterConfig = {
+	[19] = { -- 副本19 (诛莽复汉)
+		sceneId = 99, -- 场景id
+		beganJuQingKey = "juqing-ac001", -- 开场剧情
+		endedJuQingKey = "juqing-ac002", -- 结束剧情
+		position = { 56, 59 }, -- 进入的坐标
+		monsterList = { -- 刷怪配置
+			--第一阶段：颍川外
+			[1] = { -- 第一波怪物
+				{ -- 怪物
+					monsterId = 501,
+					monsterNum = 10,
+					position = { 43,53,50,56 }, -- x1, x2, y1, y2
+				},
+			},
+			[2] = { -- 第二波怪物
+				{ -- 怪物
+					monsterId = 502,
+					monsterNum = 10,
+					position = { 29,39,44,50 }, -- x1, x2, y1, y2
+				},
+			},
+			[3] = { -- 第三波怪物
+				{ -- 怪物
+					monsterId = 501,
+					monsterNum = 5,
+					position = { 11,22,36,42 }, -- x1, x2, y1, y2
+				},
+				{ -- 怪物
+					monsterId = 502,
+					monsterNum = 5,
+					position = { 11,22,36,42 }, -- x1, x2, y1, y2
+				},
+			},
+			[4] = { -- 第四波怪物
+				{ -- 怪物
+					monsterId = 503,
+					monsterNum = 2,
+					position = { 23,27,16,19 }, -- x1, x2, y1, y2
+				},
+				{ -- 怪物
+					monsterId = 504,
+					monsterNum = 2,
+					position = { 23,27,16,19 }, -- x1, x2, y1, y2
+				},
+			},
+			[5] = { -- 第四波怪物
+				{ -- 怪物
+					monsterId = 505,
+					monsterNum = 1,
+					position = { 54,54,17,17 }, -- x1, x2, y1, y2
+				},
+			},
+		},
+	},
+	[20] = { -- 副本20 (帝魂惊梦)
+		sceneId = 61, -- 场景id
+		beganJuQingKey = "juqing-ac003", -- 开场剧情
+		endedJuQingKey = "juqing-ac004", -- 结束剧情
+		position = { 3, 36 }, -- 进入的坐标
+		monsterList = { -- 刷怪配置
+			--第一阶段：颍川外
+			[1] = { -- 第一波怪物
+				{ -- 怪物
+					monsterId = 506,
+					monsterNum = 10,
+					position = { 8,18,24,30 }, -- x1, x2, y1, y2
+				},
+			},
+			[2] = { -- 第二波怪物
+				{ -- 怪物
+					monsterId = 507,
+					monsterNum = 10,
+					position = { 25,38,45,53 }, -- x1, x2, y1, y2
+				},
+			},
+			[3] = { -- 第三波怪物
+				{ -- 怪物
+					monsterId = 508,
+					monsterNum = 2,
+					position = { 48,55,35,42 }, -- x1, x2, y1, y2
+				},
+				{ -- 怪物
+					monsterId = 509,
+					monsterNum = 2,
+					position = { 48,55,35,42 }, -- x1, x2, y1, y2
+				},
+			},
+			[4] = { -- 第四波怪物
+				{ -- 怪物
+					monsterId = 510,
+					monsterNum = 1,
+					position = { 46,46,13,13 }, -- x1, x2, y1, y2
+					isBoss = true,
+				},
+			},
+		},
+	},
+	[21] = { -- 副本21 (斩奸奠魂)
+		sceneId = 62, -- 场景id
+		beganJuQingKey = "juqing-ac007", -- 开场剧情
+		endedJuQingKey = "juqing-ac008", -- 结束剧情
+		position = { 4, 65 }, -- 进入的坐标
+		blockArea = {{37,49,52,55},{38,65,15,18},},
+		monsterList = { -- 刷怪配置
+			--第一阶段：颍川外
+			[1] = { -- 第一波怪物
+				{ -- 怪物
+					monsterId = 511,
+					monsterNum = 10,
+					position = { 12,22,45,52 }, -- x1, x2, y1, y2
+				},
+			},
+			[2] = { -- 第二波怪物
+				{ -- 怪物
+					monsterId = 512,
+					monsterNum = 10,
+					position = { 30,36,37,41 }, -- x1, x2, y1, y2
+				},
+			},
+			[3] = { -- 第三波怪物
+				{ -- 怪物
+					monsterId = 513,
+					monsterNum = 2,
+					position = { 36,44,21,27 }, -- x1, x2, y1, y2
+				},
+				{ -- 怪物
+					monsterId = 514,
+					monsterNum = 2,
+					position = { 36,44,21,27 }, -- x1, x2, y1, y2
+				},
+			},
+			[4] = { -- 第四波怪物
+				{ -- 怪物
+					monsterId = 515,
+					monsterNum = 1,
+					position = { 19,19,11,11 }, -- x1, x2, y1, y2
+					isBoss = true,
+				},
+			},
+		},
+	},
+	[22] = { -- 副本22 (断情绝梦)
+		sceneId = 63, -- 场景id
+		beganJuQingKey = "juqing-ac005", -- 开场剧情
+		position = { 3, 36 }, -- 进入的坐标
+		monsterList = { -- 刷怪配置
+			--第一阶段：颍川外
+			[1] = { -- 第一波怪物
+				{ -- 怪物
+					monsterId = 516,
+					monsterNum = 10,
+					position = { 8,18,24,30 }, -- x1, x2, y1, y2
+				},
+			},
+			[2] = { -- 第二波怪物
+				{ -- 怪物
+					monsterId = 517,
+					monsterNum = 10,
+					position = { 25,38,45,53 }, -- x1, x2, y1, y2
+				},
+			},
+			[3] = { -- 第三波怪物
+				{ -- 怪物
+					monsterId = 518,
+					monsterNum = 2,
+					position = { 48,55,35,42 }, -- x1, x2, y1, y2
+				},
+				{ -- 怪物
+					monsterId = 519,
+					monsterNum = 2,
+					position = { 48,55,35,42 }, -- x1, x2, y1, y2
+				},
+			},
+			[4] = { -- 第四波怪物
+				{ -- 怪物
+					monsterId = 520,
+					monsterNum = 1,
+					position = { 46,46,13,13 }, -- x1, x2, y1, y2
+					isBoss = true,
+				},
+			},
+		},
+	},
+}

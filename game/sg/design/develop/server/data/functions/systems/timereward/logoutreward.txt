@@ -1,0 +1,136 @@
+﻿--#include "LogoutReward_Const.txt" once
+
+ONLINEREWARD.LogoutRewardImplement = 
+{
+	-- 发送离线经验信息
+	sendClientLogoutRewardListMsg = function(sysarg)
+		if LocalDT.LogoutRewardCfg == nil then return end
+		local var = LActor.getStaticVar( sysarg )       --获得上次剩余的在线奖励记录
+		if var.getlogoutExp == nil then
+			var.getlogoutExp = 0
+		end
+
+
+
+		local conf = LocalDT.LogoutRewardCfg
+		local index = LActor.getLevel(sysarg) -- 根据等级获取经验
+		if index < 1 then index = 1 end
+		if index > #conf.TimeExpReward then index = #conf.TimeExpReward end  --如果等级超过100级则按照100来计算
+		local logout_exp = conf.TimeExpReward[index]
+		local logout_hours = math.floor(var.getlogoutExp/3600) -- 离线时间(小时)
+        local vipLevel = LActor.getVIPLevel( sysarg )
+        if vipLevel < 1 then vipLevel = 1 end
+        local hours = conf.VIPtime[vipLevel]         --判断离线时间是否超过最大累计时间      
+        if logout_hours < hours then 
+        	logout_hours = logout_hours
+        else
+        	logout_hours = hours
+        end
+
+		local total_exp = logout_hours * logout_exp -- 总共可获得的经验	
+		local npack = DataPack.allocPacket(sysarg,138,10)  --申请一个数据包
+		if npack == nil then
+			--print("npack:nil")
+			return
+		end
+		DataPack.writeUInt(npack, logout_hours) --离线小时数
+		DataPack.writeUInt(npack, total_exp) --离线经验
+		DataPack.writeUInt(npack, math.floor(conf.TimeExp1[2])) --1倍经验值
+		DataPack.writeUInt(npack, math.floor(conf.TimeExp2[2])) --2倍经验值
+		DataPack.writeUInt(npack, math.floor(conf.TimeExp3[2])) --3倍经验值
+		DataPack.writeUInt(npack, math.floor(conf.TimeExp4[2])) --4倍经验值
+		--print("========离线信息",math.floor(conf.TimeExp1[2]),math.floor(conf.TimeExp2[2]),math.floor(conf.TimeExp3[2]) )
+		DataPack.flush(npack)   --发送数据包 
+	end,
+ 
+ 	-- 领取离线经验
+	GetLogoutReward = function(sysarg,packet)
+		if LActor.isDeath(sysarg) then --死亡拿不到经验,所以退出
+			return
+		end
+
+		local awardIndex = DataPack.readInt(packet) --是哪种类型
+		if awardIndex < 1 or awardIndex > 4 then
+			return 
+		end
+
+		local moneytype = DataPack.readByte(packet)
+		if moneytype == nil or moneytype ~= mtYuanbao and moneytype ~= mtBindYuanbao then return end
+
+		local var = LActor.getStaticVar( sysarg )       --获得上次剩余的在线奖励记录
+		if var.getlogoutExp == nil then
+			var.getlogoutExp = 0
+		end
+
+		local conf = LocalDT.LogoutRewardCfg
+		
+		local index = LActor.getLevel(sysarg) -- 根据等级获取经验
+		if index < 1 then index = 1 end
+		if index > #conf.TimeExpReward then index = #conf.TimeExpReward end
+		local logout_exp = conf.TimeExpReward[index]
+		local logout_hours = math.floor(var.getlogoutExp/3600) --总共多少小时
+		local vipLevel = LActor.getVIPLevel( sysarg )
+		if vipLevel < 1 then vipLevel = 1 end
+		local hours = conf.VIPtime[vipLevel]
+        if hours < logout_hours then 
+            logout_hours = logout_hours
+        else
+        	logout_hours = hours
+        end
+
+
+		local total_exp = logout_hours * logout_exp -- 总共可获得的经验
+
+		--print("awardindex..........="..awardIndex)
+		--print("nExp2.............="..nExp2)
+		--print("get_hours.....="..get_hours)
+
+		local exp = 0
+		
+		if awardIndex == 1 then
+			exp = math.floor(total_exp * conf.TimeExp1[1]) -- 乘以倍率获取到的经验
+			LActor.addExp(sysarg, exp, 0, 0)
+		elseif awardIndex == 2 then -- 贝币换取
+			local money = logout_hours * LocalDT.LogoutRewardCfg.TimeExp2[2]  -- 乘以倍率获取到的经验
+			if LActor.getMoneyCount(sysarg,mtYuanbao) < money then
+				LActor.sendTipmsg( sysarg,Lang.ScriptTips.gz006, ttMessage)
+				return 
+			end
+			LActor.changeMoney(sysarg, mtYuanbao, -money, 1, true, "offlineexp", "getexpbyxb")
+
+			exp = math.floor(total_exp * conf.TimeExp2[1])
+			LActor.addExp(sysarg, exp, 0, 0)
+
+		elseif awardIndex == 3 then -- 天珠换取
+			local money = logout_hours * LocalDT.LogoutRewardCfg.TimeExp3[2]  -- 乘以倍率获取到的经验
+			if not LActor.CheckMoneyEnough(sysarg, mtYuanbao, money) then
+				return 
+			end
+			LActor.changeMoney(sysarg, mtYuanbao, -money, 1, true, "offlineexp", "getexpbyyb")
+
+			exp = math.floor(total_exp * conf.TimeExp3[1])
+			LActor.addExp(sysarg, exp, 0, 0)
+
+		elseif awardIndex == 4 then -- 天珠换取
+			local money = logout_hours * LocalDT.LogoutRewardCfg.TimeExp4[2]  -- 乘以倍率获取到的经验
+			if not LActor.CheckMoneyEnough(sysarg, mtYuanbao, money) then
+				return 
+			end
+			LActor.changeMoney(sysarg, mtYuanbao, -money, 1, true, "logoutreward")
+
+			exp = math.floor(total_exp * conf.TimeExp4[1])
+			LActor.addExp(sysarg, exp, 0, 0)
+		end
+
+		var.getlogoutExp = var.getlogoutExp - logout_hours*3600
+
+		ONLINEREWARD.LogoutRewardImplement.sendClientLogoutRewardListMsg(sysarg)
+
+		if exp > 0 then
+			LActor.playExpEffect(sysarg, exp) -- 播放获取经验特效
+		end
+
+	end,	
+
+
+}

@@ -1,0 +1,872 @@
+--#include "data\functions\systemvarmanager.txt" once
+
+--#include "data\functions\systems\systemhandlerdispatcherimplement.txt" once
+
+--#include "data\functions\globaldefine.txt" once
+--#include "data\functions\systems\timereward\goldoreconf.txt" once
+
+math.randomseed( System.getCurrMiniTime() )
+
+GoldOreFunc = {}
+GoldOreFunc.checkGoldOre = nil
+GoldOreFunc.DEFAULT_QUALITY = 1
+GoldOreFunc.DEFAULT_ADDITION = 1
+GoldOreFunc.STATE_CLOSE = 0
+GoldOreFunc.STATE_OPEN = 1
+GoldOreFunc.excluted = false
+
+GoldOreFunc.HandlerNetMsg = function (sysarg, systemid, msgid, packet)
+	if msgid == 1 then
+		GoldOreFunc.OpenMine(sysarg)
+	elseif msgid == 2 then
+		GoldOreFunc.RefreshQuality(sysarg)
+	elseif msgid == 3 then
+		GoldOreFunc.CreateMine(sysarg)
+	elseif msgid == 4 then
+		GoldOreFunc.PublishInfomation(sysarg)
+	elseif msgid == 5 then
+		GoldOreFunc.Summon(sysarg)
+	elseif msgid == 6 then
+		GoldOreFunc.Employ(sysarg, DataPack.readInt(packet))
+	elseif msgid == 7 then
+		GoldOreFunc.CloseMine(LActor.getActorId(sysarg))
+	elseif msgid == 9 then
+		GoldOreFunc.GetMineList(sysarg)
+	elseif msgid == 11 then
+		GoldOreFunc.GetOpenMineEarnings(sysarg)
+	elseif msgid == 14 then
+		GoldOreFunc.checkEmploy(sysarg, DataPack.readInt(packet))
+	else
+		print(string.format("Error msgid(%d)", msgid))
+	end
+end
+
+-- 随机矿场品质
+GoldOreFunc.RandQuality = function()
+	local selection = GoldOreFunc.DEFAULT_QUALITY
+	local totalweight = 0.0
+	for quality, weight in pairs(GoldOreConf.qualityPro) do
+		totalweight = totalweight + weight
+		if math.random()*totalweight < weight then
+			selection = quality
+		end
+	end
+	return selection
+end
+
+--根据当前矿场品质随机下一次矿场加成
+GoldOreFunc.RandAddition = function(quality)
+	if GoldOreConf.additionPro[quality] == nil then
+		return GoldOreFunc.DEFAULT_ADDITION
+	end
+	local selection = 1
+	local totalweight = 0.0
+	for quality, weight in pairs(GoldOreConf.additionPro[quality]) do
+		totalweight = totalweight + weight
+		if math.random()*totalweight < weight then
+			selection = quality
+		end
+	end
+	return selection
+end
+
+-- 开矿，并不真正创建矿场，只是刷出矿场品质
+-- 每一次开矿的时候都对矿产进行初始化
+GoldOreFunc.OpenMine = function(sysarg)
+	local aid = LActor.getActorId(sysarg)
+	local name = LActor.getName(sysarg)
+	local var_sys = System.getStaticVar()
+	if var_sys.activityControl == nil then
+		var_sys.activityControl = {}
+	end
+	if var_sys == nil or aid == nil or name == nil then return end
+	if var_sys.activityControl[3] == nil then return end
+	if var_sys.activityControl[3].starttime == nil then return end
+	if var_sys.activityControl[3].endtime == nil then return end
+
+	local nowtime = System.getCurrMiniTime() 
+	if var_sys.activityControl[3].starttime > nowtime or nowtime > var_sys.activityControl[3].endtime then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.jk020, ttMessage)
+		return
+	end
+
+	local goldore = GoldOreFunc.getGoldOre(LActor.getActorId(sysarg))
+	if goldore == nil then
+		local hdlVar = System.createSysVar(aid, name, SystemIdList.goldore)
+		goldore = GoldOreFunc.initGoldOre(aid, name, hdlVar)
+	end
+	if goldore.info.quality == nil then
+		goldore.info.quality = GoldOreFunc.DEFAULT_QUALITY
+	end
+	
+	local pPack = DataPack.allocPacket(sysarg, BaseTypes.SystemId.goldOreSystem, 1)
+	DataPack.writeByte(pPack, goldore.info.quality)
+	DataPack.writeInt(pPack, GoldOreConf.workerAddition)
+	DataPack.writeInt(pPack, #GoldOreConf.refreshCost)
+	for i,v in ipairs(GoldOreConf.refreshCost) do
+		DataPack.writeInt(pPack, v)
+	end
+	DataPack.writeInt(pPack, #GoldOreConf.createMineCost)
+	for i,v in ipairs(GoldOreConf.createMineCost) do
+		DataPack.writeInt(pPack, v)
+	end
+	DataPack.writeInt(pPack, #GoldOreConf.qualityAddition)
+	for i,v in ipairs(GoldOreConf.qualityAddition) do
+		DataPack.writeInt(pPack, v)
+	end
+	DataPack.flush(pPack)
+end
+
+-- 刷新矿场品质
+GoldOreFunc.RefreshQuality = function(sysarg)
+	local goldore = GoldOreFunc.getGoldOre(LActor.getActorId(sysarg))
+	if goldore == nil then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.jk001, ttMessage)
+		return
+	end
+	if goldore.info.quality == nil then
+		goldore.info.quality.quality = GoldOreFunc.DEFAULT_QUALITY
+	end
+	if GoldOreFunc.getCount(sysarg) >= GoldOreConf.createMineTimes then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.jk014, ttMessage)
+		return false
+	end
+	if goldore.info.quality == #GoldOreConf.qualityPro then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.jk002, ttMessage)
+		return
+	end
+	if LActor.getMoneyCount(sysarg, mtYuanbao) < GoldOreConf.refreshCost[goldore.info.quality] then
+		LActor.sendTipmsg( sysarg, Lang.ScriptTips.jk003, ttMessage )
+		return
+	end
+	local winglevel, wingstage = LActor.getWingInfo(sysarg)
+	if wingstage <= goldore.info.quality+1 then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.jk004, ttMessage)
+		return
+	end
+	if LActor.changeMoney( sysarg, mtYuanbao, -GoldOreConf.refreshCost[goldore.info.quality], 1, false, "goldore", "refresh" ) then
+		if math.random(100) <= GoldOreConf.qualityPro[goldore.info.quality+1] then
+			goldore.info.quality = goldore.info.quality + 1
+		end
+
+		local pPack = DataPack.allocPacket(sysarg, BaseTypes.SystemId.goldOreSystem, 1)
+		DataPack.writeByte(pPack, goldore.info.quality)
+		DataPack.writeInt(pPack, GoldOreConf.workerAddition)
+		DataPack.writeInt(pPack, #GoldOreConf.refreshCost)
+		for i,v in ipairs(GoldOreConf.refreshCost) do
+			DataPack.writeInt(pPack, v)
+		end
+		DataPack.writeInt(pPack, #GoldOreConf.createMineCost)
+		for i,v in ipairs(GoldOreConf.createMineCost) do
+			DataPack.writeInt(pPack, v)
+		end
+		DataPack.writeInt(pPack, #GoldOreConf.qualityAddition)
+		for i,v in ipairs(GoldOreConf.qualityAddition) do
+			DataPack.writeInt(pPack, v)
+		end
+		DataPack.flush(pPack)
+	end
+end
+
+--创建矿场
+GoldOreFunc.CreateMine = function(sysarg)
+	if not GoldOreFunc.canOpenMine(sysarg) then return end
+
+	local aid = LActor.getActorId(sysarg)
+	local name = LActor.getName(sysarg)
+
+	local goldore = GoldOreFunc.getGoldOre(aid)
+	if goldore == nil then
+		local hdlVar = System.createSysVar(aid, name, SystemIdList.goldore)
+		goldore = GoldOreFunc.initGoldOre(aid, name, hdlVar)
+	else
+		goldore.minerName = name --如果玩家改过名称的需要设置新的名称
+	end
+	if goldore.info.quality == nil then
+		goldore.info.quality = GoldOreFunc.DEFAULT_QUALITY
+	end
+	local quality = goldore.info.quality
+	if goldore.info.state ~= nil and goldore.info.state == GoldOreFunc.STATE_OPEN then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.jk005, ttMessage)
+		return
+	end
+
+	if LActor.getMoneyCount(sysarg, mtYuanbao) < GoldOreConf.createMineCost[quality] then
+		LActor.sendTipmsg( sysarg, Lang.ScriptTips.jk006, ttMessage )
+		return 
+	end
+	
+	if LActor.changeMoney( sysarg, mtYuanbao, -GoldOreConf.createMineCost[quality], 1, false, "goldore", "create" ) == false then return end
+	
+	goldore.info.workerNum = 0
+	goldore.info.workers = {}
+	goldore.info.state = GoldOreFunc.STATE_OPEN
+
+	GoldOreFunc.addCount(sysarg)
+
+	GoldOreFunc.GetOpenMineEarnings(sysarg)
+	GoldOreFunc.GetMineList(sysarg)
+
+	local camp = LActor.getCampId(sysarg)
+	local camp_name = CampShortName[camp]
+	if camp_name == nil then return end
+	local message = string.format(GoldOreConf.tips.createmine, CampColor[LActor.getCampId(sysarg)], camp_name, (LActor.getName(sysarg) or ""),
+		GoldOreConf.qualityColor[quality], GoldOreConf.qualityName[quality], aid)
+	System.broadcastLevelTipmsg(message, GoldOreConf.workerLevel, ttHearsay)
+end
+
+--发公告
+GoldOreFunc.PublishInfomation = function(sysarg)
+	local aid = LActor.getActorId(sysarg)
+	local goldore = GoldOreFunc.getGoldOre(aid)
+	if goldore == nil or goldore.info.state == GoldOreFunc.STATE_CLOSE then
+		return
+	end
+	if goldore.info.workerNum >= GoldOreConf.workerMax then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.jk007, ttMessage)
+		return
+	end
+	local nowtime = System.getCurrMiniTime()
+	if goldore.info.publishTime ~= nil and (nowtime - goldore.info.publishTime) < GoldOreConf.publishInfomationCD then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.jk008, ttMessage)
+		return
+	end
+	goldore.info.publishTime = nowtime
+	local camp = LActor.getCampId(sysarg)
+	local camp_name = CampShortName[camp]
+	if camp_name == nil then return end
+	local message = string.format(GoldOreConf.tips.publish, CampColor[LActor.getCampId(sysarg)], camp_name, (LActor.getName(sysarg) or ""),
+		GoldOreConf.qualityColor[goldore.info.quality], GoldOreConf.qualityName[goldore.info.quality], aid)
+	System.broadcastLevelTipmsg(message, GoldOreConf.workerLevel, ttHearsay)
+end
+
+--召唤矿工镜像
+GoldOreFunc.Summon = function(sysarg)
+	local aid = LActor.getActorId(sysarg)
+	local goldore = GoldOreFunc.getGoldOre(aid)
+	if goldore == nil or goldore.info.state == GoldOreFunc.STATE_CLOSE then
+		print("gold ore had beed closed")
+		return
+	end
+	if goldore.info.workerNum >= GoldOreConf.workerMax then
+		print("worker number limited")
+		return
+	end
+
+	local cost = GoldOreConf.summonCost[goldore.info.quality]
+	if LActor.getMoneyCount(sysarg, mtYuanbao) < cost then
+		LActor.sendTipmsg( sysarg, Lang.ScriptTips.jk009, ttMessage )
+		return 
+	end
+	if LActor.changeMoney( sysarg, mtYuanbao, -cost, 1, false, "goldore", "summon" ) then
+		GoldOreFunc.AddWork(goldore, aid)
+	end
+end
+
+--是否可以挖矿
+GoldOreFunc.canEmploy = function(sysarg, minerId)
+	if minerId == LActor.getActorId(sysarg) then
+		LActor.sendTipmsg(sysarg, GoldOreConf.tips.helpSelf, ttMessage)
+		return false
+	end
+	
+	local goldore = GoldOreFunc.getGoldOre(minerId)
+	if goldore == nil   then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.jk018, ttDialog)
+		return false
+	end
+	if goldore == nil or goldore.info.state == GoldOreFunc.STATE_CLOSE  then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.jk010, ttDialog)
+		return false
+	end
+	if goldore == nil or goldore.info.workerNum >= GoldOreConf.workerMax then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.jk017, ttDialog)
+		return false
+	end
+	if LActor.getIntProperty(sysarg, PROP_LEVEL) < GoldOreConf.workerLevel then
+		LActor.sendTipmsg(sysarg, GoldOreConf.tips.employLevelLimit, ttMessage)
+		return false
+	end
+	local nowtime = System.getCurrMiniTime()
+	local goldore = GoldOreFunc.getGoldOre(LActor.getActorId(sysarg))
+	if goldore ~= nil and goldore.info.employ ~= nil and (System.getCurrMiniTime()-goldore.info.employ) < GoldOreConf.employCD then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.jk011, ttDialog)
+		return false
+	end
+	return true
+end
+
+--检查是否可以协助挖矿
+GoldOreFunc.checkEmploy = function(sysarg, minerId)
+	local bemploy = GoldOreFunc.canEmploy(sysarg, minerId)
+	if bemploy then
+		bemploy = 1
+	else
+		bemploy = 0
+	end
+	local pPack = DataPack.allocPacket(sysarg, BaseTypes.SystemId.goldOreSystem, 14)
+	DataPack.writeByte(pPack, bemploy)
+	DataPack.flush(pPack)
+end
+
+--协助挖矿
+GoldOreFunc.Employ = function(sysarg, minerId)
+	if GoldOreFunc.canEmploy(sysarg, minerId) == false then return end
+
+	local goldore = GoldOreFunc.getGoldOre(minerId)
+	if goldore == nil or goldore.info.state == GoldOreFunc.STATE_CLOSE then
+		return
+	end
+
+	local aid = LActor.getActorId(sysarg)
+	local name = LActor.getName(sysarg)
+	local tmp = GoldOreFunc.getGoldOre(aid)
+	if tmp == nil then
+		local hdlVar = System.createSysVar(aid, name, SystemIdList.goldore)
+		tmp = GoldOreFunc.initGoldOre(aid, name, hdlVar)
+	end
+	tmp.info.employ = System.getCurrMiniTime()
+
+	GoldOreFunc.AddWork(goldore, minerId, sysarg)
+	GoldOreFunc.PrizeWorker(sysarg, goldore.info.quality)
+end
+
+--添加工人
+GoldOreFunc.AddWork = function(GoldOre, minerId, sysarg)
+	GoldOre.info.workerNum = GoldOre.info.workerNum + 1
+	GoldOre.info.workers[GoldOre.info.workerNum] = {}
+	if sysarg ~= nil then
+		GoldOre.info.workers[GoldOre.info.workerNum].name = LActor.getName(sysarg) or Lang.ScriptTips.jk012
+		GoldOre.info.workers[GoldOre.info.workerNum].aid = LActor.getActorId(sysarg) or 0
+		GoldOre.info.workers[GoldOre.info.workerNum].icon = LActor.getIntProperty(sysarg, PROP_ICON) or 0
+		GoldOre.info.workers[GoldOre.info.workerNum].sex = LActor.getIntProperty(sysarg, PROP_SEX) or 0
+		GoldOreFunc.GetMineList(sysarg)
+	else
+		GoldOre.info.workers[GoldOre.info.workerNum].name = string.format(Lang.ScriptTips.jk013, GoldOre.info.workerNum)
+		GoldOre.info.workers[GoldOre.info.workerNum].aid = 0
+		GoldOre.info.workers[GoldOre.info.workerNum].icon = -1
+		GoldOre.info.workers[GoldOre.info.workerNum].sex = -1
+	end
+	GoldOreFunc.SendMineInfo(GoldOre)
+end
+
+--收矿
+GoldOreFunc.CloseMine = function(minerId)
+	local goldore = GoldOreFunc.getGoldOre(minerId)
+	if goldore == nil or goldore.info.state ~= GoldOreFunc.STATE_OPEN then
+		print("gold ore not exist")
+		return
+	end
+
+	--给矿主发奖励
+	local miner = LActor.getActorById(minerId)
+	if miner ~= nil then
+		GoldOreFunc.PrizeMiner(miner, goldore.info.workerNum, goldore.info.quality)
+	end
+	goldore.info.state = GoldOreFunc.STATE_CLOSE
+	goldore.info.quality = GoldOreFunc.DEFAULT_QUALITY
+	goldore.info.workerNum = 0
+	goldore.info.workers = {}
+
+	GoldOreFunc.GetOpenMineEarnings(miner)
+	GoldOreFunc.GetMineList(miner)
+end
+
+--发送矿场信息
+GoldOreFunc.SendMineInfo = function(GoldOre)
+	if GoldOre.minerId ~= nil then
+		local miner = LActor.getActorById(GoldOre.minerId)
+		if miner ~= nil then
+			GoldOreFunc.GetOpenMineEarnings(miner)
+		end
+	end
+	--[[for i=1,mine.workerNum do
+		local worker = LActor.getActorById((mine.workers[i].aid or 0))
+		if worker ~= nil then
+			GoldOreFunc.GetOpenMineEarnings(worker)
+		end
+	end]]
+end
+
+--是否可开矿
+GoldOreFunc.canOpenMine = function(sysarg)
+	--TODO
+	local goldore = GoldOreFunc.getGoldOre(LActor.getActorId(sysarg))
+	if goldore ~= nil then
+		if goldore.info.state == GoldOreFunc.STATE_OPEN then
+			return false
+		end
+	end
+	if GoldOreFunc.getCount(sysarg) >= GoldOreConf.createMineTimes then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.jk014, ttMessage)
+		return false
+	end
+	--玩家身上装备的翅膀为二阶翅膀及以上时，才可以开启晶矿
+	local winglevel, wingstage = LActor.getWingInfo(sysarg)
+	if wingstage == nil or wingstage < GoldOreConf.wingStageLimit then
+		LActor.sendTipmsg(sysarg, GoldOreConf.tips.wingStageLimit, ttMessage)
+		return false
+	end
+	return true
+end
+
+--获取矿场列表
+GoldOreFunc.GetMineList = function(sysarg)
+	local employCD = 0
+	local goldore = GoldOreFunc.getGoldOre(LActor.getActorId(sysarg))
+	if goldore ~= nil and goldore.info.employ ~= nil then
+		local surplustime = System.getCurrMiniTime() - goldore.info.employ
+		if surplustime < GoldOreConf.employCD then
+			employCD = GoldOreConf.employCD - surplustime
+		end
+	end
+
+	local pPack = DataPack.allocPacket(sysarg, BaseTypes.SystemId.goldOreSystem, 9)
+	DataPack.writeInt(pPack, employCD)
+	local count = 0
+	for k,var in pairs(_G.__GoldOreVar) do
+		if var ~= nil and var.info.state == GoldOreFunc.STATE_OPEN and var.info.workerNum < GoldOreConf.workerMax then
+			count = count + 1
+		end
+	end
+	DataPack.writeInt(pPack, count)
+	for k,tmp in pairs(_G.__GoldOreVar) do
+		if tmp ~= nil and tmp.info.state == GoldOreFunc.STATE_OPEN and tmp.info.workerNum < GoldOreConf.workerMax then
+			DataPack.writeInt(pPack, tmp.minerId)
+			DataPack.writeString(pPack, (tmp.minerName or Lang.ScriptTips.jk015))
+			DataPack.writeByte(pPack, tmp.info.workerNum)
+			DataPack.writeByte(pPack, GoldOreConf.workerMax)
+			DataPack.writeByte(pPack, tmp.info.quality)
+			DataPack.writeInt(pPack, (GoldOreConf.workerEarnings[tmp.info.quality] or 0))
+			--print( string.format("【%s】的金矿(%d) %d/%d quality(%d)", (tmp.minerName or "玩家"),minerId, tmp.info.workerNum, GoldOreConf.workerMax, tmp.info.quality))
+		end
+	end
+	DataPack.flush(pPack)
+end
+
+--获取开矿收益
+GoldOreFunc.GetOpenMineEarnings = function(sysarg)
+	local count = GoldOreConf.createMineTimes - GoldOreFunc.getCount(sysarg)
+	local identity = 0
+	local name = LActor.getName(sysarg)
+	local minerId = LActor.getActorId(sysarg)
+	local quality = GoldOreFunc.DEFAULT_QUALITY
+	local workernum = 0
+	local goldore = GoldOreFunc.getGoldOre(minerId)
+	if goldore ~= nil then
+		if goldore.info.state == GoldOreFunc.STATE_OPEN then
+			identity = 2
+		end
+		quality = goldore.info.quality or GoldOreFunc.DEFAULT_QUALITY
+		workernum = goldore.info.workerNum or 0
+	end
+
+	local pPack = DataPack.allocPacket(sysarg, BaseTypes.SystemId.goldOreSystem, 11)
+	DataPack.writeInt(pPack, count)
+	DataPack.writeInt(pPack, GoldOreConf.workerAddition)	--矿工收益加成
+	DataPack.writeInt(pPack, GoldOreFunc.GetQualityAddition(quality))
+	DataPack.writeInt(pPack, identity) --玩家身份
+	DataPack.writeInt(pPack, minerId)	--矿主ID
+	DataPack.writeString(pPack, name)	--矿主名称
+	DataPack.writeInt(pPack, GoldOreConf.summonCost[quality])
+	DataPack.writeInt(pPack, workernum)
+	--print(string.format("==== %d %d %d %d %d %s %d %d",count,GoldOreConf.workerAddition,GoldOreFunc.GetQualityAddition(quality),identity,minerId,name,GoldOreConf.summonCost[quality],workernum))
+	for i=1,workernum do
+		DataPack.writeString(pPack, (goldore.info.workers[i].name or Lang.ScriptTips.jk012))
+		DataPack.writeInt(pPack, (goldore.info.workers[i].aid or 0))
+		DataPack.writeByte(pPack, (goldore.info.workers[i].icon or 0))
+		DataPack.writeByte(pPack, (goldore.info.workers[i].sex or 0))
+	end
+	DataPack.flush(pPack)
+	GoldOreFunc.GetMineList(sysarg)
+end
+
+--获取翅膀加成
+GoldOreFunc.GetWingAddition = function (wingLevel)
+	local wingearngings = 0
+	for i,value in ipairs(GoldOreConf.wingAddition) do
+		if wingLevel < value[1] then
+			wingearngings = value[2]
+			break
+		end
+	end
+	return wingearngings
+end
+
+--获取品质加成
+GoldOreFunc.GetQualityAddition = function (quality)
+	local qualityearnings = 0
+	if GoldOreConf.qualityAddition[quality] ~= nil then
+		qualityearnings = GoldOreConf.qualityAddition[quality]
+	end
+	return qualityearnings
+end
+
+--关闭挖矿功能
+GoldOreFunc.Shutdown = function()
+	local sysVar = System.getStaticVar()
+	if sysVar == nil then return end
+	sysVar.GoldOreActivity = nil
+	sysVar.GoldOreMinerList = nil
+end
+
+--清空玩家金矿信息
+GoldOreFunc.Clear = function(sysarg, otherActor)
+	local pactor = sysarg
+	if otherActor ~= nil then
+		pactor = LActor.getActorByName(otherActor)
+		if pactor == nil then
+			pactor = sysarg
+		end
+	end
+	local actVar = LActor.getStaticVar(pactor)
+	if actVar ~= nil then
+		actVar.GoldOreParam = nil
+	end
+
+	local goldore = GoldOreFunc.getGoldOre(LActor.getActorId(pactor))
+	if goldore ~= nil then
+		goldore.info.state = GoldOreFunc.STATE_CLOSE
+		goldore.info.employ = 0
+	end
+	-- print(string.format("%s reset goldore time clear", LActor.getName(sysarg)))
+	GoldOreFunc.resetCount(pactor)
+end
+
+GoldOreFunc.addCount = function(sysarg)
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	local nowtime = System.getCurrMiniTime()
+	if var.GoldOreParam == nil then
+		var.GoldOreParam = {}
+		var.GoldOreParam.count = 1
+		var.GoldOreParam.date = nowtime
+	elseif var.GoldOreParam.count == nil or var.GoldOreParam.date == nil then
+		var.GoldOreParam.count = 1
+		var.GoldOreParam.date = nowtime
+	else
+		if System.isSameDay(var.GoldOreParam.date, nowtime) then
+			var.GoldOreParam.count = var.GoldOreParam.count + 1
+		else
+			var.GoldOreParam.count = 1
+			var.GoldOreParam.date = nowtime
+		end
+	end
+end
+
+GoldOreFunc.resetCount = function(sysarg)
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	
+	local nowtime = System.getCurrMiniTime()
+	if var.GoldOreParam == nil then
+		var.GoldOreParam = {}
+		var.GoldOreParam.count = 0
+		var.GoldOreParam.date = nowtime
+	elseif var.GoldOreParam.count == nil or var.GoldOreParam.date == nil then
+		var.GoldOreParam.count = 0
+		var.GoldOreParam.date = nowtime
+	else
+		if not System.isSameDay(var.GoldOreParam.date, nowtime) then
+			var.GoldOreParam.count = 0
+			var.GoldOreParam.date = nowtime
+		end
+	end
+end
+
+GoldOreFunc.getCount = function(sysarg)
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return 0 end
+
+	local nowtime = System.getCurrMiniTime()
+	if var.GoldOreParam == nil then
+		var.GoldOreParam = {}
+		var.GoldOreParam.count = 0
+		var.GoldOreParam.date = nowtime
+	elseif var.GoldOreParam.count == nil or var.GoldOreParam.date == nil then
+		var.GoldOreParam.count = 0
+		var.GoldOreParam.date = nowtime
+	elseif not System.isSameDay(var.GoldOreParam.date, nowtime) then
+		var.GoldOreParam.count = 0
+		var.GoldOreParam.date = nowtime
+	end
+	return var.GoldOreParam.count
+end
+
+--给矿主发奖励
+GoldOreFunc.PrizeMiner = function(miner, workerNum, quality)
+	local qualityearnings = GoldOreFunc.GetQualityAddition(quality)
+	local earnings = qualityearnings + qualityearnings*workerNum*GoldOreConf.workerAddition/100
+	if LActor.giveAward(miner, qatShengWang, earnings) then
+		local message = string.format(Lang.ScriptTips.jk019, earnings)
+		LActor.sendTipmsg(miner, message, ttMessage)
+	end
+		
+	local pPack = DataPack.allocPacket(miner, BaseTypes.SystemId.goldOreSystem, 10)
+	DataPack.writeInt(pPack, earnings)
+	DataPack.flush(pPack)
+end
+
+--给矿工发奖励
+GoldOreFunc.PrizeWorker = function(worker, quality)
+	LActor.giveAward(worker, qatShengWang, GoldOreConf.workerEarnings[quality])
+	local message = string.format(Lang.ScriptTips.jk016, GoldOreConf.workerEarnings[quality])
+	LActor.sendTipmsg(worker, message, ttDialog)
+end
+
+--玩家上线回调
+GoldOreFunc.onLogin = function(sysarg)
+	--飘图
+	local sysVar = System.getStaticVar()
+	if sysVar == nil or sysVar.GoldOreActivity == nil then return end
+	local bclose = false
+	local nowtime = System.getCurrMiniTime()
+	local surplus_time = 1
+	if sysVar.GoldOreActivity.closetime ~= nil and sysVar.GoldOreActivity.closetime > nowtime then
+		surplus_time = sysVar.GoldOreActivity.closetime - nowtime
+	else
+		bclose = true
+	end
+	if bclose == true then
+		local goldore = GoldOreFunc.getGoldOre(LActor.getActorId(sysarg))
+		if goldore ~= nil and goldore.info.state == GoldOreFunc.STATE_OPEN then
+			bclose = false
+		end
+	end
+	if bclose == false then
+		local pPack = DataPack.allocPacket(sysarg, BaseTypes.SystemId.goldOreSystem, 12)
+		if pPack ~= nil then
+			DataPack.writeInt(pPack, GoldOreConf.icon)
+			DataPack.writeInt(pPack, surplus_time)
+			DataPack.flush(pPack)
+		end
+
+		-- print(string.format("%s reset goldore time login", LActor.getName(sysarg)))
+		GoldOreFunc.resetCount(sysarg)
+	end
+end
+
+--初始化
+GoldOreFunc.Init = function(lasttime)
+	local nowtime = System.getCurrMiniTime()
+	local sysVar = System.getStaticVar()
+	if sysVar == nil then return end
+	if sysVar.GoldOreActivity == nil then
+		sysVar.GoldOreActivity = {}
+	end
+	sysVar.GoldOreActivity.opentime = nowtime
+	sysVar.GoldOreActivity.closetime = sysVar.GoldOreActivity.opentime + lasttime
+
+	--注册活动结束定时器
+	local year, month, day, hour, minute, sec = 0, 0, 0, 0, 0, 0
+	year, month, day, hour, minute, sec = System.timeDecode(sysVar.GoldOreActivity.closetime, year, month, day, hour, minute, sec)
+	local timeString = string.format("%d-%d-%d %d:%d:%d", year, month, day, hour, minute, sec)
+	local handler = System.registerTimeCall(System.getGlobalNpc(),"OnGoldOreActivityEnd",timeString, 60, false)
+	if handler ~= nil then
+		GoldOreFunc.activityEnd = handler
+	end
+
+	local actors = LuaHelp.getAllActorList()
+	if actors ~= nil then
+		for i=1,#actors do
+			-- print(string.format("%s reset goldore time init", LActor.getName(actors[i])))
+			GoldOreFunc.resetCount(actors[i])
+		end
+	end
+end
+
+--新的一天到来，重置开矿次数
+GoldOreFunc.OnNewDay = function(sysarg)
+	print(string.format("%s reset goldore time newday", LActor.getName(sysarg)))
+	-- GoldOreFunc.resetCount(sysarg)
+	-- 新的一天到来，将为收矿的矿全部收掉
+	local aid = LActor.getActorId(sysarg)
+	local goldore = GoldOreFunc.getGoldOre(aid)
+	if goldore == nil or goldore.info.state ~= GoldOreFunc.STATE_OPEN then
+		return
+	end
+
+	local miner = LActor.getActorById(aid)
+	if miner ~= nil then
+		local qualityearnings = GoldOreFunc.GetQualityAddition(goldore.info.quality)
+		local earnings = qualityearnings + qualityearnings*goldore.info.workerNum*GoldOreConf.workerAddition/100
+		if LActor.giveAward(miner, qatShengWang, earnings) then
+			local message = string.format(Lang.ScriptTips.jk019, earnings)
+			System.sendGmMailOffLine(aid,  message, 0, 0, 0, 0)
+		end
+	end
+
+	goldore.info.state = GoldOreFunc.STATE_CLOSE
+	goldore.info.quality = GoldOreFunc.DEFAULT_QUALITY
+	goldore.info.workerNum = 0
+	goldore.info.workers = {}
+
+end
+
+--活动结束
+function OnGoldOreActivityEnd(bForce)
+	local sysVar = System.getStaticVar()
+	if bForce ~= nil and bForce == true and sysVar ~= nil and sysVar.GoldOreActivity ~= nil then
+		sysVar.GoldOreActivity.closetime = 0
+	end
+
+	--取消定时器
+	if GoldOreFunc.activityEnd ~= nil then
+		System.unregisterTimeCall(GoldOreFunc.activityEnd)
+		GoldOreFunc.activityEnd = nil
+	end
+
+	if GoldOreFunc.excluted then return end
+	GoldOreFunc.excluted = true
+
+	local actors = LuaHelp.getAllActorList()
+	local aids = {}
+	if actors ~= nil then
+		for i=1,#actors do
+			local actor = actors[i]
+			local aid = LActor.getActorId(actor)
+			local goldore = GoldOreFunc.getGoldOre(aid)
+			if goldore == nil or goldore.info.state ~= GoldOreFunc.STATE_OPEN then
+				local pPack = DataPack.allocPacket(actors[i], BaseTypes.SystemId.goldOreSystem, 12)
+				DataPack.writeInt(pPack, GoldOreConf.icon)
+				DataPack.writeInt(pPack, 0)
+				DataPack.flush(pPack)
+				table.insert(aids, aid)
+			end
+		end
+	end
+
+	--for i,aid in ipairs(aids) do
+	--	GoldOreFunc.delGoldOre(aid)
+	--end
+end
+
+GoldOreFunc.ChangeMinerName = function(sysarg)
+	local aid = LActor.getActorId(sysarg)
+	local name = LActor.getName(sysarg)
+	local goldore = GoldOreFunc.getGoldOre(LActor.getActorId(sysarg))
+	if goldore == nil then return end
+	goldore.minerName = LActor.getName(sysarg)
+end
+
+GoldOreFunc.GmGoldOre = function(sysarg, args)
+    --print("GoldOreFunc.GmGoldOre "..args[1])
+    if args[1] == "open" then
+      GoldOreFunc.OpenMine(sysarg)
+    elseif args[1] == "refresh" then
+      GoldOreFunc.RefreshQuality(sysarg)
+    elseif args[1] == "create" then
+      GoldOreFunc.CreateMine(sysarg)
+    elseif args[1] == "publish" then
+      GoldOreFunc.PublishInfomation(sysarg)
+    elseif args[1] == "summon" then
+      GoldOreFunc.Summon(sysarg)
+    elseif args[1] == "employ" then
+      GoldOreFunc.Employ(sysarg, tonumber(args[2]) )
+    elseif args[1] == "close" then
+      GoldOreFunc.CloseMine(LActor.getActorId(sysarg))
+    elseif args[1] == "getmine" then
+      GoldOreFunc.GetMineList(sysarg)
+  	elseif args[1] == "earnings" then
+  		GoldOreFunc.GetOpenMineEarnings(sysarg)
+    elseif args[1] == "shutdown" then
+      GoldOreFunc.Shutdown()
+    elseif args[1] == "login" then
+      GoldOreFunc.onLogin(sysarg)
+    elseif args[1] == "clear" then
+      GoldOreFunc.Clear(sysarg, args[2])
+    elseif args[1] == "start" then
+    	GoldOreFunc.GmGoldOreStart(tonumber(args[2]))
+    elseif args[1] == "end" then
+      OnGoldOreActivityEnd(true)
+    elseif args[1] == "delete" then
+    	GoldOreFunc.delGoldOre(LActor.getActorId(sysarg))
+    else
+      print("unkown opt")
+    end
+end
+
+-- 后台开启活动
+GoldOreFunc.GmGoldOreStart = function(days)
+    print("GmGoldOreStart "..days)
+    local lasttime = days*86400
+    GoldOreFunc.Init(lasttime)
+
+	-- 广播
+	local pPack = LDataPack.allocPacket()
+	if pPack ~= nil then
+		LDataPack.writeByte(pPack, BaseTypes.SystemId.goldOreSystem)
+		LDataPack.writeByte(pPack, 12)
+		LDataPack.writeInt(pPack, GoldOreConf.icon)
+		LDataPack.writeInt(pPack, lasttime)
+		System.broadcastData(pPack)
+	end
+	GoldOreFunc.excluted = false
+end
+
+
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, GoldOreFunc.onLogin)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, GoldOreFunc.OnNewDay)
+
+_G.__GoldOreVar = {}
+
+GoldOreFunc.initGoldOre = function(charId, charName, hdlVar)
+	local var = _G.__GoldOreVar
+	if var[charId] == nil then
+
+		var[charId] = {
+			minerId		= charId,
+			minerName	= charName,
+			hdlVar		= hdlVar,
+			info 		= System.getSysVar(hdlVar),
+		}
+		if var[charId].info.state == nil then
+			var[charId].info.state = GoldOreFunc.STATE_CLOSE
+		end
+		if var[charId].info.quality == nil then
+			var[charId].info.quality = GoldOreFunc.DEFAULT_QUALITY
+		end
+		if var[charId].info.workerNum == nil then
+			var[charId].info.workerNum = 0
+		end
+		if var[charId].info.workers == nil then
+			var[charId].info.workers = {}
+		end
+	end
+	return var[charId]
+end
+
+GoldOreFunc.delGoldOre = function(minerId)
+	if _G.__GoldOreVar == nil then return end
+
+	_G.__GoldOreVar[minerId] = nil
+	print(string.format("%d delGoldOre", minerId))
+end
+
+GoldOreFunc.getGoldOre = function(charId)
+	return _G.__GoldOreVar[charId]
+end
+
+GoldOreFunc.onDbDataReturn = function(charId, charName, hdlVar)
+	GoldOreFunc.initGoldOre(charId, charName, hdlVar)
+end
+
+GoldOreFunc.onLoadTmpVar = function()
+	print("GoldOreFunc.onLoadTmpVar")
+end
+
+GoldOreFunc.onFinal = function()
+	local var = _G.__GoldOreVar
+	if var == nil then return end
+	for k,var in pairs(_G.__GoldOreVar) do
+		if var ~= nil then
+			System.saveSysVar(var.minerId, SystemIdList.goldore, var.hdlVar)
+		end
+	end
+end
+
+
+SystemVarDispatcher.register(SystemIdList.goldore, GoldOreFunc.onDbDataReturn)
+SystemVarDispatcher.registerTmpVar(SystemIdList.goldore, GoldOreFunc.onLoadTmpVar())
+table.insert(FinaFnTable, GoldOreFunc.onFinal)

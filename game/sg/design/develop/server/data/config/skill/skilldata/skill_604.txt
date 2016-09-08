@@ -1,0 +1,32 @@
+{
+	id = 604,
+	name = Lang.Skill.s604Name,
+	desc = Lang.Skill.s604Desc,
+	vocation = 0,
+	skillType = 0,
+	skillSpellType = 0,
+	skillClass = 4,
+	commonCd = 0,
+	canbeDefault = false,
+	specialBuffCond = 0,
+	notAutoUse = false,
+	maxTargetNum=3,
+ 	actions=
+{
+		-- 11 = 结印施法， 15 = 跳跃施法
+	{act=2,effect=1601,type=2},
+		
+},
+	skillSubLevel = { 
+--#include "Skill_604_1.txt"
+--#include "Skill_604_2.txt"
+--#include "Skill_604_3.txt"
+--#include "Skill_604_4.txt"
+--#include "Skill_604_5.txt" 
+--#include "Skill_604_6.txt"
+--#include "Skill_604_7.txt"
+--#include "Skill_604_8.txt"
+--#include "Skill_604_9.txt"
+--#include "Skill_604_10.txt" 
+	},
+},

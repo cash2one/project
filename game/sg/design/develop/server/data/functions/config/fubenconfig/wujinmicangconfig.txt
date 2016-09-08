@@ -1,0 +1,172 @@
+
+
+
+--wujinmicangconfig = {}			
+-- 无尽秘籍
+wujinmicangconfig = {
+	fubenId = {5},			-- 副本ID
+	sceneId = {85},			-- 场景ID
+	sceneJieSuan = {85},
+	fubenToSence = {85},
+	isfanpai = 2, 				--是否翻牌 1 翻牌 2 普通奖励
+
+	toNextTeleport = {},		-- 传送门
+
+	gameTime = 480,				-- 游戏时间
+
+	playerPos = {{26,21},{26,20},{25,21}},		-- 玩家进入副本的位置
+
+	NPCMonster = {
+		monsterId = 100,
+		posX1 = 30, --怪物x坐标范围
+		posX2 = 40,
+	},
+	
+	allmonstercout = 480, --一共刷这么多只 之后就副本结算
+	limitTime = 480,				-- 结算的时间限制
+	RefreshMonsterTime = 1,				-- 刷怪事件
+	monsterIdList = {1061,1062,1063,1064,1065,1066,1067,1068},
+
+	gradeType = 1,				-- 评级类型：1表示时间，2表示层数
+
+	TongguanAward =
+	{
+		{22101,1,1,1,10000},-- {奖励ID,类型,数量,是否绑定,概率}	(其中类型部分：1表示的是物品 2 钱（贝币,天珠）3 经验,按需求往后面加)
+	},
+
+	--进入副本后 创建怪物的数量位置
+	startRefreshMonst =
+	{
+		[1]= --副本难度
+		{
+			{
+				monsterId = 1061, --怪物id
+				posX1 = 9, --怪物x坐标范围
+				posX2 = 37,
+				posY1 = 13,
+				posY2 = 26,
+				nCount = 5,
+			},
+			
+		},
+		[2]=
+		{
+			{
+				monsterId = 1064, --怪物id
+				posX1 = 9, --怪物x坐标范围
+				posX2 = 37,
+				posY1 = 13,
+				posY2 = 26,
+				nCount = 5,
+			},
+		},
+		[3]=
+		{
+			{
+				monsterId = 1067, --怪物id
+				posX1 = 9, --怪物x坐标范围
+				posX2 = 37,
+				posY1 = 13,
+				posY2 = 26,
+				nCount = 5,
+			},
+		},
+	},
+	--刷新怪物
+	RefreshMonster =
+	{
+		[1] =--副本难度
+		{
+			{
+				monsterId = 1061, --怪物id
+				posX1 = 9, --怪物x坐标范围
+				posX2 = 37,
+				posY1 = 13,
+				posY2 = 26,
+				nCount = 1,
+				rate = 83,
+			},
+			{
+				monsterId = 1062, --怪物id
+				posX1 = 9, --怪物x坐标范围
+				posX2 = 37,
+				posY1 = 13,
+				posY2 = 26,
+				nCount = 1,
+				rate = 14,
+			},
+			{
+				monsterId = 1063, --怪物id
+				posX1 = 9, --怪物x坐标范围
+				posX2 = 37,
+				posY1 = 13,
+				posY2 = 26,
+				nCount = 1,
+				rate = 3,
+			},
+		},
+		[2] =
+		{
+			{
+				monsterId = 1064, --怪物id
+				posX1 = 9, --怪物x坐标范围
+				posX2 = 37,
+				posY1 = 13,
+				posY2 = 26,
+				nCount = 1,
+				rate = 83,
+			},
+			{
+				monsterId = 1065, --怪物id
+				posX1 = 9, --怪物x坐标范围
+				posX2 = 37,
+				posY1 = 13,
+				posY2 = 26,
+				nCount = 1,
+				rate = 14,
+			},
+			{
+				monsterId = 1066, --怪物id
+				posX1 = 9, --怪物x坐标范围
+				posX2 = 37,
+				posY1 = 13,
+				posY2 = 26,
+				nCount = 1,
+				rate = 3,
+			},
+		},
+		[3] =
+		{
+			{
+				monsterId = 1067, --怪物id
+				posX1 = 9, --怪物x坐标范围
+				posX2 = 37,
+				posY1 = 13,
+				posY2 = 26,
+				nCount = 1,
+				rate = 83,
+			},
+			{
+				monsterId = 1068, --怪物id
+				posX1 = 9, --怪物x坐标范围
+				posX2 = 37,
+				posY1 = 13,
+				posY2 = 26,
+				nCount = 1,
+				rate = 14,
+			},
+			{
+				monsterId = 1068, --怪物id
+				posX1 = 9, --怪物x坐标范围
+				posX2 = 37,
+				posY1 = 13,
+				posY2 = 26,
+				nCount = 1,
+				rate = 3,
+			},
+		},
+	},
+
+
+}
+

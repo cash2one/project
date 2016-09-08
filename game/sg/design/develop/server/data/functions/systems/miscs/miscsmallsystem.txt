@@ -1,0 +1,1283 @@
+-- 处理一些简单的协议
+--#include "data/config/item/stditems.txt" once 
+--#include "data\config\task\baguadigongconfig.txt" once
+--#include "data\config\task\activityfbconfig.txt" once
+--#include "data\functions\actorevent\stonedealhandler.txt" once
+--#include "data\envir\FuBen.txt" once
+--#include "data\functions\config\FubenConfig\FubenCountConfig.txt" once
+--#include "data\config\misc\renamedcardconf.txt" once
+
+-- local debug_print = function() end
+--local debug_print = print
+
+function OnServerMailCheck(sysarg, mailId)
+	--print("OnServerMailCheck: "..mailId)
+	if not mailId then return end
+
+	local sysVar = System.getStaticVar()
+	if sysVar == nil then return end
+
+	if sysVar.TimeServerMail == nil then 
+		sysVar.TimeServerMail = {}
+	end
+
+	--检测全服邮件是否已经领取过了
+	local actorid = LActor.getActorId(sysarg)
+	if sysVar.TimeServerMail[actorid] == nil then
+		sysVar.TimeServerMail[actorid] = {}
+	end
+
+	if sysVar.TimeServerMail[actorid][mailId] == nil then
+		print("sysVar.TimeServerMail[actorid][mailId]"..mailId)
+		sysVar.TimeServerMail[actorid][mailId] = System.getCurrMiniTime()
+		return true
+	else
+		return false
+	end
+
+	return false
+end
+
+
+
+MiscsImplement.ClientParam = function(sysarg, msgid, packet)
+	--print("MiscsImplement.ClientParam")
+	local cnt = DataPack.readInt(packet)
+	if cnt > 16 then return end
+	--print("ClientParam count:" .. cnt)
+	local st = LActor.getStaticVar( sysarg )
+	if st == nil then return end
+
+	for i=1,cnt do
+		local key = DataPack.readString(packet)
+		local val = DataPack.readString(packet)
+		--print("key:"..key..",val:"..val)
+		if key == "pf" then
+			if string.sub(val, 1, 5) == "union" and string.find(val, "*") ~= nil then
+				start = string.find(val, "*")
+				length = string.len(val)
+				st.pf = string.sub(val, start+1, length)
+			else
+				st.pf = val
+			end
+			LActor.setPf(sysarg, st.pf)
+			local pfid = GlobalConfig.pfList[st.pf]
+			pfid = pfid or 0
+			LActor.setPfId(sysarg, pfid)
+		elseif key == "contract_id" then
+			if val ~= nil and val ~= "" then st.contractid = val end
+		elseif key == "is_blue_vip" then
+			if val == "1" then st.is_blue_vip = true else st.is_blue_vip = nil end
+		elseif key == "is_blue_year_vip" then
+			if val == "1" then st.is_blue_year_vip = true else st.is_blue_year_vip = nil end
+		elseif key == "is_super_blue_vip" then
+			if val == "1" then st.is_super_blue_vip = true else st.is_super_blue_vip = nil end
+		elseif key == "blue_vip_level" then
+			st.blue_vip_level = tonumber(val)
+		elseif key == "is_vip" then
+			if val == "1" then st.is_web_vip = true else st.is_web_vip = nil end
+		elseif key == "is_year_vip" then
+			if val == "1" then st.is_web_year_vip = true else st.is_web_year_vip = nil end
+		elseif key == "vip_level" then
+			st.web_vip_level = tonumber(val)
+		elseif key == "iopenid" then -- 邀请人的openid
+			st.iopenid = val
+			st.yqtime =  System.getCurrMiniTime()-- 被邀请时间
+		elseif key == "is_qq_vip" then
+			if val == "1" then st.is_qq_vip = true else st.is_qq_vip = nil end
+		elseif key == "is_qq_year_vip" then
+			if val == "1" then st.is_qq_year_vip = true else st.is_qq_year_vip = nil end
+		elseif key == "qq_vip_level" then
+			st.qq_vip_level = tonumber(val)
+		elseif key == "is_yellow_high_vip" then
+			if val == "1" then st.is_yellow_high_vip = true else st.is_yellow_high_vip = nil end
+		elseif key == "login_ip" then
+			if val == "" then val = "0.0.0.0" end
+			LActor.setLastLoginIp(sysarg, val)
+		elseif key == "app_custom" then
+			if val ~= nil and val ~= "" then st.app_custom = val end
+		elseif key == "cpRet" then
+			if val ~= nil and val ~= "" then st.cpRet = val end
+		end
+	end
+	--LoginCheckFunc.SetQQHYInfo(sysarg)
+
+	LoginCheckFunc.SetBlueInfo(sysarg)
+
+	--客户端上报pf值后 已经下发过的消息 的再重发一次
+	--[[
+	if st.pf ~= nil and st.pf == "qqgame" then
+		EventCallDispatcher.OnLoginOrNewDayForQQGameNewGift(sysarg)
+		EventCallDispatcher.OnLoginOrNewDayForQQGameLJDLGift(sysarg)
+		EventCallDispatcher.OnLoginOrNewDayForQQGameXNFLGift(sysarg)
+		EventCallDispatcher.sendMarchInfo(sysarg)
+		HallSummerLoginFunc.LoginForLXGongCeLogin(sysarg)
+		QQHallOnlineFunc.OnLoginTrigger(sysarg)
+		QQGameLoginFunc.OnLoginTrigger(sysarg)
+	end
+	if st.pf ~= nil and st.pf == "qzone" then
+		EventCallDispatcher.OnLoginOrNewDayForQQGameLJDLGift(sysarg)
+		EventCallDispatcher.sendMarchInfo(sysarg)
+	end
+	if st.pf ~= nil and st.pf == "3366" then
+		EventCallDispatcher.OnLoginOrNewDayForQQGameLJDLGift(sysarg)
+		EventCallDispatcher.OnLoginOrNewDayFor3366LJDLGift(sysarg)
+	end
+
+	if st.pf ~= nil and string.sub(st.pf, 1, 11) == "union-10029" then
+		EventCallDispatcher.OnLoginOrNewDayForQQGameLJDLGift(sysarg)
+	end
+
+	if st.app_custom ~= nil and st.app_custom == "QQCLIENT.MAINPANEL.SETAPP" then
+		QQPanelLoginFunc.OnLoginTrigger(sysarg)
+	end
+	if st.cpRet ~= nil and st.cpRet == "1" then
+		QZoneLoginFunc.OnLoginTrigger(sysarg)
+	end]]
+end
+
+MiscsImplement.GetSceneNpcStatus = function (sysarg, msgid, packet)
+	local sceneId = DataPack.readInt(packet)
+
+	local scenePtr = LActor.getScenePtr(sysarg)
+	if scenePtr == nil then
+		return
+	end
+
+	local scenePtr = LActor.getScenePtr(sysarg)
+	local npcList = LuaHelp.getSceneNpcList(scenePtr)
+	if npcList == nil then
+		return
+	end
+
+	-- npcdata
+	local npcdata = {}
+	for i=1,#npcList do
+		npcdata[i] = {}
+		npcdata[i].name = LActor.getName(npcList[i])
+		npcdata[i].status = LActor.getQuestStateType(sysarg, npcList[i], false)
+	end
+	----
+
+	local npack = DataPack.allocPacket(sysarg, 139, 72)
+	if npack == nil then return end
+
+	DataPack.writeInt(npack, sceneId)
+	local count = #npcList
+	DataPack.writeInt(npack, count)
+	for i=1,count do
+		local npc = npcList[i]
+		-- local name = LActor.getName(npc)
+		-- local status = LActor.getQuestStateType(sysarg, npc, false)
+		local name = npcdata[i].name
+		local status = npcdata[i].status
+		DataPack.writeString(npack, name)
+		DataPack.writeInt(npack, status)
+	end
+	DataPack.flush(npack)
+end
+
+MiscsImplement.SetBroadcastLimit = function (sysarg, msgid, packet)
+	local limit = DataPack.readInt(packet)
+
+	LActor.setLimitActorAppear(sysarg, limit)
+end
+
+MiscsImplement.SetActorScreen = function (sysarg, msgid, packet)
+	local x = DataPack.readInt(packet)
+	local y = DataPack.readInt(packet)
+
+	LActor.setActorScreen(sysarg, x, y)
+end
+
+MiscsImplement.QuitGame = function (sysarg, msgid, packet)
+	System.closeActor(sysarg)
+end
+
+MiscsImplement.GetActivityNum = function (sysarg, msgid, packet)
+	qId = {1,2,3,4} --id順序為:斩妖除魔、护送、军团、银币
+	StarNum = {0,0,0,0} --对应上面的id，用来保存剩余次数
+
+	local var = LActor.getStaticVar( sysarg )
+	if var == nil then return end
+
+	if var.star == nil then 
+		var.star = {}
+	end
+	for i=1,4 do
+		local questConf = RefreshQuests[qId[i]]
+		
+		local  info = var.star[qId[i]]
+
+		-- 剩余次数
+		if questConf ~= nil then
+			StarNum[i] = MiscsImplement.GetLeftRefreshQuestCount(sysarg, questConf, info)
+		end
+	end
+
+	local npack = DataPack.allocPacket(sysarg, 139, 85)
+	if npack == nil then return end
+
+	DataPack.writeInt(npack, StarNum[1])
+	DataPack.writeInt(npack, StarNum[2])
+	DataPack.writeInt(npack, StarNum[3])
+	DataPack.writeInt(npack, StarNum[4])
+
+	DataPack.flush(npack)
+
+end
+
+MiscsImplement.GetActorIsOnline = function (sysarg, msgid, packet)
+	local npack = DataPack.allocPacket(sysarg, 139, 86)
+	if npack == nil then return end
+	DataPack.flush(npack)
+end
+
+ MiscsImplement.uploadglobeuser = function (sysarg, isfirst, str)
+	local openid = LActor.getAccountName(sysarg)
+	local name = LActor.getName(sysarg)
+	local actorid = LActor.getActorId(sysarg)
+	local sex = LActor.getIntProperty(sysarg, PROP_SEX)
+	local job = LActor.getIntProperty(sysarg, PROP_VOCATION)
+	local level = LActor.getIntProperty(sysarg, PROP_LEVEL)
+	local serverid = System.getServerId()
+
+	--print("str == "..str.." , uploadglobeuser accountname ========== "..openid)
+
+	--if isfirst == 1 then
+		LActor.txSendScriptUrl(openid, 
+			"/update_globaluser", "&openid="..openid.."&name="..urlencode(name).."&actorid="..actorid.."&sex="..sex.."&job="..job.."&level="..level.."&serverid="..serverid.."&mobileInfo="..str.."&state=1", 3, true)	
+	--else
+	--	LActor.txSendScriptUrl(openid, 
+	--		"/hy/update_globaluser.jsp", "&openid="..openid.."&name="..urlencode(name).."&actorid="..actorid.."&sex="..sex.."&job="..job.."&level="..level.."&mobileInfo="..str, 3, true)	
+	--end
+end
+
+MiscsImplement.UploadPhoneInfo = function (sysarg, msgid, packet)
+	local st = LActor.getStaticVar( sysarg )
+	if st == nil then
+		return
+	end
+
+	local phone_type = DataPack.readString(packet)
+	local phone_version = DataPack.readString(packet)
+	local download_from = DataPack.readString(packet)
+	local ratio = DataPack.readString(packet)
+	local networkproviders = DataPack.readString(packet)
+	local networktype = DataPack.readString(packet)
+	local udid = DataPack.readString(packet)
+	local channel = DataPack.readString(packet)
+	local client_version = DataPack.readString(packet)
+	local deviceid = nil
+
+	if phone_type == nil then
+		phone_type = ""
+	end
+	if phone_version == nil then
+		phone_version = ""
+	end
+	if download_from == nil then
+		download_from = ""
+	end
+	if ratio == nil then
+		ratio = ""
+	end
+	if networkproviders == nil then
+		networkproviders = ""
+	end
+	if networktype == nil then
+		networktype = ""
+	end
+	if udid == nil then
+		udid = ""
+	end
+	if client_version == nil then
+		client_version = ""
+	end
+	if channel == nil then
+		channel = download_from
+	end
+	if channel == "" then
+		channel = download_from
+	end
+	if deviceid == nil then
+		deviceid = ""
+	end
+
+	st.phone_type = phone_type
+	st.phone_version = phone_version
+	st.download_from = download_from
+	st.phone_ratio = ratio
+	st.channel = channel
+	st.deviceid = deviceid
+	
+	LActor.SetChannel(sysarg, channel)
+	LActor.SetDeviceId(sysarg, deviceid)
+	LActor.setDf(sysarg, download_from)
+	--print("MiscsImplement.UploadPhoneInfo download_from"..download_from)
+
+	local isfirst = LActor.isFirstLogin(sysarg)
+	if not isfirst then
+		local level = LActor.getLevel(sysarg)
+		if level <= 1 and st.stFirstLogin == nil then
+			isfirst = true
+			st.stFirstLogin = 1
+		end
+	else
+		st.stFirstLogin = 1
+	end
+
+	if st.firstLoginPerDay == nil then
+		local dau = "udid:"..udid..",client_version:"..client_version..",phone_type:"..phone_type..",phone_version:"..phone_version..",ratio:"..ratio..",download_from:"..download_from..",channel:"..channel
+		local accountname = LActor.getAccountName(sysarg)
+		if accountname ~= nil then 
+			--System.logDau(accountname, "android", "", "", networkproviders, networktype, "", "", dau, lfBI)
+			System.logDau(accountname, "android", "", "", download_from, channel, "", "", dau, lfDB)
+			print("dau ============ "..dau.." , accountname ======== "..accountname)
+		end
+	end
+
+	if isfirst then
+		local install = "udid:"..udid..",client_version:"..client_version..",phone_type:"..phone_type..",phone_version:"..phone_version..",ratio:"..ratio..",download_from:"..download_from..",channel:"..channel
+		local accountname = LActor.getAccountName(sysarg)
+		if accountname ~= nil then 
+			--System.logInstall(accountname, "android", "", "", networkproviders, networktype, "", install, lfBI)
+			System.logInstall(accountname, "android", "", "", download_from, channel, "", install, lfDB)
+			print("install =========== "..install.." , accountname ======== "..accountname)
+		end
+	end
+
+	local str = "user_level:"..LActor.getLevel(sysarg)..",phone_type:"..phone_type..",phone_version:"..phone_version..",ratio:"..ratio..",download_from:"..download_from..",channel:"..channel..",deviceid:"..deviceid
+
+	local encode,num = string.gsub(str, ' ', '_')
+	if isfirst then
+		MiscsImplement.uploadglobeuser(sysarg , 1, encode)
+	else
+		MiscsImplement.uploadglobeuser(sysarg , 0, encode)
+	end
+
+	st.firstLoginPerDay = 1
+
+	--热云数据上报
+	System.logCounter(LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg))
+				, "login", "", "", "", "", "", "", "", lfBI)
+end
+
+MiscsImplement.GetSystemTime = function (sysarg, msgid, packet)
+	local time = System.getCurrMiniTime()
+	local openservertime = System.getOpenServerTime()
+	local npack = DataPack.allocPacket(sysarg, 139, 123)
+	if npack == nil then return end
+	DataPack.writeInt(npack, time)
+	DataPack.writeInt(npack, openservertime)
+	DataPack.flush(npack)
+end
+
+MiscsImplement.GetStdItemInfo = function (sysarg, msgid, packet)
+	local item_id = DataPack.readInt(packet)
+
+	if item_id == nil or item_id <= 0 then
+		return
+	end
+
+	local item = nil
+	for i=1,#StdItems do
+		if StdItems[i].id == item_id then
+			item = StdItems[i]
+			break
+		end
+	end
+
+	if item == nil then
+		return
+	end
+
+	local npack = DataPack.allocPacket(sysarg, 139, 124)
+	if npack == nil then return end
+	DataPack.writeInt(npack, item.id)
+	DataPack.writeInt(npack, item.type)
+	DataPack.writeInt(npack, item.icon)
+	DataPack.writeInt(npack, item.color)
+	DataPack.writeString(npack, item.name)
+	DataPack.writeString(npack, item.desc)
+	DataPack.flush(npack)
+end
+
+--[[MiscsImplement.GetStoneMaterialNum = function (sysarg, msgid, packet) 
+	--print("MiscsImplement.GetStoneMaterialNum")
+	local npack = DataPack.allocPacket(sysarg, 139, 127)
+	if npack == nil then return end
+	for i=1,4 do
+		local num = tonumber(EnhanceTable.getStoneMaterialNum(sysarg, i))
+		DataPack.writeInt(npack, num)
+		--print("MiscsImplement.GetStoneMaterialNum index:"..i.."num:"..num)
+	end
+	DataPack.flush(npack)
+end]]
+
+MiscsImplement.GetStoreActivityReward = function (sysarg, msgid, packet) 
+	--print("MiscsImplement.GetStoreActivityReward")
+	local index = DataPack.readInt(packet)
+	local var = LActor.getStaticVar(sysarg)
+	if var.storeactivitydata == nil or var.storeactivitydata.record == nil then return end
+	if var.storeactivitydata.reward == nil then var.storeactivitydata.reward = 0 end
+	--不可领取
+	if not System.bitOPMask(var.storeactivitydata.record, index - 1) then return end
+	--已领取
+	if System.bitOPMask(var.storeactivitydata.reward, index - 1) then return end
+
+	local conf = StoreActivityData[index]
+    if Item.getBagEmptyGridCount(sysarg) <  conf.needbag then
+          --提示背包空间不足
+          LActor.sendTipmsg(sysarg, Lang.ScriptTips.xyzp004, ttMessage)
+          return
+     end
+
+    --置已领取
+    var.storeactivitydata.reward = System.bitOpSetMask(var.storeactivitydata.reward, index - 1, true)
+
+   	local rewards
+   	if conf.vocationflag ~= nil and conf.vocationflag == 1 then
+   		local vocation = LActor.getIntProperty(sysarg, PROP_VOCATION)
+   		rewards = conf.rewards[vocation]
+   	else
+   		rewards = conf.rewards[1]
+   	end
+
+
+    --给奖励
+    --播放特效
+	local effects = {}
+    for i,v in ipairs(rewards) do
+    	LActor.addItem(sysarg, v.id, 0, 0, v.count, 1, "GetStoreActivityReward"..index, 1)
+
+    	local effect = {}
+		effect.type = 1  -- 1为物品,暂时只支持发物品所以写死
+		effect.id = v.id
+		effect.count = v.count
+		effects[#effects+1] = effect
+    end
+
+	if #effects > 0 then
+	   MiscFunc.PlayItemEffect(sysarg, 11, effects)
+	end
+
+	local char_name = LActor.getName(sysarg)
+
+    local broadmsg = string.format(Lang.ScriptTips.shch0003, char_name)
+	System.broadcastTipmsg(broadmsg, ttChatWindow)
+	broadmsg = string.format(Lang.ScriptTips.shch0004, char_name)
+	--System.broadcastTipmsg(broadmsg, ttGmTip)
+
+    --更新
+    StoreOpFuncList.sendstroeactivity(sysarg)
+end
+
+MiscsImplement.AddFubenCount = function (sysarg, msgid, packet) 
+	--print("MiscsImplement.AddFubenCount ")
+	local fubenlistid = DataPack.readInt(packet)
+	local moneytype = DataPack.readByte(packet)
+	--local moneytype = 2
+	local fubenlist = FubenLinkConfig[fubenlistid]
+	local ybCost = FubenAddCountMoney[fubenlistid]
+	--print("MiscsImplement.AddFubenCount fubenlistid:"..fubenlistid)
+	if fubenlist == nil or fubenlist[1] == nil or ybCost == nil then return end
+	if moneytype == nil or moneytype ~= mtYuanbao and moneytype ~= mtBindYuanbao then return end
+
+	local var = LActor.getStaticVar(sysarg)
+	local vipLevel = LActor.getVIPLevel(sysarg)
+
+	local addCount = 0
+
+    --如果是特殊副本
+    if speFubenDayNum[fubenlistid] ~= nil then
+    	if var.fubenlistprocess ~= nil and var.fubenlistprocess[fubenlistid] ~= nil and var.fubenlistprocess[fubenlistid].addCount ~= nil then
+    		addCount = var.fubenlistprocess[fubenlistid].addCount
+    	end
+
+    	--print("MiscsImplement.AddFubenCount speFubenDayNum addCount:"..addCount)
+
+    	if speFubenDayCanbuyNum[fubenlistid][vipLevel + 1] == nil or addCount >= speFubenDayCanbuyNum[fubenlistid][vipLevel + 1] then
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.f00076, ttMessage)
+			return
+		end
+    else
+    	-- 次数不足
+    	local enterCount = 0
+		enterCount, addCount = Fuben.getEnterFubenInfo(sysarg, fubenlist[1])
+
+		if vipLevel < 1 then
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.f00078, ttDialog)
+			return
+		end
+
+		--print("MiscsImplement.AddFubenCount not speFubenDayNum addCount:"..addCount)
+
+		if addCount >= vipFubenAddCounts[vipLevel] then
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.f00076, ttMessage)
+			return
+		end
+    end
+
+	-- 天珠不足
+	if not LActor.CheckMoneyEnough(sysarg, moneytype, ybCost) then 
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.f00075, ttMessage)
+		return 
+	end
+
+    -- 扣除天珠
+    LActor.changeMoney(sysarg, moneytype, -ybCost, 1, true, "fuben", "addcount")
+
+    --如果是特殊副本
+    if speFubenDayNum[fubenlistid] ~= nil then
+    	local var = LActor.getStaticVar(sysarg)
+    	if var.fubenlistprocess == nil then var.fubenlistprocess = {} end
+    	if var.fubenlistprocess[fubenlistid] == nil then var.fubenlistprocess[fubenlistid] = {} end
+    	if var.fubenlistprocess[fubenlistid].addCount == nil then var.fubenlistprocess[fubenlistid].addCount = 0 end
+    	var.fubenlistprocess[fubenlistid].addCount = var.fubenlistprocess[fubenlistid].addCount + 1
+    	var.fubenlistprocess[fubenlistid].ifcant = nil
+    else
+	    -- 增加次数
+	    for i,v in ipairs(fubenlist) do
+	    	Fuben.addFubenCount(sysarg, v, 1)
+	    end
+	end
+
+	--ShowFubenList(sysarg, fubenlistid)
+
+	--print("MiscsImplement.AddFubenCount end")
+end
+
+-- tjxs函数
+MiscsImplement.AddFubenCountTjxs = function (sysarg, msgid, packet) 
+	print("MiscsImplement.AddFubenCount ")
+	local fubenlistid = DataPack.readInt(packet)
+	local moneytype = DataPack.readByte(packet)
+	local moneytype = 3
+	local fubenlist = TjxsFubenListConfig[fubenlistid]
+	local ybCost = TjxsAddFubenCountConfig[fubenlistid]
+	print("MiscsImplement.AddFubenCount fubenlistid:"..fubenlistid)
+	if fubenlist == nil or fubenlist[1] == nil or ybCost == nil then return end
+	if moneytype == nil or moneytype ~= mtYuanbao and moneytype ~= mtBindYuanbao then return end
+
+	local var = LActor.getStaticVar(sysarg)
+	local vipLevel = LActor.getVIPLevel(sysarg)
+
+	local addCount = 0
+
+	-- 次数不足
+	local enterCount = 0
+	enterCount, addCount = Fuben.getEnterFubenInfo(sysarg, fubenlist[1])
+
+	if vipLevel < 1 then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.f00078, ttDialog)
+		return
+	end
+
+	if addCount >= vipFubenAddCounts[vipLevel] then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.f00076, ttMessage)
+		return
+	end
+
+	-- 天珠不足
+	if not LActor.CheckMoneyEnough(sysarg, moneytype, ybCost) then 
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.f00075, ttMessage)
+		return 
+	end
+
+    -- 扣除天珠
+    LActor.changeMoney(sysarg, moneytype, -ybCost, 1, true, "fuben", "addcount")
+
+    -- 增加次数
+    for i,v in ipairs(fubenlist) do
+    	Fuben.addFubenCount(sysarg, v, 1)
+    	print("============fubenId: "..v)
+    end
+
+
+    -- 下发副本次数
+    local npack = DataPack.allocPacket(sysarg, 139, 149)
+    local count = #fubenlist
+    DataPack.writeInt(npack, count) -- 副本个数
+    for i,v in ipairs(fubenlist) do
+    	local enterCount, addCount = Fuben.getEnterFubenInfo(sysarg, v) 
+    	DataPack.writeShort(npack, v) 			-- fuben ID
+    	DataPack.writeShort(npack, enterCount) 	-- 今天进入次数
+    	DataPack.writeShort(npack, addCount)		-- 增加的次数
+    	print(string.format("=========(%d,%d,%d)",v,enterCount,addCount))
+    end
+    DataPack.flush(npack)
+end
+
+MiscsImplement.GetFubenListRemainnum = function (sysarg, msgid, packet) 
+	--print("MiscsImplement.GetFubenListRemainnum")
+	local npack = DataPack.allocPacket(sysarg, 139, 136)
+	if npack == nil then return end
+	local var = LActor.getStaticVar(sysarg)
+	DataPack.writeInt(npack, #FubenLinkConfig + 1)
+	for i = 0,#FubenLinkConfig do
+		local fubenlistid = i
+		DataPack.writeInt(npack, fubenlistid)
+		--print("MiscsImplement.GetFubenListRemainnum fubenlistid:"..fubenlistid)
+
+		local remainnum = 0
+		if speFubenDayNum[fubenlistid] then
+			remainnum = speFubenDayNum[fubenlistid]
+			if var.fubenlistprocess ~= nil and var.fubenlistprocess[fubenlistid] ~= nil then
+				if var.fubenlistprocess[fubenlistid].addCount ~= nil then
+					remainnum = remainnum + var.fubenlistprocess[fubenlistid].addCount
+				end
+				if var.fubenlistprocess[fubenlistid].enterCount ~= nil then
+					remainnum = remainnum - var.fubenlistprocess[fubenlistid].enterCount
+				end
+			end
+		else
+			local fubenlist = FubenLinkConfig[fubenlistid]
+			for p,k in ipairs(fubenlist) do
+				local enterCount, addCount = Fuben.getEnterFubenInfo( sysarg, k)
+		      	local fbdata = FuBen[k]
+		      	remainnum = remainnum + fbdata.daycount + addCount - enterCount
+			end
+		end
+		DataPack.writeInt(npack, remainnum)
+		--print("MiscsImplement.GetFubenListRemainnum remainnum:"..remainnum)
+	end
+
+	DataPack.flush(npack)
+end
+
+--[[MiscsImplement.SetActorset = function (sysarg, msgid, packet) 
+	print("MiscsImplement.GetStoneMaterialNum")
+	local index = DataPack.readChar(packet)
+	local value = DataPack.readChar(packet)
+	if index == nil or value == nil then return end
+	if index < enActorSetYbUse or index >= enActorSetMax then return end
+	value = value == 0 and false or true
+	LActor.ChangeActorSet(sysarg, index, value)
+end]]
+
+
+MiscsImplement.ChangeUserName = function(sysarg, msgid, packet)
+	local conf = RenamedCardConf
+	if not conf then return end
+
+	local var = LActor.getStaticVar( sysarg )
+	if var == nil then return end
+	if var.ChangeNameCD == nil then --修改次数
+		var.ChangeNameCD = 0
+	end
+
+	--local now_t = System.getCurrMiniTime()
+	--if (now_t - var.ChangeNameCD) < conf.timeCD then
+	--	LActor.sendTipmsg( sysarg, Lang.ScriptTips.cn002, ttMessage )
+	--	return
+	--end
+
+	local name = DataPack.readString(packet)
+	if var.ChangeNameCD > 0 then
+		local price = conf.needYubao * var.ChangeNameCD
+		local user_yuanbao = LActor.getMoneyCount(sysarg, mtYuanbao)
+		--判断元宝是否足够
+		if price > user_yuanbao then
+			LActor.SendGeneralTips(sysarg, 1, 3, price-user_yuanbao)
+			return
+		end
+	end
+
+	if name == nil or name == '' then
+		local npack = DataPack.allocPacket(sysarg, 139, 160)
+		if npack == nil then return end
+		DataPack.writeChar(npack, (-15)) --昵称不能为空
+		DataPack.flush(npack)
+		return
+	end
+
+	name = LActorMgr.lowerCaseNameStr(name)	
+	local rawName = LActor.getName(sysarg)
+
+	if rawName == name then
+		local npack = DataPack.allocPacket(sysarg, 139, 160)
+		if npack == nil then return end
+		DataPack.writeChar(npack, (-12)) --跟上次昵称相同了
+		DataPack.flush(npack)
+		return
+	end
+
+	local nameLen = System.getStrLenUtf8(name)
+	if nameLen <= 0 or nameLen > 6 then
+		local npack = DataPack.allocPacket(sysarg, 139, 160)
+		if npack == nil then return end
+		DataPack.writeChar(npack, (-13)) --名称无效，长度不符合规则
+		DataPack.flush(npack)
+		return
+	end
+
+	if not LActorMgr.checkNameStr(name) then
+		local npack = DataPack.allocPacket(sysarg, 139, 160)
+		if npack == nil then return end
+		DataPack.writeChar(npack, (-14)) --包含不可用符号
+		DataPack.flush(npack)
+		return
+	end
+
+	--local needItem = Item.getItemById(sysarg, conf.needItemId, 1)
+	--if needItem == nil then
+	--	needItem = Item.getItemById(sysarg, conf.needItemId, 0)
+	--	if needItem == nil then
+	--		LActor.sendTipmsg( sysarg, Lang.ScriptTips.cn001, ttMessage )
+	--		return
+	--	end
+	--end
+
+	
+	LActor.changeName(sysarg, name)
+end
+
+
+-- 答题活动修改名字
+MiscsImplement.changeAnswerName = function (oldName,newName)
+	local sysvar = System.getStaticVar()
+	if not sysvar.answerData then return end
+	if not sysvar.answerData.state then return end
+	if 0 == sysvar.answerData.state then return end
+	if not sysvar.answerData.ranknum then 
+		sysvar.answerData.ranknum = 0 
+	end
+
+	for i=1,sysvar.answerData.ranknum do
+		if sysvar.answerData.rank[i].actorName == oldName then
+			sysvar.answerData.rank[i].actorName = newName
+		end
+	end	
+end
+
+-- 修改通天塔层主信息
+MiscsImplement.changeMastersName = function(oldName, newName, actorId)
+	local sysVar = System.getStaticVar()
+	if sysVar == nil then return end
+
+	local count = 0
+	if sysVar.tongtianta ~= nil then
+		for i=1,#TongTianTaConf.scenes do
+			if sysVar.tongtianta[i] == nil then break end
+			count = count + 1
+		end
+	end
+
+	for i=1,count do
+		if sysVar.tongtianta[i].name == oldName then
+			sysVar.tongtianta[i].name = newName
+		end
+	end
+
+	if sysVar ~= nil and sysVar.tongtianta ~= nil then
+		for i=1,#TongTianTaConf.scenes do
+			local rankName = TongTianTaPublic.getRandName(i)
+			local rank = Ranking.getRanking(rankName)
+			if rank ~= nil then
+				local rankItem = Ranking.getItemPtrFromId(rank, actorId)
+				if rankItem then
+					Ranking.setSub(rankItem, 1, name)
+				end
+			end
+		end
+	end
+end
+
+--改名(c++回调)
+MiscsImplement.OnSetUserName = function(sysarg, arg)
+	local res = arg[1]
+	local name = arg[2]
+	local rawName = arg[3]
+	local way = arg[4] or 0 -- 改名方式,旧的版本没传这个参数
+
+	if name == nil or rawName == nil then return end
+	local conf = RenamedCardConf
+	if res == 0 then
+
+
+		--[[
+		local needItem = nil
+		if way ~= 1 then
+			needItem = Item.getItemById(sysarg, conf.needItemId, 1)
+			if needItem == nil then
+				needItem = Item.getItemById(sysarg, conf.needItemId, 0)
+				if needItem == nil then
+					LActor.sendTipmsg( sysarg, Lang.ScriptTips.cn001, ttMessage )
+					return
+				end
+			end
+		end
+		--]]
+
+		local var = LActor.getStaticVar( sysarg )
+		if var == nil then return end
+		--if way == 1 or LActor.removeItemByPtr(sysarg, needItem, 1, true, "UseRenamedCard", 5) > 0 then      --删除一个物品
+			if var.ChangeNameCD > 0 then
+				local price = conf.needYubao * var.ChangeNameCD
+				LActor.changeMoney(sysarg, 3, -price, 1, true, "changeUseName", "")
+			end
+			var.ChangeNameCD = var.ChangeNameCD + 1
+			MiscsImplement.SendChangedNameNum(sysarg)
+			local aId = LActor.getActorId(sysarg)
+			LActor.setEntityName(sysarg, name)
+			LActor.friendStatusChange(sysarg)
+
+			-- if way ~= 1 then -- 修复bug的情况下不改变CD
+			-- 	var.ChangeNameCD = System.getCurrMiniTime()
+			-- end
+
+			--log
+			local logStr = string.format("%s_%s", rawName, name)
+			System.logCounter(LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), "changeName", logStr, "", "", "", "", "", "", lfDB)
+			local var_sy = System.getStaticVar()
+			if var_sy then
+				if var_sy.MateChangeList == nil then
+					var_sy.MateChangeList = {}
+				end
+				-- local aId = LActor.getActorId(sysarg)
+				var_sy.MateChangeList[aId] = name
+
+				if var_sy.HeFuChangeList then
+					if var_sy.HeFuChangeList[aId] == nil then
+						var_sy.HeFuChangeList[aId] = {}
+					end
+					if var_sy.HeFuChangeList[aId].oldNames == nil then
+						var_sy.HeFuChangeList[aId].oldNames = {}
+					end
+					local oldCount = #(var_sy.HeFuChangeList[aId].oldNames) + 1
+					var_sy.HeFuChangeList[aId].oldNames[oldCount] = rawName
+					var_sy.HeFuChangeList[aId].curName = name
+				end
+			end
+
+			-- 答题
+			MiscsImplement.changeAnswerName(rawName, name)
+			-- 通天塔
+			MiscsImplement.changeMastersName(rawName, name, aId)
+			--================
+			--跨服群P战
+			--JinXianZhiLi.changeFighterName(sysarg, name )
+			--================
+			--仙道会
+			--身价
+			local rank = ArenaFuncList.arenaPriceRank
+			if rank ~= nil then
+				local rankItem = Ranking.getItemPtrFromId(rank, aId)
+				if rankItem then
+					Ranking.setSub(rankItem, 0, name)
+				end
+			end
+
+			--下注
+			rank = ArenaFuncList.arenaBetRank
+			if rank ~= nil then
+				local rankItem = Ranking.getItemPtrFromId(rank, aId)
+				if rankItem then
+					Ranking.setSub(rankItem, 16, name)
+				end
+			end
+			-- 自由赛
+			rank = ArenaFuncList.ZysRank
+			if rank ~= nil then
+				local rankItem = Ranking.getItemPtrFromId(rank, aId)
+				if rankItem then
+					Ranking.setSub(rankItem, 0, name)
+				end
+			end
+			-- 争霸赛
+			rank = ArenaFuncList.ZbsRank
+			if rank ~= nil then
+				local rankItem = Ranking.getItemPtrFromId(rank, aId)
+				if rankItem then
+					Ranking.setSub(rankItem, 0, name)
+				end
+			end
+			-- 上届16强
+			rank = ArenaFuncList.PrevRank
+			if rank ~= nil then
+				local rankItem = Ranking.getItemPtrFromId(rank, aId)
+				if rankItem then
+					Ranking.setSub(rankItem, 0, name)
+				end
+			end
+			
+			-- -- 自由赛报名榜***
+			-- rank = ArenaFuncList.SignRank
+			-- if rank ~= nil then
+			-- 	local rankItem = Ranking.getItemPtrFromId(rank, aId)
+			-- 	if rankItem then
+			-- 		Ranking.setSub(rankItem, 0, name)
+			-- 	end
+			-- end
+
+			--天元之战的所有排行榜
+			rank = Ranking.getRanking(TianYuanRankName)
+			if rank ~= nil then
+				local rankItem = Ranking.getItemPtrFromId(rank, aId)
+				if rankItem then
+					Ranking.setSub(rankItem, 0, name)
+				end
+			end
+
+			--TianYuanOldGuildRankName
+			rank = Ranking.getRanking(TianYuanOldGuildRankName)
+			if rank ~= nil then
+				local rankItem = Ranking.getItemPtrFromId(rank, aId)
+				if rankItem then
+					Ranking.setSub(rankItem, 0, name)
+				end
+			end
+
+			--TianYuanGuildRankName*****
+			rank = Ranking.getRanking(TianYuanGuildRankName)
+			if rank ~= nil then
+				--local rankItem = Ranking.getItemPtrFromId(rank, aId)
+				local rankItem = Ranking.getItemFromIndex(rank, 0)
+				if rankItem then
+					local leaderidStr = Ranking.getSub(rankItem,6)
+					local leaderid = tonumber(leaderidStr) or 0
+					if leaderid == aId then
+						Ranking.setSub(rankItem, 3, name)
+					end
+				end
+			end
+
+			if LGuild.getTianYuanStaicLeaderId() == aId then
+				local leadersex =  LActor.getIntProperty(sysarg, PROP_SEX)
+				local leaderjob = LGuild.getTianYuanLeaderJob()
+
+				local scene = Fuben.getSceneHandleById(TianYuanConfig.STATUENPCSCENE, 0)
+				for i=1,#TianYuanConfig.MODEL do
+					if  TianYuanConfig.MODEL[i].job == leaderjob and  TianYuanConfig.MODEL[i].sex == leadersex then
+						Fuben.setSceneNpcmodel(scene, TianYuanConfig.STATUENPCX,TianYuanConfig.STATUENPCY, TianYuanConfig.MODEL[i].modelid, name)
+					end
+				end
+				LGuild.updateMasterData(sysarg)
+			end
+			--============================
+			--洞府(暂时没用)
+			--[[
+			local dfData = DongfuManager.getDongfuData(aId)
+			if dfData then
+				dfData.ownerName = name
+				DongfuManager.onChanged(aId)
+			end
+			--]]
+
+			--===========================金矿活动
+			--(暂时没用)
+			--GoldOreFunc.ChangeMinerName(sysarg)
+			--=============================
+			--阵营战
+			for i=1, CampBattleConf.maxBattle do
+				local rankList = Camp.getRanking(i)
+				if rankList then
+					local rankItem = Ranking.getItemPtrFromId(rankList, aId)
+					if rankItem then
+						Ranking.setSub(rankItem, 0, name)
+					end
+				end
+			end
+
+			-- local rankList = Camp.getRanking(0)
+			-- if rankList == nil then
+			-- 	local rankItem = Ranking.getItemPtrFromId(rankList, aId)
+			-- 	if rankItem then
+			-- 		Ranking.setSub(rankItem, 3, name)
+			-- 	end
+			-- end
+			--============================
+			--合服活动
+			local rank = Ranking.getRanking("hefufightrank")
+			if rank ~= nil then
+				local rankItem = Ranking.getItemPtrFromId(rank, aId)
+				if rankItem then
+					Ranking.setSub(rankItem, 0, name)
+					Ranking.save(rank, "hefufightrank")
+				end
+			end
+			rank = Ranking.getRanking("hefupetrank")
+			if rank ~= nil then
+				local rankItem = Ranking.getItemPtrFromId(rank, aId)
+				if rankItem then
+					Ranking.setSub(rankItem, 0, name)
+					Ranking.save(rank, "hefupetrank")
+				end
+			end
+			rank = Ranking.getRanking(HefuConf.CampRankName)
+			if rank ~= nil then
+				local rankItem = Ranking.getItemPtrFromId(rank, aId)
+				if rankItem then
+					Ranking.setSub(rankItem, 0, name)
+					Ranking.save(rank, HefuConf.CampRankName)
+				end
+			end
+			rank = Ranking.getRanking(HefuFuncList.ConsumeRankName)
+			if rank ~= nil then
+				local rankItem = Ranking.getItemPtrFromId(rank, aId)
+				if rankItem then
+					Ranking.setSub(rankItem, 0, name)
+					Ranking.save(rank, HefuFuncList.ConsumeRankName)
+				end
+			end
+
+			local var_sys = System.getStaticVar()
+			if var_sys and var_sys.hefuinfo and var_sys.hefuinfo.tyguild and var_sys.hefuinfo.tyguild.ids then
+
+				local name = LActor.getName(sysarg)
+				local gid = LActor.getGuildId(sysarg)
+				local gname = LGuild.getGuildName(gid)
+				if gname == nil then gname = "" end
+
+				--local ids = { name, gname, name, gname }
+				for i=1, 4 do
+					if (i % 2) == 1 then
+						if var_sys.hefuinfo.tyguild.ids[i] == rawName then
+							var_sys.hefuinfo.tyguild.ids[i] = name
+						end
+					end
+				end
+			end
+
+			--================
+
+			-- local list = LActor.getFriendIdList(sysarg) or {}
+			-- local mailContext = string.format(conf.mailContext, rawName, name)
+			-- for _, id in ipairs(list) do
+			-- 	System.sendGmMailOffLine(id, mailContext, 0, 0, 0, 0)
+			-- end
+
+
+			
+		--end
+
+		-- 修复玩家名字含特殊字符问题,补偿一个改名卡
+		if way == 1 then
+			local context = "亲爱的玩家您好，由于您的名字中含有非法字符，系统已经将您的名字重置，并补发给您[改名卡]，您可以使用[改名卡]为您的角色重新命名1次，给您带来不便，敬请谅解！"
+			System.sendGmMailOffLine(LActor.getActorId(sysarg), context, 1, 44965, 1, 1)
+		end
+
+		--[[
+		-- 更新一下actorrealtime表
+		System.SendToDb(1, 106, 4, 
+			dtInt, LActor.getActorId(sysarg), 
+			dtInt, LActor.getLevel(sysarg), 
+			dtString, LActor.getName(sysarg), 
+			dtString, LActor.getAccountName(sysarg))
+		--]]
+		local list = LActor.getFriendIdList(sysarg) or {}
+		for _,friend_id in ipairs(list) do
+			 local actor = LActor.getActorById(friend_id)
+	         if actor ~= nil then
+	         	local str = LActor.getStaticVar(actor)
+	            if str ~= nil and str.lingqulist ~= nil then
+	               for i=1, #str.lingqulist do
+	               	 	if str.lingqulist[i].friend_id == aId then
+	               	 	  	str.lingqulist[i].name = name
+	               	 	  --	print("---玩家改名",friend_id,name)
+	               		end
+	               end
+	            end
+	         end
+		end
+
+	end
+	
+
+	local npack = DataPack.allocPacket(sysarg, 139, 160)
+	if npack == nil then return end
+	DataPack.writeChar(npack, res)
+	DataPack.flush(npack)
+end
+
+--验证昵称
+MiscsImplement.SendChangedNameNum = function(sysarg, msgid, packet)
+	--[[
+	local name = DataPack.readString(packet)
+	if name == nil then return end
+
+	name = LActorMgr.lowerCaseNameStr(name)	
+	local rawName = LActor.getName(sysarg)
+
+	--该昵称已经被注册
+	if (rawName == name) or LActorMgr.nameHasUser(name) then
+		local npack = DataPack.allocPacket(sysarg, 139, 161)
+		if npack == nil then return end
+		DataPack.writeChar(npack, (-6))
+		DataPack.flush(npack)
+		return
+	end
+
+	--该昵称长度不符合规则
+	local nameLen = System.getStrLenUtf8(name)
+	if nameLen <= 0 or nameLen > 6 then
+		local npack = DataPack.allocPacket(sysarg, 139, 161)
+		if npack == nil then return end
+		DataPack.writeChar(npack, (-12))
+		DataPack.flush(npack)
+		return
+	end
+
+	--该昵称包含不可用符号
+	if not LActorMgr.checkNameStr(name) then
+		local npack = DataPack.allocPacket(sysarg, 139, 161)
+		if npack == nil then return end
+		DataPack.writeChar(npack, (-13))
+		DataPack.flush(npack)
+		return
+	end
+
+	--昵称不能为空
+	if tostring(name) == "" then
+		local npack = DataPack.allocPacket(sysarg, 139, 161)
+		if npack == nil then return end
+		DataPack.writeChar(npack, (-14))
+		DataPack.flush(npack)
+		return
+	end
+
+	--昵称可用
+	local npack = DataPack.allocPacket(sysarg, 139, 161)
+	if npack == nil then return end
+	DataPack.writeChar(npack, 0)
+	DataPack.flush(npack)
+
+	--]]
+
+	local var = LActor.getStaticVar( sysarg )
+	if var == nil then return end
+	if var.ChangeNameCD == nil then --修改次数
+		var.ChangeNameCD = 0
+	end
+
+	local npack = DataPack.allocPacket(sysarg, 139, 161)
+	if npack == nil then return end
+	DataPack.writeInt(npack, var.ChangeNameCD)
+	DataPack.flush(npack)
+end
+
+-- 登录
+MiscsImplement.onLoginMisc = function(sysarg, arg)
+	--[[
+	local sid = System.getServerId()
+	--if sid < 30 then
+		local var = LActor.getStaticVar(sysarg)
+		if var.fixname == nil then -- 修复玩家名字含特殊字符问题
+			var.fixname = 1
+			if not LActorMgr.checkNameStr(LActor.getName(sysarg)) then
+				print("==========fix actorname name=========")
+				LActor.changeName(sysarg, "", 1)
+			end
+		end
+	--end
+	--]]
+
+	--print("下发下发已改名次数=======")
+	MiscsImplement.SendChangedNameNum(sysarg, 161)
+end
+
+MiscsImplement.GetFubenInfo = function( sysarg, arg )
+	local fbptr = LActor.getFubenPrt(sysarg)
+	if not fbptr then return end
+	local time = Fuben.getFbTime(fbptr)
+	local npack = DataPack.allocPacket(sysarg, 139, 162)
+	if npack == nil then return end
+	-- print("MiscsImplement.GetFubenInfo",time)
+	DataPack.writeInt(npack, time)
+	DataPack.flush(npack)
+end
+
+MiscsImplement.registerMsgHandler(64, MiscsImplement.ClientParam)
+MiscsImplement.registerMsgHandler(72, MiscsImplement.GetSceneNpcStatus) 
+MiscsImplement.registerMsgHandler(73, MiscsImplement.SetBroadcastLimit) 
+MiscsImplement.registerMsgHandler(74, MiscsImplement.SetActorScreen) 
+MiscsImplement.registerMsgHandler(83, MiscsImplement.QuitGame) 
+MiscsImplement.registerMsgHandler(85, MiscsImplement.GetActivityNum)
+MiscsImplement.registerMsgHandler(86, MiscsImplement.GetActorIsOnline)
+MiscsImplement.registerMsgHandler(87, MiscsImplement.UploadPhoneInfo)
+MiscsImplement.registerMsgHandler(123, MiscsImplement.GetSystemTime)
+MiscsImplement.registerMsgHandler(124, MiscsImplement.GetStdItemInfo)
+--MiscsImplement.registerMsgHandler(127, MiscsImplement.GetStoneMaterialNum)
+MiscsImplement.registerMsgHandler(130, MiscsImplement.GetStoreActivityReward)
+MiscsImplement.registerMsgHandler(133, MiscsImplement.AddFubenCount)
+MiscsImplement.registerMsgHandler(136, MiscsImplement.GetFubenListRemainnum)
+MiscsImplement.registerMsgHandler(149, MiscsImplement.AddFubenCountTjxs)			-- 增加副本次数（天将雄狮特有）
+--MiscsImplement.registerMsgHandler(131, MiscsImplement.SetActorset)
+MiscsImplement.registerMsgHandler(160, MiscsImplement.ChangeUserName) --角色改名
+MiscsImplement.registerMsgHandler(161, MiscsImplement.SendChangedNameNum) -- 下发已改名次数
+MiscsImplement.registerMsgHandler(162, MiscsImplement.GetFubenInfo) -- 获取副本时间
+
+MiscsImplement.getAchieveAward = function (sysarg, arg) 
+	local  score = arg[1]
+
+	local var = LActor.getStaticVar( sysarg )
+	if var == nil then return end
+
+	if var.achieveScore == nil then
+		var.achieveScore = 0
+	end
+
+	var.achieveScore = var.achieveScore + score
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, MiscsImplement.onLoginMisc)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeChangeName, MiscsImplement.OnSetUserName)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeAchieveAward, MiscsImplement.getAchieveAward)
+
+--[[MiscsImplement.AddActivityFBCount = function (sysarg, msgid, packet)
+    --玩家增加活动副本次数，客户端要传副本的id进来
+    local st = LActor.getStaticVar( sysarg )
+    local fbid = DataPack.readInt(packet)
+    local addfbcount = DataPack.readInt(packet)
+    local enterCount, addCount = Fuben.getEnterFubenInfo( sysarg, fbid )
+    --add wupeng 是否增加活动副本次数
+    if addfbcount == 1 then
+    	--add wupeng 这里先要判断总共的副本次数是否已经超过上限 
+        if daycount+addCount+st.activityfbcount >= ActivityFBConfig.activityfbSum then
+           LActor.sendTipmsg(sysarg, Lang.ScriptTips.f00076, ttDialog)
+           return
+        end
+	    if LActor.getMoneyCount(sysarg, mtBindYuanbao) >= ActivityFBConfig.bindyuanbao then 
+	        LActor.changeMoney( sysarg, mtBindYuanbao, -ActivityFBConfig.bindyuanbao, 1, true, "misc", "activityfbcount")   	
+	    	st.activityfbcount = st.activityfbcount + 1
+	    else 
+	    	if LActor.getMoneyCount(sysarg, mtYuanbao) < ActivityFBConfig.yuanbao then
+				LActor.sendTipmsg(sysarg, Lang.ScriptTips.f00075, ttDialog)
+				return
+			end
+			--扣东西  增加次数
+			LActor.changeMoney( sysarg, mtYuanbao, -ActivityFBConfig.yuanbao, 1, true, "misc", "activityfbcount")
+			st.activityfbcount = st.activityfbcount + 1	
+	    end
+    end	    
+    
+    --以下是发送给客户端的消息
+    local npack = DataPack.allocPacket(sysarg, 139, 126)
+    if npack == nil then return end	
+    DataPack.writeInt(npack, enterCount) --已经进入副本次数
+    DataPack.writeInt(npack, ActivityFBConfig.activityfbSum) --总共能进入副本的次数
+    DataPack.flush(npack)	
+end
+
+MiscsImplement.registerMsgHandler(126, MiscsImplement.AddActivityFBCount)
+
+MiscsImplement.ActivityFBEnter = function(sysarg, hfb, way)
+	local st = LActor.getStaticVar( sysarg )
+	if st.activityfbcount == nil then  st.activityfbcount = 0 end
+
+	local fbptr = Fuben.getFubenPtr(hfb)
+	if fbptr == nil then return end
+	
+	local fbid = Fuben.getFubenIdbyFuBenPtr(fbptr)
+
+    local enterCount, addCount = Fuben.getEnterFubenInfo( sysarg, fbid )
+	if enterCount == nil or addCount == nil or enterCount >= daycount+addCount+st.activityfbcount then
+		LActor.sendTipmsg( sysarg, Lang.ScriptTips.f00015, ttDialog )
+		return 
+	end
+end
+--add wupeng 注册进入副本
+for i=1,#ActivityFBConfig.activityfb do
+	EventCallDispatcher.registerFubenEnter(ActivityFBConfig.activityfb[i], MiscsImplement.ActivityFBEnter)
+end]]

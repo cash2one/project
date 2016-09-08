@@ -1,0 +1,103 @@
+
+
+DongfuManager.readLog = function(pChar)
+	local atHome, ownerId = DongfuManager.isAtHome(pChar)
+	if not atHome then return end
+
+	local dfData = DongfuManager.getDongfuData(ownerId)
+	local info = dfData.info
+	local list = info.logList or {}
+	local count = info.logCount or 0
+	local dp = DataPack.allocPacket(pChar, 157, 19)
+	DataPack.writeInt(dp, count)
+	for i = 1, count do
+		local lInfo = list[i]
+		DataPack.writeInt(dp, lInfo.time)
+		DataPack.writeByte(dp, lInfo.type)
+		DataPack.writeString(dp, lInfo.name)
+	end
+	DataPack.flush(dp)
+end
+
+DongfuManager.normalEvent = function(pChar, dfData, type)
+	local tInfo = DongfuConf.eventIndex[type]
+	DongfuManager.triggerEvent(pChar, dfData, type, tInfo)
+end
+
+DongfuManager.specEvent = function(pChar, dfData, type)
+	local tInfo = DongfuConf.specEventIndex[type]
+	DongfuManager.triggerEvent(pChar, dfData, type, tInfo, true)
+end
+
+DongfuManager.triggerEvent = function(pChar, dfData, type, tInfo, showMsg)
+	if tInfo == nil then return end
+	local info = dfData.info
+	local iInfo = tInfo[info.level or 1]
+	if iInfo == nil then return end
+	local eConf = DFEventConf[iInfo[2]]
+	if eConf == nil then return end
+
+	local rate = System.getRandomNumber(100) + 1
+	if rate > iInfo[1] then return end
+
+	local index = System.getRandomNumber(#eConf) + 1
+	local aInfo = eConf[index]
+	if aInfo == nil then return end
+
+	LActor.giveAward(pChar, aInfo.type, aInfo.value)
+	LActor.sendTipmsg(pChar, string.format(Lang.ScriptTips.df012, aInfo.value), ttMessage)
+
+	local name = LActor.getName(pChar)
+	if showMsg then
+		local tipmsg = string.format(aInfo.message, name, dfData.ownerName)
+		System.broadcastTipmsg(tipmsg, ttScreenCenter)
+	end
+
+	DongfuManager.writeLog(info, type, name)
+end
+
+--洞府操作事件
+DongfuManager.operatingEvent = function(pChar, dfData, type)
+	local tInfo = DongfuConf.specEventIndex[type]
+	if tInfo == nil then return end
+	local info = dfData.info
+	local iInfo = tInfo[info.level or 1]
+	if iInfo == nil then return end
+	local eConf = DFEventConf[iInfo[2]]
+	if eConf == nil then return end
+
+	local index = System.getRandomNumber(#eConf) + 1
+	local aInfo = eConf[index]
+	if aInfo == nil then return end
+
+	local name = LActor.getName(pChar)
+	DongfuManager.writeLog(info, type, name)
+end
+
+DongfuManager.writeLog = function(info, type, name)
+	if info.logList == nil then
+		info.logList = {}
+	end
+	local list = info.logList
+	local count = info.logCount or 0
+	if count >= 60 then
+		-- 存储log记录超过60条，删掉前30条
+		for i = 1, 30 do 
+			local lInfo = list[30 + i]
+			list[i] = {
+				time 	= lInfo.time,
+				type 	= lInfo.type,
+				name 	= lInfo.name,
+			}
+			list[30 +i] = nil
+		end
+		count = 30
+	end
+	count = count + 1
+	list[count] = {
+		time	= System.getCurrMiniTime(),
+		type 	= type,
+		name 	= name,
+	}
+	info.logCount = count
+end

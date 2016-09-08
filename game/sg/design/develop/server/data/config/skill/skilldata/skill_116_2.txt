@@ -1,0 +1,53 @@
+{
+	actions=
+	{
+		{act=6,effect=20057,},	
+	},
+	
+	desc=Lang.Skill.s116L2Desc,
+	
+	iconID=116,
+	
+	actRange=
+	{
+		{
+			xStart=0,
+			xEnd=0,
+			yStart=0,
+			yEnd=0,
+			
+			rangeType=0,
+			rangeCenter=0,	
+			acts=
+			{
+				{
+					conds=
+					{
+						{cond=11,value=300},--10000/10000,配置1万就是100%
+						{cond=3,value=true},
+						{cond=12,value=false},
+					},
+
+					results=
+					{
+						{mj=0,timeParam=1,type=13,delay=0,value={rate=550,value=0,type=1}},-- value回血效果，万分比，interval是时效
+					},
+					specialEffects=
+					{
+						{type=6,mj=0,id=20052,keepTime=2000,delay=0,always=false,targetpos=true},
+					},
+				},
+			},
+		},
+	},
+	trainConds=
+	{
+	},
+	
+	spellConds=
+	{
+	},
+	singTime=0,
+
+	cooldownTime=30000,
+},

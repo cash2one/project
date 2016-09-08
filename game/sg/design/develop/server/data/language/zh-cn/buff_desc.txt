@@ -1,0 +1,115 @@
+﻿--[[
+Buff完整描述配置
+顺序与buff的id一一对应
+各个匹配格式串的定义，程序会替换这些格式串，替换成相应定义的内容。
+这些格式串并不一定全部都需要，只要用到了，程序就会替换，没用的就不会替换
+$name$			buff名称位置
+$inc$			属性增加或减少描述位置
+$value$			buff值位置
+$timeRemain$	buff剩余时间位置
+--]]
+buff_descs =
+{
+	"",--0
+	"",--1
+	"",--2
+	"",--3
+	"",--4
+	"",--5
+	"",--6
+	"",--7
+	"$name$<BR>获取经验速度$inc$：$value$<BR>$timeRemain$", --8,  棒棒糖经验倍率增加。
+	"",--9
+	"",--10
+	"$name$<BR>生命值$inc$：$value$<BR>$timeRemain$",		--11，生命值增加
+	"$name$<BR>生命值$inc$：$value$<BR>$timeRemain$",		--12，生命值倍率增加
+	"$name$<BR>耐力值$inc$：$value$<BR>$timeRemain$",		--13，耐力增加
+	"$name$<BR>耐力值$inc$：$value$<BR>$timeRemain$",		--14，耐力倍率增加
+	"$name$<BR>移动速度$inc$：$value$<BR>$timeRemain$",		--15，移动速度增加
+	"$name$<BR>移动速度$inc$：$value$<BR>$timeRemain$",		--16，移动速度倍率增加
+	"$name$<BR>生命值上限$inc$：$value$<BR>$timeRemain$",	--17，生命上限增加
+	"$name$<BR>生命值上限$inc$：$value$<BR>$timeRemain$",	--18，生命上限倍率增加
+	"$name$<BR>耐力值上限$inc$：$value$<BR>$timeRemain$",	--19，耐力上限增加
+	"$name$<BR>耐力值上限$inc$：$value$<BR>$timeRemain$",	--20，耐力上限倍率增加
+	"$name$<BR>外功攻击$inc$：$value$<BR>$timeRemain$",		--21，外功攻击增加
+	"$name$<BR>外功攻击$inc$：$value$<BR>$timeRemain$",		--22，外功攻击倍率增加
+	"$name$<BR>外功防御$inc$：$value$<BR>$timeRemain$",		--23，外功防御增加
+	"$name$<BR>外功防御$inc$：$value$<BR>$timeRemain$",		--24，外功防御倍率增加
+	"$name$<BR>抗暴击$inc$：$value$<BR>$timeRemain$",		--25，抗暴击增加
+	"$name$<BR>抗暴击$inc$：$value$<BR>$timeRemain$",		--26，抗暴击倍率增加
+	"$name$<BR>攻击$inc$：$value$<BR>$timeRemain$",			--27，所有攻击增加
+	"$name$<BR>攻击$inc$：$value$<BR>$timeRemain$",			--28，所有攻击倍率增加
+	"$name$<BR>忽视防御$inc$：$value$<BR>$timeRemain$",		--29，无视防御增加
+	"$name$<BR>忽视防御$inc$：$value$<BR>$timeRemain$",		--30，无视防御倍率增加
+	"$name$<BR>内功攻击$inc$：$value$<BR>$timeRemain$",		--31，内功攻击增加
+	"$name$<BR>内功攻击$inc$：$value$<BR>$timeRemain$",		--32，内功攻击倍率增加
+	"$name$<BR>内功防御$inc$：$value$<BR>$timeRemain$",		--33，内功防御增加
+	"$name$<BR>内功防御$inc$：$value$<BR>$timeRemain$",		--34，内功防御倍率增加
+	"$name$<BR>暴击值$inc$：$value$<BR>$timeRemain$",		--35，暴击值增加
+	"$name$<BR>暴击值$inc$：$value$<BR>$timeRemain$",		--36，暴击值倍率增加
+	"$name$<BR>闪避值$inc$：$value$<BR>$timeRemain$",		--37，闪避值增加
+	"$name$<BR>闪避值$inc$：$value$<BR>$timeRemain$",		--38，闪避值倍率增加
+	"$name$<BR>命中值$inc$：$value$<BR>$timeRemain$",		--39，命中值增加
+	"$name$<BR>命中值$inc$：$value$<BR>$timeRemain$",		--40，命中值倍率增加
+	"$name$<BR>伤害追加$inc$：$value$<BR>$timeRemain$",		--41，伤害追加增加
+	"$name$<BR>伤害追加$inc$：$value$<BR>$timeRemain$",		--42，伤害追加倍率增加
+	"$name$<BR>生命恢复$inc$：$value$<BR>$timeRemain$",		--43，生命恢复增加
+	"$name$<BR>生命恢复$inc$：$value$<BR>$timeRemain$",		--44，生命恢复倍率增加
+	"$name$<BR>耐力恢复$inc$：$value$<BR>$timeRemain$",		--45，耐力恢复增加
+	"$name$<BR>耐力恢复$inc$：$value$<BR>$timeRemain$",		--46，耐力恢复倍率增加
+	"$name$<BR>攻击速度$inc$：$value$<BR>$timeRemain$",		--47，攻击速度增加
+	"$name$<BR>攻击速度$inc$：$value$<BR>$timeRemain$",		--48，攻击速度倍率增加
+	"$name$<BR>内功免伤$inc$：$value$<BR>$timeRemain$",		--49，内功免伤增加
+	"$name$<BR>内功免伤$inc$：$value$<BR>$timeRemain$",		--50，内功免伤倍率增加
+	"$name$<BR>外功免伤$inc$：$value$<BR>$timeRemain$",		--51，外功免伤增加
+	"$name$<BR>外功免伤$inc$：$value$<BR>$timeRemain$",		--52，外功免伤倍率增加
+	"$name$<BR>内功护盾，吸收$value$点伤害<BR>$timeRemain$",	--53，护盾
+	"$name$<BR>所受伤害$inc$：$value$<BR>$timeRemain$",		--54，按比例吸收伤害,降低一定百分比的所受伤害
+	"$name$<BR>使用内功抵消$value$点伤害<BR>$timeRemain$",	--55，伤害转换为蓝的消耗,吸收N点伤害，每吸收一点伤害需要损耗m点内力值，内力不足时护盾消失
+	"$name$<BR>定身：无法移动<BR>$timeRemain$",			--56，禁止移动,不可移动，但可施放技能
+	"$name$<BR>晕眩：无法移动和使用技能<BR>$timeRemain$",	--57，外功免伤倍率增加
+	"$name$<BR>无法使用内功攻击技能<BR>$timeRemain$",		--58，禁止使用内功攻击
+	"$name$<BR>无法使用外功攻击技能<BR>$timeRemain$",		--59，禁止使用外功攻击
+	"$name$<BR>免疫内功攻击<BR>$timeRemain$",				--60，免疫内功攻击
+	"$name$<BR>免疫外功攻击<BR>$timeRemain$",				--61，免疫外功攻击
+	"$name$<BR>免疫晕眩和定身<BR>$timeRemain$",				--62，免疫晕眩、定身
+	"$name$<BR>暴击伤害$inc$：$value$<BR>$timeRemain$",		--63，暴击伤害比率的提高，默认的是1.5倍
+	"$name$<BR>在攻击时有$value$几率将目标击晕<BR>$timeRemain$",		--64，攻击打出晕眩的几率
+	"$name$<BR>经验$inc$：$value$<BR>$timeRemain$",			--65，经验增加
+	"$name$<BR>有一定几率将目标击晕$value$秒<BR>$timeRemain$",		--66，攻击打出晕眩的持续时间
+	"$name$<BR>嘲讽：吸引目标攻击自己<BR>$timeRemain$",		--67，嘲讽
+	"$name$<BR>无敌：免疫任何攻击<BR>$timeRemain$",			--68，无敌,能攻击，不能被攻击
+	"$name$<BR>复活保护：免疫任何攻击<BR>$timeRemain$",		--69，复活保护状态
+	"$name$<BR>获取真气速度$inc$：$value$<BR>$timeRemain$",	--70，跳跃体力的恢复速度的增加
+	"$name$<BR>技能伤害追加百分比$inc$：$value$<BR>$timeRemain$",	--71，技能伤害追加百分比，为10000的倍数，比如2000表示0.2,整数
+	"",														--72，使用一个buff的效果是定时使用技能
+	"$name$<BR>隐身：使敌人无法发现自己<BR>$timeRemain$",	--73，隐身
+	"$name$<BR>3秒内无法使用技能<BR>$timeRemain$",			--74，沉默3秒
+	"$name$<BR>获取经验速度$inc$：$value$<BR>$timeRemain$",	--75，获取经验速率增加
+	"$name$<BR>真气$inc$：$value$<BR>$timeRemain$",			--76，真气增加
+	"$name$<BR>反弹$value$伤害给目标<BR>$timeRemain$",		--77，反弹百分比伤害给目标
+	"$name$<BR>生命值$inc$：$value$<BR>$timeRemain$",		--78，伙伴血量增加
+	"",														--79，禁止刷新外观
+	"$name$<BR>对怪物伤害$inc$：$value$<BR>$timeRemain$",	--80，杀怪伤害的提升，在最后的伤害输出的时候计算，忍术攻击或者幻术攻击的伤害输出(dot无效)
+	"$name$<BR>内功免伤$inc$：$value$<BR>$timeRemain$",		--81，	
+	"$name$<BR>外功免伤$inc$：$value$<BR>$timeRemain$",		--82，
+	"$name$<BR>内功反弹，将所受内功伤害反弹$value$给对方<BR>$timeRemain$",		--83，内功反伤
+	"$name$<BR>外功反弹，将所受外功伤害反弹$value$给对方<BR>$timeRemain$",		--84，外功反伤
+	"$name$<BR>PK保护状态<BR>$timeRemain$",					--85，pk保护状态
+	"$name$<BR>伤害追加$inc$：$value$<BR>$timeRemain$",		--86，伤害追加增加
+	"",														--87，
+	"$name$<BR>受到暴击时伤害$inc$：$value$<BR>$timeRemain$",		--88，受到暴击伤害减少n%
+	"$name$<BR>威望$inc$：$value$<BR>$timeRemain$",			--89，威望增加 n 
+	"$name$<BR>阵营贡献度速度$inc$：$value$<BR>$timeRemain$",			--90，阵营贡献度速度(浮点型) +%n
+	"$name$<BR>威望的获取速度$inc$：$value$<BR>$timeRemain$",			--91，威望的获取速度加成(浮点型),+%n
+	"",														--92，
+	"$name$<BR>禁止上坐骑<BR>$timeRemain$",					--93，禁止上坐骑
+	"$name$<BR>禁止使用速传符<BR>$timeRemain$",				--94，禁止速传
+	
+	"一级阵营buff",											--95, 一级阵营buff
+	"二级阵营buff",											--96, 二级阵营buff
+	"三级阵营buff",											--97, 三级阵营buff
+	"100%伤害miss状态",										--98,miss状态
+	"炎凰之持<BR>每次攻击100%暴击<BR>$timeRemain$",			--99,炎凰之持
+	
+}

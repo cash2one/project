@@ -1,0 +1,372 @@
+-- 剑试云台 (组队爬塔副本)
+-- Author: LiaoYuDong
+-- Data: 2016-5-24
+
+--#include "data\config\gameplay\jianshiyuantaiconfig.txt" once
+
+JianShiYunTaiFuncs = {}
+
+-- 检查是否是这个副本里面的场景
+JianShiYunTaiFuncs.isOwnSceneId = function (sceneId)
+	if JianShiYunTaiConfig.sceneId == sceneId then
+		return true
+	end
+	return false
+end
+
+-- 副本怪物都死亡的注册事件
+JianShiYunTaiFuncs.registerAllMonsterDeath = function ()
+	MonAllKilledDispatcher.register(JianShiYunTaiConfig.sceneId, JianShiYunTaiFuncs.killFloorAllMonster, JianShiYunTaiConfig.timeNext)
+end
+
+-- 副本结算
+JianShiYunTaiFuncs.goGameOver = function (fubenPtr)
+	local fubenId = Fuben.getFubenIdbyFuBenPtr(fubenPtr)
+	if fubenId ~= JianShiYunTaiConfig.fubenId then
+		return
+	end
+	local fbActorList = LuaHelp.getFbActorList(fubenPtr)
+	if fbActorList == nil then
+		return
+	end
+	Fuben.setStopMonsterRunOne(fbActorList[1])
+	for i = 1 , #fbActorList do
+		-- fubenjiesuan.GameOver(fbActorList[i])
+		local activationType = fubenjiesuan.GetActivationType(JianShiYunTaiConfig.fubenId)
+		if activationType ~= nil then
+			-- 活跃度
+			-- ActivationTrigger(fbActorList[i], activationType)
+		end
+		JianShiYunTaiFuncs.sendFubenResult(fbActorList[i], fubenPtr)
+	end
+end
+
+-- 发送副本结算面板
+JianShiYunTaiFuncs.sendFubenResult = function (actorobj, fubenPtr)
+	local fubenHandle = Fuben.getFubenHandle(fubenPtr)
+	local itemTable = {}
+	local fbVar = Fuben.getDyanmicVar(fubenPtr)
+	fbVar.IsTongguan = 1 -- 我次奥 这是有用的字段 不能随意改名
+	local actorId = LActor.getActorId(actorobj)
+	if fbVar.fbAwardList ~= nil and fbVar.fbAwardList[actorId] ~= nil then
+		local size = #fbVar.fbAwardList[actorId]
+		--物品类型的问题
+		for k = 1, size  do
+			local itemColor = Item.getItemPropertyById(fbVar.fbAwardList[actorId][k][1], Item.ipItemColor)
+			local tItem = {
+				id = fbVar.fbAwardList[actorId][k][1],
+				count = fbVar.fbAwardList[actorId][k][2],
+				color = itemColor,
+			}
+			table.insert(itemTable, tItem)
+		end
+	else
+		print("---------actorId----------")
+	end
+	-- table.sort(itemTable, function (tItem1, tItem2)
+	-- 	if tItem1 == nil or tItem2 == nil then
+	-- 		return false
+	-- 	end
+	-- 	if tItem1.itemColor > tItem2.itemColor then
+	-- 		return true
+	-- 	end
+	-- 	return false
+	-- end)
+	local fubenExp = LActor.getCaleData(actorobj, 0)
+
+	local actorVar = LActor.getStaticVar(actorobj)
+	if actorVar.jianshiyuantai_var == nil then
+		actorVar.jianshiyuantai_var = {}
+		actorVar.jianshiyuantai_var.his_top_floor = {} -- 剑试云台历史最高层数
+		actorVar.jianshiyuantai_var.his_top_floor[1] = 0 -- 普通难度最高记录
+		actorVar.jianshiyuantai_var.his_top_floor[2] = 0 -- 困难难度最高记录
+		actorVar.jianshiyuantai_var.his_top_floor[3] = 0 -- 深渊难度最高记录
+	end
+	-- 为了老号不报错
+	if type(actorVar.jianshiyuantai_var.his_top_floor) == "number" then
+		actorVar.jianshiyuantai_var.his_top_floor = {} -- 剑试云台历史最高层数
+		actorVar.jianshiyuantai_var.his_top_floor[1] = 0 -- 普通难度最高记录
+		actorVar.jianshiyuantai_var.his_top_floor[2] = 0 -- 困难难度最高记录
+		actorVar.jianshiyuantai_var.his_top_floor[3] = 0 -- 深渊难度最高记录
+	end
+
+	local difficul = Fuben.getFubenDifficulty(fubenHandle)
+
+	if fbVar.jianshiyuantai_var.now_floor > actorVar.jianshiyuantai_var.his_top_floor[difficul] then
+		actorVar.jianshiyuantai_var.his_top_floor[difficul] = fbVar.jianshiyuantai_var.now_floor
+	end
+
+	local pack = DataPack.allocPacket(actorobj, 167, 11)
+	DataPack.writeInt(pack, JianShiYunTaiConfig.fubenId)
+	DataPack.writeInt(pack, 5) -- 结算的协议
+	DataPack.writeInt(pack, fbVar.jianshiyuantai_var.now_floor) -- 当前的层数
+	DataPack.writeInt(pack, actorVar.jianshiyuantai_var.his_top_floor[difficul]) -- 玩家最高层数
+	DataPack.writeInt(pack, fubenExp)
+	DataPack.writeInt(pack, #itemTable)
+	for k = 1, #itemTable do
+		DataPack.writeWord(pack,itemTable[k].id)
+		DataPack.writeInt(pack, itemTable[k].count)
+	end
+	DataPack.flush(pack)
+
+	Fuben.SetFubenTime(fubenHandle, 12) -- 默认12秒后踢出来
+end
+
+-- 副本退出
+JianShiYunTaiFuncs.goFubenExit = function (actorobj, fubenHandle, exitWay)
+	-- body
+	if not exitWay or exitWay ~= 1 or not actorobj or not fubenHandle then
+		return
+	end
+	local fbPtr = Fuben.getFubenPtr(fubenHandle)
+
+	--恢复技能cd
+	LActor.restoreRecordCD(actorobj)
+	fubenbase.ExitFubenRestore(actorobj)
+	LActor.partnerOnActorRelive(actorobj)
+end
+
+-- 杀光了整层的怪物
+JianShiYunTaiFuncs.killFloorAllMonster = function (sceneId, scenePtr, flag, monsterEntity)
+	debug_print("=======================> JianShiYunTaiFuncs.killFloorAllMonster")
+	if JianShiYunTaiFuncs.isOwnSceneId(sceneId) == true then
+		local sceneHandle = Fuben.getSceneHandleByPtr(scenePtr)
+		if sceneHandle <= 0 then
+			return
+		end
+		local fbPtr = Fuben.getSceneFuben(scenePtr)
+		if fbPtr == nil then
+			return
+		end
+		local fbVar = Fuben.getDyanmicVar(fbPtr)
+		if fbVar.jianshiyuantai_var == nil then
+			return
+		end
+		local fubenHandle = Fuben.getFubenHandle(fbPtr)
+		local difficul = Fuben.getFubenDifficulty(fubenHandle)
+		local floor = fbVar.jianshiyuantai_var.now_floor + 1
+
+		local sceneTransterConfig = JianShiYunTaiConfig.monsterList[difficul]
+		if sceneTransterConfig == nil or sceneTransterConfig[floor] == nil then -- 没有配置了 或者达到最大层数了 结算
+			-- 结束通关
+			debug_print("===============> 达到最大层数 通关")
+			JianShiYunTaiFuncs.goGameOver(fbPtr)
+			return
+		end
+
+		fbVar.jianshiyuantai_var.go_next_floor = 1 -- 标记进入下一层 3s后回调函数检查用
+		-- Fuben.postSceneTimeCall(sceneHandle, TimerMsg.JianShiYunTaiTimeMsg, JianShiYunTaiConfig.timeNext, -1) -- 定时器 3s后触发
+		JianShiYunTaiFuncs.onTimeCall(TimerMsg.JianShiYunTaiTimeMsg, scenePtr)
+	end
+end
+
+-- 定时器回调函数
+JianShiYunTaiFuncs.onTimeCall = function (msgId, scenePtr)
+	debug_print("==============> 回调定时器 msgId:" .. tostring(msgId))
+	if msgId ~= TimerMsg.JianShiYunTaiTimeMsg then
+		return
+	end
+	local fbPtr = Fuben.getSceneFuben(scenePtr)
+	if fbPtr == nil then
+		return
+	end
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+	if fbVar.jianshiyuantai_var == nil then
+		return
+	end
+	local fubenId = Fuben.getFubenIdbyFuBenPtr(fbPtr)
+
+	if fubenId ~= JianShiYunTaiConfig.fubenId then
+		return
+	end
+
+	local fubenHandle = Fuben.getFubenHandle(fbPtr)
+	local sceneId = JianShiYunTaiConfig.sceneId
+	local sceneHandle = Fuben.getSceneHandleByPtr(scenePtr)
+
+	if fbVar.jianshiyuantai_var.go_next_floor == 1 then -- 进入下一层的标记
+		fbVar.jianshiyuantai_var.go_next_floor = 0
+		-- 清除定时器
+		Fuben.clearSceneTimeCall(sceneHandle)
+
+		local floor = fbVar.jianshiyuantai_var.now_floor + 1
+
+		local difficul = Fuben.getFubenDifficulty(fubenHandle)
+
+		local sceneTransterConfig = JianShiYunTaiConfig.monsterList[difficul]
+		if sceneTransterConfig == nil or sceneTransterConfig[floor] == nil then -- 没有配置了 或者达到最大层数了 结算
+			-- 结束通关
+			debug_print("===============> 达到最大层数 通关")
+			JianShiYunTaiFuncs.goGameOver(fbPtr)
+			return
+		end
+
+		fbVar.jianshiyuantai_var.now_floor = fbVar.jianshiyuantai_var.now_floor + 1 -- 层数增加1
+
+		local fbActorList = LuaHelp.getFbActorList(fbPtr)
+		if fbActorList ~= nil then
+			for i = 1, #fbActorList do
+				LActor.catchTargetToXY(fbActorList[i], JianShiYunTaiConfig.position[1], JianShiYunTaiConfig.position[2])
+				-- 发送层数
+				JianShiYunTaiFuncs.sendNowFloor(fbActorList[i], fbVar.jianshiyuantai_var.now_floor, #sceneTransterConfig)
+			end
+		end
+		
+		-- 创建怪物
+		JianShiYunTaiFuncs.createMonsters(fubenHandle, sceneId, fbVar.jianshiyuantai_var.now_floor)
+	end
+end
+
+JianShiYunTaiFuncs.createMonsters = function (fubenHandle, sceneId, stage)	
+	local sceneHandle = Fuben.getSceneHandleById(sceneId, fubenHandle)
+	if sceneHandle <= 0 then
+		debug_print("========> 剑试云台创建怪物失败 sceneHandle 不存在")
+		return
+	end
+	local difficul = Fuben.getFubenDifficulty(fubenHandle) or 3 -- 默认深渊
+	if JianShiYunTaiConfig.monsterList[difficul] == nil then
+		debug_print("========> 剑试云台无对应难度配置文件:" .. tostring(difficul))
+		return
+	end
+	local monsterListConf = JianShiYunTaiConfig.monsterList[difficul][stage]
+	if monsterListConf == nil then
+		debug_print("========> 剑试云台无对应波数刷怪配置文件:" .. tostring(stage))
+		return
+	end
+	for k, v in pairs(monsterListConf) do
+		Fuben.createMonsters(sceneHandle, v.monsterId, v.position[1], v.position[2], v.position[3], v.position[4], v.monsterNum, 0, true)
+	end
+end
+
+JianShiYunTaiFuncs.isFubenAllActorDie = function (fubenPtr)
+	local isAllDie = true
+	local actorList = LuaHelp.getFbActorList(fubenPtr)
+	if actorList ~= nil then
+		for i = 1 , #actorList do
+            if LActor.ActorIsDie(actorList[i]) == true then
+                isAllDie = false
+                break
+            end
+		end
+	end
+	return isAllDie
+end
+
+JianShiYunTaiFuncs.actorDeath = function (actorobj, killerEntity)
+	local fubenId = LActor.getFubenId(actorobj)
+	if fubenId ~= JianShiYunTaiConfig.fubenId then
+		return
+	end
+	local fbPtr = LActor.getFubenPrt(actorobj)
+
+	if JianShiYunTaiFuncs.isFubenAllActorDie(fbPtr) == true then
+		JianShiYunTaiFuncs.goGameOver(fbPtr)
+	end
+
+	-- 标记当前玩家已死亡
+	fbVar = Fuben.getDyanmicVar(fbPtr)
+	if fbVar.jianshiyuantai_var.deathActor == nil then
+		fbVar.jianshiyuantai_var.deathActor = {}
+	end
+	local actorId = LActor.getActorId(actorobj)
+	fbVar.jianshiyuantai_var.deathActor[actorId] = {} -- 标记死亡
+	fbVar.jianshiyuantai_var.deathActor[actorId].death = 1
+	fbVar.jianshiyuantai_var.deathActor[actorId].hp = 0
+	fbVar.jianshiyuantai_var.deathActor[actorId].mp = LActor.getIntProperty(actorobj, PROP_MP)
+end
+
+JianShiYunTaiFuncs.actorLogin = function (actorobj, firstLogin)
+	local fbPtr = LActor.getFubenPrt(actorobj)
+	if fbPtr ~= nil then
+		local fubenId = Fuben.getFubenIdbyFuBenPtr(fbPtr)
+		if JianShiYunTaiConfig.fubenId ~= fubenId then
+			return
+		end
+		local fbVar = Fuben.getDyanmicVar(fbPtr)
+		if fbVar.jianshiyuantai_var ~= nil then
+			local fubenHandle = Fuben.getFubenHandle(fbPtr)
+			local difficul = Fuben.getFubenDifficulty(fubenHandle)
+			local sceneTransterConfig = JianShiYunTaiConfig.monsterList[difficul]
+			if sceneTransterConfig == nil or sceneTransterConfig[fbVar.jianshiyuantai_var.now_floor] == nil then
+				return
+			end
+
+			local actorId = LActor.getActorId(actorobj)
+			if fbVar.jianshiyuantai_var.deathActor ~= nil and fbVar.jianshiyuantai_var.deathActor[actorId] ~= nil then
+				if fbVar.jianshiyuantai_var.deathActor[actorId].death == 1 then -- 已死亡
+					LActor.setIntProperty(actorobj, PROP_HP, fbVar.jianshiyuantai_var.deathActor[actorId].hp)
+					LActor.setIntProperty(actorobj, PROP_HP, fbVar.jianshiyuantai_var.deathActor[actorId].mp)
+				end
+			end
+			
+			JianShiYunTaiFuncs.sendNowFloor(actorobj, fbVar.jianshiyuantai_var.now_floor, #sceneTransterConfig)
+		end
+	end
+end
+
+JianShiYunTaiFuncs.sendNowFloor = function (actorobj, floor, totalFloor, newScene)
+	local pack = DataPack.allocPacket(actorobj, 167, 11)
+	DataPack.writeInt(pack, JianShiYunTaiConfig.fubenId)
+	DataPack.writeInt(pack, 8) -- 副本协议
+	DataPack.writeByte(pack, newScene or 0) -- 是否进入新场景 老字段 无效 默认0即可
+	DataPack.writeInt(pack, floor or 1)
+	DataPack.writeInt(pack, totalFloor or 1)
+	DataPack.flush(pack)
+end
+
+-- ================================ 消息处理 =================================
+-- 进入副本回调处理事件 预留
+JianShiYunTaiFuncs.enterInit = function (actorobj, fubenHandle)
+	local fbPtr = Fuben.getFubenPtr(fubenHandle)
+	if fbPtr == nil then
+		return
+	end
+	local fubenId = Fuben.getFubenIdbyFuBenPtr(fbPtr)
+	if fubenId ~= JianShiYunTaiConfig.fubenId then
+		return
+	end
+	local fubenHandle = Fuben.getFubenHandle(fbPtr)
+	local difficul = Fuben.getFubenDifficulty(fubenHandle)
+	if JianShiYunTaiConfig.monsterList[difficul] == nil then
+		debug_print("=========> 无此对应难度的副本配置:" .. tostring(fubenId))
+		return
+	end
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+	fbVar.jianshiyuantai_var = {}
+	fbVar.jianshiyuantai_var.now_floor = 1 -- 初始化在第一层
+
+	-- 创建该场景内的怪物
+	JianShiYunTaiFuncs.createMonsters(fubenHandle, JianShiYunTaiConfig.sceneId, fbVar.jianshiyuantai_var.now_floor)
+
+	local nTeam = LActor.getTeamId(actorobj)
+	if nTeam > 0 then
+		local nActionList = LuaHelp.getTeamMemberList(actorobj)
+		for i = 1 , #nActionList do
+      		LActor.enterFuBen(nActionList[i], fubenHandle, JianShiYunTaiConfig.sceneId, JianShiYunTaiConfig.position[1], JianShiYunTaiConfig.position[2])
+      		local actorVar = LActor.getStaticVar(nActionList[i])
+      		if actorVar.jianshiyuantai_var == nil then
+      			actorVar.jianshiyuantai_var = {}
+      			actorVar.jianshiyuantai_var.his_top_floor = {} -- 剑试云台历史最高层数
+      			actorVar.jianshiyuantai_var.his_top_floor[1] = 0 -- 普通难度最高记录
+      			actorVar.jianshiyuantai_var.his_top_floor[2] = 0 -- 困难难度最高记录
+      			actorVar.jianshiyuantai_var.his_top_floor[3] = 0 -- 深渊难度最高记录
+      		end
+		  	JianShiYunTaiFuncs.sendNowFloor(nActionList[i], fbVar.jianshiyuantai_var.now_floor, #JianShiYunTaiConfig.monsterList[difficul])
+      	end
+ 	else
+ 		LActor.enterFuBen(actorobj, fubenHandle, JianShiYunTaiConfig.sceneId, JianShiYunTaiConfig.position[1], JianShiYunTaiConfig.position[2])
+ 		JianShiYunTaiFuncs.sendNowFloor(actorobj, fbVar.jianshiyuantai_var.now_floor, #JianShiYunTaiConfig.monsterList[difficul])
+  	end
+
+  	fubenbase.Init(actorobj, JianShiYunTaiConfig.fubenId, JianShiYunTaiConfig.sceneId)
+end
+
+
+
+-- ================================ 注册事件 =================================
+JianShiYunTaiFuncs.registerAllMonsterDeath()
+fubenbase.registerEnterFuben(JianShiYunTaiConfig.fubenId, JianShiYunTaiFuncs.enterInit)
+EventCallDispatcher.registerFubenExit(JianShiYunTaiConfig.fubenId, JianShiYunTaiFuncs.goFubenExit)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeOnActorDeath, JianShiYunTaiFuncs.actorDeath)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, JianShiYunTaiFuncs.actorLogin)
+-- TimerMsgFunc.register(TimerMsg.JianShiYunTaiTimeMsg, JianShiYunTaiFuncs.onTimeCall) -- 定时器

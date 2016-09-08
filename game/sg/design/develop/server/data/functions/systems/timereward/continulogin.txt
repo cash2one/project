@@ -1,0 +1,331 @@
+﻿--#include "ContinuLogin_Const.txt" once
+--#include "data\functions\GlobalDefine.txt" once
+--#include "data\functions\miscfunc.txt"  once
+
+ONLINEREWARD.ContinuLoginImplement =
+{
+	-- 给予奖励
+	GiveAward = function(sysarg, conf)
+		if conf.type ~= 0 and conf.type ~= 15 then return false end -- 配置错误
+
+		local effects = {} -- 用于播放特效
+
+		if conf.type == 0 then --奖励物品
+			local needspace = Item.getAddItemNeedGridCount( sysarg, conf.itemid, conf.amount, 0, 0, conf.bind)
+			if ( needspace > Item.getBagEmptyGridCount( sysarg ) ) then
+				-- local str = string.format(Lang.ScriptTips.f00016,needspace)
+				-- LActor.sendTipmsg(sysarg, str,ttMessage)
+				LActor.SendGeneralTips(sysarg, 7, 0, 0)
+				return false
+			end
+			LActor.addItem(sysarg,conf.itemid,conf.quality,conf.strong, conf.amount,conf.bind,"VIPContinuLogin",57)
+			-- local tips = string.format(Lang.ScriptTips.cl0003, Item.getItemName(conf.itemid), 1)
+			-- LActor.sendTipmsg(sysarg, tips, ttWarmTip)
+
+			local effect = {}
+			effect.type = 1
+		    effect.id = conf.itemid
+		    effect.count = conf.amount
+		    effects[#effects+1] = effect
+
+		else -- 奖励金钱
+			local money_type = conf.type -- 奖天珠，应该没有了
+			local money = conf.amount
+			LActor.changeMoney(sysarg, money_type, money, 1, true, "fengce", "continuelogin")
+			-- local tipstr = string.format(Lang.ScriptTips.f1, money)
+			-- LActor.sendTipmsg(sysarg, tipstr, ttMessage)
+
+			local effect = {}
+			effect.type = 2
+		    effect.id = money_type
+		    effect.count = conf.amount
+		    effects[#effects+1] = effect
+		end
+
+		-- 播放特效
+		if #effects > 0 then
+			MiscFunc.PlayItemEffect(sysarg, 10, effects)
+		end
+
+		return true
+	end,
+
+	-- 获取连续登录奖励信息
+	GetCurContinuLoginItem = function(sysarg)
+		local var = LActor.getStaticVar(sysarg)
+
+		local ContinuLoginCfg = LocalDT.ContinuLoginRewardConfig
+		local VIPContinuLoginCfg = LocalDT.ContinuLoginVIPRewardConfig
+
+		local times = var.continulogintime
+		if times == nil then times = 0 end
+		local logins = var.continuousLogins
+		if logins == nil then logins = {} end
+		local vipLogins = var.vipContinuousLogins
+		if vipLogins == nil then vipLogins = {} end
+		
+		local npack = DataPack.allocPacket(sysarg,138,12)
+		if npack == nil then return end
+		DataPack.writeInt(npack, times)
+
+		local status -- 领取奖励状态
+		DataPack.writeInt(npack, #ContinuLoginCfg)
+		--print("continue login status")
+		for i=1, #ContinuLoginCfg do
+			status = logins[i]
+			if status == nil then status = 0 end -- 为空则是不可领取状态
+			DataPack.writeByte(npack, status)
+			--print(status)
+		end
+		--print("vip continue login status")
+		local isVip = (LActor.getVIPLevel(sysarg) > 0)
+		DataPack.writeInt(npack, #VIPContinuLoginCfg)  
+		for i=1, #VIPContinuLoginCfg do
+			status = vipLogins[i]
+			if isVip == false or status == nil then status = 0 end -- 为空则是不可领取状态，非VIP用户这个值都发0
+			DataPack.writeByte(npack, status)
+			--print(status)
+		end
+
+		DataPack.flush(npack)
+	end,
+	
+	-- 发送连续登录奖励信息列表
+	sendClientContinuLoginListMsg = function(sysarg) --发给客户端查看列表
+		local npack = DataPack.allocPacket(sysarg,138,6)  --申请一个数据包
+		if (npack == nil) then
+			print("npack:nil")
+			return
+		end
+
+		local ContinuLoginCfg = LocalDT.ContinuLoginRewardConfig
+		local VIPContinuLoginCfg = LocalDT.ContinuLoginVIPRewardConfig
+
+		local ncount = #ContinuLoginCfg
+		DataPack.writeInt(npack,ncount)  
+		for i=1, #ContinuLoginCfg do
+			DataPack.writeInt(npack,ContinuLoginCfg[i].type)
+			DataPack.writeInt(npack,ContinuLoginCfg[i].itemid)
+			DataPack.writeInt(npack,ContinuLoginCfg[i].amount)
+		end
+		local vipcount = #VIPContinuLoginCfg
+		DataPack.writeInt(npack,vipcount)  
+		for i=1, #VIPContinuLoginCfg do
+			DataPack.writeInt(npack,VIPContinuLoginCfg[i].type)
+			DataPack.writeInt(npack,VIPContinuLoginCfg[i].itemid)
+			DataPack.writeInt(npack,VIPContinuLoginCfg[i].amount)
+		end
+
+		local var = LActor.getStaticVar(sysarg)
+		local times = 0
+		if var ~= nil then
+			times = var.continulogintime
+		end
+		if times == nil then
+			times = 0
+		end
+		DataPack.writeInt(npack,times)  
+		DataPack.flush(npack)   --发送数据包 
+	end,
+		
+	-- 领取连续登录奖励
+	GetContinuLoginItemMsg = function(sysarg, packet)
+		local naward = DataPack.readInt(packet) -- 第几个奖励
+		if naward == nil then return end
+
+		--print("naward:"..naward)
+		--naward = 1
+
+		local conf = LocalDT.ContinuLoginRewardConfig[naward]
+		if conf == nil then
+			print("continuousLogins error, conf is nil")
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.cl0001, ttMessage)
+			return 
+		end
+		
+		local var = LActor.getStaticVar(sysarg)
+		if var.continuousLogins == nil then
+			print("continuousLogins is nil")
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.cl0001, ttMessage)
+			return
+		end
+
+		local status = var.continuousLogins[naward]
+		if status == nil or status == 0 then
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.cl0001, ttMessage) -- 不可领取
+			return
+		elseif status == 2 then
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.cl0002, ttMessage)-- 已领取
+			return 
+		end
+		
+		-- 给予奖励
+		if not ONLINEREWARD.ContinuLoginImplement.GiveAward(sysarg, conf) then
+			print("continuousLogins error, can not get award")
+			return 
+		end
+
+		-- 设置为已领取状态
+		var.continuousLogins[naward] = 2
+
+		ONLINEREWARD.ContinuLoginImplement.GetCurContinuLoginItem(sysarg)
+	end,
+	
+	-- 领取VIP用户奖励
+	GetContinuVipLoginItemMsg = function(sysarg, packet)
+		local naward = DataPack.readInt(packet) -- 第几个奖励
+		if naward == nil then return end
+
+		--print("vip naward:"..naward)
+		--naward = 1
+		
+		-- 是否VIP玩家
+		if LActor.getVIPLevel(sysarg) < 1 then
+			print("vipContinuousLogins error, no vip user")
+			return 
+		end
+
+		local conf = LocalDT.ContinuLoginVIPRewardConfig[naward]
+		if conf == nil then
+			print("vipContinuousLogins error, conf is nil")
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.cl0001, ttMessage)
+			return 
+		end
+		
+		local var = LActor.getStaticVar(sysarg)
+		if var.vipContinuousLogins == nil then
+			print("vipContinuousLogins is nil")
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.cl0001, ttMessage)
+			return
+		end
+
+		local status = var.vipContinuousLogins[naward]
+		print(status)
+		if status == nil or status == 0 then
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.cl0001, ttMessage) -- 不可领取
+			return
+		elseif status == 2 then
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.cl0002, ttMessage)-- 已领取
+			return 
+		end
+		
+		-- 给予奖励
+		if not ONLINEREWARD.ContinuLoginImplement.GiveAward(sysarg, conf) then
+			print("vipContinuousLogins error, can not get award")
+			return 
+		end
+
+		-- 设置为已领取状态
+		var.vipContinuousLogins[naward] = 2
+		
+		ONLINEREWARD.ContinuLoginImplement.GetCurContinuLoginItem(sysarg)
+	end,
+	
+	-- 清除连续登录奖励
+	ClearContinuLoginDay = function(sysarg)
+		local var = LActor.getStaticVar(sysarg)
+		var.continulogintime = 0 --连续登入几天
+		var.continuousLogins = {}
+		var.vipContinuousLogins = {}
+		ONLINEREWARD.ContinuLoginImplement.GetCurContinuLoginItem(sysarg) -- 通知客户端
+	end,
+}
+
+-- 用户登录
+EventCallDispatcher.OnContinuousLogin = function(sysarg)
+	local var = LActor.getStaticVar(sysarg)
+
+	-- 把旧的数据迁移过来，只调用一次
+	if var.getitemlogintime ~= nil or var.vipgetitemlogintime ~= nil then
+		--print(var.getitemlogintime)
+		--print(var.vipgetitemlogintime)
+		if var.continulogintime ~= nil and var.continulogintime > 0 then
+			var.continuousLogins = {}
+			var.vipContinuousLogins = {}
+			for i=1,var.continulogintime do
+				if i <= var.getitemlogintime then
+					var.continuousLogins[i] = 2 -- 已领奖
+				else
+					var.continuousLogins[i] = 1 -- 可领奖
+				end
+				if i <= var.vipgetitemlogintime then
+					var.vipContinuousLogins[i] = 2 -- 已领奖
+				else
+					var.vipContinuousLogins[i] = 1 -- 可领奖
+				end
+			end
+		end
+		var.getitemlogintime = nil
+		var.vipgetitemlogintime = nil
+	end
+
+	if var.continulogintime == nil then
+		var.continulogintime = 1
+	end
+  
+  	local nLast = LActor.getLastLogoutTime(sysarg)	--上次下线的时间
+	if nLast == 0 or nLast < System.getYesterday() or var.continulogintime > 30 then	--第一次登录或昨天之前登录或超过30天
+		var.continulogintime = 1 --连续登入几天
+		var.continuousLogins = {}
+		var.vipContinuousLogins = {}
+		var.continuousLogins[1] = 1 -- 设置为未领取状态
+		var.vipContinuousLogins[1] = 1
+	elseif nLast > 0 and nLast < System.getToday() then -- 最后一次是昨天登录,增加连续登录次数
+		var.continulogintime = var.continulogintime + 1
+
+		if var.continuousLogins == nil then -- 一般不会，防止意外情况
+			var.continuousLogins = {}
+		end
+		var.continuousLogins[var.continulogintime] = 1
+
+		if var.vipContinuousLogins == nil then -- 一般不会，防止意外情况
+			var.vipContinuousLogins = {}
+		end
+		var.vipContinuousLogins[var.continulogintime] = 1
+	end
+
+	-- 测试
+	--[[
+	print("test continulogintime......................")
+	var.continulogintime = 5
+	for i=1, var.continulogintime do
+		var.continuousLogins[i] = 1
+		var.vipContinuousLogins[i] = 1
+	end
+	]]
+end
+
+-- 新的一天
+EventCallDispatcher.OnContinuousNewDay = function(sysarg, arg)
+	if arg[1] ~= nil and arg[1] == 1 then return end -- 登录的情况在上面已经处理
+
+	local var = LActor.getStaticVar(sysarg)
+
+	if var.continulogintime == nil then
+		var.continulogintime = 1
+	end
+  
+	if var.continulogintime >= 30 then	--第一次登录或昨天之前登录或超过30天
+		var.continulogintime = 1 --连续登入几天
+		var.continuousLogins = {}
+		var.vipContinuousLogins = {}
+		var.continuousLogins[1] = 1 -- 设置为未领取状态
+		var.vipContinuousLogins[1] = 1
+	else -- 增加连续登录次数
+		var.continulogintime = var.continulogintime + 1
+
+		if var.continuousLogins == nil then -- 一般不会，防止意外情况
+			var.continuousLogins = {}
+		end
+		var.continuousLogins[var.continulogintime] = 1
+
+		if var.vipContinuousLogins == nil then -- 一般不会，防止意外情况
+			var.vipContinuousLogins = {}
+		end
+		var.vipContinuousLogins[var.continulogintime] = 1
+	end
+end
+
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, EventCallDispatcher.OnContinuousLogin)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, EventCallDispatcher.OnContinuousNewDay)

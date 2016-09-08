@@ -1,0 +1,1370 @@
+--结婚系统
+
+--#include "data\config\misc\marryconf.txt" once
+--#include "data\functions\miscfunc.txt" once
+--#include "data\functions\gmevent.txt" once
+--#include "data\functions\globaldefine.txt" once
+--#include "data\functions\timermsgfunc.txt" once
+--#include "data\functions\gamestartevent.txt" once
+--#include "data\functions\miscfunc.txt" once
+   --#include "data\functions\systems\timereward\xiejiehandler.txt" once
+
+MarryFuncList = {}
+
+MarryFuncList.marryRankName = "marryrank"
+MarryFuncList.marryRankCol = {"day", "handle", "type", "actor1", "name1", "actor2", "name2",
+								"sex1", "job1", "camp1", "level1", 
+								"sex2", "job2", "camp2", "level2"}
+
+MarryFuncList.MarryOp = function (sysarg, systemid, msgid, packet)
+	local func = MarryFuncList[msgid]
+	if func ~= nil then
+		func(sysarg, packet) 
+	end
+end
+
+-- 游戏引擎启动的时候，要初始化所有之前预定好了的婚礼
+MarryFuncList.Init = function()
+	--print("MarryFuncList.Init")
+	local rankName = MarryFuncList.marryRankName
+	local rank = Ranking.getRanking(rankName)
+	if rank == nil then
+		rank = Ranking.add(rankName, 1000, 0)
+		if rank == nil then
+			return 
+		end
+
+		if Ranking.load(rank, rankName) == false then
+			--print("MarryFuncList.Init none")
+			-- 创建排行榜
+			for i=1, #MarryFuncList.marryRankCol do
+				Ranking.addColumn( rank, MarryFuncList.marryRankCol[i] )
+			end
+			Ranking.save(rank, rankName)
+		end 
+	end
+
+	Ranking.addRef(rank)
+
+	local count = Ranking.getRankItemCount(rank)
+	local nowtime = System.getCurrMiniTime()
+	local npc = System.getGlobalNpc()
+
+	for i=1,count do
+		local rankitem = Ranking.getItemFromIndex(rank, count - i)	-- 倒序遍历
+
+		if rankitem ~= nil then 
+			-- 如果已经过期，则删除，如果到时间了，则发scriptemsg
+			local starttime = Ranking.getPoint(rankitem) * -1
+			local day = Ranking.getSub(rankitem, 0)
+			local nowday = System.getDayOfWeek()
+			local endtime = starttime + 18000
+			if day ~= tostring(nowday) or nowtime > endtime then
+				Ranking.removeId(rank, Ranking.getId(rankitem))
+			else
+				-- 给npc 发送一个消息，到时间就开启婚礼				
+				LActor.postEntityScriptCallbackMsg(npc, EntityCallbackMsg.MarryTime, 
+					(starttime - nowtime) * 1000, Ranking.getId(rankitem))
+				Ranking.setSub(rankitem, 1, "0")	-- 副本的handle
+			end
+		end
+	end
+
+	return rank
+end
+
+MarryFuncList.SendData = function (sysarg, st)
+	if st == nil then
+		st = LActor.getStaticVar(sysarg)
+	end
+
+	if st.marry.qm == nil then st.marry.qm = 0 end
+	if st.marry.qy == nil then st.marry.qy = 0 end
+	if st.marry.actorid == nil then st.marry.actorid = 0 end
+	if st.marry.name == nil then st.marry.name = "" end
+	if st.marry.xy == nil then st.marry.xy = System.makeInt32(0, 1) end
+
+	-- 这个协议改的话，在miscfunc.txt和打坐也有一个一样的要修改
+	local npack = DataPack.allocPacket(sysarg, 148, 1)
+	if npack == nil then return end
+	DataPack.writeInt(npack, st.marry.qm)
+	DataPack.writeInt(npack, st.marry.qy)
+	DataPack.writeInt(npack, st.marry.actorid)
+	DataPack.writeString(npack, st.marry.name)
+	DataPack.flush(npack)
+end
+
+-- 用户登陆触发
+MarryFuncList.OnLogin = function (sysarg, arg)
+	--arg[1] is first login
+	local st = LActor.getStaticVar(sysarg)
+	if st.marry == nil then
+		st.marry = {}
+
+		if st.marry.wineCount == nil then st.marry.wineCount = marryConf.wineCount end
+		if st.marry.gathCountday == nil then st.marry.gathCountday = marryConf.gathCountday end
+		if st.marry.zhufu == nil then st.marry.zhufu = marryConf.zhufu end
+		if st.marry.face == nil then st.marry.face = marryConf.face end
+		if st.marry.march == nil then st.marry.march = marryConf.march end
+		if st.marry.sweet == nil then st.marry.sweet = 0 end -- 自己举办婚礼，这个才是10
+	end
+	-- 下发初始数据
+	MarryFuncList.SendData(sysarg, st)
+
+	if st.marry.xy == nil then st.marry.xy = System.makeInt32(0, 1) end
+	local xy = st.marry.xy
+	local level = System.bitOpRig(xy, 16)
+	local root = System.bitOpAnd(xy, 0xffff)
+	LActor.marryAttrChange(sysarg, level, root)
+end
+
+-- 举办婚礼
+MarryFuncList[3] = function (sysarg, dp)
+	local tt = DataPack.readInt(dp)
+	local time = DataPack.readInt(dp)
+	if time < 0 or time > 24 then return end
+	local st = LActor.getStaticVar(sysarg)
+	if st.marry.actorid == nil or st.marry.actorid == 0 then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.mry01, ttMessage)
+		return
+	end
+	if st.marry.nextmarrytime ~= nil and 
+			st.marry.nextmarrytime > System.getCurrMiniTime() then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.mry53, ttMessage)
+		return
+	end
+
+	if tt == 1 and st.marry.marrycount ~= nil then
+		-- 普通婚礼只能举办一次
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.mry02, ttMessage)
+		return
+	end
+	local luxuryday = st.marry.luxuryday
+	if tt == 2 and (luxuryday == nil or luxuryday <= 0) then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.mry03, ttMessage)
+		return
+	end
+
+	if tt == 1 and LActor.getMoneyCount(sysarg, marryConf.atoncemt) < marryConf.atoncemoney then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.mry04, ttMessage)
+		return
+	end
+	if tt == 2 and LActor.getMoneyCount(sysarg, 3) < marryConf.luxurymarry then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.mry05, ttMessage)
+		return
+	end
+
+	if tt == 1 then
+		LActor.changeMoney( sysarg, marryConf.atoncemt, -marryConf.atoncemoney, 1, true, "marry")
+	else
+		LActor.changeMoney( sysarg, 3, -marryConf.luxurymarry, 1, true, "marry", "luxury")
+	end
+
+	-- 添加新的婚礼
+	local rank = Ranking.getRanking(MarryFuncList.marryRankName)
+	if rank ~= nil then
+		local marryid = System.getRandomNumber(1000000000)
+		local starttime = 0
+		if time ~= 0 then
+			if time == 24 then
+				starttime = System.getTomorrow()
+			else
+				starttime = System.getToday() + time * 3600
+			end
+		else
+			starttime = System.getCurrMiniTime()
+		end
+
+		local rankitem = Ranking.addItem(rank, marryid, -starttime)
+		if rankitem then
+			-- 初始化
+			Ranking.setSub(rankitem, 0, tostring(System.getDayOfWeek()))
+			Ranking.setSub(rankitem, 1, "0")
+			Ranking.setSub(rankitem, 2, tostring(tt))
+			Ranking.setSub(rankitem, 3, tostring(LActor.getActorId(sysarg)))
+			Ranking.setSub(rankitem, 4, LActor.getName(sysarg))
+			Ranking.setSub(rankitem, 5, tostring(st.marry.actorid))
+			Ranking.setSub(rankitem, 6, tostring(st.marry.name))
+			Ranking.setSub(rankitem, 7, tostring(LActor.getIntProperty(sysarg, PROP_SEX)))
+			Ranking.setSub(rankitem, 8, tostring(LActor.getIntProperty(sysarg, PROP_VOCATION)))
+			Ranking.setSub(rankitem, 9, tostring(LActor.getIntProperty(sysarg, PROP_CAMP)))
+			Ranking.setSub(rankitem, 10, tostring(LActor.getLevel(sysarg)))
+
+			Ranking.setSub(rankitem, 11, tostring(st.marry.sex))
+			Ranking.setSub(rankitem, 12, tostring(st.marry.job))
+			Ranking.setSub(rankitem, 13, tostring(st.marry.camp))
+			Ranking.setSub(rankitem, 14, tostring(st.marry.level))
+
+			local nowtime = System.getCurrMiniTime()
+			local npc = System.getGlobalNpc()
+			LActor.postEntityScriptCallbackMsg(npc, EntityCallbackMsg.MarryTime, 
+				(starttime - nowtime) * 1000, marryid)
+
+			if tt == 1 then 
+				st.marry.marrycount = 1 
+			else
+				st.marry.luxuryday = st.marry.luxuryday - 1 
+			end
+			-- 下次婚礼的时间必须在30分钟之后
+			st.marry.nextmarrytime = nowtime + 30 * 60
+
+			-- 广播给客户端
+			local dp = LDataPack.allocPacket()
+			if dp == nil then return end
+
+			LDataPack.writeByte(dp, 148)
+			LDataPack.writeByte(dp, 3)
+			LDataPack.writeInt(dp, 1)
+			LDataPack.writeInt(dp, marryid)
+			LDataPack.writeInt(dp, starttime)
+			LDataPack.writeInt(dp, tt)
+
+			LDataPack.writeInt(dp, LActor.getActorId(sysarg))
+			LDataPack.writeByte(dp, LActor.getIntProperty(sysarg, PROP_SEX))
+			LDataPack.writeByte(dp, LActor.getIntProperty(sysarg, PROP_VOCATION))
+			LDataPack.writeByte(dp, LActor.getIntProperty(sysarg, PROP_CAMP))
+			LDataPack.writeByte(dp, LActor.getLevel(sysarg))
+
+			LDataPack.writeInt(dp, st.marry.actorid)
+			LDataPack.writeByte(dp, st.marry.sex)
+			LDataPack.writeByte(dp, st.marry.job)
+			LDataPack.writeByte(dp, st.marry.camp)
+			LDataPack.writeByte(dp, st.marry.level)
+
+			LDataPack.writeString(dp, LActor.getName(sysarg))
+			LDataPack.writeString(dp, st.marry.name)
+
+			System.broadcastData(dp)
+
+			-- 世界公告
+			local fmt1 = nil
+			if tt == 1 then
+				fmt1 = Lang.ScriptTips.mry071
+			else
+				fmt1 = Lang.ScriptTips.mry061
+			end
+
+			if time ~= 0 then
+				local year = 0
+				local mon = 0
+				local day = 0
+				local hour = 0
+				local min = 0
+				local sec = 0
+				year, mon, day, hour, min, sec = System.timeDecode(starttime, year, mon, day, hour, min, sec)
+				System.broadcastTipmsg(string.format(fmt1, 
+					LActor.getName(sysarg), st.marry.name, hour, min, sec), 
+					ttScreenCenter)
+			end
+		end
+		Ranking.save(rank, MarryFuncList.marryRankName) -- 领取后保存一下
+	end
+
+	-- 双发要获得亲密度，邮件？
+	local addqm = marryConf.weddingQM[tt]
+	--local state = ONLINEREWARD.GetActivityState(xiejieConf.activityId)
+   -- if 0 ~= state then 
+    --	addqm = addqm * 2
+   -- end
+	st.marry.qm = st.marry.qm + addqm
+	LActor.sendTipmsg(sysarg, string.format(Lang.ScriptTips.mry35, addqm), ttTipmsgWindow)
+	MarryFuncList.SendData(sysarg, st)
+
+	local aid = st.marry.actorid
+	local actorPtr = System.getEntityPtrByActorID(aid)
+	if actorPtr ~= nil then
+		local st1 = LActor.getStaticVar(actorPtr)
+		st1.marry.qm = st1.marry.qm + addqm
+		LActor.sendTipmsg(actorPtr, string.format(Lang.ScriptTips.mry35, addqm), ttTipmsgWindow)
+		MarryFuncList.SendData(actorPtr, st1)
+	else
+		-- 不在线就发离线消息
+		local dp = LDataPack.allocPacket()
+		if dp == nil then return end
+		LDataPack.writeInt(dp, LActor.getActorId(sysarg)) 
+		LDataPack.writeInt(dp, 1)
+		LDataPack.writeInt(dp, addqm)
+		System.addOfflineMsg(aid, omMarryAward, dp, 0)
+	end
+	local str = string.format(Lang.ScriptTips.mry40, st.marry.name, addqm)
+	System.sendGmMailOffLine(LActor.getActorId(sysarg), 
+							str, 0, 0, 0,0)
+	str = string.format(Lang.ScriptTips.mry40, LActor.getName(sysarg), addqm)
+	System.sendGmMailOffLine(st.marry.actorid,
+							str, 0, 0, 0,0)
+end
+
+-- 获取本服侠侣记录
+MarryFuncList[4] = function (sysarg, dp)
+	local count = DataPack.readInt(dp)
+	local page = DataPack.readInt(dp)
+
+	if count <= 0 then count = 10 end
+	if page < 0 then page = 0 end
+	System.sendMarryLog(sysarg, 148, 4, count, page)
+end
+
+-- 新的一天到达，清除相关值
+MarryFuncList.newDayLogin = function (sysarg)
+	local st = LActor.getStaticVar(sysarg)
+	if st.marry == nil then
+		st.marry = {}
+	end
+	if st.marry.qm == nil then st.marry.qm = 0 end
+	if st.marry.qy == nil then st.marry.qy = 0 end
+	if st.marry.actorid == nil then st.marry.actorid = 0 end
+	if st.marry.name == nil then st.marry.name = "" end
+	if st.marry.xy == nil then st.marry.xy = System.makeInt32(0, 1) end
+
+	local normaltime = 1
+	local normarch = marryConf.march
+
+	-- 情人节活动，多送一次，结束后可删除代码
+	local var_sys_d = System.getDyanmicVar()
+	if var_sys_d.qrjstate ~= nil and var_sys_d.qrjstate == 1 then
+		normaltime = normaltime + 1
+		normarch = normarch + 1
+	end 
+	st.marry.luxuryday = normaltime 
+	st.marry.wineCount = marryConf.wineCount
+	st.marry.gathCountday = marryConf.gathCountday
+	st.marry.zhufu = marryConf.zhufu
+	st.marry.face = marryConf.face
+	st.marry.march = normarch 
+	st.marry.sweet = 0 -- 自己举办婚礼，这个才是10
+end
+
+-- 婚礼到期举行,参数为npc指针和婚礼id
+MarryFuncList.OnMarryTime = function (npc, marryid)
+	local rank = Ranking.getRanking(MarryFuncList.marryRankName)
+	if rank ~= nil then
+		local rankitem = Ranking.getItemPtrFromId(rank, marryid)
+		if rankitem ~= nil then
+			-- 创建副本
+			local tt = tonumber(Ranking.getSub(rankitem, 2))
+			local fbid
+			if tt == 1 then
+				fbid = marryConf.marryfb[1]
+			else
+				fbid = marryConf.marryfb[2]
+			end
+
+			local hdl = Fuben.createFuBen(fbid)			
+			if hdl ~= 0 then
+				Ranking.setSub(rankitem, 1, tostring(hdl))	-- 把副本的handle保存下来
+				local fbtime = 60 * 30 
+				Fuben.SetFubenTime(hdl, fbtime)	-- 婚礼时间半小时
+				Fuben.setReserveTime(hdl, System.getCurrMiniTime() + fbtime)
+				Fuben.SetFubenGameTime(hdl, fbtime - 30) -- 提前30s触发，避免副本被释放资源而执行不了事件
+
+				local dt = Fuben.getDyanmicVar(Fuben.getFubenPtr(hdl))
+				dt.marryid = marryid
+				dt.marry_aid1 = tonumber(Ranking.getSub(rankitem, 3))
+				dt.marry_aid2 = tonumber(Ranking.getSub(rankitem, 5))
+
+				local fmt = nil
+				local fmt1 = nil
+				if tt == 1 then
+					fmt = Lang.ScriptTips.mry07
+					fmt1 = Lang.ScriptTips.mry0711
+				else
+					fmt = Lang.ScriptTips.mry06
+					fmt1 = Lang.ScriptTips.mry0611
+				end
+				local name1 = Ranking.getSub(rankitem, 4)
+				local name2 = Ranking.getSub(rankitem, 6)
+				-- System.broadcastTipmsg(string.format(fmt, 
+				-- 			name1, name2,
+				-- 			marryid), ttHearsay)
+				System.broadcastTipmsg(string.format(fmt1, 
+							name1, name2),
+							ttScreenCenter)
+				if tt ~= 1 then
+					System.playScrEffectCode(5, 10)	-- 参照鲜花系统
+				end
+			end
+		end
+	end
+end
+
+-- 求婚
+MarryFuncList[5] = function (sysarg, dp)
+	local guid = DataPack.readInt64(dp)
+	local actorid = DataPack.readInt(dp)
+	local name = DataPack.readString(dp)
+	local actorPtr = System.getEntityPtrByActorID(actorid)	
+	if actorPtr == nil then
+		actorPtr = LActor.getActorByName(name)
+	end
+
+	if actorPtr == nil then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.mry08, ttMessage)
+		return
+	end
+
+	local itemPtr = Item.getBagItemPtrByGuid(sysarg, guid)
+	if itemPtr == nil then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.mry09, ttMessage)
+		return
+	end
+
+	local itemid = Item.getItemId(itemPtr)
+	-- 需要判断是否戒指或者什么类型的戒指
+	local conf
+	for i=1,#marryConf.ringItemId do
+		if itemid == marryConf.ringItemId[i] then
+			conf = marryConf.ringItemId[i]
+			break
+		end
+	end
+	if conf == nil then 
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.mry24, ttMessage)
+		return
+	end
+
+	if LActor.getLevel(sysarg) < marryConf.level then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.mry10, ttMessage)
+		return
+	end	
+	if LActor.getLevel(actorPtr) < marryConf.level then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.mry12, ttMessage)
+		return
+	end	
+
+	local st = LActor.getStaticVar(sysarg)
+	if st.marry.actorid ~= 0 and st.marry.actorid ~= nil then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.mry11, ttMessage)
+		return
+	end	
+	st = LActor.getStaticVar(actorPtr)
+	if st.marry.actorid ~= 0 and st.marry.actorid ~= nil then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.mry13, ttMessage)
+		return
+	end	
+	-- 是否异形
+	if LActor.getIntProperty(sysarg, PROP_SEX) == LActor.getIntProperty(actorPtr, PROP_SEX) then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.mry14, ttMessage)
+		return
+	end
+	if not LActor.isFriend(sysarg, LActor.getActorId(actorPtr)) or 
+		not LActor.isFriend(actorPtr, LActor.getActorId(sysarg)) then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.mry15, ttMessage)
+		return
+	end
+
+	local npack = DataPack.allocPacket(actorPtr, 148, 5)
+	if npack == nil then return end
+	DataPack.writeInt(npack, LActor.getActorId(sysarg))
+	DataPack.writeInt64(npack, guid)
+	DataPack.writeInt(npack, itemid)
+	DataPack.writeByte(npack, LActor.getIntProperty(sysarg, PROP_SEX))
+	DataPack.writeByte(npack, LActor.getIntProperty(sysarg, PROP_VOCATION))
+	DataPack.writeByte(npack, LActor.getIntProperty(sysarg, PROP_CAMP))
+	DataPack.writeByte(npack, LActor.getLevel(sysarg)) 
+	DataPack.writeString(npack, LActor.getName(sysarg))
+	DataPack.flush(npack)
+
+	LActor.sendTipmsg(sysarg, Lang.ScriptTips.mry33, ttMessage)
+end
+
+-- 同意或者拒绝求婚
+MarryFuncList[6] = function (sysarg, dp)
+	local ret = DataPack.readInt(dp)
+	local actorid = DataPack.readInt(dp)
+	local guid = DataPack.readInt64(dp)
+
+	--1：同意，2：拒绝
+	local actorPtr = System.getEntityPtrByActorID(actorid) 
+	if ret == 1 then
+		if actorPtr == nil then
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.mry16, ttMessage)
+			return
+		end
+	else 
+		if actorPtr then
+			local str = string.format(Lang.ScriptTips.mry17, LActor.getName(sysarg))
+			LActor.sendTipmsg(actorPtr, str, ttMessage)
+		end
+		return
+	end
+
+	local itemPtr = Item.getBagItemPtrByGuid(actorPtr, guid)
+	if itemPtr == nil then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.mry18, ttMessage)
+		return
+	end
+	local itemid = Item.getItemId(itemPtr)
+	-- 需要判断是否戒指或者什么类型的戒指
+	local conf
+	local notic = false
+	for i=1,#marryConf.ringItemId do
+		if itemid == marryConf.ringItemId[i] then
+			conf = marryConf.ringItemId[i]
+			notic = marryConf.ringNotice[i]
+			break
+		end
+	end
+	if conf == nil then 
+		-- 物品非戒指,客户端发错误的值上来
+		return
+	end
+
+	if LActor.getLevel(sysarg) < marryConf.level then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.mry10, ttMessage)
+		return
+	end	
+	if LActor.getLevel(actorPtr) < marryConf.level then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.mry12, ttMessage)
+		return
+	end	
+
+	local st = LActor.getStaticVar(sysarg)
+	if st.marry.actorid ~= 0 and st.marry.actorid ~= nil then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.mry11, ttMessage)
+		return
+	end	
+	st = LActor.getStaticVar(actorPtr)
+	if st.marry.actorid ~= 0 and st.marry.actorid ~= nil then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.mry13, ttMessage)
+		return
+	end	
+	-- 是否异形
+	if LActor.getIntProperty(sysarg, PROP_SEX) == LActor.getIntProperty(actorPtr, PROP_SEX) then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.mry14, ttMessage)
+		return
+	end
+	if not LActor.isFriend(sysarg, LActor.getActorId(actorPtr)) or 
+		not LActor.isFriend(actorPtr, LActor.getActorId(sysarg)) then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.mry15, ttMessage)
+		return
+	end
+
+	if Item.getBagEmptyGridCount( sysarg ) < 1 then
+		LActor.sendTipmsg( sysarg, "背包已满，请清理后再接受求婚", ttMessage )
+		return
+	end
+
+	-- 可以结婚了
+	-- 激活戒指, 删除戒指，并给新的装备
+	Item.setItemProperty(actorPtr, itemPtr, Item.ipItemStrong, 1)
+	LActor.useItemByGuid(actorPtr, guid)
+	LActor.addItemAddUse(sysarg, itemid, 0, 1, 1, 1, "marry", 93)
+
+	local now = System.getCurrMiniTime()
+
+	-- 修改双方结婚状态
+	local st = LActor.getStaticVar(sysarg)
+	st.marry.actorid = LActor.getActorId(actorPtr)
+	st.marry.name = LActor.getName(actorPtr)
+	st.marry.sex = LActor.getIntProperty(actorPtr, PROP_SEX)
+	st.marry.job = LActor.getIntProperty(actorPtr, PROP_VOCATION)
+	st.marry.camp = LActor.getIntProperty(actorPtr, PROP_CAMP)
+	st.marry.level = LActor.getLevel(actorPtr)
+	st.marry.marrycount = nil
+
+	local normaltime = 1
+	-- 情人节活动，多送一次，结束后可删除代码
+	local var_sys_d = System.getDyanmicVar()
+	if var_sys_d.qrjstate ~= nil and var_sys_d.qrjstate == 1 then
+		normaltime = normaltime + 1
+	end 
+	st.marry.luxuryday = normaltime 
+
+	st.marry.candivtime = now + 72 * 3600
+	MarryFuncList.SendData(sysarg, st)
+
+	st = LActor.getStaticVar(actorPtr)
+	st.marry.actorid = LActor.getActorId(sysarg)
+	st.marry.name = LActor.getName(sysarg)
+	st.marry.sex = LActor.getIntProperty(sysarg, PROP_SEX)
+	st.marry.job = LActor.getIntProperty(sysarg, PROP_VOCATION)
+	st.marry.camp = LActor.getIntProperty(sysarg, PROP_CAMP)
+	st.marry.level = LActor.getLevel(sysarg)
+	st.marry.marrycount = nil
+	st.marry.luxuryday = normaltime
+	st.marry.candivtime = now + 72 * 3600
+	MarryFuncList.SendData(actorPtr, st)
+
+	System.addMarryLog(LActor.getActorId(actorPtr), LActor.getActorId(sysarg), 
+		LActor.getName(actorPtr), LActor.getName(sysarg))
+
+	-- 广播
+	local dp = LDataPack.allocPacket()
+	if dp == nil then return end
+	LDataPack.writeByte(dp, 148)
+	LDataPack.writeByte(dp, 14)
+	LDataPack.writeInt(dp, System.getCurrMiniTime())	
+	LDataPack.writeInt(dp, LActor.getActorId(actorPtr))
+	LDataPack.writeInt(dp, LActor.getActorId(sysarg))
+	LDataPack.writeString(dp, LActor.getName(actorPtr))
+	LDataPack.writeString(dp, LActor.getName(sysarg))
+	System.broadcastData(dp)	
+	-- 只有约定三生，才发世界公告和鲜花特效
+	local str = string.format(Lang.ScriptTips.mry25, LActor.getName(actorPtr), LActor.getName(sysarg))
+	System.broadcastTipmsg(str, ttScreenCenter)
+	if notic then
+		System.playScrEffectCode(5, 10)	-- 参照鲜花系统
+	end
+
+	-- 日志
+	System.logCounter(
+		LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), 
+		"marry", "", LActor.getAccountName(actorPtr),
+		"get_married", "", "",
+		"", "", lfBI)	
+end
+
+-- 戒指升级
+MarryFuncList[2] = function (sysarg, dp)
+	local item = Item.getEquipByPos(sysarg, marryConf.ringEquipPos)
+	if item == nil then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.mry20, ttMessage)
+		return
+	end
+
+	-- 消耗情缘
+	local st = LActor.getStaticVar(sysarg)
+	local itemid = Item.getItemId(item)
+
+	local conf
+	local i
+	for j=1,#marryConf.ringItemId do
+		if itemid == marryConf.ringItemId[j] then
+			conf = marryConf.ringItemId[j]
+			i = j
+			break
+		end
+	end
+	if conf == nil then return end
+
+	local level = Item.getItemProperty( sysarg, item, Item.ipItemStrong, 0 )
+
+	local nextItem = itemid
+	if level >= marryConf.ringLevel then
+		-- 获取下一等级的物品的配置
+		local nextConf = marryConf.ringItemId[i + 1]
+		if nextConf == nil then
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.mry21, ttMessage)
+			return
+		end
+		nextItem = nextConf
+	end
+	local nextQY = marryConf.ringQY[i][level]
+	if st.marry.qy < nextQY then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.mry22, ttMessage)
+		return
+	end
+
+	if nextItem ~= itemid and Item.getBagEmptyGridCount(sysarg) < 1 then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.mry23, ttMessage)
+		return
+	end
+	st.marry.qy = st.marry.qy - nextQY
+	LActor.sendTipmsg(sysarg, string.format(Lang.ScriptTips.mry38, nextQY), ttTipmsgWindow)
+	MarryFuncList.SendData(sysarg, st)
+
+	if nextItem == itemid then
+		Item.setItemProperty(sysarg, item, Item.ipItemStrong, level + 1)
+	else
+		-- 换个物品
+		Item.removeEquip(sysarg, item, "ring", 91)
+		-- 给新的物品，并装备
+		LActor.addItemAddUse(sysarg, nextItem, 0, 1, 1, 1, "ringup", 92)
+	end
+
+	-- 日志
+	System.logCounter(
+		LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), 
+		"marry", "", "",
+		"ring_upgrade", "", "",
+		"", "", lfBI)
+end
+
+
+-- 查看仙缘信息
+MarryFuncList[7] = function ( sysarg )
+	local st = LActor.getStaticVar(sysarg)	
+	if st.marry.xy == nil then st.marry.xy = System.makeInt32(0, 1) end
+	
+	local npack = DataPack.allocPacket(sysarg, 148, 7)	
+	if npack == nil then return end
+	DataPack.writeInt(npack, st.marry.xy)
+	DataPack.flush(npack)
+end
+
+-- 升级仙缘
+MarryFuncList[8] = function (sysarg)
+	--高2位是仙缘的等级，低2位是开启仙缘的个数
+	local st = LActor.getStaticVar(sysarg)	
+	if st.marry.actorid == nil or st.marry.actorid == 0 then return end
+	
+	if st.marry.xy == nil then st.marry.xy = System.makeInt32(0, 1) end
+	local xy = st.marry.xy
+	local qm = st.marry.qm
+	local level = System.bitOpRig(xy, 16)
+	local root = System.bitOpAnd(xy, 0xffff)
+	if root < 0 then root = 0 end
+	if root > 10 then root = 10 end
+	local MarryXY = marryConf.marryXY
+	if level <= 0 or level > #MarryXY or root < 0 or root > 10 then
+		return
+	end
+
+	if level >= #MarryXY and root >= 10 then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.mry48, ttMessage)
+		return
+	end
+	-- 获取升级需要的亲密度
+	local nextRoot = root
+	local nextLvl = level
+	if nextRoot >= 10 then
+		nextLvl = nextLvl + 1
+		nextRoot = 1
+
+		if (nextLvl > #MarryXY) then
+			return
+		end
+	else
+		nextRoot = nextRoot + 1
+	end
+	local exp = MarryXY[nextLvl].root[nextRoot].expr
+	if qm < exp then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.mry19, ttMessage)
+		return
+	end
+	qm = qm - exp
+	LActor.sendTipmsg(sysarg, string.format(Lang.ScriptTips.mry37, exp), ttTipmsgWindow)
+
+	if qm < 0 then qm = 0 end
+	root = root + 1
+	if root >= 10 and level < #MarryXY then
+		root = 0
+		level = level + 1
+	end
+
+	st.marry.qm = qm
+	st.marry.xy = System.makeInt32(root, level)
+
+	MarryFuncList[7](sysarg)
+	MarryFuncList.SendData(sysarg, st)
+	-- 重新计算属性
+	LActor.marryAttrChange(sysarg, level, root)
+
+	MarryFuncList.SendData(sysarg, st)
+
+	-- 日志
+	System.logCounter(
+		LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), 
+		"marry", "", "",
+		"qingzhu", "", "",
+		"", "", lfBI)
+end
+
+-- 参加婚礼
+MarryFuncList[9] = function (sysarg, dp)
+	if LActor.getFubenId(sysarg) ~= 0 then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.mry39, ttMessage)
+		return
+	end
+
+	-- 护送任务期间不能进入婚礼副本
+	if LActor.hasState(sysarg, esProtection) then
+    	LActor.sendTipmsg(sysarg, "护送过程中，无法进入婚礼副本", ttMessage)
+    	return 
+  	end
+
+	local marryid = DataPack.readInt(dp)	
+	local rank = Ranking.getRanking(MarryFuncList.marryRankName)
+	if rank ~= nil then
+		local rankitem = Ranking.getItemPtrFromId(rank, marryid)
+		if rankitem ~= nil then
+			local hdl = tonumber(Ranking.getSub(rankitem, 1))
+			local ptr = Fuben.getFubenPtr(hdl)
+			if hdl ~= 0 and ptr ~= nil then
+				-- 婚礼已经开始
+				local myid = LActor.getActorId(sysarg)
+				local dt = Fuben.getDyanmicVar(ptr)
+				if myid == dt.marry_aid1 then
+					-- 我的婚礼
+					local st = LActor.getStaticVar(sysarg)
+					if dt.marryid ~= st.marry.sweetid then
+						st.marry.sweet = marryConf.sweet
+						st.marry.sweetid = dt.marryid -- 重置撒喜糖的次数
+					end
+				end
+
+				LActor.enterFuBen(sysarg, hdl, -1, -1, -1)
+				-- 这里不用发送数据，进入的时候会自动发 onentermarry
+				--MarryFuncList.SendMarryData(sysarg)
+			else
+				LActor.sendTipmsg(sysarg, Lang.ScriptTips.mry26, ttMessage)
+				return
+			end
+		else
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.mry42, ttMessage)
+		end
+	end
+end
+
+-- 进入婚礼副本时下发初始的数据
+MarryFuncList.OnEnterMarry = function(sysarg, hfb, way)
+	MarryFuncList.SendMarryData(sysarg)	
+end
+
+
+-- 发送参加婚礼的初始化信息
+MarryFuncList.SendMarryData = function (sysarg)
+	--print("MarryFuncList.SendMarryData")
+	local npack = DataPack.allocPacket(sysarg, 148, 9)
+	if npack == nil then return end
+	local st = LActor.getStaticVar(sysarg)
+	DataPack.writeInt(npack, st.marry.wineCount)
+	DataPack.writeInt(npack, st.marry.zhufu)
+	DataPack.writeInt(npack, st.marry.face)
+	DataPack.writeInt(npack, st.marry.sweet)
+
+	local ptr = LActor.getFubenPrt(sysarg)
+	local dt = Fuben.getDyanmicVar(ptr)
+	if dt.marry_aid1 == nil then
+		dt.marry_aid1 = 0
+	end
+	if dt.marry_aid2 == nil then
+		dt.marry_aid2 = 0
+	end
+	DataPack.writeInt(npack, dt.marry_aid1)
+	DataPack.writeInt(npack, dt.marry_aid2)
+	DataPack.flush(npack)
+	--print("MarryFuncList.SendMarryData end")
+end
+
+-- 婚礼互动
+MarryFuncList[10] = function (sysarg, dp)
+	local tt = DataPack.readInt(dp)
+	-- 次数限制
+	--1：敬酒，2：祝福，3：扮鬼脸，4：撒喜糖
+	local outtime = false
+	local st = LActor.getStaticVar(sysarg)
+	if tt == 1 then
+		if st.marry.wineCount > 0 then st.marry.wineCount = st.marry.wineCount - 1 else outtime = true end
+	elseif tt == 2 then
+		if st.marry.zhufu > 0 then st.marry.zhufu = st.marry.zhufu - 1 else outtime = true end
+	elseif tt == 3 then
+		if st.marry.face > 0 then st.marry.face = st.marry.face - 1 else outtime = true end
+	elseif tt == 4 then
+		-- 必须是婚礼主人才可以
+		local ptr = LActor.getFubenPrt(sysarg)
+		local dt = Fuben.getDyanmicVar(ptr)
+		local myid = LActor.getActorId(sysarg)
+		if dt.marry_aid1 ~= myid and dt.marry_aid2 ~= myid then
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.mry28, ttMessage)
+			return
+		end
+		if st.marry.sweet > 0 then st.marry.sweet = st.marry.sweet - 1 else outtime = true end
+	end
+
+	if outtime then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.mry27, ttMessage)
+		return
+	end
+
+	MarryFuncList.SendMarryData(sysarg)
+
+	if tt == 4 then
+		-- 生成喜糖
+		local hdl = LActor.getSceneHandle(sysarg)
+		-- 在当前坐标周围随机点撒喜糖
+		local x = 0
+		local y = 0
+		x, y = LActor.getEntityPosition(sysarg, x, y)
+		for i=1, marryConf.sweetCount do
+			local rd = System.getRandomNumber(25)
+			x = x + rd % 5 - 2
+			y = y + rd / 5 - 2
+			Fuben.createDropBag(hdl, x, y, 0, 0, 0, 
+				marryConf.sweetItemId, 0, 0, marryConf.sweetExpTime, 2)
+		end			
+	else
+		-- 获取经验
+		LActor.addExpByLevel(sysarg, marryConf.marryFactor, 0, 0)	
+	end
+
+	local npack = DataPack.allocPacket(sysarg, 148, 11)
+	if npack == nil then return end
+	DataPack.writeInt(npack, tt)
+	DataPack.flush(npack)
+end
+
+-- 增加撒喜糖的次数
+MarryFuncList[11] = function (sysarg)
+	local ptr = LActor.getFubenPrt(sysarg)
+	local dt = Fuben.getDyanmicVar(ptr)
+	local myid = LActor.getActorId(sysarg)
+	if dt.marry_aid1 ~= myid and dt.marry_aid2 ~= myid then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.mry28, ttMessage)
+		return
+	end
+
+	if LActor.getMoneyCount(sysarg, 3) < marryConf.addsweet then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.mry29, ttMessage)
+		return
+	end
+	LActor.changeMoney( sysarg, 3, -marryConf.addsweet, 1, true, "marry", "addsweet")
+	local st = LActor.getStaticVar(sysarg)
+	st.marry.sweet = st.marry.sweet + 1
+
+	MarryFuncList.SendMarryData(sysarg)
+end
+
+-- 开启巡游 
+MarryFuncList[12] = function (sysarg, dp)
+	local tt = DataPack.readInt(dp)
+	if tt < 1 or tt > 3 then return end
+	local conf = marryConf.marchFee[tt]
+
+	-- 1：普通，2：浪漫，3：豪华
+	local st = LActor.getStaticVar(sysarg)
+	if st.marry.actorid == nil or st.marry.actorid == 0 then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.mry32, ttMessage)
+		return
+	end
+	if st.marry.march <= 0 then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.mry30, ttMessage)
+		return
+	end
+
+	-- 获取月老的坐标
+	local hdl = LActor.getSceneHandle(sysarg)
+	local npcptr = Fuben.getNpcPtrByName(hdl, marryConf.yuelao)
+	if npcptr == nil then
+		return
+	end
+
+	if LActor.getMoneyCount(sysarg, conf.mt) < conf.count then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.mry31, ttMessage)
+		return
+	end
+
+	st.marry.march = st.marry.march - 1
+
+	if conf.notic ~= nil then
+		local str = string.format(conf.notic, LActor.getName(sysarg), st.marry.name)
+		System.broadcastTipmsg(str, ttScreenCenter)
+	end
+	LActor.changeMoney(sysarg, conf.mt, -conf.count, 1, true, "marry", "march")
+
+	-- 开启巡游，邮件发送情缘
+	local x = 0
+	local y = 0
+	x, y = LActor.getEntityPosition(npcptr, x, y)
+	local pbaby = Fuben.createMonster(hdl, conf.monsterid, x, y, conf.totaltime)
+	--local pbaby = LActor.addSlave(sysarg, conf.monsterid, 1, conf.totaltime, 0, 0)
+	if pbaby ~= nil then
+		LActor.setDenyBeAttack(pbaby, true)
+
+		local pname = LActor.getName(sysarg)
+		local etname = LActor.getName(pbaby)
+		local showname = string.format(Lang.ScriptTips.mry49, pname, st.marry.name, etname)
+		System.setEntityShowName(pbaby, showname)
+	end
+
+	local addqy = conf.qy
+	--[[local state = ONLINEREWARD.GetActivityState(xiejieConf.activityId)
+    if 0 ~= state then 
+    	addqy = addqy * 2
+    end]]
+	st.marry.qy = st.marry.qy + addqy
+	LActor.sendTipmsg(sysarg, string.format(Lang.ScriptTips.mry36, addqy), ttTipmsgWindow)
+	MarryFuncList.SendData(sysarg, st)
+
+	local aid = st.marry.actorid
+	local actorPtr = System.getEntityPtrByActorID(aid)
+	if actorPtr ~= nil then
+		local st1 = LActor.getStaticVar(actorPtr)
+		st1.marry.qy = st1.marry.qy + addqy
+		LActor.sendTipmsg(actorPtr, string.format(Lang.ScriptTips.mry36, addqy), ttTipmsgWindow)
+		MarryFuncList.SendData(actorPtr, st1)
+	else
+		local dp = LDataPack.allocPacket()
+		if dp == nil then return end
+		LDataPack.writeInt(dp, LActor.getActorId(sysarg)) 
+		LDataPack.writeInt(dp, 2)
+		LDataPack.writeInt(dp, addqy)
+		System.addOfflineMsg(aid, omMarryAward, dp, 0)	
+	end
+
+	local str = string.format(Lang.ScriptTips.mry43, st.marry.name, addqy)
+	System.sendGmMailOffLine(LActor.getActorId(sysarg), 
+							str, 0, 0, 0,0)
+	str = string.format(Lang.ScriptTips.mry43, LActor.getName(sysarg), addqy)
+	System.sendGmMailOffLine(st.marry.actorid,
+							str, 0, 0, 0,0)
+
+	-- 日志
+	System.logCounter(
+		LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), 
+		"marry", "", "",
+		"xunyou", "", "",
+		"", "", lfBI)	
+end
+
+-- 获取婚礼列表
+MarryFuncList[13] = function (sysarg, dp)
+	local npack = DataPack.allocPacket(sysarg, 148, 13)
+	if npack == nil then return end
+	
+	local rank = Ranking.getRanking(MarryFuncList.marryRankName)
+	if rank ~= nil then
+		local count = Ranking.getRankItemCount(rank)
+		--print("MarryFuncList marryRanklist num:"..count)
+		DataPack.writeInt(npack, count)
+		for i=1,count do
+			local rankitem = Ranking.getItemFromIndex(rank, i - 1)	-- 倒序遍历
+			DataPack.writeInt(npack, Ranking.getId(rankitem)) -- marryid
+			DataPack.writeInt(npack, -1 * Ranking.getPoint(rankitem)) -- starttime
+			DataPack.writeInt(npack, tonumber(Ranking.getSub(rankitem, 2))) -- type
+
+			DataPack.writeInt(npack, tonumber(Ranking.getSub(rankitem, 3))) -- actorid1
+			DataPack.writeByte(npack, tonumber(Ranking.getSub(rankitem, 7))) -- sex job camp level
+			DataPack.writeByte(npack, tonumber(Ranking.getSub(rankitem, 8)))
+			DataPack.writeByte(npack, tonumber(Ranking.getSub(rankitem, 9)))
+			DataPack.writeByte(npack, tonumber(Ranking.getSub(rankitem, 10)))
+
+			DataPack.writeInt(npack, tonumber(Ranking.getSub(rankitem, 5))) -- actorid2
+			DataPack.writeByte(npack, tonumber(Ranking.getSub(rankitem, 11))) -- sex job camp level
+			DataPack.writeByte(npack, tonumber(Ranking.getSub(rankitem, 12)))
+			DataPack.writeByte(npack, tonumber(Ranking.getSub(rankitem, 13)))
+			DataPack.writeByte(npack, tonumber(Ranking.getSub(rankitem, 14)))
+
+			DataPack.writeString(npack, Ranking.getSub(rankitem, 4))
+			DataPack.writeString(npack, Ranking.getSub(rankitem, 6))
+		end
+	end
+
+	DataPack.flush(npack)
+end
+
+-- 消耗戒指获取亲密度
+MarryFuncList[16] = function (sysarg, dp)
+	local st = LActor.getStaticVar(sysarg)	
+	local aid = st.marry.actorid
+	if aid == nil or aid == 0 then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.mry45, ttMessage)
+		return
+	end
+
+	local guid = DataPack.readInt64(dp)
+	local itemPtr = Item.getBagItemPtrByGuid(sysarg, guid)
+	if itemPtr == nil then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.mry09, ttMessage)
+		return
+	end
+
+	local itemid = Item.getItemId(itemPtr)
+	-- 需要判断是否戒指或者什么类型的戒指
+	local conf
+	for i=1,#marryConf.ringItemId do
+		if itemid == marryConf.ringItemId[i] then
+			conf = marryConf.ringItemId[i]
+			break
+		end
+	end
+	if conf == nil then 
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.mry09, ttMessage)
+		return
+	end
+
+	LActor.removeItemByPtr(sysarg, itemPtr, 1, true, "marry", 95)
+
+	local addqm = marryConf.useRingQm
+	if 11102 == itemid then
+		addqm = marryConf.useRingQm2
+	end
+	st.marry.qm = st.marry.qm + addqm
+	MarryFuncList.SendData(sysarg, st)
+	local str = string.format(Lang.ScriptTips.mry35, addqm)
+	LActor.sendTipmsg(sysarg, str, ttTipmsgWindow)
+
+	local aid = st.marry.actorid
+	local actorPtr = System.getEntityPtrByActorID(aid)
+	if actorPtr ~= nil then
+		local st1 = LActor.getStaticVar(actorPtr)
+		st1.marry.qm = st1.marry.qm + addqm
+		LActor.sendTipmsg(actorPtr, str, ttTipmsgWindow)
+		MarryFuncList.SendData(actorPtr, st1)
+	else
+		-- 不在线就发离线消息
+		local dp = LDataPack.allocPacket()
+		if dp == nil then return end
+		LDataPack.writeInt(dp, LActor.getActorId(sysarg)) 
+		LDataPack.writeInt(dp, 1)
+		LDataPack.writeInt(dp, addqm)
+		System.addOfflineMsg(aid, omMarryAward, dp, 0)
+	end
+	local myname = LActor.getName(sysarg)
+	str = string.format(Lang.ScriptTips.mry46, myname, addqm)
+	System.sendGmMailOffLine(LActor.getActorId(sysarg), str, 0, 0, 0,0)
+	str = string.format(Lang.ScriptTips.mry46, myname, addqm)
+	System.sendGmMailOffLine(st.marry.actorid,	str, 0, 0, 0,0)
+end
+
+-- 婚礼的副本结束时触发
+MarryFuncList.OnMarryOver = function (pfb)
+	-- 在婚礼排行榜中删除
+	local rankName = MarryFuncList.marryRankName
+	local rank = Ranking.getRanking(rankName)
+	if rank == nil then return end
+
+	local count = Ranking.getRankItemCount(rank)
+	for i=1,count do
+		local rankitem = Ranking.getItemFromIndex(rank, count - i)	-- 倒序遍历
+
+		if rankitem == nil then return end
+
+		if Ranking.getSub(rankitem, 1) == 
+			tostring(Fuben.getFubenHandle(pfb)) then
+			local marryid = Ranking.getId(rankitem)
+			Ranking.removeId(rank, marryid)
+			
+			local dp = LDataPack.allocPacket()
+			if dp == nil then return end
+
+			LDataPack.writeByte(dp, 148)
+			LDataPack.writeByte(dp, 15)
+			LDataPack.writeInt(dp, marryid)	
+			System.broadcastData(dp)
+			break
+		end
+	end
+end
+
+MarryFuncList.OnDivorceOfflineMsg = function (sysarg, msgType, dp, num)
+	if msgType == nil or dp == nil then return end
+	if msgType ~= omDivorceEvent then return end -- 只处理离婚的消息
+
+	local aid = LDataPack.readInt(dp)
+	divorce(sysarg, 3, true)
+end
+
+MarryFuncList.OnGetMarryAward = function (sysarg, msgType, dp, num)
+	if msgType == nil or dp == nil then return end
+	if msgType ~= omMarryAward then return end
+
+	local aid = LDataPack.readInt(dp)  -- 对方的id
+	local tt = LDataPack.readInt(dp)
+	local count = LDataPack.readInt(dp)
+	local st = LActor.getStaticVar(sysarg)
+	local str 
+	if tt == 1 then -- 亲密度
+		st.marry.qm = st.marry.qm + count
+		str = string.format(Lang.ScriptTips.mry35, count)
+		MarryFuncList.SendData(sysarg, st)
+	else
+		st.marry.qy = st.marry.qy + count
+		str = string.format(Lang.ScriptTips.mry36, count) 
+		MarryFuncList.SendData(sysarg, st)
+	end
+	LActor.sendTipmsg(sysarg, str, ttTipmsgWindow)
+end
+
+
+--游戏启动时触发
+GameStartEventList.registerEvent(MarryFuncList.Init)
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, MarryFuncList.newDayLogin)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, MarryFuncList.OnLogin)
+SystemHandlerDispatcher.registerSystemHander(BaseTypes.SystemId.marrySystem, MarryFuncList.MarryOp)
+EventCallDispatcher.regEntityCallbackMsg(EntityCallbackMsg.MarryTime, MarryFuncList.OnMarryTime)
+OffLineMsgDispatcher.registerEventCall(omDivorceEvent, MarryFuncList.OnDivorceOfflineMsg)
+OffLineMsgDispatcher.registerEventCall(omMarryAward, MarryFuncList.OnGetMarryAward)
+for i=1,2 do
+	EventCallDispatcher.registerFubenEnter(marryConf.marryfb[i], MarryFuncList.OnEnterMarry)
+	EventCallDispatcher.registerFubenGameOver(marryConf.marryfb[i],  MarryFuncList.OnMarryOver)
+end
+
+
+
+-- 巡游怪定时触发的脚本函数
+function OnMarchTime(monster, time)
+	local hdl = LActor.getSceneHandle(monster)
+	-- 在当前坐标周围随机点撒喜糖
+	local x = 0
+	local y = 0
+	x, y = LActor.getEntityPosition(monster, x, y)
+	for i=1, marryConf.sweetCount do
+		local rd = System.getRandomNumber(25)
+		x = x + rd % 5 - 2
+		y = y + rd / 5 - 2
+		Fuben.createDropBag(hdl, x, y, 0, 0, 0, 
+			marryConf.sweetItemId, 0, 0, marryConf.sweetExpTime, 2)
+	end
+end
+
+
+function unmarry(sysarg, name)
+	local ptr = LActor.getActorByName(name)
+	if ptr == nil then
+		LActor.sendTipmsg(sysarg, "the actor is offline!", ttMessage)
+		return
+	end
+	local item = Item.getEquipByPos(ptr, marryConf.ringEquipPos)
+	if item ~= nil then
+		Item.removeEquip(ptr, item, "divorce", 94)	
+	end
+
+	local st = LActor.getStaticVar(ptr)
+	st.marry.actorid = 0
+	st.marry.name = ""
+
+	LActor.sendTipmsg(sysarg, "gm cmd ok", ttMessage)
+end
+
+function addqy(sysarg, name, num)
+	local ptr = LActor.getActorByName(name)
+	if ptr == nil then
+		LActor.sendTipmsg(sysarg, "对方不在线", ttMessage)
+		return
+	end
+
+	local st = LActor.getStaticVar(ptr)
+	st.marry.qy = st.marry.qy + tonumber(num)
+	LActor.sendTipmsg(sysarg, "增加情意值成功", ttMessage)
+end
+
+function addqm(sysarg, arg)
+	local st = LActor.getStaticVar(sysarg)
+	st.marry.qm = tonumber(arg)
+end
+
+function resetxy(sysarg)
+	local st = LActor.getStaticVar(sysarg)
+	st.marry.xy = 65536
+end
+
+function resetmc(sysarg)
+	local st = LActor.getStaticVar(sysarg)
+	st.marry.marrycount = nil
+	st.marry.luxuryday = 1
+end
+
+function resetmarch(sysarg)
+	local st = LActor.getStaticVar(sysarg)
+	st.marry.march = 1
+end
+
+function clearmarrylog(sysarg)
+	local rankName = MarryFuncList.marryRankName
+	local rank = Ranking.getRanking(rankName)
+	if rank ~= nil then
+		Ranking.clearRanking(rank)
+	end
+end
+
+---#include "data\functions\systems\yigui\ygmanager.txt"
+
+function DenaturationFunc(sysarg,itemidx,itemPtr,ItemTable)
+	if ItemTable == nil then return end
+
+	local st = LActor.getStaticVar(sysarg)	
+	if st.marry ~= nil and st.marry.actorid ~= nil and st.marry.actorid ~= 0 then
+		LActor.sendTipmsg( sysarg, Lang.ScriptTips.mry52, ttMessage )
+		return
+	end
+		
+	local id = ItemTable.item_id
+
+	LActor.removeItemByPtr(sysarg,itemPtr,1,true,"usedenaturationitem",5) 
+	local sex =  LActor.getIntProperty(sysarg,PROP_SEX)
+	if sex == 0 then
+		sex = 1
+	else
+		sex = 0
+	end
+	LActor.setIntProperty(sysarg,PROP_SEX, sex)
+	
+	local fashion = Item.getEquipByPos(sysarg, 15)
+	if fashion ~= nil then
+		local  gender = Item.getItemProperty(sysarg, fashion, Item.ipItemNeedSex, 0)
+		if gender < 2 and sex ~= gender then
+			if Item.getBagEmptyGridCount(sysarg) < 1 then
+				Item.removeEquip(sysarg, fashion, "denaturation", 98)
+				System.sendGmMailOffLine(LActor.getActorId(sysarg), Lang.ScriptTips.mry51, 1, Item.getItemId(fashion), 1, 1);
+			else
+				local guid = Item.getItemGuid(fashion)
+				LActor.takeoffequip(sysarg,guid)
+			end
+		end
+	end
+
+	--YiguiManager.onDenaturation(sysarg)
+
+	LActor.refreshDenaturationFeature(sysarg)
+
+	local leadid = LGuild.getTianYuanStaicLeaderId()
+	if leadid == LActor.getActorId(sysarg) then
+		local job =  LActor.getIntProperty(sysarg,PROP_VOCATION)
+		local name =  LActor.getName(sysarg)
+		local scene = Fuben.getSceneHandleById(TianYuanConfig.STATUENPCSCENE,0)
+		for i=1,#TianYuanConfig.MODEL do
+			if  TianYuanConfig.MODEL[i].job == job and  TianYuanConfig.MODEL[i].sex == sex then
+				Fuben.setSceneNpcmodel(scene,TianYuanConfig.STATUENPCX,TianYuanConfig.STATUENPCY, TianYuanConfig.MODEL[i].modelid,name)
+			end
+		end
+	end
+end
+
+function  DenaturationItemsInit(sysarg)
+  for i = 1,table.getn(DenaturationItem) do
+	local x = DenaturationItem[i]
+	GlobalItemFn[x.item_id] = { func = DenaturationFunc, params = x }
+  end
+end
+
+table.insert(InitFnTable,DenaturationItemsInit)
+
+
+function DenaturationTest(sysarg)
+	local sex =  LActor.getIntProperty(sysarg,PROP_SEX)
+	if sex == 0 then
+		sex = 1
+	else
+		sex = 0
+	end
+	LActor.setIntProperty(sysarg,PROP_SEX, sex)
+	
+
+	local fashion = Item.getEquipByPos(sysarg, 15)
+	if fashion ~= nil then
+		local  gender = Item.getItemProperty(sysarg, fashion, Item.ipItemNeedSex, 0)
+		if gender < 2 and sex ~= gender then
+			if Item.getBagEmptyGridCount(sysarg) < 1 then
+				Item.removeEquip(sysarg, fashion, "denaturation", 98)
+				--local str = string.format(Lang.ScriptTips.mry40, st.marry.name, addqm)
+				System.sendGmMailOffLine(LActor.getActorId(sysarg), "test", 1, Item.getItemId(fashion), 1, 1);
+			else
+				local guid = Item.getItemGuid(fashion)
+				LActor.takeoffequip(sysarg,guid)
+			end
+		end
+	end
+
+	LActor.refreshDenaturationFeature(sysarg)
+end
+
+--修改名后,更新伴侣名称
+MarryFuncList.UpdateMateName = function(sysarg, arg)
+	local var = LActor.getStaticVar(sysarg)
+	if var and var.marry and var.marry.actorid and var.marry.name then
+		local var_sy = System.getStaticVar()
+		if var_sy.MateChangeList then
+			if var_sy.MateChangeList[var.marry.actorid] then
+				var.marry.name = var_sy.MateChangeList[var.marry.actorid]
+				var_sy.MateChangeList[var.marry.actorid] = nil
+			end
+		end
+	end
+	
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, MarryFuncList.UpdateMateName)
+
+

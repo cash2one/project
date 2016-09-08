@@ -1,0 +1,186 @@
+
+BaGua = {}
+--随机抽取任务列表
+
+BaGua.FindMonsterIndex = function ( monId )
+    -- body
+    for k , v in pairs ( BaGuaConfig.TASK ) do
+        if v.ID == monId then
+            return k
+        end
+    end
+end
+
+BaGua.FindTaskTable = function ( table_temp , index )
+    -- body
+    if type(table_temp) ~= 'table' then
+        debug_print("非常严重bug")
+    end
+    for k , v in pairs ( table_temp ) do
+        if BaGuaConfig.TASK[v].TYPE == BaGuaConfig.TASK[index].TYPE and BaGuaConfig.TASK[v].TYPE == 2 then
+            return 1
+        end
+    end
+end
+
+BaGua.BaGuaTaskId = function( task_table )
+    debug_print("======")
+    local fighters = {}
+    local loop = #BaGuaConfig.TASK
+    -- local rand_task_table = {}
+    if type(task_table) ~= 'table' then
+        debug_print("---------参数错误 强制转换成table----------")
+        task_table = {}
+    end
+
+    local tmp = {}
+    for i = 1, loop do
+        tmp[i] = i
+    end
+    if loop < BaGuaConfig.TASK_NUM then
+        debug_print("------目标库中目标数量少于任务数量--------")
+        return
+    end
+    local index = 0
+    local nCount = BaGuaConfig.TASK_NUM
+    while ( nCount > 0 )
+    do
+        local rand_num = loop - index
+        if rand_num <= 0 then
+            debug_print("---------配置百分百错误----------")
+            break
+        end
+        --debug_print( )
+        local rand = System.getRandomNumber(rand_num) + 1
+        debug_print(string.format("=-======%d", rand))
+        local nFlag = BaGua.FindTaskTable(task_table , tmp[rand])
+        tmp[rand], tmp[rand_num] = tmp[rand_num], tmp[rand]
+        if nFlag ~= nil then
+            debug_print("---------存在该类任务--------")
+        else
+            table.insert(task_table , tmp[rand_num])
+            nCount = nCount - 1
+        end
+        index = index + 1
+    end
+end
+
+BaGua.IsSameScreen = function (x1, y1, x2, y2)
+    if x1 > x2 + 14 or x1 < x2 - 14 or y1 > y2 + 9 or y1 < y2 - 9 then
+        return false
+    else
+        return true
+    end
+end
+
+BaGua.GetExpByLevel = function (sysarg, factor)
+    local level = LActor.getLevel(sysarg)
+    local val =  factor
+    local mode = val % 100
+    val = val - mode
+
+    if mode >= 50 then
+        val = val + 100
+    end
+    val = val - val % 1000
+    return val
+end
+
+BaGua.BaGuaTask = function()         --每天抽取任务
+    local var_p = System.getStaticVar()
+    if var_p.BaGuaTaskId == nil then
+        var_p.BaGuaTaskId = {}
+    else
+        debug_print("=======每天随机一次==========")
+        return
+    end
+
+    local task_table = {}
+    BaGua.BaGuaTaskId(task_table)
+    --print_table(task_table)
+    debug_print("---------初始化任务列表------------------")
+    for i = 1 , #task_table do
+        debug_print(BaGuaConfig.TASK[task_table[i]].ID)
+        var_p.BaGuaTaskId[i] = BaGuaConfig.TASK[task_table[i]].ID
+    end
+    debug_print("---------结束任务列表------------------")
+end
+
+BaGua.BaGua_Statistic = function (sysarg)        --下发任务目标列表 
+    local nSysVar = System.getStaticVar()
+    local sVal = System.getDyanmicVar()
+
+    if not nSysVar.baguaStartTime or not System.isSameDay(nSysVar.baguaStartTime, System.getCurrMiniTime()) then
+        local npack = DataPack.allocPacket(sysarg,139,90)
+        if npack == nil then return end
+        DataPack.writeInt(npack , 0)
+        DataPack.flush(npack)
+        return
+    end
+
+    if nSysVar.BaGuaTaskId == nil then
+        debug_print("=====1====击杀")
+        LActor.sendTipmsg(sysarg, Lang.ScriptTips.bgdg002, ttMessage)
+        return
+    end
+
+    local var = LActor.getStaticVar( sysarg )
+    if var.BaGuaTaskId == nil then
+        --初始化下发任务列表
+        var.BaGuaTaskId = {}
+        var.BaGuaAward = {}
+        var.BaGuaTaskAmount = {}
+        for i = 1 , BaGuaConfig.TASK_NUM do
+            if nSysVar.BaGuaTaskId[i] ~= nil then
+                var.BaGuaTaskId[i] = nSysVar.BaGuaTaskId[i]
+                var.BaGuaAward[i] = 0
+                var.BaGuaTaskAmount[i] = 0
+            end
+        end
+    end
+
+    if var.BaGuaAward == nil then
+        debug_print("=====2====击杀")
+        return
+    end
+    if var.BaGuaTaskId == nil then
+        debug_print("=====2====击杀")
+        return
+    end 
+    if var.BaGuaTaskAmount == nil then
+        debug_print("=====3====击杀")
+        return
+    end 
+
+    local npack = DataPack.allocPacket(sysarg,139,90)
+    if npack == nil then return end
+    local exp = 0.0
+    local level = LActor.getLevel(sysarg)
+    for i=1,#BaGuaConfig.EXP do
+        if level >= BaGuaConfig.EXP[i][1] and level <= BaGuaConfig.EXP[i][2] then
+            exp = BaGuaConfig.EXP[i][3]
+            break
+        end
+    end
+  --  debug_print("-----------###--------",#var.BaGuaTaskId)
+
+    DataPack.writeInt(npack, #var.BaGuaTaskId)
+    for i = 1 , #var.BaGuaTaskId do
+        DataPack.writeInt(npack, var.BaGuaTaskId[i])        
+        DataPack.writeInt(npack, var.BaGuaTaskAmount[i])
+        local TargetId = var.BaGuaTaskId[i]
+        local targetnum = 0
+        local t = BaGua.FindMonsterIndex(TargetId)
+        if t ~= nil then
+            targetnum = BaGuaConfig.TASK[t].AMOUNT
+        end
+      --  debug_print("----------------",t)
+        debug_print("=========击杀目标",BaGuaConfig.TASK[t].AMOUNT , BaGuaConfig.TASK[t].ID , var.BaGuaAward[i],var.BaGuaTaskAmount[i])
+        DataPack.writeInt(npack, targetnum)
+        local ex = BaGua.GetExpByLevel(sysarg,exp)
+        DataPack.writeInt(npack, ex)
+        DataPack.writeInt(npack, var.BaGuaAward[i])
+    end
+    DataPack.flush(npack)
+end
+

@@ -1,0 +1,50 @@
+﻿--部分功能物品的延迟效果处理 
+
+
+--#include "data\language\LangCode.txt" once --语言包
+--#include "ScriptDelayCallBackItem\CityChuanSongItem.txt" once
+--#include "ScriptDelayCallBackItem\CreatePowderPacketItem.txt" once
+--#include "ScriptDelayCallBackItem\UseTaskThingInThePlaceItems.txt" once
+--#include "ScriptDelayCallBackItem\RapidMoveItem.txt" once  --疾风令
+--#include "..\NormalItem\XiuweiBox.txt" once
+--#include "..\NormalItem\UseExpBox.txt" once
+--#include "..\NormalItem\UseItemCreateMonster.txt" once  --使用道具刷怪延时
+--#include "ScriptDelayCallBackItem\GemRide.txt" once -- 宝物骑乘
+--#include "data\functions\monevent\monsteractionimpl.txt" once 
+
+
+
+EventCallDispatcher.ScriptDelayCallback = function (sysarg,arg)
+  if arg == nil then return print("arg is null!") end
+  local type = arg[1]
+  if LocalDT.ScriptDelayConfig[type] ~= nil then 
+     --print("_-------------")
+     local fnTable = LocalDT.ScriptDelayConfig[type]
+     for i=1,#fnTable do
+      --print("i:"..i)
+      fnTable[i](sysarg,arg)
+     end
+  end
+end
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeScriptDelayCallback, EventCallDispatcher.ScriptDelayCallback)
+
+EntityCallbackFunc = {}
+
+-- 脚本延时回调消息
+function OnEntityScriptCallbackMsg(et, msg, p1, p2, p3, p4, p5)
+  local func = EntityCallbackFunc[msg]
+  if func ~= nil then
+    func(et, p1, p2, p3, p4, p5)
+  end
+end
+
+-- 注册回调函数
+EventCallDispatcher.regEntityCallbackMsg = function(msg, func)
+  if EntityCallbackFunc[msg] ~= nil then
+    print("same regEntityCallbackFunc msg id:"..msg)
+  end
+  EntityCallbackFunc[msg] = func
+end
+
+EventCallDispatcher.regEntityCallbackMsg(EntityCallbackMsg.MonsterTianhuoEffect, MonsterActionFunc.MonsterTianhuoOnHit);
+EventCallDispatcher.regEntityCallbackMsg(EntityCallbackMsg.MonsterYunShiEffect, MonsterActionFunc.OnYunShiEffect);

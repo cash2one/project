@@ -1,0 +1,209 @@
+﻿  --物品配置示范
+  {
+    id = 0, --物品ID，必须是唯一的
+    name ="test", --"测试物品"
+    type = 0, --物品的类型，药品、技能书、任务物品等，使用数字类型编号 
+--[[
+		 enum ItemType
+{
+    itUndefinedType = 0,		//未定义类型的物品
+    itWeapon = 1,				//武器
+    itDress = 2,				//衣服
+    itHelmet = 3,				//头盔
+    itCuff = 4,					//护腕
+    itTrousers = 5,				//裤子
+    itRing = 6,					/
+    itNecklace = 7,				//项链
+    itDecorations = 8,			//饰品
+    itGirdle = 9,				//腰带
+    itShoes = 10,				//鞋子
+    itMount = 11,               //坐骑
+    itHpSource = 12,            //HP源泉
+    itMpSource = 13,            //MP源泉
+    itDecoration = 14,          //勋章(翅膀)
+    itBadge = 15,				//魂器
+    itFashionDress = 16,        //时装
+    itHpPot = 17,               //经验罐子，用来装备在身上，吸收杀怪经验
+    itEquipMax,                 //最大的装备ID,这个值不能随便改
+
+    itMountEquipMin = 49,
+    itMountHelmet = 50 ,          //坐骑的头饰
+    itMountNecklace = 51,          //坐骑的项链
+    itMountDress = 52,				//坐骑的护甲
+    itMountCuff = 53,             //坐骑的护腕
+    itMountEquipMax,              //最大的装备ID ,这个值不能随便改
+
+    ////上面的都是装备类型
+
+    itQuestItem = 81,			//任务物品
+    itFunctionItem = 82,		//功能物品，可以双击执行功能脚本的
+    itMedicaments = 83,		//普通药品
+    itFastMedicaments = 84,	//速回药品
+    itItemDiamond = 85,        //宝石
+    itItemEquivalence = 86,    //等价道具，可以用来出售换钱的道具
+    itItemEquipEnhance = 87,   //装备强化类，比如强化石等
+    itItemEquipUpgrad = 88,       // 装备升级材料
+    itItemPetSkill = 89,       //伙伴的技能书
+    itPetMedicaments = 90,		//伙伴普通药品
+    itPetFastMedicaments = 91,	//伙伴速回药品
+
+    itMpStore = 92,				// 法力存储包
+    itHpStore = 93,				// 生命存储包
+    itPetHpStore = 94,			// 伙伴生命存储包
+	itCanUseTime = 201,			// 到时间才能使用的道具
+    itItemTypeCount,			//物品类型的数量，最大值，类型值不一定是连续的
+};
+]]   
+
+
+    
+    icon = 10, --物品图标图片编号
+    --物品外观图片编号，可配置多个（一般是用于服装配置）。只对具有外形的装备类物品有意义，例如衣服、武器和坐骑
+    --分别对应4个职业不同性别的外观，依次为刘秀男、刘秀女、阴丽华男、阴丽华女、待定职业男、待定职业女、圣通男、圣通女
+    shape = {0,0,0,0,0,0,0,0}, --如果没外观，随便写一个数字，不需要8个
+    color = 0, --白色：0 绿色：1 蓝色：2 紫色：3 橙色：4 红色：5
+    xiLianLevel = 0, --洗练等级
+    dura = 1000, --装备耐久度，1000表示1耐久。
+    --非装备表示冷却时间，单位是毫秒，如没有冷却可以不填写。
+    --如果是技能书，这个就表示技能的等级1-4
+    --宝石类表示宝石子类型（0：没定义，1:生命、2:攻击、3:物理防御、4:道法防御、5:命中、6:闪避、7:暴击、8:抗暴）
+    dup = 10, --叠加数量上限，默认值为0
+    colGroup = 0, --冷却组，对于使用后具有冷却时间的物品来说，相同冷却组的物品将同时进入冷却恢复状态
+    dealType = 0, --物品在商店中交易的货币类型，0为绑定货币，1为非绑定货币
+    dealPrice = 10000, --物品在商店中售出的价格，售出和购买的货币的类型通过dealType配置
+    time = 0, --物品的使用时限，单位是秒，0表示不限制使用时间。 
+    validFbId=-1,		 -- 物品使用的有效副本ID。-1表明是不限制。对于配置了限制场景的物品，需要配置禁止交易、放入仓库等
+    validSceneId=-1,	 -- 物品使用的有效场景ID。-1表明是不限制
+    existScenes = {1,2,4,5,6}, --物品存在的有效场景集合。不在此场景列表中的物品会被删除。-1表示任何场景都可存在
+    event = "@use,1,2;@getfrom,2,3",--事件（客户端用于显示tip时跳转用）
+    suitId =1,      --    套装的ID,
+    fashionId = 1,  --时装id
+    
+                     --  a)如果是装备表示装备的套装ID，
+		     --  b)在功能物品里表示功能物品的子分类   1:磨刀石,2:大喇叭道具，3: 疾风令,4：gm大喇叭,
+                     --                  5:表示能扩展背包的物品 6:黄钻vip道具,7：蓝钻vip道具,8:红钻vip道具,9:扩展伙伴槽的道具,10:伙伴的口粮，用于扩展增加伙伴的忠诚度
+                     --                  11表示伙伴蛋,12 表示产生宝物的道具
+                     --  c)在宝石里，suitId表示宝石的等级，比如5表示是5级宝石
+                     --  d)在技能秘籍中，按2^(n-1)表示该秘籍开启的第几个效果，第1个效果是1，开启第2个效果是2，开启第3个秘籍效果是4，4个效果是8,开启1和4效果是9，以此类推                   
+                     --  e)在伙伴技能书里，表示的是 该技能书对应的伙伴的技能的id
+
+    --静态属性表，静态属性指物品原本具备的且不会改变的属性
+    --[[
+	1)源泉类的装备,物品类型=12或者13的
+	在物品的静态属性里配置
+		
+         staitcAttrs =  
+		
+         {
+			
+                {type=0,value =3000},    --表示回复时间是3000毫秒每次
+			
+                {type=0,value =25},      --表示每次回复的是25点
+			
+                {type=0,value =123},     --表示可以用ID为123的物品灌注,如果有多个物品可以在后面继续添加,,,
+		{type=0,value =124},     --表示可以用ID为124的物品灌注
+         }
+ 
+	2)药水类物品的配置，是buff药才需要这样配置,物品类型= 103，(可以多个buff，比如2个buff，下面的要配置8行,...)
+		
+            下面这个表示每次加3点HP,加30次，间隔为3秒，buffid=1
+
+        3)伙伴蛋的话，表示伙伴的id，宝物蛋的话，填宝物的模型id 比如
+        
+         staitcAttrs =  
+		
+         {
+			
+                {type=0,value =1},    --伙伴的id或者宝物的模型id
+			
+         }
+
+        staitcAttrs =
+       {        
+	    {type=11, value =3},    --type=增加的属性,value =每次添加的数值
+			
+            {type=0, value=30 },      --type=0,value= 作用次数    
+	    {type=0, value=3},        --type=0,value= 间隔时间，单位是秒 
+	    {type=0, value=1},        --type=0,value= buffID
+		
+       }
+	
+       3)速回药，灌注药的配置，物品类型= 104， 可以配置多个效果
+       staitcAttrs =
+       {        
+            --表示一次性回复300点蓝
+            {type=13, value =300},    --type=增加的属性,value =添加的数值
+       }
+
+    --]]
+    staitcAttrs =
+    {
+      --一个属性的配置示范，type为属性类型，value为属性值
+      { type = 0, value = 0 },
+    },
+    --品质属性表，不具有品质属性的物品可以不进行配置
+    qualityAttrs =
+    {
+      --1品质的属性表
+      {
+        --一个属性的配置示范，type为属性类型，value为属性值
+        { type = 0, value = 0 },
+      },
+      --后续品质的属性表，每个品质等级的属性值是独立的，不会增加上一个品质等级的属性
+    },
+    --强化属性表，不能进行强化或不具有强化等级的物品可以不进行配置
+    strongAttrs =
+    {
+      --强化+1的属性表
+      {
+        --一个属性的配置示范，type为属性类型，value为属性值
+        { type = 0, value = 0 },
+      },
+      --后续强化等级的属性表，每个强化等级的属性值是独立的，不会增加上一个强化等级的属性
+    },
+
+
+    --物品标志配置表，所有属性默认为false，如果不为true的属性，可以不填写 
+    flags = 
+    {
+      recordLog = true,--是否记录物品流通日志
+      denyStorage = false,--是否禁止存仓库
+      denyAutoBindOnTake = false,--是否在穿戴后不自动绑定
+      autoStartTime = false,--是否在获得时即开始计算时间，如果不具有此标志则将在装备第一次被穿戴的时候开始计时
+      denyDeal = false,--是否禁止交易
+      denySell = false,--是否禁止出售到商店
+      denyDestroy = false,--是否禁止销毁
+      destroyOnOffline = false,--是否在角色下线时自动消失
+      destroyOnDie = false,--是否在角色死亡时自动消失
+      denyDropdown = false,--是否禁止在死亡时爆出
+      dieDropdown = false,--是否在角色死亡时强制爆出
+      offlineDropdown= false,--是否在角色下线时强制爆出
+      hasHole = false,--是否有宝石孔
+      hideDura = false,--是否不显示耐久
+      denySplite = false,--是否禁止在物品叠加后进行拆分（通常用于带有实现限制的物品）
+      asQuestItem = false,--是否作为任务需求物品使用
+      monAlwaysDropdown= false,--是否在怪物死亡爆出时不检查杀怪者等级差而均掉落
+      hideQualityName = false,--是否隐藏装备的品质前缀文字
+      useOnPractice = false,--是否可以再操练的时候使用 
+      batchUse = false, --是否可以批量使用
+    }, 
+    --物品使用条件表
+    conds = 
+    {
+      --必须到达10级或以上才能使用 
+      { cond = 1, value = 10 }, 
+      --必须为value性别才能使用，0男1女2男女通用 注意:该项必须配置
+      { cond = 2, value = 0 },
+      --必须为value职业才能使用，0:通用、1：天雷、2：蜀山、3： 圆月 、4：云华
+      { cond = 3, value = 0 }, 
+      --结婚与否必须等于value才能使用，0表示未婚，1表示已婚
+      { cond = 4, value = 1 }, 
+      --需要的骑术等级,value表示骑术的等级
+      { cond = 5, value = 1 }, 
+       --需要的阵营的职位,value表示职位的id
+      { cond = 6, value = 1 }, 
+       --需要加入世族,value暂时没有
+      { cond = 7, value = 1 }, 
+    },
+    desc = "物品描述（说明）文字，可使用HTML语法", 
+  },

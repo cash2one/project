@@ -1,0 +1,110 @@
+local NpcScriptFuncs = {}
+local npc_script_dir_names = {}
+
+-- 裁切函数 sep裁切依据
+function NpcScriptFuncs.Split(str, sep)
+    local sep, fields = sep or "\t", {}
+    local pattern = string.format("([^%s]+)", sep)
+    str:gsub(pattern, function(c)
+        if tonumber(c) ~= nil then
+            c = tonumber(c)
+        end
+        fields[#fields + 1] = c
+    end)
+    return fields
+end
+
+function ReadNPCScript ()
+    -- os.execute('mkdir exceltolua\\mytest')
+    local headStr = ""
+    local tailStr = ""
+    local headFile = io.open("exceltolua\\npc_script_head.txt", "r")
+    if headFile then
+        headStr = headStr .. (headFile:read("*a") or "")
+        headFile:close()
+    end
+    local tailFile = io.open("exceltolua\\npc_script_tail.txt", "r")
+    if tailFile then
+        tailStr = tailStr .. (tailFile:read("*a") or "")
+        tailFile:close()
+    end
+
+    local objexcel = CExcelReader:new()
+    if not objexcel then
+        print("objexcel is null")
+        return
+    end
+
+    objexcel:Init_App()
+    objexcel:OpenRead()
+
+    -- 读取<NPC脚本配置>
+    local obj = objexcel:LoadSheetByIndex(1)
+    if not obj then
+        print("读取<NPC脚本配置>失败!")
+        objexcel:Close()
+        objexcel:Quit_App()
+        objexcel:delete()
+        return
+    end
+
+    local cCount = objexcel:GetCurrentSheetColCount()
+    local rCount = objexcel:GetCurrentSheetRowCount()
+
+    for i = 2, rCount do
+        local id = tonumber(objexcel:ReadCellAsString(i, 1)) or 0
+        if id > 0 then
+            local dir = objexcel:ReadCellAsString(i, 2)
+            if not dir or dir == "" then
+                print(string.format("表格第<%d>行中<场景目录>异常", i))
+            else
+                if npc_script_dir_names[dir] == nil then
+                    os.execute(string.format("md exceltolua\\npcscript\\%s", dir))
+                    npc_script_dir_names[dir] = 1
+                end
+                -- 过滤第3列数据
+                local filename = objexcel:ReadCellAsString(i, 4)
+                if not filename or filename == "" then
+                    print(string.format("表格第<%d>行中<脚本名字>异常", i))
+                else
+                    local proms = objexcel:ReadCellAsString(i, 6)
+                    local comps = objexcel:ReadCellAsString(i, 7)
+                    local PromMs = NpcScriptFuncs.Split(proms, ",")
+                    local CompMs = NpcScriptFuncs.Split(comps, ",")
+
+                    local PromMsHead = "PromMs = {\n"
+                    local PromMsTail = "}\n"
+                    local CompMsHead = "CompMs = {\n"
+                    local CompMsTail = "}\n"
+
+                    for k, v in ipairs(PromMs) do
+                        local qid = tonumber(v) or 0
+                        if qid > 0 then
+                            local str = string.format("--#include \"data\\config\\quest\\quests\\%d.txt\"", qid)
+                            PromMsHead = PromMsHead .. str .. "\n"
+                        end
+                    end
+                    PromMsHead = PromMsHead .. PromMsTail
+
+                    for k, v in ipairs(CompMs) do
+                        local qid = tonumber(v) or 0
+                        if qid > 0 then
+                            local str = string.format("--#include \"data\\config\\quest\\quests\\%d.txt\"", qid)
+                            CompMsHead = CompMsHead .. str .. "\n"
+                        end
+                    end
+                    CompMsHead = CompMsHead .. CompMsTail
+
+                    local dumpStr = string.format("%s\n%s\n%s\n%s\n", headStr, PromMsHead, CompMsHead, tailStr)
+                    objexcel:WriteFile(string.format("exceltolua\\npcscript\\%s\\%s.txt", dir, filename), dumpStr)
+                end
+            end
+        else
+            print(string.format("过滤表格第<%d>行数据", i))
+        end
+    end
+
+    objexcel:Close()
+    objexcel:Quit_App()
+    objexcel:delete()
+end

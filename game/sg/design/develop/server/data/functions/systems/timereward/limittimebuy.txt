@@ -1,0 +1,164 @@
+--限时购买活动
+--#include "data\functions\systems\timereward\activityconf.txt" once
+
+LimitTimeBuyActivity = {}
+LimitTimeBuyActivity.activityId = {39, 100, 101}
+
+function LimitTimeBuyActivity.getActorVar(actor, id)
+	if not actor or not id then return end
+
+	local var = LActor.getStaticVar(actor)
+	if not var then return end
+
+	if not var.limitTimeBuyActivity then var.limitTimeBuyActivity = {} end
+	if not var.limitTimeBuyActivity[id] then var.limitTimeBuyActivity[id] = {} end
+
+	local state,starttime,endtime = ONLINEREWARD.GetActivityState(id)
+	if not var.limitTimeBuyActivity[id].time or var.limitTimeBuyActivity[id].time ~= starttime then
+		var.limitTimeBuyActivity[id] = {}
+		var.limitTimeBuyActivity[id].time = starttime
+	end
+
+	return var.limitTimeBuyActivity[id]
+end
+
+function LimitTimeBuyActivity.sendInfo(actor, id)
+	if not actor then return end
+
+	local state,starttime,endtime = ONLINEREWARD.GetActivityState(id)
+	if state == 0 then return end
+
+	if not activityConf[id] then
+		print("error limitTimeBuyActivity buyItem id        "..id)
+		print(type(id))
+		return
+	end
+
+	local config
+	for _, activityId in pairs(LimitTimeBuyActivity.activityId) do
+		if activityConf[id].activities[activityId] then
+			config = activityConf[id].activities[activityId]
+			break
+		end
+	end
+	if not config then return end
+
+	local var = LimitTimeBuyActivity.getActorVar(actor, id)
+	if not var then return end
+	if not var.hasBuyItem_1 then var.hasBuyItem_1 = {} end 	--玩家购买的物品个数
+
+	local now = System.getCurrMiniTime()
+	local tmp = {}
+	for itemidx, itemconfig in ipairs(config.items) do
+		if not var.hasBuyItem_1[itemidx] then var.hasBuyItem_1[itemidx] = 0 end
+
+		local time = starttime + itemconfig.time
+		if now <= time then
+			table.insert(tmp, {itemid = itemconfig.itemid, leftCount = itemconfig.maxCount-var.hasBuyItem_1[itemidx], endTime = time})
+		end
+	end
+
+	local pack = DataPack.allocPacket(actor, BaseTypes.SystemId.timeRewardSystem, 146)
+	if not pack then return end
+
+	DataPack.writeInt(pack, id)
+	DataPack.writeByte(pack, #tmp)
+	for _, items in ipairs(tmp) do
+		DataPack.writeInt(pack, items.itemid)
+		DataPack.writeByte(pack, items.leftCount)
+		DataPack.writeUInt(pack, items.endTime)
+	end
+	DataPack.flush(pack)
+end
+
+--购买物品
+function LimitTimeBuyActivity.buyItem(actor, id, itemid)
+	if not activityConf[id] then
+		print("error limitTimeBuyActivity buyItem id        "..id)
+		print(type(id))
+		return
+	end
+
+	local state,starttime,endtime = ONLINEREWARD.GetActivityState(id)
+	if state == 0 then return end
+
+	local config
+	for _, activityId in pairs(LimitTimeBuyActivity.activityId) do
+		if activityConf[id].activities[activityId] then
+			config = activityConf[id].activities[activityId]
+			break
+		end
+	end
+	if not config then return end
+
+	local now = System.getCurrMiniTime()
+	local itemconfig
+	local itemidx
+	for idx, conf in pairs(config.items) do
+		if conf.itemid == itemid then
+			local time = starttime + conf.time
+			if now <= time then
+				itemconfig = conf
+				itemidx = idx
+			end
+			break
+		end
+	end
+	if not itemconfig or not itemidx then return end
+
+	local var = LimitTimeBuyActivity.getActorVar(actor, id)
+	if not var or not var.hasBuyItem_1 or not var.hasBuyItem_1[itemidx] then return end
+
+	if var.hasBuyItem_1[itemidx] >= itemconfig.maxCount then
+		LActor.sendTipmsg(actor, Lang.ScriptTips.limit003, ttMessage)
+		return
+	end
+	
+	if LActor.getMoneyCount(actor, itemconfig.moneyType) < itemconfig.price then
+		LActor.SendGeneralTips(actor, 1, itemconfig.moneyType, itemconfig.price)
+		return
+	end
+
+	if Item.getBagEmptyGridCount(actor) < 1 then
+		LActor.SendGeneralTips(actor, 7, 0, 0)
+		return
+	end
+
+	var.hasBuyItem_1[itemidx] = var.hasBuyItem_1[itemidx] + 1
+
+	LActor.changeMoney(actor, itemconfig.moneyType, -itemconfig.price, 1, true, "limitTimeBuyActivity")
+
+	LActor.addItem(actor, itemconfig.itemid, 0, 0, 1, 0, "limitTimeBuyActivity")
+
+	LimitTimeBuyActivity.sendInfo(actor, id)
+
+	System.logCounter(LActor.getActorId(actor), LActor.getAccountName(actor), tostring(LActor.getLevel(actor)), "limittimebuy", tonumber(itemconfig.itemid), "", "", "", LActor.getName(actor))
+end
+
+function LimitTimeBuyActivity.onLogin(actor)
+	for _, conf in pairs(ActivityControl) do
+		if activityConf[conf.id] then
+			for _, activityId in pairs(LimitTimeBuyActivity.activityId) do
+				if activityConf[conf.id].activities[activityId] then
+					LimitTimeBuyActivity.sendInfo(actor, conf.id)
+					break
+				end
+			end
+		end
+	end
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, LimitTimeBuyActivity.onLogin)
+
+function LimitTimeBuyActivity.check(actor, args)
+	local tmp1 = tonumber(args[1])
+	if tmp1 == 1 then
+		LimitTimeBuyActivity.onLogin(actor)
+	elseif tmp1 == 2 then
+		local tmp2 = tonumber(args[2])
+		LimitTimeBuyActivity.buyItem(actor, 1, tmp2)
+	end
+end
+
+GmEventFuncList.register( "lim", LimitTimeBuyActivity.check, 1)
+

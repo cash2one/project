@@ -1,0 +1,27 @@
+--历练副本小怪
+{
+	id = 6,	--行为ID
+	trigger = 1,	--触发类型，血量为1，时间为2
+	infos = 
+	{
+		--血量99%
+		{
+			sequId = 1,
+			param = 99,
+			sequence = 
+			{
+				{ type = 1, duration = 3, talk=Lang.Actions.a000209, talkType=1 },	--对白
+			} 
+		},
+
+		--血量20%
+		{
+			sequId = 2,
+			param = 99,
+			sequence = 
+			{
+				{ type = 1, duration = 2, talk=Lang.Actions.a000210, talkType=1 },	--对白
+			} 
+		},
+	},
+},

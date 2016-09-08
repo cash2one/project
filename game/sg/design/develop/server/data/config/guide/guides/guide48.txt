@@ -1,0 +1,59 @@
+﻿{
+	--斩妖除魔
+  trigger = 
+  { 
+    type = 1, 
+    value = 371,
+  },
+ 
+  --引导中锁定的窗口ID
+  lockUI = 
+  {
+    230,
+  },
+
+  --引导的步骤 
+  steps = 
+  {
+	--第1步 指引点击刷星
+    {
+      cond = { type = 1, helpId = 231, data = 0 },
+
+      action = { type = 1, helpId = 231, data = 0, desc = "" },
+
+      hideCond = { type = 2, helpId = 231, data = 0 },
+    },
+
+	--第2步 指引点击刷星
+    {
+      cond = { type = 1, helpId = 231, data = 0 },
+
+      action = { type = 1, helpId = 231, data = 0, desc = "" },
+
+      hideCond = { type = 2, helpId = 231, data = 0 },
+    },
+
+	--第3步 指引点击刷星
+    {
+      cond = { type = 1, helpId = 231, data = 0 },
+
+      action = { type = 1, helpId = 231, data = 0, desc = "" },
+
+      hideCond = { type = 2, helpId = 231, data = 0 },
+    },
+
+	--第4步 指引点击接受任务
+    {
+      cond = { type = 1, helpId = 232, data = 0 },
+
+      action = { type = 1, helpId = 232, data = 0, desc = "" },
+    },
+
+	--第5步 引导结束
+    {
+      cond = { type = 2, helpId = 230, data = 3 },
+
+      action = { type = 0, helpId = 0, data = Lang.GuideLang.func48, desc = "" },
+    },
+  } 
+}

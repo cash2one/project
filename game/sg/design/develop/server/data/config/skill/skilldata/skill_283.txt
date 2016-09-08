@@ -1,0 +1,22 @@
+{
+	id = 283,
+	name = Lang.Skill.s283Name,
+	desc = Lang.Skill.s283Desc,
+	vocation = 0,
+	skillType = 10,
+	skillSpellType = 1,
+	skillClass = 10,
+	commonCd = 0,
+	canbeDefault = false,
+	specialBuffCond = 0,
+	notAutoUse = false,
+   actions=
+    {
+		{ act = 53, effect = 0 },
+		
+	},
+	skillSubLevel = { 
+--#include "Skill_283_1.txt"
+ 
+	},
+},

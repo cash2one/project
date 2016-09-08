@@ -1,0 +1,125 @@
+--活动，强者之路
+
+--#include "gemactivityrewardconf.txt" once
+--#include "activitycontrolhandler.txt" once
+
+--请求至强伙伴奖励情况
+ONLINEREWARD.getGemActivityRewardInfo = function(sysarg)
+	local checklv = ONLINEREWARD.ActivityCheckLevel(sysarg, GemActivityConf.activityId)
+	if not checklv then return end
+
+	local var = LActor.getStaticVar(sysarg)
+	--是否重置
+	local ifreset = ONLINEREWARD.CheckResetActivityInfo(sysarg, GemActivityConf.activityId)
+	local state = ONLINEREWARD.GetActivityState(GemActivityConf.activityId)
+
+	local gemState, gemLevel, gemExpr = LActor.getGemInfo( sysarg )
+
+	local level = (gemState - 1)*10 + gemLevel
+
+	if ifreset and state == 1 then 
+		if level >= GemActivityConf.aimlevel[1] then
+			for i=1,#GemActivityConf.aimlevel do
+				if level < GemActivityConf.aimlevel[i] then break end
+				var.GemActivity.Record = System.bitOpSetMask(var.GemActivity.Record, i - 1, true)
+			end
+		end
+	end
+
+	if var.GemActivity == nil then 
+		ONLINEREWARD.gemactivitycheck(sysarg, level)
+	end
+	if var.GemActivity.Record == nil then var.GemActivity.Record = 0 end
+	if var.GemActivity.Reward == nil then var.GemActivity.Reward = 0 end
+
+	local ifreward = ONLINEREWARD.CheckActivityRewardInfo[GemActivityConf.activityId](sysarg)
+	if state == 0 and ifreward == 0 then return end
+	--print("ONLINEREWARD.getGemActivityRewardInfo state:"..state..",ifreward:"..ifreward)
+
+	local npack = DataPack.allocPacket(sysarg, 138, 57)
+	if npack == nil then return end
+	DataPack.writeInt(npack, var.GemActivity.Record)
+	DataPack.writeInt(npack, var.GemActivity.Reward)
+	DataPack.writeInt(npack, level)
+	DataPack.flush(npack)
+
+	--print("ONLINEREWARD.getGemActivityRewardInfo Record:"..var.GemActivity.Record..",Reward:"..var.GemActivity.Reward..",level:"..gemLevel)
+end
+
+--领取至强伙伴奖励
+ONLINEREWARD.getGemActivityReward = function(sysarg, packet)
+	--print("ONLINEREWARD.getGemActivityReward")	
+	local var = LActor.getStaticVar(sysarg)
+
+	local checklv = ONLINEREWARD.ActivityCheckLevel(sysarg, GemActivityConf.activityId)
+	if not checklv then return end
+
+	local Pos = DataPack.readInt(packet)
+	--local Pos = 1
+	if Pos <= 0 or Pos > #GemActivityConf.aimlevel then return end
+
+	Pos = Pos - 1
+
+	if var.GemActivity == nil  or var.GemActivity.Record == nil then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.osa0004, ttMessage)
+		return
+	end
+
+	if not System.bitOPMask(var.GemActivity.Record, Pos) then				--没纪录即没达成
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.osa0004, ttMessage)
+		return
+	end
+
+	if System.bitOPMask(var.GemActivity.Reward, Pos) then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.osa0002, ttMessage)	--领过了
+		return
+	end
+
+	local items = GemActivityConf.rewardlist[Pos + 1]
+	if items == nil then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.osa0004, ttMessage)
+		return
+	end
+
+	--给奖励
+	local bagGrid =Item.getBagEmptyGridCount(sysarg)      --玩家身上有多少个格子
+	if bagGrid == 0 then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.osa0005, ttMessage)
+		return
+	end
+
+	LActor.addItem(sysarg,items.id,items.quality,items.strong,items.count,items.bind,"compensate",1)
+
+	--设置已领取
+	var.GemActivity.Reward = System.bitOpSetMask(var.GemActivity.Reward, Pos, true)
+
+	--上报
+	System.logCounter(LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), "neice_act", "1", "", "act_14", "", "", "", tostring(items.id), lfBI)
+
+	ONLINEREWARD.getGemActivityRewardInfo(sysarg)
+end
+
+--至强伙伴奖励更新
+ONLINEREWARD.gemactivitycheck = function(sysarg, level)
+	local var = LActor.getStaticVar(sysarg)
+
+	--print("ONLINEREWARD.petactivitycheck gemGrowLv:"..level)
+
+	local state = ONLINEREWARD.GetActivityState(GemActivityConf.activityId)
+	if state == 0 then return end
+
+	local checklv = ONLINEREWARD.ActivityCheckLevel(sysarg, GemActivityConf.activityId)
+	if not checklv then return end
+
+	if var.GemActivity == nil then var.GemActivity = {} end
+	if var.GemActivity.Record == nil then var.GemActivity.Record = 0 end
+	if var.GemActivity.Reward == nil then var.GemActivity.Reward = 0 end
+
+	if level >= GemActivityConf.aimlevel[1] then
+		for i=1,#GemActivityConf.aimlevel do
+			if level < GemActivityConf.aimlevel[i] then break end
+			var.GemActivity.Record = System.bitOpSetMask(var.GemActivity.Record, i - 1, true)
+		end
+	end
+end
+

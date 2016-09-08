@@ -1,0 +1,44 @@
+{
+	id = 21,
+	name = Lang.Skill.s21Name,
+	desc = Lang.Skill.s21Desc,
+	vocation = 3,
+	skillType = 4,
+	skillSpellType = 0,
+	skillClass = 1,
+	commonCd = 0,
+	canbeDefault = false,
+	specialBuffCond = 0,
+	notAutoUse = false,
+	trainCondAddtions=
+{
+	{addtionsid=1,cond=1,value=4,consume=false},
+	{addtionsid=2,cond=1,value=9,consume=false},
+	{addtionsid=3,cond=1,value=24,consume=false},
+},
+	
+	trainCondAdddesc=
+{
+	{addtionid=1,iconid=301,name=Lang.Skill.s21_21Name,desc=Lang.Skill.s21_21Desc},
+	{addtionid=2,iconid=302,name=Lang.Skill.s21_22Name,desc=Lang.Skill.s21_22Desc},
+	{addtionid=3,iconid=303,name=Lang.Skill.s21_23Name,desc=Lang.Skill.s21_23Desc},
+},
+ 	actions=
+{
+
+	{act=2,effect=1601,type=2},
+		
+},
+	skillSubLevel = { 
+--#include "Skill_21_1.txt"
+--#include "Skill_21_2.txt"
+--#include "Skill_21_3.txt"
+--#include "Skill_21_4.txt"
+--#include "Skill_21_5.txt"
+--#include "Skill_21_6.txt"
+--#include "Skill_21_7.txt"
+--#include "Skill_21_8.txt"
+--#include "Skill_21_9.txt"
+--#include "Skill_21_10.txt" 
+	},
+},

@@ -1,0 +1,30 @@
+--减少对手攻击
+{
+	id = 110,
+	name = Lang.Skill.s110Name,
+	desc = Lang.Skill.s110Desc,
+	vocation = 0,
+	skillType = 8,
+	skillSpellType = 0,
+	skillClass = 1,
+	commonCd = 0,
+	canbeDefault = false,
+	specialBuffCond = 0,
+	notAutoUse = false,
+	actions=
+	{
+		{ act = 2, effect = 20051, type = 6 },	--type = 6 在人物身上播放
+	},
+	skillSubLevel = { 
+--#include "Skill_110_1.txt"
+--#include "Skill_110_2.txt"
+--#include "Skill_110_3.txt"
+--#include "Skill_110_4.txt"
+--#include "Skill_110_5.txt"
+--#include "Skill_110_6.txt"
+--#include "Skill_110_7.txt"
+--#include "Skill_110_8.txt"
+--#include "Skill_110_9.txt"
+--#include "Skill_110_10.txt"
+	},
+},

@@ -1,0 +1,34 @@
+
+
+lua_quest_system = {}
+
+Lua_Quest_CMD = --对应协议编辑器 172系统号
+{
+	BianShen_ASK = 1,--变身玩法
+	TaoZhai_NetWord = 3,--讨债玩法
+    ZhaoHuan_Target_Appear = 7, -- 召唤目标出现
+    ZhuiBu_Start_Kill = 8, -- 追捕开始创建击杀对象
+}
+
+function lua_quest_system.Register( msgid , proc )
+    -- body
+    if lua_quest_system[msgid] == nil then
+        lua_quest_system[msgid] = proc
+    else
+        debug_print("------------lua 任务系统中 已经注册有该命令-------------", msgid)
+    end
+end
+
+function lua_quest_system.dealwith(sysarg , sysid , cmd , dp )
+    -- body
+    if not sysarg or not sysid or not cmd then
+         debug_print("==============参数为空=============",sysarg , sysid , cmd)
+        return
+    end
+    if lua_quest_system[cmd] ~= nil then
+        lua_quest_system[cmd](sysarg , dp)
+    else
+        debug_print("==============发送命令错误=============")
+    end
+end
+SystemHandlerDispatcher.registerSystemHander(BaseTypes.SystemId.cscy_Quest , lua_quest_system.dealwith)

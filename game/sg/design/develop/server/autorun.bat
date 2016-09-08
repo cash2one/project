@@ -1,0 +1,1 @@
+start ExcelToLuaTable64_debug.exe

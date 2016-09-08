@@ -1,0 +1,825 @@
+--导出怪物配置表
+
+--[[
+--写怪物标题
+local title = {
+		"怪物id",--entityid
+		"怪物名称",--name
+		"怪物模型ID",--modelid
+		"怪物等级",--level
+		"HP恢复",--hprenew
+		"MP恢复",--mprenew
+		"闪避",--outdodgerate
+		"命中",--outhitrate
+		"暴击",--outcriticalstrikesrate
+		"抗暴击",--defcriticalstrikes
+		"普通攻击系数",--nNearAttackRate
+		"移动速度", --moveoneslottime
+		"攻击速度",	--attackSpeed
+		"攻击间隔", --attackInterval
+		"最大掉血量", --maxDropHp
+		"最大生命",	--maxhp
+		"最大蓝", --maxmp
+		"内功攻击", --innerattack
+		"外功攻击", --outattack
+        "外功防御", --outdefence
+        "内功防御", --innerdefence
+        "经验值", --exp
+        "历练值", --lilian
+        "攻击类型", --attackType
+        "怪物类型", --monsterType
+        "怪物实体类型", --entityType
+        "怪物采集时间", --gatherTime
+        "怪物采集是否死亡", --gatherDie
+        "重新选择敌人的概率", --reSelTargetRate
+        "怪物AI", --aiConfigId
+        "所属阵营", --camp
+        "攻击等级", --attackLevel
+        "是否显示攻击归属者", --isShowVestName
+        "死亡是否触发脚本", --bDeathTriggerScript
+        "优先攻击怪物ID", --priorTarget
+        "怪物行为ID", --actionId
+        "是否采集怪", --gatherCheck
+        "怪物颜色", --color
+        "是否击杀共享",--share
+
+        "经验共享方式",--expMode
+        "经验共享范围",--expRange
+        "共享根据人物等级",--expFactor
+
+        "掉落", --drops
+        "标记", --flag
+
+        "怪物发言", --talk 
+}
+
+
+----------------------------------------------------------------------------------------
+--写文件
+function writeConfig(configname, concent)
+	if not concent then
+		print("concent is null")
+		return
+	end
+
+	if not configname then
+		print("configname is null")
+		return
+	end
+
+	local f = io.open(configname, "w")
+	f:write(concent)
+	f:close()
+end
+
+----------------------------------------------------------------------------------------
+
+function cyctable(t)
+	if type(t) ~= 'table' then
+		return
+	end
+
+	local strt = "{"
+	for k, v in pairs(t) do
+		if type(v) == 'table' then
+			 strt =  strt .. cyctable(v)
+		else
+			if type(v) == 'string' then
+				strt = strt .. string.format("%s=\"%s\",", tostring(k), tostring(v))
+			else
+				strt = strt .. string.format("%s=%s,", tostring(k), tostring(v))
+			end
+		end
+	end
+	strt = strt .. "},"
+
+	return strt
+end
+
+
+function format_output(concent)
+	local str = "{\n"
+	for k, v in pairs(concent) do
+		if type(v) ~= 'table' then
+			if type(v) == 'string' and k ~= "shape" then
+				str = str .. string.format("\t%s=\"%s\",\n", tostring(k), tostring(v))
+			else
+				str = str .. string.format("\t%s=%s,\n", tostring(k), tostring(v))
+			end
+		else
+			str = str .. string.format("\t%s=%s\n", tostring(k), cyctable(v))
+		end
+	end
+
+	str = str ..'},'
+
+	print(str)
+	return str
+end
+
+
+
+--写入天将的怪物配置表到excel
+function WriteMonsterToExcel()
+	--写入excel
+	local objexcel = CExcelWriter:new()
+	if not objexcel then
+		print("CExcelWriter objexcel is null")
+		return
+	end
+
+	objexcel:Init_App()
+	objexcel:OpenWrite()
+	if not objexcel:LoadSheetByIndex(1) then
+		print("LoadSheetByIndex failed!")
+		return
+	end
+
+	for x, y in pairs(title) do
+		objexcel:WriteCellAsString(1, x, tostring(y))	
+	end
+  
+	--遍历Monster表
+	local i = 2
+	for k, v in pairs(Monster) do
+			objexcel:WriteCellAsString(i, 1, tostring(v.entityid))--怪物ID
+			objexcel:WriteCellAsString(i, 2, tostring(v.name))--怪物名称
+			objexcel:WriteCellAsString(i, 3, tostring(v.modelid))--怪物模型ID
+			objexcel:WriteCellAsString(i, 4, tostring(v.level))--怪物等级
+			objexcel:WriteCellAsString(i, 5, tostring(v.hprenew))--HP恢复
+			objexcel:WriteCellAsString(i, 6, tostring(v.mprenew))--MP恢复
+			objexcel:WriteCellAsString(i, 7, tostring(v.outdodgerate))--闪避
+			objexcel:WriteCellAsString(i, 8, tostring(v.outhitrate))--命中
+			objexcel:WriteCellAsString(i, 9, tostring(v.outcriticalstrikesrate))--暴击
+			objexcel:WriteCellAsString(i, 10, tostring(v.defcriticalstrikes))--抗暴击
+			objexcel:WriteCellAsString(i, 11, tostring(v.nNearAttackRate))--普通攻击系数
+			objexcel:WriteCellAsString(i, 12, tostring(v.moveoneslottime))--移动速度
+			objexcel:WriteCellAsString(i, 13, tostring(v.attackSpeed))--攻击速度
+			objexcel:WriteCellAsString(i, 14, tostring(v.attackInterval))--攻击时间间隔
+			objexcel:WriteCellAsString(i, 15, tostring(v.maxDropHp))--最大掉血量
+			objexcel:WriteCellAsString(i, 16, tostring(v.maxhp))--最大血量
+			objexcel:WriteCellAsString(i, 17, tostring(v.maxmp))--最大蓝量
+			objexcel:WriteCellAsString(i, 18, tostring(v.innerattack))--内功攻击
+			objexcel:WriteCellAsString(i, 19, tostring(v.outattack))--外功攻击
+			objexcel:WriteCellAsString(i, 20, tostring(v.outdefence))--外功防御
+			objexcel:WriteCellAsString(i, 21, tostring(v.innerdefence))--内功防御
+			objexcel:WriteCellAsString(i, 22, tostring(v.exp))--击杀经验值
+			objexcel:WriteCellAsString(i, 23, tostring(v.lilian))--击杀历练值
+			objexcel:WriteCellAsString(i, 24, tostring(v.attackType))--攻击类型
+			objexcel:WriteCellAsString(i, 25, tostring(v.monsterType))--怪物类型
+			objexcel:WriteCellAsString(i, 26, tostring(v.entityType))--怪物实体类型
+			objexcel:WriteCellAsString(i, 27, tostring(v.gatherTime))--怪物采集时间
+			objexcel:WriteCellAsString(i, 28, tostring(v.gatherDie) or "FALSE")--怪物采集是否死亡
+			objexcel:WriteCellAsString(i, 29, tostring(v.reSelTargetRate))--怪物受击时改变目标支持概率配置
+			objexcel:WriteCellAsString(i, 30, tostring(v.aiConfigId))--在AI配置表里的ID
+			objexcel:WriteCellAsString(i, 31, tostring(v.camp))--怪物所属阵营
+			objexcel:WriteCellAsString(i, 32, tostring(v.attackLevel))--攻击等级
+			objexcel:WriteCellAsString(i, 33, tostring(v.isShowVestName) or "FALSE")--是否在怪物上显示攻击归属者
+			objexcel:WriteCellAsString(i, 34, tostring(v.bDeathTriggerScript) or "FALSE")--死亡是否触发副本
+			objexcel:WriteCellAsString(i, 35, tostring(Json.Encode(v.priorTarget)) or "{}")--怪物优先攻击怪物id列表
+			objexcel:WriteCellAsString(i, 36, tostring(v.actionId))--行为ID
+			objexcel:WriteCellAsString(i, 37, tostring(v.gatherCheck) or "FALSE")--采集怪，判断是否需要检查能否采集
+			objexcel:WriteCellAsString(i, 38, tostring(v.color))--怪物颜色
+			objexcel:WriteCellAsString(i, 39, tostring(v.share) or "FALSE")--是否分享经验
+        	
+        	objexcel:WriteCellAsString(i, 40, tostring(v.expMode)) --经验共享方式
+        	objexcel:WriteCellAsString(i, 41, tostring(v.expRange)) --经验共享范围
+        	objexcel:WriteCellAsString(i, 42, tostring(v.expFactor)) --共享根据人物等级
+
+			objexcel:WriteCellAsString(i, 43, tostring(Json.Encode(v.drops)) or "{}")--掉落
+			objexcel:WriteCellAsString(i, 44, tostring(Json.Encode(v.flags)))	--标记		
+			
+			objexcel:WriteCellAsString(i, 44, tostring(Json.Encode(v.talk))) --发言
+
+			i = i + 1
+		end
+
+	objexcel:Close()
+	objexcel:Quit_App()
+	objexcel:delete()
+end
+
+----------------------------------------------------------------------------------------
+
+
+--]]
+
+
+
+
+
+
+
+--导出山海经的配置表
+
+local strLangTemplate = "m%d=\"%s\","
+
+local strTemplete = [[
+{
+	entityid = %d,
+	name = Lang.MonsterName.m%d,
+	modelid = %d,
+	level = %d,
+	hprenew = %d,
+	mprenew = %d,
+	maxhp = %d,
+	maxmp = %d,
+	outattack = %d,
+	innerattack = %d,
+	outdefence = %d,
+	innerdefence = %d,
+	outhitrate = %d,
+	outdodgerate = %d,
+	outcriticalstrikesrate = %d,
+	defcriticalstrikes = %d,
+	moveoneslottime = %d,
+	attackSpeed = %d,
+	attackType = %d,
+	entityType = %d,
+	monsterType = %d,
+	gatherTime = %d,
+	gatherDie = %s,
+	camp = %d,
+	exp = %d,
+	lilian = %d,
+	isShowVestName = %s,
+	aiConfigId = %d,
+	attackLevel = %d,
+	attackInterval = %d,
+	maxDropHp = %d,
+	nNearAttackRate = %d,
+	bDeathTriggerScript = %s,
+	gatherCheck = %s,
+	color = %.0f,
+	lastKill = %s,
+	share = %s,
+	expMode = %d,
+	expRange = %d,
+	expFactor = %d,
+	dir = %d,
+	modelscale = %.1f,
+	showhpbar = %s,
+	triggerDamage = %s,
+	drops = {
+%s
+	},
+	talk = {
+	%s
+	},
+	flags = %s,
+},
+]]
+
+local strTemplete2 = [[
+{
+	entityid = %d,
+	name = Lang.MonsterName.m%d,
+	modelid = %d,
+	level = %d,
+	hprenew = %d,
+	mprenew = %d,
+	maxhp = %d,
+	maxmp = %d,
+	outattack = %d,
+	innerattack = %d,
+	outdefence = %d,
+	innerdefence = %d,
+	outhitrate = %d,
+	outdodgerate = %d,
+	outcriticalstrikesrate = %d,
+	defcriticalstrikes = %d,
+	moveoneslottime = %d,
+	attackSpeed = %d,
+	attackType = %d,
+	entityType = %d,
+	monsterType = %d,
+	gatherTime = %d,
+	gatherDie = %s,
+	camp = %d,
+	exp = %d,
+	lilian = %d,
+	isShowVestName = %s,
+	aiConfigId = %d,
+	attackLevel = %d,
+	attackInterval = %d,
+	maxDropHp = %d,
+	nNearAttackRate = %d,
+	bDeathTriggerScript = %s,
+	gatherCheck = %s,
+	color = %.0f,
+	lastKill = %s,
+	share = %s,
+	expMode = %d,
+	expRange = %d,
+	expFactor = %d,
+	dir = %d,
+	modelscale = %.1f,
+	showhpbar = %s,
+	triggerDamage = %s,
+	drops = {
+%s
+	},
+	flags = %s,
+},
+]]
+
+	--reSelTargetRate = 0,-- 怪物受击时改变目标支持概率配置（百分比，0-100， 默认为0，表明一直不改）
+	--priorTarget = {},
+	--actionId = 0,
+
+
+
+
+function ReadMonsterItem()
+	local objexcel = CExcelReader:new()
+	if not objexcel then
+		print("objexcel is null")
+		return
+	end
+
+	objexcel:Init_App()
+	objexcel:OpenRead()
+
+	local obj = objexcel:LoadSheetByIndex(1) --怪物配置.xlsx
+	if not obj then
+		print("LoadSheetByIndex失败!")
+		objexcel:Close()
+		objexcel:Quit_App()
+		return
+	end
+
+	local nCount = objexcel:GetCurrentSheetColCount()
+	local mCount = objexcel:GetCurrentSheetRowCount()
+
+
+	print("nCount", nCount)
+	print("mCount", mCount)
+
+	local strAllLang = "MonsterName=\n{\n"
+	local strAllStdItem = "--#include \"..\\..\\language\\LangCode.txt\"\n\nMonster = {\n--#include \"MonsterClass\\MonsterSmple.txt\"\n"
+
+	for i = 3, mCount do
+		local concent = {} --第一行构造成一个table
+
+		local strValue = objexcel:ReadCellAsString(i, 1) --物物ID
+		local itemfile = string.format(".\\data\\config\\monster\\monsterclass\\%d.txt", tonumber(strValue))
+		print(itemfile)
+
+		concent.entityid = tonumber(strValue)
+		
+		strValue = objexcel:ReadCellAsString(i, 2) --怪物的名字
+		concent.name = tostring(strValue) or ""
+		
+		strValue = objexcel:ReadCellAsString(i, 3)
+		concent.modelid = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 4)
+		concent.level = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 5)
+		concent.hprenew = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 6)
+		concent.mprenew = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 7)
+		concent.maxhp = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 8)
+		concent.maxmp = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 9)
+		concent.outattack = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 10)
+		concent.innerattack = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 11)
+		concent.outdefence = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 12)
+		concent.innerdefence = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 13)
+		concent.outhitrate = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 14)
+		concent.outdodgerate = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 15)
+		concent.outcriticalstrikesrate = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 16)
+		concent.defcriticalstrikes = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 17)
+		concent.moveoneslottime = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 18)
+		concent.attackSpeed = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 19)
+		concent.attackType = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 20)
+		concent.entityType = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 21)
+		concent.monsterType = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 22)
+		concent.gatherTime = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 23)
+		concent.gatherDie = tonumber(strValue) or 0
+		if concent.gatherDie == 1 then
+			concent.gatherDie = 'true'
+		else
+			concent.gatherDie = 'false'
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 24)
+		concent.camp = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 25)
+		concent.exp = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 26)
+		concent.lilian = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 27)
+		concent.isShowVestName = tonumber(strValue) or 0
+		if concent.isShowVestName == 1 then
+			concent.isShowVestName = 'true'
+		else
+			concent.isShowVestName = 'false'
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 28)
+		concent.aiConfigId = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 29)
+		concent.attackLevel = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 30)
+		concent.attackInterval = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 31)
+		concent.maxDropHp = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 32)
+		concent.nNearAttackRate = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 33)
+		concent.bDeathTriggerScript = tonumber(strValue) or 0
+		if concent.bDeathTriggerScript == 1 then
+			concent.bDeathTriggerScript = 'true'
+		else
+			concent.bDeathTriggerScript = 'false'
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 34)
+		concent.gatherCheck = tonumber(strValue) or 0
+		if concent.gatherCheck == 1 then
+			concent.gatherCheck = 'true'
+		else
+			concent.gatherCheck = 'false'
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 35)	
+		concent.color = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 36)
+		concent.lastKill = tonumber(strValue) or 0
+		if concent.lastKill == 1 then
+			concent.lastKill = 'true'
+		else
+			concent.lastKill = 'false'
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 37)
+		concent.share = tonumber(strValue) or 0
+		if concent.share == 1 then
+			concent.share = 'true'
+		else
+			concent.share = 'false'
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 38)
+		concent.expMode = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 39)
+		concent.expRange = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 40)
+		concent.expFactor = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 41)
+		concent.drops = tostring(strValue) or ""
+		if concent.drops ~= "" then
+			local drop = tonumber(concent.drops)
+			concent.drops = string.format("--#include \"..\\drops\\drops%d.txt\"", drop)
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 42)
+		concent.talk = tostring(strValue) or ""
+
+		strValue = objexcel:ReadCellAsString(i, 43)
+		concent.flags = tostring(strValue) or ""
+		if concent.flags == "" then
+			concent.flags = '{}'
+		end
+
+
+		strValue = objexcel:ReadCellAsString(i, 44)
+		concent.dir = tonumber(strValue) or -1
+		if concent.dir < 0 or concent.dir > 7 then
+			concent.dir = -1
+		end
+
+		if 2116 == concent.entityid then
+			print("concent.dir:"..tostring(concent.dir))
+		end
+
+		local scaleNum = objexcel:ReadCellAsDouble(i, 45)
+		print("scaleNum: "..scaleNum)
+		concent.modelscale = tonumber(scaleNum) or 1.0
+
+		if scaleNum == 0 then
+			concent.modelscale = 1.0
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 46)
+		concent.showhpbar = tonumber(strValue) or 0
+		if concent.showhpbar == 1 then
+			concent.showhpbar = 'true'
+		else
+			concent.showhpbar = 'false'
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 47)
+		concent.triggerDamage = tonumber(strValue) or 0
+		if concent.triggerDamage == 1 then
+			concent.triggerDamage = 'true'
+		else
+			concent.triggerDamage = 'false'
+		end
+
+		local str = ""
+		if concent.talk ~= "" then
+				str = string.format(strTemplete,
+										concent.entityid,
+										concent.entityid,
+										concent.modelid,
+										concent.level,
+										concent.hprenew,
+										concent.mprenew,
+										concent.maxhp,
+										concent.maxmp,
+										concent.outattack,
+										concent.innerattack,
+										concent.outdefence,
+										concent.innerdefence,
+										concent.outhitrate,
+										concent.outdodgerate,
+										concent.outcriticalstrikesrate,
+										concent.defcriticalstrikes,
+										concent.moveoneslottime,
+										concent.attackSpeed,
+										concent.attackType,
+										concent.entityType,
+										concent.monsterType,
+										concent.gatherTime,
+										concent.gatherDie,
+										concent.camp,
+										concent.exp,
+										concent.lilian,
+										concent.isShowVestName,
+										concent.aiConfigId,
+										concent.attackLevel,
+										concent.attackInterval,
+										concent.maxDropHp,
+										concent.nNearAttackRate,
+										concent.bDeathTriggerScript,
+										concent.gatherCheck,
+										concent.color,
+										concent.lastKill,
+										concent.share,
+										concent.expMode,
+										concent.expRange,
+										concent.expFactor,
+										concent.dir,
+										concent.modelscale,
+										concent.showhpbar,	
+										concent.triggerDamage,									
+										concent.drops,
+										concent.talk,
+										concent.flags)
+		else
+						str = string.format(strTemplete2,
+										concent.entityid,
+										concent.entityid,
+										concent.modelid,
+										concent.level,
+										concent.hprenew,
+										concent.mprenew,
+										concent.maxhp,
+										concent.maxmp,
+										concent.outattack,
+										concent.innerattack,
+										concent.outdefence,
+										concent.innerdefence,
+										concent.outhitrate,
+										concent.outdodgerate,
+										concent.outcriticalstrikesrate,
+										concent.defcriticalstrikes,
+										concent.moveoneslottime,
+										concent.attackSpeed,
+										concent.attackType,
+										concent.entityType,
+										concent.monsterType,
+										concent.gatherTime,
+										concent.gatherDie,
+										concent.camp,
+										concent.exp,
+										concent.lilian,
+										concent.isShowVestName,
+										concent.aiConfigId,
+										concent.attackLevel,
+										concent.attackInterval,
+										concent.maxDropHp,
+										concent.nNearAttackRate,
+										concent.bDeathTriggerScript,
+										concent.gatherCheck,
+										concent.color,
+										concent.lastKill,
+										concent.share,
+										concent.expMode,
+										concent.expRange,
+										concent.expFactor,
+										concent.dir,
+										concent.modelscale,
+										concent.showhpbar,		
+										concent.triggerDamage,								
+										concent.drops,
+										concent.flags)
+		end
+
+
+
+
+
+
+		--写文件
+		--writeConfig(itemfile, str)
+		--print(str)
+
+		objexcel:WriteFile(itemfile, str)
+
+
+		--语言包
+		local strLang = string.format(strLangTemplate, concent.entityid, concent.name)
+		strAllLang = strAllLang..strLang.."\n"
+		if mCount == i then
+			strAllLang = strAllLang..strLang.."\n}"
+			objexcel:WriteFile(".\\data\\language\\zh-cn\\monstername.txt", strAllLang)
+		end
+		--生成include文件名
+		local strStdItem = string.format("--#include \"MonsterClass\\%d.txt\"", concent.entityid)
+		strAllStdItem = strAllStdItem..strStdItem.."\n"
+		if mCount == i then
+			strAllStdItem = strAllStdItem..strStdItem.."\n}"
+			objexcel:WriteFile(".\\data\\config\\monster\\monsterconfig.txt", strAllStdItem)
+		end
+	end
+
+	objexcel:Close()
+	objexcel:Quit_App()
+	objexcel:delete()
+end
+----------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+---导出掉落表
+function exportMonsterDrops()
+	local objexcel = CExcelReader:new()
+	if not objexcel then
+		print("objexcel is null")
+		return
+	end
+
+	objexcel:Init_App()
+	objexcel:OpenRead()
+
+	local obj = objexcel:LoadSheetByIndex(1) --掉落表.xlsx
+	if not obj then
+		print("LoadSheetByIndex失败!")
+		objexcel:Close()
+		objexcel:Quit_App()
+		return
+	end
+
+	local nCount = objexcel:GetCurrentSheetColCount()
+	local mCount = objexcel:GetCurrentSheetRowCount()
+
+
+	print("nCount", nCount)
+	print("mCount", mCount)
+
+
+	local allconcent = {}
+
+	for i = 2, mCount do
+		local concent = {} --第一行构造成一个table
+
+		local strValue = objexcel:ReadCellAsString(i, 1) --掉落id
+		concent.dropid = tonumber(strValue)
+
+
+		local itemfile = string.format(".\\data\\config\\monster\\drops\\drops%d.txt", tonumber(strValue))
+		--print(itemfile)
+
+		concent.itemfile = itemfile
+
+		strValue = objexcel:ReadCellAsString(i, 2) --物品ID
+		concent.id = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 3) --数量
+		concent.count = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 4) --概率
+		concent.propability = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 5) --分组的id
+		concent.group = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 6) --是否触发脚本事件
+		concent.triggerEvent = tonumber(strValue) or 0
+
+		if not concent.triggerEvent or concent.triggerEvent == 0 then
+			concent.triggerEvent = 'false'
+		elseif concent.triggerEvent == 1 then
+			concent.triggerEvent = 'true'
+		end
+		
+		--添加到总表中
+		table.insert(allconcent, concent)
+	end
+
+
+
+	local temp = {}
+	local strdrop = ""
+
+	for k, v in pairs(allconcent) do
+		--print("k, v ===========", v.dropid, v.id)
+
+		if temp[v.dropid] == nil then
+			strdrop = ""
+
+			temp[v.dropid] = {}
+			temp[v.dropid].dropid = v.dropid
+			temp[v.dropid].id = v.id
+			temp[v.dropid].count = v.count
+			temp[v.dropid].propability = v.propability
+			temp[v.dropid].group = v.group
+			temp[v.dropid].itemfile = v.itemfile
+			temp[v.dropid].triggerEvent = v.triggerEvent
+
+			local str1 = string.format("{ id=%d, count=%d, propability=%d, group=%d, triggerEvent=%s, strong=0, quality=0,bind=0,},\n", v.id, v.count, v.propability, v.group, v.triggerEvent)
+			strdrop = strdrop .. str1
+
+			temp[v.dropid].drop = strdrop
+		else
+			local str2 = string.format("{ id=%d, count=%d, propability=%d, group=%d, triggerEvent=%s, strong=0, quality=0,bind=0,},\n", v.id, v.count, v.propability, v.group, v.triggerEvent)
+			strdrop = strdrop .. str2
+
+			temp[v.dropid].drop = strdrop
+		end
+	end
+
+
+
+
+	for m, n in pairs(temp) do
+		--写文件
+		--print(n.itemfile)
+		--print(n.drop)
+
+		objexcel:WriteFile(n.itemfile, n.drop)
+	end
+
+	objexcel:Close()
+	objexcel:Quit_App()
+	objexcel:delete()
+end
+
+
+
+
+

@@ -1,0 +1,40 @@
+
+
+DongfuManager.runSummon = function(info, curTime)
+	local changed = false
+	if info.summonEndTime ~= nil then
+		if info.summonEndTime <= curTime then
+			info.summonEndTime = nil
+		end
+		changed = true
+	end
+	return changed
+end
+
+DongfuManager.summon = function(pChar, type, moneytype)
+	local atHome, ownerId = DongfuManager.isAtHome(pChar)
+	if not atHome then return end
+
+	local yb = DongfuConf.summonYuanBao[type]
+	if yb == nil then return end
+	if not LActor.CheckMoneyEnough(pChar, moneytype, yb) then
+		return 
+	end
+	LActor.changeMoney(pChar, moneytype, -yb, 1, true, "dongfu", "summon")
+
+	local dfData = DongfuManager.getDongfuData(ownerId)
+	local info = dfData.info
+	info.summonType = type
+	local curEnd = info.summonEndTime or System.getCurrMiniTime()
+	local endTime = curEnd + DongfuConf.summonTime[type]
+	info.summonEndTime = endTime
+	DongfuManager.onChanged(ownerId)
+
+	local summonNoti = function(pChar)
+		local dp = DataPack.allocPacket(pChar, 157, 17)
+		DataPack.writeByte(dp, type)
+		DataPack.writeInt(dp, endTime)
+		DataPack.flush(dp)
+	end
+	DongfuManager.broadcast(dfData.playerSet, summonNoti)
+end

@@ -1,0 +1,1739 @@
+
+-- 猎奇就是山精海怪活动副本
+
+LieqiFubenConfig = {}			-- 猎奇
+
+LieqiFubenConfig = {
+	fubenId = {2},				-- 副本ID
+	sceneId = {82},			-- 场景ID
+	sceneJieSuan = {82},
+	fubenToSence = {82},
+	isfanpai = 2, 				--是否翻牌 1 翻牌 2 普通奖励
+
+	toNextTeleport = {},		-- 传送门
+
+	gameTime = 1800,				-- 游戏时间
+
+	playerPos = {20,60},		-- 玩家进入副本的位置
+
+	limitTime = 1800,				-- 结算的时间限制
+
+	monsterIdList = {1021,1022,1023,1024,1025,1026},
+
+	gradeType = 1,				-- 评级类型：1表示时间，2表示层数
+
+	TongguanAward =
+	{
+		{22101,1,1,1,10000},-- {奖励ID,类型,数量,是否绑定,概率}	(其中类型部分：1表示的是物品 2 钱（贝币,天珠）3 经验,按需求往后面加)
+		{22101,1,1,1,10000},
+		{22101,1,1,1,10000},
+		{22101,1,1,1,10000},
+	},
+	turnplate_count = 3, --转盘次数
+	RefreshMonster =
+	{
+		[1] ={ --副本难度
+			[1] ={ --倍率 1 等于 1 倍 ， 2= 1.5 ， 3  = 2 ， 4 = 3
+				[10] = { --数量
+					{
+						monsterId = 1021, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 3,
+					},
+					{
+						monsterId = 1022, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 2,
+					},
+					{
+						monsterId = 1021, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 3,
+					},
+					{
+						monsterId = 1022, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 2,
+					},
+				},
+				[15] =
+				{
+					{
+						monsterId = 1021, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 5,
+					},
+					{
+						monsterId = 1022, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 3,
+					},
+					{
+						monsterId = 1021, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 4,
+					},
+					{
+						monsterId = 1022, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 3,
+					},
+				},
+				[20] = {
+					{
+						monsterId = 1021, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 6,
+					},
+					{
+						monsterId = 1022, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 4,
+					},
+					{
+						monsterId = 1021, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 6,
+					},
+					{
+						monsterId = 1022, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 4,
+					},
+				},
+				[25] =
+				{
+					{
+						monsterId = 1021, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 8,
+					},
+					{
+						monsterId = 1022, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 5,
+					},
+					{
+						monsterId = 1021, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 7,
+					},
+					{
+						monsterId = 1022, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 5,
+					},
+				},
+			},
+			[2] ={
+				[10] = { --数量
+					{
+						monsterId = 1021, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 3,
+					},
+					{
+						monsterId = 1022, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 2,
+					},
+					{
+						monsterId = 1021, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 3,
+					},
+					{
+						monsterId = 1022, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 2,
+					},
+				},
+				[15] =
+				{
+					{
+						monsterId = 1021, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 5,
+					},
+					{
+						monsterId = 1022, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 3,
+					},
+					{
+						monsterId = 1021, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 4,
+					},
+					{
+						monsterId = 1022, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 3,
+					},
+				},
+				[20] = {
+					{
+						monsterId = 1021, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 6,
+					},
+					{
+						monsterId = 1022, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 4,
+					},
+					{
+						monsterId = 1021, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 6,
+					},
+					{
+						monsterId = 1022, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 4,
+					},
+				},
+				[25] =
+				{
+					{
+						monsterId = 1021, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 8,
+					},
+					{
+						monsterId = 1022, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 5,
+					},
+					{
+						monsterId = 1021, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 7,
+					},
+					{
+						monsterId = 1022, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 5,
+					},
+				},
+			},
+			[3] ={				
+				[10] = { --数量
+					{
+						monsterId = 1021, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 3,
+					},
+					{
+						monsterId = 1022, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 2,
+					},
+					{
+						monsterId = 1021, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 3,
+					},
+					{
+						monsterId = 1022, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 2,
+					},
+				},
+				[15] =
+				{
+					{
+						monsterId = 1021, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 5,
+					},
+					{
+						monsterId = 1022, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 3,
+					},
+					{
+						monsterId = 1021, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 4,
+					},
+					{
+						monsterId = 1022, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 3,
+					},
+				},
+				[20] = {
+					{
+						monsterId = 1021, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 6,
+					},
+					{
+						monsterId = 1022, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 4,
+					},
+					{
+						monsterId = 1021, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 6,
+					},
+					{
+						monsterId = 1022, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 4,
+					},
+				},
+				[25] =
+				{
+					{
+						monsterId = 1021, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 8,
+					},
+					{
+						monsterId = 1022, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 5,
+					},
+					{
+						monsterId = 1021, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 7,
+					},
+					{
+						monsterId = 1022, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 5,
+					},
+				},
+			},
+			[4] ={
+				[10] = { --数量
+					{
+						monsterId = 1021, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 3,
+					},
+					{
+						monsterId = 1022, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 2,
+					},
+					{
+						monsterId = 1021, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 3,
+					},
+					{
+						monsterId = 1022, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 2,
+					},
+				},
+				[15] =
+				{
+					{
+						monsterId = 1021, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 5,
+					},
+					{
+						monsterId = 1022, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 3,
+					},
+					{
+						monsterId = 1021, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 4,
+					},
+					{
+						monsterId = 1022, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 3,
+					},
+				},
+				[20] = {
+					{
+						monsterId = 1021, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 6,
+					},
+					{
+						monsterId = 1022, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 4,
+					},
+					{
+						monsterId = 1021, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 6,
+					},
+					{
+						monsterId = 1022, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 4,
+					},
+				},
+				[25] =
+				{
+					{
+						monsterId = 1021, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 8,
+					},
+					{
+						monsterId = 1022, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 5,
+					},
+					{
+						monsterId = 1021, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 7,
+					},
+					{
+						monsterId = 1022, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 5,
+					},
+				},
+			},
+		},
+		[2] ={
+			[1] ={ --倍率 1 等于 1 倍 ， 2= 1.5 ， 3  = 2 ， 4 = 3
+				[10] = { --数量
+					{
+						monsterId = 1023, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 3,
+					},
+					{
+						monsterId = 1024, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 2,
+					},
+					{
+						monsterId = 1023, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 3,
+					},
+					{
+						monsterId = 1024, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 2,
+					},
+				},
+				[15] =
+				{
+					{
+						monsterId = 1023, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 5,
+					},
+					{
+						monsterId = 1024, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 3,
+					},
+					{
+						monsterId = 1023, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 4,
+					},
+					{
+						monsterId = 1024, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 3,
+					},
+				},
+				[20] = {
+					{
+						monsterId = 1023, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 6,
+					},
+					{
+						monsterId = 1024, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 4,
+					},
+					{
+						monsterId = 1023, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 6,
+					},
+					{
+						monsterId = 1024, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 4,
+					},
+				},
+				[25] =
+				{
+					{
+						monsterId = 1023, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 8,
+					},
+					{
+						monsterId = 1024, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 5,
+					},
+					{
+						monsterId = 1023, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 7,
+					},
+					{
+						monsterId = 1024, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 5,
+					},
+				},
+			},
+			[2] ={
+				[10] = { --数量
+					{
+						monsterId = 1023, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 3,
+					},
+					{
+						monsterId = 1024, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 2,
+					},
+					{
+						monsterId = 1023, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 3,
+					},
+					{
+						monsterId = 1024, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 2,
+					},
+				},
+				[15] =
+				{
+					{
+						monsterId = 1023, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 5,
+					},
+					{
+						monsterId = 1024, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 3,
+					},
+					{
+						monsterId = 1023, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 4,
+					},
+					{
+						monsterId = 1024, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 3,
+					},
+				},
+				[20] = {
+					{
+						monsterId = 1023, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 6,
+					},
+					{
+						monsterId = 1024, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 4,
+					},
+					{
+						monsterId = 1023, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 6,
+					},
+					{
+						monsterId = 1024, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 4,
+					},
+				},
+				[25] =
+				{
+					{
+						monsterId = 1023, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 8,
+					},
+					{
+						monsterId = 1024, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 5,
+					},
+					{
+						monsterId = 1023, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 7,
+					},
+					{
+						monsterId = 1024, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 5,
+					},
+				},
+			},
+			[3] ={				
+				[10] = { --数量
+					{
+						monsterId = 1023, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 3,
+					},
+					{
+						monsterId = 1024, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 2,
+					},
+					{
+						monsterId = 1023, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 3,
+					},
+					{
+						monsterId = 1024, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 2,
+					},
+				},
+				[15] =
+				{
+					{
+						monsterId = 1023, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 5,
+					},
+					{
+						monsterId = 1024, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 3,
+					},
+					{
+						monsterId = 1023, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 4,
+					},
+					{
+						monsterId = 1024, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 3,
+					},
+				},
+				[20] = {
+					{
+						monsterId = 1023, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 6,
+					},
+					{
+						monsterId = 1024, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 4,
+					},
+					{
+						monsterId = 1023, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 6,
+					},
+					{
+						monsterId = 1024, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 4,
+					},
+				},
+				[25] =
+				{
+					{
+						monsterId = 1023, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 8,
+					},
+					{
+						monsterId = 1024, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 5,
+					},
+					{
+						monsterId = 1023, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 7,
+					},
+					{
+						monsterId = 1024, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 5,
+					},
+				},
+			},
+			[4] ={
+				[10] = { --数量
+					{
+						monsterId = 1023, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 3,
+					},
+					{
+						monsterId = 1024, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 2,
+					},
+					{
+						monsterId = 1023, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 3,
+					},
+					{
+						monsterId = 1024, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 2,
+					},
+				},
+				[15] =
+				{
+					{
+						monsterId = 1023, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 5,
+					},
+					{
+						monsterId = 1024, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 3,
+					},
+					{
+						monsterId = 1023, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 4,
+					},
+					{
+						monsterId = 1024, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 3,
+					},
+				},
+				[20] = {
+					{
+						monsterId = 1023, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 6,
+					},
+					{
+						monsterId = 1024, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 4,
+					},
+					{
+						monsterId = 1023, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 6,
+					},
+					{
+						monsterId = 1024, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 4,
+					},
+				},
+				[25] =
+				{
+					{
+						monsterId = 1023, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 8,
+					},
+					{
+						monsterId = 1024, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 5,
+					},
+					{
+						monsterId = 1023, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 7,
+					},
+					{
+						monsterId = 1024, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 5,
+					},
+				},
+			},
+		},
+		[3] ={
+			[1] ={ --倍率 1 等于 1 倍 ， 2= 1.5 ， 3  = 2 ， 4 = 3
+				[10] = { --数量
+					{
+						monsterId = 1025, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 3,
+					},
+					{
+						monsterId = 1026, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 2,
+					},
+					{
+						monsterId = 1025, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 3,
+					},
+					{
+						monsterId = 1026, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 2,
+					},
+				},
+				[15] =
+				{
+					{
+						monsterId = 1025, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 5,
+					},
+					{
+						monsterId = 1026, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 3,
+					},
+					{
+						monsterId = 1025, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 4,
+					},
+					{
+						monsterId = 1026, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 3,
+					},
+				},
+				[20] = {
+					{
+						monsterId = 1025, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 6,
+					},
+					{
+						monsterId = 1026, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 4,
+					},
+					{
+						monsterId = 1025, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 6,
+					},
+					{
+						monsterId = 1026, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 4,
+					},
+				},
+				[25] =
+				{
+					{
+						monsterId = 1025, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 8,
+					},
+					{
+						monsterId = 1026, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 5,
+					},
+					{
+						monsterId = 1025, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 7,
+					},
+					{
+						monsterId = 1026, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 5,
+					},
+				},
+			},
+			[2] ={
+				[10] = { --数量
+					{
+						monsterId = 1025, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 3,
+					},
+					{
+						monsterId = 1026, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 2,
+					},
+					{
+						monsterId = 1025, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 3,
+					},
+					{
+						monsterId = 1026, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 2,
+					},
+				},
+				[15] =
+				{
+					{
+						monsterId = 1025, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 5,
+					},
+					{
+						monsterId = 1026, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 3,
+					},
+					{
+						monsterId = 1025, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 4,
+					},
+					{
+						monsterId = 1026, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 3,
+					},
+				},
+				[20] = {
+					{
+						monsterId = 1025, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 6,
+					},
+					{
+						monsterId = 1026, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 4,
+					},
+					{
+						monsterId = 1025, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 6,
+					},
+					{
+						monsterId = 1026, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 4,
+					},
+				},
+				[25] =
+				{
+					{
+						monsterId = 1025, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 8,
+					},
+					{
+						monsterId = 1026, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 5,
+					},
+					{
+						monsterId = 1025, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 7,
+					},
+					{
+						monsterId = 1026, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 5,
+					},
+				},
+			},
+			[3] ={				
+				[10] = { --数量
+					{
+						monsterId = 1025, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 3,
+					},
+					{
+						monsterId = 1026, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 2,
+					},
+					{
+						monsterId = 1025, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 3,
+					},
+					{
+						monsterId = 1026, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 2,
+					},
+				},
+				[15] =
+				{
+					{
+						monsterId = 1025, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 5,
+					},
+					{
+						monsterId = 1026, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 3,
+					},
+					{
+						monsterId = 1025, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 4,
+					},
+					{
+						monsterId = 1026, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 3,
+					},
+				},
+				[20] = {
+					{
+						monsterId = 1025, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 6,
+					},
+					{
+						monsterId = 1026, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 4,
+					},
+					{
+						monsterId = 1025, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 6,
+					},
+					{
+						monsterId = 1026, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 4,
+					},
+				},
+				[25] =
+				{
+					{
+						monsterId = 1025, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 8,
+					},
+					{
+						monsterId = 1026, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 5,
+					},
+					{
+						monsterId = 1025, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 7,
+					},
+					{
+						monsterId = 1026, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 5,
+					},
+				},
+			},
+			[4] ={
+				[10] = { --数量
+					{
+						monsterId = 1025, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 3,
+					},
+					{
+						monsterId = 1026, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 2,
+					},
+					{
+						monsterId = 1025, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 3,
+					},
+					{
+						monsterId = 1026, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 2,
+					},
+				},
+				[15] =
+				{
+					{
+						monsterId = 1025, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 5,
+					},
+					{
+						monsterId = 1026, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 3,
+					},
+					{
+						monsterId = 1025, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 4,
+					},
+					{
+						monsterId = 1026, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 3,
+					},
+				},
+				[20] = {
+					{
+						monsterId = 1025, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 6,
+					},
+					{
+						monsterId = 1026, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 4,
+					},
+					{
+						monsterId = 1025, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 6,
+					},
+					{
+						monsterId = 1026, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 4,
+					},
+				},
+				[25] =
+				{
+					{
+						monsterId = 1025, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 8,
+					},
+					{
+						monsterId = 1026, --怪物id
+						posX1 = 10, --怪物x坐标范围
+						posX2 = 26,
+						posY1 = 58,
+						posY2 = 62,
+						num = 5,
+					},
+					{
+						monsterId = 1025, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 7,
+					},
+					{
+						monsterId = 1026, --怪物id
+						posX1 = 32, --怪物x坐标范围
+						posX2 = 42,
+						posY1 = 56,
+						posY2 = 62,
+						num = 5,
+					},
+				},
+			},
+		},
+	},
+	-- num 怪物数量
+	--rate 是概率
+	MonsterNumRate = {
+		{ num = 10 ,rate = 25},
+		{ num = 15 ,rate = 40},
+		{ num = 20 ,rate = 25},
+		{ num = 25 ,rate = 10},
+	},
+	-- num 是倍率  1 等于 1 倍 ， 2= 1.5 ， 3  = 2 ， 4 = 3
+	-- rate 是概率
+	MonsterDropRate = {
+		{ num = 1 ,rate = 25},
+		{ num = 2 ,rate = 40},
+		{ num = 3 ,rate = 25},
+		{ num = 4 ,rate = 10},
+	},
+}
+

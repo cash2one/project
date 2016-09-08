@@ -1,0 +1,134 @@
+-- 双蛋副本怪物脚本处理
+--#include "data\functions\globaldefine.txt" once
+--#include "data\config\misc\guoqingfubenconf.txt"
+--#include "data\functions\systems\miscs\guoqingfubenfunc.txt" once
+
+GuoQingMon = {}
+
+-- 杀死怪物处理
+GuoQingMon.OnKillMonster = function(monster,sysarg,mid)
+	if sysarg == nil then return end
+	if LActor.getFubenId(sysarg) ~= GuoQingFubenConf.fbid then return end
+
+	local pfb = LActor.getFubenPrt(sysarg)
+	if pfb == nil then return end
+
+	local layer = Fuben.getFubenProgress(pfb) -- 第几层
+	local sconf = GuoQingFubenConf.scenes[layer]
+	if sconf == nil then
+		print("guoqing scene id error")
+		return
+	end
+
+	-- 统计用
+	local var = Fuben.getDyanmicVar(pfb)
+	if var ~= nil and var.fbRestMonster ~= nil then
+		var.fbRestMonster = var.fbRestMonster - 1 
+		if var.fbRestMonster <= 0 then
+			if sconf.conds.type ~= nil and sconf.conds.type == 1 then -- 通关
+				GuoQingPublic.OnTongGuan(sysarg, layer, sconf)
+			end
+		end
+	end
+
+	-- 通关处理
+	if sconf.conds.type ~= nil and sconf.conds.type == 2 and sconf.conds.mid == mid then 
+		GuoQingPublic.OnTongGuan(sysarg, layer, sconf)
+	end
+end
+
+GuoQingMon.MonGatherBoxFinish = function (monster,sysarg,monId)
+	local var = System.getStaticVar()
+	if var.xinchunrefreshmon == nil then
+		var.xinchunrefreshmon = {}
+		for i=1,#GuoQingFubenConf.refreshboss.refresh do
+			var.xinchunrefreshmon[i] = GuoQingFubenConf.refreshboss.refresh[i].count
+		end
+	end
+
+	local pfb = LActor.getFubenHandle(sysarg)
+	if pfb == nil then return end
+	local  hScene = Fuben.getSceneHandleById( LActor.getSceneId(sysarg), pfb)
+	-- 通关处理
+	if Fuben.getGatherMonsterCount(hScene, monId) <= 0 then 
+		local pfbprt = LActor.getFubenPrt(sysarg)
+		if pfbprt == nil then return end
+		local layer = Fuben.getFubenProgress(pfbprt) -- 第几层
+		local sconf = GuoQingFubenConf.scenes[layer]
+		GuoQingPublic.OnTongGuan(sysarg, layer, sconf)
+	end
+
+	local n = System.getRandomNumber(1000);
+	if n > GuoQingFubenConf.refreshboss.ratio then
+		return
+	end
+	n = System.getRandomNumber(1000);
+	local boss = 0
+	local bossnum = 0
+	local num = 0
+	local sum = 0
+	for i=1,#GuoQingFubenConf.refreshboss.refresh do
+		sum = sum + GuoQingFubenConf.refreshboss.refresh[i].ratio
+		if n < sum then
+			boss = GuoQingFubenConf.refreshboss.refresh[i].id
+			bossnum = GuoQingFubenConf.refreshboss.refresh[i].amount
+			num = i
+			break
+		end
+	end
+
+	if var.xinchunrefreshmon[num] <= 0 then	
+		return
+	end
+
+	for i=1,bossnum do
+		local x = Fuben.getSceneMovePosX(hScene);
+		local y = Fuben.getSceneMovePosY(hScene);
+		local test = 0
+		while Fuben.canMove(hScene, x , y) == false do
+			x = Fuben.getSceneMovePosX(hScene);
+			y = Fuben.getSceneMovePosY(hScene);
+			test = test + 1
+			if test > 100 then
+				break
+			end
+		end
+		Fuben.createMonster( hScene, boss, x, y, GuoQingFubenConf.refreshboss.livetime )
+	end
+	local flag = 0
+	for i=1,#GuoQingFubenConf.broadcast do
+		if boss == GuoQingFubenConf.broadcast[i] then
+			flag = 1
+			break
+		end
+	end 
+	if flag == 1 then
+		local camp = LActor.getCampId(sysarg)
+		local tipmsg = string.format("#c%s%s%s在节日副本中运道惊人,在开宝箱的时候居然碰到了BOSS%s,羡慕嫉妒恨啊有木有！",CampColor[camp], CampShortName[camp], LActor.getName(sysarg), System.getMonsterNameById(boss))
+		System.broadcastTipmsg(tipmsg,ttScreenCenter)
+	end
+
+	var.xinchunrefreshmon[num] = var.xinchunrefreshmon[num] - 1
+end
+
+-- 副本初始化
+for i=1, #GuoQingFubenConf.scenes do
+	local sconf = GuoQingFubenConf.scenes[i]
+
+	-- 怪物配置
+	if sconf.monster.type == 0 then
+		if sconf.monster ~= nil then
+			local ids = sconf.monster.ids
+			for j=1,#ids do
+				MonDieDispatcher.register( ids[j], GuoQingMon.OnKillMonster )
+			end
+		end
+	else
+		if sconf.monster ~= nil then
+			local ids = sconf.monster.ids
+			for j=1,#ids do
+				GatherFinishDispatcher.register(ids[j],GuoQingMon.MonGatherBoxFinish)
+			end
+		end
+	end
+end

@@ -1,0 +1,119 @@
+--驿站NPC的传送表
+
+--#include "..\..\language\LangCode.txt"
+
+UiAwardItems=
+{
+	--新手卡
+	{
+	   	icon =1, --图标的id
+		name = Lang.Misc.m000435,
+		items=
+		{
+      {  type = 0, count = 2, id = 1588, quality=0, strong=0, bind=1 },
+ 	    {  type = 0, count = 2, id = 1589, quality=0, strong=0, bind=1 },
+		 	{  type = 0, count = 1, id = 1886, quality=0, strong=0, bind=1 },
+		 	{  type = 0, count = 5, id = 1559, quality=0, strong=0, bind=1 },
+		 	{  type = 0, count = 2, id = 1718, quality=0, strong=0, bind=1 },
+ 	    {  type = 0, count = 2, id = 1634, quality=0, strong=0, bind=1 },
+		 	{  type = 0, count = 1, id = 1009, quality=0, strong=0, bind=1 },
+		 	{  type = 0, count = 1, id = 786, quality=0, strong=0, bind=1 },
+			
+		},
+		buttons=
+		{
+			{
+				name=Lang.Misc.m000430, -- 获取卡号
+				funcs=
+				{
+				    { spid="91w",url="http://djrm.91wan.com/xsk/"},
+				    { spid="wyi" ,url="http://www.521g.com"},
+				}
+			},
+			{
+				name=Lang.Misc.m000431, -- 领取奖励
+				funcs=
+				{
+				    { spid="*",uiId =1,param=4}, --spid表示运营商的编号，*表示所有，否则是特定的运营桑，uiId 表示打开的界面的id,param这里表示卡类型
+				}
+			},
+		},
+		desc =Lang.Misc.m000433,
+	},
+	
+	--领取奖励首充礼包 
+	{
+	    icon =2, --图标的id
+		name = Lang.Misc.m000436,
+		items=
+		{
+			--{id =3,count=1,quality=0,strong=0,bind=0},
+			{  type = 0, count = 18, id = 1002, quality=0, strong=0, bind=1 },
+			{  type = 0, count = 6, id = 1646, quality=0, strong=0, bind=1 },
+			{  type = 0, count = 10, id = 1559, quality=0, strong=0, bind=1 },
+			{  type = 0, count = 8, id = 1442, quality=0, strong=0, bind=1 },
+			{  type = 0, count = 3, id = 1886, quality=0, strong=0, bind=1 },
+			{  type = 0, count = 7, id = 2041, quality=0, strong=0, bind=1 },
+			{  type = 0, count = 5, id = 1718, quality=0, strong=0, bind=1 },
+			{  type = 0, count = 18, id = 1558, quality=0, strong=0, bind=1 },
+			{  type = 0, count = 2, id = 1590, quality=0, strong=0, bind=1 },
+			{  type = 0, count = 3, id = 1440, quality=0, strong=0, bind=1 },
+		},
+		buttons=
+		{
+			{
+				name=Lang.Misc.m000432, -- 立刻充值
+				funcs=
+				{
+				    { spid="91w", url="http://pay.91wan.com/?game_id=36"},
+				    { spid="wyi" ,url="http://www.521g.com"},
+				}
+			},
+			
+		},
+		desc =Lang.Misc.m000434,
+	},
+	--领取王者礼包
+	--[[{
+	    icon =3, --图标的id
+		name = Lang.Misc.m000437,
+		items=
+		{
+			--{id =3,count=1,quality=0,strong=0,bind=0},
+			{  type = 0, count = 5, id = 1002, quality=0, strong=0, bind=1 },
+			{  type = 0, count = 1, id = 1647, quality=0, strong=0, bind=1 },
+			{  type = 0, count = 1, id = 1442, quality=0, strong=0, bind=1 },
+			{  type = 0, count = 5, id = 1559, quality=0, strong=0, bind=1 },
+			{  type = 0, count = 2, id = 1634, quality=0, strong=0, bind=1 },
+			{  type = 0, count = 1, id = 1766, quality=0, strong=0, bind=1 },
+			{  type = 0, count = 1, id = 1886, quality=0, strong=0, bind=1 },
+			{  type = 0, count = 1, id = 611, quality=0, strong=0, bind=1 },
+			{  type = 0, count = 1, id = 1940, quality=0, strong=0, bind=1 },
+			{  type = 0, count = 1, id = 1939, quality=0, strong=0, bind=1 },
+			{  type = 0, count = 1, id = 1718, quality=0, strong=0, bind=1 },
+			{  type = 0, count = 1, id = 1588, quality=0, strong=0, bind=1 },
+			{  type = 0, count = 1, id = 1589, quality=0, strong=0, bind=1 },
+			{  type = 0, count = 2, id = 2041, quality=0, strong=0, bind=1 },
+		},
+		buttons=
+		{
+			{
+				name=Lang.Misc.m000430, -- 获取卡号
+				funcs=
+				{
+				    { spid="91w",url="http://djrm.91wan.com/youxihuodong/2011-08/52627.html"},
+				    { spid="wyi" ,url="http://djrm.91wan.com/youxihuodong/2011-08/52627.html"},
+				}
+			},
+			{
+				name=Lang.Misc.m000431, -- 领取奖励
+				funcs=
+				{
+				   { spid="*",uiId =1,param=7}, --spid表示运营商的编号，*表示所有，否则是特定的运营桑，uiId 表示打开的界面的id,param 表示卡类型
+				}
+			},
+		},
+		desc =Lang.Misc.m000438,
+	}, ]]
+	
+}

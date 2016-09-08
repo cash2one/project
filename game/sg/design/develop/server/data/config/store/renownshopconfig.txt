@@ -1,0 +1,58 @@
+﻿--历练商店配置表
+--#include "..\..\language\LangCode.txt"
+
+RenwnShopConfig=
+{
+
+	{
+		 id = 1,
+		 name=Lang.Store.r00001,   --"装备"
+		--子项,如果子项只有一个,不用下拉
+		secClasses = 
+		{
+			{
+				name =Lang.Store.rs0001 ,   
+				--这里存储该分类下的所有的物品
+				items = 
+				{
+--#include "renownshopclass\rsclass1.txt"
+				},
+			},
+		},
+	},
+
+	{
+		id = 2,
+		 name=Lang.Store.r00002,   --"材料"
+		--子项,如果子项只有一个,不用下拉
+		secClasses = 
+		{
+			{
+				name =Lang.Store.rs0002 ,   
+				--这里存储该分类下的所有的物品
+				items = 
+				{
+--#include "renownshopclass\rsclass2.txt"
+				},
+			},
+		},
+	},
+
+	{
+		id = 3,
+		 name=Lang.Store.r00003,   --"材料"
+		--子项,如果子项只有一个,不用下拉
+		secClasses = 
+		{
+			{
+				name =Lang.Store.rs0003 ,   
+				--这里存储该分类下的所有的物品
+				items = 
+				{
+--#include "renownshopclass\rsclass3.txt"
+				},
+			},
+		},
+	},
+	
+}

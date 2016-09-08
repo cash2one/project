@@ -1,0 +1,53 @@
+﻿-- 剧情副本1-1 桃花坳 羽山 场景相关的配置 羽山
+{
+	--场景1
+	scenceid = 102,						--这个id必须每次递增，比如第一个场景id是0，下一个一定是1，类推
+	--场景名称
+	scencename = Lang.SceneName.s102,
+	--场景对应的地图,只需要填文件名，不需要写路径和后缀名，比如这个地图文件是map/demo.jxm，只需要写demo
+	mapfilename = "ly",
+	--限制等级,低于这个等级无法进入
+	minlevel = 1,
+	--限制物品，这是一个数字列表，代表有这些物品的玩家不能进入
+	forbiddenitem = {},
+	--限制的技能列表，有这些技能的玩家不能进入
+	forbiddenskill = {},
+	--0表示可以pk，1表示不可以，默认是0
+	nopk = 1,
+	progress = 0,
+	music = "yewaiqingxin.mp3", 
+	triggerkillallmonster = true,
+	musicInterval=5,
+        --在世界地图上的坐标x
+        worldmapPosx =0,
+        worldmapPosy =0,
+        --场景的长宽,是指格子数的长宽
+        sceneWidth =191,
+        sceneHeight =137,
+
+	poetry = Lang.SceneName.s102,
+	area = 
+	{
+		{ name = Lang.SceneName.s102, range = { 0,0,191,0,191,137,0,137}, center = { 54,91},
+		     attri = 
+		    {
+			    -- {type=68 ,value = {2}, fun = "PlayFubenArrive"  },
+			},
+	    },	
+
+				
+	},
+
+     
+refresh =
+{	  
+},
+
+npc = 
+{    
+},
+
+teleport = 
+  {
+  },
+},

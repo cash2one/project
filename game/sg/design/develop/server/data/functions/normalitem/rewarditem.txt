@@ -1,0 +1,25 @@
+﻿--给奖励的物品使用
+
+function RewardItemUseHandler(sysarg, itemIdx, itemPtr, conf)
+	if conf == nil then return end
+
+	if not LActor.giveAward(sysarg, conf.awardtype, conf.awardval) then
+		print("use reward item error")
+		return 
+	end
+
+	if LActor.removeItemByPtr(sysarg, itemPtr, 1, true, "use_reward_item", 1) ~= 1 then
+		print("remove reward item error")
+		return
+	end
+end
+
+-- @brief: 注册奖励物品使用Handler
+function RewardItemInit(sysarg)
+	for i = 1, table.getn(RewardItem) do
+		local conf = RewardItem[i]
+		GlobalItemFn[conf.item_id] = { func = RewardItemUseHandler, params = conf, }
+	end
+end
+
+table.insert(InitFnTable, RewardItemInit)

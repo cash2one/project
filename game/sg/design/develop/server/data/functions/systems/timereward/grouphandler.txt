@@ -1,0 +1,412 @@
+﻿--grouphandler 团购活动
+--#include "data\config\activity\groupconf.txt" once
+--#include "data\config\activity\groupconf2.txt" once
+--#include "data\config\activity\groupconf3.txt" once
+--#include "data\config\activity\groupconf4.txt" once
+--#include "data\config\activity\groupconf5.txt" once
+--#include "data\functions\globaldefine.txt" once
+--#include "data\functions\miscfunc.txt" once
+--#include "activitycontrolhandler.txt" once
+
+Grouphandler = {}
+
+GrouphandlerConfig = 
+{
+	 { activityID = 81, config = Groupconf81 },
+	 { activityID = 82, config = Groupconf82 },
+	 { activityID = 83, config = Groupconf83 },
+	 { activityID = 84, config = Groupconf84 },
+	 { activityID = 85, config = Groupconf85 },
+}
+
+
+--获取tag
+Grouphandler.getGroupTag = function()
+	return 1
+end
+--获得配置
+Grouphandler.getGroupConf = function()
+	-- local sysvar = System.getStaticVar()
+	-- if not sysvar then return end
+	-- if not sysvar.activityControl then return end
+	-- 
+	-- if sysvar.activityControl[groupActivityID] and sysvar.activityControl[groupActivityID].type then
+	-- 	return Groupconf[sysvar.activityControl[groupActivityID].type]
+	-- end
+
+	local sysvar = System.getStaticVar()
+	if not sysvar then return end
+
+	local tag = Grouphandler.getGroupTag()
+	for i = 1, #GrouphandlerConfig do
+		local activityID = GrouphandlerConfig[i].activityID
+		if sysvar.grouphandler_activityid == activityID then
+			return GrouphandlerConfig[i].config[tag]
+		end
+	end
+
+	--[[local state,startime = ONLINEREWARD.GetActivityState(groupActivityID)
+	--if state ~= 0 then
+	local tag = Grouphandler.getGroupTag()
+	return Groupconf[tag]
+	--end]]
+end
+
+--获得团购信息
+Grouphandler.getGroupInfo = function(sysarg)
+	if not sysarg then return end
+
+	local sysvar = System.getStaticVar()
+	if not sysvar then return end
+
+	local state = ONLINEREWARD.GetActivityState(sysvar.grouphandler_activityid)
+	if state == 0 then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.grp001, ttMessage)
+		return
+	end	
+
+	ONLINEREWARD.CheckResetActivityInfo(sysarg, sysvar.grouphandler_activityid)
+	local groupConf = Grouphandler.getGroupConf()
+	if not groupConf then print("_______________no data") return end
+	--是否需要增加排行榜
+	if not groupConf.isSetRank then return end
+	local rank = Ranking.getRanking(groupConf.guildRank.CharmRankName)
+	--没有排行，初始化一个
+	if not rank then
+		 rank = MiscFunc.InitRank(groupConf.guildRank.CharmRankName, groupConf.guildRank.CharmRankName, groupConf.guildRank.charmcount, {"aname", "get"})
+	end
+	local Column = groupConf.guildRank.charmcount
+	local count = Ranking.getRankItemCount(rank)
+	if Column > count then Column = count end
+	--下面是发协议
+	local npack = DataPack.allocPacket(sysarg, 138, 200)
+	if npack == nil then return end 
+	--我的排名信息
+	local guildID = LActor.getGuildId(sysarg)
+	local idx = Ranking.getItemIndexFromId(rank, guildID)+1
+	local myGuildPoint = 0 
+	if idx > 0 then 
+		local rankItem = Ranking.getItemFromIndex(rank, idx-1)
+		myGuildPoint = Ranking.getPoint(rankItem)
+	end
+	DataPack.writeByte(npack, idx)		-- 我的仙宗排行
+	DataPack.writeInt(npack, myGuildPoint)  -- 我的仙宗积分
+	--多少个排名
+	DataPack.writeByte(npack, Column)
+	--print("________my idx="..idx.." myGuildPoint = "..myGuildPoint)
+	for i = 1, Column do
+		local rankItem = Ranking.getItemFromIndex(rank, i-1)
+		local aname = Ranking.getSub(rankItem, 0)
+		DataPack.writeString(npack, aname) -- 仙宗名字
+		local point = Ranking.getPoint(rankItem)
+		DataPack.writeInt(npack, point)    -- 仙宗积分	
+		--print("______idx = "..i.." name ="..aname.." point="..point)
+	end
+	DataPack.flush(npack)
+end
+
+--获得团购物品信息
+Grouphandler.getGroupItemInfo = function(sysarg)
+	if not sysarg then return end
+	local st = LActor.getStaticVar(sysarg)
+	if st == nil then return end
+
+	local sysvar = System.getStaticVar()
+	if not sysvar then return end
+
+	local state = ONLINEREWARD.GetActivityState(sysvar.grouphandler_activityid)
+	if state == 0 then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.grp001, ttMessage)
+		return
+	end	
+	ONLINEREWARD.CheckResetActivityInfo(sysarg, sysvar.grouphandler_activityid)
+	local groupConf = Grouphandler.getGroupConf()
+	if not groupConf then print("_______________getGroupItemInfo = no data") return end
+	local sysvar = System.getStaticVar()
+	if not sysvar then return end
+	if sysvar.activityControl[sysvar.grouphandler_activityid] then
+		--当天购买实惠礼包剩余次数
+		if not st.itematimes then st.itematimes = groupConf.itemTimes[1] end
+		--当天购买超值礼包剩余次数
+		if not st.itembtimes then st.itembtimes = groupConf.itemTimes[2] end
+		--当日积分
+		if not st.mypoint then st.mypoint = 0 end
+		--是否可领取
+		if not st.getreward then st.getreward = 0 end
+		--下面是发协议
+		local npack = DataPack.allocPacket(sysarg, 138, 201)
+		if npack == nil then return end 
+		local tag = Grouphandler.getGroupTag()
+		DataPack.writeByte(npack, tag)			 -- 类型
+		--print("sysvar.activityControl[groupActivityID].type:"..sysvar.activityControl[groupActivityID].type)
+		DataPack.writeInt(npack, st.itematimes)  -- 实惠礼包剩余可购买数量
+		--print("st.itematimes:"..st.itematimes)
+		DataPack.writeInt(npack, st.itembtimes)  -- 超值礼包剩余可购买数量
+		--print("st.itembtimes:"..st.itembtimes)
+		DataPack.writeInt(npack, st.mypoint)	 -- 我的积分
+		--print("st.mypoint:"..st.mypoint)
+		DataPack.writeInt(npack, st.getreward)	 -- 我的领取状态
+		--print("st.getreward:"..st.getreward)
+		DataPack.writeByte(npack, groupConf.isSetRank and 1 or 0) -- 是否弹出排行榜
+		--print("是否弹出排行榜:"..groupConf.isSetRank and 1 or 0)
+		DataPack.flush(npack)
+		--print("___________type = "..sysvar.activityControl[groupActivityID].type..", st.itematimes ="..st.itematimes..", st.itembtimes ="..st.itembtimes..",st.mypoint="..st.mypoint..", st.getreward = "..st.getreward)
+	end
+end
+
+--购买团购物品
+Grouphandler.buyItem = function(sysarg, packet)
+	--购买的类型 buyType == 1 --实惠礼包 buyType == 2 --超值礼包
+	local buyType = DataPack.readInt(packet)
+	if sysarg == nil or buyType == nil then return end
+
+	local sysvar = System.getStaticVar()
+	if not sysvar then return end
+
+	local state = ONLINEREWARD.GetActivityState(sysvar.grouphandler_activityid)
+	if state == 0 then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.grp001, ttMessage)
+		return
+	end	
+	local st = LActor.getStaticVar(sysarg)
+	if st == nil then return end
+	--判断背包格子
+	if Item.getBagEmptyGridCount(sysarg) < 1 then
+		LActor.sendTipmsg( sysarg, Lang.ScriptTips.sclib03, ttMessage )
+		return
+	end
+	local groupConf = Grouphandler.getGroupConf()
+	if not groupConf then print("_______________buyItem = no data") return end
+	--所须天珠
+	local needMoney = groupConf.itemPrice[buyType]
+	if LActor.getMoneyCount( sysarg, 3 ) < needMoney  then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.sx011, ttMessage)
+		return 
+	end
+	--当天购买实惠礼包剩余次数
+	if not st.itematimes then st.itematimes = groupConf.itemTimes[1] end
+	--当天购买超值礼包剩余次数
+	if not st.itembtimes then st.itembtimes = groupConf.itemTimes[2] end
+	--配置了canbuy 要购买礼包A才能购买礼包B
+	if buyType == 2 and groupConf.canbuy and (groupConf.itemTimes[1]-st.itematimes) < groupConf.buyNum  then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.grp002, ttMessage)
+		return
+	end
+	--次数不够了不能买
+	if buyType == 1 and st.itematimes == 0 or (buyType == 2 and st.itembtimes == 0) then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.grp005, ttMessage)
+		return
+	end
+	--塞物品
+	local itemID = 0
+	local count = 0
+	local broadcast = false
+	local nowdaycounts = ONLINEREWARD.GetActivityRunDays(sysvar.grouphandler_activityid)
+	if buyType == 1 and groupConf.itemListA[nowdaycounts] then
+		itemID = groupConf.itemListA[nowdaycounts].itemID
+		count = groupConf.itemListA[nowdaycounts].count
+		broadcast = groupConf.itemListA[nowdaycounts].broadcast
+		st.itematimes = st.itematimes - 1
+	elseif buyType == 2 and groupConf.itemListB[nowdaycounts] then
+		itemID = groupConf.itemListB[nowdaycounts].itemID
+		count = groupConf.itemListB[nowdaycounts].count
+		broadcast = groupConf.itemListB[nowdaycounts].broadcast
+		st.itembtimes = st.itembtimes - 1
+	else
+		print("_____________没有物品数据..当前第"..nowdaycounts.."天, buyType = "..buyType)
+		return
+	end
+	--扣钱, 增加积分
+	LActor.changeMoney(sysarg, 3, -needMoney, 1, true, "tuangou")
+	st.mypoint = st.mypoint + groupConf.itemPoint[buyType]
+	if st.getreward == 0 and st.mypoint >= groupConf.needList.score then
+		st.getreward = 1
+	end
+	LActor.addItem(sysarg,itemID,0,0,count,1,"tuangou",1)
+	if broadcast then
+		local str = string.format(Lang.ScriptTips.grp003,LActor.getName(sysarg),Item.getColorName(itemID))
+		--System.broadcastLevelTipmsg(str, 31, ttGmTip)
+
+		local str1 = string.format(Lang.ScriptTips.grp004,sysvar.grouphandler_activityid)
+		-- System.broadcastLevelTipmsg(str..str1, 31, ttHearsay)
+	end
+	--是否需要增加排行榜
+	if groupConf.isSetRank then
+		--统计仙宗积分
+		local rank = Ranking.getRanking(groupConf.guildRank.CharmRankName)
+		--没有排行，初始化一个
+		if not rank then
+			 rank = MiscFunc.InitRank(groupConf.guildRank.CharmRankName, groupConf.guildRank.CharmRankName, groupConf.guildRank.charmcount, {"aname", "get"})
+		end
+		local guildID = LActor.getGuildId(sysarg)
+		if guildID > 0 then 
+			--Ranking.clearRanking(rank)
+			local idx = Ranking.getItemIndexFromId(rank, guildID)
+			--是否有排名信息，有则更新，没有则添加
+			if idx == -1 then
+				local rankItem = Ranking.addItem(rank, guildID, groupConf.itemPoint[buyType])  --仙宗积分
+				Ranking.setSub(rankItem, 0, LGuild.getGuildName(guildID))
+			else
+				Ranking.updateItem(rank, guildID, groupConf.itemPoint[buyType])
+			end
+			Ranking.save(rank, groupConf.guildRank.CharmRankName)
+		end
+	end
+	local effects = {}
+	local effect = {}
+	effect.type = 1  
+	effect.id = itemID
+	effect.count = count
+	effects[#effects+1] = effect
+	if #effects > 0 then
+		MiscFunc.PlayItemEffect(sysarg, 1, effects)
+	end
+	Grouphandler.getGroupItemInfo(sysarg)
+	Grouphandler.getGroupInfo(sysarg)
+end
+
+--领取积分礼包
+Grouphandler.getPointGift = function(sysarg)
+	local st = LActor.getStaticVar(sysarg)
+	if st == nil then return end
+	local groupConf = Grouphandler.getGroupConf()
+	if not groupConf then print("_______________getPointGift = no data") return end
+	--判断背包格子
+	if Item.getBagEmptyGridCount(sysarg) < 1 then
+		LActor.sendTipmsg( sysarg, Lang.ScriptTips.sclib03, ttMessage )
+		return
+	end
+	--积分不足
+	if not st.mypoint or st.mypoint < groupConf.needList.score then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.grp006, ttMessage)
+		return
+	end
+	--已经领过
+	if st.getreward == 2 then return end
+	--兑换
+	LActor.addItem(sysarg,groupConf.needList.itemID,0,0,1,1,"tuangoujifen",1)
+	local effects = {}
+	local effect = {}
+	effect.type = 1  
+	effect.id = groupConf.needList.itemID
+	effect.count = 1
+	effects[#effects+1] = effect
+	if #effects > 0 then
+		MiscFunc.PlayItemEffect(sysarg, 1, effects)
+	end
+	--更改状态
+	--是否可领取
+	st.getreward = 2
+	Grouphandler.getGroupItemInfo(sysarg)
+end
+
+--新的一天
+Grouphandler.NewDayArrive = function(sysarg)
+	
+	local sysvar = System.getStaticVar()
+	if not sysvar then return end
+
+	local state = ONLINEREWARD.GetActivityState(sysvar.grouphandler_activityid)
+	local groupConf = Grouphandler.getGroupConf()
+	if not groupConf then 
+		--print("_______________NewDayArrive = no data") 
+		return 
+	end
+	if state ~= 0 then
+		local st = LActor.getStaticVar(sysarg)
+		if st == nil then return end
+		--是否重置积分
+		if groupConf.isReset then
+			st.mypoint = 0
+			--补发礼包
+			if st.getreward and st.getreward == 1 then
+				System.sendGmMailOffLine(LActor.getActorId(sysarg), Lang.ScriptTips.grp007, 1, groupConf.needList.itemID, 1, 1)
+				st.getreward = 0
+			end
+		end
+		st.itematimes = groupConf.itemTimes[1]
+		st.itembtimes = groupConf.itemTimes[2]
+	else
+		local st = LActor.getStaticVar(sysarg)
+		if st == nil then return end
+		--是否需要增加排行榜
+		if groupConf.isSetRank then
+			local guildID = LActor.getGuildId(sysarg)
+			if guildID > 0 then 
+				--是否领取过仙宗排名礼包
+				print("是否领取过仙宗排名礼包")
+				if not st.guildrewardstate then 
+					local rank = Ranking.getRanking(groupConf.guildRank.CharmRankName)
+					if rank then	
+						local idx = Ranking.getItemIndexFromId(rank, guildID)
+						print("_________________我的排名 = "..idx)
+						if idx > -1 and idx < groupConf.guildRank.charmcount then  
+							local rewardID = groupConf.guildRank.awards[idx+1].awardid
+							local count = groupConf.guildRank.awards[idx+1].awardcount
+							if rewardID and count then
+								local context = string.format(Lang.ScriptTips.grp008, idx+1)	
+								System.sendGmMailOffLine(LActor.getActorId(sysarg), context, 1, rewardID, count, 1)
+								print("_________________发邮件")	
+							end
+						end
+					end
+					st.guildrewardstate = 1
+				end
+			end
+		end
+		--补发礼包
+		if st.getreward and st.getreward == 1 then
+			System.sendGmMailOffLine(LActor.getActorId(sysarg), Lang.ScriptTips.grp007, 1, groupConf.needList.itemID, 1, 1)
+			st.getreward = 0
+		end
+	end
+end
+
+----清除排行榜信息 下次活动开始前
+--Grouphandler.clearRankInfo = function()
+--	local state,startime = ONLINEREWARD.GetActivityState(groupActivityID)
+--	local nowtime = System.getCurrMiniTime()
+--	if state == 0 and nowtime >= startime-61 and nowtime < startime then
+--		local groupConf = Grouphandler.getGroupConf()
+--		if not groupConf then print("_______________clearRankInfo = no data") return end
+--		local rank = Ranking.getRanking(groupConf.guildRank.CharmRankName)
+--		if rank then
+--			Ranking.clearRanking(rank)
+--			Ranking.save(rank, groupConf.guildRank.CharmRankName)
+--			--print("______清除排行榜")
+--		end
+--	end
+--end
+
+Grouphandler.clearRankInfo = function()
+	-- local groupConf = Grouphandler.getGroupConf()
+	-- local tag = Grouphandler.getGroupTag()
+	-- local groupConf = Groupconf[tag]
+	-- if not groupConf then print("_______________clearRankInfo = no data") return end
+	-- local rank = Ranking.getRanking(groupConf.guildRank.CharmRankName)
+	-- if rank then
+	-- 	Ranking.clearRanking(rank)
+	-- 	Ranking.save(rank, groupConf.guildRank.CharmRankName)
+	-- 	print("______清除排行榜")
+	-- end
+
+
+	for i=1,#GrouphandlerConfig do
+		local groupConf = GrouphandlerConfig[i].config[1]
+		--if not groupConf then print("_______________clearRankInfo = no data") return end
+		if groupConf then
+			local rank = Ranking.getRanking(groupConf.guildRank.CharmRankName)
+			if rank then
+				Ranking.clearRanking(rank)
+				Ranking.save(rank, groupConf.guildRank.CharmRankName)
+				print("______清除排行榜")
+			end
+		end
+	end
+end
+
+-- table.insert(TimeFnTable, Grouphandler.clearRankInfo)
+
+if EventCallDispatcher then
+    EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, Grouphandler.NewDayArrive)
+end

@@ -1,0 +1,39 @@
+--#include "..\..\language\LangCode.txt" once
+
+NewhandFubenConf = {
+	fbid = 75, -- 副本ID
+
+	buffGroup = 150, -- 进入后添加buff的的分组，一般不用改
+
+	NewhandbuffGroup = {
+
+	    --倍率血量上限  type:18和12的value值要一致
+		{ type = 18, value = 100, times=1800, interval=1 },
+        --倍率增加血
+		{ type = 12, value = 100, times=1800, interval=1 },
+		--物理攻击
+		{ type = 21, value = 10000, times=1800, interval=1 },
+		--物理防御
+		{ type = 23, value = 100000, times=1800, interval=1 },
+		--法术攻击
+		{ type = 31, value = 10000, times=1800, interval=1 },
+		--法术防御
+		{ type = 33, value = 100000, times=1800, interval=1 },
+	},
+
+    --阵营Id 按照 逍遥，星辰，逸仙阵营次序配置阵营id，目前只有三个阵营，如果多加阵营这里需要修改
+    campId = {1, 2, 3},
+
+    --场景Id 按照 逍遥(凌云渡)，星辰(飞云渡)，逸仙(青云渡)阵营次序配置场景id，目前只有三个阵营，如果多加阵营这里需要修改
+	sceneId = {0, 12, 8},
+
+	--新手职业 按照 天雷=1,蜀山=2,圆月=3,云华=4,职业次序配置
+	JobId = {1, 2, 3, 4},
+
+	--新手武器 按照 天雷,蜀山,圆月,云华,职业次序配置
+	EquipId = {1100, 1200, 1300, 1400},
+
+	--退出新手副本把玩家传到的坐标(原来的出生点坐标)
+	PosX = 11,
+	PosY = 12,
+}

@@ -1,0 +1,48 @@
+-- 七夕boss
+-- worldboss类型3
+
+QixiBossFun = {}
+QixiBossFun.ActivityId = 0
+QixiBossFun.SubActivityId = 96
+
+function OnReadyQixiBossTips(id1)
+	local idx = tonumber(id1)
+	if WorldBoss[idx].type == 3 and ONLINEREWARD.GetActivityState(QixiBossFun.ActivityId) == 1 then
+		OnReadyWorldBossTips(id1, 99)
+	end
+end
+
+function OnStartQixiBossTips(id1, id2)
+	local idx = tonumber(id1)
+	if WorldBoss[idx].type == 3 and ONLINEREWARD.GetActivityState(QixiBossFun.ActivityId) == 1 then
+		OnStartWorldBossTips(id1, id2)
+	end
+end
+
+function OnQixiBossCreate(id1)
+	local idx = tonumber(id1)
+	if WorldBoss[idx].type == 3 and ONLINEREWARD.GetActivityState(QixiBossFun.ActivityId) == 1 then
+		OnWorldBossCreate(id1, 99)
+	end
+end
+
+function OnQixiBossGone(id1)
+	local idx = tonumber(id1)
+	if WorldBoss[idx].type == 3 and ONLINEREWARD.GetActivityState(QixiBossFun.ActivityId) == 1 then
+		OnWorldBossGone(id1, 99)
+	end
+end
+
+-- 通过QixiBossFun.SubActivityId找QixiBossFun.ActivityId
+QixiBossFun.Init = function()
+	for i,v in pairs(activityConf) do
+		for j,w in pairs(v.activities) do
+			if w and w.id == QixiBossFun.SubActivityId then
+				QixiBossFun.ActivityId = tonumber(v.activityId)
+				return
+			end
+		end
+	end
+end
+
+table.insert(InitFnTable, QixiBossFun.Init)

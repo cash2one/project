@@ -1,0 +1,33 @@
+--VIP道具，使用后延长VIP有效时间
+
+
+--[[
+--VIP道具物品使用处理函数
+--sysarg:实体的指针
+--itemidx: 物品的ID
+--itemPtr: 物品的指针
+--ItemTable: 配置的参数列表
+--]]
+function VIPChargeItemUseHandler(sysarg, itemIdx, itemPtr, conf)
+	if (conf == nil) then return end
+	if (conf.time <= 0) then return end
+	if (conf.vipType < enVIPRedDiamond or conf.vipType > enVIPYellowDiamond) then
+		print("VIPChargeItemUseHandler error, invalid vip type")
+		return
+	end
+	
+	if (LActor.removeItemByPtr(sysarg, itemPtr, 1, true, "vip charge", 71) ~= 1) then
+		return
+	end	
+	LActor.addVIPTimeByType(sysarg, conf.vipType, conf.time * 86400)	
+end
+
+-- @brief: 注册VIP道具物品使用Handler
+function VIPChargeItemInit(sysarg)
+	for i = 1, table.getn(VIPChargeItem) do
+		local conf = VIPChargeItem[i]
+		GlobalItemFn[conf.item_id] = { func = VIPChargeItemUseHandler, params = conf, }
+	end
+end
+
+table.insert(InitFnTable, VIPChargeItemInit)

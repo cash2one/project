@@ -1,0 +1,53 @@
+﻿--lua script
+--本文件是用于定义商城相关的任务
+
+--这里配置完成了购买活动后，要完成的任务
+StoreQuestData = 
+{
+   [1] = {
+   				{qid = 909, tid = 20201,count=1},  
+ 
+   			},  --任务目标,表示购买了物品1234，则完成任务1862，tid和count对应任务配置表的值
+
+   [18711] = {
+   				{qid = 320, tid = 20201,count=1},  
+				{qid = 321, tid = 20202,count=1},  
+				{qid = 322, tid = 20203,count=1}, 
+				{qid = 323, tid = 20204,count=1}, 
+   			},  --任务目标,表示购买了物品 18711，则完成任务 10001，tid和count对应任务配置表的值
+
+} 
+
+--这里配置购买了某个商城物品后，要完成的活动
+StoreActivityData = 
+{
+	{
+		storeid = 18711,
+		needbag = 3,
+		limitlevel = 20,
+		moneytype = mtYuanbao,
+		vocationflag = 1, --1.表示分职业 0.表示不分职业
+	   	rewards = {
+	   				{
+		   				{id = 7111, count=1},  
+						{id = 8111, count=1},  
+						{id = 6111, count=1}, 
+					},
+					{
+		   				{id = 18711, count=1},  
+						{id = 18711, count=1},  
+						{id = 18711, count=1}, 
+					},
+					{
+		   				{id = 7311, count=1},  
+						{id = 8311, count=1},  
+						{id = 6311, count=1}, 
+					},
+					{
+		   				{id = 7411, count=1},  
+						{id = 8411, count=1},  
+						{id = 6411, count=1}, 
+					},
+	   			},  --奖励列表
+	},
+} 

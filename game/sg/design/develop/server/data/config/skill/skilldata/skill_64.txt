@@ -1,0 +1,20 @@
+
+-- 区域BOSS单体技能
+{
+	id=64,
+	name=Lang.Skill.s64Name,
+	desc=Lang.Skill.s64Desc,
+	vocation=0,	
+	skillClass =7,
+	skillType=6,
+	skillSpellType=0,
+	commonCd=0,
+	specialBuffCond =0,
+	skillSubLevel=
+	{
+--#include "Skill_64_1.txt"	
+	}
+},
+
+
+

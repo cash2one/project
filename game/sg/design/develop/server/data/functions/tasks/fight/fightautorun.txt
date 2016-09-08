@@ -1,0 +1,81 @@
+﻿-- 竞技场事件处理
+
+--#include "data\config\fight\fightconf.txt" once
+--#include "data\functions\tasks\fight\fightpublic.txt" once
+
+LocalDT.FightAutoRunFunc = {}
+
+
+-- 排行奖励结算
+function FightInitData()
+	local var = System.getStaticVar()
+	if var == nil then return end
+
+	var.fightAwardTime = System.getCurrMiniTime() -- 领奖时间
+
+	-- 更新每个玩家的排名
+	var.fightRank = {} -- 每次更新前都要把之前的排名清空
+
+	local actors = FightFun.getRankActorList()
+	if actors ~= nil then
+		for i=1,#actors do
+			var.fightRank[actors[i]] = i
+		end
+	end
+	print("fight rank count:"..#var.fightRank)
+	var.fightAward = 1 -- 可以领奖了
+end
+
+-- 竞技场初始化
+LocalDT.FightAutoRunFunc.FightAutoRun_Init = function (npcobj)
+	if LocalDT.FightAutoRunFunc.InitData == nil then
+		local inter_t = FightPublicOp.AwardInterval
+		local open_t = System.getOpenServerTime()
+		local next_t = open_t + 24 * 3600
+		local year, month, day, hour, minute, sec = 0, 0, 0, 0, 0, 0
+		year, month, day = System.timeDecode(next_t, year, month, day, hour, minute, sec)
+		local sNextCall = string.format("%d-%d-%d %d:00:00", year, month, day, 23)
+
+		LocalDT.FightAutoRunFunc.InitData = System.registerTimeCall(thisNPC,"FightInitData",sNextCall, inter_t, true)
+
+		next_t = System.timeEncode(year, month, day, 23, 0, 0) -- 第一次结算时间
+
+		local var = System.getStaticVar()
+		if var == nil then return end
+
+		-- 这次的领奖时间
+		local cur_t = System.getCurrMiniTime()
+
+		if var.fightAward == nil then var.fightAward = 0 end
+		if cur_t < next_t then -- 未到领奖时间
+			var.fightAward = 0
+		end
+
+		if cur_t < next_t then -- 小于第一次领奖时间
+			var.fightAwardTime = next_t - inter_t
+		else
+			for i=1,1000 do
+				if next_t + inter_t > cur_t then
+					var.fightAwardTime = next_t
+					break
+				end
+				next_t = next_t + inter_t
+			end
+		end
+
+		-- 初始化排名列表
+		if var.fightRank == nil then
+			var.fightRank = {}
+		end
+	end
+end
+
+LocalDT.FightAutoRunFunc.FightAutoRun_Fina = function (npcobj)
+	if LocalDT.FightAutoRunFunc.InitData ~= nil then
+		System.unregisterTimeCall(LocalDT.FightAutoRunFunc.InitData)
+	end
+end
+
+
+table.insert(InitFnTable,LocalDT.FightAutoRunFunc.FightAutoRun_Init)   
+table.insert(FinaFnTable,LocalDT.FightAutoRunFunc.FightAutoRun_Fina) 

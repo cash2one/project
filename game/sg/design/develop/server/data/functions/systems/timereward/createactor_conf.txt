@@ -1,0 +1,363 @@
+﻿--特价礼包配置
+
+--#include "..\..\..\language\LangCode.txt" once
+
+CreateActivity_conf = 
+{
+	activityId = 5,
+	openserver_createactor7 = { --开服活动-创角7天】显示的活动列表
+		[1]={46,62,47,64,63}, --天级宝藏	装备强化
+		[2]={46,62,58,60}, --武力试炼	世族捐献
+		[3]={46,62,57,59}, --宝石镶嵌	装备洗练
+		[4]={46,62,55,54},  --武将收集	演武场
+		[5]={46,62,53,52},  --伙伴资质	聚宝盆
+		[6]={46,62,65},  --坐骑提升
+		[7]={46,62,61},  --战力提升
+
+	},
+	activities = 
+	{
+	   
+		{
+			--活动id,连续登陆
+			-- id = 1,
+			-- loginReward = {{1, 30404, 1}, {2, 30405, 1}, {3, 30406, 1},{4, 30407, 1}, {5, 30408, 1}, {6, 30409, 1},{7, 30410, 1}},	--每日登陆,累积2、4天、6天登陆的礼包ID (必须遵循这个顺序！)
+		},
+		[34] = 
+		{
+			-- 活动id,新版连续登陆
+			id = 34,
+			lxloginReward = {{1, 30401, 1}, {2, 30402, 1}, {3, 30403, 1},},	
+		},
+		[46]=
+		{
+		  --活动id46.【开服活动-创角7天】登录福利
+		  id = 46,
+		  createactor7_loginreward={{1, 30600, 1}, {2, 30601, 1}, {3, 30602, 1},{4, 30603, 1},{5, 30604, 1},{6, 30605, 1},{7, 30606, 1}}, 
+		
+		  
+		},
+		[47]=
+		{
+			 --活动id47.【开服活动-创角7天】充值福利
+		  id = 47,
+		  charge_reward={{100, 30771, 1}, {300, 30772, 1}, {500, 30773, 1},{1000, 30774, 1},{2000, 30775, 1},{5000, 30776, 1},{10000, 30777, 1},{20000, 30778, 1},{50000, 30779, 1},{100000, 30781, 1}}, 
+
+		},
+		[62]= 
+		{
+		  --活动id62, 原来为48.【开服活动-创角7天】半价福利
+		  id = 62,
+		  config_sell={
+		     [1]={ {itemid = 30610, price_origin =1000, discount_price= 588}, {itemid = 30617, price_origin =300, discount_price= 120}, }, --格式：{item_id,原价,购买实际价格} 第一天半价购买的道具/礼包
+		     [2]={ {itemid = 30611, price_origin =1000, discount_price= 588}, {itemid = 30618, price_origin =400, discount_price= 128}, },
+		     [3]={ {itemid = 30612, price_origin =900, discount_price= 588}, {itemid = 30619, price_origin =225, discount_price= 128}, },
+		     [4]={ {itemid = 30613, price_origin =888, discount_price= 588}, {itemid = 30620, price_origin =330, discount_price= 128}, },
+		     [5]={ {itemid = 30614, price_origin =1100, discount_price= 588}, {itemid = 30621, price_origin =270, discount_price= 128}, },
+		     [6]={ {itemid = 30615, price_origin =1000, discount_price= 588}, {itemid = 30622, price_origin =250, discount_price= 128}, },
+		     [7]={ {itemid = 30616, price_origin =1350, discount_price= 688}, {itemid = 30623, price_origin =270, discount_price= 128}, },
+		      
+		  },
+
+
+
+		},
+		[63]=
+		{
+			-- 【开服活动-创角7天】装备提升
+		  id = 63 ,
+		   --type:（强化1,进阶2）,level :最终等级, 奖励item_id,item数量,
+		  target  =  {
+		 	{type=1,level=3,  itemid=30650,itemcount=1},--全身装备均强化至5级
+		 	{type=1,level=5,  itemid=30651,itemcount=1},--全身装备均进阶至20级
+		 	{type=1,level=8,  itemid=30652,itemcount=1},
+		 	{type=1,level=10,  itemid=30653,itemcount=1},
+		 	{type=1,level=12,  itemid=30654,itemcount=1},
+		 	{type=1,level=15,  itemid=30655,itemcount=1},
+		 	{type=1,level=20,  itemid=30656,itemcount=1},
+		 	{type=1,level=25,  itemid=30657,itemcount=1},
+		 	{type=1,level=30,  itemid=30658,itemcount=1},
+		 	{type=1,level=35,  itemid=30659,itemcount=1},
+		},
+
+		  --客户端显示的文字,{ 达成目标的条件, 未达成时的显示}
+	      display_text	=	{
+	      		{"#cf7e1986件装备均强化至%d级" , "#c714f31装备均已强化至%d级"},
+	      		{"#cf7e1986件装备均强化至%d级" , "#c714f31装备均已强化至%d级"},
+	      		{"#cf7e1986件装备均强化至%d级" , "#c714f31装备均已强化至%d级"},
+	      		{"#cf7e1986件装备均强化至%d级" , "#c714f31装备均已强化至%d级"},
+	      		{"#cf7e1986件装备均强化至%d级" , "#c714f31装备均已强化至%d级"},
+	      		{"#cf7e1986件装备均强化至%d级" , "#c714f31装备均已强化至%d级"},
+	      		{"#cf7e1986件装备均强化至%d级" , "#c714f31装备均已强化至%d级"},
+	      		{"#cf7e1986件装备均强化至%d级" , "#c714f31装备均已强化至%d级"},
+	      		{"#cf7e1986件装备均强化至%d级" , "#c714f31装备均已强化至%d级"},
+	      		{"#cf7e1986件装备均强化至%d级" , "#c714f31装备均已强化至%d级"},
+	      		 
+	  	 },
+			 
+
+		},
+		[64]=
+		{
+
+		  --活动id50.【开服活动-创角7天】天级宝藏
+		  id = 64,
+		  --天级宝藏十 { 抽的次数,itemid,itemcount)
+	      target = { {1,30740},{2,30741},{3,30742},{5,30743},{8,30744},{10,30745},{15,30746},{20,30747},{30,30748},{45,30749},{60,30790},},
+	      --客户端显示的文字,{ 达成目标的条件, 未达成时的显示}
+	      display_text	=	{
+	      		{"#cf7e198进行天级宝藏寻宝%d次" , "#c714f31进行天级宝藏寻宝%d次"},
+	      		 
+	  	  },
+			 
+			 
+		},
+		[65]=
+		{
+		  --活动id65 【动-创角7天】坐骑提升
+		  id = 65,
+		  -- { 坐骑进阶阶级,itemid,itemcount)
+	      target = { {2,30670} , {3,30671} , {4,30672}, {5,30673},{6,30674},},
+	       --客户端显示的文字,{ 达成目标的条件, 未达成时的显示}
+	      display_text	=	{
+	      		{"#cf7e198坐骑进阶至%d阶" , "#c714f31坐骑已进阶至%d阶"},
+	      		 
+	  	  },
+			 
+		},
+		[52]=
+		{
+		  --活动id52.【开服活动-创角7天】聚宝盆
+		  id = 52,
+		  -- { 聚宝次数,itemid,itemcount)
+	      target = { {5,30720},{10,30721} ,{20,30722},{50,30723}, {100,30724} , {200,30725},{300,30726},},
+
+	      --客户端显示的文字,{ 达成目标的条件, 未达成时的显示}
+	      display_text = {
+	      	{'#cf7e198使用元宝聚宝%d次','#c714f31已元宝聚宝%d次' },
+
+	      },
+
+		},
+		[53]=
+		{
+		  --活动id53.【开服活动-创角7天】伙伴收集
+		  id = 53,
+		  --注意：如果改变了配置数值,相应的客户端界面显示文件display_text也要更改！！！！
+		  --huoban_color:  1: 白色 ,2:绿色,3: 蓝色 4 ：紫色 ,5：橙色 6:红色 0表示不限颜色
+		  -- {type:1收集2激活 3资质达到,huoban_color:伙伴品质, skill_type:1所有技能,2【天赋技能】, count:当type为1时表示伙伴个数 ,为2时表示技能数  )
+	      target = { 
+	         {type=3,huoban_color=0,  skill_type=0,  count=5, itemid=30750,itemcount=1}, --收集到1个橙色伙伴 （收集到橙色伙伴1个）
+	         {type=3,huoban_color=0,  skill_type=1,  count=10, itemid=30751,itemcount=1},--激活2个伙伴技能  （激活伙伴技能2个）
+	         {type=3,huoban_color=0,  skill_type=0,  count=20, itemid=30752,itemcount=1},--共收集到5个伙伴  （收集伙伴5个）
+	         {type=3,huoban_color=0,  skill_type=2,  count=30, itemid=30753,itemcount=1},--激活1个伙伴天赋技能 （激活伙伴【天赋技能】1个）
+	         {type=3,huoban_color=0,  skill_type=0,  count=40, itemid=30754,itemcount=1}, --共收集到3个橙色伙伴（收集橙色伙伴3个）
+	          {type=3,huoban_color=0,  skill_type=0,  count=60, itemid=30755,itemcount=1},
+	           {type=3,huoban_color=0,  skill_type=0,  count=80, itemid=30756,itemcount=1},
+	         
+	         
+
+	      },
+	      --客户端显示的文字,{ 达成目标的条件, 未达成时的显示}
+	      display_text	=	{
+	      	--	{"#cf7e198收集到%d个橙色伙伴" , "#c714f31已收集%d个橙色伙伴"},
+	      	--	{"#cf7e198激活%d个伙伴技能",'#c714f31已激活%d个伙伴技能' },
+				{"#cf7e198至少一个伙伴资质达到%d级",'#c714f31当前伙伴最大资质达到%d级' },  
+
+	  		},
+			 
+		},
+		[54]=
+		{
+		  --活动id54.【开服活动-创角7天】演武场
+		  id = 54,
+		  -- { 演武场排名,itemid,itemcount) --注意,排名按从大到小的顺序递降
+	      target = { {500,30709} , {200,30708},{100,30707},{50,30706},{30,30705},{10,30704},{5,30703},{3,30702},{2,30701},{1,30700},},
+	       --客户端显示的文字,{ 达成目标的条件, 未达成时的显示}
+	      display_text	=	{
+	      		{"#cf7e198演武场排名达到%d名" , "#c714f31当前最高排名%d名"},
+	      		 
+	  	  },
+			 
+		},
+		[55]=
+		{
+		  --活动id55.【开服活动-创角7天】武将收集
+		  id = 55,
+
+		  --wujiang_color: 同道具颜色:白色0    绿色1   蓝色2  紫色3  橙色：4    红色：5  -1:不限颜色
+		  -- {type:1:收集 2:武将达到某个等级 ）
+		  --countOrLevel 当type为1时表示武将个数,当type为2时固定为1,表示至少1个武将达到x级  ,
+		  --wujiang_color:武将品质
+	      target = { 
+	      	{type=1,wujiang_color=-1, countOrLevel=1,  itemid=30730,itemcount=1},--至少一个武将达到5级
+	        {type=2,wujiang_color=0, countOrLevel=5,  itemid=30731,itemcount=1},--收集到1个color为紫色的武将
+	        {type=2,wujiang_color=0, countOrLevel=10,  itemid=30732,itemcount=1},--收集到1个color为橙色的武将    
+	        {type=2,wujiang_color=0, countOrLevel=15, itemid=30733,itemcount=1},--至少一个武将达到10级
+	        {type=2,wujiang_color=0, countOrLevel=20, itemid=30734,itemcount=1},--至少一个武将达到20级
+	        {type=2,wujiang_color=0, countOrLevel=30, itemid=30735,itemcount=1},--至少一个武将达到10级
+	        {type=1,wujiang_color=-1, countOrLevel=3, itemid=30736,itemcount=1},--至少一个武将达到20级
+	        {type=1,wujiang_color=-1, countOrLevel=5, itemid=30737,itemcount=1},--至少一个武将达到20级
+
+
+	      },
+	       --客户端显示的文字,{ 达成目标的条件, 未达成时的显示}
+	      display_text	=	{
+	     		 {"#cf7e198收集到%d个武将",'#c714f31已收集%d个武将' },
+	      		{"#cf7e198至少1个武将达到%d级" , "#c714f31武将最高等级已达到%d级"},
+	      		{"#cf7e198至少1个武将达到%d级" , "#c714f31武将最高等级已达到%d级"},
+	      		{"#cf7e198至少1个武将达到%d级" , "#c714f31武将最高等级已达到%d级"},
+	      		{"#cf7e198至少1个武将达到%d级" , "#c714f31武将最高等级已达到%d级"},
+	      		{"#cf7e198至少1个武将达到%d级" , "#c714f31武将最高等级已达到%d级"},
+	      		 {"#cf7e198收集到%d个武将",'#c714f31已收集%d个武将' },
+	      		 {"#cf7e198收集到%d个武将",'#c714f31已收集%d个武将' },
+
+
+	      	 
+	  		},
+			 
+		},
+		[56]=
+		{
+		  --活动id56.【开服活动-创角7天】玫瑰之约
+		  id = 56, 
+		  --type:1赠送 2获赠 count:玫瑰朵数,
+		  target = {  
+		  	{type=1,count=20,  itemid=30017,itemcount=1 },
+		  	{type=2,count=40,  itemid=30017,itemcount=1 },
+		  	{type=1,count=80,  itemid=30017,itemcount=1 },
+		  	{type=2,count=200, itemid=30017,itemcount=1 },
+		  	{type=1,count=500, itemid=30017,itemcount=1 },
+		  	{type=1,count=999, itemid=30017,itemcount=1 },
+		  },
+		    --客户端显示的文字,{ 达成目标的条件, 未达成时的显示}
+	      display_text	=	{
+	      		{"#cf7e198赠送玫瑰达到%d朵" ,"#c714f31已赠送玫瑰%d朵"},
+	      		{"#cf7e198获赠玫瑰达到%d朵",'#c714f31已获赠玫瑰%d朵' },
+	      		{"#cf7e198赠送玫瑰达到%d朵" ,"#c714f31已赠送玫瑰%d朵"},
+	      		{"#cf7e198获赠玫瑰达到%d朵",'#c714f31已获赠玫瑰%d朵' },
+	      		{"#cf7e198赠送玫瑰达到%d朵" ,"#c714f31已赠送玫瑰%d朵"},
+	      		{"#cf7e198赠送玫瑰达到%d朵" ,"#c714f31已赠送玫瑰%d朵"},
+
+	      	 
+	  	  },
+			 
+		},
+
+		[57]=
+		{
+		  --活动id57.【开服活动-创角7天】宝石镶嵌
+		  id = 57, 
+		  --{镶嵌棵数, 宝石最低等级
+		   target = { 
+		   --[[
+		   	 {level=1,count=12,itemid=30710,itemcount=1},
+		   	 {level=2,count=12,itemid=30711,itemcount=1},
+		   	 {level=3,count=12,itemid=30712,itemcount=1},
+		   	 {level=4,count=12,itemid=30713,itemcount=1},
+	         {level=5,count=9,itemid=30714,itemcount=1},
+	         {level=5,count=18,itemid=30715,itemcount=1},
+	         {level=6,count=18,itemid=30716,itemcount=1},
+	         ]]
+
+	         --type==1表示开服宝石镶嵌改成全身等级之和
+	         {type=1,count=6, itemid=30710,itemcount=1},
+		   	 {type=1,count=12,itemid=30710,itemcount=1},
+		   	 {type=1,count=20,itemid=30710,itemcount=1},
+		   	 {type=1,count=28,itemid=30713,itemcount=1},
+		   	 {type=1,count=36,itemid=30714,itemcount=1},
+		   	 {type=1,count=44,itemid=30716,itemcount=1},
+		   	 {type=1,count=52,itemid=30716,itemcount=1},
+		   	 {type=1,count=60,itemid=30717,itemcount=1},
+		   	 {type=1,count=66,itemid=30719,itemcount=1},
+		   	  {type=1,count=72,itemid=30719,itemcount=1},
+
+	      },
+		  display_text	=	{
+	      		{"#cf7e198宝石总和不低于%d级" , "#c714f31当前宝石等级总和为%d级"},
+	      	 
+
+	  	  },
+			 
+		},
+		[58]=
+		{
+		  --活动id58.【开服活动-创角7天】
+		 
+		  id = 58, 
+		  --{武力试炼层数,itemid,itemCount, 
+		  target = { {5,30660} , {10,30661} , {15,30662},{20,30663},{25,30664} ,{30,30665} ,{35,30666} ,{40,30667},{45,30791},},
+		  display_text	=	{
+	      		{"#cf7e198武力试炼达到%d层" , "#c714f31武力试炼已达到%d层"},
+
+	  	  },
+			 
+		},
+		[59]=
+		{
+		  --活动id59.【开服活动-创角7天】装备洗练
+		  id = 59, 
+		  --{装备洗练总次数,itemid,itemCount, 
+		  target = { {5,30690} , {10,30691},{20,30692},{30,30693},{40,30694},{50,30695},{70,30696},{90,30697},{120,30698},{150,30699},},
+		  display_text	=	{
+	      		{"#cf7e198洗炼总次数达到%d次" , "#c714f31洗炼总次数已达到%d次"},
+
+	  	  },
+			 
+		},
+		[60]=
+		{
+		  --活动id60.【开服活动-创角7天】世族捐献
+		  id = 60, 
+		  --{moneyType：货币类型 1:元宝 ,2:铜钱3.贡献count:捐献的钱数目标,itemid,itemCount, \4历史总贡献
+
+		  target = { 
+
+		  	 {type=4,count=200,  itemid=30680,itemcount=1},
+		   	 {type=4,count=500, itemid=30681,itemcount=1},
+		   	 {type=4,count=800,  itemid=30682,itemcount=1},
+		   	 {type=4,count=1000,  itemid=30683,itemcount=1},
+		   	 {type=4,count=1800,  itemid=30684,itemcount=1},
+		   	 {type=4,count=2400, itemid=30685,itemcount=1},
+		   	 {type=4,count=3000, itemid=30686,itemcount=1},
+		   	  {type=4,count=4000, itemid=30687,itemcount=1},
+		   	   {type=4,count=6000, itemid=30688,itemcount=1},
+		   	   {type=4,count=9000, itemid=30792,itemcount=1},
+		  },
+
+		  display_text	=	{
+	      		{"#cf7e198累计世族贡献达到%d","#c714f31已获得世族贡献%d"},
+	      		{"#cf7e198累计世族贡献达到%d","#c714f31已获得世族贡献%d"},
+                {"#cf7e198累计世族贡献达到%d","#c714f31已获得世族贡献%d"},
+	      		{"#cf7e198累计世族贡献达到%d","#c714f31已获得世族贡献%d"},
+	      		{"#cf7e198累计世族贡献达到%d","#c714f31已获得世族贡献%d"},
+	      		{"#cf7e198累计世族贡献达到%d","#c714f31已获得世族贡献%d"},
+	      		{"#cf7e198累计世族贡献达到%d","#c714f31已获得世族贡献%d"},
+	      		{"#cf7e198累计世族贡献达到%d","#c714f31已获得世族贡献%d"},
+	      		{"#cf7e198累计世族贡献达到%d","#c714f31已获得世族贡献%d"},
+	      		{"#cf7e198累计世族贡献达到%d","#c714f31已获得世族贡献%d"},
+
+	  	  },
+			 
+		},
+		[61]=
+		{
+		  --活动id61.【开服活动-创角7天】战力提升
+		  id = 61, 
+		  --{战力目标值,itemid,itemCount
+		  target = { {30000,30760} , {40000,30761},{50000,30762},{70000,30763},{90000,30764},{110000,30765},{120000,30766},{150000,30767},{180000,30768},},
+		  display_text	=	{
+	      		{"#cf7e198战力达到%d" , "#c714f31最高战力达到%d"},
+
+	  	  },
+			 
+			 
+		},
+
+
+
+
+
+
+	},
+}

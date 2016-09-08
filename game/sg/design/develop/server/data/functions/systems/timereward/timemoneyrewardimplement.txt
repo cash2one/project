@@ -1,0 +1,553 @@
+﻿
+-- ONLINEREWARD.RewardImplement = {}
+-- for i=1,10 do
+-- 	print(i)
+-- end
+-- ONLINEREWARD.main = function (sysarg, systemid, msgid, packet)
+-- 	print("---rrrrrttttttttt--")
+--   if ONLINEREWARD.RewardImplement[msgid] then
+--   	print("--ONLINEREWARD.main msgid: "..msgid)
+--     ONLINEREWARD.RewardImplement[msgid](sysarg, packet)
+--    else
+--    	print("----ddddddddddd--ggggg--")
+--   end
+-- end    
+
+-- --[[
+--     注册杂项子系统消息处理函数，函数的形式为function (sysarg, msgid, packet)
+-- ]]
+-- ONLINEREWARD.registerMsgHandler = function (msgid, proc)
+--   if ONLINEREWARD.RewardImplement[msgid] then
+--   	print("---gggggggggggppppp=========pppppppppp: "..msgid)
+--     return false
+--   else
+--   	print("--registerSystemHander msgid: "..msgid)
+--     ONLINEREWARD.RewardImplement[msgid] = proc
+--     return true
+--   end
+-- end
+-- --[[
+--     取消已注册的子系统消息处理函数
+-- ]]
+-- ONLINEREWARD.unregisterMsgHandler = function (msgid, proc)
+--   if ONLINEREWARD.RewardImplement[msgid] == proc then
+--     ONLINEREWARD.RewardImplement[msgid] = nil
+--     return true
+--   else
+--     return false
+--   end
+-- end  
+
+
+
+--#include "TimeRewardSystem.txt" once
+--#include "WeekTimeRewardSystem.txt"	once
+--#include "ContinuLogin.txt"	once
+--#include "LogoutReward.txt"	once
+--#include "VipLoginReward.txt" once
+	--#include "fcrewardsystem.txt" once -- 屏蔽封测奖励功能
+--#include "wsjrewardsystem.txt" once -- 万圣节活动奖励
+--#include "miyousystem.txt" once -- 密友系统
+--#include "dtrewardsystem.txt" once
+--#include "activitycontrolhandler.txt" once
+--#include "equipenactivityhandler.txt" once
+--#include "gemactivityhandler.txt" once
+--#include "petactivityhandler.txt" once
+--#include "yqhysystem.txt" once	
+
+--#include "activityhandler.txt" once
+--#include "activityreturnarrayhandler.txt" once
+--#include "xingyunzhuanpanhandler.txt" once
+--#include "lixianjianglihandler.txt" once
+--#include "meirichongzhihandler.txt" once
+--#include "data\functions\actorevent\lotteryhandle.txt" once
+--#include "data\functions\systems\timereward\newhandhandler.txt" once
+--#include "data\functions\tasks\dailyattendance\dailyloginrewardfunc.txt" once
+--#include "data\functions\systems\timereward\grouphandler.txt" once
+--#include "data\functions\systems\miscs\callfriendhandler.txt" once
+--#include "data\functions\systems\miscs\pobinghandler.txt" once
+--#include "data\functions\systems\timereward\discounthandler.txt"once  		--限时商店
+--#include "data\functions\systems\timereward\exchangehandler.txt"once  		--兑换商店
+--#include "data\functions\systems\timereward\exchangehandler1.txt"once  		--乾坤兑换
+--#include "data\functions\systems\timereward\receiveflowerhandler.txt"once  	--收花排行
+--#include "data\functions\systems\timereward\singledayhandler.txt" once 		--送花排行
+--#include "jewelboxitem.txt" once 												--仙道宝盒	
+--#include "data\functions\systems\timereward\magicdragonfunc.txt" once 		--神龙密塔	
+--#include "data\functions\systems\miscs\lianxuchargehandler.txt" once
+--#include "charmrankhandle.txt" once
+--#include "data\functions\systems\secondactivity\createactorrechager.txt" once
+--#include "data\functions\systems\miscs\levelrankactivity.txt" once --等级排行
+--#include "data\functions\actorevent\actorloginhandler.txt" once
+--#include "data\functions\systems\timereward\limittimebuy.txt" once --限时抢购
+--#include "data\functions\systems\timereward\limitbuy.txt" once --限量抢购
+--#include "data\functions\systems\timereward\duobaohandler.txt" once --x元夺宝
+--#include "data\functions\systems\miscs\fightrankactivity.txt" once --战力排行榜活动
+--#include "data\functions\systems\timereward\everydaylimitbuy.txt" once --每日限量抢购
+--#include "data\functions\systems\timereward\openserverhalfpricehandler.txt" once --【开服活动-创角7天】半价福利
+--#include "data\functions\systems\miscs\levelrankactivity.txt" once --等级排行榜活动
+--#include "data\functions\systems\miscs\rankactivity.txt" once --通用的排行榜活动
+--#include "data\functions\systems\timereward\doubleawards.txt" once --双倍奖励活动
+--#include "data\functions\systems\timereward\newonlinereward.txt" once --在线奖励活动
+--#include "data\functions\systems\timereward\qixiexchange.txt" once --七夕兑换
+--#include "data\functions\systems\timereward\qixititlefun.txt" once --七夕称号
+--#include "data\functions\systems\miscs\flowerrankactivity.txt" once
+
+-- ONLINEREWARD.registerMsgHandler(1,ONLINEREWARD.TimeRewardImplement.getOnlineReward)
+-- ONLINEREWARD.registerMsgHandler(2,ONLINEREWARD.TimeMoneyRewardImplement.sendClientRewardMsg)
+-- ONLINEREWARD.registerMsgHandler(3,ONLINEREWARD.TimeMoneyRewardImplement.getOnlineMoneyReward)
+-- ONLINEREWARD.registerMsgHandler(4,ONLINEREWARD.TimeMoneyRewardImplement.getOnlineMoneyReward)
+-- ONLINEREWARD.registerMsgHandler(5,ONLINEREWARD.WeekTimeMoneyRewardImplement.getOnlineMoneyReward)
+-- ONLINEREWARD.registerMsgHandler(6,ONLINEREWARD.ContinuLoginImplement.sendClientContinuLoginListMsg)
+-- ONLINEREWARD.registerMsgHandler(7,ONLINEREWARD.ContinuLoginImplement.GetContinuLoginItemMsg)
+-- ONLINEREWARD.registerMsgHandler(8,ONLINEREWARD.ContinuLoginImplement.GetContinuVipLoginItemMsg)
+-- ONLINEREWARD.registerMsgHandler(9,ONLINEREWARD.ContinuLoginImplement.ClearContinuLoginDay)
+-- ONLINEREWARD.registerMsgHandler(10,ONLINEREWARD.LogoutRewardImplement.sendClientLogoutRewardListMsg)
+-- ONLINEREWARD.registerMsgHandler(11,ONLINEREWARD.LogoutRewardImplement.GetLogoutReward)
+-- ONLINEREWARD.registerMsgHandler(12,ONLINEREWARD.ContinuLoginImplement.GetCurContinuLoginItem)
+-- ONLINEREWARD.registerMsgHandler(13,ONLINEREWARD.VipLoginRewardImplement.OnGetLoginReward)
+-- ONLINEREWARD.registerMsgHandler(14,ONLINEREWARD.VipLoginRewardImplement.OnCheckGetReward)
+-- ONLINEREWARD.registerMsgHandler(16,ONLINEREWARD.VipLoginRewardImplement.OnGetFirstRechargeAward)
+-- ONLINEREWARD.registerMsgHandler(17,ONLINEREWARD.VipLoginRewardImplement.OnGetYellowVipAward)
+-- ONLINEREWARD.registerMsgHandler(19,ONLINEREWARD.VipLoginRewardImplement.GetRankActivityData)
+-- ONLINEREWARD.registerMsgHandler(20,ONLINEREWARD.VipLoginRewardImplement.GetRankActivityAward)
+-- ONLINEREWARD.registerMsgHandler(22,ONLINEREWARD.ServerActivityImplement.GetGuildRewardInfo)
+-- ONLINEREWARD.registerMsgHandler(23,ONLINEREWARD.ServerActivityImplement.getGuildReward)
+-- ONLINEREWARD.registerMsgHandler(24,ONLINEREWARD.ServerActivityImplement.GetSuitRewardInfo)
+-- ONLINEREWARD.registerMsgHandler(25,ONLINEREWARD.ServerActivityImplement.getSuiteReward)
+-- ONLINEREWARD.registerMsgHandler(26,ONLINEREWARD.ServerActivityImplement.GetCrossRewardInfo)
+-- ONLINEREWARD.registerMsgHandler(27,ONLINEREWARD.ServerActivityImplement.getCrossReward)
+-- ONLINEREWARD.registerMsgHandler(29,ONLINEREWARD.VipLoginRewardImplement.tmpHuodong9Detail)
+-- ONLINEREWARD.registerMsgHandler(30,ONLINEREWARD.VipLoginRewardImplement.tmpHuodong9GetAward)
+-- ONLINEREWARD.registerMsgHandler(31,ONLINEREWARD.VipLoginRewardImplement.tmpZheKouGetAward)
+-- ONLINEREWARD.registerMsgHandler(34,ONLINEREWARD.WSJRewardImplement.getWsjReward)
+-- ONLINEREWARD.registerMsgHandler(36,ONLINEREWARD.VipLoginRewardImplement.getYellowDayAward)
+-- ONLINEREWARD.registerMsgHandler(37,ONLINEREWARD.VipLoginRewardImplement.OnGetBlueVipAward)
+-- ONLINEREWARD.registerMsgHandler(38,ONLINEREWARD.MiYouImplement.OnGetInfo)
+-- ONLINEREWARD.registerMsgHandler(39,ONLINEREWARD.MiYouImplement.OnGiveItem)
+-- ONLINEREWARD.registerMsgHandler(40,ONLINEREWARD.MiYouImplement.OnGetItem)
+-- ONLINEREWARD.registerMsgHandler(43,ONLINEREWARD.VipLoginRewardImplement.GetQQGameDating)
+-- ONLINEREWARD.registerMsgHandler(44,ONLINEREWARD.DtRewardImplement.OnGetInfo)
+-- ONLINEREWARD.registerMsgHandler(45,ONLINEREWARD.DtRewardImplement.OnGetItem)
+-- ONLINEREWARD.registerMsgHandler(46,ONLINEREWARD.VipLoginRewardImplement.tmpMovementGetAward)
+-- ONLINEREWARD.registerMsgHandler(47,ONLINEREWARD.VipLoginRewardImplement.GetJuniorEffortInfo)
+-- ONLINEREWARD.registerMsgHandler(48,ONLINEREWARD.VipLoginRewardImplement.GetJuniorEffortAward)
+-- ONLINEREWARD.registerMsgHandler(51,ONLINEREWARD.VipLoginRewardImplement.OnGetComsumptionBoxAward)
+-- ONLINEREWARD.registerMsgHandler(52,ONLINEREWARD.GetActivityList)
+-- ONLINEREWARD.registerMsgHandler(53,ONLINEREWARD.getEquipenActivityRewardInfo)
+-- ONLINEREWARD.registerMsgHandler(54,ONLINEREWARD.getEquipenActivityReward)
+-- ONLINEREWARD.registerMsgHandler(55,ONLINEREWARD.getPetActivityRewardInfo)
+-- ONLINEREWARD.registerMsgHandler(56,ONLINEREWARD.getPetActivityReward)
+-- ONLINEREWARD.registerMsgHandler(57,ONLINEREWARD.getGemActivityRewardInfo)
+-- ONLINEREWARD.registerMsgHandler(58,ONLINEREWARD.getGemActivityReward)
+-- ONLINEREWARD.registerMsgHandler(59,ONLINEREWARD.YqhyImplement.OnGetInfo)
+-- ONLINEREWARD.registerMsgHandler(60,ONLINEREWARD.YqhyImplement.OnInvite)
+-- ONLINEREWARD.registerMsgHandler(61,ONLINEREWARD.YqhyImplement.OnShare)
+-- ONLINEREWARD.registerMsgHandler(62,ONLINEREWARD.YqhyImplement.OnLottery)
+-- ONLINEREWARD.registerMsgHandler(73,ONLINEREWARD.JewelBoxImplement.OnLottery)
+-- ONLINEREWARD.registerMsgHandler(74,ONLINEREWARD.JewelBoxImplement.OnEndLottery)
+-- ONLINEREWARD.registerMsgHandler(76,activityFunc.getshouchonglibao)
+-- ONLINEREWARD.registerMsgHandler(80,activityFunc.handler_getActivityInfo)
+-- ONLINEREWARD.registerMsgHandler(81,activityFunc.getActivityReward)
+-- ONLINEREWARD.registerMsgHandler(82,activityFunc.handler_sendCharmInfo)
+-- ONLINEREWARD.registerMsgHandler(85,ONLINEREWARD.JewelBoxImplement.MysteriousOnLottery)
+-- ONLINEREWARD.registerMsgHandler(87,ONLINEREWARD.JewelBoxImplement.MysteriousSuperOnLottery)
+-- ONLINEREWARD.registerMsgHandler(106,ONLINEREWARD.VipLoginRewardImplement.OnGetQQAward)
+-- ONLINEREWARD.registerMsgHandler(107,ONLINEREWARD.VipLoginRewardImplement.OnQQyijianAnZhuang)
+-- ONLINEREWARD.registerMsgHandler(108,ONLINEREWARD.VipLoginRewardImplement.OnGetWeiXinAward)
+-- ONLINEREWARD.registerMsgHandler(110,LotteryOpFuncList.Ranking)
+-- ONLINEREWARD.registerMsgHandler(112,ONLINEREWARD.VipLoginRewardImplement.OnGetChannelAward)
+-- ONLINEREWARD.registerMsgHandler(113,ONLINEREWARD.SendDailyLoginRewardInfo)
+-- ONLINEREWARD.registerMsgHandler(114,ONLINEREWARD.GetDailyLoginReward)
+-- ONLINEREWARD.registerMsgHandler(117,ONLINEREWARD.SendTotalLogin)
+-- ONLINEREWARD.registerMsgHandler(118,ONLINEREWARD.GetTotalLoginReward)
+-- ONLINEREWARD.registerMsgHandler(130,activityFunc.getOpenActivityList)
+-- ONLINEREWARD.registerMsgHandler(131,CreateActorRecharget.getActivityData)
+-- ONLINEREWARD.registerMsgHandler(132,CreateActorRecharget.getRecharAward)
+-- ONLINEREWARD.registerMsgHandler(134,LevelRankActivity.sendInfo)
+-- ONLINEREWARD.registerMsgHandler(136,QuickAnswer.handler_sendActorInfo)
+-- ONLINEREWARD.registerMsgHandler(137,QuickAnswer.handler_chooseAnswer)
+-- ONLINEREWARD.registerMsgHandler(139,AnswerQuestion.handler_sendActorInfo)
+-- ONLINEREWARD.registerMsgHandler(140,AnswerQuestion.handler_chooseAnswer)
+-- ONLINEREWARD.registerMsgHandler(141,AnswerQuestion.handler_getAwards)
+-- ONLINEREWARD.registerMsgHandler(142,QuickAnswer.sendRankInfo)
+-- ONLINEREWARD.registerMsgHandler(143,LevelRankActivity.sendRankInfo)
+-- ONLINEREWARD.registerMsgHandler(200,Grouphandler.getGroupInfo)
+-- ONLINEREWARD.registerMsgHandler(201,Grouphandler.getGroupItemInfo)
+-- ONLINEREWARD.registerMsgHandler(202,Grouphandler.buyItem)
+-- ONLINEREWARD.registerMsgHandler(203,Grouphandler.getPointGift)
+-- ONLINEREWARD.registerMsgHandler(223,SingledayHandler.getFlowerRank)
+-- ONLINEREWARD.registerMsgHandler(225,Exchangehandler.GetInfo)
+-- ONLINEREWARD.registerMsgHandler(226,Exchangehandler.Exchange)
+-- ONLINEREWARD.registerMsgHandler(235,Discounthandler.handler_getDiscountCount)
+-- ONLINEREWARD.registerMsgHandler(236,Discounthandler.buyDiscountItem)
+-- ONLINEREWARD.registerMsgHandler(239,Discounthandler.getActivityType)
+-- ONLINEREWARD.registerMsgHandler(240,Receiveflowerhandler.getFlowerState)
+-- ONLINEREWARD.registerMsgHandler(242,Exchangehandler1.exchangeItem)
+-- ONLINEREWARD.registerMsgHandler(243,Exchangehandler1.getActivityInfo)
+-- ONLINEREWARD.registerMsgHandler(244,Exchangehandler1.getItemCount)
+-- ONLINEREWARD.registerMsgHandler(245,PoBingFuncDouBi.GetActivityFor)
+-- ONLINEREWARD.registerMsgHandler(246,PoBingFuncDouBi.GetActivityReward)
+-- ONLINEREWARD.registerMsgHandler(247,ReceiveFlowerHandler.getFlowerRank)
+-- ONLINEREWARD.registerMsgHandler(248,LXCharge_Func.getActivityInfo)
+-- ONLINEREWARD.registerMsgHandler(249,LXCharge_Func.getActivityReward)
+-- ONLINEREWARD.registerMsgHandler(250,MagicTragonFunc.getMagicTragonInfo)
+-- ONLINEREWARD.registerMsgHandler(251,MagicTragonFunc.getMagicTragonReward)
+-- ONLINEREWARD.registerMsgHandler(252,ONLINEREWARD.charmRankFunc.getRankInfo)
+-- ONLINEREWARD.registerMsgHandler(253,CallFriendFunc.GiveLotteryCount)
+-- ONLINEREWARD.registerMsgHandler(254,MiscsImplement.getkeyHandler)
+-- ONLINEREWARD.registerMsgHandler(212,activityFunc.ByFund)
+
+
+
+
+
+ONLINEREWARD.RewardImplement = 
+{
+MessageAssign = function (sysarg, systemid, msgid, packet)
+    if msgid == 1 then
+		ONLINEREWARD.TimeRewardImplement.getOnlineReward(sysarg, packet)
+	elseif msgid == 2 then     --消息号为2 客户端点击"送天珠"按钮
+		ONLINEREWARD.TimeMoneyRewardImplement.sendClientRewardMsg(sysarg)
+	elseif msgid == 3 then  --消息号为3 客户端点击"领取奖励"按钮
+		ONLINEREWARD.TimeMoneyRewardImplement.getOnlineMoneyReward(sysarg)
+	elseif msgid == 4 then
+		ONLINEREWARD.WeekTimeMoneyRewardImplement.sendClientRewardMsg(sysarg)
+	elseif msgid == 5 then
+		ONLINEREWARD.WeekTimeMoneyRewardImplement.getOnlineMoneyReward(sysarg)
+	elseif msgid == 6 then
+		ONLINEREWARD.ContinuLoginImplement.sendClientContinuLoginListMsg(sysarg)
+	elseif msgid == 7 then
+		ONLINEREWARD.ContinuLoginImplement.GetContinuLoginItemMsg(sysarg, packet)
+	elseif msgid == 8 then
+		ONLINEREWARD.ContinuLoginImplement.GetContinuVipLoginItemMsg(sysarg, packet)
+	elseif msgid == 9 then
+		ONLINEREWARD.ContinuLoginImplement.ClearContinuLoginDay(sysarg)
+	elseif msgid == 10 then
+		--ONLINEREWARD.LogoutRewardImplement.sendClientLogoutRewardListMsg(sysarg)
+		LixianJiangli.getInfo(sysarg)
+	elseif msgid == 11 then
+		--ONLINEREWARD.LogoutRewardImplement.GetLogoutReward(sysarg,packet)
+		LixianJiangli.getReward(sysarg,packet)
+	elseif msgid == 12 then
+		ONLINEREWARD.ContinuLoginImplement.GetCurContinuLoginItem(sysarg)
+	elseif msgid == 13 then
+		ONLINEREWARD.VipLoginRewardImplement.OnGetLoginReward( sysarg )
+	elseif msgid == 14 then
+		ONLINEREWARD.VipLoginRewardImplement.OnCheckGetReward( sysarg )
+		--[[ -- 屏蔽封测奖励功能
+	elseif msgid == 15 then
+		ONLINEREWARD.FcRewardImplement.getFengceReward(sysarg,systemid, msgid, packet)
+		]]
+	elseif msgid == 16 then
+		ONLINEREWARD.VipLoginRewardImplement.OnGetFirstRechargeAward(sysarg, packet)
+	elseif msgid == 17 then
+		ONLINEREWARD.VipLoginRewardImplement.OnGetYellowVipAward(sysarg, packet)
+	elseif msgid == 19 then
+		ONLINEREWARD.VipLoginRewardImplement.GetRankActivityData(sysarg, packet)
+	elseif msgid == 20 then
+		ONLINEREWARD.VipLoginRewardImplement.GetRankActivityAward(sysarg, packet)
+	elseif msgid == 21 then
+		--ONLINEREWARD.VipLoginRewardImplement.OnOpenYellowVip(sysarg, packet)
+	elseif msgid == 22 then
+		ONLINEREWARD.ServerActivityImplement.GetGuildRewardInfo(sysarg)
+	elseif msgid == 23 then
+		ONLINEREWARD.ServerActivityImplement.getGuildReward(sysarg, packet)
+	elseif msgid == 24 then 
+		ONLINEREWARD.ServerActivityImplement.GetSuitRewardInfo(sysarg)
+	elseif msgid == 25 then
+		ONLINEREWARD.ServerActivityImplement.getSuiteReward(sysarg, packet)
+	elseif msgid == 26 then
+		ONLINEREWARD.ServerActivityImplement.GetCrossRewardInfo(sysarg)
+	elseif msgid == 27 then
+		ONLINEREWARD.ServerActivityImplement.getCrossReward(sysarg, packet)
+	elseif msgid == 29 then
+		ONLINEREWARD.VipLoginRewardImplement.tmpHuodong9Detail(sysarg, packet)
+	elseif msgid == 30 then
+		ONLINEREWARD.VipLoginRewardImplement.tmpHuodong9GetAward(sysarg, packet)
+	elseif msgid == 31 then
+		ONLINEREWARD.VipLoginRewardImplement.tmpZheKouGetAward(sysarg, packet)
+		--ONLINEREWARD.VipLoginRewardImplement.tmpStarGetAward(sysarg, packet)
+	elseif msgid == 34 then
+		ONLINEREWARD.WSJRewardImplement.getWsjReward(sysarg, packet)
+	elseif msgid == 36 then
+		ONLINEREWARD.VipLoginRewardImplement.getYellowDayAward(sysarg, packet)		
+	elseif msgid == 37 then
+		ONLINEREWARD.VipLoginRewardImplement.OnGetBlueVipAward(sysarg, packet)
+	elseif msgid == 38 then
+		ONLINEREWARD.MiYouImplement.OnGetInfo(sysarg, packet)
+	elseif msgid == 39 then
+		ONLINEREWARD.MiYouImplement.OnGiveItem(sysarg, packet)
+	elseif msgid == 40 then
+		ONLINEREWARD.MiYouImplement.OnGetItem(sysarg, packet)
+	elseif msgid == 41 then
+		--ONLINEREWARD.VipLoginRewardImplement.OnGetRound2PayAward(sysarg, packet)
+	elseif msgid == 43 then
+		ONLINEREWARD.VipLoginRewardImplement.GetQQGameDating(sysarg)
+	elseif msgid == 44 then
+		ONLINEREWARD.DtRewardImplement.OnGetInfo(sysarg, packet)
+	elseif msgid == 45 then
+		ONLINEREWARD.DtRewardImplement.OnGetItem(sysarg, packet)
+	elseif msgid == 46 then
+		ONLINEREWARD.VipLoginRewardImplement.tmpMovementGetAward(sysarg, packet)
+	elseif msgid == 47 then
+		ONLINEREWARD.VipLoginRewardImplement.GetJuniorEffortInfo(sysarg, packet)
+	elseif msgid == 48 then
+		ONLINEREWARD.VipLoginRewardImplement.GetJuniorEffortAward(sysarg, packet)
+	elseif msgid == 50 then
+		--ONLINEREWARD.LogoutRewardImplement.GetLogoutRoot(sysarg,packet)
+	elseif msgid == 51 then
+		ONLINEREWARD.VipLoginRewardImplement.OnGetComsumptionBoxAward(sysarg, packet)
+	elseif msgid == 52 then
+		MagicTreeFunc.test(sysarg,packet)
+		ONLINEREWARD.GetActivityList(sysarg, packet)
+	elseif msgid == 53 then
+		--ONLINEREWARD.getEquipenActivityRewardInfo(sysarg)
+	elseif msgid == 54 then
+		--ONLINEREWARD.getEquipenActivityReward(sysarg, packet)
+	elseif msgid == 55 then
+		ONLINEREWARD.getPetActivityRewardInfo(sysarg)
+	elseif msgid == 56 then
+		ONLINEREWARD.getPetActivityReward(sysarg, packet)
+	elseif msgid == 57 then
+		ONLINEREWARD.getGemActivityRewardInfo(sysarg)
+	elseif msgid == 58 then
+		ONLINEREWARD.getGemActivityReward(sysarg, packet)
+	elseif msgid == 59 then
+		ONLINEREWARD.YqhyImplement.OnGetInfo(sysarg, packet)
+	elseif msgid == 60 then
+		ONLINEREWARD.YqhyImplement.OnInvite(sysarg, packet)
+	elseif msgid == 61 then
+		ONLINEREWARD.YqhyImplement.OnShare(sysarg, packet)
+	elseif msgid == 62 then
+		ONLINEREWARD.YqhyImplement.OnLottery(sysarg, packet)
+	elseif msgid == 73 then
+		ONLINEREWARD.JewelBoxImplement.OnLottery(sysarg, packet)
+	elseif msgid == 74 then
+		ONLINEREWARD.JewelBoxImplement.OnEndLottery(sysarg, packet)
+    --elseif msgid ==76 then
+		--activityFunc.getshouchonglibao(sysarg)
+	elseif msgid == 80 then
+		local activeid = tonumber(DataPack.readInt(packet))
+		local activitytype = tonumber(DataPack.readInt(packet))
+		activityFunc.getActivityInfo(sysarg, activeid, activitytype)
+	elseif msgid == 81 then
+		activityFunc.getActivityReward(sysarg, packet)
+	elseif msgid == 82 then
+		local activeid = tonumber(DataPack.readInt(packet))
+		local rankid = DataPack.readInt(packet)
+		activityFunc.sendCharmInfo(sysarg, activeid, rankid)
+	elseif msgid == 85 then
+		ONLINEREWARD.JewelBoxImplement.MysteriousOnLottery(sysarg, packet)
+	elseif msgid == 87 then
+		ONLINEREWARD.JewelBoxImplement.MysteriousSuperOnLottery(sysarg, packet)
+	elseif msgid == 88 then
+		XingyunZhuanpan.getInfo(sysarg)
+	elseif msgid == 89 then
+		XingyunZhuanpan.ChouJianBegin(sysarg)
+	elseif msgid == 90 then
+		XingyunZhuanpan.ChouJianEnd(sysarg)
+	elseif msgid == 91 then
+		MeiriChongzhi.GetInfo1(sysarg)
+	elseif msgid == 92 then
+		MeiriChongzhi.getReward1(sysarg, packet)
+	elseif msgid == 93 then
+		ONLINEREWARD.GetLeijiSignReward(sysarg)
+	elseif msgid == 106 then
+		ONLINEREWARD.VipLoginRewardImplement.OnGetQQAward(sysarg)
+	elseif msgid == 107 then			
+		ONLINEREWARD.VipLoginRewardImplement.OnQQyijianAnZhuang(sysarg, packet)
+	elseif msgid == 108 then
+	    ONLINEREWARD.VipLoginRewardImplement.OnGetWeiXinAward(sysarg, packet)
+	elseif msgid == 110 then
+		LotteryOpFuncList.Ranking(sysarg)
+	elseif msgid == 112 then
+		ONLINEREWARD.VipLoginRewardImplement.OnGetChannelAward(sysarg, packet)
+	elseif msgid == 113 then
+		ONLINEREWARD.SendDailyLoginRewardInfo(sysarg)
+	elseif msgid == 114 then
+		ONLINEREWARD.GetDailyLoginReward(sysarg, packet)
+	elseif msgid == 117 then
+		ONLINEREWARD.SendTotalLogin(sysarg)
+	elseif msgid == 118 then
+		ONLINEREWARD.GetTotalLoginReward(sysarg,packet)
+	elseif msgid == 200	 then
+	    Grouphandler.getGroupInfo(sysarg)
+    elseif msgid == 201	 then
+	    Grouphandler.getGroupItemInfo(sysarg)
+    elseif msgid == 202	 then
+	    Grouphandler.buyItem(sysarg, packet)
+    elseif msgid == 203	 then
+	    Grouphandler.getPointGift(sysarg)
+	elseif msgid == 204	 then
+	   -- CallFriendFunc.GiveLotteryCount(sysarg,packet)
+    elseif msgid == 205 then
+    	--CallFriendFunc.GetactivityInfo(sysarg)
+    elseif msgid == 207 then
+    	--CallFriendFunc.Lottery(sysarg)
+    elseif msgid == 208 then
+    	--CallFriendFunc.GetReward(sysarg)
+	elseif msgid == 223	 then
+		SingledayHandler.getFlowerRank(sysarg, packet)
+	elseif msgid == 225	 then
+		Exchangehandler.GetInfo(sysarg, packet)
+	elseif msgid == 226	 then
+		Exchangehandler.Exchange(sysarg, packet)
+	 elseif msgid == 235  then
+	    local activityID = tonumber(DataPack.readInt(packet))
+	    print("activityID: "..activityID)
+	    Discounthandler.getDiscountCount(sysarg, activityID)
+    elseif msgid == 236 then
+    	Discounthandler.buyDiscountItem(sysarg, packet)
+    elseif msgid == 239  then
+    	Discounthandler.getActivityType(sysarg, packet)
+    elseif msgid == 240	 then
+		--Receiveflowerhandler.getFlowerState(sysarg)
+	elseif msgid == 241	 then
+		--Receiveflowerhandler.getFlowerAward(sysarg, packet)
+	elseif msgid == 242	 then
+		Exchangehandler1.exchangeItem(sysarg, packet)
+	elseif msgid == 243 then
+		Exchangehandler1.getActivityInfo(sysarg)
+	elseif msgid == 244	 then
+		Exchangehandler1.getItemCount(sysarg)
+	elseif msgid == 245  then
+    	PoBingFuncDouBi.GetActivityFor(sysarg)
+    elseif msgid == 246  then
+    	PoBingFuncDouBi.GetActivityReward(sysarg,packet)
+    elseif msgid == 247  then
+    	ReceiveFlowerHandler.getFlowerRank(sysarg, packet)
+    elseif msgid == 248  then
+    	LXCharge_Func.getActivityInfo(sysarg)
+    elseif msgid == 249  then
+    	LXCharge_Func.getActivityReward(sysarg,packet)
+    elseif msgid == 250  then
+    	MagicTragonFunc.getMagicTragonInfo(sysarg,packet)
+    elseif msgid == 251  then
+    	MagicTragonFunc.getMagicTragonReward(sysarg,packet)
+    elseif msgid == 252 then		
+		ONLINEREWARD.charmRankFunc.getRankInfo(sysarg)
+	elseif msgid == 253 then
+		CallFriendFunc.GiveLotteryCount(sysarg,packet)
+    elseif msgid == 254 then
+    	MiscsImplement.getkeyHandler(sysarg,packet)
+    elseif msgid == 212 then
+    	activityFunc.ByFund(sysarg,packet)
+    elseif msgid == 130 then
+    	activityFunc.getOpenActivityList( sysarg )
+    elseif msgid == 131 then
+    	CreateActorRecharget.getActivityData( sysarg )
+    elseif msgid == 132 then
+    	CreateActorRecharget.getRecharAward( sysarg , packet )
+    elseif msgid == 133 then
+    	--CreateActorRecharget.getCountinuerechar( sysarg , packet )
+	elseif msgid == 134 then
+		FightRankActivity.sendInfo(sysarg, packet)
+	elseif msgid == 136 then
+		local id = tonumber(DataPack.readByte(packet))
+		QuickAnswer.sendActorInfo(sysarg, id)
+	elseif msgid == 137 then
+		local id = tonumber(DataPack.readByte(packet))
+		local questionId = DataPack.readInt(packet)
+		local answerId = DataPack.readInt(packet)
+		QuickAnswer.chooseAnswer(sysarg, id, questionId, answerId)
+	elseif msgid == 139 then
+		local id = DataPack.readInt(packet)
+		AnswerQuestion.sendActorInfo(sysarg, id)
+	elseif msgid == 140 then
+		local id = DataPack.readInt(packet)
+		local questionId = DataPack.readInt(packet)
+		local answerId = DataPack.readInt(packet)
+		AnswerQuestion.chooseAnswer(sysarg, id, questionId, answerId)
+	elseif msgid == 141 then
+		local id = DataPack.readInt(packet)
+		AnswerQuestion.getAwards(sysarg, id)
+	elseif msgid == 142 then
+		QuickAnswer.sendRankInfo(sysarg)
+	elseif msgid == 143 then
+		-- LevelRankActivity.sendRankInfo(sysarg, packet)
+	elseif msgid == 144 then
+		local id = DataPack.readInt(packet)
+		DuobaoActivity.sendInfo(sysarg, id)
+	elseif msgid == 145 then
+		local id = DataPack.readInt(packet)
+		DuobaoActivity.duobao(sysarg, id)
+	elseif msgid == 146 then
+		local id = DataPack.readInt(packet)
+		LimitTimeBuyActivity.sendInfo(sysarg, id)
+	elseif msgid == 147 then
+		local id = DataPack.readInt(packet)
+		local itemid = DataPack.readInt(packet)
+		LimitTimeBuyActivity.buyItem(sysarg, id, itemid)
+	elseif msgid == 148 then
+		local id = DataPack.readInt(packet)
+		LimitBuyActivity.sendInfo(sysarg, id)
+	elseif msgid == 149 then
+		local id = DataPack.readInt(packet)
+		local itemid = DataPack.readInt(packet)
+		LimitBuyActivity.buyItem(sysarg, id, itemid)
+	elseif msgid == 150 then 
+		--【开服活动-创角7天】 半价福利
+		local whichday=DataPack.readInt(packet)
+		debug_print("msgid:"..msgid..",whichday:"..whichday)
+		OpenServerHalfPriceHandler.sendInfo(sysarg,whichday)
+	elseif msgid == 151 then 
+		--【开服活动-创角7天】 半价福利
+		local whichday=DataPack.readInt(packet)
+		local whichday_index=DataPack.readInt(packet)
+		debug_print("msgid:"..msgid..",whichday:"..whichday..",index:"..whichday_index)
+		OpenServerHalfPriceHandler.buyitem(sysarg,whichday,whichday_index)
+	elseif msgid == 152 then
+		local id = DataPack.readInt(packet)
+		EveryDayLimitBuyActivity.sendInfo(sysarg, id)
+	elseif msgid == 153 then
+		local id = DataPack.readInt(packet)
+		local itemid = DataPack.readInt(packet)
+		EveryDayLimitBuyActivity.buyItem(sysarg, id, itemid)	
+	elseif msgid == 155 then 
+		local activeid = tonumber(DataPack.readInt(packet))
+		local activitytype = tonumber(DataPack.readInt(packet))
+		activityFunc.getActivityReturnArrayNumInfo(sysarg, activeid, activitytype)
+	elseif msgid == 156 then 
+		local activeid = tonumber(DataPack.readInt(packet))
+		local activitytype = tonumber(DataPack.readInt(packet))
+		local index = tonumber(DataPack.readInt(packet))
+		local param1 = DataPack.readInt(packet)
+		activityFunc.getActivityReturnArrayNumReward(sysarg, activeid, activitytype,index,param1)
+	elseif msgid == 157 then
+		LevelRankActivity.sendInfo(sysarg, packet)
+	elseif msgid == 159 then
+		RankActivity.sendInfo(sysarg, packet)
+	elseif msgid == 161 then
+		DoubleAwards.sendInfo(sysarg)
+	elseif msgid == 120 then
+		-- 专题活动boss
+		WorldBossFun.sendActivityInfo(sysarg)
+	elseif msgid == 121 then
+		-- 新在线奖励
+		newonlinereward.getOnlineReward(sysarg, packet)
+	-- elseif msgid == 122 then
+	-- 	-- 七夕称号
+	-- 	QixiTitleFun.SendInfo(sysarg)
+	-- elseif msgid == 123 then
+	-- 	-- 七夕称号
+	-- 	QixiTitleFun.GetReward(sysarg)
+	elseif msgid == 162 then
+		local id = DataPack.readInt(packet)
+		QixiExchange.sendInfo(sysarg, id)
+	elseif msgid == 163 then
+		QixiExchange.exchangeItem(sysarg, packet)
+	elseif msgid == 165 then
+		local rankId = DataPack.readByte(packet)
+		local itemId = DataPack.readInt(packet)
+		RankActivity.chooseAward(sysarg, rankId, itemId)
+	elseif msgid == 166 then
+		local rankId = DataPack.readByte(packet)
+		RankActivity.sendActorInfo(sysarg, rankId)
+	elseif msgid == 167 then
+		FlowerRankActivity.sendInfo(sysarg)
+	end
+end
+}
+
+SystemHandlerDispatcher.registerSystemHander(BaseTypes.SystemId.timeRewardSystem, ONLINEREWARD.RewardImplement.MessageAssign)
+--SystemHandlerDispatcher.registerSystemHander(BaseTypes.SystemId.timeRewardSystem, ONLINEREWARD.main)

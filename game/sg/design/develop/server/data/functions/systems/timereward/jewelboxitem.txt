@@ -1,0 +1,343 @@
+﻿-- 仙道宝盒
+--#include "data\config\misc\jewelbox.txt" once
+
+ONLINEREWARD.JewelBoxImplement = {
+	-- 处理抽奖
+	HandleLottery = function(sysarg, guid)
+		local var = LActor.getStaticVar(sysarg)
+		local ptr = Item.getBagItemPtrByGuid(sysarg, guid) -- 道具已经删除
+		if ptr == nil then
+			var.jewelbox = nil
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.it004,ttMessage)
+			return false
+		end
+
+		local iconf = var.jewelbox.iconf
+		if iconf == nil then
+			print("iconf is nil")
+			return false
+		end
+
+		local conf = JewelBoxConf[iconf]
+		if conf == nil then
+			print("JewelBoxConf is nil")
+			return false
+		end
+
+		if LActor.removeItemByPtr(sysarg, ptr, 1, true, "use_jewelbox", 1) ~= 1 then
+			print("remove jewelbox item error")
+			return false
+		end
+
+		if LActor.addItem(sysarg, var.jewelbox.randid, 0,0,1,1, "jewelbox_item", 1) ~= 1 then
+			local context = string.format(Lang.ScriptTips.it011, LActor.getName(sysarg))
+			System.sendGmMailOffLine(LActor.getActorId(sysarg), context, 1, var.jewelbox.randid, 1, 1) -- 添加不成功通过邮件发送
+		end
+
+		var.jewelbox = nil
+
+		return true
+	end,
+
+	-- 抽奖
+	OnLottery = function(sysarg, packet)
+		local guid = DataPack.readInt64(packet)
+		local removeLast = DataPack.readByte(packet)
+
+		local ptr = Item.getBagItemPtrByGuid(sysarg, guid)
+		if ptr == nil then
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.it004,ttMessage)
+			return 
+		end
+
+		local itemId = Item.getItemId(ptr)
+
+		local conf
+		for i=1,#JewelBoxConf do
+			if JewelBoxConf[i].itemId == itemId then
+				conf = JewelBoxConf[i]
+				break
+			end
+		end
+
+		if conf == nil then
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.it004,ttMessage)
+			return
+		end
+
+		-- 去掉最后几个
+		if removeLast == 1 then
+			if LActor.getMoneyCount(sysarg, mtYuanbao) < conf.removeCost then
+				LActor.sendTipmsg(sysarg, Lang.ScriptTips.it010,ttMessage)
+				return 
+			end
+
+			LActor.changeMoney( sysarg, mtYuanbao, -conf.removeCost, 100, true, "jewelbox", "remove")
+		end
+
+		-- 随机一个
+		local cnt = #conf.items
+		if removeLast == 1 then
+			cnt = cnt - 5
+		end
+		local randid = conf.items[System.getRandomNumber(cnt) + 1]
+
+		-- 保存数据
+		local var = LActor.getStaticVar(sysarg)
+		var.jewelbox = {}
+		var.jewelbox.iconf = conf.id
+		var.jewelbox.guid = guid
+		var.jewelbox.randid = randid
+		var.jewelbox.count = cnt
+
+		local npack = DataPack.allocPacket(sysarg,138,73)
+		if npack == nil then return end
+		DataPack.writeInt64(npack, guid)
+		DataPack.writeInt(npack, randid)
+		DataPack.flush(npack)
+	end,
+
+	-- 结束抽奖
+	OnEndLottery = function(sysarg, packet)
+		local guid = DataPack.readInt64(packet)
+
+		local var = LActor.getStaticVar(sysarg)
+		if var.jewelbox == nil or var.jewelbox.guid == nil or var.jewelbox.randid == nil or var.jewelbox.guid ~= guid then
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.it003,ttMessage)
+			return 
+		end
+
+		local itemid = var.jewelbox.randid
+		if ONLINEREWARD.JewelBoxImplement.HandleLottery(sysarg, guid) then
+			local tips = string.format(Lang.ScriptTips.it006, Item.getItemName(itemid))
+			LActor.sendTipmsg(sysarg, tips, ttMessage)
+		end
+	end,
+
+	-- 登陆处理
+	OnLogin = function(sysarg, arg)
+		local var = LActor.getStaticVar(sysarg)
+		if var.jewelbox ~= nil and var.jewelbox.guid ~= nil then
+			ONLINEREWARD.JewelBoxImplement.HandleLottery(sysarg, var.jewelbox.guid)
+		end
+	end,
+
+	-- 神秘礼包抽奖
+	MysteriousOnLottery = function(sysarg, packet)
+		local guid = DataPack.readInt64(packet)
+
+		local ptr = Item.getBagItemPtrByGuid(sysarg, guid)
+		if ptr == nil then
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.it004,ttMessage)
+			return 
+		end
+
+		local itemId = Item.getItemId(ptr)
+
+		if itemId ~= MysteriousBoxConf.itemId then
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.it003,ttMessage)
+			return
+		end
+
+		-- 随机一个
+		local cnt = #MysteriousBoxConf.items
+		local randid = 0
+		local count = 0
+		local broadcast = 0
+
+		-- 每抽一次获得一个物品，放入仓库
+		local r = System.getRandomNumber(10000)
+		local total = 0
+		for j = 1, cnt do
+			total = total + MysteriousBoxConf.items[j][3]
+			if r < total then
+				randid = MysteriousBoxConf.items[j][1]
+				count = MysteriousBoxConf.items[j][2]
+				broadcast = MysteriousBoxConf.items[j][4]
+				break
+			end
+		end
+		
+		local ptr = Item.getBagItemPtrByGuid(sysarg, guid) -- 道具已经删除
+		if ptr == nil then
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.it004,ttMessage)
+			return 
+		end
+
+
+		if LActor.removeItemByPtr(sysarg, ptr, 1, true, "use_mysteriousbox", 5) ~= 1 then
+			print("remove mysteriousbox item error")
+			return 
+		end
+
+		if LActor.canAddItem(sysarg, randid, count, 0, 0, true) == false then
+			local context = string.format(Lang.ScriptTips.it005, LActor.getName(sysarg))
+			System.sendGmMailOffLine(LActor.getActorId(sysarg), context, 1, randid, count, 1) -- 添加不成功通过邮件发送
+		else
+			LActor.addItem(sysarg, randid, 0,0, count,1, "mysteriousbox_item", 56)
+		end
+
+		local itemid = Item.getItemId(ptr)
+		local itemname = Item.getItemName(itemid)
+		local zy = LActor.getIntProperty(sysarg, PROP_CAMP)
+		if broadcast ~= nil and broadcast == 1 and zy ~= nil then
+			local str = string.format(Lang.ScriptTips.it008,  CampColor[zy], CampShortName[zy], LActor.getName(sysarg),  itemname, 
+				Item.getColorName(randid), count)
+			System.broadcastTipmsg(str, ttScreenCenter)
+		end
+
+		System.logCounter(LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), "box_act", "", "", "open_shenmilibao_box")
+
+
+		local npack = DataPack.allocPacket(sysarg,138,85)
+		if npack == nil then return end
+		DataPack.writeInt64(npack, guid)
+		DataPack.writeInt(npack, randid)
+		DataPack.writeInt(npack, count)
+		DataPack.flush(npack)
+	end,
+
+	-- 神秘百宝箱抽奖
+	MysteriousSuperOnLottery = function(sysarg, packet)
+		local guid = DataPack.readInt64(packet)
+		local ty = DataPack.readInt(packet)
+
+		local ptr = Item.getBagItemPtrByGuid(sysarg, guid)
+		if ptr == nil then
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.it004,ttMessage)
+			return 
+		end
+
+		local itemId = Item.getItemId(ptr)
+
+		if itemId ~= MysteriousSuperBoxConf.itemId then
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.it003,ttMessage)
+			return
+		end
+
+		if ty == 1 then
+			if LActor.getItemCount(sysarg, MysteriousSuperBoxConf.keyitemId) <= 0 then
+				LActor.sendTipmsg(sysarg, Lang.ScriptTips.it007, ttMessage)
+				return
+			end
+		end
+
+		-- 随机一个
+		local conf = nil
+		if ty == 0 then
+			conf = MysteriousSuperBoxConf.items
+		elseif ty == 1 then
+			conf = MysteriousSuperBoxConf.keyitems
+		end
+		if conf == nil then
+			print("MysteriousSuperBox Type Error")
+			return
+		end
+
+		local cnt = #conf
+		local randid = 0
+		local count = 0
+		local broadcast = 0
+
+		-- 每抽一次获得一个物品，放入仓库
+		local r = System.getRandomNumber(10000)
+		local total = 0
+		for j = 1, cnt do
+			total = total + conf[j][3]
+			if r < total then
+				randid = conf[j][1]
+				count = conf[j][2]
+				broadcast = conf[j][4]
+				break
+			end
+		end
+
+		local ptr = Item.getBagItemPtrByGuid(sysarg, guid) -- 道具已经删除
+		if ptr == nil then
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.it004,ttMessage)
+			return
+		end
+
+		if ty == 1 then
+			if LActor.getItemCount(sysarg, MysteriousSuperBoxConf.keyitemId) <= 0 then
+				LActor.sendTipmsg(sysarg, Lang.ScriptTips.it007, ttMessage)
+				return
+			end
+
+			if LActor.removeItem( sysarg, MysteriousSuperBoxConf.keyitemId, 1, -1, -1, -1, "use_mysterioussperbox_key",  5) ~= 1 then
+				print("remove mysterioussuperbox key item error")
+				return 
+			end
+		end
+
+
+		if LActor.removeItemByPtr(sysarg, ptr, 1, true, "use_mysterioussuperbox", 5) ~= 1 then
+			print("remove mysterioussuperbox item error")
+			return 
+		end
+
+		if LActor.canAddItem(sysarg, randid, count, 0, 0, true) == false then
+			local context = string.format(Lang.ScriptTips.it005, LActor.getName(sysarg))
+			System.sendGmMailOffLine(LActor.getActorId(sysarg), context, 1, randid, count, 1) -- 添加不成功通过邮件发送
+		else 
+			LActor.addItem(sysarg, randid, 0,0, count,1, "mysterioussuperbox_item", 56)
+		end
+
+		local itemid = Item.getItemId(ptr)
+		local itemname = Item.getItemName(itemid)
+		local zy = LActor.getIntProperty(sysarg, PROP_CAMP)
+		if broadcast ~= nil and broadcast == 1 and zy ~= nil then
+			local str = string.format(Lang.ScriptTips.it008, CampColor[zy], CampShortName[zy], LActor.getName(sysarg),  itemname,
+				Item.getColorName(randid), count)
+			System.broadcastTipmsg(str, ttScreenCenter)
+		end
+
+		if ty == 1 then
+			System.logCounter(LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), "box_act", "", "", "key_shenmibaibaoxiang_box")
+		else
+			System.logCounter(LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), "box_act", "", "", "open_shenmibaibao_box")
+		end
+
+
+		local npack = DataPack.allocPacket(sysarg,138,87)
+		if npack == nil then return end
+		DataPack.writeInt64(npack, guid)
+		DataPack.writeInt(npack, randid)
+		DataPack.writeInt(npack, count)
+		DataPack.flush(npack)
+	end,
+}
+
+--[[
+--sysarg:实体的指针
+--itemidx: 物品的ID
+--itemPtr: 物品的指针
+--ItemTable: 配置的参数列表
+--]]
+
+function JewelBoxItemUseHandler(sysarg, itemIdx, itemPtr, conf)
+	if conf == nil then return end
+
+	local guid = Item.getItemGuid(itemPtr)
+
+	local items = conf.items
+
+	local npack = DataPack.allocPacket(sysarg,138,72)
+	if npack == nil then return end
+	DataPack.writeInt64(npack, guid)
+	for i=1,#items do
+		DataPack.writeInt(npack, items[i])
+	end
+	DataPack.flush(npack)
+end
+
+-- @brief: 注册仙道宝盒物品使用Handler
+function JewelBoxItemInit(sysarg)
+	for i = 1, table.getn(RefreshItem) do
+		local conf = JewelBoxConf[i]
+		GlobalItemFn[conf.itemId] = { func = JewelBoxItemUseHandler, params = conf, }
+	end
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, ONLINEREWARD.JewelBoxImplement.OnLogin)
+table.insert(InitFnTable, JewelBoxItemInit)

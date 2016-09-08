@@ -1,0 +1,59 @@
+﻿--#ifndef _SYSTEM_HANDLER_DISPATCHER_INCLIDED_ 
+--#define _SYSTEM_HANDLER_DISPATCHER_INCLIDED_
+
+--#include "SystemHandlerDispatcherImplement.txt" once
+                                         
+--#include "ShortCut\ShortCutSystem.txt" once                                          
+--#include "NPCTrade\NPCTradeSystem.txt" once
+--#include "Miscs\MiscSystems.txt" once   
+---#include "Archive\ArchiveSystem.txt" once
+--#include "Archive\LuckyRollAwardHandler.txt" once
+--#include "FightSystem\autoFightSystem.txt" once
+  --#include "ActorDataFunc.txt" once         
+  --#include "SpaceCopyFunc.txt" once
+  --#include "DeputyEventFunc.txt" once
+  --#include "ShortcutsEventFunc.txt" once
+--#include "TimeReward\TimeMoneyRewardSystem.txt" once
+--#include "TimeReward\ContinuLogin.txt" once
+--#include "TimeReward\LogoutReward.txt" once
+--#include "TimeReward\WeekTimeRewardSystem.txt" once
+--#include "TimeReward\TimeMoneyRewardImplement.txt" once
+--#include "TimeReward\activitydispacher.txt" once
+--#include "slave\slavesystem.txt" once
+--#include "answerquestion\answerImplement.txt" once   
+
+--#include "data\functions\actorevent\oncommonfubengameout.txt" once
+--#include "data\functions\systems\marry\marryhandle.txt" once
+--#include "data\functions\systems\dongfu\dfsystem.txt" once
+--#include "data\functions\tasks\fengcereward\fcactivehandler.txt" once
+--#include "data\functions\systems\miscs\singlesdayhandler.txt" once
+--#include "timereward\activityimplement.txt" once
+--#include "data\functions\actorevent\teamfbhandler.txt" once
+--#include "data\functions\tasks\teamfuben\chesshandler.txt" once
+--#include  "data\functions\systems\timereward\newdayclearhandler.txt" once
+--#include "offlinefb\offlinefbimplement.txt" once
+--#include "data\functions\fubennpcfunc\fubenoverfunc.txt" once
+
+--#include "data\functions\systems\timereward\goldorefunc.txt" once 	--挖矿活动
+--#include "data\functions\systems\root\rootsystem.txt" once  			--修炼真气
+--#include "data\functions\actorevent\arenahandler.txt" once   			--仙道会
+--#include "data\functions\systems\timereward\magictreefunc.txt" once 	--昆仑神树	
+--#include "data\functions\actorevent\hetuleshuhandle.txt" once     	--美人后宫
+--#include "data\functions\systems\takecard\takecardsystem.txt" once  	--美人抽卡
+--#include "data\functions\systems\fashionsystem\ygsystem.txt" once     --衣柜时装
+--#include "data\functions\gameplay\qianghongbao.txt" once              --抢红包
+--#include "data\functions\activity\activationhandler.txt" once			--活跃度
+
+
+--[[
+    将默认的系统消息处理分派插入到通知表中 
+]]
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeOnClientData, SystemHandlerDispatcher.dispatcher)
+SystemHandlerDispatcher.registerSystemHander(BaseTypes.SystemId.recentTargetSystem, RecentTargetFunc.main)
+SystemHandlerDispatcher.registerSystemHander(BaseTypes.SystemId.loopTaskSystem, LoopTaskFunc.main)
+--SystemHandlerDispatcher.registerSystemHander(BaseTypes.SystemId.goldOreSystem, GoldOreFunc.HandlerNetMsg)
+--SystemHandlerDispatcher.registerSystemHander(BaseTypes.SystemId.rootSystem, RootSystem.HandlerNetMsg)
+SystemHandlerDispatcher.registerSystemHander(BaseTypes.SystemId.takeCard, TakeCardSystem.HandlerNetMsg)
+
+--#endif //end of _SYSTEM_HANDLER_DISPATCHER_INCLIDED_

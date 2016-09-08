@@ -1,0 +1,68 @@
+﻿--本脚本片段实现了角色登出游戏的默认处理 
+ --#include "data\functions\Tasks\ProectionFun\ProectionFun.txt" once
+
+ EventCallDispatcher.updateglobeuser = function (sysarg, isfirst)
+	local openid = LActor.getAccountName(sysarg)
+	local name = LActor.getName(sysarg)
+	local actorid = LActor.getActorId(sysarg)
+	local sex = LActor.getIntProperty(sysarg, PROP_SEX)
+	local job = LActor.getIntProperty(sysarg, PROP_VOCATION)
+	local level = LActor.getIntProperty(sysarg, PROP_LEVEL)
+	--local serverid = System.getServerId()
+	local serverid = System.getOldServerId(actorid)
+
+	local st = LActor.getStaticVar( sysarg )
+	if st == nil then
+		return
+	end
+	if st.phone_type == nil or st.phone_version == nil or st.download_from == nil or st.phone_ratio == nil then
+		return 
+	end
+
+	--local str = "user_level:"..level..",phone_type:"..st.phone_type..",phone_version:"..st.phone_version..",ratio:"..st.phone_ratio..",download_from:"..st.download_from
+	--local encode,num = string.gsub(str, ' ', '_')
+	
+	--print ("logout str =================== "..encode)
+
+	--if isfirst == 1 then
+	--	LActor.txSendScriptUrl(openid, 
+	--		"/update_globaluser", "&openid="..openid.."&name="..urlencode(name).."&actorid="..actorid.."&sex="..sex.."&job="..job.."&level="..level.."&serverid="..serverid.."&mobileInfo="..encode.."&state=0", 3, true)	
+	--else
+	--	LActor.txSendScriptUrl(openid, 
+	--		"/update_globaluser.jsp", "&openid="..openid.."&name="..urlencode(name).."&actorid="..actorid.."&sex="..sex.."&job="..job.."&level="..level.."&mobileInfo="..encode, 3, true)	
+	--end
+
+	--base/quit?channel=xx&job=xx&level=xx&account=xx&role_name=xx&role_id=xx&server_id=xx
+	local  pfstr = string.format("&channel=%s&job=%d&level=%d&account=%s&role_name=%s&role_id=%d&server_id=%d", 
+						tostring(st.download_from), job, level, openid, name, actorid, serverid)
+	print("logout pfstr ====================== "..pfstr)
+
+	LActor.txSendScriptUrl(openid, "/base/quit", pfstr, 1, true)
+end
+
+EventCallDispatcher.defaultHandlerPlayerLogout = function (sysarg,arg)
+	local TeamId = LActor.getTeamId(sysarg)
+	if TeamId ~= 0 then
+		if Fuben.getTeamFubenStatus(TeamId) == tsReady then
+			LActor.exitTeam(sysarg)
+		end
+	end
+	local svar = LActor.getDyanmicVar(sysarg)
+	local monster = svar.ProtectionMonster
+	if monster ~= nil then
+		Fuben.clearMonster(monster, false)
+	end
+	SaveData(sysarg)
+
+	if LActor.isFirstLogin(sysarg) then
+		EventCallDispatcher.updateglobeuser(sysarg , 1)
+	else
+		EventCallDispatcher.updateglobeuser(sysarg , 0)
+	end
+	-- 发送日志
+	local st = LActor.getStaticVar( sysarg )
+	System.logCounter(LActor.getActorId(sysarg), LActor.getAccountName(sysarg),
+		LActor.getLevel(sysarg), "logout", tostring(arg[2]), "", st.pf)
+end              
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogout, EventCallDispatcher.defaultHandlerPlayerLogout)

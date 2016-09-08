@@ -1,0 +1,241 @@
+NewPetConfig = {}			-- 新校武场配置
+
+NewPetConfig = {
+	fubenId = {63},				-- 副本ID
+	sceneId = {1082},		-- 场景ID
+	sceneJieSuan = {1082},
+	fubenToSence = {1082},
+
+	toNextTeleport = {			-- 传送门
+		{ posx = 11, posy = 26,toSceneid = 1125,toPosx = 11, toPosy = 38,modelid = 50000,name = Lang.SceneName.s1125,comfirm =0 },
+	},
+
+	gameTime = 600,				-- 游戏时间
+
+	playerPos = {4,87},		-- 玩家进入副本的位置
+	monsterCount = {45,15},		-- 怪物个数
+
+	limitTime = 0,				-- 结算的时间限制
+
+	monsterIdList = {1600,1601,1602,1603,1604,1605,1606,1607,1608,1609,1610,1611,1612,1613,1614,1615,1616,1617,},
+
+	especialMonster = {},
+	monstersArea = {
+		{posX1=23,posX2=23,posY1=11,posY2=11,monsterCount=1,livetime=0,},
+		{posX1=11,posX2=11,posY1=11,posY2=11,monsterCount=1,livetime=0,},
+		{posX1=23,posX2=23,posY1=17,posY2=17,monsterCount=1,livetime=0,},
+	},
+	monsters =
+	{
+		{monsterId=1600,percent=0.1,},
+		{monsterId=1601,percent=11,},
+		{monsterId=1602,percent=11,},
+		{monsterId=1603,percent=11,},
+		{monsterId=1604,percent=11,},
+		{monsterId=1605,percent=11,},
+		{monsterId=1606,percent=8,},
+		{monsterId=1607,percent=8,},
+		{monsterId=1608,percent=8,},
+		{monsterId=1609,percent=8,},
+		{monsterId=1610,percent=8,},
+		{monsterId=1611,percent=1.4,},
+		{monsterId=1612,percent=0.8,},
+		{monsterId=1613,percent=0.8,},
+		{monsterId=1614,percent=0.6,},
+		{monsterId=1615,percent=0.5,},
+		{monsterId=1616,percent=0.5,},
+		{monsterId=1617,percent=0.3,},
+	},
+
+
+	monsterList = {			-- 奖励	
+		[1600] = {				-- [怪物ID]
+			{11,1,5000,1},		-- {奖励ID,类型,数量,概率}	(其中类型部分：1表示的角色属性，2表示的是物品)
+			{38206,2,1,0},
+			{28251,2,1,0.1},
+		},
+		[1601] = {				-- [怪物ID]
+			{11,1,1000,1},		-- {奖励ID,类型,数量,概率}	(其中类型部分：1表示的角色属性，2表示的是物品)
+			{28250,2,1,0.25},
+			{28251,2,1,0.07},
+		},
+		[1602] = {				-- [怪物ID]
+			{11,1,1000,1},		-- {奖励ID,类型,数量,概率}	(其中类型部分：1表示的角色属性，2表示的是物品)
+			{28289,2,1,0.25},
+			{28290,2,1,0.07},
+		},	
+		[1603] = {				-- [怪物ID]
+			{11,1,1000,1},		-- {奖励ID,类型,数量,概率}	(其中类型部分：1表示的角色属性，2表示的是物品)
+			{28286,2,1,0.25},
+			{28288,2,1,0.1},
+		},
+		[1604] = {				-- [怪物ID]
+			{11,1,1000,1},		-- {奖励ID,类型,数量,概率}	(其中类型部分：1表示的角色属性，2表示的是物品)
+			{28258,2,1,0.25},
+			{28259,2,1,0.07},
+		},
+		[1605] = {				-- [怪物ID]
+			{11,1,1000,1},		-- {奖励ID,类型,数量,概率}	(其中类型部分：1表示的角色属性，2表示的是物品)
+			{28250,2,1,0.25},
+			{28251,2,1,0.1},
+		},
+		[1606] = {				-- [怪物ID]
+			{11,1,1000,1},		-- {奖励ID,类型,数量,概率}	(其中类型部分：1表示的角色属性，2表示的是物品)
+			{28247,2,1,0},
+		},
+		[1607] = {				-- [怪物ID]
+			{11,1,1000,1},		-- {奖励ID,类型,数量,概率}	(其中类型部分：1表示的角色属性，2表示的是物品)
+			{28248,2,1,0.01},
+		},
+		[1608] = {				-- [怪物ID]
+			{11,1,1000,1},		-- {奖励ID,类型,数量,概率}	(其中类型部分：1表示的角色属性，2表示的是物品)
+			{28249,2,1,0.01},
+		},
+		[1609] = {				-- [怪物ID]
+			{11,1,1000,1},		-- {奖励ID,类型,数量,概率}	(其中类型部分：1表示的角色属性，2表示的是物品)
+			{28293,2,1,0.03},
+			{28294,2,1,0.01},
+		},
+		[1610] = {				-- [怪物ID]
+			{11,1,1000,1},		-- {奖励ID,类型,数量,概率}	(其中类型部分：1表示的角色属性，2表示的是物品)
+			{28295,2,1,0.15},
+			{28296,2,1,0.01},
+		},
+		[1611] = {				-- [怪物ID]
+			{11,1,1000,1},		-- {奖励ID,类型,数量,概率}	(其中类型部分：1表示的角色属性，2表示的是物品)
+			{28297,2,1,0.15},
+			{28298,2,1,0.01},
+		},
+		[1612] = {				-- [怪物ID]
+			{11,1,1000,1},		-- {奖励ID,类型,数量,概率}	(其中类型部分：1表示的角色属性，2表示的是物品)
+			{28299,2,1,0.15},
+			{38200,2,1,0.01},
+		},
+		[1613] = {				-- [怪物ID]
+			{11,1,1000,1},		-- {奖励ID,类型,数量,概率}	(其中类型部分：1表示的角色属性，2表示的是物品)
+			{38207,2,1,0.05},
+		},
+		[1614] = {				-- [怪物ID]
+			{11,1,1500,1},		-- {奖励ID,类型,数量,概率}	(其中类型部分：1表示的角色属性，2表示的是物品)
+			{34440,2,1,0},
+			{38207,2,1,0.05},
+		},
+		[1615] = {				-- [怪物ID]
+			{11,1,2000,1},		-- {奖励ID,类型,数量,概率}	(其中类型部分：1表示的角色属性，2表示的是物品)
+			{34441,2,1,0},
+			{38207,2,1,0.01},
+		},
+		[1616] = {				-- [怪物ID]
+			{11,1,3000,1},		-- {奖励ID,类型,数量,概率}	(其中类型部分：1表示的角色属性，2表示的是物品)
+			{34442,2,1,0},
+			{38207,2,1,0.05},
+		},
+		[1617] = {				-- [怪物ID]
+			{11,1,5000,1},		-- {奖励ID,类型,数量,概率}	(其中类型部分：1表示的角色属性，2表示的是物品)
+			{34443,2,1,0},
+			{38207,2,1,0.01},
+		},	
+	},
+	itemList = {			-- 掉落
+		[38206] = {id=38206 ,count=1,strong =0,quality = 0,propability=1, bind=0,group=0},
+		[28250] = {id=28250 ,count=1,strong =0,quality = 0,propability=1, bind=0,group=0},
+		[28251] = {id=28251 ,count=1,strong =0,quality = 0,propability=1, bind=0,group=0},
+		[28289] = {id=28289 ,count=1,strong =0,quality = 0,propability=1, bind=0,group=0},
+		[28290] = {id=28290 ,count=1,strong =0,quality = 0,propability=1, bind=0,group=0},
+		[28286] = {id=28286 ,count=1,strong =0,quality = 0,propability=1, bind=0,group=0},
+		[28288] = {id=28288 ,count=1,strong =0,quality = 0,propability=1, bind=0,group=0},
+		[28258] = {id=28258 ,count=1,strong =0,quality = 0,propability=1, bind=0,group=0},
+		[28259] = {id=28259 ,count=1,strong =0,quality = 0,propability=1, bind=0,group=0},
+		[28250] = {id=28250 ,count=1,strong =0,quality = 0,propability=1, bind=0,group=0},
+		[28251] = {id=28251 ,count=1,strong =0,quality = 0,propability=1, bind=0,group=0},
+		[28247] = {id=28247 ,count=1,strong =0,quality = 0,propability=1, bind=0,group=0},
+		[28248] = {id=28248 ,count=1,strong =0,quality = 0,propability=1, bind=0,group=0},
+		[28249] = {id=28249 ,count=1,strong =0,quality = 0,propability=1, bind=0,group=0},
+		[28293] = {id=28293 ,count=1,strong =0,quality = 0,propability=1, bind=0,group=0},
+		[28294] = {id=28294 ,count=1,strong =0,quality = 0,propability=1, bind=0,group=0},
+		[28295] = {id=28295 ,count=1,strong =0,quality = 0,propability=1, bind=0,group=0},
+		[28296] = {id=28296 ,count=1,strong =0,quality = 0,propability=1, bind=0,group=0},
+		[28297] = {id=28297 ,count=1,strong =0,quality = 0,propability=1, bind=0,group=0},
+		[28298] = {id=28298 ,count=1,strong =0,quality = 0,propability=1, bind=0,group=0},
+		[28299] = {id=28299 ,count=1,strong =0,quality = 0,propability=1, bind=0,group=0},
+		[38200] = {id=38200 ,count=1,strong =0,quality = 0,propability=1, bind=0,group=0},
+		[38207] = {id=38207 ,count=1,strong =0,quality = 0,propability=1, bind=0,group=0},
+		[34440] = {id=34440 ,count=1,strong =0,quality = 0,propability=1, bind=0,group=0},
+		[34441] = {id=34441 ,count=1,strong =0,quality = 0,propability=1, bind=0,group=0},
+		[34442] = {id=34442 ,count=1,strong =0,quality = 0,propability=1, bind=0,group=0},
+		[34443] = {id=34443 ,count=1,strong =0,quality = 0,propability=1, bind=0,group=0},
+
+	},
+
+	gradeType = 1,				-- 评级类型：1表示时间，2表示层数
+	gradeList = {
+		{
+			floor = 1,
+			time = 700,			-- 单位秒
+			value = 10,			-- 百分比
+		},
+		{
+			floor = 9,
+			time = 500,			-- 单位秒
+			value = 20,			-- 百分比
+		},
+        {
+			floor = 15,
+			time = 400,			-- 单位秒	
+			value = 30,			-- 百分比
+		},
+	},
+
+	boxPool = {					-- 结算物品池
+		{ --第一个宝箱
+			itemList = 
+			{
+				-- 配置奖励的物品
+				{count = 1, itemid =	18510	,present= 	500,},
+				{count = 1, itemid =	18520	,present=	1000,},
+				{count = 1, itemid =	18530	,present=	1000,},
+				{count = 1, itemid =	18540	,present=	1000,},
+				{count = 1, itemid =	18600	,present=	1000,},
+				{count = 1, itemid =	18601	,present=	1000,},
+				{count = 1, itemid =	18603	,present=	1000,},
+				{count = 1, itemid =	18608	,present=	2000,},
+				{count = 1, itemid =	18618	,present=	1000,},
+				{count = 1, itemid =	18617	,present=	500,},
+
+			},
+	    },
+	    { --第二个宝箱
+			itemList = 
+			{
+				-- 配置奖励的物品
+				{count = 1, itemid =	18510	,present= 	500,},
+				{count = 1, itemid =	18520	,present=	1000,},
+				{count = 1, itemid =	18530	,present=	1000,},
+				{count = 1, itemid =	18540	,present=	1000,},
+				{count = 1, itemid =	18600	,present=	1000,},
+				{count = 1, itemid =	18601	,present=	1000,},
+				{count = 1, itemid =	18603	,present=	1000,},
+				{count = 1, itemid =	18608	,present=	2000,},
+				{count = 1, itemid =	18618	,present=	1000,},
+				{count = 1, itemid =	18617	,present=	500,},
+			},
+	    },
+	    {--第三个宝箱
+			itemList = 
+			{
+				-- 配置奖励的物品
+				{count = 1, itemid =	18510	,present= 	500,},
+				{count = 1, itemid =	18520	,present=	1000,},
+				{count = 1, itemid =	18530	,present=	1000,},
+				{count = 1, itemid =	18540	,present=	1000,},
+				{count = 1, itemid =	18600	,present=	1000,},
+				{count = 1, itemid =	18601	,present=	1000,},
+				{count = 1, itemid =	18603	,present=	1000,},
+				{count = 1, itemid =	18608	,present=	2000,},
+				{count = 1, itemid =	18618	,present=	1000,},
+				{count = 1, itemid =	18617	,present=	500,},
+
+			},
+	    },		
+	},		
+}

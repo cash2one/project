@@ -1,0 +1,31 @@
+{
+	id = 60141,
+	name = Lang.Item.n60141,
+	desc = Lang.Item.i60141,
+	type = 82,
+	sellType = 82,
+	icon = 387,
+	shape = {0,0,0,0,0,0,0,0},
+	color = 3,
+	dura = 0,
+	dup = 99,
+	colGroup = 0,
+	dealType = 0,
+	dealPrice = 0,
+	time = 0,
+	suitId = 0,
+	staitcAttrs = {  
+	},
+	strongAttrs = {  
+	},
+	flags = { 
+		recordLog = true,
+		denyDeal = true,
+		denySell = true, 
+        denyDestroy = true,
+        batchUse = true,
+	},
+	conds = { 
+		{ cond = 1, value = 1, }, 
+	},
+},

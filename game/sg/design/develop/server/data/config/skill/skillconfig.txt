@@ -1,0 +1,112 @@
+﻿--#include "..\..\language\LangCode.txt"
+--[[
+下面是技能的配置,
+每个技能用一个文件存放,格式是Skill_1.txt,其中1表示技能的ID
+--]]
+
+SkillConfig=
+{
+--#include "skillData/Skill_sample.txt"
+--#include "skillData/Skill_1.txt"    --风刀技能1
+--#include "skillData/Skill_2.txt"    --风刀技能2
+--#include "skillData/Skill_3.txt"    --风刀技能3
+--#include "skillData/Skill_4.txt"    --风刀技能4
+--#include "skillData/Skill_5.txt"
+--#include "skillData/Skill_6.txt"
+--#include "skillData/Skill_7.txt"
+--#include "skillData/Skill_11.txt"
+--#include "skillData/Skill_12.txt"
+--#include "skillData/Skill_13.txt"
+--#include "skillData/Skill_14.txt"
+--#include "skillData/Skill_15.txt"
+--#include "skillData/Skill_16.txt"
+--#include "skillData/Skill_21.txt"
+--#include "skillData/Skill_22.txt"   
+--#include "skillData/Skill_23.txt" 
+--#include "skillData/Skill_24.txt"
+--#include "skillData/Skill_25.txt"
+--#include "skillData/Skill_26.txt"
+--#include "skillData/Skill_31.txt"
+--#include "skillData/Skill_32.txt"
+--#include "skillData/Skill_33.txt"
+--#include "skillData/Skill_34.txt"
+--#include "skillData/Skill_35.txt"
+--#include "skillData/Skill_36.txt"
+--#include "skillData/Skill_39.txt"
+--#include "skillData/Skill_40.txt"
+--#include "skillData/Skill_41.txt"
+--#include "skillData/Skill_42.txt"
+--#include "skillData/Skill_43.txt"
+--#include "skillData/Skill_44.txt"
+--#include "skillData/Skill_45.txt"
+--#include "skillData/Skill_46.txt"
+--#include "skillData/Skill_61.txt"
+--#include "skillData/Skill_62.txt"
+--#include "skillData/Skill_63.txt"
+--#include "skillData/Skill_64.txt"
+--#include "skillData/Skill_65.txt"
+--#include "skillData/Skill_66.txt"
+--#include "skillData/Skill_67.txt"
+--#include "skillData/Skill_68.txt"
+--#include "skillData/Skill_69.txt"
+--#include "skillData/Skill_70.txt"
+--#include "skillData/Skill_71.txt"
+--#include "skillData/Skill_78.txt"
+--#include "skillData/Skill_79.txt"
+--#include "skillData/Skill_80.txt"  --BOSS近战
+--#include "skillData/Skill_81.txt"  --BOSS外功远程
+--#include "skillData/Skill_82.txt"  --BOSS内功远程
+--#include "skillData/Skill_83.txt"  --BOSS内功远程
+--#include "skillData/Skill_84.txt"  --BOSS内功远程
+--#include "skillData/Skill_85.txt"  --BOSS内功远程
+--#include "skillData/Skill_86.txt"  --BOSS内功远程
+--#include "skillData/Skill_87.txt"  --5.6 新增BOSS内功远程
+--#include "skillData/Skill_88.txt"  --BOSS内功远程
+--#include "skillData/Skill_89.txt"  --BOSS内功远程
+--#include "skillData/Skill_90.txt"  --BOSS内功远程
+--#include "skillData/Skill_91.txt"  --BOSS内功远程
+--#include "skillData/Skill_96.txt"  
+--#include "skillData/Skill_97.txt"  
+--#include "skillData/Skill_98.txt"  
+--#include "skillData/Skill_99.txt"  
+--#include "skillData/Skill_100.txt"  
+--#include "skillData/Skill_101.txt"  
+--#include "skillData/Skill_102.txt"  
+--#include "skillData/Skill_103.txt"  
+--#include "skillData/Skill_104.txt"  
+--#include "skillData/Skill_501.txt"
+--#include "skillData/Skill_502.txt"
+--#include "skillData/Skill_503.txt"
+--#include "skillData/Skill_504.txt"
+--#include "skillData/Skill_505.txt"
+--#include "skillData/Skill_506.txt"
+--#include "skillData/Skill_507.txt"
+--#include "skillData/Skill_508.txt"
+--#include "skillData/Skill_509.txt"
+--#include "skillData/Skill_510.txt"
+--#include "skillData/Skill_551.txt"
+--#include "skillData/Skill_552.txt"
+--#include "skillData/Skill_553.txt"
+--#include "skillData/Skill_554.txt"
+--#include "skillData/Skill_555.txt"
+--#include "skillData/Skill_556.txt"
+--#include "skillData/Skill_557.txt"
+--#include "skillData/Skill_558.txt"
+--#include "skillData/Skill_559.txt"
+--#include "skillData/Skill_560.txt"
+--#include "skillData/Skill_599.txt"
+--#include "skillData/Skill_600.txt"
+--#include "skillData/Skill_601.txt"
+--#include "skillData/Skill_602.txt"
+--#include "skillData/Skill_603.txt"
+--#include "skillData/Skill_604.txt"
+--#include "skillData/Skill_605.txt"
+--#include "skillData/Skill_606.txt"
+--#include "skillData/Skill_607.txt"
+--#include "skillData/Skill_608.txt"
+--#include "skillData/Skill_609.txt"
+--#include "skillData/Skill_610.txt"
+--#include "skillData/Skill_611.txt"
+--#include "skillData/Skill_612.txt"
+
+}

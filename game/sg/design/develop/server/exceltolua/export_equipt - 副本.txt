@@ -1,0 +1,232 @@
+--导出装备、武器衣服时装表
+
+----------------------------------------------------------------------------------------
+--写文件
+function writeConfig(configname, concent)
+	if not concent then
+		print("concent is null")
+		return
+	end
+
+	if not configname then
+		print("configname is null")
+		return
+	end
+
+	local f = io.open(configname, "w")
+	f:write(concent)
+	f:close()
+end
+
+----------------------------------------------------------------------------------------
+
+function cyctable(t)
+	if type(t) ~= 'table' then
+		return
+	end
+
+	local strt = "{"
+	for k, v in pairs(t) do
+		if type(v) == 'table' then
+			 strt =  strt .. cyctable(v)
+		else
+			if type(v) == 'string' then
+				strt = strt .. string.format("%s=\"%s\",", tostring(k), tostring(v))
+			else
+				strt = strt .. string.format("%s=%s,", tostring(k), tostring(v))
+			end
+		end
+	end
+	strt = strt .. "},"
+
+	return strt
+end
+
+
+function format_output(concent)
+	local str = "{\n"
+	for k, v in pairs(concent) do
+		if type(v) ~= 'table' then
+			if type(v) == 'string' and k ~= "shape" then
+				str = str .. string.format("\t%s=\"%s\",\n", tostring(k), tostring(v))
+			else
+				str = str .. string.format("\t%s=%s,\n", tostring(k), tostring(v))
+			end
+		else
+			str = str .. string.format("\t%s=%s\n", tostring(k), cyctable(v))
+		end
+	end
+
+	str = str ..'},'
+
+	print(str)
+	return str
+end
+
+
+
+function ReadEquiptItem()
+	local objexcel = CExcelReader:new()
+	if not objexcel then
+		print("objexcel is null")
+		return
+	end
+
+	objexcel:Init_App()
+	objexcel:OpenRead()
+
+	local obj = objexcel:LoadSheetByIndex(1)
+	if not obj then
+		print("LoadSheetByIndex失败!")
+		objexcel:Close()
+		objexcel:Quit_App()
+		return
+	end
+
+	local nCount = objexcel:GetCurrentSheetColCount()
+	local mCount = objexcel:GetCurrentSheetRowCount()
+
+
+	print("nCount", nCount)
+	print("mCount", mCount)
+
+
+	for i = 2, mCount do
+		local concent = {} --第一行构造成一个table
+
+
+		local strValue = objexcel:ReadCellAsString(i, 1)
+		local itemfile = string.format("%s\\%d.txt", "server\\data\\config\\item\\itemclass", tonumber(strValue))
+		print(itemfile)
+
+
+		concent.id = tonumber(strValue)
+		
+		strValue = objexcel:ReadCellAsString(i, 2)
+		concent.name = tostring(strValue) or ""
+			
+		concent.staitcAttrs = {}
+		strValue = objexcel:ReadCellAsString(i, 3)--物理攻击
+		if strValue and strValue ~= "" then
+			concent.staitcAttrs[#concent.staitcAttrs+1] = {type = 21, value = tonumber(strValue)}
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 4)--法力攻击
+		if strValue and strValue ~= "" then
+			concent.staitcAttrs[#concent.staitcAttrs+1] = {type = 31, value = tonumber(strValue)}
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 5)--物理防御
+		if strValue and strValue ~= "" then
+			concent.staitcAttrs[#concent.staitcAttrs+1] = {type = 23, value = tonumber(strValue)}
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 6)--法力防御
+		if strValue and strValue ~= "" then
+			concent.staitcAttrs[#concent.staitcAttrs+1] = {type = 33, value = tonumber(strValue)}
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 7)--生命
+		if strValue and strValue ~= "" then
+			concent.staitcAttrs[#concent.staitcAttrs+1] = {type = 17, value = tonumber(strValue)}
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 8)--灵力
+		if strValue and strValue ~= "" then
+			concent.staitcAttrs[#concent.staitcAttrs+1] = {type = 1000, value = tonumber(strValue)}
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 9)--命中
+		if strValue and strValue ~= "" then
+			concent.staitcAttrs[#concent.staitcAttrs+1] = {type = 39, value = tonumber(strValue)}
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 10)--闪避
+		if strValue and strValue ~= "" then
+			concent.staitcAttrs[#concent.staitcAttrs+1] = {type = 37, value = tonumber(strValue)}
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 11)--暴击
+		if strValue and strValue ~= "" then
+			concent.staitcAttrs[#concent.staitcAttrs+1] = {type = 35, value = tonumber(strValue)}
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 12)--抗暴击
+		if strValue and strValue ~= "" then
+			concent.staitcAttrs[#concent.staitcAttrs+1] = {type = 25, value = tonumber(strValue)}
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 13)--会心(暴击倍数)
+		if strValue and strValue ~= "" then
+			concent.staitcAttrs[#concent.staitcAttrs+1] = {type = 36, value = tonumber(strValue)}
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 14)
+		concent.desc = tostring(strValue) or ""
+			
+		strValue = objexcel:ReadCellAsString(i, 15)
+		concent.type = tonumber(strValue) or 0
+			
+		strValue = objexcel:ReadCellAsString(i, 16)
+		concent.sellType = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 17)
+		concent.icon = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 18)
+		concent.shape = tostring(strValue) or 0
+			
+		strValue = objexcel:ReadCellAsString(i, 19)
+		concent.color = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 20)
+		concent.dealType = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 21)
+		concent.dealPrice = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 22)
+		concent.time = tonumber(strValue) or 0
+		
+		strValue = objexcel:ReadCellAsString(i, 23)
+		concent.suitId = tonumber(strValue) or 0
+			
+
+		--等级限制	性别限制	职业限制	婚姻限制
+		concent.conds = {}
+		strValue = objexcel:ReadCellAsString(i, 24)
+		if strValue and strValue ~= "" then
+			concent.conds[#concent.conds+1] = {cond = 1, value = tonumber(strValue)}
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 25)
+		if strValue and strValue ~= "" then
+			concent.conds[#concent.conds+1] = {cond = 2, value = tonumber(strValue)}
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 26)
+		if strValue and strValue ~= "" then
+			concent.conds[#concent.conds+1] = {cond = 3, value = tonumber(strValue)}
+		end
+
+		strValue = objexcel:ReadCellAsString(i, 27)
+		if strValue and strValue ~= "" then
+			concent.conds[#concent.conds+1] = {cond = 4, value = tonumber(strValue)}
+		end
+
+		local str = format_output(concent)
+
+		--写文件
+		--writeConfig(itemfile, str)
+		objexcel:WriteFile(itemfile, str)
+
+	end
+
+	objexcel:Close()
+	objexcel:Quit_App()
+	objexcel:delete()
+end
+----------------------------------------------------------------------------------------
+
+
+

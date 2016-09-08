@@ -1,0 +1,286 @@
+﻿-- 技能1的秘籍配置
+
+-- tp : 作用类型
+-- prob : 触发概率
+-- param : 根据不同的类型不同
+-- event : 触发事件
+
+--[[ tp 定义
+1 : 加被动属性 
+	-- 未用到
+2 : 给玩家加buff
+	target : 目标
+	attrtype
+	attrvalue
+	attrgroup
+	times
+	interval
+3 : 改变技能冷却时间
+	skillid : 技能ID，0表示当前技能，默认为0
+	value : 正数表示增加，负数表示减少，0表示清空，单位：秒
+4 : 额外伤害(万分之几)
+	rate : 伤害比例
+5 : 叠加buff时间
+	times :  次数
+	interval : 间隔
+6 : 修改秘籍相关属性
+	attrtype : 秘籍属性类型
+	attrvalue : 秘籍属性值 (整数)
+7 : 
+8 : 使用技能
+	skillid : 技能ID
+	skilllevel : 技能等级
+9 : 伤害加成
+	rate : 伤害比例(万分之几)
+10 : 对标记的人使用技能
+	skillid : 技能ID
+	skilllevel : 技能等级
+
+	target字段无效
+]]
+
+-- event : 效果触发事件
+--[[
+1 : 释放技能
+2 : 计算伤害
+3 : buff 自动消失
+4 : 添加buff
+5 : buff 被动消失
+6 : 扣除目标玩家血量
+7 : 计算伤害加成
+]]
+
+--[[
+参数
+target : 目标，
+	1 表示选择目标
+	2 表示全体
+	3 特殊分类，眩晕，减速，定身，沉默的玩家
+	4 血量低于%x的玩家(百分之几)
+	5 表示自己
+	6 表示有某类buff的玩家，参数是buff列表
+tparam : 目标参数,根据目标不同而不同
+effect :
+	1 : 上浮秘籍名
+	2 : 技能类似的特效, mjname : 表示是否同时上浮秘籍名
+	3 : 添加人物特效
+	4:  添加标记特效
+]]
+
+--[[
+当有buff在，或者消失时触发特定效果需要配置此项，如果与特定技能相关，需要配置技能id
+参数
+  attrtypeCheck    buff类型 
+  attrgroupCheck   buff组id
+]]
+
+--[[
+当有buff在，或者消失时触发特定效果需要配置此项，如果此时有特效需要配置此项
+参数
+effectType = 2, 特效类型
+effectId = 6701, 特效id
+effectTime = 0, 时间
+effectDelay = 0 延迟
+]]
+
+
+--[[
+   秘籍升级效果配置
+	同技能配置
+
+]]
+
+{ -- 绿
+	id = 19640, -- 秘籍ID
+
+	basics = {
+		-- 等级
+		{
+			score = 100,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己, 2全体队友，actionType配1表示新效果
+				 {skillid=0,target = 0, attrtypeCheck = 73, attrgroupCheck = 80, actionType= 1, timeParam=1,type=4,delay=0,value={rate=3000,value=200}},	
+			},
+		},
+	},
+
+	extras = {
+		-- 重数 
+		{
+			score = 100, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 17, attrvalue = 17 },
+			},
+
+			actions = 
+			{
+
+			--	{ event = 2, tp = 2, target = 1, attrtype = 11, attrvalue = -12, attrgroup = 11, times = 100, interval = 1, effect = 1 }, -- 新的buff
+			--	{ event = 2, tp = 2, target = 1, attrtype = 107, attrvalue = 1, attrgroup = 10, times = 10, interval = 1}, 
+			-----当添加buff时， 如果该buff与将于特定技能相关联，则需要配置技能id，如果有特效还需要配置对应特效，attrActType表示实施类型，0表示等buff时间到，1表示只是用一次就把buff删除
+			--		{ event = 2, tp = 2,  target = 1, skillid = 10, attrActType = 0, effectType = 4, effectId = 20058, effectTime = 10000, effectDelay = 0, attrtype = 108, attrvalue = 7888877, attrgroup = 15, times = 31100000, interval = 1111111, effect = 1 },
+                --attrtypeCheck buff类型， attrgroupCheck buff组id 在某个buff的消失的情况下干啥
+                { event = 3, tp = 2, target = 5, attrtypeCheck = 73, attrgroupCheck = 80, attrtype = 48, attrvalue = 0.5, attrgroup = 0, times = 1000, interval = 1, effect = 1 },
+                { event = 5, tp = 2, target = 1, attrtypeCheck = 73, attrgroupCheck = 80, attrtype = 48, attrvalue = 0.5, attrgroup = 0, times = 1000, interval = 1, effect = 1 },
+				
+
+				-- 离炎引
+				-- 对于眩晕，减速，定身，沉默的目标，造成额外伤害万分之x。
+				{ event = 6, tp = 9, target = 3, rate = x },
+
+				-- 玄冰掌
+				-- 使用后万分之x的概率，重置仓澜吟技能的冷却时间。上浮秘籍名
+				{ event = 1, tp = 3, prop = x, skillid = 28, value = 0, effect = 1, },
+
+				-- 冰龙天道
+				-- 使用后，万分之X的概率增加自身攻击速度y(负整数，参考酒仙斩技能)，持续z秒。上浮秘籍名
+				{ event = 1, tp = 2, prop = x, target = 5, attrtype = 47, attrvalue = y, attrgroup = 0, times = 1, interval = z, effect = 1 },
+
+				-- 苍澜吟
+				-- 对选定的目标造成额外万分之x的伤害。冒出2次伤害，播放一个闪电特效。
+				{ event = 2, tp = 4, target = 1, rate = x, effect = 2, effparam = { type=4,mj=0,id=55,time=0,delay=200 } },
+
+				-- 太虚灵盾
+				-- 灵盾破碎后，增加玩家X%的免伤值，持续X秒。上浮秘籍名
+				--{ event = 3, tp = 2, target = 5, attrtypeCheck = 53, attrgroupCheck = 80, attrtype = 49, attrvalue = 0, attrgroup = 80, times = 1000, interval = 1, effect = 1 },
+				{ event = 3, tp = 2, target = 5, attrtypeCheck = 53, attrgroupCheck = 80, attrtype = 81, attrvalue = 0.1, attrgroup = 80, times = 1000, interval = 1, effect = 1 },
+				--{ event = 3, tp = 2, target = 5, attrtypeCheck = 53, attrgroupCheck = 80, attrtype = 51, attrvalue = 0, attrgroup = 80, times = 1000, interval = 1, effect = 1 },
+				{ event = 3, tp = 2, target = 5, attrtypeCheck = 53, attrgroupCheck = 80, attrtype = 82, attrvalue = 0.1, attrgroup = 80, times = 1000, interval = 1, effect = 1 },
+				
+		        --{ event = 5, tp = 2, target = 5, attrtypeCheck = 53, attrgroupCheck = 80, attrtype = 49, attrvalue = 0, attrgroup = 80, times = 1000, interval = 1, effect = 1 },
+				{ event = 5, tp = 2, target = 5, attrtypeCheck = 53, attrgroupCheck = 80, attrtype = 81, attrvalue = 0.1, attrgroup = 80, times = 1000, interval = 1, effect = 1 },
+		        --{ event = 5, tp = 2, target = 5, attrtypeCheck = 53, attrgroupCheck = 80, attrtype = 51, attrvalue = 0, attrgroup = 80, times = 1000, interval = 1, effect = 1 },
+				{ event = 5, tp = 2, target = 5, attrtypeCheck = 53, attrgroupCheck = 80, attrtype = 82, attrvalue = 0.1, attrgroup = 80, times = 1000, interval = 1, effect = 1 },
+
+				-- 云海飘渺
+				-- 增加持续时间X秒，减少冷却时间Y。
+				{ event = 4, tp = 5, attrtype = 62, times = 0, interval = X },
+				{ event = 1, tp = 3, skillid = 0, value = -Y },
+
+				-- 九天玄灵诀
+				-- 对血量低于X%的目标，造成的伤害增加Y%
+				{ event = 6, tp = 6, attrtype = 3, attrvalue = X },
+				{ event = 6, tp = 6, attrtype = 4, attrvalue = Y },
+
+				-- -- 昆仑会心诀
+				-- 血量低于X%的时候，受到的伤害减少Y%。
+				{ event = 6, tp = 6, attrtype = 1, attrvalue = X },
+				{ event = 6, tp = 6, attrtype = 2, attrvalue = Y },
+
+
+				-- 突雷
+				-- 对于眩晕，减速，定身，沉默的目标，造成额外伤害万分之X。
+				{ event = 6, tp = 9, target = 3, rate = X },
+
+				-- 离恨刺
+				-- 玩家A对B使用离恨刺后，概率万分之X附带一个标记，持续YS，持续时间内A对B造成的伤害增加Z(小数) 。上浮秘籍名
+				{ event = 2, tp = 2, target = 1, prop = X, attrtype = 105, attrvalue = Z, attrgroup = 80, times = 1, interval = Y, effect = 4, effparam = { type=6,mj=0,id=20080,time=Y*1000,delay=0 } },
+
+				-- 擒龙手
+				-- 使用擒龙手后，提升攻击力X(小数)，持续Y秒。上浮秘籍名
+				{ event = 1, tp = 2, target = 5, attrtype = 28, attrvalue = X, attrgroup = 0, times = 1, interval = Y, effect = 1 },
+
+				-- 天威煌炎 
+				-- 使用后，降低被攻击者的攻击力X(小数),持续Y秒。若使用时该天雷有标记目标，则在标记目标身上及其周围也放一个群攻伤害(技能id和等级对应skillid和skilllevel)
+				{ event = 2, tp = 2, attrtype = 28, attrvalue = -X, attrgroup = 0, times = 1, interval = Y },
+				{ event = 1, tp = 10, skillid = 113, skilllevel = 1 }, -- 对有标记的玩家使用技能, 需要配该技能的10个等级，每个等级对应重数
+
+				-- 苍雷狂啸
+				-- 使用后获得吸血效果，X秒内攻击可吸取每次伤害的Y(小数)的血.上浮秘籍名
+				{ event = 1, tp = 2, target = 5, attrtype = 106, attrvalue = Y, attrgroup = 80, times = 1, interval = X, effect = 1 }, 
+
+				-- -- 诛心仙疡 -- 同云海飘渺
+				-- 增加持续时间X秒，减少冷却时间Y。
+				{ event = 4, tp = 5, attrtype = 62, times = 0, interval = X },
+				{ event = 1, tp = 3, skillid = 0, value = -Y },
+
+				-- 紫电炼体诀
+				-- 血量低于X%的时候, 受到的伤害减少Y%
+				{ event = 6, tp = 6, attrtype = 1, attrvalue = X }, 
+				{ event = 6, tp = 6, attrtype = 2, attrvalue = Y },
+
+				-- 怒海狂雷功 -- 同九天玄灵诀
+				-- 对血量低于X%的目标，造成的伤害增加Y%
+				{ event = 6, tp = 6, attrtype = 3, attrvalue = X },
+				{ event = 6, tp = 6, attrtype = 4, attrvalue = Y },
+
+				-- 穿云 -- 同离炎引
+				-- 对于眩晕，减速，定身，沉默的目标，造成额外伤害万分之x。
+				{ event = 6, tp = 9, target = 3, rate = x },
+
+				-- 化云斩
+				-- 攻击目标后，会以X%的概率在目标身上附带个dot，每2秒掉攻击的Y(小数)的血，并回复相应的血量给玩家，持续Z秒。上浮秘籍名
+				{ event = 2, tp = 2, prop = X, target = 1, attrtype = 109, attrvalue = Y, attrgroup = 80, damage = true, times = Z/2, interval = 2, effect = 1 }, 
+
+				-- 酒仙斩
+				-- 使用后，增加自己的攻击速度Y(负整数),持续X秒, 上浮秘籍名
+				{ event = 1, tp = 2, target = 5, attrtype = 47, attrvalue = Y, attrgroup = 0, times = 1, interval = X, effect = 1 },
+
+				-- -- 万剑归宗
+				-- 使用后X%概率给自己加一个剑阵BUFF，持续X秒（这段时间内使用玩家身上会持续播一个剑阵特效），期间使用化元斩造成双倍伤害，使用后该BUFF消失。（特效表现为目标头上再播一个剑落下来特效）。上浮秘籍名
+				{ event = 1, tp = 2, prop = 9000, target = 5, skillid = 10, attrActType = 1, effectType = 4, effectId = 20087, effectTime = 0, effectDelay = 0, attrtype = 108, attrvalue = 1, attrgroup = 80, times = 1000, interval = 1, effect = 1,},
+
+				-- 傲天剑意
+				-- 使用后，增加免伤X(小数),持续Y秒。上浮秘籍名
+				{ event = 1, tp = 2, target = 5, attrtype = 81, attrvalue = X, attrgroup = 0, times = 1, interval = Y, effect = 1 }, -- 法防
+				{ event = 1, tp = 2, target = 5, attrtype = 82, attrvalue = X, attrgroup = 0, times = 1, interval = Y }, -- 物防
+
+				-- -- 天道有情 -- 同云海飘渺
+				-- 增加持续时间X秒，减少冷却时间Y。
+				{ event = 4, tp = 5, attrtype = 62, times = 0, interval = X },
+				{ event = 1, tp = 3, skillid = 0, value = -Y },
+
+				-- -- 斩妖灭法诀 -- 同九天玄灵诀
+				-- 对血量低于X%的目标，造成的伤害增加Y%
+				{ event = 6, tp = 6, attrtype = 3, attrvalue = X },
+				{ event = 6, tp = 6, attrtype = 4, attrvalue = Y },
+
+				-- -- 乾坤混元功
+				{ event = 6, tp = 6, attrtype = 1, attrvalue = X },
+				{ event = 6, tp = 6, attrtype = 2, attrvalue = Y },
+
+				-- -- 逐月
+				-- 对于眩晕，减速，定身，沉默的目标，造成额外伤害万分之x。
+				{ event = 6, tp = 9, target = 3, rate = x },
+
+				-- -- 皓月斩
+				-- 攻击时，一定概率打出dot，每2秒造成攻击的X%，持续X秒。特效表现为：中了dot的人物泛绿。上浮秘籍名...两个buff的时间要一致
+				{ event = 2, tp = 2, target = 1, prop = 9000, isUseRev = true, revattrvalue = -0.05, attrtype = 11, attrvalue = 0, attrgroup = 0, times = 30, interval = 2, effect = 1 },
+				{ event = 2, tp = 2, target = 1, prop = 9000, attrtype = 107, attrvalue = 1, attrgroup = 0, times = 30, interval = 2, effect = 1 },
+
+				-- -- 隐遁
+				-- 隐身后第一击后，X%的概率破除目标X%的护甲，持续X秒。上浮秘籍名
+				{ event = 5, tp = 2, target = 1, prop = 6000, effectType = 2, effectId = 6701, effectTime = 0, effectDelay = 0,attrtypeCheck = 73, attrgroupCheck = 80, attrtype = 23, attrvalue = -2000, attrgroup = 80, times = 1000, interval = 1, effect = 0 },
+				{ event = 5, tp = 2, target = 1, prop = 6000, effectType = 2, effectId = 6701, effectTime = 0, effectDelay = 0,attrtypeCheck = 73, attrgroupCheck = 80, attrtype = 24, attrvalue = -0.2, attrgroup = 80, times = 1000, interval = 1, effect = 0 },
+				{ event = 5, tp = 2, target = 1, prop = 6000, effectType = 2, effectId = 6701, effectTime = 0, effectDelay = 0, attrtypeCheck = 73, attrgroupCheck = 80, attrtype = 33, attrvalue = -2000, attrgroup = 80, times = 1000, interval = 1, effect = 0 },
+				{ event = 5, tp = 2, target = 1, prop = 6000, effectType = 2, effectId = 6701, effectTime = 0, effectDelay = 0, attrtypeCheck = 73, attrgroupCheck = 80, attrtype = 34, attrvalue = -0.2, attrgroup = 80, times = 1000, interval = 1, effect = 0 },
+
+				-- 环定乾坤
+				-- 对选定的目标造成额外万分之x的伤害。冒出2次伤害，播放一个闪电特效。
+				{ event = 2, tp = 4, target = 1, rate = x, effect = 2, effparam = { type=4,mj=0,id=55,time=0,delay=200 } },
+
+				-- -- 踏云无痕
+				-- 使用后，获得踏云BUFF，持续X秒，期间皓月技能可造成额外伤害。上浮秘籍名
+				{ event = 1, tp = 2, prop = 10000, target = 5, skillid = 18, attrActType = 0, attrtype = 110, attrvalue = 1, attrgroup = 80, times = 1000, interval = 1, effect = 1 },
+
+				-- -- 镜花水月 -- 同云海飘渺
+				-- 增加持续时间X秒，减少冷却时间Y。
+				{ event = 4, tp = 5, attrtype = 62, times = 0, interval = X },
+				{ event = 1, tp = 3, skillid = 0, value = -Y },
+
+				-- -- 凌虚飞仙诀
+				-- 血量低于X%的时候，受到的伤害减少Y%。
+				{ event = 6, tp = 6, attrtype = 1, attrvalue = X },
+				{ event = 6, tp = 6, attrtype = 2, attrvalue = Y },
+
+				-- 赤月战神功
+				-- 对血量低于X%的目标，造成的伤害增加Y%
+				{ event = 6, tp = 6, attrtype = 3, attrvalue = X },
+				{ event = 6, tp = 6, attrtype = 4, attrvalue = Y },
+
+			},
+		},
+	},
+},

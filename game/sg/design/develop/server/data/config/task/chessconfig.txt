@@ -1,0 +1,87 @@
+--#include "..\..\language\LangCode.txt"
+ChessConfig = 
+{
+    fubenid = 82,   -- 副本id
+    sceneid = 1146,	--场景id
+    round = 5,		--多少波
+    roundtime = 240, --每波多少秒
+    white = 642,		--白棋子的怪物ID
+    black = 643,		--黑棋子的怪物ID
+    red = 644,		--红棋子的怪物ID
+    awardSet = {
+    [642] = 244,
+    [643] = 244,
+    [644] = 244,
+	},
+    redratio = 1,  --出现红棋子的概率
+    tokentype = 1,	--副本币类型
+    tokentotal = 1000, --副本币的总共获得
+    tokenround = {200,200,200,200,200},	--每轮副本币的获得
+    score = {300,500,800,1100,1400},	--每轮的积分限制
+    scroetotal = 1000, --通关积分
+    returnmapid = 3, --返回的地图id
+	returnmapx = 105, --返回地图的x坐标
+	returnmapy = 77, --返回地图的y坐标
+	chesseffect = { --棋子死亡特效
+		id = 20021,		--id
+		type = 6,		--类型
+		time = 10000,	--持续时间（单位毫秒）
+	},
+	passEffect = { id = 20022, time = 1 }, -- 通关特效(id,持续时间(秒))
+	failEffect = { id = 20023, time = 1 }, -- 失败特效(id,持续时间(秒))
+	winEffect = { id = 20024, time = 1 }, -- 成功特效(id,持续时间(秒))
+	interval = 1, --刷新棋子的间隔（单位秒）
+	tonguanDelay = 2, --通关后几秒后踢出玩家
+	--posx X坐标 posy Y坐标 pixx X像素 pixy Y像素
+	pos = {
+		{
+			{posx =21, posy = 3, pixx = 684, pixy = 131}, 
+			{posx =25, posy = 3, pixx = 813, pixy = 131}, 
+			{posx =29, posy = 3, pixx = 941, pixy = 131}, 
+			{posx =33, posy = 3, pixx =1071, pixy = 131}, 
+			{posx =37, posy = 3, pixx =1206, pixy = 131}, 
+			{posx =41, posy = 3, pixx =1330, pixy = 131}, 
+		},
+		{
+			{posx =21, posy = 7, pixx = 684, pixy = 261}, 
+			{posx =25, posy = 7, pixx = 813, pixy = 261}, 
+			{posx =29, posy = 7, pixx = 941, pixy = 261}, 
+			{posx =33, posy = 7, pixx =1071, pixy = 261}, 
+			{posx =37, posy = 7, pixx =1206, pixy = 261}, 
+			{posx =41, posy = 7, pixx =1330, pixy = 261}, 
+		},
+		{
+			{posx =21, posy =11, pixx = 684, pixy = 391}, 
+			{posx =25, posy =11, pixx = 813, pixy = 391}, 
+			{posx =29, posy =11, pixx = 941, pixy = 391}, 
+			{posx =33, posy =11, pixx =1071, pixy = 391}, 
+			{posx =37, posy =11, pixx =1206, pixy = 391}, 
+			{posx =41, posy =11, pixx =1330, pixy = 391}, 
+		},
+		{
+			{posx =21, posy =15, pixx = 684, pixy = 521}, 
+			{posx =25, posy =15, pixx = 813, pixy = 521}, 
+			{posx =29, posy =15, pixx = 941, pixy = 521}, 
+			{posx =33, posy =15, pixx =1071, pixy = 521}, 
+			{posx =37, posy =15, pixx =1206, pixy = 521}, 
+			{posx =41, posy =15, pixx =1330, pixy = 521}, 
+		},
+		{
+			{posx =21, posy =19, pixx = 684, pixy = 651}, 
+			{posx =25, posy =19, pixx = 813, pixy = 651}, 
+			{posx =29, posy =19, pixx = 941, pixy = 651}, 
+			{posx =33, posy =19, pixx =1071, pixy = 651}, 
+			{posx =37, posy =19, pixx =1206, pixy = 651}, 
+			{posx =41, posy =19, pixx =1330, pixy = 651}, 
+		},
+		{
+			{posx =21, posy =23, pixx = 684, pixy = 781}, 
+			{posx =25, posy =23, pixx = 813, pixy = 781}, 
+			{posx =29, posy =23, pixx = 941, pixy = 781}, 
+			{posx =33, posy =23, pixx =1071, pixy = 781}, 
+			{posx =37, posy =23, pixx =1206, pixy = 781}, 
+			{posx =41, posy =23, pixx =1330, pixy = 781}, 
+		},
+	},
+
+}

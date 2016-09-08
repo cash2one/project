@@ -1,0 +1,29 @@
+{
+	id = 60103,
+	name = Lang.Item.n60103,
+	desc = Lang.Item.i60103,
+	type = 86,
+	icon = 999991,
+	shape = {0,0,0,0,0,0,0,0},
+	color = 3,
+	dura = 0,
+	dup = 0,
+	colGroup = 0,
+	dealType = 0,
+	dealPrice = 0,
+	time = 0,
+	suitId = 0,
+	staitcAttrs = {  
+	},
+	strongAttrs = {  
+	},
+	flags = { 
+		denyStorage = true,
+		denyDeal = true,
+		denySell = true, 
+        denyDestroy = true,
+	},
+	conds = { 
+		{ cond = 1, value = 43, }, 
+	},
+},

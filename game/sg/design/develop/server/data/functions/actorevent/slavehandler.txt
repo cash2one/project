@@ -1,0 +1,2752 @@
+--lua script
+--处理斗地主相关逻辑
+
+--#include "data\config\slave\slaveconfig.txt" once --斗地主配置
+
+SlaveOpFuncList = {}
+
+SlaveOpFuncList.main = function (sysarg, systemid, msgid, packet)
+  if SlaveOpFuncList[msgid] then
+    --SlaveOpFuncList[msgid](sysarg, packet)
+  end
+end
+
+EventCallDispatcher.handlerLevelUpforMasterSlave = function (sysarg, arg)
+	if arg[1] >= SlaveConfig.OPEN_LEVEL then
+		FightFun.addSlaveActor( LActor.getActorId( sysarg ) )
+	end
+end
+
+--================= 辅助函数 及结构 ======================
+
+SlaveOpFuncList.msgStruct = function() 
+	local obj = {
+		sendTime = 0,
+		msgType = 0,
+		msgId = 0,
+		target1 = 0,
+		target2 = 0,
+	}
+	return obj
+end
+
+SlaveOpFuncList.masterSlaveStruct = function()
+	local obj={
+		masterId = 0,
+		catchTime = 0,
+		liberateTime = 0,
+		liberateTimeByPay = 0,
+		todayCatchTimes = 0,
+		todayInteractiveTimes = 0,
+		todayResistTimes = 0,
+		todayGetExp = 0,
+		todayRescueTimes = 0, 
+		todayAddCatchCount = 0,
+		myFailureList = {},
+		slaveList = {},
+		enemyList = {},
+		askForHelpList = {},
+		msg = {},
+		sendHelpList = {},
+	}
+	return obj
+end
+
+SlaveOpFuncList.slaveListStruct = function()
+	local obj={
+		id = 0,
+		catchTime = 0,
+		interactiveTime = 0,
+		liberateTime = 0,
+		exp = 0,
+		catchLevel = 0,
+		catchFightRank = 0,
+		lastSubmitTime = 0, 
+	}
+	return obj
+end
+
+SlaveOpFuncList.msgVo = function()
+	local obj = {
+		sendTime = 0,
+		msgType = 0,
+		msgId = 0,
+		targetNum = 1,
+		target1Struct = {}, -- slaveSysVo 
+		target2Struct = {}, -- slaveSysVo
+	}
+	return obj
+end
+
+SlaveOpFuncList.slaveSysVo = function()
+	local obj={
+		id = 0 ,       -- 角色ID
+		name = "",     -- 角色名
+		level =0 ,     -- 角色等级
+		job = 0 ,      -- 职业ID
+		familyId = 0 , -- 帮派ID
+		familyName = "", -- 帮派名
+		camp = 0 ,     -- 阵营
+		sex = 0,       -- 性别
+		faceId = 0,    -- 头像ID
+		catchTime = 0, --被抓捕时的时间
+		catchLevel = 0, --被抓捕时的等级
+		catchRankNum = 0, --被抓捕时的竞技场排行
+		curExp = 0 ,   --当前已经产生的经验
+		interactiveCd = 0 , --互动cd时间
+		slaveStatus = 0, -- 身份标识
+		baseExp = 0,  --苦工每秒钟产生的经验的基数(前端取 baseExp/10000 值)
+	}
+	return obj
+end
+
+SlaveOpFuncList.helpVo = function()
+	local obj = {
+		id = 0 ,       -- 角色ID
+		name = "",     -- 角色名
+		level =0 ,     -- 角色等级
+		job = 0 ,      -- 职业ID
+	}
+	return obj
+end
+----------------------------------------
+
+
+SlaveOpFuncList.initMasterSlaveData = function ( id )
+	local var = FightFun.getStaticVar( id )
+	if var == nil then
+		print("SlaveOpFuncList.initMasterSlaveData error! var = nil , actorId="..id)
+		return
+	end
+	
+	if var.masterSlaveData == nil then 
+		var.masterSlaveData = {}
+		var.masterSlaveData.masterId = 0
+		var.masterSlaveData.catchTime = 0
+		var.masterSlaveData.liberateTimeByPay = 0
+		var.masterSlaveData.liberateTime = 0
+		var.masterSlaveData.todayCatchTimes = 0
+		var.masterSlaveData.todayInteractiveTimes = 0
+		var.masterSlaveData.todayResistTimes = 0
+		var.masterSlaveData.todayGetExp = 0
+		var.masterSlaveData.todayRescueTimes = 0
+		var.masterSlaveData.todayAddCatchCount = 0
+		var.masterSlaveData.myFailureList = {}
+		var.masterSlaveData.slaveList = {}
+		var.masterSlaveData.enemyList = {}
+		var.masterSlaveData.askForHelpList = {}
+		var.masterSlaveData.msg = {}
+		var.masterSlaveData.sendHelpList = {}
+	end
+	if var.masterSlaveData.liberateTimeByPay == nil then
+		var.masterSlaveData.liberateTimeByPay = 0
+	end
+	if var.masterSlaveData.sendHelpList == nil then
+		var.masterSlaveData.sendHelpList = {}
+	end
+	if var.masterSlaveData.liberateTime < System.getCurrMiniTime() then
+		var.masterSlaveData.masterId = 0
+		var.masterSlaveData.catchTime = 0
+	end
+
+	if var.masterSlaveData.masterId ~= 0 then
+		local var = FightFun.getStaticVar( var.masterSlaveData.masterId , false)
+		if var == nil then
+			print("SlaveOpFuncList.initMasterSlaveData  var == nil, actorId="..var.masterSlaveData.masterId)
+		end
+		local rank = FightFun.getRankingById( var.masterSlaveData.masterId ) + 1
+		if var == nil or rank <= 0 or rank > SlaveConfig.HELPER_LIST_ON_RANKNUM then
+			var.masterSlaveData.masterId = 0
+			var.masterSlaveData.liberateTime = System.getCurrMiniTime()
+		end
+	end
+	if var.masterSlaveData.masterId == 0 then
+		var.masterSlaveData.sendHelpList = {}
+	end
+	return true
+end
+
+SlaveOpFuncList.getMasterSlaveData = function( id )
+	SlaveOpFuncList.initMasterSlaveData( id )
+	local var = FightFun.getStaticVar( id , false)
+	if var == nil then
+		print("SlaveOpFuncList.getMasterSlaveData var == nil , actorId=" .. id )
+		return nil
+	end
+	return var.masterSlaveData
+end
+
+SlaveOpFuncList.setMasterSlaveData = function(id, data)
+	SlaveOpFuncList.initMasterSlaveData( id )
+	local var = FightFun.getStaticVar( id )
+	if var == nil or data == nil then
+		print("SlaveOpFuncList.setMasterSlaveData var == nil or data == nil, actorId="..id)
+		return
+	end
+	--[[
+	print( "6666 SlaveOpFuncList.setMasterSlaveData type(var.masterSlaveData)="..type(var.masterSlaveData) )
+	print(" type( var.masterSlaveData.masterId ) = "..type(data.masterId or var.masterSlaveData.masterId ) )
+	print(" type( var.masterSlaveData.catchTime ) = "..type(data.catchTime or  var.masterSlaveData.catchTime) )
+	print(" type( var.masterSlaveData.liberateTimeByPay ) = "..type(data.liberateTimeByPay or  var.masterSlaveData.liberateTimeByPay) )
+	print(" type( var.masterSlaveData.liberateTime ) = "..type(data.liberateTime or  var.masterSlaveData.liberateTime) )
+	print(" type( var.masterSlaveData.todayCatchTimes ) = "..type(data.todayCatchTimes or  var.masterSlaveData.todayCatchTimes) )
+	print(" type( var.masterSlaveData.todayInteractiveTimes ) = "..type(data.todayInteractiveTimes or  var.masterSlaveData.todayInteractiveTimes) )
+	print(" type( var.masterSlaveData.todayResistTimes ) = "..type(data.todayResistTimes or  var.masterSlaveData.todayResistTimes) )
+	print(" type( var.masterSlaveData.todayGetExp ) = "..type(data.todayGetExp or  var.masterSlaveData.todayGetExp) )
+	print(" type( var.masterSlaveData.todayRescueTimes ) = "..type(data.todayRescueTimes or  var.masterSlaveData.todayRescueTimes) )
+	print(" type( var.masterSlaveData.todayAddCatchCount ) = "..type(data.todayAddCatchCount or  var.masterSlaveData.todayAddCatchCount) )
+	
+	]]
+	
+	var.masterSlaveData.masterId = data.masterId or var.masterSlaveData.masterId
+	var.masterSlaveData.catchTime = data.catchTime or var.masterSlaveData.catchTime
+	var.masterSlaveData.liberateTimeByPay = data.liberateTimeByPay or var.masterSlaveData.liberateTimeByPay
+	var.masterSlaveData.liberateTime = data.liberateTime or var.masterSlaveData.liberateTime
+	var.masterSlaveData.todayCatchTimes = data.todayCatchTimes or var.masterSlaveData.todayCatchTimes
+	var.masterSlaveData.todayInteractiveTimes = data.todayInteractiveTimes or var.masterSlaveData.todayInteractiveTimes
+	var.masterSlaveData.todayResistTimes = data.todayResistTimes or var.masterSlaveData.todayResistTimes
+	var.masterSlaveData.todayGetExp = data.todayGetExp or var.masterSlaveData.todayGetExp
+	var.masterSlaveData.todayRescueTimes = data.todayRescueTimes or var.masterSlaveData.todayRescueTimes
+	var.masterSlaveData.todayAddCatchCount = data.todayAddCatchCount or var.masterSlaveData.todayAddCatchCount
+
+	--如果玩家在线，则更新前端数据
+	local ptr = System.getEntityPtrByActorID( id )
+	if ptr ~= nil then
+		SlaveOpFuncList[2](ptr)
+	end
+	return true
+end
+
+SlaveOpFuncList.isClose = function(sysarg)
+	local actorLevel = LActor.getIntProperty( sysarg, PROP_LEVEL )
+	if 1 ~= SlaveConfig.SYSTEM_SWITCH or actorLevel < SlaveConfig.OPEN_LEVEL then
+		LActor.sendTipmsg( sysarg, Lang.Slave.t001, ttMessage ) 
+		return true
+	end
+	return false
+end
+
+SlaveOpFuncList.getActorInfo = function( pid )
+	local info = SlaveOpFuncList.slaveSysVo()
+	info.id = pid
+	info.name, info.faceId, info.level, info.job, info.familyId, info.familyName, info.camp, info.sex  =  FightFun.getActorInfo( pid )
+	info.slaveStatus = SlaveOpFuncList.getActorSlaveStatus( pid )
+	if info.slaveStatus == nil then
+		print("SlaveOpFuncList.getActorInfo info.slaveStatus error, actorId="..pid)
+		return
+	end
+	info.fightRank = FightFun.getRankingById( pid ) + 1
+	return info
+end
+
+SlaveOpFuncList.getActorSlaveStatus = function( pid )
+	SlaveOpFuncList.initMasterSlaveData( pid )
+	local myData = SlaveOpFuncList.getMasterSlaveData( pid )
+	if myData == nil then
+		print("SlaveOpFuncList.getActorSlaveStatus error, actorId=".. pid..", type(myData)="..type(myData) )
+		return
+	end
+	if myData.masterId > 0 then
+		return SlaveConfig.slaveStatus.SLAVE
+	end
+	local mySlaveList = SlaveOpFuncList.getSlaveList( pid )
+	if #mySlaveList > 0 then
+		return SlaveConfig.slaveStatus.LANDOWNER
+	end
+	if System.isSameDay(System.getCurrMiniTime(), myData.liberateTimeByPay) then
+		return SlaveConfig.slaveStatus.FREE_BY_PAY
+	else
+		return SlaveConfig.slaveStatus.FREE
+	end
+end
+
+SlaveOpFuncList.doSendSlaveSysVoList = function( sysarg, systemId, protocolId, list)
+	--print("SlaveOpFuncList.doSendSlaveSysVoList protocolId="..protocolId)
+	if nil == list then
+		print("SlaveOpFuncList.doSendSlaveSysVoList, protocolId= " .. protocolId .. ", list is nil ")
+		return 
+	end
+	local npack = DataPack.allocPacket( sysarg, systemId, protocolId )
+    if npack == nil then return end	
+	local size = #list
+	DataPack.writeInt(npack, size)        -- 数组长度
+	for i=1, size do
+		DataPack.writeInt(npack,    list[i].id)        -- (int32) id : 角色ID
+		DataPack.writeString(npack, list[i].name)   -- (string) name : 角色名
+		DataPack.writeInt(npack,    list[i].level)     -- (int32) level : 角色等级
+		DataPack.writeInt(npack,    list[i].job)       -- (int32) job : 职业ID
+		DataPack.writeInt(npack,    list[i].familyId)       -- (int32) familyId : 帮派ID
+		DataPack.writeString(npack, list[i].familyName)   -- (string) familyName : 帮派名
+		DataPack.writeInt(npack, list[i].camp)   -- (int32) camp : 阵营
+		DataPack.writeInt(npack, list[i].sex)   -- (int32) sex : 性别
+		DataPack.writeInt(npack, list[i].faceId)   -- (int32) faceId : 头像ID
+		DataPack.writeInt(npack, list[i].catchTime )   -- (int32) catchLevel ：被抓捕时的等级
+		DataPack.writeInt(npack, list[i].catchLevel)   -- (int32) catchLevel ：被抓捕时的等级
+		DataPack.writeInt(npack, list[i].catchRankNum)   -- (int32) catchRankNum ：被抓捕时的竞技场排行
+		DataPack.writeInt(npack, list[i].curExp)   -- (int32) curExp ：当前已经产生的经验
+		DataPack.writeInt(npack, list[i].interactiveCd)   -- (int32) interactiveCd ：互动cd时间
+		DataPack.writeInt(npack, list[i].slaveStatus)   -- (int32) slaveStatus : 身份状态
+		DataPack.writeInt(npack, list[i].baseExp)   -- (int32) 仙仆每秒产生的经验的基数
+	end
+	DataPack.flush(npack)
+
+	--[[========
+	print("=====================size="..size)
+	for i=1, size do
+		print("id="..list[i].id)        -- (int32) id : 角色ID
+		print("name="..list[i].name)   -- (string) name : 角色名
+		print("level="..list[i].level)     -- (int32) level : 角色等级
+		print("job="..list[i].job)       -- (int32) job : 职业ID
+		print("familyId="..list[i].familyId)       -- (int32) familyId : 帮派ID
+		print("familyName="..list[i].familyName)   -- (string) familyName : 帮派名
+		print("camp="..list[i].camp)   -- (int32) camp : 阵营
+		print("sex="..list[i].sex)   -- (int32) sex : 性别
+		print("faceId="..list[i].faceId)   -- (int32) faceId : 头像ID
+		print("catchTime="..list[i].catchTime)   -- (int32) faceId : 头像ID
+		print("catchLevel="..list[i].catchLevel)   -- (int32) catchLevel ：被抓捕时的等级
+		print("catchRankNum="..list[i].catchRankNum)   -- (int32) catchRankNum ：被抓捕时的竞技场排行
+		print("curExp="..list[i].curExp)   -- (int32) curExp ：当前已经产生的经验
+		print("interactiveCd="..list[i].interactiveCd)   -- (int32) interactiveCd ：互动cd时间
+		print("slaveStatus="..list[i].slaveStatus)   -- (int32) slaveStatus : 身份状态
+		print("===============")
+	end
+	--]]
+end
+
+-- 加到手下败将列表
+SlaveOpFuncList.doAddToFailureList = function(pid, failureId)
+	SlaveOpFuncList.initMasterSlaveData( pid )
+	local var = FightFun.getStaticVar( pid )
+	if var == nil or var.masterSlaveData == nil then 
+		print(" SlaveOpFuncList.doAddToFailureList error! var == nil or var.masterSlaveData == nil, actorId="..pid .. " failureId="..failureId )
+		return
+	end
+	local slaveList = SlaveOpFuncList.getSlaveList( pid )
+	for i=1, #slaveList do
+		if slaveList[i].id == failureId then
+			return true
+		end
+	end
+	local tmpList = SlaveOpFuncList.copyUserdataToTable( var.masterSlaveData.myFailureList )
+	var.masterSlaveData.myFailureList = {}
+	var.masterSlaveData.myFailureList[1] = failureId
+	for i=1, #tmpList do
+		local k = #var.masterSlaveData.myFailureList
+		if k >= SlaveConfig.MAX_FAILURE_COUNT then
+			break
+		end
+		if failureId ~= tmpList[i] then
+			var.masterSlaveData.myFailureList[k+1] = tmpList[i]
+		end
+	end
+
+	--如果玩家在线，则更新前端数据
+	local ptr = System.getEntityPtrByActorID( pid )
+	if ptr ~= nil then
+		SlaveOpFuncList[3](ptr)
+	end
+	return true
+end
+
+-- 从手下败将列表删除
+SlaveOpFuncList.deleteFromFailureList = function(pid, failureId)	
+	SlaveOpFuncList.initMasterSlaveData( pid )
+	local var = FightFun.getStaticVar( pid )
+	if var == nil or var.masterSlaveData == nil then 
+		print(" SlaveOpFuncList.deleteFromFailureList error! var == nil or var.masterSlaveData == nil, acotrId="..pid .. " failureId="..failureId )
+		return
+	end
+	local tmpList = SlaveOpFuncList.copyUserdataToTable( var.masterSlaveData.myFailureList )
+	var.masterSlaveData.myFailureList = {}
+	for i=1, #tmpList do
+		if tmpList[i] ~= failureId then
+			local k = #var.masterSlaveData.myFailureList
+			var.masterSlaveData.myFailureList[k+1] = tmpList[i]
+		end
+	end
+	
+	--如果玩家在线，则更新前端数据
+	local ptr = System.getEntityPtrByActorID( pid )
+	if ptr ~= nil then
+		SlaveOpFuncList[3](ptr)
+	end
+	return true
+end
+
+-- 添加消息到玩家消息列表
+SlaveOpFuncList.addMsg = function(msgId, receiverId, target1Id, target2Id )
+	SlaveOpFuncList.initMasterSlaveData( receiverId )
+	local var = FightFun.getStaticVar( receiverId )
+	if var == nil or var.masterSlaveData == nil then 
+		print(" SlaveOpFuncList.addMsg error! var == nil or var.masterSlaveData == nil, msgId=".. msgId .. ", receiverId=".. receiverId )
+		return
+	end
+	local tmpList = SlaveOpFuncList.copyMsgListToTable( var.masterSlaveData.msg )
+	var.masterSlaveData.msg = {}
+	var.masterSlaveData.msg[1] = {}
+	var.masterSlaveData.msg[1].sendTime = System.getCurrMiniTime()
+	var.masterSlaveData.msg[1].msgType = SlaveConfig.sysMsg[msgId].msgType
+	var.masterSlaveData.msg[1].msgId = msgId
+	var.masterSlaveData.msg[1].target1 = target1Id or 0
+	var.masterSlaveData.msg[1].target2 = target2Id or 0
+
+	for i=1, #tmpList do
+		local k = #var.masterSlaveData.msg
+		if k >= SlaveConfig.MAX_MSG_COUNT then
+			break
+		end
+		var.masterSlaveData.msg[k+1] = {}
+		var.masterSlaveData.msg[k+1].sendTime = tmpList[i].sendTime
+		var.masterSlaveData.msg[k+1].msgType = tmpList[i].msgType
+		var.masterSlaveData.msg[k+1].msgId   = tmpList[i].msgId
+		var.masterSlaveData.msg[k+1].target1 = tmpList[i].target1
+		var.masterSlaveData.msg[k+1].target2 = tmpList[i].target2
+	end
+
+	--如果玩家在线，则更新前端数据
+	local ptr = System.getEntityPtrByActorID( receiverId )
+	if ptr ~= nil then
+		SlaveOpFuncList[1](ptr)
+		SlaveOpFuncList.sendNewsTip(ptr, msgId)
+	end
+	
+	if 'number' == type(target1Id) then
+		local ptrTarget1 = System.getEntityPtrByActorID( target1Id )
+		if ptrTarget1 ~= nil then
+			SlaveOpFuncList[1](ptrTarget1)
+		end
+	end
+	if 'number' == type(target2Id) then
+		local ptrTarget2 = System.getEntityPtrByActorID( target2Id )
+		if ptrTarget2 ~= nil then
+			SlaveOpFuncList[1](ptrTarget2)
+		end
+	end
+	return true
+end
+
+-- 加到夺仆之敌列表
+SlaveOpFuncList.doAddToEnemyList = function(pid, enemyId)
+	SlaveOpFuncList.initMasterSlaveData( pid )
+	local var = FightFun.getStaticVar( pid )
+	if var == nil or var.masterSlaveData == nil then 
+		print(" SlaveOpFuncList.doAddToEnemyList error!var == nil or var.masterSlaveData == nil , actorId="..pid)
+		return
+	end
+	local slaveList = SlaveOpFuncList.getSlaveList( pid )
+	for i=1, #slaveList do
+		if slaveList[i].id == enemyId then
+			return true
+		end
+	end
+	local tmpList = SlaveOpFuncList.copyUserdataToTable( var.masterSlaveData.enemyList )
+	var.masterSlaveData.enemyList = {}
+	var.masterSlaveData.enemyList[1] = enemyId
+	for i=1, #tmpList do
+		local k = #var.masterSlaveData.enemyList
+		if k >= SlaveConfig.MAX_ENEMY_COUNT then
+			break
+		end
+		if enemyId ~= tmpList[i] then
+			var.masterSlaveData.enemyList[k+1] = tmpList[i]
+		end
+	end
+	--如果玩家在线，则更新前端数据
+	local ptr = System.getEntityPtrByActorID( pid )
+	if ptr ~= nil then
+		SlaveOpFuncList[4](ptr)
+	end
+	return true
+end
+
+-- 从夺仆之敌列表删除
+SlaveOpFuncList.deleteFromEnemyList = function(pid, enemyId)	
+	SlaveOpFuncList.initMasterSlaveData( pid )
+	local var = FightFun.getStaticVar( pid )
+	if var == nil or var.masterSlaveData == nil then 
+		print(" SlaveOpFuncList.deleteFromEnemyList error! var == nil or var.masterSlaveData == nil, acotrId="..pid .. " enemyId="..enemyId )
+		return
+	end
+	local tmpList = SlaveOpFuncList.copyUserdataToTable( var.masterSlaveData.enemyList )
+	var.masterSlaveData.enemyList = {}
+	for i=1, #tmpList do
+		if tmpList[i] ~= enemyId then
+			local k = #var.masterSlaveData.enemyList
+			var.masterSlaveData.enemyList[k+1] = tmpList[i]
+		end
+	end
+	
+	--如果玩家在线，则更新前端数据
+	local ptr = System.getEntityPtrByActorID( pid )
+	if ptr ~= nil then
+		SlaveOpFuncList[4](ptr)
+	end
+	return true
+end
+
+-- 加到求救列表
+SlaveOpFuncList.addAskForHelpList = function(pid, fromId)
+	SlaveOpFuncList.initMasterSlaveData( pid )
+	local var = FightFun.getStaticVar( pid )
+	if var == nil or var.masterSlaveData == nil then 
+		print(" SlaveOpFuncList.addAskForHelpList error! var == nil or var.masterSlaveData == nil actorId="..pid)
+		return
+	end
+	local tmpList = SlaveOpFuncList.copyUserdataToTable( var.masterSlaveData.askForHelpList )
+	var.masterSlaveData.askForHelpList = {}
+	var.masterSlaveData.askForHelpList[1] = fromId
+	for i=1, #tmpList do
+		local k = #var.masterSlaveData.askForHelpList
+		if k >= SlaveConfig.MAX_HELP_REQUST_COUNT then
+			break
+		end
+		if fromId ~= tmpList[i] then
+			var.masterSlaveData.askForHelpList[k+1] = tmpList[i]
+		end
+	end
+	--如果玩家在线，则更新前端数据
+	local ptr = System.getEntityPtrByActorID( pid )
+	if ptr ~= nil then
+		SlaveOpFuncList[6](ptr)
+	end
+	return true
+end
+
+
+-- 从求救列表中删除
+SlaveOpFuncList.deleteFromAskForHelpList = function(pid, fromId)
+	SlaveOpFuncList.initMasterSlaveData( pid )
+	local var = FightFun.getStaticVar( pid )
+	if var == nil or var.masterSlaveData == nil then 
+		print(" SlaveOpFuncList.deleteFromAskForHelpList error! var == nil or var.masterSlaveData == nil, actorId="..pid)
+		return
+	end
+	local tmpList = SlaveOpFuncList.copyUserdataToTable( var.masterSlaveData.askForHelpList )
+	var.masterSlaveData.askForHelpList = {}
+	for i=1, #tmpList do
+		local k = #var.masterSlaveData.askForHelpList
+		if tmpList[i] ~= fromId then
+			var.masterSlaveData.askForHelpList[k+1] = tmpList[i]
+		end
+	end
+	--如果玩家在线，则更新前端数据
+	local ptr = System.getEntityPtrByActorID( pid )
+	if ptr ~= nil then
+		SlaveOpFuncList[6](ptr)
+	end
+	return true
+end
+
+
+
+-- 加到我的求救记录
+SlaveOpFuncList.addSendHelpList = function(pid, helperId)
+	SlaveOpFuncList.initMasterSlaveData( pid )
+	local var = FightFun.getStaticVar( pid )
+	if var == nil or var.masterSlaveData == nil then 
+		print(" SlaveOpFuncList.sendHelpList error! var == nil or var.masterSlaveData == nil actorId="..pid)
+		return
+	end
+	for i=1, #var.masterSlaveData.sendHelpList do
+		if var.masterSlaveData.sendHelpList[i] == helperId then
+			return true
+		end
+	end
+	var.masterSlaveData.sendHelpList[#var.masterSlaveData.sendHelpList+1] = helperId
+	--如果玩家在线，则更新前端数据
+	local ptr = System.getEntityPtrByActorID( pid )
+	if ptr ~= nil then
+		SlaveOpFuncList[2](ptr)
+	end
+	return true
+end
+
+-- 删除我的求救记录
+SlaveOpFuncList.delSendHelpList = function(pid, helperId)
+	SlaveOpFuncList.initMasterSlaveData( pid )
+	local var = FightFun.getStaticVar( pid )
+	if var == nil or var.masterSlaveData == nil then 
+		print(" SlaveOpFuncList.sendHelpList error! var == nil or var.masterSlaveData == nil actorId="..pid)
+		return false
+	end
+	local helpListCount = #var.masterSlaveData.sendHelpList
+	for i=1, helpListCount do
+		if var.masterSlaveData.sendHelpList[i] == helperId then
+			var.masterSlaveData.sendHelpList[i] = 0
+			break
+		end
+	end
+	--var.masterSlaveData.sendHelpList[#var.masterSlaveData.sendHelpList+1] = helperId
+	--如果玩家在线，则更新前端数据
+	local ptr = System.getEntityPtrByActorID( pid )
+	if ptr ~= nil then
+		SlaveOpFuncList[2](ptr)
+	end
+	return true
+end
+
+SlaveOpFuncList.cleanSlave = function( pid )
+	local nowUnixTime = System.getCurrMiniTime()
+	local rank = FightFun.getRankingById( pid ) + 1
+	local var = FightFun.getStaticVar( pid )
+	if var == nil or var.masterSlaveData == nil then 
+		print(" SlaveOpFuncList.addSlave error! var == nil or var.masterSlaveData == nil, actorId="..pid)
+		return
+	end
+	if rank <= 0 or rank > SlaveConfig.HELPER_LIST_ON_RANKNUM then
+		var.masterSlaveData.slaveList = {}
+	end
+	for i=1, #var.masterSlaveData.slaveList do
+		if var.masterSlaveData.slaveList[i] ~= nil  then
+			if var.masterSlaveData.slaveList[i].liberateTime <= nowUnixTime then
+				var.masterSlaveData.slaveList[i] = nil
+			end
+		end
+	end
+end
+
+-- 获取苦工列表
+SlaveOpFuncList.getSlaveList = function( pid )
+	SlaveOpFuncList.cleanSlave( pid )
+	local tmpList = {}
+	local var = FightFun.getStaticVar( pid, false )
+	if var == nil or var.masterSlaveData == nil then 
+		print(" SlaveOpFuncList.addSlave error! var == nil or var.masterSlaveData == nil, actorId="..pid)
+		return tmpList
+	end
+	for i=1, #var.masterSlaveData.slaveList do
+		if var.masterSlaveData.slaveList[i] ~= nil then
+			tmpList[#tmpList+1] = var.masterSlaveData.slaveList[i]
+		end
+	end
+	return tmpList
+end
+
+-- 加到苦工列表
+SlaveOpFuncList.addSlave = function(pid, hisId, catchLevel, catchFightRank)
+	SlaveOpFuncList.cleanSlave( pid )
+	local var = FightFun.getStaticVar( pid )
+	if var == nil or var.masterSlaveData == nil then 
+		print(" SlaveOpFuncList.addSlave error! var == nil or var.masterSlaveData == nil, actorId="..pid)
+		return
+	end
+	local nowUnixTime = System.getCurrMiniTime()
+	for i=1, SlaveConfig.MAX_SLAVE_COUNT do
+		if var.masterSlaveData.slaveList[i] == nil then
+			var.masterSlaveData.slaveList[i] = {}
+			var.masterSlaveData.slaveList[i].id = hisId
+			var.masterSlaveData.slaveList[i].catchTime = nowUnixTime
+			var.masterSlaveData.slaveList[i].interactiveTime = 0
+			var.masterSlaveData.slaveList[i].liberateTime = nowUnixTime + SlaveConfig.MAX_SLAVE_SERVICE_TIME
+			var.masterSlaveData.slaveList[i].exp = 0
+			var.masterSlaveData.slaveList[i].catchLevel = catchLevel
+			var.masterSlaveData.slaveList[i].catchFightRank = catchFightRank
+			var.masterSlaveData.slaveList[i].lastSubmitTime = nowUnixTime
+			break
+		end
+	end
+
+	--如果玩家在线，则更新前端数据
+	local ptr = System.getEntityPtrByActorID( pid )
+	if ptr ~= nil then
+		SlaveOpFuncList[5](ptr)
+		SlaveOpFuncList[2](ptr)
+	end
+	return true
+end
+
+-- 从苦工列表中删除
+SlaveOpFuncList.deleteSlave = function(pid, slaveId)
+	SlaveOpFuncList.initMasterSlaveData( pid )
+	local var = FightFun.getStaticVar( pid )
+	if var == nil or var.masterSlaveData == nil then 
+		print(" SlaveOpFuncList.deleteSlave error! var == nil or var.masterSlaveData == nil, actorId="..pid)
+		return
+	end
+	for i=1, #var.masterSlaveData.slaveList do
+		if var.masterSlaveData.slaveList[i] ~= nil and slaveId == var.masterSlaveData.slaveList[i].id then
+			var.masterSlaveData.slaveList[i] = nil
+		end
+	end
+	--如果玩家在线，则更新前端数据
+	local ptr = System.getEntityPtrByActorID( pid )
+	if ptr ~= nil then
+		SlaveOpFuncList[5](ptr)
+		SlaveOpFuncList[2](ptr)
+	end
+	return true
+end
+
+-- 更改苦工列表中苦工信息
+-- catchTime, interactiveTime, exp, lastSubmitTime 设为nil 则不修改
+SlaveOpFuncList.updateSlaveItem = function(pid, slaveId, liberateTime, interactiveTime, exp, lastSubmitTime)
+	SlaveOpFuncList.initMasterSlaveData( pid )
+	local var = FightFun.getStaticVar( pid )
+	if var == nil or var.masterSlaveData == nil then 
+		print(" SlaveOpFuncList.updateSlaveItem error! var == nil or var.masterSlaveData == nil , actorId="..pid)
+		return
+	end
+	for k=1, #var.masterSlaveData.slaveList do
+		if var.masterSlaveData.slaveList[k] ~= nil and slaveId == var.masterSlaveData.slaveList[k].id then
+			--var.masterSlaveData.slaveList[k].id = 
+			--var.masterSlaveData.slaveList[k].catchTime = 
+			var.masterSlaveData.slaveList[k].interactiveTime = interactiveTime or var.masterSlaveData.slaveList[k].interactiveTime 
+			var.masterSlaveData.slaveList[k].liberateTime = liberateTime or var.masterSlaveData.slaveList[k].liberateTime
+			var.masterSlaveData.slaveList[k].exp = exp or var.masterSlaveData.slaveList[k].exp
+			--var.masterSlaveData.slaveList[k].catchLevel = 
+			--var.masterSlaveData.slaveList[k].catchFightRank = 
+			var.masterSlaveData.slaveList[k].lastSubmitTime = lastSubmitTime or var.masterSlaveData.slaveList[k].lastSubmitTime
+		end
+	end
+	--如果玩家在线，则更新前端数据
+	local ptr = System.getEntityPtrByActorID( pid )
+	if ptr ~= nil then
+		SlaveOpFuncList[5](ptr)
+	end
+	return true
+end
+
+--[[
+-- 从苦工列表获得苦工信息
+SlaveOpFuncList.getSlaveById = function(pid, slaveId)
+	SlaveOpFuncList.initMasterSlaveData( pid )
+	local var = FightFun.getStaticVar( pid )
+	if var == nil or var.masterSlaveData == nil then 
+		print(" SlaveOpFuncList.deleteSlave masterSlaveData error!")
+		return
+	end
+	local slaveList = SlaveOpFunList.getSlaveList( pid )
+	for i=1, #slaveList do
+		local k = #slaveList
+		if slaveList[i] ~= nil and slaveId ~= slaveList[i].id then
+			return slaveList[i]
+		end
+	end
+end
+]]
+
+SlaveOpFuncList.getHelpList = function(sysarg, familyId, myId, masterId)
+	local helperList = {}
+	--如果玩家没加入帮派直接返回空列表
+	if familyId == 0 then
+		return helperList
+	end
+	local plist = FightFun.getActorList(familyId, SlaveConfig.HELPER_LIST_ON_LEVEL, SlaveConfig.HELPER_LIST_ON_RANKNUM, 20 )  --取竞技场 1000名内同帮派且在线的玩家，最多取20人
+	if plist == nil then
+		return helperList
+	end
+	for i=1, #plist do
+		local info = SlaveOpFuncList.slaveSysVo()
+		info.id, info.name, info.faceId, info.level, info.job, info.familyId, info.familyName, info.camp, info.sex  =  FightFun.getActorInfoByPtr( plist[i] )
+		if info ~= nil and info.id ~= nil and masterId ~= info.id and myId ~= info.id then
+			info.slaveStatus = SlaveOpFuncList.getActorSlaveStatus( info.id )
+			info.fightRank = FightFun.getRankingById( info.id ) + 1
+			if info.slaveStatus ~= nil and info.slaveStatus ~= SlaveConfig.slaveStatus.SLAVE and info.fightRank ~= nil then
+				helperList[#helperList+1] = info
+			end
+			--[[----------test----------------
+			print("*************************************** i="..i)
+			for k,v in pairs(info) do
+				print("info."..k.."= "..v)
+			end
+			----------------------------]]
+		end
+	end
+	return helperList
+end
+
+SlaveOpFuncList.copyUserdataToTable = function(myUserdata)
+	local t = {}
+	for i=1, #myUserdata do
+		t[i] = myUserdata[i]
+	end
+	return t
+end
+SlaveOpFuncList.copySlaveItemToTable = function(myUserdata)
+	local slave = SlaveOpFuncList.slaveListStruct()
+	for k, v in pairs( slave ) do
+		slave[k] = myUserdata[k]
+	end
+	return slave
+end
+SlaveOpFuncList.copySlaveListToTable = function(myUserdata)
+	local list = {}
+	for i=1, #myUserdata do 
+		list[i] = SlaveOpFuncList.copySlaveItemToTable( myUserdata[i] )
+	end
+	return list
+end
+SlaveOpFuncList.copyMsgItemToTable = function(myUserdata)
+	local msg = SlaveOpFuncList.msgStruct()
+	for k, v in pairs( msg ) do
+		msg[k] = myUserdata[k]
+	end
+	return msg
+end
+SlaveOpFuncList.copyMsgListToTable = function(myUserdata)
+	local list = {}
+	for i=1, #myUserdata do 
+		list[i] = SlaveOpFuncList.copyMsgItemToTable( myUserdata[i] )
+	end
+	return list
+end
+
+-- 经验奖励值
+SlaveOpFuncList.getExpAward = function(baseConf, rank, level, second)
+	local base = SlaveOpFuncList.getConfBase( baseConf, rank )
+	if second == nil then
+		return math.floor(( 400 * level * level + level * 200 + 1000000 ) * base )
+	else
+		return math.floor(( 400 * level * level + level * 200 + 1000000 ) * base * second )
+	end
+end
+
+-- 获取基数
+SlaveOpFuncList.getConfBase = function(baseConf, rank )
+	local base = 0
+	for i=1,#baseConf do
+		local exp = baseConf[i]
+		if rank >= exp[1] and rank <= exp[2] then
+			base = exp[3]
+			break
+		end
+	end
+	return base
+end
+--=============== end 辅助函数 ======================
+
+
+
+--======================协议=======================
+
+--  获取消息列表
+SlaveOpFuncList[1] = function ( sysarg )
+	if SlaveOpFuncList.isClose( sysarg ) then
+		return
+	end
+	local myId = LActor.getActorId( sysarg )
+	SlaveOpFuncList.initMasterSlaveData( myId )
+	local data = SlaveOpFuncList.getMasterSlaveData( myId )
+	if data == nil then 
+		print("SlaveOpFuncList[1] data error! actorId="..myId)
+		return
+	end
+
+	local msglist = {}
+	for k=1, #data.msg do
+		if data.msg[k] ~= nil then
+			local flag = true
+			local target1Info = nil
+			local target2Info = nil
+			if "number" == type(data.msg[k].target1) and data.msg[k].target1 ~= 0 then
+				target1Info = SlaveOpFuncList.getActorInfo( data.msg[k].target1 )
+				if target1Info == nil then
+					print("SlaveOpFuncList[1] target1Info == nil, actorId="..data.msg[k].target1)
+					flag = false
+				end
+			end
+			if "number" == type(data.msg[k].target2) and data.msg[k].target2 ~= 0 then
+				target2Info = SlaveOpFuncList.getActorInfo( data.msg[k].target2 )
+				if target2Info == nil then
+					print("SlaveOpFuncList[1] target2Info == nil, actorId="..data.msg[k].target2)
+					flag = false
+				end
+			end
+			local i = #msglist+1
+			if flag then
+				msglist[i] = {}
+				msglist[i].sendTime = data.msg[k].sendTime
+				msglist[i].msgType = data.msg[k].msgType
+				msglist[i].msgId = data.msg[k].msgId
+				msglist[i].target1 = data.msg[k].target1
+				msglist[i].target1Info = target1Info
+				msglist[i].target2 = data.msg[k].target2
+				msglist[i].target2Info = target2Info
+			end
+		end
+	end
+	
+	local npack = DataPack.allocPacket(sysarg,144,1)
+	if npack == nil then return end
+	DataPack.writeInt(npack, #msglist)
+	for k=#msglist, 1 , -1 do
+		DataPack.writeInt(npack, msglist[k].sendTime)
+		DataPack.writeInt(npack, msglist[k].msgType)
+		DataPack.writeInt(npack, msglist[k].msgId)
+
+		local list = {}
+		if msglist[k].target1Info ~= nil then
+			list[#list+1] = msglist[k].target1Info
+		end
+		if msglist[k].target2Info ~= nil then
+			list[#list+1] = msglist[k].target2Info
+		end
+		DataPack.writeInt(npack, #list)
+
+		for i=1, #list do
+			DataPack.writeInt(npack,    list[i].id)        -- (int32) id : 角色ID
+			DataPack.writeString(npack, list[i].name)   -- (string) name : 角色名
+			DataPack.writeInt(npack,    list[i].level)     -- (int32) level : 角色等级
+			DataPack.writeInt(npack,    list[i].job)       -- (int32) job : 职业ID
+			DataPack.writeInt(npack,    list[i].familyId)       -- (int32) familyId : 帮派ID
+			DataPack.writeString(npack, list[i].familyName)   -- (string) familyName : 帮派名
+			DataPack.writeInt(npack, list[i].camp)   -- (int32) camp : 阵营
+			DataPack.writeInt(npack, list[i].sex)   -- (int32) sex : 性别
+			DataPack.writeInt(npack, list[i].faceId)   -- (int32) faceId : 头像ID
+			DataPack.writeInt(npack, list[i].catchTime )   -- (int32) catchLevel ：被抓捕时的等级
+			DataPack.writeInt(npack, list[i].catchLevel)   -- (int32) catchLevel ：被抓捕时的等级
+			DataPack.writeInt(npack, list[i].catchRankNum)   -- (int32) catchRankNum ：被抓捕时的竞技场排行
+			DataPack.writeInt(npack, list[i].curExp)   -- (int32) curExp ：当前已经产生的经验
+			DataPack.writeInt(npack, list[i].interactiveCd)   -- (int32) interactiveCd ：互动cd时间
+			DataPack.writeInt(npack, list[i].slaveStatus)   -- (int32) slaveStatus : 身份状态
+			DataPack.writeInt(npack, list[i].baseExp)   -- (int32) slaveStatus : 身份状态
+		end
+	end
+	DataPack.flush(npack)
+end
+
+--  地主苦工系统数据
+SlaveOpFuncList[2] = function( sysarg )
+	if SlaveOpFuncList.isClose( sysarg ) then
+		return
+	end
+	local myId = LActor.getActorId( sysarg )
+	SlaveOpFuncList.initMasterSlaveData( myId )
+	local data = SlaveOpFuncList.getMasterSlaveData( myId )
+	if data == nil then 
+		print("SlaveOpFuncList[2] data error! actorId="..myId)
+		return
+	end
+	local slaveStatus = SlaveOpFuncList.getActorSlaveStatus( myId )
+
+	if slaveStatus == nil then
+		print(" SlaveOpFuncList[2] slaveStatus error! actorId="..myId)
+		return
+	end
+
+	local masterInfo = nil
+	if slaveStatus == SlaveConfig.slaveStatus.SLAVE then
+		masterInfo = SlaveOpFuncList.getActorInfo( data.masterId )
+		if masterInfo == nil then
+			print(" SlaveOpFuncList[2] masterInfo error! actorId="..data.masterId)
+			return
+		end
+	end
+
+	local nextAddCatchCountNeedYB = 0
+    if data.todayAddCatchCount < SlaveConfig.MAX_ADD_CATCH_COUNT then
+    	nextAddCatchCountNeedYB = SlaveOpFuncList.getConfBase(SlaveConfig.addCatchCountCost, data.todayAddCatchCount +1 )
+    end
+
+	local npack = DataPack.allocPacket(sysarg,144,2)
+    if npack == nil then return end    
+
+    DataPack.writeInt(npack, SlaveConfig.SYSTEM_SWITCH) --系统开关状态
+    DataPack.writeInt(npack, SlaveConfig.OPEN_LEVEL) --系统开启角色等级下限
+    DataPack.writeInt(npack, slaveStatus)  --身份状态
+	DataPack.writeInt(npack, SlaveConfig.MAX_CATCH_TIMES - data.todayCatchTimes) --今天剩抓捕/掠夺次数
+	DataPack.writeInt(npack, SlaveConfig.MAX_CATCH_TIMES) --抓捕/掠夺次数上限
+	DataPack.writeInt(npack, SlaveConfig.MAX_INTERACTIVE_TIMES-data.todayInteractiveTimes) --今日剩互动次数
+	DataPack.writeInt(npack, SlaveConfig.MAX_INTERACTIVE_TIMES) --互动次数上限
+	DataPack.writeInt(npack, SlaveConfig.MAX_RESIST_TIMES - data.todayResistTimes) --今天剩反抗/求救次数
+	DataPack.writeInt(npack, SlaveConfig.MAX_RESIST_TIMES) --反抗/求救次数上限
+    DataPack.writeInt(npack, data.todayGetExp)  --今日已获得经验
+    DataPack.writeInt(npack, SlaveConfig.MAX_RESCUE_TIMES - data.todayRescueTimes)  --今日剩解救次数
+    DataPack.writeInt(npack, SlaveConfig.MAX_RESCUE_TIMES)  --解救次数上限
+    DataPack.writeInt(npack, nextAddCatchCountNeedYB )  --下一次增加抓捕次数需要消耗天珠数 为0时 客户端提示不能再增加了
+
+    DataPack.writeInt(npack, #data.sendHelpList)
+	for k=1, #data.sendHelpList do
+		DataPack.writeInt(npack, data.sendHelpList[k] )
+	end
+
+    if slaveStatus == SlaveConfig.slaveStatus.SLAVE then
+		DataPack.writeInt(npack,    masterInfo.id)        -- (int32) id : 角色ID
+		DataPack.writeString(npack, masterInfo.name)   -- (string) name : 角色名
+		DataPack.writeInt(npack,    masterInfo.level)     -- (int32) level : 角色等级
+		DataPack.writeInt(npack,    masterInfo.job)       -- (int32) job : 职业ID
+		DataPack.writeInt(npack,    masterInfo.familyId)       -- (int32) familyId : 帮派ID
+		DataPack.writeString(npack, masterInfo.familyName)   -- (string) familyName : 帮派名
+		DataPack.writeInt(npack, masterInfo.camp)   -- (int32) camp : 阵营
+		DataPack.writeInt(npack, masterInfo.sex)   -- (int32) sex : 性别
+		DataPack.writeInt(npack, masterInfo.faceId)   -- (int32) faceId : 头像ID
+		DataPack.writeInt(npack, masterInfo.catchTime )   -- (int32) catchLevel ：被抓捕时的等级
+		DataPack.writeInt(npack, masterInfo.catchLevel)   -- (int32) catchLevel ：被抓捕时的等级
+		DataPack.writeInt(npack, masterInfo.catchRankNum)   -- (int32) catchRankNum ：被抓捕时的竞技场排行
+		DataPack.writeInt(npack, masterInfo.curExp)   -- (int32) curExp ：当前已经产生的经验
+		DataPack.writeInt(npack, masterInfo.interactiveCd)   -- (int32) interactiveCd ：互动cd时间
+		DataPack.writeInt(npack, masterInfo.slaveStatus)   -- (int32) slaveStatus : 身份状态
+		DataPack.writeInt(npack, masterInfo.baseExp)   -- (int32) slaveStatus : 身份状态
+    end
+
+    DataPack.flush(npack)
+    --[[
+    print(" SlaveConfig.SYSTEM_SWITCH=" .. SlaveConfig.SYSTEM_SWITCH) --系统开关状态
+    print(" SlaveConfig.OPEN_LEVEL=" .. SlaveConfig.OPEN_LEVEL) --系统开启角色等级下限
+    print(" slaveStatus=" .. slaveStatus)  --身份状态
+	print(" SlaveConfig.MAX_CATCH_TIMES - data.todayCatchTimes=" .. SlaveConfig.MAX_CATCH_TIMES - data.todayCatchTimes) --今天剩抓捕/掠夺次数
+	print(" SlaveConfig.MAX_CATCH_TIMES=" .. SlaveConfig.MAX_CATCH_TIMES) --抓捕/掠夺次数上限
+	print(" SlaveConfig.MAX_INTERACTIVE_TIMES-data.todayInteractiveTimes=" .. SlaveConfig.MAX_INTERACTIVE_TIMES-data.todayInteractiveTimes) --今日剩互动次数
+	print(" SlaveConfig.MAX_INTERACTIVE_TIMES=" .. SlaveConfig.MAX_INTERACTIVE_TIMES) --互动次数上限
+	print(" SlaveConfig.MAX_RESIST_TIMES - data.todayResistTimes=" .. SlaveConfig.MAX_RESIST_TIMES - data.todayResistTimes) --今天剩反抗/求救次数
+	print(" SlaveConfig.MAX_RESIST_TIMES=" .. SlaveConfig.MAX_RESIST_TIMES) --反抗/求救次数上限
+    print(" data.todayGetExp=" .. data.todayGetExp)  --今日已获得经验
+    print(" SlaveConfig.MAX_RESCUE_TIMES - data.todayRescueTimes=" .. SlaveConfig.MAX_RESCUE_TIMES - data.todayRescueTimes)  --今日剩解救次数
+    print(" SlaveConfig.MAX_RESCUE_TIMES=" .. SlaveConfig.MAX_RESCUE_TIMES)  --解救次数上限
+    ]]
+end
+
+--  手下败将列表
+SlaveOpFuncList[3] = function ( sysarg )
+	if SlaveOpFuncList.isClose( sysarg ) then
+		return
+	end
+	local myId = LActor.getActorId( sysarg )
+	SlaveOpFuncList.initMasterSlaveData( myId )
+	local data = SlaveOpFuncList.getMasterSlaveData( myId )
+	if data == nil  then 
+		print("SlaveOpFuncList[3] data error! actorId="..myId)
+		return
+	end
+	local list = {}
+
+	for k=1, #data.myFailureList do
+		local info = SlaveOpFuncList.getActorInfo( data.myFailureList[k] )
+		if info ~= nil then
+			list[#list+1] = info
+		end
+	end
+	SlaveOpFuncList.doSendSlaveSysVoList( sysarg, 144, 3, list)
+end
+
+-- 夺仆之敌列表
+SlaveOpFuncList[4] = function( sysarg )
+	if SlaveOpFuncList.isClose( sysarg ) then
+		return
+	end
+	local myId = LActor.getActorId( sysarg )
+	SlaveOpFuncList.initMasterSlaveData( myId )
+	local data = SlaveOpFuncList.getMasterSlaveData( myId )
+	if data == nil then 
+		print("SlaveOpFuncList[4]  data error! actorId="..myId)
+		return
+	end
+	local list = {}
+	for k=1, #data.enemyList do
+		local info = SlaveOpFuncList.getActorInfo( data.enemyList[k] )
+		if info ~= nil then
+			list[#list+1] = info
+		end
+	end
+	SlaveOpFuncList.doSendSlaveSysVoList( sysarg, 144, 4, list)
+end
+
+--  苦工列表
+SlaveOpFuncList[5] = function( sysarg )
+	if SlaveOpFuncList.isClose( sysarg ) then
+		return
+	end
+	local myId = LActor.getActorId( sysarg )
+	SlaveOpFuncList.initMasterSlaveData( myId )
+	local slaveList = SlaveOpFuncList.getSlaveList( myId )
+	local list = {}
+	local nowUnixTime = System.getCurrMiniTime()
+	for k=1, #slaveList do
+		local i = #list + 1
+		local rank = slaveList[k].catchFightRank
+		local second = nowUnixTime - slaveList[k].lastSubmitTime
+		local exp = SlaveOpFuncList.getExpAward( SlaveConfig.slaveMakeExp, rank, slaveList[k].catchLevel, second )
+		local exp = slaveList[k].exp + exp
+		local info = SlaveOpFuncList.getActorInfo( slaveList[k].id )
+		if info ~= nil then
+			list[i] = info
+			list[i].catchTime = slaveList[k].liberateTime - nowUnixTime --这里作假，客户端这个字段要的是当前干活时间
+			list[i].curExp = exp
+			list[i].catchLevel = slaveList[k].catchLevel
+			list[i].catchRankNum = slaveList[k].catchFightRank
+			list[i].baseExp = 100000000000 * SlaveOpFuncList.getConfBase( SlaveConfig.slaveMakeExp, rank ) 
+			list[i].interactiveCd  =  SlaveConfig.INTERACTIVE_PROTECT_TIME - (nowUnixTime - slaveList[k].interactiveTime)
+			if list[i].interactiveCd < 0 then
+				list[i].interactiveCd = 0
+			end
+		end
+	end
+	SlaveOpFuncList.doSendSlaveSysVoList( sysarg, 144, 5, list )
+end
+
+--  求救列表
+SlaveOpFuncList[6] = function( sysarg )
+	if SlaveOpFuncList.isClose( sysarg ) then
+		return
+	end
+	local myId = LActor.getActorId( sysarg )
+	SlaveOpFuncList.initMasterSlaveData( myId )
+	local data = SlaveOpFuncList.getMasterSlaveData( myId )
+	if data == nil then 
+		print("SlaveOpFuncList[6] data error! actorId="..myId)
+		return
+	end
+	local list = {}
+	for k=1, #data.askForHelpList do
+		local tmpInfo = SlaveOpFuncList.getActorInfo( data.askForHelpList[k] )
+		--如果已经是不是仙仆了，则不显示
+		if tmpInfo ~= nil and tmpInfo.slaveStatus == SlaveConfig.slaveStatus.SLAVE then
+			list[#list+1] = tmpInfo
+		end
+	end
+	SlaveOpFuncList.doSendSlaveSysVoList( sysarg, 144, 6, list)
+end
+
+--  抓捕/掠夺
+SlaveOpFuncList[7] = function( sysarg , dp)
+	if SlaveOpFuncList.isClose( sysarg ) then
+		return
+	end
+	local hisId = DataPack.readInt( dp )	--玩家ID
+	local force = DataPack.readInt( dp )  -- 若对手已经有地主，是否与地主PK？
+
+	local rank = FightFun.getRankingById( hisId ) + 1
+	if rank <= 0 or rank > SlaveConfig.HELPER_LIST_ON_RANKNUM then
+		LActor.sendTipmsg( sysarg, Lang.Slave.t025, ttMessage ) 
+		return
+	end
+
+	local myId = LActor.getActorId( sysarg )
+	local myData = SlaveOpFuncList.getMasterSlaveData( myId )
+	if myData == nil then 
+		print("SlaveOpFuncList[7] myData error! actorId="..myId)
+		return
+	end
+	local mySlaveStatus = SlaveOpFuncList.getActorSlaveStatus( myId )
+
+	if mySlaveStatus == nil then
+		print(" SlaveOpFuncList[7] mySlaveStatus error! actorId="..myId)
+		return
+	end
+
+	--如果自己是苦工身份，不允许此操作
+	if mySlaveStatus == SlaveConfig.slaveStatus.SLAVE then
+		print("SlaveOpFuncList[7] error! mySlaveStatus == SlaveConfig.slaveStatus.SLAVE, actorId="..myId)
+		return
+	end
+	--次数已到限制
+	if myData.todayCatchTimes >= SlaveConfig.MAX_CATCH_TIMES then
+		LActor.sendTipmsg( sysarg, Lang.Slave.t003, ttMessage ) 
+		return
+	end
+	local mySlaveList = SlaveOpFuncList.getSlaveList( myId )
+	for k=1, #mySlaveList do
+		--已在我的苦工列表
+		if mySlaveList[k] == hisId then
+			LActor.sendTipmsg( sysarg, Lang.Slave.t005, ttMessage ) 
+			return
+		end
+	end
+	-- 苦工个数限制
+	if #mySlaveList >= SlaveConfig.MAX_SLAVE_COUNT then
+		LActor.sendTipmsg( sysarg, Lang.Slave.t004, ttMessage )
+		return
+	end
+
+	--不在我的手下败将或夺仆之敌列表中，则不给抓捕、掠夺
+	local isInList = false
+	for k=1, #myData.myFailureList do
+		if myData.myFailureList[k] == hisId then
+			isInList = true
+			break
+		end
+	end
+	for k=1, #myData.enemyList do
+		if myData.enemyList[k] == hisId then
+			isInList = true
+			break
+		end
+	end
+    if not isInList then
+    	LActor.sendTipmsg( sysarg, Lang.Slave.t006, ttMessage )
+    	return
+    end
+
+
+	local tmpData1 = {}
+	tmpData1.todayCatchTimes = myData.todayCatchTimes + 1
+	
+    local failureStatus = SlaveOpFuncList.getActorSlaveStatus( hisId )
+	if failureStatus == nil then
+		print(" SlaveOpFuncList[7] failureStatus error! actorId="..hisId)
+		return
+	end
+    if failureStatus == SlaveConfig.slaveStatus.FREE_BY_PAY then
+    	LActor.sendTipmsg( sysarg, Lang.Slave.t007, ttMessage )
+		return
+	end
+	if failureStatus == SlaveConfig.slaveStatus.LANDOWNER then
+		local hisData = SlaveOpFuncList.getMasterSlaveData( hisId )
+		if hisData == nil then 
+			print("SlaveOpFuncList[7] hisData error! actorId="..hisId)
+			return
+		end
+		local lastInteractiveTime = 0 --最后互动的时间
+		local nowUnixTime = System.getCurrMiniTime()
+		local hisSlaveList = SlaveOpFuncList.getSlaveList( hisId )
+		for k=1, #hisSlaveList do
+			if hisSlaveList[k].interactiveTime > lastInteractiveTime then
+				lastInteractiveTime = hisSlaveList[k].interactiveTime
+			end
+		end
+		--判断是否在互动保护期内
+		if lastInteractiveTime ~=0 and ( nowUnixTime - lastInteractiveTime < SlaveConfig.INTERACTIVE_PROTECT_TIME ) then
+			LActor.sendTipmsg( sysarg, Lang.Slave.t008, ttMessage )
+			return
+		end
+		local flag1 = FightPublicOp.doCatch( sysarg, hisId, hisSlaveList[1].id, SlaveConfig.pkType.ROB )
+		if flag1 then
+			local flag = SlaveOpFuncList.setMasterSlaveData( myId, tmpData1 )
+			if not flag then
+				print("SlaveOpFuncList[7] pkType.ROB 1 SlaveOpFuncList.setMasterSlaveData return false , actorId="..myId)
+				return
+			end
+		end
+		return
+	end
+
+	if failureStatus == SlaveConfig.slaveStatus.SLAVE then
+		local hisData = SlaveOpFuncList.getMasterSlaveData( hisId )
+		if hisData == nil or hisData.masterId == 0 then 
+			print("SlaveOpFuncList[7] hisData error! hisData == nil or hisData.masterId == 0 , actorId="..hisId)
+			return
+		end
+		if force ~= 1 then
+			SlaveOpFuncList.sendTip(sysarg, hisId, hisData.masterId, 9001)
+			return
+		end
+		local histMasterData = SlaveOpFuncList.getMasterSlaveData( hisData.masterId )
+		if histMasterData == nil then
+			print("SlaveOpFuncList[7] error! histMasterData == nil , hisId="..hisId..", histMasterId="..hisData.masterId )
+			return
+		end
+		local lastInteractiveTime = 0 --最后互动的时间
+		local nowUnixTime = System.getCurrMiniTime()
+		local hisMastersSlaveList = SlaveOpFuncList.getSlaveList( hisData.masterId )
+		for k=1, #hisMastersSlaveList do
+			if hisMastersSlaveList[k].interactiveTime > lastInteractiveTime then
+				lastInteractiveTime = hisMastersSlaveList[k].interactiveTime
+			end
+		end
+		--判断是否在互动保护期内
+		if lastInteractiveTime ~=0 and ( nowUnixTime - lastInteractiveTime < SlaveConfig.INTERACTIVE_PROTECT_TIME ) then
+			LActor.sendTipmsg( sysarg, Lang.Slave.t008, ttMessage )
+			return
+		end
+
+		local flag1 = FightPublicOp.doCatch( sysarg, hisData.masterId, hisId, SlaveConfig.pkType.ROB )
+		if flag1 then
+			local flag = SlaveOpFuncList.setMasterSlaveData( myId, tmpData1 )
+			if not flag then
+				print("SlaveOpFuncList[7] pkType.ROB 2 SlaveOpFuncList.setMasterSlaveData return false , actorId="..myId)
+				return
+			end
+		end
+		return
+	end
+
+	if failureStatus == SlaveConfig.slaveStatus.FREE then
+		local flag1 = FightPublicOp.doCatch( sysarg, hisId, hisId, SlaveConfig.pkType.CATCH )
+		if flag1 then
+			local flag = SlaveOpFuncList.setMasterSlaveData( myId, tmpData1 )
+			if not flag then
+				print("SlaveOpFuncList[7] pkType.CATCH SlaveOpFuncList.setMasterSlaveData return false , actorId="..myId)
+				return
+			end
+		end
+		return
+	end
+end
+
+--  求救
+SlaveOpFuncList[8] = function( sysarg , dp)
+	if SlaveOpFuncList.isClose( sysarg ) then
+		return
+	end
+	local myId = LActor.getActorId( sysarg )
+	SlaveOpFuncList.initMasterSlaveData( myId )
+	local myData = SlaveOpFuncList.getMasterSlaveData( myId )
+	local myInfo = SlaveOpFuncList.getActorInfo( myId )
+	local mySlaveStatus = SlaveOpFuncList.getActorSlaveStatus( myId )
+
+	local hisId = DataPack.readInt( dp )	--被求玩家ID
+	local hisData = SlaveOpFuncList.getMasterSlaveData( hisId )
+	local hisInfo = SlaveOpFuncList.getActorInfo( hisId )
+	local hisSlaveStatus = SlaveOpFuncList.getActorSlaveStatus( hisId )
+
+	if myData == nil then 
+		print(" SlaveOpFuncList[8] myData error! actorId="..myId)
+		return
+	end
+	if  hisData == nil then 
+		print(" SlaveOpFuncList[8] hisData error! actorId="..hisId)
+		return
+	end
+	if myInfo == nil then
+		print(" SlaveOpFuncList[8] myInfo error! actorId="..myId)
+		return
+	end
+	if hisInfo == nil then
+		print(" SlaveOpFuncList[8] hisInfo error! actorId="..hisId)
+		return
+	end
+	if mySlaveStatus == nil then
+		print(" SlaveOpFuncList[8] mySlaveStatus error! actorId="..myId)
+		return
+	end
+	if hisSlaveStatus == nil then
+		print(" SlaveOpFuncList[8] hisSlaveStatus error! actorId="..hisId)
+		return
+	end
+	--如果自己不是苦工身份，不允许此操作
+	if mySlaveStatus ~= SlaveConfig.slaveStatus.SLAVE then
+		print("SlaveOpFuncList[8] error! mySlaveStatus ~= SlaveConfig.slaveStatus.SLAVE, actorId="..myId)
+		return
+	end
+	--次数已到限制
+	if myData.todayResistTimes >= SlaveConfig.MAX_RESIST_TIMES then
+		LActor.sendTipmsg( sysarg, Lang.Slave.t010, ttMessage ) 
+		return
+	end
+
+	if hisId == myData.masterId then
+		LActor.sendTipmsg( sysarg, Lang.Slave.t021, ttMessage ) 
+		return
+	end
+
+	if hisInfo.familyId ~= myInfo.familyId then
+		LActor.sendTipmsg( sysarg, Lang.Slave.t011, ttMessage ) 
+		return
+	end
+
+	if hisSlaveStatus == SlaveConfig.slaveStatus.SLAVE then
+		LActor.sendTipmsg( sysarg, Lang.Slave.t012, ttMessage )
+		return
+	end
+
+	local helpList = SlaveOpFuncList.getHelpList(sysarg, myInfo.familyId, myId, myData.masterId)
+	local exist = false
+	for i=1, #helpList do
+		if helpList[i].id == hisId then
+			exist = true
+			break
+		end
+	end
+	if not exist then
+		LActor.sendTipmsg( sysarg, Lang.Slave.t013, ttMessage )
+		return
+	end
+
+	if myData.sendHelpList ~= nil then
+		for i=1, #myData.sendHelpList do
+			if myData.sendHelpList[i] == hisId then
+				return true
+			end
+		end
+	end
+
+	tmpData = {}
+	tmpData.todayResistTimes = myData.todayResistTimes +1
+	local flag1 = SlaveOpFuncList.setMasterSlaveData( myId , tmpData )
+	if not flag1 then
+		print("SlaveOpFuncList[8] SlaveOpFuncList.setMasterSlaveData return false , myId="..myId)
+		return
+	end
+	local flag2 = SlaveOpFuncList.addSendHelpList( myId, hisId )
+	if not flag2 then
+		print("SlaveOpFuncList[8] SlaveOpFuncList.addSendHelpList return false , myId="..myId..", hisId="..hisId)
+		return
+	end
+	local flag3 = SlaveOpFuncList.addAskForHelpList( hisId, myId)
+	if not flag3 then
+		print("SlaveOpFuncList[8] SlaveOpFuncList.addAskForHelpList return false , myId="..myId..", hisId="..hisId)
+		return
+	end
+	SlaveOpFuncList.addMsg(8001, myId, hisId)
+	SlaveOpFuncList.addMsg(8002, hisId, myId)
+end
+
+--  赎身
+SlaveOpFuncList[9] = function( sysarg, dp)
+	local moneytype = DataPack.readByte(dp)
+	if moneytype == nil or moneytype ~= mtYuanbao and moneytype ~= mtBindYuanbao then return end
+
+	if SlaveOpFuncList.isClose( sysarg ) then
+		return
+	end 
+	local myId = LActor.getActorId( sysarg )
+	SlaveOpFuncList.initMasterSlaveData( myId )
+	
+	local myData = SlaveOpFuncList.getMasterSlaveData( myId )
+	local mySlaveStatus = SlaveOpFuncList.getActorSlaveStatus( myId )
+	if myData == nil then 
+		print(" SlaveOpFuncList[9] myData error! actorId="..myId)
+		return
+	end
+	if mySlaveStatus == nil then
+		print(" SlaveOpFuncList[9] mySlaveStatus error! actorId="..myId)
+		return
+	end
+
+	--如果自己不是苦工身份，不允许此操作
+	if mySlaveStatus ~= SlaveConfig.slaveStatus.SLAVE then
+		print("SlaveOpFuncList[9] error! mySlaveStatus ~= SlaveConfig.slaveStatus.SLAVE, actorId="..myId)
+		return
+	end
+	if not LActor.CheckMoneyEnough( sysarg, moneytype , SlaveConfig.PAY_FREE_NEED_YB) then
+		return 
+	end
+
+	local hisId = myData.masterId
+	local flag = LActor.changeMoney( sysarg, moneytype, - SlaveConfig.PAY_FREE_NEED_YB, 1, true, "slave", "free_by_pay" )
+	if not flag then 
+		print("SlaveOpFuncList[9] error! LActor.changeMoney return false, actorId="..myId)
+		return
+	end
+
+	local tmpData = {}
+	tmpData.masterId = 0
+	tmpData.liberateTime = System.getCurrMiniTime()
+	tmpData.liberateTimeByPay = System.getCurrMiniTime()
+
+	local flag1 = SlaveOpFuncList.setMasterSlaveData( myId , tmpData)
+	if not flag1 then
+		print("SlaveOpFuncList[9] error! SlaveOpFuncList.setMasterSlaveData return false, actorId="..myId)
+		return
+	end
+
+	local flag2 = SlaveOpFuncList.deleteSlave(hisId, myId) --从对方苦工列表中删除
+	if not flag2 then
+		print("SlaveOpFuncList[9] error! SlaveOpFuncList.deleteSlave return false, myId="..myId..", hisId="..hisId)
+		return
+	end
+
+	SlaveOpFuncList.addMsg(7001, myId)
+	SlaveOpFuncList.addMsg(7002, hisId, myId)
+
+end
+
+--  反抗
+SlaveOpFuncList[10] = function( sysarg )
+	if SlaveOpFuncList.isClose( sysarg ) then
+		return
+	end
+	local myId = LActor.getActorId( sysarg )
+	SlaveOpFuncList.initMasterSlaveData( myId )
+	local myData = SlaveOpFuncList.getMasterSlaveData( myId )
+	if myData == nil then 
+		print(" SlaveOpFuncList[10] myData error! actorId="..myId)
+		return
+	end
+	local myInfo = SlaveOpFuncList.getActorInfo( myId )
+	local mySlaveStatus = SlaveOpFuncList.getActorSlaveStatus( myId )
+
+	local hisId = myData.masterId	--地主ID
+	local hisData = SlaveOpFuncList.getMasterSlaveData( hisId )
+	if hisData == nil then 
+		print(" SlaveOpFuncList[10] hisData error! actorId="..hisId)
+		return
+	end
+
+	local hisInfo = SlaveOpFuncList.getActorInfo( hisId )
+	local hisSlaveStatus = SlaveOpFuncList.getActorSlaveStatus( hisId )
+
+	if myInfo == nil then
+		print(" SlaveOpFuncList[10] myInfo error! actorId="..myId)
+		return
+	end
+	if hisInfo == nil then
+		print(" SlaveOpFuncList[10] hisInfo error! actorId="..hisId)
+		return
+	end
+	if mySlaveStatus == nil then
+		print(" SlaveOpFuncList[10] mySlaveStatus error! actorId="..myId)
+		return
+	end
+	if hisSlaveStatus == nil then
+		print(" SlaveOpFuncList[10] hisSlaveStatus error! actorId="..hisId)
+		return
+	end
+
+	--如果自己不是苦工身份，不允许此操作
+	if mySlaveStatus ~= SlaveConfig.slaveStatus.SLAVE then
+		print("SlaveOpFuncList[10] error! mySlaveStatus ~= SlaveConfig.slaveStatus.SLAVE, actorId="..myId)
+		return
+	end
+	--次数已到限制
+	if myData.todayResistTimes >= SlaveConfig.MAX_RESIST_TIMES then
+		LActor.sendTipmsg( sysarg, Lang.Slave.t010, ttMessage ) 
+		return
+	end
+	
+	local flag1 = FightPublicOp.doCatch( sysarg, myData.masterId, myId, SlaveConfig.pkType.RESIST )
+	if flag1 then
+		local tmpData = {}
+		tmpData.todayResistTimes = myData.todayResistTimes + 1
+		local flag = SlaveOpFuncList.setMasterSlaveData( myId, tmpData )
+		if not flag then
+			print("SlaveOpFuncList[10] error! SlaveOpFuncList.setMasterSlaveData, myId="..myId)
+			return
+		end
+	end
+end
+
+--  互动
+SlaveOpFuncList[11] = function( sysarg , dp)
+	if SlaveOpFuncList.isClose( sysarg ) then
+		return
+	end
+	local myId = LActor.getActorId( sysarg )
+	SlaveOpFuncList.initMasterSlaveData( myId )
+	local hisId = DataPack.readInt( dp )	--对方玩家ID
+	local msgId = DataPack.readInt( dp )
+
+	local myData = SlaveOpFuncList.getMasterSlaveData( myId )
+	local myInfo = SlaveOpFuncList.getActorInfo( myId )
+	local mySlaveStatus = SlaveOpFuncList.getActorSlaveStatus( myId )
+
+	if myData == nil then 
+		print(" SlaveOpFuncList[11] myData error!  actorId="..myId)
+		return
+	end
+
+	if myInfo == nil then
+		print(" SlaveOpFuncList[11] myInfo error! actorId="..myId)
+		return
+	end
+	if mySlaveStatus == nil then
+		print(" SlaveOpFuncList[11] mySlaveStatus error! actorId="..myId)
+		return
+	end
+	if mySlaveStatus == SlaveConfig.slaveStatus.FREE  or mySlaveStatus == SlaveConfig.slaveStatus.FREE_BY_PAY then
+		return 
+	end
+	if mySlaveStatus == SlaveConfig.slaveStatus.SLAVE then
+		hisId = myData.masterId
+	end
+	local hisData = SlaveOpFuncList.getMasterSlaveData( hisId )
+	if hisData == nil then 
+		print(" SlaveOpFuncList[11] hisData error! actorId="..hisId)
+		return
+	end
+
+	if myData.todayInteractiveTimes >= SlaveConfig.MAX_INTERACTIVE_TIMES then
+		LActor.sendTipmsg( sysarg, Lang.Slave.t020, ttMessage ) 
+		return
+	end
+	
+	--LActor.triggerTarget(sysarg, enATSlave)
+
+	if mySlaveStatus == SlaveConfig.slaveStatus.SLAVE and msgId >= 4301 and msgId <= 4312 then
+		local rank = FightFun.getRankingById( myId ) + 1
+		local expadd = SlaveOpFuncList.getExpAward( SlaveConfig.interactiveBySlaveExpAwards, rank, myInfo.level, nil )
+		local tmpData = {}
+		tmpData.todayGetExp = myData.todayGetExp + expadd		
+		tmpData.todayInteractiveTimes = myData.todayInteractiveTimes + 1
+		local flag = SlaveOpFuncList.setMasterSlaveData( myId, tmpData )
+		if not flag then
+			print("SlaveOpFuncList[11] SlaveOpFuncList.setMasterSlaveData, error, myId="..myId)
+			return
+		end
+		LActor.addExp(sysarg, expadd, 0, 0)
+		SlaveOpFuncList.addMsg(msgId,     myId,  hisId)
+		SlaveOpFuncList.addMsg(msgId-100, hisId, myId)
+	end
+	local mySlaveList = SlaveOpFuncList.getSlaveList( myId )
+	local nowUnixTime = System.getCurrMiniTime()
+	if mySlaveStatus == SlaveConfig.slaveStatus.LANDOWNER and msgId >= 4101 and msgId <= 4112 then
+		for i=1, #mySlaveList do
+			if mySlaveList[i].id == hisId then
+				if  mySlaveList[i].interactiveTime + SlaveConfig.INTERACTIVE_PROTECT_TIME > nowUnixTime then
+					LActor.sendTipmsg( sysarg, Lang.Slave.t026, ttMessage )	-- 冷却时间未到
+					return
+				end
+
+				-- 日志
+				System.logCounter(
+					LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), 
+					"happy_fight", "", "",
+					"hudong", msgId <= 4106 and "anfu" or "wanshua", "",
+					"", "", lfBI)
+				local rank = mySlaveList[i].catchFightRank
+				local expadd = SlaveOpFuncList.getExpAward( SlaveConfig.interactiveByMasterExpAwards, rank, mySlaveList[i].catchLevel, nil )
+				local tmpData = {}
+				tmpData.todayGetExp = myData.todayGetExp + expadd				
+				tmpData.todayInteractiveTimes = myData.todayInteractiveTimes + 1
+				local flag1 = SlaveOpFuncList.setMasterSlaveData( myId, tmpData )
+				if not flag1 then
+					print("SlaveOpFuncList[11] LANDOWNER SlaveOpFuncList.setMasterSlaveData return false, myId="..myId)
+					return
+				end
+
+				local flag2 = SlaveOpFuncList.updateSlaveItem(myId, mySlaveList[i].id, nil, nowUnixTime, nil, nil )
+				if not flag2 then
+					print("SlaveOpFuncList[11] LANDOWNER SlaveOpFuncList.updateSlaveItem return false, myId="..myId..", slaveId="..mySlaveList[i].id)
+					return
+				end
+				LActor.addExp(sysarg, expadd, 0, 0)
+				SlaveOpFuncList.addMsg(msgId,     myId,  hisId)
+				SlaveOpFuncList.addMsg(msgId+300, hisId, myId)
+				break
+			end
+		end
+	end
+end
+
+--  提取经验
+SlaveOpFuncList[12] = function( sysarg , dp)
+	if SlaveOpFuncList.isClose( sysarg ) then
+		return
+	end
+	local myId = LActor.getActorId( sysarg )
+	SlaveOpFuncList.initMasterSlaveData( myId )
+	local hisId = DataPack.readInt( dp )	--对方玩家ID
+	local myData = SlaveOpFuncList.getMasterSlaveData( myId )
+	if myData == nil then 
+		print(" SlaveOpFuncList[12] myData error! actorId="..myId)
+		return
+	end
+	local mySlaveList = SlaveOpFuncList.getSlaveList( myId )
+	for i=1, #mySlaveList do
+		if mySlaveList[i].id == hisId then
+			local nowUnixTime = System.getCurrMiniTime()
+			if nowUnixTime > mySlaveList[i].liberateTime then
+				LActor.sendTipmsg( sysarg, Lang.Slave.t015, ttMessage )
+				return
+			end
+
+			--如果抓捕后30秒内提取
+			local isNotFirst = true
+			if nowUnixTime - mySlaveList[i].catchTime < SlaveConfig.SUCK_CD_TIME then
+				isNotFirst = false
+			end
+			if isNotFirst and nowUnixTime - mySlaveList[i].lastSubmitTime < SlaveConfig.SUCK_CD_TIME then
+				LActor.sendTipmsg( sysarg, Lang.Slave.t016, ttMessage ) 
+				return
+			end
+			
+			local rank = mySlaveList[i].catchFightRank
+
+			local second = 0 
+			if mySlaveList[i].liberateTime - 60 < nowUnixTime then
+				second = 0
+			else
+				second = nowUnixTime - mySlaveList[i].lastSubmitTime
+			end
+			local exp = SlaveOpFuncList.getExpAward( SlaveConfig.slaveMakeExp, rank, mySlaveList[i].catchLevel, second )
+			local expadd = mySlaveList[i].exp + exp
+			
+			local tmpData = {}
+			tmpData.todayGetExp = myData.todayGetExp + expadd
+			local flag1 = SlaveOpFuncList.setMasterSlaveData( myId, tmpData )
+			if not flag1 then
+				print("SlaveOpFuncList[12]  SlaveOpFuncList.setMasterSlaveData return false, myId="..myId) 
+				return
+			end
+			local flag2 = SlaveOpFuncList.updateSlaveItem(myId, mySlaveList[i].id, nil, nil, 0, nowUnixTime )
+			if not flag2 then
+				print("SlaveOpFuncList[12]  SlaveOpFuncList.updateSlaveItem return false, myId="..myId..", slaveId="..mySlaveList[i].id) 
+				return
+			end
+			if flag1 and flag2 then
+				LActor.addExp( sysarg, expadd, 0 , 0) --加经验
+			end
+
+			-- 日志
+			System.logCounter(
+				LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), 
+				"happy_fight", tostring(expadd), "",
+				"yazha", "tiqu", "",
+				"", "", lfBI)
+			break
+		end
+	end
+end
+
+--  压榨
+SlaveOpFuncList[13] = function( sysarg , dp)
+	if SlaveOpFuncList.isClose( sysarg ) then
+		return
+	end
+	local myId = LActor.getActorId( sysarg )
+	SlaveOpFuncList.initMasterSlaveData( myId )
+	local hisId = DataPack.readInt( dp )	--对方玩家ID
+	local moneytype = DataPack.readByte(dp)
+	if moneytype == nil or moneytype ~= mtYuanbao and moneytype ~= mtBindYuanbao then return end
+	local mySlaveList = SlaveOpFuncList.getSlaveList( myId )
+	for i=1, #mySlaveList  do
+		if mySlaveList[i].id == hisId then
+			local nowUnixTime = System.getCurrMiniTime()
+			if nowUnixTime > mySlaveList[i].liberateTime - 60 then
+				LActor.sendTipmsg( sysarg, Lang.Slave.t015, ttMessage )
+				return
+			end
+			if not LActor.CheckMoneyEnough( sysarg, moneytype, SlaveConfig.PRESS_NEED_YB) then
+				return 
+			end
+			local flag = LActor.changeMoney( sysarg, moneytype, - SlaveConfig.PRESS_NEED_YB, 1, true, "slave", "press" )
+			if not flag then 
+				print("SlaveOpFuncList[13] use gold error! myId="..myId .. ", hisId="..hisId)
+				return
+			end
+
+			local tmpData = {}
+			local liberateTime = 0
+			local rank = mySlaveList[i].catchFightRank
+			local expadd
+			if ( mySlaveList[i].liberateTime - 60 - nowUnixTime ) > SlaveConfig.PRESS_REDUCE_TIME then
+				expadd = SlaveOpFuncList.getExpAward( SlaveConfig.slaveMakeExp, rank, mySlaveList[i].catchLevel, SlaveConfig.PRESS_REDUCE_TIME )
+				local exp = mySlaveList[i].exp + expadd
+				liberateTime = mySlaveList[i].liberateTime - SlaveConfig.PRESS_REDUCE_TIME
+				local flag = SlaveOpFuncList.updateSlaveItem(myId, hisId, liberateTime, nil, exp, nil)
+				if not flag then
+					print("SlaveOpFuncList[13] 1 SlaveOpFuncList.updateSlaveItem return false, myId="..myId..", hisId="..hisId)
+					return
+				end
+			else
+				local second =  mySlaveList[i].liberateTime - 60 - nowUnixTime
+				expadd = SlaveOpFuncList.getExpAward( SlaveConfig.slaveMakeExp, rank, mySlaveList[i].catchLevel, second )
+				local exp = mySlaveList[i].exp + expadd
+				liberateTime = System.getCurrMiniTime() + 60 
+				local flag = SlaveOpFuncList.updateSlaveItem(myId, hisId, liberateTime, nil, exp, nil)
+				if not flag then
+					print("SlaveOpFuncList[13] 2 SlaveOpFuncList.updateSlaveItem return false, myId="..myId..", hisId="..hisId)
+					return
+				end
+			end
+			tmpData.liberateTime = liberateTime
+			local flag2 = SlaveOpFuncList.setMasterSlaveData( hisId, tmpData )
+			if not flag2 then
+				print("SlaveOpFuncList[13] SlaveOpFuncList.setMasterSlaveData return false, hisId="..hisId)
+			end
+
+			-- 日志
+			System.logCounter(
+				LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), 
+				"happy_fight", tostring(expadd), "",
+				"yazha", "yazha", "",
+				"", "", lfBI)
+			break
+		end
+	end
+end
+
+--  抽干
+SlaveOpFuncList[14] = function( sysarg , dp)
+	if SlaveOpFuncList.isClose( sysarg ) then
+		return
+	end
+	local myId = LActor.getActorId( sysarg )
+	SlaveOpFuncList.initMasterSlaveData( myId )
+	local hisId = DataPack.readInt( dp )	--对方玩家ID
+	local moneytype = DataPack.readByte(dp)
+	if moneytype == nil or moneytype ~= mtYuanbao and moneytype ~= mtBindYuanbao then return end
+	local myData = SlaveOpFuncList.getMasterSlaveData( myId )
+	local hisData = SlaveOpFuncList.getMasterSlaveData( hisId )
+
+	if myData == nil then 
+		print(" SlaveOpFuncList[14] myData error! actorId="..myId)
+		return
+	end
+	if hisData == nil then 
+		print(" SlaveOpFuncList[14] hisData error! actorId="..hisId)
+		return
+	end
+	local mySlaveList = SlaveOpFuncList.getSlaveList( myId )
+	for i=1, #mySlaveList do
+		if mySlaveList[i].id == hisId then
+			local nowUnixTime = System.getCurrMiniTime()
+			if nowUnixTime > mySlaveList[i].liberateTime then
+				LActor.sendTipmsg( sysarg, Lang.Slave.t015, ttMessage )
+				return
+			end
+
+			if not LActor.CheckMoneyEnough( sysarg, moneytype, SlaveConfig.PRESS_NEED_YB) then
+				LActor.sendTipmsg( sysarg, Lang.Slave.t014, ttMessage )	-- 没有足够的天珠
+				return 
+			end
+
+			local needYb = math.ceil( (mySlaveList[i].liberateTime - 60 - nowUnixTime) / 3600 ) * SlaveConfig.FINISH_PER_HOUR_NEED_YB
+			local flag = LActor.changeMoney( sysarg, moneytype, -needYb, 1, true, "slave", "finish" )
+			if not flag then 
+				print("SlaveOpFuncList[14] use gold error! myId="..myId .. ", hisId="..hisId)
+				return
+			end
+
+			local rank = mySlaveList[i].catchFightRank
+			local second = mySlaveList[i].liberateTime - 60 - mySlaveList[i].lastSubmitTime
+			local expadd = SlaveOpFuncList.getExpAward( SlaveConfig.slaveMakeExp, rank, mySlaveList[i].catchLevel, second)
+			local exp = mySlaveList[i].exp + expadd
+			
+			local liberateTime = nowUnixTime + 60
+			local flag = SlaveOpFuncList.updateSlaveItem(myId, hisId, liberateTime, nil, exp, nil)
+			if not flag then
+				print("SlaveOpFuncList[14] SlaveOpFuncList.updateSlaveItem return false, myId="..myId .. ", hisId="..hisId)
+			end
+
+			local tmpData2 = {}
+			tmpData2.liberateTime = liberateTime
+			local flag2 = SlaveOpFuncList.setMasterSlaveData( hisId, tmpData2 )
+			if not flag2 then
+				print("SlaveOpFuncList[14] SlaveOpFuncList.setMasterSlaveData return false, hisId="..hisId )
+			end
+
+			-- 日志
+			System.logCounter(
+				LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), 
+				"happy_fight", tostring(expadd), "",
+				"yazha", "zhagan", "",
+				"", "", lfBI)
+			break
+		end
+	end	
+end
+
+
+--  解救
+SlaveOpFuncList[15] = function( sysarg , dp)
+	if SlaveOpFuncList.isClose( sysarg ) then
+		return
+	end 
+	local myId = LActor.getActorId( sysarg )
+	SlaveOpFuncList.initMasterSlaveData( myId )
+	local myData = SlaveOpFuncList.getMasterSlaveData( myId )
+	local myInfo = SlaveOpFuncList.getActorInfo( myId )
+	local mySlaveStatus = SlaveOpFuncList.getActorSlaveStatus( myId )
+
+	local hisId = DataPack.readInt( dp )	--求玩家ID
+	local hisData = SlaveOpFuncList.getMasterSlaveData( hisId )
+	local hisInfo = SlaveOpFuncList.getActorInfo( hisId )
+	local hisSlaveStatus = SlaveOpFuncList.getActorSlaveStatus( hisId )
+
+	if myData == nil then 
+		print(" SlaveOpFuncList[15] myData error! actorId="..myId)
+		return
+	end
+	if hisData == nil then 
+		print(" SlaveOpFuncList[15] hisData error! actorId="..hisId)
+		return
+	end
+	if myInfo == nil then
+		print(" SlaveOpFuncList[15] myInfo error! actorId="..myId)
+		return
+	end
+	if hisInfo == nil then
+		print(" SlaveOpFuncList[15] hisInfo error! actorId="..hisId)
+		return
+	end
+	if mySlaveStatus == nil then
+		print(" SlaveOpFuncList[10] mySlaveStatus error! actorId="..myId)
+		return
+	end
+	if hisSlaveStatus == nil then
+		print(" SlaveOpFuncList[10] hisSlaveStatus error! actorId="..hisId)
+		return
+	end
+
+	--如果自己是苦工身份，不允许此操作
+	if mySlaveStatus == SlaveConfig.slaveStatus.SLAVE then
+		print("SlaveOpFuncList[15] error! mySlaveStatus == SlaveConfig.slaveStatus.SLAVE, actorId="..myId)
+		return
+	end
+
+	--次数已到限制
+	if myData.todayRescueTimes >= SlaveConfig.MAX_RESCUE_TIMES then
+		LActor.sendTipmsg( sysarg, Lang.Slave.t017, ttMessage ) 
+		return
+	end
+	--如果对方是自己的苦工，不允许解救
+	local exist = false
+	local mySlaveList = SlaveOpFuncList.getSlaveList( myId )
+	for i=1, #mySlaveList do
+		if hisId == mySlaveList[i].id then
+			exist = true
+			break
+		end
+	end
+	if exist then
+		LActor.sendTipmsg( sysarg, Lang.Slave.t022, ttMessage ) 
+		return
+	end
+
+	if hisInfo.familyId ~= myInfo.familyId then
+		LActor.sendTipmsg( sysarg, Lang.Slave.t018, ttMessage ) 
+		return
+	end
+	local exist = false
+	for i=1, #myData.askForHelpList do
+		if myData.askForHelpList[i] == hisId then
+			exist = true
+		end
+	end
+	if not exist then
+		return 
+	end
+	if hisSlaveStatus ~= SlaveConfig.slaveStatus.SLAVE then
+		LActor.sendTipmsg( sysarg, Lang.Slave.t012, ttMessage )
+		local flag = SlaveOpFuncList.deleteFromAskForHelpList( myId, hisId)
+		if not flag then
+			print("SlaveOpFuncList[15] SlaveOpFuncList.deleteFromAskForHelpList return false, myId="..myId..", hisId="..hisId )
+		end
+		return
+	end
+	--[[
+	local lastInteractiveTime = 0 --最后互动的时间
+	local nowUnixTime = System.getCurrMiniTime()
+	local hisMastersSlaveList = SlaveOpFuncList.getSlaveList( hisData.masterId )
+	for k, hisMastersSlave in pairs( hisMastersSlaveList ) do
+		if hisMastersSlave.interactiveTime > lastInteractiveTime then
+			lastInteractiveTime = hisMastersSlaveList[k].interactiveTime
+		end
+	end
+	--判断是否在互动保护期内
+	if lastInteractiveTime ~=0 and ( nowUnixTime - lastInteractiveTime < SlaveConfig.INTERACTIVE_PROTECT_TIME ) then
+		LActor.sendTipmsg( sysarg, Lang.Slave.t008, ttMessage )
+		return
+	end
+	]]
+
+	
+	local flag1 = FightPublicOp.doCatch( sysarg, hisData.masterId, hisId, SlaveConfig.pkType.RESCUE )
+	if flag1 then
+		local tmpData1 = {}	
+		tmpData1.todayRescueTimes = myData.todayRescueTimes + 1
+		local flag = SlaveOpFuncList.setMasterSlaveData( myId, tmpData1 )
+		if not flag then
+			print("SlaveOpFuncList[15] SlaveOpFuncList.setMasterSlaveData return false, myId="..myId )
+			return
+		end
+	end
+end
+
+--  忽略解救
+SlaveOpFuncList[21] = function( sysarg , dp)
+	if SlaveOpFuncList.isClose( sysarg ) then
+		return
+	end 
+	local myId = LActor.getActorId( sysarg )
+	SlaveOpFuncList.initMasterSlaveData( myId )
+	local myData = SlaveOpFuncList.getMasterSlaveData( myId )
+	local myInfo = SlaveOpFuncList.getActorInfo( myId )
+	local mySlaveStatus = SlaveOpFuncList.getActorSlaveStatus( myId )
+
+	local hisId = DataPack.readInt( dp )	--求玩家ID
+	local hisData = SlaveOpFuncList.getMasterSlaveData( hisId )
+	local hisInfo = SlaveOpFuncList.getActorInfo( hisId )
+	local hisSlaveStatus = SlaveOpFuncList.getActorSlaveStatus( hisId )
+
+	if myData == nil then 
+		print(" SlaveOpFuncList[21] myData error! actorId="..myId)
+		return
+	end
+	if hisData == nil then 
+		print(" SlaveOpFuncList[21] hisData error! actorId="..hisId)
+		return
+	end
+	if myInfo == nil then
+		print(" SlaveOpFuncList[21] myInfo error! actorId="..myId)
+		return
+	end
+	if hisInfo == nil then
+		print(" SlaveOpFuncList[21] hisInfo error! actorId="..hisId)
+		return
+	end
+	if mySlaveStatus == nil then
+		print(" SlaveOpFuncList[21 mySlaveStatus error! actorId="..myId)
+		return
+	end
+	if hisSlaveStatus == nil then
+		print(" SlaveOpFuncList[21] hisSlaveStatus error! actorId="..hisId)
+		return
+	end
+
+	--如果自己是苦工身份，不允许此操作
+	--if mySlaveStatus == SlaveConfig.slaveStatus.SLAVE then
+	--	print("SlaveOpFuncList[15] error! mySlaveStatus == SlaveConfig.slaveStatus.SLAVE, actorId="..myId)
+	--	return
+	--end
+
+	--次数已到限制
+	--if myData.todayRescueTimes >= SlaveConfig.MAX_RESCUE_TIMES then
+	--	LActor.sendTipmsg( sysarg, Lang.Slave.t017, ttMessage ) 
+	--	return
+	--end
+	--如果对方是自己的苦工，不允许解救
+	local exist = false
+	--苦工列表
+	local mySlaveList = SlaveOpFuncList.getSlaveList( myId )
+	for i=1, #mySlaveList do
+		if hisId == mySlaveList[i].id then
+			exist = true
+			break
+		end
+	end
+	if exist then
+		LActor.sendTipmsg( sysarg, Lang.Slave.t022, ttMessage ) 
+		return
+	end
+	----------------------
+	local exist = false
+	--解救列表
+	for i=1, #myData.askForHelpList do
+		if myData.askForHelpList[i] == hisId then
+			exist = true
+		end
+	end
+	if not exist then
+		return 
+	end
+	local flag = SlaveOpFuncList.deleteFromAskForHelpList( myId, hisId)
+	if not flag then
+		print("SlaveOpFuncList[15] SlaveOpFuncList.deleteFromAskForHelpList return false, myId="..myId..", hisId="..hisId )
+	end
+
+	SlaveOpFuncList.delSendHelpList(hisId, myId)
+
+end
+
+
+--  释放
+SlaveOpFuncList[16] = function( sysarg , dp)
+	if SlaveOpFuncList.isClose( sysarg ) then
+		return
+	end 
+	local myId = LActor.getActorId( sysarg )
+	SlaveOpFuncList.initMasterSlaveData( myId )
+	local hisId = DataPack.readInt( dp )	--对方玩家ID
+
+	local myData = SlaveOpFuncList.getMasterSlaveData( myId )
+	local mySlaveStatus = SlaveOpFuncList.getActorSlaveStatus( myId )	
+	local hisData = SlaveOpFuncList.getMasterSlaveData( hisId )
+
+	if myData == nil then 
+		print(" SlaveOpFuncList[16] myData error! actorId="..myId)
+		return
+	end
+	if hisData == nil then 
+		print(" SlaveOpFuncList[16] hisData error! actorId="..hisId)
+		return
+	end
+	if mySlaveStatus == nil then
+		print(" SlaveOpFuncList[16] mySlaveStatus error! actorId="..myId)
+		return
+	end
+
+	local exist = false
+	local mySlaveList = SlaveOpFuncList.getSlaveList( myId )
+	for i=1, #mySlaveList do
+		if mySlaveList[i].id == hisId then
+			exist = true
+		end
+	end
+	if not exist then
+		return
+	end
+
+	
+	local tmpData = {}
+	tmpData.masterId = 0 
+	tmpData.catchTime = 0
+	tmpData.liberateTime = System.getCurrMiniTime()
+	local flag1 = SlaveOpFuncList.setMasterSlaveData( hisId, tmpData )
+	if not flag1 then
+		print(" SlaveOpFuncList[16] SlaveOpFuncList.setMasterSlaveData return false, hisId="..hisId)
+		return
+	end
+
+	local flag2 = SlaveOpFuncList.deleteSlave( myId, hisId )
+	if not flag2 then
+		print(" SlaveOpFuncList[16] SlaveOpFuncList.deleteSlave return false, myId="..myId..", hisId="..hisId)
+		return
+	end
+
+	SlaveOpFuncList.addMsg(3001, myId, hisId)
+	SlaveOpFuncList.addMsg(3002, hisId, myId)
+end
+
+
+--  可解救我的同帮派玩家列表
+SlaveOpFuncList[17] = function ( sysarg )
+	if SlaveOpFuncList.isClose( sysarg ) then
+		return
+	end
+	local myId = LActor.getActorId( sysarg )
+	local myData = SlaveOpFuncList.getMasterSlaveData( myId )
+	if myData == nil  then 
+		print("SlaveOpFuncList[17]  data error! actorId="..myId )
+		return
+	end
+
+	SlaveOpFuncList.initMasterSlaveData( myId )
+	local data = SlaveOpFuncList.getMasterSlaveData( myId )
+	if data == nil  then 
+		print("SlaveOpFuncList[17]  data error! actorId="..myId )
+		return
+	end
+	local myInfo = SlaveOpFuncList.getActorInfo( myId )
+	if myInfo == nil then
+		print(" SlaveOpFuncList[17] myInfo error! actorId="..myId)
+		return
+	end
+	local helpList = SlaveOpFuncList.getHelpList(sysarg, myInfo.familyId, myId, myData.masterId )
+	SlaveOpFuncList.doSendSlaveSysVoList( sysarg, 144, 17, helpList)
+end
+
+
+--  增加抓捕次数
+SlaveOpFuncList[18] = function ( sysarg, dp)
+	local moneytype = DataPack.readByte(dp)
+	if moneytype == nil or moneytype ~= mtYuanbao and moneytype ~= mtBindYuanbao then return end
+	if SlaveOpFuncList.isClose( sysarg ) then
+		return
+	end
+	local myId = LActor.getActorId( sysarg )
+	SlaveOpFuncList.initMasterSlaveData( myId )
+	local data = SlaveOpFuncList.getMasterSlaveData( myId )
+	if data == nil  then 
+		print("SlaveOpFuncList[18]  data error! actorId="..myId)
+		return
+	end
+	if data.todayAddCatchCount >= SlaveConfig.MAX_ADD_CATCH_COUNT then
+		LActor.sendTipmsg( sysarg, Lang.Slave.t024, ttMessage )	-- 超过增加次数
+		return
+	end
+	local nextAddCatchCountNeedYB = 0
+    if data.todayAddCatchCount < SlaveConfig.MAX_ADD_CATCH_COUNT then
+    	nextAddCatchCountNeedYB = SlaveOpFuncList.getConfBase(SlaveConfig.addCatchCountCost, data.todayAddCatchCount +1 )
+    end
+    if nextAddCatchCountNeedYB <= 0 then
+    	print("SlaveOpFuncList[18] error! nextAddCatchCountNeedYB == 0, actorId="..actorId)
+    	return
+    end
+	if not LActor.CheckMoneyEnough( sysarg, moneytype, nextAddCatchCountNeedYB) then
+		LActor.sendTipmsg( sysarg, Lang.Slave.t014, ttMessage )	-- 没有足够的天珠
+		return 
+	end
+	local flag = LActor.changeMoney( sysarg, moneytype, -nextAddCatchCountNeedYB , 1, true, "slave", "add_catch_count" )
+	if not flag then 
+		print("SlaveOpFuncList[18] use gold error! myId="..myId)
+		return
+	end
+	local tmpData = {}
+	tmpData.todayCatchTimes = data.todayCatchTimes - 1
+	tmpData.todayAddCatchCount = data.todayAddCatchCount + 1
+	local flag = SlaveOpFuncList.setMasterSlaveData( myId, tmpData)
+	if not flag then
+		print("SlaveOpFuncList[18] SlaveOpFuncList.setMasterSlaveData return false, myId="..myId)
+	end
+end
+
+--通知前端当前手下败将已有主
+SlaveOpFuncList.sendTip = function(sysarg, hisId, hisMasterId, msgId)
+	if SlaveOpFuncList.isClose( sysarg ) then
+		return
+	end
+	local myId = LActor.getActorId( sysarg )
+	if myId == hisMasterId then
+		LActor.sendTipmsg( sysarg, Lang.Slave.t005, ttMessage )
+		local flag4 = SlaveOpFuncList.deleteFromFailureList( myId, hisId )
+		if not flag4 then
+			print(" SlaveOpFuncList.sendTip SlaveOpFuncList.deleteFromFailureList return false, myId="..myId..", hisId="..hisId)
+			return
+		end
+		local flag5 = SlaveOpFuncList.deleteFromEnemyList( myId, hisId )
+		if not flag5 then
+			print(" SlaveOpFuncList.sendTip SlaveOpFuncList.deleteFromEnemyList  return false, myId="..myId..", hisId="..hisId)
+			return
+		end
+		return true
+	end
+	local list = {}
+	list[1] = SlaveOpFuncList.getActorInfo( hisId )
+	list[2] = SlaveOpFuncList.getActorInfo( hisMasterId )
+	if list[1] == nil or list[2] == nil then 
+		print("SlaveOpFuncList.sendTip list[1] or list[2] is nil")
+		return
+	end
+	local npack = DataPack.allocPacket(sysarg,144,19)
+	if npack == nil then return end
+	DataPack.writeInt(npack,    msgId )        -- 消息类型ID
+	for i=1, #list do
+		DataPack.writeInt(npack,    list[i].id)        -- (int32) id : 角色ID
+		DataPack.writeString(npack, list[i].name)   -- (string) name : 角色名
+		DataPack.writeInt(npack,    list[i].level)     -- (int32) level : 角色等级
+		DataPack.writeInt(npack,    list[i].job)       -- (int32) job : 职业ID
+		DataPack.writeInt(npack,    list[i].familyId)       -- (int32) familyId : 帮派ID
+		DataPack.writeString(npack, list[i].familyName)   -- (string) familyName : 帮派名
+		DataPack.writeInt(npack, list[i].camp)   -- (int32) camp : 阵营
+		DataPack.writeInt(npack, list[i].sex)   -- (int32) sex : 性别
+		DataPack.writeInt(npack, list[i].faceId)   -- (int32) faceId : 头像ID
+		DataPack.writeInt(npack, list[i].catchTime )   -- (int32) catchLevel ：被抓捕时的等级
+		DataPack.writeInt(npack, list[i].catchLevel)   -- (int32) catchLevel ：被抓捕时的等级
+		DataPack.writeInt(npack, list[i].catchRankNum)   -- (int32) catchRankNum ：被抓捕时的竞技场排行
+		DataPack.writeInt(npack, list[i].curExp)   -- (int32) curExp ：当前已经产生的经验
+		DataPack.writeInt(npack, list[i].interactiveCd)   -- (int32) interactiveCd ：互动cd时间
+		DataPack.writeInt(npack, list[i].slaveStatus)   -- (int32) slaveStatus : 身份状态
+		DataPack.writeInt(npack, list[i].baseExp)   -- (int32) slaveStatus : 身份状态
+	end
+	DataPack.flush(npack)
+end
+
+--通知前端当前有新消息
+SlaveOpFuncList.sendNewsTip = function(sysarg, msgId)
+	for i=1, #SlaveConfig.msgTips do 
+		if msgId == SlaveConfig.msgTips[i] then
+			local npack = DataPack.allocPacket(sysarg,144,20)
+			if npack == nil then return end
+			DataPack.writeInt(npack, msgId )        -- 消息类型ID
+			DataPack.flush(npack)		
+			break
+		end
+	end
+end
+--=================== end 协议=====================
+
+--=================== 回调函数 =====================
+SlaveOpFuncList.resistCallback = function(sysarg, hisId, result )
+	if SlaveOpFuncList.isClose( sysarg ) then
+		return
+	end
+
+	local myId = LActor.getActorId( sysarg )
+	local myData = SlaveOpFuncList.getMasterSlaveData( myId )
+	local hisData = SlaveOpFuncList.getMasterSlaveData( hisId )
+
+	if myData == nil then 
+		print(" SlaveOpFuncList.resistCallback myData error! actorId="..myId)
+		return
+	end
+	if hisData == nil then 
+		print(" SlaveOpFuncList.resistCallback hisData error! actorId="..hisId)
+		return
+	end
+	if result ~= 1 then
+		SlaveOpFuncList.addMsg(6002, myId, hisId )
+		SlaveOpFuncList.addMsg(6004, hisId, myId )
+		return
+	end
+	local tmpData = {}
+	tmpData.masterId = 0
+	tmpData.liberateTime = System.getCurrMiniTime()
+
+	local flag1 = SlaveOpFuncList.setMasterSlaveData( myId, tmpData )
+	if not flag1 then
+		print("SlaveOpFuncList.resistCallback SlaveOpFuncList.setMasterSlaveData return false, myId="..myId)
+		return
+	end
+
+	local flag2 = SlaveOpFuncList.deleteSlave(hisId, myId)
+	if not flag2 then
+		print("SlaveOpFuncList.resistCallback SlaveOpFuncList.deleteSlave return false, myId="..myId..", hisId="..hisId)
+		return
+	end
+	SlaveOpFuncList.addMsg(6001, myId, hisId )
+	SlaveOpFuncList.addMsg(6003, hisId, myId )
+end
+
+SlaveOpFuncList.catchCallback = function( sysarg, hisId, result )
+	if SlaveOpFuncList.isClose( sysarg ) then
+		return
+	end
+	local myId = LActor.getActorId( sysarg )
+	local myData = SlaveOpFuncList.getMasterSlaveData( myId )
+	local hisData = SlaveOpFuncList.getMasterSlaveData( hisId )
+	local hisInfo = SlaveOpFuncList.getActorInfo( hisId )
+
+	if myData == nil then 
+		print(" SlaveOpFuncList.catchCallback myData error! actorId="..myId)
+		return
+	end
+	if hisData == nil then 
+		print(" SlaveOpFuncList.catchCallback hisData error! actorId="..hisId)
+		return
+	end
+	if hisInfo == nil then
+		print(" SlaveOpFuncList.catchCallback hisInfo error! actorId="..hisId)
+		return
+	end
+	--LActor.triggerTarget(sysarg, enATSlave)
+
+	if result ~= 1 then
+		SlaveOpFuncList.addMsg(1002, myId, hisId )
+		SlaveOpFuncList.addMsg(1004, hisId, myId )
+		return
+	end
+	if hisData.masterId > 0 and hisData.liberateTime > System.getCurrMiniTime() then
+		SlaveOpFuncList.sendTip(sysarg, hisId, hisData.masterId, 9002)
+		return
+	end
+
+	local hisRank = FightFun.getRankingById( hisId ) + 1
+	local flag1 = SlaveOpFuncList.deleteFromFailureList( myId, hisId )
+	if not flag1 then
+		print(" SlaveOpFuncList.catchCallback SlaveOpFuncList.deleteFromFailureList return false, myId="..myId..", hisId="..hisId)
+		return
+	end
+	local flag2 = SlaveOpFuncList.deleteFromEnemyList( myId, hisId )
+	if not flag2 then
+		print(" SlaveOpFuncList.catchCallback SlaveOpFuncList.deleteFromEnemyList  return false, myId="..myId..", hisId="..hisId)
+		return
+	end
+	
+	local flag3 = SlaveOpFuncList.addSlave(myId, hisId, hisInfo.level, hisRank)
+	if not flag3 then
+		print(" SlaveOpFuncList.catchCallback error! SlaveOpFuncList.addSlave("..myId..", "..hisId..", "..hisInfo.level..", "..hisRank..")")
+		return
+	end
+
+	local nowUnixTime = System.getCurrMiniTime()
+	local tmpData2 = {}
+	tmpData2.masterId = myId
+	tmpData2.catchTime = nowUnixTime
+	tmpData2.liberateTime = nowUnixTime + SlaveConfig.MAX_SLAVE_SERVICE_TIME
+	local flag4 = SlaveOpFuncList.setMasterSlaveData( hisId, tmpData2)
+	if not flag4 then
+		print(" SlaveOpFuncList.catchCallback error! SlaveOpFuncList.setMasterSlaveData(".. hisId ..",tmpData2)")
+		return
+	end
+
+	SlaveOpFuncList.addMsg(1001, myId, hisId )
+	SlaveOpFuncList.addMsg(1003, hisId, myId )
+end
+
+-- 掠夺结果
+SlaveOpFuncList.robCallback = function( sysarg, hisId, hisSlaveId, result )
+	if SlaveOpFuncList.isClose( sysarg ) then
+		return
+	end
+	local myId = LActor.getActorId( sysarg )
+	local myData = SlaveOpFuncList.getMasterSlaveData( myId )
+	local hisData = SlaveOpFuncList.getMasterSlaveData( hisId )
+	local hisSlaveData = SlaveOpFuncList.getMasterSlaveData( hisSlaveId )
+	local hisSlaveInfo = SlaveOpFuncList.getActorInfo( hisSlaveId )
+
+	if myData == nil then 
+		print(" SlaveOpFuncList.robCallback myData error! actorId="..myId)
+		return
+	end
+	if hisData == nil then 
+		print(" SlaveOpFuncList.robCallback hisData error! actorId="..hisId)
+		return
+	end
+	if hisSlaveData == nil then 
+		print(" SlaveOpFuncList.robCallback hisSlaveData error! actorId="..hisSlaveId)
+		return
+	end	
+	if hisSlaveInfo == nil then
+		print(" SlaveOpFuncList.robCallback hisSlaveInfo error! actorId="..hisSlaveId)
+		return
+	end
+	local nowUnixTime = System.getCurrMiniTime()
+	if result ~= 1  then
+		SlaveOpFuncList.addMsg(2002, myId, hisId )
+		SlaveOpFuncList.addMsg(2004, hisId, myId )
+		return
+	end
+
+	-- 被抢了
+	if hisSlaveData.masterId > 0 and hisSlaveData.masterId ~= hisId and hisSlaveData.liberateTime > System.getCurrMiniTime() then
+		SlaveOpFuncList.sendTip(sysarg, hisSlaveId, hisSlaveData.masterId, 9002)
+		return
+	end
+
+	local flag1 = SlaveOpFuncList.doAddToEnemyList( hisId, myId )
+	if not flag1 then
+		print("SlaveOpFuncList.robCallback SlaveOpFuncList.doAddToEnemyList hisId="..hisId..",myId="..myId)
+		return
+	end 
+
+	local tmpData2 = {}
+	tmpData2.masterId = myId
+	tmpData2.catchTime = nowUnixTime
+	tmpData2.liberateTime = nowUnixTime + SlaveConfig.MAX_SLAVE_SERVICE_TIME
+	local flag2 = SlaveOpFuncList.setMasterSlaveData( hisSlaveId, tmpData2 )
+	if not flag2 then
+		print("SlaveOpFuncList.robCallback SlaveOpFuncList.setMasterSlaveData, hisSlaveId="..hisSlaveId)
+		return
+	end
+
+	local flag3 = SlaveOpFuncList.deleteSlave(hisId, hisSlaveId )
+	if not flag3 then
+		print("SlaveOpFuncList.robCallback SlaveOpFuncList.deleteSlave hisId="..hisId..",hisSlaveId="..hisSlaveId)
+		return
+	end
+
+	local flag4 = SlaveOpFuncList.deleteFromFailureList( myId, hisId )
+	if not flag4 then
+		print(" SlaveOpFuncList.robCallback SlaveOpFuncList.deleteFromFailureList return false, myId="..myId..", hisId="..hisId)
+		return
+	end
+
+	local flag4 = SlaveOpFuncList.deleteFromFailureList( myId, hisSlaveId )
+	if not flag4 then
+		print(" SlaveOpFuncList.robCallback SlaveOpFuncList.deleteFromFailureList return false, myId="..myId..", hisId="..hisSlaveId)
+		return
+	end
+	
+	local flag5 = SlaveOpFuncList.deleteFromEnemyList( myId, hisId )
+	if not flag5 then
+		print(" SlaveOpFuncList.robCallback SlaveOpFuncList.deleteFromEnemyList  return false, myId="..myId..", hisId="..hisId)
+		return
+	end
+
+	local hisSlaveRank = FightFun.getRankingById( hisSlaveId ) + 1
+	SlaveOpFuncList.addSlave(myId, hisSlaveId, hisSlaveInfo.level, hisSlaveRank)
+
+	SlaveOpFuncList.addMsg(2001, myId, hisId, hisSlaveId)
+	SlaveOpFuncList.addMsg(2003, hisId, myId, hisSlaveId)
+	SlaveOpFuncList.addMsg(1003, hisSlaveId, myId )
+
+	local exist = false ;
+	--可解救列表
+	for i=1, #myData.askForHelpList do
+		if myData.askForHelpList[i] == hisSlaveId then 
+			exist = true ;
+		end
+	end
+	--删除该解救信息
+	if exist == true then 
+		SlaveOpFuncList.deleteFromAskForHelpList( myId, hisSlaveId)
+		SlaveOpFuncList.delSendHelpList(hisId, myId);
+	end
+end
+
+SlaveOpFuncList.rescueCallback = function(sysarg, hisId, hisSlaveId, result )
+	if SlaveOpFuncList.isClose( sysarg ) then
+		return
+	end
+	local myId = LActor.getActorId( sysarg )
+	local myData = SlaveOpFuncList.getMasterSlaveData( myId )
+	local hisData = SlaveOpFuncList.getMasterSlaveData( hisId )
+	local hisSlaveData = SlaveOpFuncList.getMasterSlaveData( hisSlaveId )
+	local hisSlaveInfo = SlaveOpFuncList.getActorInfo( hisSlaveId )
+
+	if myData == nil then 
+		print(" SlaveOpFuncList.rescueCallback myData error! actorId="..myId)
+		return
+	end
+	if hisData == nil then 
+		print(" SlaveOpFuncList.rescueCallback hisData error! actorId="..hisId)
+		return
+	end
+	if hisSlaveData == nil then 
+		print(" SlaveOpFuncList.rescueCallback hisSlaveData error! actorId="..hisSlaveId)
+		return
+	end
+	if hisSlaveInfo == nil then
+		print(" SlaveOpFuncList.rescueCallback hisSlaveInfo error! actorId="..hisSlaveId)
+		return
+	end
+	if result ~= 1 then
+		SlaveOpFuncList.addMsg(5002, myId, hisSlaveId )
+		SlaveOpFuncList.addMsg(5004, hisSlaveId, myId )
+		SlaveOpFuncList.addMsg(5006, hisId, myId , hisSlaveId )
+		return
+	end
+
+
+	local tmpData2 = {}
+	tmpData2.masterId = 0
+	tmpData2.liberateTime = System.getCurrMiniTime()
+	local flag1 = SlaveOpFuncList.setMasterSlaveData( hisSlaveId, tmpData2 )
+	if not flag1 then
+		print("SlaveOpFuncList.rescueCallback SlaveOpFuncList.setMasterSlaveData, hisSlaveId="..hisSlaveId)
+		return
+	end
+	local flag2 = SlaveOpFuncList.deleteSlave( hisId, hisSlaveId )
+	if not flag2 then
+		print("SlaveOpFuncList.rescueCallback SlaveOpFuncList.deleteSlave, hisSlaveId="..hisSlaveId..", hisId="..hisId)
+		return
+	end
+	local flag3 = SlaveOpFuncList.deleteFromAskForHelpList( myId, hisSlaveId)
+	if not flag3 then
+		print("SlaveOpFuncList.rescueCallback SlaveOpFuncList.deleteFromAskForHelpList, myId="..myId..", hisId="..hisId.." , hisSlaveId="..hisSlaveId)
+		return
+	end
+
+	local rank = FightFun.getRankingById( hisSlaveId ) + 1
+	local exp = SlaveOpFuncList.getExpAward( SlaveConfig.rescueExp, rank , hisSlaveInfo.level , nil)
+	LActor.addExp( sysarg, exp, 0 , 0) --加经验
+	local tmpData = {}
+	tmpData.todayGetExp = myData.todayGetExp + exp
+	SlaveOpFuncList.setMasterSlaveData( myId, tmpData )
+	
+	SlaveOpFuncList.addMsg(5001, myId, hisSlaveId )
+	SlaveOpFuncList.addMsg(5003, hisSlaveId, myId )
+	SlaveOpFuncList.addMsg(5005, hisId, myId , hisSlaveId )
+end
+
+SlaveOpFuncList.fightCallback = function(sysarg, hisId, hisSlaveId, pkType, result )
+	--print("SlaveOpFuncList.fightCallback hisId="..hisId..", hisSlaveId="..hisSlaveId..", pkType="..pkType..", result="..result)
+	if pkType == SlaveConfig.pkType.RESIST then
+		SlaveOpFuncList.resistCallback( sysarg, hisId, result )
+		return
+	end
+	if pkType == SlaveConfig.pkType.CATCH then
+		SlaveOpFuncList.catchCallback( sysarg, hisId, result )
+		-- 日志
+		System.logCounter(
+			LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), 
+			"happy_fight", "", "",
+			"zhuabu", "", "",
+			"", result == 1 and "success" or "fail", lfBI)
+		return
+	end
+	if pkType == SlaveConfig.pkType.ROB then
+		SlaveOpFuncList.robCallback( sysarg, hisId, hisSlaveId, result )
+		return
+	end
+	if pkType == SlaveConfig.pkType.RESCUE then
+		SlaveOpFuncList.rescueCallback( sysarg, hisId, hisSlaveId, result )
+		-- 日志
+		System.logCounter(
+			LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), 
+			"happy_fight", "", "",
+			"jiejiu", "", "",
+			"", result == 1 and "success" or "fail", lfBI)
+		return
+	end
+
+
+
+	--更新苦工信息
+	
+	-- ######################################################################
+end
+
+SlaveOpFuncList.pkResultCallback = function( sysarg, hisId , result )
+	--print(" SlaveOpFuncList.pkResultCallback  result="..result)
+	if result == 1 then
+		local myId = LActor.getActorId( sysarg )
+		--print("SlaveOpFuncList.pkResultCallback  myId="..myId)
+		SlaveOpFuncList.doAddToFailureList( myId, hisId )
+	end
+end
+
+SlaveOpFuncList.exitRankCallback = function( pid )
+	SlaveOpFuncList.initMasterSlaveData( pid )
+	local slaveList = SlaveOpFuncList.getSlaveList( pid )
+	if #slaveList > 0 then
+		for i=1, #slaveList do
+			--print(" SlaveOpFuncList.exitRankCallback actorId="..pid ..", slaveId="..slaveList[i].id)
+			local tmpData = {}
+			tmpData.masterId = 0 
+			tmpData.liberateTime = System.getCurrMiniTime()
+			local flag1 = SlaveOpFuncList.setMasterSlaveData( slaveList[i].id, tmpData )
+			if not flag1 then
+				print("SlaveOpFuncList.exitRankCallback SlaveOpFuncList.setMasterSlaveData slaveId="..slaveList[i].id)
+			end
+			if flag1 then
+				local flag2 = SlaveOpFuncList.deleteSlave( pid, slaveList[i].id )
+				if not flag2 then
+					print("SlaveOpFuncList.exitRankCallback SlaveOpFuncList.deleteSlave, acotrId=".. pid ..", slaveId="..slaveList[i].id)
+				end
+			end
+			SlaveOpFuncList.addMsg(3003, pid, slaveList[i].id )
+			SlaveOpFuncList.addMsg(3004, slaveList[i].id, pid )
+		end
+	end
+end
+--=================== end 回调函数=====================
+
+
+--新的一天到来
+EventCallDispatcher.NewDayForMasterSlaveSys = function( sysarg, arg )
+	local actorLevel = LActor.getIntProperty( sysarg, PROP_LEVEL )
+	if actorLevel >= SlaveConfig.OPEN_LEVEL then
+		local myId = LActor.getActorId( sysarg )
+		local tmpData = {}
+		tmpData.todayCatchTimes = 0
+		tmpData.todayInteractiveTimes = 0
+		tmpData.todayResistTimes = 0
+		tmpData.todayGetExp = 0
+		tmpData.todayRescueTimes = 0
+		tmpData.todayAddCatchCount = 0
+		local flag = SlaveOpFuncList.setMasterSlaveData( myId , tmpData )
+		if not flag then
+			print("EventCallDispatcher.NewDayForMasterSlaveSys SlaveOpFuncList.setMasterSlaveData, myId="..myId)
+		end
+	end
+end
+
+--FightPublicOp.catchCallback = SlaveOpFuncList.fightCallback
+--FightPublicOp.fightResult = SlaveOpFuncList.pkResultCallback
+--FightPublicOp.exitRankCallback = SlaveOpFuncList.exitRankCallback
+--EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, EventCallDispatcher.NewDayForMasterSlaveSys)
+--EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeLevel, EventCallDispatcher.handlerLevelUpforMasterSlave)
+
+
+--=============== gm 命令==========
+-- @slave addmsg msgId target1 garget2 --给自己发一条ID为msgId的消息，消息中可以有 target1 的玩家和target2玩家 两个玩家ID
+-- @slave addmsg 4001 100001
+-- @slave addmsg 2001 100001 100002
+------------------------------
+-- @slave addfailure hisId
+-- @slave addfailure 100001  --把玩家 100001 加到我的手下败将列表中
+------------------------------
+-- @slave fightresult hisId hisSlaveId pkType result  --pk结果回调
+-- hisId 对方ID； hisSlaveId 对方苦工ID；pkType PK类型(1:抓捕,2掠夺,3解救,4反抗)；result(1成功,2失败)
+
+SlaveOpFuncList.slave = function(sysarg, arg)
+	for i=1, #arg do
+		--print("=====================SlaveOpFuncList.slave arg["..i.."]="..arg[i] )
+	end
+	if SlaveOpFuncList.isClose( sysarg ) then
+		return
+	end
+	local myId = LActor.getActorId( sysarg )
+	--print("myId="..myId)
+
+	local optype = arg[1]
+	if optype == "addmsg" then
+		local msgId = tonumber(arg[2])
+		local target1 = tonumber(arg[3]) or 0
+		local target2 = tonumber(arg[4]) or 0
+		SlaveOpFuncList.initMasterSlaveData( myId )
+		SlaveOpFuncList.addMsg(msgId, myId, target1, target2 )
+		return
+	end
+	if optype == "addfailure" then
+		local hisId = tonumber(arg[2]) or 0
+		SlaveOpFuncList.doAddToFailureList(myId, hisId)
+		return
+	end
+	if optype == "fightresult" then
+		local hisId = tonumber(arg[2]) or 0
+		local hisSlaveId = tonumber(arg[3]) or 0
+		local pkType = tonumber(arg[4]) or 0
+		local result = tonumber(arg[5]) or 0
+		SlaveOpFuncList.fightCallback(sysarg, hisId, hisSlaveId, pkType, result)
+		return
+	end
+	if optype == "cleanslave" then
+		local hisId = tonumber(arg[2]) or 0
+		if hisId == 0 then
+			return
+		end
+		local tmpData2 = {}
+		tmpData2.masterId = 0
+		tmpData2.liberateTime = System.getCurrMiniTime()
+		local flag2 = SlaveOpFuncList.setMasterSlaveData( hisId, tmpData2 )
+		if not flag2 then
+			print("SlaveOpFuncList.slave cleanslave SlaveOpFuncList.setMasterSlaveData error, hisId="..hisId)
+			return
+		end
+	end
+
+	if optype == "getdata" then
+		local id = tonumber(arg[2]) or 0
+		if id ~= 0 then
+			local var = FightFun.getStaticVar( id )
+			if var == nil then
+				LActor.sendTipmsg( sysarg, "var == nil ", ttMessage )
+				return
+			end
+			if var.masterSlaveData == nil then
+				LActor.sendTipmsg( sysarg, "var.masterSlaveData == nil", ttMessage )
+				return
+			end
+			LActor.sendTipmsg( sysarg, "var ~= nil and var.masterSlaveData ~= nil", ttMessage )
+			return
+		end
+		LActor.sendTipmsg( sysarg, "id is not a number", ttMessage )
+		return
+	end
+
+	if optype == "resetdata" then
+		local id = tonumber(arg[2]) or LActor.getActorId( sysarg )
+		if id ~= 0 then
+			FightFun.resetSlaveActor( id )
+		end
+		return
+	end
+end
+
+--==============测试====================
+--[[
+echomyid = function( sysarg )
+	local myId = LActor.getActorId( sysarg )
+	print("myId="..myId)
+end
+
+echomsg = function ( sysarg )
+	local myId = LActor.getActorId( sysarg )
+	local myData = SlaveOpFuncList.getMasterSlaveData( myId )
+	--local myInfo = SlaveOpFuncList.getActorInfo( myId )
+	--print("myInfo.id="..myInfo.id .. "myInfo.name=" ..myInfo.name .. " myinfo.level="..myInfo.level )
+	print ( " #myData.msg = ".. #myData.msg )
+
+	for i=1, #myData.msg do 
+		print(" type(myData.msg[i])  =======" .. type(myData.msg[i]) )
+		print("sendTime="..myData.msg[i].sendTime)
+		print("msgType="..myData.msg[i].msgType)
+		print("msgId="..myData.msg[i].msgId)
+		print("target1="..myData.msg[i].target1)
+		print("target2="..myData.msg[i].target2)
+		print("===============")
+	end
+end
+
+
+echoinfo = function( )
+	local info = {}
+	info.name, info.faceId, info.level, info.job, info.familyId, info.familyName, info.camp, info.sex  =  FightFun.getActorInfo( 43028 )
+	print("familyId="..info.familyId)
+	print("familyName="..info.familyName)
+end
+]]
+
+--[[
+echoslave = function( sysarg )
+	local myId = LActor.getActorId( sysarg )
+	local mySlaveList = SlaveOpFuncList.getSlaveList( myId )
+	print ( " #mySlaveList = ".. #mySlaveList )
+	for i=1, #mySlaveList do 
+		print(" type(mySlaveList[i]) =======" .. type(mySlaveList[i]) )
+		local list = mySlaveList[i]
+		print("id="..list.id)      
+		print("catchTime="..list.catchTime)   
+		print("interactiveTime="..list.interactiveTime)  
+		print("liberateTime="..list.liberateTime)   
+		print("exp="..list.exp)        
+		print("catchLevel="..list.catchLevel)   
+		print("catchFightRank="..list.catchFightRank) 
+		print("lastSubmitTime="..list.lastSubmitTime) 
+		print("===============")
+	end
+end
+
+echofailure = function ( sysarg )
+	local myId = LActor.getActorId( sysarg )
+	local myData = SlaveOpFuncList.getMasterSlaveData( myId )
+	--local myInfo = SlaveOpFuncList.getActorInfo( myId )
+	--print("myInfo.id="..myInfo.id .. "myInfo.name=" ..myInfo.name .. " myinfo.level="..myInfo.level )
+	print ( " #myData.myFailureList = ".. #myData.myFailureList )
+
+	for i=1, #myData.myFailureList do 
+		print(" myFailureList =======" .. myData.myFailureList[i] )
+		list = SlaveOpFuncList.getActorInfo( myData.myFailureList[i] )
+		print("id="..list.id)        -- (int32) id : 角色ID
+		print("name="..list.name)   -- (string) name : 角色名
+		print("level="..list.level)     -- (int32) level : 角色等级
+		print("job="..list.job)       -- (int32) job : 职业ID
+		print("familyId="..list.familyId)       -- (int32) familyId : 帮派ID
+		print("familyName="..list.familyName)   -- (string) familyName : 帮派名
+		print("camp="..list.camp)   -- (int32) camp : 阵营
+		print("sex="..list.sex)   -- (int32) sex : 性别
+		print("faceId="..list.faceId)   -- (int32) faceId : 头像ID
+		print("catchTime="..list.catchTime)   -- (int32) faceId : 头像ID
+		print("catchLevel="..list.catchLevel)   -- (int32) catchLevel ：被抓捕时的等级
+		print("catchRankNum="..list.catchRankNum)   -- (int32) catchRankNum ：被抓捕时的竞技场排行
+		print("curExp="..list.curExp)   -- (int32) curExp ：当前已经产生的经验
+		print("interactiveCd="..list.interactiveCd)   -- (int32) interactiveCd ：互动cd时间
+		print("slaveStatus="..list.slaveStatus)   -- (int32) slaveStatus : 身份状态
+		print("===============")
+	end
+end
+]]

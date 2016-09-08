@@ -1,0 +1,2251 @@
+--XP技能万剑归宗
+{
+	actions=
+	{
+	{act=2,effect=0,},
+	},
+	
+	desc=Lang.Skill.s272L1Desc,
+	
+	iconID=172,
+	
+
+	actRange=
+	{
+		{
+			xStart=-7,
+			xEnd=7,
+			yStart=-7,
+			yEnd=7,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+				
+				{
+					conds=
+					{
+					{cond = 5,value =1},
+					{cond = 13,value =true},
+					},
+
+					results=
+					{
+						{mj=0,timeParam=1,type=1,delay=700,value={type=11,id=50,rate=0,value=-6000,interval=1,vt=0}},
+					},
+					specialEffects=
+					{
+					},
+				},
+				
+				
+				
+				{
+					conds=
+					{
+					{cond = 3,value =true},
+					},
+
+					results=
+					{
+					    {mj=0,timeParam=1,type=18,delay=200,value={rate=7,value=300}},
+						{mj=0,timeParam=1,type=18,delay=700,value={rate=7,value=300}},
+						{mj=0,timeParam=1,type=18,delay=1200,value={rate=7,value=300}},
+					
+						},
+					specialEffects=
+					{
+						{type=1,mj=0,id=50033,keepTime=0,delay=0,always=false},
+
+					},
+				},
+			},
+		},
+		{
+			xStart=7,
+			xEnd=7,
+			yStart=0,
+			yEnd=0,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=3,mj=0,id=64,keepTime=500,delay=0,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=50,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=100,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=150,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=200,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=250,always=true},
+			
+					
+					},
+				},
+			},
+		},
+		{
+			xStart=-7,
+			xEnd=-7,
+			yStart=0,
+			yEnd=0,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=3,mj=0,id=64,keepTime=500,delay=0,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=50,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=100,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=150,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=200,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=250,always=true},
+			
+					},
+				},
+			},
+		},
+		{
+			xStart=0,
+			xEnd=0,
+			yStart=-7,
+			yEnd=-7,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=3,mj=0,id=64,keepTime=500,delay=0,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=50,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=100,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=150,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=200,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=250,always=true},
+				
+					},
+				},
+			},
+		},
+		{
+			xStart= 0,
+			xEnd= 0,
+			yStart= 7,
+			yEnd= 7,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=3,mj=0,id=64,keepTime=500,delay=0,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=50,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=100,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=150,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=200,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=250,always=true},
+				
+					},
+				},
+			},
+		},
+		{
+			xStart= -5,
+			xEnd= -5,
+			yStart= 5,
+			yEnd= 5,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=3,mj=0,id=64,keepTime=500,delay=0,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=50,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=100,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=150,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=200,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=250,always=true},
+			
+					},
+				},
+			},
+		},
+		{
+			xStart= -5,
+			xEnd= -5,
+			yStart= -5,
+			yEnd= -5,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=3,mj=0,id=64,keepTime=500,delay=0,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=50,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=100,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=150,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=200,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=250,always=true},
+				
+					},
+				},
+			},
+		},
+		{
+			xStart= 5,
+			xEnd= 5,
+			yStart= 5,
+			yEnd= 5,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=3,mj=0,id=64,keepTime=500,delay=0,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=50,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=100,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=150,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=200,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=250,always=true},
+			
+					},
+				},
+			},
+		},
+		{
+			xStart= 5,
+			xEnd= 5,
+			yStart= -5,
+			yEnd= -5,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=3,mj=0,id=64,keepTime=500,delay=0,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=50,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=100,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=150,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=200,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=250,always=true},
+				
+					},
+				},
+			},
+		},
+		{
+			xStart=6,
+			xEnd=6,
+			yStart=-3,
+			yEnd=-3,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=3,mj=0,id=64,keepTime=500,delay=0,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=50,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=100,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=150,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=200,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=250,always=true},
+			
+					
+					},
+				},
+			},
+		},
+		{
+			xStart=-6,
+			xEnd=-6,
+			yStart=-3,
+			yEnd=-3,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=3,mj=0,id=64,keepTime=500,delay=0,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=50,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=100,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=150,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=200,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=250,always=true},
+			
+					},
+				},
+			},
+		},
+		{
+			xStart=-3,
+			xEnd=-3,
+			yStart=-6,
+			yEnd=-6,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=3,mj=0,id=64,keepTime=500,delay=0,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=50,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=100,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=150,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=200,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=250,always=true},
+				
+					},
+				},
+			},
+		},
+		{
+			xStart= -3,
+			xEnd= -3,
+			yStart= 6,
+			yEnd= 6,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=3,mj=0,id=64,keepTime=500,delay=0,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=50,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=100,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=150,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=200,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=250,always=true},
+				
+					},
+				},
+			},
+		},
+		{
+			xStart= 3,
+			xEnd= 3,
+			yStart= 6,
+			yEnd= 6,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=3,mj=0,id=64,keepTime=500,delay=0,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=50,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=100,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=150,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=200,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=250,always=true},
+			
+					},
+				},
+			},
+		},
+		{
+			xStart= 3,
+			xEnd= 3,
+			yStart= -6,
+			yEnd= -6,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=3,mj=0,id=64,keepTime=500,delay=0,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=50,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=100,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=150,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=200,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=250,always=true},
+				
+					},
+				},
+			},
+		},
+		{
+			xStart= 6,
+			xEnd= 6,
+			yStart= 3,
+			yEnd= 3,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=3,mj=0,id=64,keepTime=500,delay=0,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=50,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=100,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=150,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=200,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=250,always=true},
+			
+					},
+				},
+			},
+		},
+		{
+			xStart= -6,
+			xEnd= -6,
+			yStart= 3,
+			yEnd= 3,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=3,mj=0,id=64,keepTime=500,delay=0,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=50,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=100,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=150,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=200,always=true},
+					{type=3,mj=0,id=64,keepTime=500,delay=250,always=true},
+				
+					},
+				},
+			},
+		},
+		--爆炸特效
+		
+		{
+			xStart= -2,
+			xEnd= -2,
+			yStart= 0,
+			yEnd= 0,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=74,keepTime=0,delay=300,always=true},
+
+				
+					},
+				},
+			},
+		},
+		{
+			xStart= -2,
+			xEnd= -2,
+			yStart= -1,
+			yEnd= -1,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=74,keepTime=0,delay=320,always=true},
+
+				
+					},
+				},
+			},
+		},
+		{
+			xStart= -1,
+			xEnd= -1,
+			yStart= -2,
+			yEnd= -2,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=74,keepTime=0,delay=340,always=true},
+
+				
+					},
+				},
+			},
+		},
+		{
+			xStart= 0,
+			xEnd= 0,
+			yStart= -2,
+			yEnd= -2,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=74,keepTime=0,delay=360,always=true},
+
+				
+					},
+				},
+			},
+		},
+		{
+			xStart= 1,
+			xEnd= 1,
+			yStart= -2,
+			yEnd= -2,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=74,keepTime=0,delay=380,always=true},
+
+				
+					},
+				},
+			},
+		},
+		{
+			xStart= 2,
+			xEnd= 2,
+			yStart= -1,
+			yEnd= -1,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=74,keepTime=0,delay=400,always=true},
+
+				
+					},
+				},
+			},
+		},
+		{
+			xStart= 2,
+			xEnd= 2,
+			yStart= 0,
+			yEnd= 0,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=74,keepTime=0,delay=420,always=true},
+
+				
+					},
+				},
+			},
+		},
+		{
+			xStart= 1,
+			xEnd= 1,
+			yStart= 1,
+			yEnd= 1,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=74,keepTime=0,delay=440,always=true},
+
+				
+					},
+				},
+			},
+		},
+		{
+			xStart= 0,
+			xEnd= 0,
+			yStart= 2,
+			yEnd= 2,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=74,keepTime=0,delay=460,always=true},
+
+				
+					},
+				},
+			},
+		},
+		{
+			xStart= -1,
+			xEnd= -1,
+			yStart= 2,
+			yEnd= 2,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=74,keepTime=0,delay=480,always=true},
+
+				
+					},
+				},
+			},
+		},
+		{
+			xStart= -2,
+			xEnd= -2,
+			yStart= 2,
+			yEnd= 2,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=74,keepTime=0,delay=500,always=true},
+
+				
+					},
+				},
+			},
+		},
+		{
+			xStart= -3,
+			xEnd= -3,
+			yStart= 1,
+			yEnd= 1,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=74,keepTime=0,delay=520,always=true},
+
+				
+					},
+				},
+			},
+		},
+		{
+			xStart= -4,
+			xEnd= -4,
+			yStart= 0,
+			yEnd= 0,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=74,keepTime=0,delay=540,always=true},
+
+				
+					},
+				},
+			},
+		},
+		{
+			xStart= -4,
+			xEnd= -4,
+			yStart= -1,
+			yEnd= -1,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=74,keepTime=0,delay=560,always=true},
+
+				
+					},
+				},
+			},
+		},
+		{
+			xStart= -4,
+			xEnd= -4,
+			yStart= -2,
+			yEnd= -2,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=74,keepTime=0,delay=580,always=true},
+
+				
+					},
+				},
+			},
+		},
+		{
+			xStart= -3,
+			xEnd= -3,
+			yStart= -3,
+			yEnd= -3,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=74,keepTime=0,delay=600,always=true},
+
+				
+					},
+				},
+			},
+		},
+		{
+			xStart= -2,
+			xEnd= -2,
+			yStart= -4,
+			yEnd= -4,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=74,keepTime=0,delay=620,always=true},
+
+				
+					},
+				},
+			},
+		},
+		{
+			xStart= -1,
+			xEnd= -1,
+			yStart= -4,
+			yEnd= -4,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=74,keepTime=0,delay=640,always=true},
+
+				
+					},
+				},
+			},
+		},
+		{
+			xStart= 0,
+			xEnd= 0,
+			yStart= -4,
+			yEnd= -4,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=74,keepTime=0,delay=660,always=true},
+
+				
+					},
+				},
+			},
+		},
+		{
+			xStart= 1,
+			xEnd= 1,
+			yStart= -4,
+			yEnd= -4,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=74,keepTime=0,delay=680,always=true},
+
+				
+					},
+				},
+			},
+		},
+		{
+			xStart= 2,
+			xEnd= 2,
+			yStart= -4,
+			yEnd= -4,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=74,keepTime=0,delay=700,always=true},
+
+				
+					},
+				},
+			},
+		},
+		{
+			xStart= 3,
+			xEnd= 3,
+			yStart= -3,
+			yEnd= -3,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=74,keepTime=0,delay=720,always=true},
+
+				
+					},
+				},
+			},
+		},
+		{
+			xStart= 4,
+			xEnd= 4,
+			yStart= -2,
+			yEnd= -2,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=74,keepTime=0,delay=740,always=true},
+
+				
+					},
+				},
+			},
+		},
+		{
+			xStart= 4,
+			xEnd= 4,
+			yStart= -1,
+			yEnd= -1,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=74,keepTime=0,delay=760,always=true},
+
+				
+					},
+				},
+			},
+		},
+		{
+			xStart= 4,
+			xEnd= 4,
+			yStart= 0,
+			yEnd= 0,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=74,keepTime=0,delay=780,always=true},
+
+				
+					},
+				},
+			},
+		},
+		{
+			xStart= 4,
+			xEnd= 4,
+			yStart= 1,
+			yEnd= 1,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=74,keepTime=0,delay=800,always=true},
+
+				
+					},
+				},
+			},
+		},
+		{
+			xStart= 3,
+			xEnd= 3,
+			yStart= 2,
+			yEnd= 2,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=74,keepTime=0,delay=820,always=true},
+
+				
+					},
+				},
+			},
+		},
+		{
+			xStart= 2,
+			xEnd= 2,
+			yStart= 3,
+			yEnd= 3,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=74,keepTime=0,delay=840,always=true},
+
+				
+					},
+				},
+			},
+		},
+		{
+			xStart= 1,
+			xEnd= 1,
+			yStart= 3,
+			yEnd= 3,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=74,keepTime=0,delay=860,always=true},
+
+				
+					},
+				},
+			},
+		},
+		{
+			xStart= 0,
+			xEnd= 0,
+			yStart= 3,
+			yEnd= 3,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=74,keepTime=0,delay=880,always=true},
+
+				
+					},
+				},
+			},
+		},
+		{
+			xStart= -1,
+			xEnd= -1,
+			yStart= 3,
+			yEnd= 3,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=74,keepTime=0,delay=900,always=true},
+
+				
+					},
+				},
+			},
+		},
+		{
+			xStart= -2,
+			xEnd= -2,
+			yStart= 3,
+			yEnd= 3,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=74,keepTime=0,delay=920,always=true},
+
+				
+					},
+				},
+			},
+		},
+		{
+			xStart= -3,
+			xEnd= -3,
+			yStart= 3,
+			yEnd= 3,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=74,keepTime=0,delay=940,always=true},
+
+				
+					},
+				},
+			},
+		},
+		{
+			xStart= -4,
+			xEnd= -4,
+			yStart= 2,
+			yEnd= 2,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=74,keepTime=0,delay=960,always=true},
+
+				
+					},
+				},
+			},
+		},
+		{
+			xStart= -5,
+			xEnd= -5,
+			yStart= 1,
+			yEnd= 1,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=74,keepTime=0,delay=980,always=true},
+
+				
+					},
+				},
+			},
+		},
+		{
+			xStart= -6,
+			xEnd= -6,
+			yStart= 0,
+			yEnd= 0,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=74,keepTime=0,delay=1000,always=true},
+
+				
+					},
+				},
+			},
+		},
+		{
+			xStart= -6,
+			xEnd= -6,
+			yStart= -1,
+			yEnd= -1,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=74,keepTime=0,delay=1020,always=true},
+
+				
+					},
+				},
+			},
+		},
+		{
+			xStart= -6,
+			xEnd= -6,
+			yStart= -2,
+			yEnd= -2,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=74,keepTime=0,delay=1040,always=true},
+
+				
+					},
+				},
+			},
+		},
+		{
+			xStart= -6,
+			xEnd= -6,
+			yStart= -3,
+			yEnd= -3,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=74,keepTime=0,delay=1060,always=true},
+
+				
+					},
+				},
+			},
+		},
+		{
+			xStart= -5,
+			xEnd= -5,
+			yStart= -4,
+			yEnd= -4,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=74,keepTime=0,delay=1080,always=true},
+
+				
+					},
+				},
+			},
+		},
+		{
+			xStart= -4,
+			xEnd= -4,
+			yStart= -5,
+			yEnd= -5,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=74,keepTime=0,delay=1100,always=true},
+
+				
+					},
+				},
+			},
+		},
+		{
+			xStart= -3,
+			xEnd= -3,
+			yStart= -6,
+			yEnd= -6,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=74,keepTime=0,delay=1120,always=true},
+
+				
+					},
+				},
+			},
+		},
+		{
+			xStart= -2,
+			xEnd= -2,
+			yStart= -6,
+			yEnd= -6,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=74,keepTime=0,delay=1140,always=true},
+
+				
+					},
+				},
+			},
+		},
+		{
+			xStart= -1,
+			xEnd= -1,
+			yStart= -6,
+			yEnd= -6,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=74,keepTime=0,delay=1160,always=true},
+
+				
+					},
+				},
+			},
+		},
+		{
+			xStart= 0,
+			xEnd= 0,
+			yStart= -6,
+			yEnd= -6,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=74,keepTime=0,delay=1180,always=true},
+
+				
+					},
+				},
+			},
+		},
+		{
+			xStart= 1,
+			xEnd= 1,
+			yStart= -6,
+			yEnd= -6,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=74,keepTime=0,delay=1200,always=true},
+
+				
+					},
+				},
+			},
+		},
+		{
+			xStart= 2,
+			xEnd= 2,
+			yStart= -6,
+			yEnd= -6,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=74,keepTime=0,delay=1220,always=true},
+
+				
+					},
+				},
+			},
+		},
+		{
+			xStart= 3,
+			xEnd= 3,
+			yStart= -6,
+			yEnd= -6,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=74,keepTime=0,delay=1240,always=true},
+
+				
+					},
+				},
+			},
+		},
+		{
+			xStart= 4,
+			xEnd= 4,
+			yStart= -5,
+			yEnd= -5,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=74,keepTime=0,delay=1260,always=true},
+
+				
+					},
+				},
+			},
+		},
+		{
+			xStart= 5,
+			xEnd= 5,
+			yStart= -4,
+			yEnd= -4,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=74,keepTime=0,delay=1280,always=true},
+
+				
+					},
+				},
+			},
+		},
+		{
+			xStart= 6,
+			xEnd= 6,
+			yStart= -3,
+			yEnd= -3,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=74,keepTime=0,delay=1300,always=true},
+
+				
+					},
+				},
+			},
+		},
+		{
+			xStart= 6,
+			xEnd= 6,
+			yStart= -2,
+			yEnd= -2,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=74,keepTime=0,delay=1320,always=true},
+
+				
+					},
+				},
+			},
+		},
+		{
+			xStart= 6,
+			xEnd= 6,
+			yStart= -1,
+			yEnd= -1,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=74,keepTime=0,delay=1340,always=true},
+
+				
+					},
+				},
+			},
+		},
+		{
+			xStart= 6,
+			xEnd= 6,
+			yStart= 0,
+			yEnd= 0,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=74,keepTime=0,delay=1360,always=true},
+
+				
+					},
+				},
+			},
+		},
+		
+		
+	},
+		
+	
+		
+
+	trainConds=
+	{
+	{cond=6,value=2,consume=false},--职业要求
+	},
+	
+	spellConds=
+	{
+
+	},
+	singTime=0,
+
+	cooldownTime=0,
+},

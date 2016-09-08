@@ -1,0 +1,412 @@
+﻿--#include "..\..\language\LangCode.txt"
+Guide = 
+{
+ --逍遥
+--#include "guides/guide1.txt" --引导必杀技（任务24）
+,
+ --#include "guides/guide2.txt" --引导操作坐骑（任务8）
+ --,
+--#include "guides/guide3.txt" --引导装备（任务1）
+,
+--#include "guides/guide4.txt" --引导装备（任务4）
+,
+--#include "guides/guide5.txt" --引导装备（任务7）
+,
+ --#include "guides/guide6.txt" --引导装备（任务10）
+ --,
+--#include "guides/guide7.txt" --引导伙伴出战（任务315）
+,
+
+ --星辰
+--#include "guides/guide11.txt" --引导必杀技（任务53）
+,
+ --#include "guides/guide12.txt" --引导操作坐骑（任务37）
+ --,
+--#include "guides/guide13.txt" --引导装备（任务30）
+,
+--#include "guides/guide14.txt" --引导装备（任务33）
+,
+--#include "guides/guide15.txt" --引导装备（任务36）
+,
+ --#include "guides/guide16.txt" --引导装备（任务39）
+ --,
+--#include "guides/guide17.txt" --引导伙伴出战（任务316）
+,
+
+ --逸仙
+--#include "guides/guide21.txt" --引导必杀技（任务82）
+,
+ --#include "guides/guide22.txt" --引导操作坐骑（任务66）
+ --,
+--#include "guides/guide23.txt" --引导装备（任务59）
+,
+--#include "guides/guide24.txt" --引导装备（任务62）
+,
+--#include "guides/guide25.txt" --引导装备（任务65）
+,
+ --#include "guides/guide26.txt" --引导装备（任务68）
+ --,
+--#include "guides/guide27.txt" --引导伙伴出战（任务317）
+,
+
+--#include "guides/guide35.txt" --抽奖引导（任务324）
+,
+--#include "guides/guide36.txt" --军团引导（任务125）
+,
+--#include "guides/guide37.txt" --灵器引导（任务313）
+,
+--#include "guides/guide38.txt" --坐骑进阶引导（任务98）
+,
+--#include "guides/guide39.txt" --灵根引导（任务285）
+,
+--#include "guides/guide40.txt" --购买药品引导（任务89）
+,
+--#include "guides/guide41.txt" --历练副本+兑换引导（任务102）
+,
+ --#include "guides/guide42.txt" --速传引导（任务101）
+ --,
+ --#include "guides/guide43.txt" --速传引导（任务130）
+ --,
+--#include "guides/guide44.txt" --渡劫副本炼气1阶引导（任务110）
+,
+--#include "guides/guide45.txt" --渡劫副本炼气2阶引导（任务118）
+,
+--#include "guides/guide46.txt" --诛仙阵副本引导（任务133）
+,
+--#include "guides/guide47.txt" --封魔殿单人副本引导（任务284）
+,
+--#include "guides/guide48.txt" --张天师斩妖除魔引导（任务299）
+,
+--#include "guides/guide49.txt" --炼器引导（任务120）
+,
+--#include "guides/guide50.txt" --任务接受后自动寻路引导（任务121）
+,
+--#include "guides/guide51.txt" --任务完成后自动寻路引导（任务127）
+,
+--#include "guides/guide52.txt" --任务接受后自动寻路引导（任务122）
+,
+--#include "guides/guide53.txt" --任务接受后自动寻路引导（任务123）
+,
+--#include "guides/guide54.txt" --任务接受后自动寻路引导（任务296）
+,
+--#include "guides/guide55.txt" --任务接受后自动寻路引导（任务297）
+,
+ --#include "guides/guide56.txt" --任务接受后自动寻路引导（任务298）
+ --,
+--#include "guides/guide57.txt" --任务接受后自动寻路引导（任务126）
+,
+--#include "guides/guide58.txt" --任务完成后自动寻路引导（任务128）
+,
+--#include "guides/guide59.txt" --任务完成后自动寻路引导（任务129）
+,
+--#include "guides/guide61.txt" --任务接受后自动寻路引导（任务295）
+,
+ --#include "guides/guide62.txt" --速传引导（任务104）
+ --,
+--#include "guides/guide63.txt" --速传引导（任务135）
+,
+--#include "guides/guide64.txt" --速传引导（任务136）
+,
+--#include "guides/guide65.txt" --速传引导（任务137）
+,
+--#include "guides/guide66.txt" --速传引导（任务138）
+,
+--#include "guides/guide67.txt" --速传引导（任务300）
+,
+--#include "guides/guide68.txt" --速传引导（任务139）
+,
+--#include "guides/guide69.txt" --速传引导（任务278）
+,
+--#include "guides/guide70.txt" --任务接受后自动寻路引导（任务119）
+,
+--#include "guides/guide71.txt" --小箭头测试（任务318）
+,
+--#include "guides/guide72.txt" --小箭头测试（任务319）
+,
+--#include "guides/guide73.txt" --小箭头测试（任务320）
+,
+--#include "guides/guide74.txt" --伙伴岛副本引导（任务321）
+,
+--#include "guides/guide75.txt" --小箭头测试（任务8）
+,
+--#include "guides/guide76.txt" --小箭头测试（任务37）
+,
+--#include "guides/guide77.txt" --小箭头测试（任务66）
+,
+--#include "guides/guide78.txt" --伙伴融合（任务322）
+,
+--#include "guides/guide79.txt" --VIP使用（任务325）
+,
+--#include "guides/guide80.txt" --无限速传指引（任务326）
+,
+--#include "guides/guide81.txt" --无限速传指引（任务327）
+,
+--#include "guides/guide82.txt" --无限速传指引（任务328）
+,
+--#include "guides/guide83.txt" --无限速传指引（任务329）
+,
+ --#include "guides/guide84.txt" --无限速传指引（任务279）
+ --,
+--#include "guides/guide85.txt" --洗炼引导（任务211）
+,
+--#include "guides/guide86.txt" --千狐冢单人副本引导（任务153）
+,
+--#include "guides/guide90.txt" --小箭头测试（任务90）
+,
+--#include "guides/guide91.txt" --小箭头测试（任务91）
+,
+--#include "guides/guide92.txt" --小箭头测试（任务92）
+,
+--#include "guides/guide93.txt" --速传引导（任务330）
+,
+--#include "guides/guide94.txt" --速传引导（任务279）
+,
+--#include "guides/guide95.txt" --速传引导（任务331）
+,
+--#include "guides/guide96.txt" --速传引导（任务287）
+,
+--#include "guides/guide97.txt" --速传引导（任务293）
+,
+--#include "guides/guide98.txt" --速传引导（任务146）
+,
+--#include "guides/guide99.txt" --速传引导（任务154）
+,
+--#include "guides/guide101.txt" --小箭头测试（任务3）
+,
+--#include "guides/guide103.txt" --小箭头测试（任务2）
+,
+--#include "guides/guide105.txt" --小箭头测试（任务5）
+,
+--#include "guides/guide106.txt" --小箭头测试（任务6）
+,
+--#include "guides/guide109.txt" --小箭头测试（任务9）
+,
+--#include "guides/guide111.txt" --小箭头测试（任务11）
+,
+--#include "guides/guide112.txt" --小箭头测试（任务12）
+,
+--#include "guides/guide113.txt" --小箭头测试（任务13）
+,
+--#include "guides/guide114.txt" --小箭头测试（任务14）
+,
+--#include "guides/guide115.txt" --小箭头测试（任务15）
+,
+--#include "guides/guide116.txt" --小箭头测试（任务16）
+,
+--#include "guides/guide117.txt" --小箭头测试（任务17）
+,
+--#include "guides/guide118.txt" --小箭头测试（任务18）
+,
+--#include "guides/guide119.txt" --小箭头测试（任务19）
+,
+--#include "guides/guide120.txt" --小箭头测试（任务20）
+,
+--#include "guides/guide121.txt" --小箭头测试（任务21）
+,
+--#include "guides/guide122.txt" --小箭头测试（任务22）
+,
+--#include "guides/guide123.txt" --小箭头测试（任务23）
+,
+--#include "guides/guide125.txt" --小箭头测试（任务25）
+,
+--#include "guides/guide126.txt" --小箭头测试（任务26）
+,
+--#include "guides/guide127.txt" --小箭头测试（任务27）
+,
+--#include "guides/guide128.txt" --小箭头测试（任务28）
+,
+--#include "guides/guide129.txt" --小箭头测试（任务29）
+,
+--#include "guides/guide201.txt" --小箭头测试（任务32）
+,
+--#include "guides/guide203.txt" --小箭头测试（任务31）
+,
+--#include "guides/guide205.txt" --小箭头测试（任务34）
+,
+--#include "guides/guide206.txt" --小箭头测试（任务35）
+,
+--#include "guides/guide209.txt" --小箭头测试（任务38）
+,
+--#include "guides/guide211.txt" --小箭头测试（任务40）
+,
+--#include "guides/guide212.txt" --小箭头测试（任务41）
+,
+--#include "guides/guide213.txt" --小箭头测试（任务42）
+,
+--#include "guides/guide214.txt" --小箭头测试（任务43）
+,
+--#include "guides/guide215.txt" --小箭头测试（任务44）
+,
+--#include "guides/guide216.txt" --小箭头测试（任务45）
+,
+--#include "guides/guide217.txt" --小箭头测试（任务46）
+,
+--#include "guides/guide218.txt" --小箭头测试（任务47）
+,
+--#include "guides/guide219.txt" --小箭头测试（任务48）
+,
+--#include "guides/guide220.txt" --小箭头测试（任务49）
+,
+--#include "guides/guide221.txt" --小箭头测试（任务50）
+,
+--#include "guides/guide222.txt" --小箭头测试（任务51）
+,
+--#include "guides/guide223.txt" --小箭头测试（任务52）
+,
+--#include "guides/guide225.txt" --小箭头测试（任务54）
+,
+--#include "guides/guide226.txt" --小箭头测试（任务55）
+,
+--#include "guides/guide227.txt" --小箭头测试（任务56）
+,
+--#include "guides/guide228.txt" --小箭头测试（任务57）
+,
+--#include "guides/guide229.txt" --小箭头测试（任务58）
+,
+--#include "guides/guide301.txt" --小箭头测试（任务61）
+,
+--#include "guides/guide303.txt" --小箭头测试（任务60）
+,
+--#include "guides/guide305.txt" --小箭头测试（任务63）
+,
+--#include "guides/guide306.txt" --小箭头测试（任务64）
+,
+--#include "guides/guide309.txt" --小箭头测试（任务67）
+,
+--#include "guides/guide311.txt" --小箭头测试（任务69）
+,
+--#include "guides/guide312.txt" --小箭头测试（任务70）
+,
+--#include "guides/guide313.txt" --小箭头测试（任务71）
+,
+--#include "guides/guide314.txt" --小箭头测试（任务72）
+,
+--#include "guides/guide315.txt" --小箭头测试（任务73）
+,
+--#include "guides/guide316.txt" --小箭头测试（任务74）
+,
+--#include "guides/guide317.txt" --小箭头测试（任务75）
+,
+--#include "guides/guide318.txt" --小箭头测试（任务76）
+,
+--#include "guides/guide319.txt" --小箭头测试（任务77）
+,
+--#include "guides/guide320.txt" --小箭头测试（任务78）
+,
+--#include "guides/guide321.txt" --小箭头测试（任务79）
+,
+--#include "guides/guide322.txt" --小箭头测试（任务80）
+,
+--#include "guides/guide323.txt" --小箭头测试（任务81）
+,
+--#include "guides/guide325.txt" --小箭头测试（任务83）
+,
+--#include "guides/guide326.txt" --小箭头测试（任务84）
+,
+--#include "guides/guide327.txt" --小箭头测试（任务85）
+,
+--#include "guides/guide328.txt" --小箭头测试（任务86）
+,
+--#include "guides/guide329.txt" --小箭头测试（任务87）
+,
+--#include "guides/guide330.txt" --斩妖除魔（任务8001）
+,
+--#include "guides/guide331.txt" --斩妖除魔（任务8002）
+,
+--#include "guides/guide332.txt" --斩妖除魔（任务8003）
+,
+--#include "guides/guide333.txt" --斩妖除魔（任务8004）
+,
+--#include "guides/guide334.txt" --斩妖除魔（任务8005）
+,
+--#include "guides/guide335.txt" --斩妖除魔（任务8006）
+,
+--#include "guides/guide336.txt" --斩妖除魔（任务8007）
+,
+--#include "guides/guide337.txt" --斩妖除魔（任务8008）
+,
+--#include "guides/guide338.txt" --斩妖除魔（任务8009）
+,
+--#include "guides/guide339.txt" --斩妖除魔（任务8010）
+,
+--#include "guides/guide340.txt" --斩妖除魔（任务8011）
+,
+--#include "guides/guide341.txt" --斩妖除魔（任务8012）
+,
+--#include "guides/guide342.txt" --斩妖除魔（任务8013）
+,
+--#include "guides/guide343.txt" --斩妖除魔（任务8014）
+,
+--#include "guides/guide344.txt" --斩妖除魔（任务8015）
+,
+--#include "guides/guide345.txt" --斩妖除魔（任务8016）
+,
+--#include "guides/guide346.txt" --斩妖除魔（任务8017）
+,
+--#include "guides/guide347.txt" --斩妖除魔（任务8018）
+,
+--#include "guides/guide348.txt" --斩妖除魔（任务8019）
+,
+--#include "guides/guide349.txt" --斩妖除魔（任务8020）
+,
+--#include "guides/guide350.txt" --斩妖除魔（任务8021）
+,
+--#include "guides/guide351.txt" --斩妖除魔（任务8022）
+,
+--#include "guides/guide352.txt" --斩妖除魔（任务8023）
+,
+--#include "guides/guide353.txt" --斩妖除魔（任务8024）
+,
+--#include "guides/guide354.txt" --斩妖除魔（任务8025）
+,
+--#include "guides/guide355.txt" --斩妖除魔（任务8026）
+,
+--#include "guides/guide356.txt" --斩妖除魔（任务8027）
+,
+--#include "guides/guide357.txt" --斩妖除魔（任务8028）
+,
+--#include "guides/guide358.txt" --斩妖除魔（任务8029）
+,
+--#include "guides/guide359.txt" --斩妖除魔（任务8030）
+,
+--#include "guides/guide360.txt" --斩妖除魔（任务8031）
+,
+--#include "guides/guide361.txt" --斩妖除魔（任务8032）
+,
+--#include "guides/guide362.txt" --斩妖除魔（任务8033）
+,
+--#include "guides/guide363.txt" --斩妖除魔（任务8034）
+,
+--#include "guides/guide364.txt" --斩妖除魔（任务8035）
+,
+--#include "guides/guide365.txt" --斩妖除魔（任务8036）
+,
+--#include "guides/guide366.txt" --斩妖除魔（任务8037）
+,
+--#include "guides/guide367.txt" --斩妖除魔（任务8038）
+,
+--#include "guides/guide368.txt" --斩妖除魔（任务8039）
+,
+--#include "guides/guide369.txt" --斩妖除魔（任务8040）
+,
+--#include "guides/guide370.txt" --斩妖除魔（任务8041）
+,
+--#include "guides/guide371.txt" --斩妖除魔（任务8042）
+,
+--#include "guides/guide372.txt" --斩妖除魔（任务8043）
+,
+--#include "guides/guide373.txt" --斩妖除魔（任务8044）
+,
+--#include "guides/guide374.txt" --斩妖除魔（任务8045）
+,
+--#include "guides/guide375.txt" --斩妖除魔（任务8046）
+,
+--#include "guides/guide376.txt" --斩妖除魔（任务8047）
+,
+--#include "guides/guide377.txt" --斩妖除魔（任务8048）
+,
+--#include "guides/guide378.txt" --斩妖除魔（任务8049）
+,
+--#include "guides/guide379.txt" --斩妖除魔（任务8050）
+,
+}

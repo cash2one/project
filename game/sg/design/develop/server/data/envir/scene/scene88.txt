@@ -1,0 +1,78 @@
+﻿--琉璃幻境场景相关的配置 
+{
+	--场景1
+	--这个id必须每次递增，比如第一个场景id是0，下一个一定是1，类推
+	scenceid = 88,
+	--场景名称
+	scencename = Lang.SceneName.s88,
+	--场景对应的地图,只需要填文件名，不需要写路径和后缀名，比如这个地图文件是map/demo.jxm，只需要写demo
+	mapfilename = "zjqt",
+	--限制等级,低于这个等级无法进入
+	minlevel = 0,
+	--限制物品，这是一个数字列表，代表有这些物品的玩家不能进入
+	forbiddenitem = {1,2},
+	--限制的技能列表，有这些技能的玩家不能进入
+	forbiddenskill = {100,20},
+	--0表示可以pk，1表示不可以，默认是0
+	nopk = 1,
+	progress = 0,
+	music = "zhandou.mp3",
+	musicInterval=5,
+        --在世界地图上的坐标x
+        worldmapPosx =0,
+        worldmapPosy =0,
+		--场景的长宽,是指格子数的长宽
+        sceneWidth =146,
+        sceneHeight =88,
+
+	area = 
+	{
+
+	    { name = Lang.SceneName.s88, range = { 0,0,146,0,146,88,0,88}, center = {24,76},
+		    attri = { 
+		      {type= 46 ,value = {0}}, --复活点，无参数,
+        --       {type= 50 ,value = {0}}, --PK模式  
+					}
+		},
+	    { inherit = false ,name = Lang.SceneName.s88, range = { 0,70,40,70,0,89,40,89}, center = { 24,76},
+		     attri = 
+		    {
+		     	{type=1 ,value = {}},
+			    {type=46 ,value = {}},
+			    {type=50 ,value = {0}},
+			},
+	    },
+	    { inherit = false ,name = Lang.SceneName.s88, range = { 0,0,146,0,0,69,147,69}, center = { 74 , 11},
+		     attri = 
+		    {
+			    {type=50,value = {2}},
+			},
+	    },
+	    { inherit = false ,name = Lang.SceneName.s88, range = { 41,70,146,70,41,88,146,88}, center = {124, 76 },
+		     attri = 
+		    {
+			    {type=50,value = {2}},
+			},
+	    },						
+	},
+	--refresh项用来配置这个场景的刷怪点，每个场景可以有多个刷怪点，可以用include包含多个刷怪点   
+ refresh =
+{
+--#include "refresh88.txt"    
+},
+	--这里配置这个场景出现的NPC，如果有多个NPC，这配置多行，每一项（行）表示一个NPC
+	npc = 
+	{
+		--name表示npc的名称，
+		--posx和posy分别表示出现的位置坐标
+		--script是对应的脚本名字，需要用相对路径
+		--modelid表示外观模型id
+        --camp表示是阵营的id，默认是0表示所有的阵营都能用，1 无忌 2逍遥  3日月，如果是0可以不配置
+      {npcid=8801, name = Lang.EntityName.n8801, posx = 18 , posy = 79, script= "data/script/liulihuanjing/chuansongshizhe.txt",modelid= 2,icon = 2,funcid = 7,funcTitle = Lang.functitle.f14 },  --传送使者
+  },
+
+  teleport = 
+  {    --无传送阵此配置块要留,不可注释
+
+  },
+},

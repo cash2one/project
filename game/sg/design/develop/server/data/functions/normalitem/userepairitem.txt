@@ -1,0 +1,37 @@
+--lua script
+
+--[[
+    函数名称：useRepairItemFunc
+    函数描述：使用磨刀石维修装备
+    参数 sysarg 的描述：
+    参数 itemidx 的描述：
+    参数 itemPtr 的描述：
+    参数 ItemTable 的描述：
+]]
+function useRepairItemFunc(sysarg,itemidx,itemPtr,ItemTable)
+  --通知客户端
+   --使用磨刀石维修装备
+	if ItemTable.item_id == 1557 then     --磨刀石物品
+		--通知客户端
+    --136 NPC装备修理子系统 3
+    local npack = DataPack.allocPacket(sysarg,136,3)  --申请一个数据包
+    if (npack == nil) then
+	   return
+    end
+    DataPack.flush(npack)
+  end
+end
+
+--磨刀石物品
+RepairItems = {
+	{item_id = 1557,},
+}
+
+function useRepairItem_Init(sysarg)
+  for i = 1,table.getn(RepairItems) do
+	local x = RepairItems[i]
+	GlobalItemFn[x.item_id] = { func = useRepairItemFunc, params = x }
+  end
+end
+
+table.insert(InitFnTable,useRepairItem_Init)

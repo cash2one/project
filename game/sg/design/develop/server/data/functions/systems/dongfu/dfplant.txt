@@ -1,0 +1,188 @@
+
+
+DongfuManager.selectPlantType = function(pChar, type)
+	local atHome, ownerId = DongfuManager.isAtHome(pChar)
+	if not atHome then return end
+
+	local dfData = DongfuManager.getDongfuData(ownerId)
+	local info = dfData.info
+	local color = info.plantSet and info.plantSet[type] or 1
+	local dp = DataPack.allocPacket(pChar, 157, 5)
+	DataPack.writeByte(dp, type)
+	DataPack.writeByte(dp, color)
+	DataPack.flush(dp)
+end
+
+DongfuManager.refreshPlantColor = function(pChar, type, moneytype)
+	local atHome, ownerId = DongfuManager.isAtHome(pChar)
+	if not atHome then return end
+
+	local dfData = DongfuManager.getDongfuData(ownerId)
+	local info = dfData.info
+	local color = info.plantSet and info.plantSet[type] or 1
+
+	local pConf = DongfuConf.plantType[type]
+	if pConf == nil or color >= #pConf.awardValue then 
+		return LActor.sendTipmsg(pChar, Lang.ScriptTips.df011, ttMessage)
+	end
+
+	if not LActor.CheckMoneyEnough(pChar, moneytype, DongfuConf.refreshYB) then
+		return
+	end
+	LActor.changeMoney(pChar, moneytype, -DongfuConf.refreshYB, 1, true, "dongfu", "refreshPlant")
+
+	local refreshNoti = function()
+		local dp = DataPack.allocPacket(pChar, 157, 5)
+		DataPack.writeByte(dp, type)
+		DataPack.writeByte(dp, color)
+		DataPack.flush(dp)
+	end
+
+	local rate = System.getRandomNumber(100) + 1
+	for i = #DongfuConf.refreshRate, 1, -1 do
+		if i <= color then return refreshNoti() end
+		if rate >= DongfuConf.refreshRate[i] then
+			color = i
+			break
+		end
+	end
+	if info.plantSet == nil then
+		info.plantSet = {}
+	end
+	info.plantSet[type] = color
+	DongfuManager.onChanged(ownerId)
+
+	refreshNoti()
+end
+
+DongfuManager.refreshPlantBestColor = function(pChar, type, moneytype)
+	local atHome, ownerId = DongfuManager.isAtHome(pChar)
+	if not atHome then return end
+
+	local dfData = DongfuManager.getDongfuData(ownerId)
+	local info = dfData.info
+	if info.plantSet == nil then
+		info.plantSet = {}
+	end
+	local color = #DongfuConf.plantType[type].awardValue
+	if (info.plantSet[type] or 1) >= color then
+		return LActor.sendTipmsg(pChar, Lang.ScriptTips.df011, ttMessage)
+	end
+
+
+	if not LActor.CheckMoneyEnough(pChar, moneytype, DongfuConf.refreshBestYB) then
+		return
+	end
+
+	LActor.changeMoney(pChar, moneytype, -DongfuConf.refreshBestYB, 1, true, "dongfu", "refreshPlantBestColor")
+	info.plantSet[type] = color
+	DongfuManager.onChanged(ownerId)
+
+	local dp = DataPack.allocPacket(pChar, 157, 5)
+	DataPack.writeByte(dp, type)
+	DataPack.writeByte(dp, color)
+	DataPack.flush(dp)
+end
+
+DongfuManager.plant = function(pChar, landId, plantType)
+	local atHome, ownerId = DongfuManager.isAtHome(pChar)
+	if not atHome then return end
+
+	local dfData = DongfuManager.getDongfuData(ownerId)
+	local info = dfData.info
+
+	local lvl = info.level or 1
+	if (info.usedXianluValue or 0) >= DongfuConf.maxXianluValue[lvl] then
+		return LActor.sendTipmsg(pChar, Lang.ScriptTips.df004, ttMessage)
+	end
+
+	local list = info.list or {}
+	local lInfo = list[landId]
+	if lInfo ~= nil and lInfo.plantFlag == 1 then return end
+	local pConf = DongfuConf.plantType[plantType]
+	if pConf == nil then return end
+
+	local color = info.plantSet and info.plantSet[plantType] or 1
+	if color >= #pConf.awardValue then
+		color = #pConf.awardValue
+	end
+
+	if info.plantSet ~= nil and info.plantSet[plantType] ~= nil then
+		info.plantSet[plantType] = nil
+	end
+	DongfuManager.actualPlant(dfData, landId, plantType, color)
+end
+
+DongfuManager.actualPlant = function(dfData, landId, type, color)
+	local info = dfData.info
+	if info.list == nil then
+		info.list = {}
+	end
+
+	local endTime = System.getCurrMiniTime() + 4 * 3600
+	info.usedXianluValue = (info.usedXianluValue or 0) + 1
+	info.list[landId] = {
+		plantFlag	= 1,
+		plantType 	= type,
+		plantColor 	= color,
+		sickFlag 	= 0,
+		endTime		= endTime,
+	}
+	DongfuManager.onChanged(dfData.ownerId)
+
+	local lvl = info.level or 1
+
+	local plantNoti = function(pChar)
+		local dp = DataPack.allocPacket(pChar, 157, 8)
+		DataPack.writeInt(dp, dfData.ownerId)
+		DataPack.writeShort(dp, DongfuConf.maxXianluValue[lvl] - info.usedXianluValue)
+		DataPack.writeByte(dp, landId)
+		DataPack.writeByte(dp, type)
+		DataPack.writeByte(dp, color)
+		DataPack.writeUInt(dp, endTime)
+		DataPack.flush(dp)
+	end
+	DongfuManager.broadcast(dfData.playerSet, plantNoti)
+
+	DongfuManager.resetLandFlag(dfData)
+end
+
+DongfuManager.batchPlant = function(pChar, type, color, moneytype)
+	local atHome, ownerId = DongfuManager.isAtHome(pChar)
+	if not atHome then return end
+
+	local dfData = DongfuManager.getDongfuData(ownerId)
+	local info = dfData.info
+	local lvl = info.level or 1
+	if lvl < 3 then return end
+
+	local pConf = DongfuConf.plantType[type]
+	if pConf == nil or color ~= 1 and color ~= #pConf.awardValue then return end
+
+	local ldCount = 0
+	local list = info.list or {}
+	for i = 1, 9 do
+		if list[i] == nil or list[i].plantFlag == 0 then
+			ldCount = ldCount + 1
+		end
+	end
+	local xianluValue = DongfuConf.maxXianluValue[lvl] - (info.usedXianluValue or 0)
+
+	local pCount = math.min(ldCount, xianluValue)
+	if pCount <= 0 then return end
+	if color ~= 1 then
+		local yb = DongfuConf.refreshBestYB * pCount
+		if not LActor.CheckMoneyEnough(pChar, moneytype, yb) then
+			return
+		end
+		LActor.changeMoney(pChar, ybtype, -yb, 1, true, "dongfu", "batchPlant")
+	end
+
+	for i = 1, 9 do
+		if pCount <= 0 then break end
+		if list[i] == nil or list[i].plantFlag == 0 then
+			pCount = pCount - 1
+			DongfuManager.actualPlant(dfData, i, type, color)
+		end
+	end
+end

@@ -1,0 +1,116 @@
+﻿-- 法宝配置项                                        
+                                        
+--#include "..\..\language\LangCode.txt" once   
+
+GemConfig = {
+    GemInit = { -- 法宝初始化属性
+        { -- 法宝1对应配置
+            gemId = 1, -- 法宝id
+            gemName = Lang.Gem.b001, -- 法宝名字
+            gemLevel = 0, -- 初始化等级
+            gemSkillLevel = 1, -- 初始化技能等级
+            active = {
+                needLevel = 2, --  领取条件等级
+                itemId = 1123, -- 领取条件道具id
+                itemNum = 1, -- 领取条件道具数量
+                coinNum = 50, -- 领取条件铜币数量
+            }
+        },
+        { -- 法宝2对应配置
+            gemId = 2, -- 法宝id
+            gemName = Lang.Gem.b002, -- 法宝名字
+            gemLevel = 0, -- 初始化等级
+            gemSkillLevel = 1, -- 初始化技能等级
+            active = {
+                needLevel = 10, --  领取条件等级
+                itemId = 1123, -- 领取条件道具id
+                itemNum = 2, -- 领取条件道具数量
+                coinNum = 100, -- 领取条件铜币数量
+            }
+        },
+    },
+
+    upgradeCount = 10, -- 默认每天10次修炼次数
+    vipUpgradeCount = { -- VIP用户额外增加的修炼次数表
+        1, 2, 3, 4, 5, 6, 7, 8, 9, 10
+    },
+    GemAttrs = { -- 法宝修炼属性配置表
+        { -- 法宝1对应修炼等级表的配置
+            { -- 等级0的配置
+                coinNum = 0, -- 修炼消耗铜钱
+                upgradeItemId = 1123, -- 修炼消耗材料id
+                upgradeItemNum = 0, -- 修炼材料消耗数量
+                attrs = { -- 对应等级的属性
+                    { type = 1, value = 50 },
+                    { type = 11, value = 300 },
+                    { type = 13, value = 180 },
+                    { type = 27, value = 250 },
+                    { type = 35, value = 15 },
+                }
+            },
+            { -- 等级1的配置
+                coinNum = 1000, -- 修炼消耗铜钱
+                upgradeItemId = 1123, -- 修炼消耗材料id
+                upgradeItemNum = 1, -- 修炼材料消耗数量
+                attrs = {
+                    { type = 1, value = 80 },
+                    { type = 11, value = 600 },
+                    { type = 13, value = 480 },
+                    { type = 27, value = 550 },
+                    { type = 35, value = 35 },
+                }
+            },
+        },
+        { -- 法宝2对应修炼等级表的配置
+            { -- 等级0的配置
+                coinNum = 0, -- 修炼消耗铜钱
+                upgradeItemId = 1123, -- 修炼消耗材料id
+                upgradeItemNum = 0, -- 修炼材料消耗数量
+                attrs = {
+                    { type = 1, value = 60 },
+                    { type = 11, value = 400 },
+                    { type = 13, value = 280 },
+                    { type = 27, value = 350 },
+                    { type = 35, value = 25 },
+                }
+            },
+            { -- 等级1的配置
+                coinNum = 10000, -- 修炼消耗铜钱
+                upgradeItemId = 1123, -- 修炼消耗材料id
+                upgradeItemNum = 2, -- 修炼材料消耗数量
+                attrs = {
+                    { type = 1, value = 150 },
+                    { type = 11, value = 800 },
+                    { type = 13, value = 580 },
+                    { type = 27, value = 650 },
+                    { type = 35, value = 65 },
+                }
+            },
+        },
+    },
+    
+    GemSkills = { -- 技能配置
+        { -- 法宝1对应技能配置
+            skillId = 1001, -- 技能id
+            progress = { -- 该等级升级进度需要点数
+                5, 15, 30, 45, 60,
+            },
+            upgradeSkillItemId = 1200, -- 技能升级消耗材料id
+            coinNum = { -- 对应升级的铜币消耗
+                10000, 20000, 40000, 60000, 100000,
+            },
+        },
+        { -- 法宝2对应技能配置
+            skillId = 1002, -- 技能id
+            progress = { -- 该等级升级进度需要点数
+                5, 15, 30, 45, 60,
+            },
+            upgradeSkillItemId = 1200, -- 技能升级消耗材料id
+            coinNum = { -- 对应升级的铜币消耗
+                10000, 20000, 40000, 60000, 100000,
+            },
+        },
+    },
+    skillResetFreeNum = 1, -- 技能免费重置次数
+    skillResetCost = 50, -- 技能重置免费过后的元宝消耗
+}

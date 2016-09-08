@@ -1,0 +1,24 @@
+--小活动配置表
+--#include "..\..\..\language\LangCode.txt" once
+
+activity23Conf = {
+	activityId = 23,
+
+	activities =
+	{
+		[39] = {
+			--限时销售
+		 	id = 39,
+		 	items = {
+		 		--{discount = 打折, maxCount = 玩家最大可购买个数, time = 售卖时间（从开活动开始算时间）},
+		 		{moneyType = mtYuanbao, discount = 0.5, price = 550, old_price = 1000, itemid = 43001, maxCount = 2, time = 3*24*3600},
+		 		{moneyType = mtYuanbao, discount = 0.7, price = 1680, old_price = 2500, itemid = 43002, maxCount = 2, time = 3*24*3600},
+		 		{moneyType = mtYuanbao, discount = 0.8, price = 680, old_price = 800, itemid = 43003, maxCount = 2, time = 3*24*3600},
+		 		{moneyType = mtYuanbao, discount = 0.7, price = 2250, old_price = 3500, itemid = 43004, maxCount = 2, time = 3*24*3600},
+		 		{moneyType = mtYuanbao, discount = 0.6, price = 550, old_price = 1000, itemid = 43005, maxCount = 2, time = 3*24*3600},
+
+		 	},
+ 		},
+ 		 
+	}
+}

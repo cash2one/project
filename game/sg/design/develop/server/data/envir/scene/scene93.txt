@@ -1,0 +1,69 @@
+﻿--场景相关的配置   轩辕之战  
+{
+	--场景1
+	--这个id必须每次递增，比如第一个场景id是0，下一个一定是1，类推
+	scenceid = 93,
+	--场景名称
+	scencename = Lang.SceneName.s93,
+	--场景对应的地图,只需要填文件名，不需要写路径和后缀名，比如这个地图文件是map/demo.jxm，只需要写demo
+	mapfilename = "zlzy",
+	-- mapfilename = "kles",
+	--限制等级,低于这个等级无法进入
+	minlevel = 0,
+	--限制物品，这是一个数字列表，代表有这些物品的玩家不能进入
+	forbiddenitem = {1,2},
+	--限制的技能列表，有这些技能的玩家不能进入
+	forbiddenskill = {100,20},
+	--0表示可以切换pk模式 1表示不可以切换pk模式
+	nopk = 1,
+	canchangepkmode = 1,
+	progress = 0,
+	music = "zhandou.mp3",
+	triggerkillallmonster = true,
+	musicInterval=5,
+        --在世界地图上的坐标x
+        worldmapPosx =0,
+        worldmapPosy =0,
+		--场景的长宽,是指格子数的长宽
+        sceneWidth =121,
+        sceneHeight =99, 
+
+	area = 
+	{
+		{ name = Lang.SceneName.s93, range = { 0,0,121,0,0,99,121,99}, center = { 62,49},
+		     attri = 
+		    {
+			    {type=50,value = {2}},
+			},
+	    },
+	    { name = Lang.SceneName.s93, range = { 19,0,35,0,19,6,35,6}, center = {27,6},
+		     attri = 
+		    {
+		     	{type=1 ,value = {}},
+			    {type=46 ,value = {}},
+			},
+	    },			
+	},
+	
+	--refresh项用来配置这个场景的刷怪点，每个场景可以有多个刷怪点，可以用include包含多个刷怪点
+
+     
+ refresh =
+{
+--#include "refresh93.txt"  	
+},
+	--这里配置这个场景出现的NPC，如果有多个NPC，这配置多行，每一项（行）表示一个NPC
+	npc = 
+	{
+		--name表示npc的名称，
+		--posx和posy分别表示出现的位置坐标
+		--script是对应的脚本名字，需要用相对路径
+		--modelid表示外观模型id
+                --camp表示是阵营的id，默认是0表示所有的阵营都能用，1 无忌 2逍遥  3日月，如果是0可以不配置
+        -- {npcid=9301, dir=3, name = Lang.EntityName.n9301 ,posx = 61, posy = 47, script = "data/script/liulihuanjing/chengzhu.txt",modelid=74,icon = 1,utype = 1},  --城主
+  },
+  teleport = 
+  {    
+
+  },
+},

@@ -1,0 +1,22 @@
+--#include "..\..\language\LangCode.txt"
+
+BianShen_Config = {
+    -- [5171] = {--变身军中刘秀
+    --     modelId = 12,
+    --     skill_list = {
+    --         {
+    --             skillId = 40,
+    --             skillLevel = 1,
+    --         },
+    --     },
+    -- },
+    [5182] = {--变身侍女
+        modelId = 41,
+        skill_list = {
+            {
+                skillId = 40,
+                skillLevel = 1,
+            },
+        },
+    },
+}

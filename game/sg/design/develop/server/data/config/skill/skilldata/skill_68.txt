@@ -1,0 +1,20 @@
+
+-- 区域BOSS持续群攻技能
+{
+	id=68,
+	name=Lang.Skill.s68Name,
+	desc=Lang.Skill.s68Desc,
+	vocation=0,	
+	skillClass =7,
+	skillType=9,
+	skillSpellType=0,
+	commonCd=0,
+	specialBuffCond =0,
+	skillSubLevel=
+	{
+--#include "Skill_68_1.txt"	
+	}
+},
+
+
+

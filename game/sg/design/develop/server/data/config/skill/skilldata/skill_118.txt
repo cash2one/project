@@ -1,0 +1,15 @@
+﻿--怪物禁锢技能
+{
+	id = 118,
+	name = Lang.Skill.s118Name,
+	desc = Lang.Skill.s118Desc,
+	vocation = 9,
+	skillType = 0,
+	skillSpellType = 0,
+	skillClass = 0,
+	commonCd = 0,
+	specialBuffCond = 0,
+	skillSubLevel = { 
+--#include "Skill_118_1.txt"
+	},
+},

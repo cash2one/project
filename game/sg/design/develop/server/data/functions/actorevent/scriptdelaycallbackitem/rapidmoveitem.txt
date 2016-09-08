@@ -1,0 +1,18 @@
+﻿--lua script
+
+--疾风令的处理
+--[[键入'ss'并按分号即可按模板生成脚本]]--
+function RapidMoveItemCallback(sysarg,arg)
+
+	local sceneID = arg[2]
+	local posx = arg[3]
+	local posy= arg[4]
+  
+	if( 1==LActor.removeItem(sysarg,1559,1,-1,-1,-1," ",5) ) then      --删除一个物品
+		--如果在队伍副本中，要退出队伍
+		
+		System.telportScene(sysarg,sceneID,posx,posy)
+	end
+  
+end
+table.insert(LocalDT.ScriptDelayConfig[5],RapidMoveItemCallback)

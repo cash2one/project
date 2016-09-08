@@ -1,0 +1,208 @@
+--lua script
+--万圣节活动相关逻辑
+--#include "data\functions\normalitem\NormalItemDatas.txt" once
+--#include "data\language\LangCode.txt" once
+--#include "data\config\misc\singlesdayconf.txt" once
+		--#include "data\config\misc\nationaldayfubenconf.txt" once
+--#include "data\functions\miscfunc.txt"  once
+--#include "data\functions\gmevent.txt" once
+
+--#include "data\functions\globaldefine.txt" once
+
+local SinglesDayImplement = 
+{
+}
+
+SinglesDayImplement.main = function (sysarg, systemid, msgid, packet)
+	if SinglesDayImplement[msgid] then
+		SinglesDayImplement[msgid](sysarg, msgid, packet)
+	end
+end
+
+SinglesDayImplement.registerMsgHandler = function (msgid, proc)
+	if SinglesDayImplement[msgid] then
+		return false
+	else
+		SinglesDayImplement[msgid] = proc
+		return true
+	end
+end
+
+SinglesDayImplement.unregisterMsgHandler = function (msgid, proc)
+	if SinglesDayImplement[msgid] == proc then
+		SinglesDayImplement[msgid] = nil
+		return true
+	else
+		return false
+	end
+end
+
+-------------------------------
+
+SinglesDayFunc = {}
+
+-------------------------------------------------------送花和魅力排行的活动
+SinglesDayFunc.CharmRankName = "singlesdaycharmrank"
+
+-- 检查情人节活动状态
+SinglesDayFunc.CheckState = function()
+	if not SinglesDayFunc.Inited then return end
+
+	local var_sys_d = System.getDyanmicVar()
+
+	local newstate = 0
+	local cur_t = System.getCurrMiniTime()
+
+	if cur_t >= var_sys_d.singlesday.weddingPromotionsStartTime and cur_t <= var_sys_d.singlesday.weddingPromotionsEndTime then
+		newstate = 1
+	else
+		newstate = 0
+	end
+	if var_sys_d.singlesday.weddingPromotionsStatus == nil or var_sys_d.singlesday.weddingPromotionsStatus == 0 then
+		if newstate == 1 then
+			local actors = LuaHelp.getAllActorList()
+			if actors ~= nil then
+				for i=1,#actors do
+					local actor = actors[i]
+					local a_var = LActor.getStaticVar(actor)
+					--a_var.marryActivityLogicOne = 1
+					if a_var.marry ~= nil and a_var.marry.luxuryday ~= nil and a_var.marry.march ~= nil then
+						st.marry.luxuryday = st.marry.luxuryday + 1
+						st.marry.march = st.marry.march + 1
+						st.marryOALoginTime = cur_t
+						--[[
+						if a_var.marry.luxuryday ~= nil then
+							a_var.marry.luxuryday = a_var.marry.luxuryday + 1
+						end
+						if a_var.marry.march ~= nil then
+							a_var.marry.march = a_var.marry.march + 1
+						end
+						--]]
+					end
+				end
+			end
+		end
+	end
+	var_sys_d.singlesday.weddingPromotionsStatus = newstate
+end
+
+SinglesDayFunc.OnUpdateFlowerOrCharm = function()
+	-- 判断活动状态
+	SinglesDayFunc.CheckState()
+end
+
+-- 登陆处理
+SinglesDayFunc.OnLoginFlower = function(sysarg, arg)
+
+	local cur_t = System.getCurrMiniTime()
+	local var = LActor.getStaticVar(sysarg)
+
+	if var.SinglesDayInfo == nil then
+		var.SinglesDayInfo = {}
+	end
+end
+
+-- 新的一天
+SinglesDayFunc.OnNewDayFlower = function(sysarg, arg)
+	local var = LActor.getStaticVar(sysarg)
+end
+
+--登陆初始化玩家数据
+SinglesDayFunc.LoginInitExchangeInfo = function ( sysarg )
+
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	if var.SinglesDay == nil then
+		var.SinglesDay = {}
+	end
+	if var.SinglesDay.Integration == nil then
+		var.SinglesDay.Integration = 0
+	end
+	if var.SinglesDay.TotalIntegration == nil then
+		var.SinglesDay.TotalIntegration = 0
+	end
+	if var.SinglesDay.ExchangeItemCount == nil then
+		var.SinglesDay.ExchangeItemCount = 0
+	end
+
+end
+
+--新一天初始化玩家数据
+SinglesDayFunc.NewDayInitExchangeInfo = function(sysarg, arg)
+
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+
+	if var.SinglesDay == nil then
+		var.SinglesDay = {}
+	end
+	if var.SinglesDay.Integration == nil then
+		var.SinglesDay.Integration = 0
+	end
+	if var.SinglesDay.TotalIntegration == nil then
+		var.SinglesDay.TotalIntegration = 0
+	end
+	if var.SinglesDay.ExchangeItemCount == nil then
+		var.SinglesDay.ExchangeItemCount = 0
+	end
+	if var.SinglesDay.LoginTime == nil then
+		var.SinglesDay.LoginTime = 0
+	end
+
+	--if arg[1] ~= nil and arg[1] == 1 then return end -- 登陆的情况在上面已经处理
+	local now = System.getCurrMiniTime()
+	if not System.isSameDay(now, var.SinglesDay.LoginTime) then
+		var.SinglesDay.LoginTime = now
+		var.SinglesDay.ExchangeItemCount = 0
+	end
+end
+
+--系统初始化
+SinglesDayFunc.OnInit = function ()
+
+    local conf = SinglesDayConf
+    local var_sys_d = System.getDyanmicVar()
+	if var_sys_d == nil then return end
+	if var_sys_d.singlesday == nil then
+		var_sys_d.singlesday = {}
+	end
+	--婚宴促销，甜蜜情人节
+	tm = conf.activitytime[1][1]
+	var_sys_d.singlesday.weddingPromotionsStartTime = System.timeEncode(tm[1], tm[2], tm[3], tm[4], tm[5], tm[6])
+	tm = conf.activitytime[1][2]
+	var_sys_d.singlesday.weddingPromotionsEndTime = System.timeEncode(tm[1], tm[2], tm[3], tm[4], tm[5], tm[6])
+
+	-- 初始化活动状态
+	SinglesDayFunc.Inited = true
+	SinglesDayFunc.CheckState()
+end
+
+-------------------------------------------------------
+
+SinglesDayFunc.OnTime = function()
+end
+
+table.insert(TimeFnTable, SinglesDayFunc.OnTime)
+table.insert(InitFnTable, SinglesDayFunc.OnInit)
+--table.insert(MainFnTable, azraelzone_main)
+--------------------------------------------------------
+--================= END 协议 ==================
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, SinglesDayFunc.SendActivityInfo)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeLevel, SinglesDayFunc.SendActivityInfo)
+
+-----------兑换
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, SinglesDayFunc.LoginInitExchangeInfo)
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, SinglesDayFunc.NewDayInitExchangeInfo)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, SinglesDayFunc.NewDayInitExchangeInfo)
+
+-------------------------
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, SinglesDayFunc.SendActivityInfo)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, SinglesDayFunc.OnNewDayFlower)
+
+
+
+
+
+

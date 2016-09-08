@@ -1,0 +1,456 @@
+﻿--奇珍异宝
+
+{
+	name = Lang.Store.c00006, --分类名称
+	--该分类中的商品表
+ 	showAreaId =0,  --显示的区域ID,0表示商城普通区，1表示商城限量抢购区，2表示背包0元抢购区，3表示背包1元抢购区，4表示背包热销商品区
+	labelId =0,  --0表示是普通的商城，1表示背包限时抢购，2表示0元抢购,3表示1元抢购
+	totalBuyLimit =0,    --表示大类的数目的限制个数,0表示无限制，1表示限制一个
+	desc =Lang.Store.desc0001,   --分类的刷新描述
+	items = 
+	{
+		--	银两宝箱					
+		{						
+			id =	60001	,			
+			item =	2075	,			
+			quality =	0	,			
+			strong =	0	,			
+			totalCountLimit=	0	,			
+			userCountLinit =	0	,			
+			price = 					
+			{					
+				{ spid = "*", type = 3, price = 	75	, bind = false,oldPrice=	180	 }, 
+			},					
+		},						
+		--	绑定银两宝箱					
+		{						
+			id =	60002	,			
+			item =	2060	,			
+			quality =	0	,			
+			strong =	0	,			
+			totalCountLimit=	0	,			
+			userCountLinit =	0	,			
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	10	, bind = false,oldPrice=	25	 }, 
+			},					
+		},						
+		--	金兰谱					
+		{						
+			id =	60003	,			
+			item =	1878	,			
+			quality =	0	,			
+			strong =	0	,			
+			totalCountLimit=	0	,			
+			userCountLinit =	0	,			
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	48	, bind = false,oldPrice=	100	 }, 
+			},					
+		},						
+		--	红月水晶石					
+		{						
+			id =	60004	,			
+			item =	1923	,			
+			quality =	0	,			
+			strong =	0	,			
+			totalCountLimit=	0	,			
+			userCountLinit =	0	,			
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	12	, bind = false,oldPrice=	25	 }, 
+			},					
+		},						
+		--	蓝月水晶石					
+		{						
+			id =	60005	,			
+			item =	1924	,			
+			quality =	0	,			
+			strong =	0	,			
+			totalCountLimit=	0	,			
+			userCountLinit =	0	,			
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	16	, bind = false,oldPrice=	35	 }, 
+			},					
+		},						
+		--	通关金箱钥匙					
+		{						
+			id =	60006	,			
+			item =	611	,			
+			quality =	0	,			
+			strong =	0	,			
+			totalCountLimit=	0	,			
+			userCountLinit =	0	,			
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	15	, bind = false,oldPrice=	30	 }, 
+			},					
+		},						
+		--	修为封存宝器					
+		{						
+			id =	60007	,			
+			item =	1750	,			
+			quality =	0	,			
+			strong =	0	,			
+			totalCountLimit=	0	,			
+			userCountLinit =	0	,			
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	2	, bind = false,oldPrice=	5	 }, 
+			},					
+		},						
+		--	修为摄取古木					
+		{						
+			id =	60008	,			
+			item =	1752	,			
+			quality =	0	,			
+			strong =	0	,			
+			totalCountLimit=	0	,			
+			userCountLinit =	0	,			
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	50	, bind = false,oldPrice=	100	 }, 
+			},					
+		},						
+		--	督脉金针					
+		{						
+			id =	60009	,			
+			item =	1886	,			
+			quality =	0	,			
+			strong =	0	,			
+			totalCountLimit=	0	,			
+			userCountLinit =	0	,			
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	5	, bind = false,oldPrice=	12	 }, 
+			},					
+		},						
+		--	召集令					
+		{						
+			id =	60010	,			
+			item =	1664	,			
+			quality =	0	,			
+			strong =	0	,			
+			totalCountLimit=	0	,			
+			userCountLinit =	0	,			
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	5	, bind = false,oldPrice=	12	 }, 
+			},					
+		},						
+		--	换车令					
+		{						
+			id =	60011	,			
+			item =	1717	,			
+			quality =	0	,			
+			strong =	0	,			
+			totalCountLimit=	0	,			
+			userCountLinit =	0	,			
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	3	, bind = false,oldPrice=	6	 }, 
+			},					
+		},						
+		--	无字天书					
+		{						
+			id =	60012	,			
+			item =	2042	,			
+			quality =	0	,			
+			strong =	0	,			
+			totalCountLimit=	0	,			
+			userCountLinit =	0	,			
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	88	, bind = false,oldPrice=	200	 }, 
+			},					
+		},						
+		--	静修函					
+		{						
+			id =	60013	,			
+			item =	1634	,			
+			quality =	0	,			
+			strong =	0	,			
+			totalCountLimit=	0	,			
+			userCountLinit =	0	,			
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	10	, bind = false,oldPrice=	20	 }, 
+			},					
+		},						
+		--	易名狼毫					
+		{						
+			id =	60014	,			
+			item =	1879	,			
+			quality =	0	,			
+			strong =	0	,			
+			totalCountLimit=	0	,			
+			userCountLinit =	0	,			
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	48	, bind = false,oldPrice=	100	 }, 
+			},					
+		},						
+		--	军团长弹劾令					
+		{						
+			id =	60015	,			
+			item =	2165	,			
+			quality =	0	,			
+			strong =	0	,			
+			totalCountLimit=	0	,			
+			userCountLinit =	0	,			
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	388	, bind = false,oldPrice=	800	 }, 
+			},					
+		},						
+		--	屠龙山谷钥匙					
+		{						
+			id =	60016	,			
+			item =	1880	,			
+			quality =	0	,			
+			strong =	0	,			
+			totalCountLimit=	0	,			
+			userCountLinit =	0	,			
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	8	, bind = false,oldPrice=	20	 }, 
+			},					
+		},						
+		--	银制钥匙					
+		{						
+			id =	60017	,			
+			item =	1625	,			
+			quality =	0	,			
+			strong =	0	,			
+			totalCountLimit=	0	,			
+			userCountLinit =	0	,			
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	10	, bind = false,oldPrice=	20	 }, 
+			},					
+		},						
+		--	黄金钥匙					
+		{						
+			id =	60018	,			
+			item =	1626	,			
+			quality =	0	,			
+			strong =	0	,			
+			totalCountLimit=	0	,			
+			userCountLinit =	0	,			
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	20	, bind = false,oldPrice=	40	 }, 
+			},					
+		},						
+		--	梦想神符					
+		{						
+			id =	60019	,			
+			item =	1766	,			
+			quality =	0	,			
+			strong =	0	,			
+			totalCountLimit=	0	,			
+			userCountLinit =	0	,			
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	3	, bind = false,oldPrice=	8	 }, 
+			},					
+		},						
+		--	1朵玫瑰					
+		{						
+			id =	60020	,			
+			item =	1720	,			
+			quality =	0	,			
+			strong =	0	,			
+			totalCountLimit=	0	,			
+			userCountLinit =	0	,			
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	1	, bind = false,oldPrice=	3	 }, 
+			},					
+		},						
+		--	9朵玫瑰					
+		{						
+			id =	60021	,			
+			item =	1721	,			
+			quality =	0	,			
+			strong =	0	,			
+			totalCountLimit=	0	,			
+			userCountLinit =	0	,			
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	9	, bind = false,oldPrice=	20	 }, 
+			},					
+		},						
+		--	99朵玫瑰					
+		{						
+			id =	60022	,			
+			item =	1722	,			
+			quality =	0	,			
+			strong =	0	,			
+			totalCountLimit=	0	,			
+			userCountLinit =	0	,			
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	99	, bind = false,oldPrice=	200	 }, 
+			},					
+		},						
+		--	999朵玫瑰					
+		{						
+			id =	60023	,			
+			item =	1723	,			
+			quality =	0	,			
+			strong =	0	,			
+			totalCountLimit=	0	,			
+			userCountLinit =	0	,			
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	999	, bind = false,oldPrice=	2000	 }, 
+			},					
+		},						
+		--	五彩缤纷					
+		{						
+			id =	60024	,			
+			item =	2118	,			
+			quality =	0	,			
+			strong =	0	,			
+			totalCountLimit=	0	,			
+			userCountLinit =	0	,			
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	5	, bind = false,oldPrice=	12	 }, 
+			},					
+		},						
+		--	帮主英明					
+		{						
+			id =	60025	,			
+			item =	2136	,			
+			quality =	0	,			
+			strong =	0	,			
+			totalCountLimit=	0	,			
+			userCountLinit =	0	,			
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	5	, bind = false,oldPrice=	12	 }, 
+			},					
+		},						
+		--	如梦江湖					
+		{						
+			id =	60026	,			
+			item =	2137	,			
+			quality =	0	,			
+			strong =	0	,			
+			totalCountLimit=	0	,			
+			userCountLinit =	0	,			
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	5	, bind = false,oldPrice=	12	 }, 
+			},					
+		},						
+		--	军团长威武					
+		{						
+			id =	60027	,			
+			item =	2138	,			
+			quality =	0	,			
+			strong =	0	,			
+			totalCountLimit=	0	,			
+			userCountLinit =	0	,			
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	5	, bind = false,oldPrice=	12	 }, 
+			},					
+		},						
+		--	火树银花					
+		{						
+			id =	60028	,			
+			item =	2139	,			
+			quality =	0	,			
+			strong =	0	,			
+			totalCountLimit=	0	,			
+			userCountLinit =	0	,			
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	5	, bind = false,oldPrice=	12	 }, 
+			},					
+		},						
+		--	团结一致					
+		{						
+			id =	60029	,			
+			item =	2140	,			
+			quality =	0	,			
+			strong =	0	,			
+			totalCountLimit=	0	,			
+			userCountLinit =	0	,			
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	5	, bind = false,oldPrice=	12	 }, 
+			},					
+		},						
+		--	我们必胜					
+		{						
+			id =	60030	,			
+			item =	2141	,			
+			quality =	0	,			
+			strong =	0	,			
+			totalCountLimit=	0	,			
+			userCountLinit =	0	,			
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	5	, bind = false,oldPrice=	12	 }, 
+			},					
+		},						
+		--	义结金兰					
+		{						
+			id =	60031	,			
+			item =	2142	,			
+			quality =	0	,			
+			strong =	0	,			
+			totalCountLimit=	0	,			
+			userCountLinit =	0	,			
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	5	, bind = false,oldPrice=	12	 }, 
+			},					
+		},						
+		--	爱的表白					
+		{						
+			id =	60032	,			
+			item =	2143	,			
+			quality =	0	,			
+			strong =	0	,			
+			totalCountLimit=	0	,			
+			userCountLinit =	0	,			
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	5	, bind = false,oldPrice=	12	 }, 
+			},					
+		},						
+		--	生日烟花					
+		{						
+			id =	60033	,			
+			item =	2147	,			
+			quality =	0	,			
+			strong =	0	,			
+			totalCountLimit=	0	,			
+			userCountLinit =	0	,			
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	5	, bind = false,oldPrice=	12	 }, 
+			},					
+		},						
+		--	师傅给力					
+		{						
+			id =	60034	,			
+			item =	2149	,			
+			quality =	0	,			
+			strong =	0	,			
+			totalCountLimit=	0	,			
+			userCountLinit =	0	,			
+			price = 					
+			{					
+				{ spid = "*", type = 3, price =	5	, bind = false,oldPrice=	12	 }, 
+			},					
+		},						
+	},
+},
+

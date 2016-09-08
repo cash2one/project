@@ -1,0 +1,51 @@
+﻿--[[	
+MiscsImplement.changeIcon = function (sysarg)
+	local id = 35
+--]]
+
+MiscsImplement.changeIcon = function (sysarg,msgid, packet)
+
+	local oldicon = LActor.getIntProperty( sysarg, PROP_ICON )
+	local id = DataPack.readWord(packet)	--头像id
+	local moneytype = DataPack.readByte(packet)
+	if moneytype == nil or moneytype ~= mtYuanbao and moneytype ~= mtBindYuanbao then return end
+	local flag = 1
+	--判断是否收费头像
+	if id <= 7 then	--系统的默认头像
+		local job = LActor.getIntProperty( sysarg, PROP_VOCATION )
+		if job ~= (id+1) then
+			--只能选对应自己职业的头像
+			print("change icon error param!job="..job.." id="..id)
+			return
+		end
+		flag = 0
+	else
+		--判断是否VIP用户
+		if LActor.getVIPLevel( sysarg ) > 0 then
+			flag = 0
+		elseif LActor.getMoneyCount(sysarg, moneytype) >= 50 then
+			flag = 0
+			LActor.changeMoney(sysarg,moneytype,-50)
+			--收费头像
+			local var = LActor.getStaticVar(sysarg)
+			var.iconId = id
+		end
+	end
+	
+	if flag == 0 then
+		LActor.changeIcon(sysarg,id)
+	end
+	local npack = DataPack.allocPacket(sysarg,LogicCmd.miscSys.sysId,LogicCmd.miscSys.sub.sChangeIcon)  --申请一个数据包
+	if npack == nil then
+		print("allocPacket is nil!")
+		return
+	end
+	DataPack.writeByte(npack,flag)
+	DataPack.flush(npack)
+
+end
+
+MiscsImplement.registerMsgHandler(27, MiscsImplement.changeIcon)
+
+testchangeIcon = MiscsImplement.changeIcon
+

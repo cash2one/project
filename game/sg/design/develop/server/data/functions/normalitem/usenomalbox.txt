@@ -1,0 +1,215 @@
+--lua script
+
+--[[
+    函数名称：use_NomalBoxItem
+    函数描述：
+    参数 sysarg 的描述：
+    参数 itemIndex 的描述： 物品ID
+    参数 itemPtr 的描述： 物品指针
+    参数 useItemTbl 的描述：物品表
+]]
+function use_NomalBoxItem( sysarg,itemIndex,itemPtr,useItemTbl )
+  local level = LActor.getIntProperty( sysarg, PROP_LEVEL )
+  if level < useItemTbl.mustLevel then
+    local tipMsg = string.format(Lang.TaskTalk.n00002,useItemTbl.mustLevel,useItemTbl.item_name)
+    LActor.sendTipmsg( sysarg,tipMsg,ttDialog )
+    return false
+  end
+  if LActor.getItemCount(sysarg,useItemTbl.item_id) < 1 then
+    local tipMsg = string.format(Lang.TaskTalk.n00003,useItemTbl.item_name)
+    LActor.sendTipmsg( sysarg,tipMsg,ttDialog )
+    return false
+  end
+  if itemIndex == useItemTbl.item_id then
+    local count = Item.getBagEmptyGridCount(sysarg)
+    if useItemTbl.mustBag and count < useItemTbl.mustBag then
+      local tipMsg = string.format(Lang.TaskTalk.n00004,useItemTbl.mustBag)
+      LActor.sendTipmsg( sysarg,tipMsg,ttDialog )
+      return false
+    else
+	    if sysarg then
+        --判断需求物品 
+        if useItemTbl.mustItem ~= nil and useItemTbl.mustItem.itemId ~= nil then
+          if LActor.getItemCount(sysarg,useItemTbl.mustItem.itemId) >= useItemTbl.mustItem.mustCount then
+            if useItemTbl.mustItem.isRemove == true then 
+              LActor.removeItem(sysarg,useItemTbl.mustItem.itemId,useItemTbl.mustItem.mustCount,-1,-1,-1,"NomalBoxItemTbl",5)      --删除消耗物品
+            end
+          else
+            local tipMsg = string.format(Lang.TaskTalk.n00020,useItemTbl.mustItem.mustCount,useItemTbl.mustItem.itemName)
+				    LActor.sendTipmsg( sysarg,tipMsg,ttDialog )
+				    return false
+          end  
+        end
+        if useItemTbl.isRemove == true then 
+          LActor.removeItem(sysarg,useItemTbl.item_id,1,-1,-1,-1,"NomalBoxItemTbl",5)      --删除消耗物品
+        end
+        local rewardItem = {}     --公告表用于奖励显示
+        ----给予常规物品 
+        if useItemTbl.regularItem ~= nil then
+	        local i
+	        local ItemPer = 0
+	        local giveItemTbl = useItemTbl.regularItem
+	        if giveItemTbl ~= nil and table.getn(giveItemTbl) > 0 then
+		        for i = 1, table.getn( giveItemTbl ) do
+		          LActor.addItem(sysarg,giveItemTbl[i].itemId,0,0,giveItemTbl[i].num,giveItemTbl[i].bind,"NomalBoxItemTbl",1)
+		          table.insert(rewardItem,giveItemTbl[i])        --插入公告表用于奖励显示
+		          if giveItemTbl[i].notice == true then
+		            local name = LActor.getName( sysarg )
+				        local str = string.format( Lang.TaskTalk.n00005, name,useItemTbl.item_name,giveItemTbl[i].name)
+		            --System.broadcastTipmsg(str,ttGmTip + ttTipmsgWindow)
+			      	end
+		        end
+	        end 
+        end
+        ------------------------
+        --随机物品 
+        if useItemTbl.randomItem ~= nil then
+	        local i
+	        local ItemPer = 0
+	        local index
+	        for index=1, #useItemTbl.randomItem do
+		        local giveItemTbl = useItemTbl.randomItem[index]
+	          if giveItemTbl ~= nil and table.getn(giveItemTbl) > 0 then
+			        local rand = System.getRandomNumber(1000)
+			        for i = 1, table.getn( giveItemTbl ) do
+			          ItemPer = ItemPer + giveItemTbl[i].percent
+			          if rand < ItemPer then
+			            LActor.addItem(sysarg,giveItemTbl[i].itemId,0,0,giveItemTbl[i].num,giveItemTbl[i].bind,"NomalBoxItemTbl",1)
+			            table.insert(rewardItem,giveItemTbl[i])    --插入公告表用于奖励显示
+			            if giveItemTbl[i].notice == true then
+			              local name = LActor.getName( sysarg )
+						        local str = string.format( Lang.TaskTalk.n00005, name,useItemTbl.item_name,giveItemTbl[i].name)
+			              --System.broadcastTipmsg(str,ttGmTip + ttTipmsgWindow)
+						      end
+						      break
+			          end
+			        end
+		        end
+	        end
+        end 
+        ---------------- 
+        ---内外功分配物品 
+        if useItemTbl.chiceItem ~= nil then
+	        local i
+	        local ItemPer = 0
+	        local vocation = LActor.getIntProperty( sysarg, PROP_VOCATION )
+	        local giveItemTbl = nil
+          if isInPower(vocation) == true then      --返回true 内功 
+            giveItemTbl = useItemTbl.chiceItem.inItem  
+          else
+            giveItemTbl = useItemTbl.chiceItem.outItem
+          end 
+          if giveItemTbl ~= nil and table.getn(giveItemTbl) > 0 then
+            
+		        local rand = System.getRandomNumber(1000)
+		        for i = 1, table.getn( giveItemTbl ) do
+		          ItemPer = ItemPer + giveItemTbl[i].percent
+		          if rand < ItemPer then
+		            LActor.addItem(sysarg,giveItemTbl[i].itemId,0,0,giveItemTbl[i].num,giveItemTbl[i].bind,"NomalBoxItemTbl",1)
+		            table.insert(rewardItem,giveItemTbl[i])    --插入公告表用于奖励显示 
+		            if giveItemTbl[i].notice == true then      --世界公告 
+		              local name = LActor.getName( sysarg )
+					        local str = string.format( Lang.TaskTalk.n00005, name,useItemTbl.item_name,giveItemTbl[i].name)
+		              --System.broadcastTipmsg(str,ttGmTip + ttTipmsgWindow)
+					      end
+					      break
+		          end
+		        end
+	        end
+        end
+        --end 内外功分配物品
+        -----------------------------
+        local rewardMoney = {}     --公告表用于奖励显示
+        ---货币奖励 
+        if useItemTbl.extentItem ~= nil then
+		      if useItemTbl.extentItem.bindGold ~= nil and useItemTbl.extentItem.bindGold > 0 then          --绑定银两 
+	          LActor.changeMoney(sysarg,mtBindCoin,useItemTbl.extentItem.bindGold)
+	          local money = {type = 5, num = useItemTbl.extentItem.bindGold}
+	          table.insert(rewardMoney, money)
+		      end
+		      if useItemTbl.extentItem.gold ~= nil and useItemTbl.extentItem.gold > 0 then                  --银两
+	          LActor.changeMoney(sysarg,mtCoin,useItemTbl.extentItem.gold)
+            local money = {type = 6, num = useItemTbl.extentItem.gold}
+	          table.insert(rewardMoney, money)           
+		      end
+	        if useItemTbl.extentItem.bindYuanBao ~= nil and useItemTbl.extentItem.bindYuanBao > 0 then    --绑定元宝 
+	          LActor.changeMoney(sysarg,mtBindYuanbao,useItemTbl.extentItem.bindYuanBao)
+	          local money = {type = 7, num = useItemTbl.extentItem.bindYuanBao}
+	          table.insert(rewardMoney, money)
+		      end
+	        if useItemTbl.extentItem.yuanBao ~= nil and useItemTbl.extentItem.yuanBao > 0 then            --元宝 
+	          LActor.changeMoney(sysarg,mtYuanbao,useItemTbl.extentItem.yuanBao)
+	          --local money = {type = 4, num = useItemTbl.extentItem.yuanBao}
+	          --table.insert(rewardMoney, money)
+		      end
+        end
+        ---end 货币奖励 
+        --
+	      local rewardCount = tonumber(#rewardItem+#rewardMoney)    --发送给客户端物品的数量 
+	      if rewardCount > 0 then 
+		      --发送数据给客户端打开显示物品界面 
+		      local npack = DataPack.allocPacket(sysarg,139,20)       --幸运挖宝消息 
+				  if npack == nil then return end
+				  DataPack.writeByte(npack,rewardCount)
+				  --物品信息 
+				  if #rewardItem > 0 then
+					  local i
+					  for i=1, #rewardItem do
+						  DataPack.writeShort(npack,0)
+						  DataPack.writeShort(npack,rewardItem[i].itemId)
+						  DataPack.writeInt(npack,rewardItem[i].num)
+						  DataPack.writeByte(npack,rewardItem[i].bind)
+						  DataPack.writeByte(npack,0)
+						  DataPack.writeByte(npack,0)
+					  end
+				  end
+				  --金钱信息 
+				  if #rewardMoney > 0 then
+					  local j
+					  for j=1, #rewardMoney do
+						  DataPack.writeShort(npack,rewardMoney[j].type)
+						  DataPack.writeShort(npack,0)
+						  DataPack.writeInt(npack,rewardMoney[j].num)
+						  DataPack.writeByte(npack,0)
+						  DataPack.writeByte(npack,0)
+						  DataPack.writeByte(npack,0)
+					  end
+				  end
+					DataPack.flush(npack)
+					
+				end
+      end --end sysarg
+      --
+    end
+  end
+end
+
+--[[
+    函数名称：isInPower
+    函数描述：判断内外功 
+    参数 idx 的描述：职业ID 
+    返回：true内功 false外功 
+]]
+function isInPower(idx)
+  local inVocation = {2,3,4,6}   --内功职业ID 
+  local i
+  for i=1, #inVocation do
+    if idx == inVocation[i] then
+      return true
+    end
+  end
+  return false
+end
+
+--#include "data\config\item\NomalBoxItem.txt" 
+
+function NomalBoxItemTbl_Init(npcobj)
+  local i
+   for i = 1, table.getn(NomalBoxItemTbl) do
+    local items = NomalBoxItemTbl[i]
+    GlobalItemFn[NomalBoxItemTbl[i].item_id] = { func = use_NomalBoxItem, params = items }
+   end
+end
+
+
+table.insert( InitFnTable, NomalBoxItemTbl_Init )

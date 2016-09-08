@@ -1,0 +1,1338 @@
+﻿
+--#include "data\language\LangCode.txt" once
+
+
+
+
+playFubenMon = {}
+playFubenMonMsg = {}
+
+playFubenMon.CreateMonsterList = function (fubenId, difficul)
+	if not fubenId then return nil end
+	difficul = difficul or 1
+	if not PlayFubenConfig.createmonsterlist[difficul] or type(PlayFubenConfig.createmonsterlist[difficul]) ~= "table" then return nil end
+	return PlayFubenConfig.createmonsterlist[difficul][fubenId]
+end
+
+playFubenMon.CheckIsInPlayFuben = function(sysarg)
+	local fubenId = LActor.getFubenId(sysarg)
+	debug_print("fubenId:"..tostring(fubenId))
+    local hfb = LActor.getFubenHandle(sysarg)
+    local pfb = Fuben.getFubenPtr(hfb)
+    local var_d = Fuben.getDyanmicVar(pfb)
+    if var_d == nil then return end
+	local isinplay = false
+	if PlayFubenConfig.createmonsterlist[var_d.difficul] ~= nil then
+		if PlayFubenConfig.createmonsterlist[var_d.difficul][fubenId] then
+			isinplay = true
+		end
+	end
+	return isinplay--isinplay
+
+end
+
+--通知怪死亡事件 怪id
+playFubenMon.OnKillMonster = function(monster,Killer,monsterid)
+	-- 判断副本
+	if playFubenMon.CheckIsInPlayFuben(Killer) == false then
+		-- debug_print('怪死亡回调 不在剧情副本中')
+		return
+	end
+
+	local pScene = LActor.getScenePtr(monster)
+	if nil == pScene then
+		return
+	end
+	local sysarg = Fuben.getActorListbySceneInPlayFuben(pScene)
+	if nil == sysarg then
+		return
+	end
+	debug_print("剧情副本 怪死亡回调")
+	
+	local fubenId = LActor.getFubenId(sysarg)
+	local fbptr = LActor.getFubenPrt(monster)
+	local var_d = Fuben.getDyanmicVar(fbptr)
+	if not var_d then return end
+	local currPlayFubenConfig = playFubenMon.CreateMonsterList(fubenId, var_d.difficul)
+	if nil == currPlayFubenConfig then
+		return
+	end
+	if currPlayFubenConfig.DeathEvent and currPlayFubenConfig.DeathEvent[monsterid] then
+		
+		local nRemainMonsterNum = LActor.getLiveMonsterCount(sysarg, monsterid)
+		if 0 == nRemainMonsterNum then
+			playFubenMon.OnCreateMonster(sysarg,currPlayFubenConfig.DeathEvent[monsterid])
+		else
+			debug_print("death not enough")
+		end
+	end
+
+	--[[
+	local npack = DataPack.allocPacket(sysarg,168,5) 
+	DataPack.writeInt(npack, monsterid)
+	DataPack.flush(npack)
+	--]]
+end
+
+
+--通知怪血量变化事件 怪id
+playFubenMon.MonsterHpChanged = function(monster, rate, monId)
+	-- 判断副本
+	if playFubenMon.CheckIsInPlayFuben(monster) == false then
+		debug_print('怪血量变化回调 不在剧情副本中')
+		return
+	end
+
+	debug_print("剧情副本 怪血量变化回调")
+	debug_print("rate:"..tostring(rate))
+	
+	local fubenId = LActor.getFubenId(monster)
+	local fbptr = LActor.getFubenPrt(monster)
+	local var_d = Fuben.getDyanmicVar(fbptr)
+	if not var_d then return end
+	local currPlayFubenConfig = playFubenMon.CreateMonsterList(fubenId, var_d.difficul)
+	if nil == currPlayFubenConfig then
+		return
+	end
+	if currPlayFubenConfig.HpChangeEvent and currPlayFubenConfig.HpChangeEvent[monId] then
+		if rate <= currPlayFubenConfig.HpChangeEvent[monId].rate then
+			local pScene = LActor.getScenePtr(monster)
+			if pScene then
+	        	local pActor = Fuben.getActorListbySceneInPlayFuben(pScene)
+	        	if nil == pActor then
+					return
+				end
+				playFubenMon.OnCreateMonster(pActor,currPlayFubenConfig.HpChangeEvent[monId].stageId)
+			end
+		end
+	end
+end
+
+
+
+--设置场景所有怪停止心跳
+playFubenMon.OnSetSceneAllMonsterISStop = function(sysarg,isrun)
+
+	if playFubenMon.CheckIsInPlayFuben(sysarg) == false then
+		debug_print('玩家不在剧情副本不能 停止怪心跳')
+		return
+	end
+	
+	LActor.SetSceneAllMonsterIsStopRun(sysarg,isrun)
+	
+	debug_print('剧情副本 停止怪心跳',isrun)
+end
+
+--设置怪位置
+playFubenMon.OnSetSceneMonsterPos = function(sysarg,monsterid,px,py,nDir)
+
+	if playFubenMon.CheckIsInPlayFuben(sysarg) == false then
+		debug_print('玩家不在剧情副本不能 不能强制移动怪位置')
+		return
+	end
+	
+	local pScene = LActor.getSceneHandle(sysarg)
+	
+	local target = Fuben.getMonsterPtrById(pScene, monsterid);
+
+	if nDir and nDir > 0 and nDir < 8 then
+		LActor.setIntProperty(target,PROP_DIR,nDir)
+	end
+
+	LActor.catchTargetToXY(target, px, py )
+	debug_print('剧情副本 强制移动怪位置',monsterid,px,py)
+
+end
+
+
+--设置障碍
+playFubenMon.SetBlock = function(sysarg , block_id , flag)
+	if playFubenMon.CheckIsInPlayFuben(sysarg) == false then
+		debug_print('玩家不在剧情副本不能 障碍')
+		return
+	end
+	local fubenId = LActor.getFubenId(sysarg)
+	local fbptr = LActor.getFubenPrt(sysarg)
+	local var_d = Fuben.getDyanmicVar(fbptr)
+	if not var_d then return end
+	local currPlayFubenConfig = playFubenMon.CreateMonsterList(fubenId, var_d.difficul)
+
+	if currPlayFubenConfig.Block then
+		local currBlock = currPlayFubenConfig.Block[block_id]
+		if currBlock then
+			local currBlockArea = currBlock.area
+			local staus = 1
+			if 0 == flag then
+				staus = 0
+			end
+			Fuben.setDyanmicObstacleDataBySquare(pScene , staus, currBlockArea)
+		end
+	end
+	local npack_block = DataPack.allocPacket(sysarg,168,8)
+	DataPack.writeWord(npack_block , 1 )
+	DataPack.writeChar(npack_block , block_id)
+	DataPack.writeChar(npack_block , flag)
+	DataPack.flush(npack_block)	
+
+end
+
+
+--怪物跟随玩家
+--[[
+playFubenMon.OnFlowActor = function(sysarg,nMonsterId)
+	local currMonsterId = tonumber(nMonsterId)
+	if nil == currMonsterId then
+		return
+	end
+	debug_print("currMonsterId:"..tostring(currMonsterId))
+	local Fhandle = LActor.getFubenHandle(sysarg)
+	local hscene = Fuben.getSceneHandleById(LActor.getSceneId(sysarg), Fhandle)
+	local FlowMonster = Fuben.getMonsterPtrById(hscene, currMonsterId)
+	debug_print("FlowMonster:",FlowMonster)
+	LActor.followActor(FlowMonster,sysarg)
+end
+--]]
+
+--判断两者距离是否在范围内
+playFubenMon.IsInNearSqure = function(Monster1 , Monster2 , nDistance)
+	if nil == Monster1 or nil == Monster2 then
+		return false
+	end
+	local posX1, posY1 = LActor.getEntityPosition(Monster1, 0, 0)
+	debug_print("posX1, posY1:",posX1, posY1)
+
+	local posX2, posY2 = LActor.getEntityPosition(Monster2, 0, 0)
+	debug_print("posX2, posY2:",posX2, posY2)
+	debug_print("posX1:"..tostring(posX1))
+	debug_print("posY1:"..tostring(posY1))
+	debug_print("posX2:"..tostring(posX2))
+	debug_print("posY2:"..tostring(posY2))
+
+	local nXDis = posX1 - posX2
+	local nYDis = posY2 - posY1
+	local minDis = tonumber(nDistance) or 0
+	debug_print("(nXDis * nXDis + nYDis * nYDis):"..tostring((nXDis * nXDis + nYDis * nYDis)))
+	debug_print("(minDis * minDis):"..tostring((minDis * minDis)))
+	if (nXDis * nXDis + nYDis * nYDis) <= (minDis * minDis) then
+		return true
+	else
+		return false
+	end
+end
+
+
+--判断能否采集
+playFubenMon.CkeckCanGather = function(monster, sysarg, monId)
+	debug_print("-----------检查能否采集-----------------")
+	if playFubenMon.CheckIsInPlayFuben(sysarg) == false then
+		debug_print('玩家不在剧情副本')
+		debug_print("_____col1_______")
+		return false
+	end
+	local fubenId = LActor.getFubenId(sysarg)
+	local fbptr = LActor.getFubenPrt(sysarg)
+	local var_d = Fuben.getDyanmicVar(fbptr)
+	if not var_d then return end
+	local currPlayFubenConfig = playFubenMon.CreateMonsterList(fubenId, var_d.difficul)
+
+	local currGatherPreUnion = currPlayFubenConfig.GatherPreStageId
+
+	if currGatherPreUnion then
+		local hfb = LActor.getFubenHandle(sysarg)
+	    local pfb = Fuben.getFubenPtr(hfb)
+		local var_d = Fuben.getDyanmicVar(pfb)
+	   	if var_d == nil then return false end
+
+	   	--采集的剧情副本前置条件
+	   	if nil == currGatherPreUnion[monId] then
+	   		return false
+	   	end
+
+	   	--采集的剧情副本前置id
+	   	local currGatherPreId =  currGatherPreUnion[monId].preStageId or 0
+	   	local currGatherPreMonId = currGatherPreUnion[monId].preMonId or 0
+
+	   	debug_print("--------------:",var_d.stageid , currGatherPreId)
+	   	if var_d.stageid >= currGatherPreId then
+	   		debug_print("_____col2_______")
+	   		local nRemainMonsterNum = LActor.getLiveMonsterCount(sysarg, currGatherPreMonId) or 0
+	   		if nRemainMonsterNum > 0 then
+	   			debug_print("_____col5_______")
+	   			return false
+	   		end
+	   		return true
+	   	else
+	   		debug_print("_____col3_______")
+	   		return false
+	   	end
+
+	end
+
+	-- 配置里面没有就表示默认是可以采集的
+	debug_print("_____col4_______")
+	return true
+end
+
+--初始化镜子光源信息
+playFubenMon.InitMirror = function(sysarg , fubenId)
+	--[[
+	local distance = 5
+	local lightInfo = {188,22,18,1,4}
+
+	local mirrorInfo = {{199,22,23,1} , {199,27,23,5}, {199,22,28,3}, {199,27,28,7} , {199,22,33,1},{199,27,33,5}}
+
+	local LightMirrorUnion = LActor.MirrorReflectInit(sysarg , distance , lightInfo , mirrorInfo)
+	if LightMirrorUnion and #LightMirrorUnion > 0 then
+		local hfb = LActor.getFubenHandle(sysarg)
+	    local pfb = Fuben.getFubenPtr(hfb)
+		local var_d = Fuben.getDyanmicVar(pfb)
+	   	if var_d == nil then return end
+
+		var_d.LightHandle = LightMirrorUnion[1]
+		table.remove(LightMirrorUnion , 1)
+		var_d.MirrorHandleUnion = LightMirrorUnion
+	end
+	--]]
+
+	local fbptr = LActor.getFubenPrt(sysarg)
+	local var_d = Fuben.getDyanmicVar(fbptr)
+	if not var_d then return end
+	local currPlayFubenConfig = playFubenMon.CreateMonsterList(fubenId, var_d.difficul)
+	if nil == currFubenConfig then
+		return
+	end
+	if nil == currFubenConfig.LightMirror then
+		return
+	end
+
+	local hfb = LActor.getFubenHandle(sysarg)
+    local pfb = Fuben.getFubenPtr(hfb)
+	local var_d = Fuben.getDyanmicVar(pfb)
+   	if var_d == nil then return end
+
+	for i , value in pairs(currFubenConfig.LightMirror) do
+		local distance = value.distance
+		local lightInfo = value.lightInfo
+		local mirrorInfo = value.mirrorInfo
+
+		local LightMirrorUnion = LActor.MirrorReflectInit(sysarg , distance , lightInfo , mirrorInfo)
+
+		if LightMirrorUnion and #LightMirrorUnion > 0 then
+			if nil == var_d.LightHandle then
+				var_d.LightHandle = {}
+			end
+			if nil == var_d.MirrorHandleUnion then
+				var_d.MirrorHandleUnion = {}
+			end
+
+			var_d.LightHandle[i] = LightMirrorUnion[1]
+			table.remove(LightMirrorUnion , 1)
+			var_d.MirrorHandleUnion[i] = {}
+			for MirrorId = 1 , #LightMirrorUnion do
+				var_d.MirrorHandleUnion[i][MirrorId] = LightMirrorUnion[MirrorId]
+			end
+		end
+	end
+end
+
+--刷新光源镜子信息
+playFubenMon.RefreshLightLine = function(sysarg,fubenId, index)
+	local fbptr = LActor.getFubenPrt(sysarg)
+	local var_d = Fuben.getDyanmicVar(fbptr)
+	if not var_d then return end
+	local currPlayFubenConfig = playFubenMon.CreateMonsterList(fubenId, var_d.difficul)
+	if nil == currFubenConfig then
+		return
+	end
+	if nil == currFubenConfig.LightMirror then
+		return
+	end
+	if nil == currFubenConfig.LightMirror[index] then
+		return
+	end
+
+	local currLightMirrorUnion = currFubenConfig.LightMirror[index]
+	local distance = currLightMirrorUnion.distance
+	local MirrorNum = #(currLightMirrorUnion.mirrorInfo)
+
+	local hfb = LActor.getFubenHandle(sysarg)
+    local pfb = Fuben.getFubenPtr(hfb)
+	local var_d = Fuben.getDyanmicVar(pfb)
+   	if var_d == nil then return end
+
+   	if var_d.LightHandle and var_d.LightHandle[index] and var_d.MirrorHandleUnion and var_d.MirrorHandleUnion[index] then
+		--LActor.ReceiveMirrorReflectRefresh(sysarg,var_d.LightHandle[index],var_d.MirrorHandleUnion[index],distance)
+		debug_print("her4")
+		--在c++中的接口中镜子的结构为table
+		local currMirror = {}
+		for i = 1 , MirrorNum do
+			currMirror[i] = (var_d.MirrorHandleUnion[index][i] or 0)
+		end
+		LActor.ReceiveMirrorReflectRefresh(sysarg,var_d.LightHandle[index],currMirror,distance)
+	end
+	debug_print("her5")
+end
+
+
+--根据不同的剧情 不同的阶段做不同的操作
+playFubenMon.OnCreateMonster = function(sysarg,stageid,flag)
+	debug_print("stageid:"..tostring(stageid))
+	debug_print("flag:"..tostring(flag))
+	if playFubenMon.CheckIsInPlayFuben(sysarg) == false then
+		debug_print('玩家不在剧情副本不能 进行操作')
+		return
+	end
+
+	local hfb = LActor.getFubenHandle(sysarg)
+    local pfb = Fuben.getFubenPtr(hfb)
+	local var_d = Fuben.getDyanmicVar(pfb)
+   	if var_d == nil then return end
+	if nil == var_d.stage_record then
+		var_d.stage_record = {}
+	end
+
+
+	
+	local fubenId = LActor.getFubenId(sysarg)
+	local fbptr = LActor.getFubenPrt(sysarg)
+	local var_d = Fuben.getDyanmicVar(fbptr)
+	if not var_d then return end
+	local currPlayFubenConfig = playFubenMon.CreateMonsterList(fubenId, var_d.difficul)
+	if nil == currPlayFubenConfig then
+		debug_print("没有当前剧情副本的剧情配置")
+		return
+	end
+	local fbmlist = currPlayFubenConfig[stageid]
+	if fbmlist == nil then
+		debug_print('当前副本阶段找不到怪',fubenId,stageid)
+		return
+	end
+
+	--需要判断前置阶段是否完成
+	if fbmlist.PreStage then
+		if (var_d.stageid or 0) < fbmlist.PreStage then
+			debug_print("前置阶段未完成：",var_d.stageid , fbmlist.PreStage)
+			return
+		end
+	end
+
+	--检测某些怪物死亡开启的条件
+	if fbmlist.MonsterAllDeath then
+		for i , DeathId in pairs(fbmlist.MonsterAllDeath) do
+			local nRemainNum = LActor.getLiveMonsterCount(sysarg, DeathId)
+
+			local hScene = LActor.getSceneHandle(sysarg)
+			local nRemainGatherNum = Fuben.getGatherMonsterCount(hScene, DeathId)
+
+			if (nRemainNum and nRemainNum > 0) or (nRemainGatherNum and nRemainGatherNum > 0) then
+				debug_print("还有怪物未死亡，未达到开启条件")
+				return
+			end
+		end	
+	end
+
+	local BackFlag = false
+
+	local hScene = LActor.getSceneHandle(sysarg)
+	if (nil == var_d.stage_record[stageid]) then
+		debug_print("start")
+		for k,v in ipairs(fbmlist) do
+			if v.distance then
+				debug_print("距离检测")
+				local Fhandle = LActor.getFubenHandle(sysarg)
+				local hscene = Fuben.getSceneHandleById(LActor.getSceneId(sysarg), Fhandle)
+				local mon1 = nil
+				local mon2 = nil
+
+				if 0 == v.monId1 then
+					mon1 = sysarg
+				else
+					mon1 = Fuben.getMonsterPtrById(hscene, v.monId1)
+				end
+
+				if 0 == v.monId2 then
+					mon2 = sysarg
+				else
+					mon2 = Fuben.getMonsterPtrById(hscene, v.monId2)
+				end
+
+				--不在距离范围内直接return
+				if not playFubenMon.IsInNearSqure(mon1 , mon2 , v.distance) then
+					debug_print("距离太远无法触发2："..tostring(stageid))
+					return
+				end
+			end
+			debug_print("v.tp:"..tostring(v.tp))
+			if 1 == v.tp then	--刷怪
+				if 1 ~= flag then
+					local nMonsterNum = v.count or 1
+					local pMonster = nil
+					if v.def == 1 then
+						debug_print("create friend")
+						if nMonsterNum > 1 then
+							local Fhandle = LActor.getFubenHandle(sysarg)
+							local hscene = Fuben.getSceneHandleById(LActor.getSceneId(sysarg), Fhandle)
+							Fuben.createMonsters(hscene, v.mondId, v.pos1[1], v.pos2[1], v.pos1[2], v.pos2[2], nMonsterNum, 0,true)
+							pMonster = Fuben.getMonsterPtrById(hscene, v.mondId)
+							LActor.setSomeMonsterDenyAttackActor(hscene, v.mondId, true)
+      						LActor.setSomeMonsterDenyAttackByActor(hscene, v.mondId, true)
+							--LActor.setEntityCanAttackMonster(pMonster , true)	--设置为不可攻击
+						else
+							local pixXadd = -1
+							local pixYadd = -1
+							if v.PixAdd then
+								pixXadd = v.PixAdd[1] or -1
+								pixYadd = v.PixAdd[2] or -1
+							end
+
+							pMonster = LActor.createMonster(sysarg, v.mondId,v.pos1[1],v.pos1[2],0,false,true,false,pixXadd,pixYadd)
+							LActor.setDenyAttackedByActor(pMonster, true) --不能被玩家攻击
+							LActor.setDenyAttackActor(pMonster, true)	  --不能攻击玩家
+						end
+					else
+						debug_print("create enemy")
+						if nMonsterNum > 1 then
+							local Fhandle = LActor.getFubenHandle(sysarg)
+							local hscene = Fuben.getSceneHandleById(LActor.getSceneId(sysarg), Fhandle)
+							Fuben.createMonsters(hscene, v.mondId, v.pos1[1], v.pos2[1], v.pos1[2], v.pos2[2], nMonsterNum, 0,true)
+							pMonster = Fuben.getMonsterPtrById(hscene, v.mondId)
+							--LActor.setEntityCanAttackMonster(pMonster , true)	--设置为不可攻击
+						else
+							local pixXadd = -1
+							local pixYadd = -1
+							if v.PixAdd then
+								pixXadd = v.PixAdd[1] or -1
+								pixYadd = v.PixAdd[2] or -1
+							end
+
+							pMonster = LActor.createMonster(sysarg, v.mondId,v.pos1[1],v.pos1[2],0,false,true,false,pixXadd,pixYadd)
+						end
+					end
+
+					local fbptr = LActor.getFubenPrt(sysarg)
+					local var_d = Fuben.getDyanmicVar(fbptr)
+					if not var_d then return end
+					local currPlayFubenConfig = playFubenMon.CreateMonsterList(fubenId, var_d.difficul)
+					local currFubenHpchangeConfig = currPlayFubenConfig.HpChangeEvent
+					if currFubenHpchangeConfig and currFubenHpchangeConfig[v.mondId] then
+						debug_print("---------------设置superman-----------------")
+						LActor.SetSuperMan(pMonster, true)
+	        			local mesHp = LActor.getIntProperty(pMonster,PROP_MAXHP) * currFubenHpchangeConfig[v.mondId].rate / 100
+	        			LActor.SetDropHpNotHurt(pMonster, math.floor(mesHp))
+	        			debug_print("mesHp:"..tostring(mesHp))
+					end
+
+					--[[
+					if v.mes == 1 or 3 == v.mes then
+						MonDieDispatcher.register(v.mondId,  playFubenMon.OnKillMonster)
+						debug_print("register death:"..tostring(v.mondId))
+					elseif v.mes == 2 or 3 == v.mes then
+						MonHpChangedDispatcher.register(v.mondId, playFubenMon.MonsterHpChanged)
+						local currFubenHpchangeConfig = PlayFubenConfig.createmonsterlist[fubenId].HpChangeEvent
+						if currFubenHpchangeConfig and currFubenHpchangeConfig[v.mondId] then
+							LActor.SetSuperMan(pMonster, true)
+		        			local mesHp = LActor.getIntProperty(pMonster,PROP_MAXHP) * currFubenHpchangeConfig[v.mondId].rate / 100
+		        			LActor.SetDropHpNotHurt(pMonster, math.floor(mesHp))
+						end
+					end
+					--注册怪物受到攻击事件
+					if PlayFubenConfig.createmonsterlist[fubenId].BeAttack and PlayFubenConfig.createmonsterlist[fubenId].BeAttack[v.mondId] then
+						MonDamageDispatcher.register(v.mondId, playFubenMon.SendBreak)
+					end
+					--]]
+
+
+				end
+
+			elseif 2 == v.tp then
+				--if 1 ~= flag then
+					playFubenMon.OnClearMonster(sysarg,v.mondId)
+				--end
+
+			elseif 3 == v.tp then	--怪物开始攻击目标
+				if 1 ~= flag then
+					local Fhandle = LActor.getFubenHandle(sysarg)
+					local hscene = Fuben.getSceneHandleById(LActor.getSceneId(sysarg), Fhandle)
+					local attackMon = Fuben.getMonsterPtrById(hscene, v.mondId)
+					local target = nil
+					debug_print("v.targerId:"..tostring(v.targerId))
+					if 0 == v.targerId then
+						target = sysarg
+						debug_print("----------------------攻击玩家-------------------------")
+					else
+						target = Fuben.getMonsterPtrById(hscene, v.targerId)
+					end
+
+					--[[
+					LActor.setEntityCanAttackMonster(attackMon , false)	--攻击者设置为可攻击
+					LActor.setDenyAttackActor(attackMon, false)	   		--攻击者设置为可以攻击玩家
+
+					LActor.setDenyBeAttack(target, false)		   		--目标设置为可以被攻击
+					--]]
+					LActor.setMonsterFinalTarget(hscene,v.mondId, target)
+					--LActor.someMonsterChangeTarget(hscene,v.mondId, target)
+				end
+				
+			elseif 4 == v.tp then	--触发通知客户端的消息，不做任何操作
+			elseif 5 == v.tp then	--设置能否被攻击
+				local Fhandle = LActor.getFubenHandle(sysarg)
+				local hscene = Fuben.getSceneHandleById(LActor.getSceneId(sysarg), Fhandle)
+				local currMonster = Fuben.getMonsterPtrById(hscene, v.mondId)
+				LActor.setDenyBeAttack(currMonster, v.flag)
+				debug_print('---------------设置不能被攻击2--------------------------:'..tostring(stageid))
+			elseif 6 == v.tp then
+				local Fhandle = LActor.getFubenHandle(sysarg)
+				local hscene = Fuben.getSceneHandleById(LActor.getSceneId(sysarg), Fhandle)
+				local currMonster = Fuben.getMonsterPtrById(hscene, v.mondId)
+				if currMonster then
+					LActor.clearHatre(currMonster)
+				end
+				debug_print('---------------清除仇恨2--------------------------'..tostring(stageid))
+			elseif 7 == v.tp then 		--刷出主动怪
+				if 1 ~= flag then
+					local Fhandle = LActor.getFubenHandle(sysarg)
+	        		local hscene = Fuben.getSceneHandleById(LActor.getSceneId(sysarg), Fhandle)
+	        		Fuben.createMonsters(hscene, v.mondId, v.pos1[1], v.pos2[1], v.pos1[2], v.pos2[2], v.count, 0,true)
+	        		local pMonster = Fuben.getMonsterPtrById(hscene, v.mondId)
+					local fbptr = LActor.getFubenPrt(sysarg)
+					local var_d = Fuben.getDyanmicVar(fbptr)
+					if not var_d then return end
+					local currPlayFubenConfig = playFubenMon.CreateMonsterList(fubenId, var_d.difficul)
+	        		local currFubenHpchangeConfig = currPlayFubenConfig.HpChangeEvent
+	        		if currFubenHpchangeConfig and currFubenHpchangeConfig[v.mondId] then
+	        			debug_print("---------------设置superman-----------------")
+						LActor.SetSuperMan(pMonster, true)
+	        			local mesHp = LActor.getIntProperty(pMonster,PROP_MAXHP) * currFubenHpchangeConfig[v.mondId].rate / 100
+	        			LActor.SetDropHpNotHurt(pMonster, math.floor(mesHp))
+	        			debug_print("mesHp:"..tostring(mesHp))
+					end
+
+					--[[
+	        		if v.mes == 1 or 3 == v.mes then
+						MonDieDispatcher.register(v.mondId,  playFubenMon.OnKillMonster)
+						debug_print("register death:"..tostring(v.mondId))
+					elseif v.mes == 2 or 3 == v.mes then
+						MonHpChangedDispatcher.register(v.mondId, playFubenMon.MonsterHpChanged)
+						if currFubenHpchangeConfig and currFubenHpchangeConfig[v.mondId] then
+							LActor.SetSuperMan(pMonster, true)
+		        			local mesHp = LActor.getIntProperty(pMonster,PROP_MAXHP) * currFubenHpchangeConfig[v.mondId].rate / 100
+		        			LActor.SetDropHpNotHurt(pMonster, math.floor(mesHp))
+						end
+					end
+					--注册怪物受到攻击事件
+					if fbmlist.BeAttack and fbmlist.BeAttack[v.mondId] then
+						MonDamageDispatcher.register(monId, playFubenMon.SendBreak)
+					end
+					--]]
+
+				end
+        	elseif 8 == v.tp then 		--怪物刷小怪
+        		if 1 ~= flag then
+        			local Fhandle = LActor.getFubenHandle(sysarg)
+	        		local hscene = Fuben.getSceneHandleById(LActor.getSceneId(sysarg), Fhandle)
+	        		local pMonster1 = nil
+	        		if 0 == v.onwer then
+	        			pMonster1 = sysarg
+	        		else 
+	        			pMonster1 = Fuben.getMonsterPtrById(hscene, v.onwer)
+	        		end
+					local fbptr = LActor.getFubenPrt(sysarg)
+					local var_d = Fuben.getDyanmicVar(fbptr)
+					if not var_d then return end
+					local currPlayFubenConfig = playFubenMon.CreateMonsterList(fubenId, var_d.difficul)
+	        		local currFubenHpchangeConfig = currPlayFubenConfig.HpChangeEvent
+	        		if pMonster1 then
+		        		for i = 1 , v.count do
+		        			local pMonster2 = LActor.createMonster(pMonster1,v.mondId ,v.pos1[1],v.pos1[2],0,true)
+		        			if 1 == v.def then 	--友方
+		        				LActor.setDenyAttackedByActor(pMonster2, true) --不能被玩家攻击
+								LActor.setDenyAttackActor(pMonster2, true)	   		--不能攻击玩家
+		        			end
+		        			if currFubenHpchangeConfig and currFubenHpchangeConfig[v.mondId] then
+								LActor.SetSuperMan(pMonster2, true)
+			        			local mesHp = LActor.getIntProperty(pMonster2,PROP_MAXHP) * currFubenHpchangeConfig[v.mondId].rate / 100
+			        			LActor.SetDropHpNotHurt(pMonster2, math.floor(mesHp))
+							end
+		        		end
+		        	end
+
+
+		        	
+
+					--[[
+	        		if v.mes == 1 or 3 == v.mes then
+						MonDieDispatcher.register(v.mondId,  playFubenMon.OnKillMonster)
+						debug_print("register death:"..tostring(v.mondId))
+					elseif v.mes == 2 or 3 == v.mes then
+						MonHpChangedDispatcher.register(v.mondId, playFubenMon.MonsterHpChanged)
+						if currFubenHpchangeConfig and currFubenHpchangeConfig[v.mondId] then
+							LActor.SetSuperMan(pMonster, true)
+		        			local mesHp = LActor.getIntProperty(pMonster,PROP_MAXHP) * currFubenHpchangeConfig[v.mondId].rate / 100
+		        			LActor.SetDropHpNotHurt(pMonster, math.floor(mesHp))
+						end
+					end
+					--注册怪物受到攻击事件
+					if fbmlist.BeAttack and fbmlist.BeAttack[v.mondId] then
+						MonDamageDispatcher.register(monId, playFubenMon.SendBreak)
+					end
+					--]]
+				end
+        	elseif 9 == v.tp then 		--怪物使用技能
+        		if 1 ~= flag then
+	        		local Fhandle = LActor.getFubenHandle(sysarg)
+					local hscene = Fuben.getSceneHandleById(LActor.getSceneId(sysarg), Fhandle)
+					debug_print("使用技能 v.mondId:"..tostring(v.mondId))
+					for _ , value in pairs(v) do
+						--debug_print("_:"..tostring(_)..": "..tostring(value))
+						if _ == "mondId" then
+							debug_print("----------------------v.mondId:",v.mondId,value)
+						end
+					end 
+					local attackMon = Fuben.getMonsterPtrById(hscene, v.mondId)
+					local target = nil
+					debug_print("v.targerId:"..tostring(v.targerId))
+					if 0 == v.targerId then
+						target = sysarg
+					else
+						target = Fuben.getMonsterPtrById(hscene, v.targerId)
+					end
+
+					local posX, posY = LActor.getEntityPosition(target, 0, 0)
+	      			LActor.useSkill( attackMon, 40, posX, posY, false , v.skill_level)
+	      		end
+      		elseif 10 == v.tp then 	 --是否停怪
+      			playFubenMon.OnSetSceneAllMonsterISStop(sysarg,v.isRun)
+      		elseif 11 == v.tp then 	 --设置怪物是否可以攻击
+      			local Fhandle = LActor.getFubenHandle(sysarg)
+        		local hscene = Fuben.getSceneHandleById(LActor.getSceneId(sysarg), Fhandle)
+        		local pMonster = Fuben.getMonsterPtrById(hscene, v.mondId)
+        		if pMonster then
+        			--最开始的配置的标志位搞反了，配置已经填了很多了，就只好改接口了（反着来）
+        			if v.flag then
+        				LActor.setCanAttackMonster(pMonster, false)
+        				LActor.setDenyAttackActor(pMonster, true)    --不能攻击玩家(跟前面一个相反)
+        			else
+        				LActor.setCanAttackMonster(pMonster, true)
+        				LActor.setDenyAttackActor(pMonster, false)    --可以攻击玩家(跟前面一个相反)
+        			end
+        		end
+			elseif 12 == v.tp then 	--打开障碍或清除障碍
+				debug_print("--------打开障碍----------")
+				local pScene = LActor.getScenePtr(sysarg)
+				local fbptr = LActor.getFubenPrt(sysarg)
+				local var_d = Fuben.getDyanmicVar(fbptr)
+				if not var_d then return end
+				local currPlayFubenConfig = playFubenMon.CreateMonsterList(fubenId, var_d.difficul)
+				local FubenBlock = currPlayFubenConfig.Block
+
+				for _ , currBlock in pairs(v.BlockUnion) do
+					debug_print("here1")
+					if FubenBlock[currBlock.BlockId] then
+						debug_print("here2")
+						local flag = 0
+						local currBlockArea = FubenBlock[currBlock.BlockId].area
+						if currBlock.Opened then
+							flag = -1
+						end
+						Fuben.setDyanmicObstacleDataBySquare(pScene , flag, currBlockArea)
+
+						local currBlockAreaPoint = FubenBlock[currBlock.BlockId].areaPoint
+						if currBlockAreaPoint then
+							Fuben.setDyanmicObstacleDataByPos(pScene, flag, currBlockAreaPoint)
+						end
+					end
+				end
+
+				local changeBlockNum = #(v.BlockUnion)
+				debug_print("障碍数量："..tostring(changeBlockNum))
+				local npack_block = DataPack.allocPacket(sysarg,168,8)
+				DataPack.writeWord(npack_block , changeBlockNum )
+				for _ , currBlock in pairs(v.BlockUnion) do
+					DataPack.writeChar(npack_block , currBlock.BlockId)
+					local flag = (currBlock.Opened and 1 or 0)
+					DataPack.writeChar(npack_block , flag)
+					debug_print("障碍id:"..tostring(currBlock.BlockId))
+					debug_print("障碍状态:"..tostring(flag))
+				end
+				DataPack.flush(npack_block)
+			elseif 13 == v.tp then 	--怪物受到背后偷袭（怪物被直接秒杀）
+				if 1 == flag then 	--只有客户端发过来的是打断状态时才触发（特殊处理）
+					debug_print("-----------------背后攻击---------------------------------------------")
+					debug_print("-----------------背后攻击---------------------------------------------")
+					debug_print("-----------------背后攻击---------------------------------------------")
+					debug_print("-----------------背后攻击---------------------------------------------")
+					debug_print("-----------------背后攻击---------------------------------------------")
+					local Fhandle = LActor.getFubenHandle(sysarg)
+	        		local hscene = Fuben.getSceneHandleById(LActor.getSceneId(sysarg), Fhandle)
+	        		local pMonster = Fuben.getMonsterPtrById(hscene, v.mondId)
+	        		debug_print("pMonster:",pMonster)
+	        		if pMonster then
+	        			LActor.setIntProperty(pMonster,PROP_HP,0)
+	        			BackFlag = true
+	        		end
+	        	end
+	        elseif 14 == v.tp then --设置特效
+	        	local srcMon = nil
+	        	if 0 == v.mondId then
+	        		srcMon = sysarg
+	        	else
+	        		local Fhandle = LActor.getFubenHandle(sysarg)
+	        		local hscene = Fuben.getSceneHandleById(LActor.getSceneId(sysarg), Fhandle)
+	        		srcMon = Fuben.getMonsterPtrById(hscene, v.mondId)
+	        	end
+	        	if srcMon then
+        			LActor.addEffect(sysarg,(v.effectId or 0),(v.effectTp or 0),-1)
+	        	end
+	        elseif 15 == v.tp then 	--将怪物设置为不可掉血
+	        	local Fhandle = LActor.getFubenHandle(sysarg)
+        		local hscene = Fuben.getSceneHandleById(LActor.getSceneId(sysarg), Fhandle)
+        		local pMonster = Fuben.getMonsterPtrById(hscene, v.mondId)
+        		if pMonster then
+        			LActor.SetSuperMan(pMonster, v.flag)
+        			local currHp = LActor.getIntProperty(pMonster,PROP_HP)
+        			LActor.SetDropHpNotHurt(pMonster, currHp)
+        		end
+        	elseif 16 == v.tp then 	--给怪物设置仇恨值
+        		local Fhandle = LActor.getFubenHandle(sysarg)
+        		local hscene = Fuben.getSceneHandleById(LActor.getSceneId(sysarg), Fhandle)
+        		local pTarget = nil
+        		if 0 == v.targerId then
+        			pTarget = sysarg
+        		else	
+        			pTarget = Fuben.getMonsterPtrById(hscene, v.targerId)
+        		end
+        		if pTarget then
+        			LActor.someMonstersetHatred(hscene, v.mondId, pTarget, (v.hatred or 0) )
+        		end
+        	elseif 17 == v.tp then 	--设置定时器
+        		if v.delay then
+	        		local Fhandle = LActor.getFubenHandle(sysarg)
+				    local hscene = Fuben.getSceneHandleById(LActor.getSceneId(sysarg), Fhandle)
+				    Fuben.postSceneTimeCall(hscene, TimerMsg.PlayFubenRefresh, (v.delay or 0), 1)
+				end
+			elseif 18 == v.tp then 	--设置外观id
+				local currModelId = tonumber(v.modelId)
+				if currModelId then
+					local npack = DataPack.allocPacket(sysarg,139,185)
+					DataPack.writeInt(npack , currModelId)
+      				DataPack.flush(npack)
+				end
+			elseif 19 == v.tp then --给怪物增加buff
+				debug_print("hggggggggggggggggggg")
+				local Fhandle = LActor.getFubenHandle(sysarg)
+				local hscene = Fuben.getSceneHandleById(LActor.getSceneId(sysarg), Fhandle)
+				if v.flag then
+					LActor.someMonsterAddBuff(hScene, v.mondId, v.buffType, (v.nValue or 0), 1, v.totalTimes);
+				else
+					LActor.someMonsterDelBuff(hScene, v.mondId, v.buffType)
+				end
+			elseif 20 == v.tp then --转向
+				local Fhandle = LActor.getFubenHandle(sysarg)
+				local hscene = Fuben.getSceneHandleById(LActor.getSceneId(sysarg), Fhandle)
+				local pMonster = Fuben.getMonsterPtrById(hscene, v.mondId)
+				local dir = v.dir or 0
+				if dir < 0 or dir > 7 then
+					dir = 0
+				end
+				LActor.ChangeDir(pMonster, dir)
+			else
+				return
+			end
+		end
+	else
+		debug_print("has excused:"..tostring(stageid))
+	end
+
+	debug_print("var_d.stageid:"..tostring(var_d.stageid))
+	if nil == var_d.stage_record[stageid] then
+		debug_print("var_d.stage_record[stageid] is nil")
+	end
+
+	if var_d.stageid ~= stageid and nil == var_d.stage_record[stageid] then
+	   	var_d.stageid = stageid
+
+	   	var_d.stage_record[stageid] = stageid
+
+
+		debug_print('剧情副本 创建怪',stageid)
+		local npack = DataPack.allocPacket(sysarg,168,6)
+		local FirstId,SecondId
+	   	for i=1,#CiYing.Story do
+	      if CiYing.Story[i].fid == fubenId then
+	         FirstId = CiYing.Story[i].FirstId
+	         SecondId = CiYing.Story[i].SecondId
+	         break
+	      end
+	   	end
+	   	DataPack.writeChar(npack , (FirstId or 0) )
+	   	DataPack.writeChar(npack , (SecondId or 0) )
+	   	DataPack.writeWord(npack , stageid )
+	   	DataPack.writeChar(npack , 0 )
+	   	DataPack.flush(npack)
+
+	   	debug_print("FirstId:"..(FirstId or 0))
+	   	debug_print("SecondId"..(SecondId or 0))
+	   	debug_print("stageid:"..(stageid or 0))
+	end
+
+	if BackFlag then
+	    playFubenMon.OnCreateMonster(sysarg,stageid + 2,0)
+	end
+
+end
+
+--清除怪
+playFubenMon.OnClearMonster = function(sysarg,monsterid)
+	
+	if playFubenMon.CheckIsInPlayFuben(sysarg) == false then
+		debug_print('玩家不在剧情副本不能 不能清除怪')
+		return
+	end
+
+	local pScene = LActor.getSceneHandle(sysarg)
+	local nMonstId = tonumber(monsterid) or 0
+	Fuben.clearTheMonster(pScene, nMonstId)
+	debug_print('剧情副本 清除怪',nMonstId)
+end
+
+
+--解救被捆绑的怪
+playFubenMon.SaveMonster = function(monster,Killer,monsterid)
+	debug_print("解救被捆绑的怪")
+	if playFubenMon.CheckIsInPlayFuben(Killer) == false then
+		debug_print('解救被捆绑的怪 不在剧情副本中')
+		return
+	end
+
+	local pScene = LActor.getScenePtr(monster)
+	if nil == pScene then
+		return
+	end
+	local sysarg = Fuben.getActorListbySceneInPlayFuben(pScene)
+	if nil == sysarg then
+		return
+	end
+	debug_print("剧情副本 解救被捆绑的怪回调")
+	
+	local fubenId = LActor.getFubenId(sysarg)
+	local fbptr = LActor.getFubenPrt(sysarg)
+	local var_d = Fuben.getDyanmicVar(fbptr)
+	if not var_d then return end
+	local currPlayFubenConfig = playFubenMon.CreateMonsterList(fubenId, var_d.difficul)
+	if nil == currPlayFubenConfig then
+		return
+	end
+	if currPlayFubenConfig.RefreshMon and currPlayFubenConfig.RefreshMon[monsterid] then
+
+		local currRefreshMon = currPlayFubenConfig.RefreshMon[monsterid]
+		local nRandNum = System.getRandomNumber( 10000 ) + 1
+		debug_print("nRandNum:"..tostring(nRandNum))
+		if nRandNum <= (currRefreshMon.pro or 0) then
+			local posX1, posY1 = LActor.getEntityPosition(monster, 0, 0)
+
+			if currRefreshMon.pos1 then
+				local ConfigX = tonumber(currRefreshMon.pos1[1])
+				local ConfigY = tonumber(currRefreshMon.pos1[2])
+				if ConfigX and ConfigY then
+					posX1 = ConfigX
+					posY1 = ConfigY
+				end
+			end
+
+			local pMonster = LActor.createMonster(sysarg, currRefreshMon.mondId,posX1,posY1,0)
+			LActor.setMonsterFinalTarget(pMonster, sysarg)
+		end
+	end
+
+
+
+	--[[
+	local fubenId = LActor.getFubenId(sysarg)
+	local currConfig = PlayFubenConfig.createmonsterlist[fubenId]
+	if nil == currConfig then
+		return
+	end
+	local currRefreshMon = nil
+
+	local target = LActor.getEntity(monHandle)
+	if target then
+		local Monid = LActor.getIntProperty( target, PROP_ENTITY_ID )
+		if currConfig.RefreshMon then
+			currRefreshMon = currConfig.RefreshMon[Monid]
+		end
+		if nil == currRefreshMon then
+			return
+		end
+
+		--清除特效
+		LActor.delAllEffect(target)
+		--设置为可以移动
+		LActor.setDenyMove(target, false)
+
+		local nRandNum = System.getRandomNumber( 10000 ) + 1
+		debug_print("nRandNum:"..tostring(nRandNum))
+		if nRandNum <= (currRefreshMon.pro or 0) then
+			local pMonster = LActor.createMonster(sysarg, currRefreshMon.mondId,currRefreshMon.pos1[1],currRefreshMon.pos1[2],0)
+			LActor.setMonsterFinalTarget(pMonster, sysarg)
+		end
+
+		local npack = DataPack.allocPacket(sysarg,168,9)
+		DataPack.writeUint64(npack , monHandle)
+		DataPack.flush(npack)
+	end
+	--]]
+end		
+
+
+-- 客户端消息处理
+playFubenMon.HandlerOp = function (sysarg, systemid, msgid, packet)
+	debug_print("systemid:"..tostring(systemid))
+	debug_print("msgid:"..tostring(msgid))
+	local nType = tonumber(msgid)
+	if nType == 1 then --停止心跳
+		local nrun = DataPack.readChar(packet)
+		local isrun = false
+		if nrun == 1 then isrun = true end
+		debug_print("停止心跳："..tostring(nrun))
+		playFubenMon.OnSetSceneAllMonsterISStop(sysarg,isrun)
+	elseif nType == 2 then --强制位移
+		local monsterid = DataPack.readWord(packet)
+		local nX = DataPack.readWord(packet)
+		local nY = DataPack.readWord(packet)
+		local nDir = DataPack.readChar(packet)
+
+		debug_print("强制位移:",monsterid,nX,nY)
+		playFubenMon.OnSetSceneMonsterPos(sysarg,monsterid,nX,nY,nDir)
+
+	elseif nType == 3 then
+		local nstageid = DataPack.readWord(packet)
+		local flag = DataPack.readChar(packet)
+
+		debug_print("nstageid:"..tostring(nstageid))
+		debug_print("flag:"..tostring(flag))
+
+		--剧情副本的阶段验证要在接收消息的地方去做。不要在playFubenMon.OnCreateMonster中去做。
+		--客户端发过来的阶段id必须连续，而服务端内部的这个阶段id是可以跳过的。
+
+		local hfb = LActor.getFubenHandle(sysarg)
+        local pfb = Fuben.getFubenPtr(hfb)
+		local var_d = Fuben.getDyanmicVar(pfb)
+   		if var_d == nil then return end
+   		debug_print("--------------------var_d.stageid:------------------"..tostring(var_d.stageid))
+   		if nil ~= var_d.stageid then
+   			if (var_d.stageid + 1) ~= nstageid then
+   				return
+   			end
+   		end
+
+		playFubenMon.OnCreateMonster(sysarg,nstageid , flag)
+	elseif nType == 4 then
+		local monsterid = DataPack.readWord(packet)
+		playFubenMon.OnClearMonster(sysarg,monsterid)
+	elseif nType == 7 then 	--请求通关
+		local hfb = LActor.getFubenHandle(sysarg)
+        local pfb = Fuben.getFubenPtr(hfb)
+		local var_d = Fuben.getDyanmicVar(pfb)
+   		if var_d == nil then return end
+   		debug_print("here 请求通关")
+   		if nil ~= var_d.stageid then
+
+   			local fubenId = LActor.getFubenId(sysarg)
+			local fbptr = LActor.getFubenPrt(sysarg)
+			local var_d = Fuben.getDyanmicVar(fbptr)
+			if not var_d then return end
+			local currPlayFubenConfig = playFubenMon.CreateMonsterList(fubenId, var_d.difficul)
+			if nil == currPlayFubenConfig then
+				debug_print("没有当前剧情副本的剧情配置:",fubenId)
+				return
+			end
+
+			local playFubenId = 0
+		   	for i , v in pairs(CiYing.Story) do
+		      	if v.fid == fubenId then
+		         	playFubenId = i
+		         	break
+		      	end
+		   	end
+		   	if 0 == playFubenId then
+		      	debug_print("非剧情副本调用了剧情副本的结算:"..tostring(fubenId))
+		      	return
+		   	end
+		   	local currCiyingConfig = CiYing.Story[playFubenId]
+		   	if nil == currCiyingConfig then
+		   		return
+		   	end
+		   	local totalTime = currCiyingConfig.starTime[1]
+
+
+
+   			if (var_d.stageid) ~= #(currPlayFubenConfig) then
+   				return
+   			else
+   				local left_t = totalTime - Fuben.getFbTime(pfb)
+   				CiyingOpFuncList.SuccessCopy(sysarg , fubenId , left_t)
+   			end
+   		end
+   	elseif nType == 8 then 	--设置障碍信息
+   		local block_id = DataPack.readChar(packet)
+   		local flag = DataPack.readChar(packet)
+   		playFubenMon.SetBlock(sysarg , block_id , flag)
+   	elseif nType == 9 then --解救被捆绑的怪
+   		--[[
+   		local monHandle = DataPack.readUint64(packet)
+   		playFubenMon.SaveMonster(sysarg , monHandle)
+   		--]]
+   	elseif nType == 11 then --停止副本倒计时
+   		local nrun = DataPack.readChar(packet)
+   	elseif nType == 12 then --对全场所有的怪物释放秒杀技能
+   		LActor.useFuckSkillInPlayFuben(sysarg)
+	end
+	debug_print('---HandlerOp---',SystemHandlerDispatcher[168])
+end
+
+
+--触发进入剧情副本
+playFubenMon.CallEnterPlayFubenStage = function(sysarg , fubenId)
+	debug_print("------------------------CallEnterPlayFubenStage-----------------------------------")
+	local fbptr = LActor.getFubenPrt(sysarg)
+	local var_d = Fuben.getDyanmicVar(fbptr)
+	if not var_d then return end
+	local currConfig = playFubenMon.CreateMonsterList(fubenId, var_d.difficul)
+	if nil == currConfig then
+		return
+	end
+
+	local pScene = LActor.getScenePtr(sysarg)
+    local hScene = LActor.getSceneHandle(sysarg)
+    Fuben.SetSceneAllBroadCast(hScene , true)
+
+	for i = 1 , #currConfig do
+		--debug_print("i:"..tostring(i))
+		--debug_print("currConfig[i][1]:",currConfig[i][1])
+		--debug_print("currConfig[i][1].enter:",currConfig[i][1].enter)
+		if currConfig[i][1] and 1 == currConfig[i][1].enter then	--是否有进入剧情副本触发的阶段
+			playFubenMon.OnCreateMonster(sysarg,i)
+		end
+	end
+
+	--初始化障碍信息
+	
+	Fuben.initDyanmicObstacleData(hScene)
+
+	
+
+	local currBlock = currConfig.Block
+	if currBlock then
+		debug_print("here1")
+		for i = 1 , #currBlock do
+			if currBlock[i].initFlag then
+				local currBlockArea = currBlock[i].area
+				if currBlockArea then
+					debug_print("currBlockArea:"..type(currBlockArea))
+					Fuben.setDyanmicObstacleDataBySquare(pScene , -1, currBlockArea)
+				end
+
+				local currBlockAreaPoint = currBlock[i].areaPoint
+				if currBlockAreaPoint then
+					Fuben.setDyanmicObstacleDataByPos(pScene, -1, currBlockAreaPoint)
+				end
+			end
+		end
+	end
+
+end
+
+
+
+
+playFubenMon.SendBreak = function(defMon , nMonid , val , attMon)
+	local fubenId = LActor.getFubenId(attMon)
+	debug_print("进入怪物受攻击打断环节 fubenId:"..tostring(fubenId))
+	local hfb = LActor.getFubenHandle(attMon)
+    local pfb = Fuben.getFubenPtr(hfb)
+	local var_d = Fuben.getDyanmicVar(pfb)
+	if not var_d then return end
+	local currPlayFubenConfig = playFubenMon.CreateMonsterList(fubenId, var_d.difficul)
+	if nil == currPlayFubenConfig then
+		debug_print("OnMonsterAttacked:不在剧情副本中")
+		return
+	end
+	debug_print("进入怪物受攻击打断环节2 fubenId:"..tostring(fubenId)..tostring(var_d.difficul))
+
+	if currPlayFubenConfig.BeAttack and currPlayFubenConfig.BeAttack[nMonid] and currPlayFubenConfig.BeAttack[nMonid][var_d.stageid + 1] then
+		if nil == var_d.play_stage[nMonid] then
+			var_d.play_stage[nMonid] = {}
+		end
+		if 1 ~= var_d.play_stage[nMonid][var_d.stageid + 1] then		--没触发过该阶段的被攻击
+
+			var_d.play_stage[nMonid][var_d.stageid + 1] = 1
+			
+			local FirstId,SecondId
+		   	for i=1,#CiYing.Story do
+		      if CiYing.Story[i].fid == fubenId then
+		         FirstId = CiYing.Story[i].FirstId
+		         SecondId = CiYing.Story[i].SecondId
+		         break
+		      end
+		   	end
+
+		   	local npack = DataPack.allocPacket(attMon,168,6)
+		   	local flag = 1
+		   	DataPack.writeChar(npack , (FirstId or 0) )
+		   	DataPack.writeChar(npack , (SecondId or 0) )
+		   	DataPack.writeWord(npack , (var_d.stageid + 1) )
+		   	DataPack.writeChar(npack , flag )
+		   	DataPack.flush(npack)
+
+		   	debug_print("show:",FirstId,SecondId,(var_d.stageid + 1),flag)
+
+
+			debug_print("打断："..tostring(var_d.stageid + 1))
+			debug_print("#(PlayFubenConfig.createmonsterlist[fubenId][var_d.stageid + 1]):"..tostring((currPlayFubenConfig[var_d.stageid + 1])))
+			for k,v in pairs(currPlayFubenConfig[var_d.stageid + 1]) do
+				debug_print("____________k:"..tostring(k))
+				if 5 == v.tp then	--设置能否被攻击
+					local Fhandle = LActor.getFubenHandle(attMon)
+					local hscene = Fuben.getSceneHandleById(LActor.getSceneId(attMon), Fhandle)
+					local currMonster = Fuben.getMonsterPtrById(hscene, v.mondId)
+					LActor.setDenyBeAttack(currMonster, v.flag)
+					debug_print('---------------设置不能被攻击1--------------------------')
+				elseif 6 == v.tp then
+					local Fhandle = LActor.getFubenHandle(attMon)
+					local hscene = Fuben.getSceneHandleById(LActor.getSceneId(attMon), Fhandle)
+					debug_print("Fhandle:",Fhandle)
+					debug_print("hscene:",hscene)
+					local currMonster = Fuben.getMonsterPtrById(hscene, v.mondId)
+					LActor.clearHatre(currMonster)
+					debug_print('---------------清楚仇恨1--------------------------')
+				end
+			end
+
+		else
+			debug_print("here1")
+		end
+	else
+		debug_print("here2")
+	end
+end
+
+
+--怪物定时刷新
+playFubenMon.TimeFreshMonster = function( msgid, pScene )
+	debug_print('-------playFreshMonster---------')
+	local sysarg = Fuben.getActorListbySceneInPlayFuben(pScene)
+	if nil == sysarg then
+		return
+	end
+	
+	debug_print("剧情副本 怪死亡回调")
+	
+	local fubenId = LActor.getFubenId(sysarg)
+	local fbptr = LActor.getFubenPrt(sysarg)
+	local var_d = Fuben.getDyanmicVar(fbptr)
+	if not var_d then return end
+	local currPlayFubenConfig = playFubenMon.CreateMonsterList(fubenId, var_d.difficul)
+	if nil == currPlayFubenConfig then
+		return
+	end
+
+	local hfb = LActor.getFubenHandle(sysarg)
+    local pfb = Fuben.getFubenPtr(hfb)
+	local var_d = Fuben.getDyanmicVar(pfb)
+
+	if nil == var_d then
+		return
+	end
+
+	playFubenMon.OnCreateMonster(sysarg , (var_d.stageid + 1) )
+
+end
+
+
+
+
+
+function PlayFubenArrive(sysarg ,val1,val2,val3,val4)
+	debug_print("arrive")
+
+
+	--这里也要进行一次阶段验证
+	--[[
+	local hfb = LActor.getFubenHandle(sysarg)
+    local pfb = Fuben.getFubenPtr(hfb)
+	local var_d = Fuben.getDyanmicVar(pfb)
+	if var_d == nil then return end
+	if nil ~= var_d.stageid then
+		if (var_d.stageid + 1) ~= nstageid then
+			return
+		end
+	end
+	--]]
+
+	--是否触发过全部在playFubenMon.OnCreateMonster里去验证，这里注释掉
+	playFubenMon.OnCreateMonster(sysarg,val1)
+
+	--[[
+	if var_d.area_ani == nil then 
+		var_d.area_ani = {}
+	end
+	--debug_print("val1:"..tostring(val1))
+	--debug_print("val2:"..tostring(val2))
+	--debug_print("val3:"..tostring(val3))
+	--debug_print("val4:"..tostring(val4))
+	if var_d.area_ani[val1] ~= 1 then
+		var_d.area_ani[val1] = 1
+		--CiyingOpFuncList.CYCallClient(sysarg,1,val1,val2)
+		
+   else
+   		debug_print("has been 1")
+   end
+   --]]
+end
+
+
+--注册剧情副本中的怪物（死亡事件、被攻击事件、掉血事件）
+for difficul, currDiffFubenConfig in pairs(PlayFubenConfig.createmonsterlist) do
+	for fubenId , currFubenConfig in pairs(currDiffFubenConfig) do
+		
+		--注册怪物死亡事件
+		if currFubenConfig.DeathEvent then
+			for mondId , v in pairs(currFubenConfig.DeathEvent) do
+				MonDieDispatcher.register(mondId,  playFubenMon.OnKillMonster)
+			end
+		end
+
+		--注册怪物受到攻击事件
+		if currFubenConfig.BeAttack then
+			for mondId , v in pairs(currFubenConfig.BeAttack) do
+				MonDamageDispatcher.register(mondId, playFubenMon.SendBreak)
+			end
+		end
+
+		--注册怪物血量变化触发的阶段
+		if currFubenConfig.HpChangeEvent then
+			for mondId , v in pairs(currFubenConfig.HpChangeEvent) do
+				MonHpChangedDispatcher.register(mondId, playFubenMon.MonsterHpChanged)
+			end
+		end
+
+		--注册采集事件
+		if currFubenConfig.GatherPreStageId then
+			for monId , v in pairs(currFubenConfig.GatherPreStageId) do
+				GatherCheckDispatcher.register(monId,playFubenMon.CkeckCanGather)
+			end
+		end
+
+		--拯救被绑住的村民
+		if currFubenConfig.RefreshMon then
+			for mondId , v in pairs(currFubenConfig.RefreshMon) do
+				MonDieDispatcher.register(mondId,  playFubenMon.SaveMonster)
+			end
+		end
+
+	end
+end
+
+
+SystemHandlerDispatcher.registerSystemHander(BaseTypes.SystemId.playFubenSystem, playFubenMon.HandlerOp)
+TimerMsgFunc.register(TimerMsg.PlayFubenRefresh, playFubenMon.TimeFreshMonster)

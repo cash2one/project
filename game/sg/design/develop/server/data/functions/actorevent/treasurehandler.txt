@@ -1,0 +1,372 @@
+-- 寻宝系统消息处理逻辑模块
+
+-- 语言包
+--#include "..\..\language\LangCode.txt" once
+--#include "data\config\treasure\treasureconfig.txt"
+--#include "data\functions\systems\timereward\activityautorun.txt" once
+TreasureOpFuncList = {}
+
+local sysTreasureId = 52 -- 寻宝系统id
+-- @param sysarg 伙伴系统对象
+-- @param args[1] cmd 指令
+-- @param args[2] DataPacketReader包
+EventCallDispatcher.HandleraeTreasureOp = function (sysarg, args)
+  if not sysarg or args[1] == nil then return end
+  local func = TreasureOpFuncList[args[1]]
+  if func ~= nil and type(func) == "function" then
+    func(sysarg, args[2])
+  end
+end
+
+----------------------------------------------------------------------------------
+--------------------------------- 业务处理分割线 ---------------------------------
+----------------------------------------------------------------------------------
+
+TreasureOpFuncList[1] = function (obj, packet)
+    local var = LActor.getStaticVar(obj)
+    if var == nil then return end
+    if var.treasure_di_time == nil then
+        var.treasure_di_time = 0
+    end
+    if var.treasure_tian_time == nil then
+        var.treasure_tian_time = 0
+    end
+    if var.treasure_di_count == nil then
+        var.treasure_di_count = Treasure.diji.free_count
+    end
+    if var.treasure_tian_count == nil then
+        var.treasure_tian_count = Treasure.tianji.free_count
+    end
+    local cur_time = System.getCurrMiniTime()
+
+    -- 非助战伙伴数量
+    local pack = DataPack.allocPacket(obj, sysTreasureId, 1)
+    if pack == nil then return end
+
+    DataPack.writeInt(pack, var.treasure_di_time - cur_time)
+    DataPack.writeInt(pack, var.treasure_di_count)
+    DataPack.writeInt(pack, var.treasure_tian_time - cur_time)
+    DataPack.writeInt(pack, var.treasure_tian_count)
+
+    DataPack.flush(pack)
+end
+
+--随机抽出一个物品
+--stype=0表示普通抽取
+TreasureOpFuncList.randItem = function ( config,stype )
+   local randconfig = config--{}
+   -- if stype == 0 then
+   --    randconfig = commonItems
+   -- else
+
+   -- end
+
+   local sum = 0
+   for i=1,#randconfig do
+       sum = sum + randconfig[i].rate
+   end
+
+   local rands = System.getRandomNumber(sum)
+   sum = 0
+   for i=1,#randconfig do
+       sum = sum + randconfig[i].rate
+       if rands < sum then
+          return randconfig[i].id, i, randconfig[i].count
+       end
+   end
+
+    return 0, 0, 0
+end
+
+--抽奖结果
+TreasureOpFuncList.notifyClient = function ( obj,count,items )
+    -- 有数据则返回前端
+    local pack = DataPack.allocPacket(obj, sysTreasureId, 2)
+    DataPack.writeInt(pack, LActor.getIntProperty(obj, PROP_ACTOR_PASS_KEY))
+    DataPack.writeByte(pack, count)
+    for i=1,count do
+       DataPack.writeInt( pack, items[i].itemid)
+       DataPack.writeInt( pack, items[i].count)
+      -- print("---寻宝",items[i].itemid,items[i].count)
+    end
+    DataPack.flush(pack)
+end
+
+--判断一个物品是不是好货
+--10抽必须要个好货 
+TreasureOpFuncList.isGoodItem = function ( config,id )
+    for i=1,#config.rareItems do
+        if id == config.rareItems[i].id then
+            return true
+        end
+    end
+
+    for i=1,#config.limitItems do
+        if id == config.limitItems[i].id then
+            return true
+        end
+    end
+
+    return false
+end
+
+TreasureOpFuncList[2] =  function (obj, packet)
+    -- 系统是否开启，使用siLottery
+    if LActor.isActorSystemOpen(obj, siLottery) ~= true then
+        LActor.sendTipmsg(obj, Lang.ScriptTips.xunbao005, ttMessage)
+        return
+    end
+
+    local level = DataPack.readByte(packet)
+    local ttype = DataPack.readByte(packet)
+    if not level or not ttype then return end
+
+    local config = {}
+    if level == 0 then --地级
+        config = Treasure.diji
+    else --天级
+        config = Treasure.tianji
+    end
+    local needcount = 0
+    if ttype == 0 then -- 单抽
+        needcount = 1
+    else --十连
+        needcount = 10
+    end
+
+    local var = LActor.getStaticVar(obj)
+    if var == nil then return end
+    if var.treasure_di_time == nil then
+        var.treasure_di_time = 0
+    end
+    if var.treasure_tian_time == nil then
+        var.treasure_tian_time = 0
+    end
+    if var.treasure_di_count == nil then
+        var.treasure_di_count = Treasure.diji.free_count
+    end
+    if var.treasure_tian_count == nil then
+        var.treasure_tian_count = Treasure.tianji.free_count
+    end
+    local cur_time = System.getCurrMiniTime()
+
+    --------- 消耗 ---------
+    local is_free = 0
+    if ttype == 0 then -- 免费单抽 
+        if level == 0 and var.treasure_di_count > 0 and cur_time > var.treasure_di_time then
+            var.treasure_di_count = var.treasure_di_count -1
+            var.treasure_di_time = cur_time + config.refreshTime
+            is_free = 1
+        elseif level == 1 and var.treasure_tian_count > 0 and cur_time > var.treasure_tian_time then
+            var.treasure_tian_count = var.treasure_tian_count -1
+            var.treasure_tian_time = cur_time + config.refreshTime
+            is_free = 1
+        end
+    end
+    local cost_type = -1
+    if is_free == 0 then     
+        local cost_config = config.cost
+        cost_type = cost_config.type
+        if needcount == 10 then
+            cost_config = config.cost_10
+        end
+        if cost_config.type == 0 then -- 消耗物品
+            local itemcount = LActor.getItemCount( obj, cost_config.id )
+            if itemcount < cost_config.count then
+                LActor.sendTipmsg(obj, Lang.ScriptTips.xunbao001, ttMessage)
+                return
+            end
+            LActor.removeItem( obj, cost_config.id, cost_config.count, -1, -1, -1,  "xunbao_di")
+        elseif cost_config.type == 1 then -- 消耗货币
+            local enough = LActor.CheckMoneyEnough(obj, cost_config.id, cost_config.count, true)
+            if enough == nil or enough == false then
+                return
+            end
+            LActor.changeMoney(obj,cost_config.id,-cost_config.count, 1, true, "xunbao_tian")
+        elseif cost_config.type == 2 then -- 消耗好友赠送的钥匙
+            if LActor.getIntProperty(obj, PROP_ACTOR_PASS_KEY) < cost_config.count then
+               -- LActor.sendTipmsg(obj, Lang.ScriptTips.xunbao003, ttMessage)
+                LActor.SendGeneralTips(obj, 2, 27501, 0)
+                return
+            end
+            LActor.giveAward(obj, qatPassKey,  -cost_config.count )
+        end
+    end
+    ------------------------
+
+    --------- 是否首次抽奖 ---------
+    local is_first = 0 --0正常1第一次2第二次
+    if level == 0 then --地级
+        if var.treasure_di_first == nil then
+            var.treasure_di_first = 0
+        end
+        if var.treasure_di_first == 0 and config.FirstItems and #config.FirstItems > 0 then
+            is_first = 1
+            var.treasure_di_first = 1
+        elseif var.treasure_di_first == 1 and config.SecondItems and #config.SecondItems > 0 then
+            is_first = 2
+            var.treasure_di_first = 2
+        end
+    else --天级
+        if var.treasure_tian_first == nil then
+            var.treasure_tian_first = 0
+        end
+        if var.treasure_tian_first == 0 and config.FirstItems and #config.FirstItems > 0 then
+            is_first = 1
+            var.treasure_tian_first = 1
+        elseif var.treasure_tian_first == 1 and config.SecondItems and #config.SecondItems > 0 then
+            is_first = 2
+            var.treasure_tian_first = 2
+        end
+    end
+    --------------------------------
+
+    --------- 抽奖 ---------
+    local hasrare = 0 -- 是否抽到稀有的
+    local haslimit = 0 -- 是否抽到不可重复的
+    local randconfig = config.Items
+    local itemlist = {} 
+    local mailitemlist = {} -- 以邮件形式发送的物品列表
+    local mailitemcount = 0 -- 邮件物品个数
+    for i=1,needcount do
+        if i == 10 and hasrare == 0 then -- 十连必出稀有
+            local rarelist = {}
+            for j=1,#randconfig do
+                if randconfig[j].israre == 1 then
+                    table.insert(rarelist, randconfig[j])
+                end
+            end
+            randconfig = rarelist
+        end
+        local itemid, index, count
+        if is_first == 1 then -- 是否首次抽奖
+            itemid, index ,count= TreasureOpFuncList.randItem(config.FirstItems) --抽
+            is_first = 0
+        elseif is_first == 2 then -- 是否二次抽奖
+            itemid, index,count = TreasureOpFuncList.randItem(config.SecondItems) --抽
+            is_first = 0
+        else -- 正常抽
+            itemid, index,count = TreasureOpFuncList.randItem(randconfig) --抽
+        end
+        if itemid > 0 and index > 0 then
+            if randconfig[index].broadcast then
+                local msg 
+                if level == 0 then
+                    msg = Lang.ScriptTips.xunbao006
+                else
+                    msg = Lang.ScriptTips.xunbao007
+                end
+                --local broadcastmsg = msg
+                local broadcastmsg = string.format(msg, LActor.getName(obj), Item.getColorName(itemid))
+                print(broadcastmsg)
+                System.broadcastTipmsg(broadcastmsg, ttGmTip)
+            end
+
+            if randconfig[index].israre == 1 then
+                hasrare = 1
+            end
+            if randconfig[index].islimit == 1 then
+                haslimit = 1
+                table.remove(randconfig, index)
+            end
+            local item = {}
+            item.itemid = itemid
+            item.count = count or 1
+            table.insert(itemlist, item)
+            local additem_msg = ""
+            if level == 0 then
+                additem_msg = "xunbao_di"
+            else
+                additem_msg = "xunbao_tian"
+            end
+            local num = LActor.addItem(obj, itemid, 0, 0, (randconfig[index].count or 1), 0, additem_msg, 937) --添加物品
+            if num <= 0 then -- 背包已满
+                -- System.sendGmMailOffLine(LActor.getActorId(obj), Lang.ScriptTips.xunbao002 , 1, itemid, 1, 1, Lang.ScriptTips.xunbao004)
+                mailitemlist[mailitemcount * 3 + 1] = 1 -- type
+                mailitemlist[mailitemcount * 3 + 2] = itemid -- id
+                mailitemlist[mailitemcount * 3 + 3] = 1 -- count
+                mailitemcount = mailitemcount + 1
+            end
+        else
+            print("=======寻宝错误=======")
+        end
+    end
+    -- 发送邮件
+    -- print("-------------!!"..#mailitemlist)
+    if mailitemcount > 0 and mailitemcount <= 5 then
+        System.sendGmMailOffLine(LActor.getActorId(obj), Lang.ScriptTips.xunbao002 , mailitemlist[1] or 0, mailitemlist[2] or 0, mailitemlist[3] or 0, 0, Lang.ScriptTips.xunbao004
+            , mailitemlist[4] or 0, mailitemlist[5] or 0, mailitemlist[6] or 0, 0
+            , mailitemlist[7] or 0, mailitemlist[8] or 0, mailitemlist[9] or 0, 0
+            , mailitemlist[10] or 0, mailitemlist[11] or 0, mailitemlist[12] or 0, 0
+            , mailitemlist[13] or 0, mailitemlist[14] or 0, mailitemlist[15] or 0, 0)
+    elseif mailitemcount > 5 and mailitemcount <= 10 then
+        System.sendGmMailOffLine(LActor.getActorId(obj), Lang.ScriptTips.xunbao002 , mailitemlist[1] or 0, mailitemlist[2] or 0, mailitemlist[3] or 0, 0, Lang.ScriptTips.xunbao004
+            , mailitemlist[4] or 0, mailitemlist[5] or 0, mailitemlist[6] or 0, 0
+            , mailitemlist[7] or 0, mailitemlist[8] or 0, mailitemlist[9] or 0, 0
+            , mailitemlist[10] or 0, mailitemlist[11] or 0, mailitemlist[12] or 0, 0
+            , mailitemlist[13] or 0, mailitemlist[14] or 0, mailitemlist[15] or 0, 0)
+        System.sendGmMailOffLine(LActor.getActorId(obj), Lang.ScriptTips.xunbao002 , mailitemlist[16] or 0, mailitemlist[17] or 0, mailitemlist[18] or 0, 0, Lang.ScriptTips.xunbao004
+            , mailitemlist[19] or 0, mailitemlist[20] or 0, mailitemlist[21] or 0, 0
+            , mailitemlist[22] or 0, mailitemlist[23] or 0, mailitemlist[24] or 0, 0
+            , mailitemlist[25] or 0, mailitemlist[26] or 0, mailitemlist[27] or 0, 0
+            , mailitemlist[28] or 0, mailitemlist[29] or 0, mailitemlist[30] or 0, 0)
+    end
+    mailitemlist = {}
+    mailitemcount = 0
+    ------------------------
+
+    -- 日志
+    -- System.logCounter(LActor.getActorId(obj), "xunbao", tostring(level), tostring(ttype), tostring(cost_type), "xunbao")
+    --
+
+    --通知客户端
+    if #itemlist > 0 then
+       TreasureOpFuncList.notifyClient(obj, #itemlist,itemlist)
+    end
+    --如果是天级十连抽，则增加活动天级宝藏十连抽次数
+    if level == 1 and ttype == 1 then
+        --print("--如果是天级十连抽，则增加活动天级宝藏十连抽次数--")
+        activityFunc.OnTianJiTreasure(obj)
+        activityFunc.SendTianJiTreasureTimes(obj)
+    end
+    --如果是天级抽奖,增加活动64.【开服活动-创角7天】天级宝藏 次数
+    
+    if level == 1 then --去掉不是免费 and is_free==0
+        if ttype==1 then --如果是十连抽
+            activityFunc.OnTianJiTreasureAllTime(obj,10)
+        else 
+             activityFunc.OnTianJiTreasureAllTime(obj,1)
+        end
+
+    end
+    --活动id[72] 寻宝助秀成霸业
+    if level == 1 then --免费也算
+        if ttype==1 then --如果是十连抽
+            activityFunc.onTianjiXunBao(obj,10)
+        else 
+            activityFunc.onTianjiXunBao(obj,1)
+        end
+
+    end
+
+
+
+    -- 触发任务事件
+    LActor.OnQuestEvent(qtXunBao, level, needcount, true, obj, false)
+    LActor.OnQuestEvent(qtXunBao, 2, needcount, true, obj, false) -- 任意抽
+end
+
+-- 新的一天到来
+TreasureOpFuncList.NewDayArrive = function( sysarg )
+    local var = LActor.getStaticVar(sysarg)
+    if var == nil then return end
+    var.treasure_di_count = Treasure.diji.free_count
+    var.treasure_tian_count = Treasure.tianji.free_count
+end
+TreasureOpFuncList.OnLogin = function(sysarg)
+    activityFunc.SendTianJiTreasureTimes(sysarg)
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeTreasure, EventCallDispatcher.HandleraeTreasureOp)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, TreasureOpFuncList.NewDayArrive)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, TreasureOpFuncList.OnLogin)

@@ -1,0 +1,65 @@
+﻿-- 伙伴岛
+{
+	fbid = 63,
+
+	fubenlistid =2,
+
+	sceneid = 1082, -- 场景ID
+
+	--初始化怒气值
+
+	--打死一波怪,是否要下发方向指引
+	ifgonext = true,
+
+	--怪物总数量
+	monsternum = 16,
+
+	monsters =
+	{
+		--第一波怪
+		[1] = {
+			{
+				monsterId = 448, --怪物id
+				posX1 = 24, --怪物x坐标范围
+				posX2 = 30,
+				posY1 = 18,
+				posY2 = 22,
+				num = 5,
+		
+			},
+
+		},
+		--第二波怪
+		[2] = {
+			{
+				monsterId = 449, --怪物id
+				posX1 = 45, --怪物x坐标范围
+				posX2 = 53,
+				posY1 = 18,
+				posY2 = 23,
+				num = 5,
+			},
+			
+		},
+        --第三波怪
+        [3] = {
+			{
+				monsterId = 450, --怪物id
+				posX1 = 77, --怪物x坐标范围
+				posX2 = 83,
+				posY1 = 22,
+				posY2 = 26,
+				num = 5,
+			},
+
+			{
+				monsterId = 451, --怪物id
+				posX1 = 80, --怪物x坐标范围
+				posX2 = 80,
+				posY1 = 24,
+				posY2 = 24,
+				num = 1,
+			},
+		},
+	},
+}

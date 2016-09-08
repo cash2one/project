@@ -1,0 +1,195 @@
+local DayQuestFuncs = {}
+
+local award_types = {
+    atMoney = 0,
+    atItem = 1,
+    atExp = 2,
+}
+
+function DayQuestFuncs.readQuestList (objexcel)
+    local questList = {}
+    local refreshList = {}
+    if not objexcel then
+        return questList, refreshList
+    end
+
+    local cCount = objexcel:GetCurrentSheetColCount()
+    local rCount = objexcel:GetCurrentSheetRowCount()
+
+    local tmp = {}
+    for i = 2, rCount do
+        local id = tonumber(objexcel:ReadCellAsString(i, 1))
+        if id ~= nil and id > 0 then
+            local groupId = tonumber(objexcel:ReadCellAsString(i, 2))
+            if tmp[groupId] == nil then
+                tmp[groupId] = {}
+            end
+            local rowTable = {}
+            rowTable.qid = id
+            rowTable.rates = {}
+            rowTable.rates[5] = tonumber(objexcel:ReadCellAsString(i, 3))
+            rowTable.rates[4] = tonumber(objexcel:ReadCellAsString(i, 4))
+            rowTable.rates[3] = tonumber(objexcel:ReadCellAsString(i, 5))
+            rowTable.rates[2] = tonumber(objexcel:ReadCellAsString(i, 6))
+            rowTable.rates[1] = tonumber(objexcel:ReadCellAsString(i, 7))
+
+            rowTable.awards = {}
+            local money = tonumber(objexcel:ReadCellAsString(i, 8)) or 0
+            if money > 0 then
+                local t = {}
+                t.type = award_types.atMoney
+                t.id = 0
+                t.count = money
+                table.insert(rowTable.awards, t)
+            end
+            local exp = tonumber(objexcel:ReadCellAsString(i, 9)) or 0
+            if exp > 0 then
+                local t = {}
+                t.type = award_types.atExp
+                t.id = 0
+                t.count = exp
+                table.insert(rowTable.awards, t)
+            end
+            local itemId = tonumber(objexcel:ReadCellAsString(i, 10)) or 0
+            if itemId > 0 then
+                local itemNum = tonumber(objexcel:ReadCellAsString(i, 11)) or 0
+                if itemNum > 0 then
+                    local t = {}
+                    t.type = award_types.atItem
+                    t.id = itemId
+                    t.count = itemNum
+                    table.insert(rowTable.awards, t)
+                end
+            end
+            table.insert(tmp[groupId], rowTable)
+        else
+            print(string.format("= WARNNING => 警告 配置文件<日常任务独立配置>第%d行出现空编号", i))
+        end
+    end
+    for k, v in pairs(tmp) do
+        if type(v) == "table" then
+            local t = {}
+            for n, m in ipairs(v) do
+                table.insert(questList, m)
+                table.insert(t, m.qid)
+            end
+            table.insert(refreshList, t)
+        end
+    end
+    -- print(string.format("====> tmp = %s", dump(tmp)))
+    -- print(string.format("====> questList = %s", dump(questList)))
+    -- print(string.format("====> refreshList = %s", dump(refreshList)))
+    return questList, refreshList
+end
+
+function DayQuestFuncs.readUpStar (objexcel)
+    local dayQuestNum = 0
+    local upStar = {}
+    if not objexcel then
+        return dayQuestNum, upStar
+    end
+
+    local cCount = objexcel:GetCurrentSheetColCount()
+    local rCount = objexcel:GetCurrentSheetRowCount()
+
+    local tmp = {}
+    for i = 2, rCount do
+        local id = tonumber(objexcel:ReadCellAsString(i, 1))
+        if id ~= nil and id > 0 then
+            local num = tonumber(objexcel:ReadCellAsString(i, 2)) or 0
+            if num <= 0 then
+                print(string.format("= WARNNING => 警告 配置文件<公共配置>第%d行出现非法<每日刷新任务数量>-><%d>", i, num))
+                return dayQuestNum, upStar
+            end
+            dayQuestNum = num
+            upStar.rates = {}
+            upStar.rates[3] = {}
+            upStar.rates[3].rate = tonumber(objexcel:ReadCellAsString(i, 3))
+            upStar.rates[3].add = 2
+
+            upStar.rates[2] = {}
+            upStar.rates[2].rate = tonumber(objexcel:ReadCellAsString(i, 4))
+            upStar.rates[2].add = 1
+
+            upStar.rates[1] = {}
+            upStar.rates[1].rate = tonumber(objexcel:ReadCellAsString(i, 5))
+            upStar.rates[1].add = 0
+
+            local itemId = tonumber(objexcel:ReadCellAsString(i, 6)) or 0
+            local itemNum = tonumber(objexcel:ReadCellAsString(i, 7)) or 0
+            local costMoney = tonumber(objexcel:ReadCellAsString(i, 8)) or 0
+
+            upStar.itemId = itemId
+            upStar.itemNum = itemNum
+            upStar.costMoney = costMoney
+
+            break
+        else
+            print(string.format("= WARNNING => 警告 配置文件<公共配置>第%d行出现空编号", i))
+        end
+    end
+    -- print(string.format("====> dayQuestNum = %s", dump(dayQuestNum)))
+    -- print(string.format("====> upStar = %s", dump(upStar)))
+    return dayQuestNum, upStar
+end
+
+-- 读取日常任务配置文件
+function ReadDayQuestConfig()
+    local NormalDayQuestConfig = {}
+
+    local objexcel = CExcelReader:new()
+    if not objexcel then
+        print("objexcel is null")
+        return
+    end
+
+    objexcel:Init_App()
+    objexcel:OpenRead()
+
+    -- 读取<日常任务独立配置>
+    local obj = objexcel:LoadSheetByIndex(1)
+    if not obj then
+        print("读取<日常任务独立配置>失败!")
+        objexcel:Close()
+        objexcel:Quit_App()
+        objexcel:delete()
+        return
+    end
+    local questList = nil
+    local refreshList = nil
+    questList, refreshList = DayQuestFuncs.readQuestList(objexcel)
+
+    NormalDayQuestConfig.questList = questList
+    NormalDayQuestConfig.refreshList = refreshList
+
+    -- 读取<公共配置>
+    local obj = objexcel:LoadSheetByIndex(2)
+    if not obj then
+        print("读取<公共配置>失败!")
+        objexcel:Close()
+        objexcel:Quit_App()
+        objexcel:delete()
+        return
+    end
+    local dayQuestNum = nil
+    local upStar = nil
+    dayQuestNum, upStar = DayQuestFuncs.readUpStar(objexcel)
+
+    NormalDayQuestConfig.dayQuestNum = dayQuestNum
+    NormalDayQuestConfig.upStar = upStar
+
+    if dayQuestNum <= 0 then
+        print(string.format("= WARNNING => 警告 配置文件<公共配置>出现非法<每日刷新任务数量>-><%d>", dayQuestNum))
+        return
+    end
+
+    local str = string.format("--lua script\n--#include \"..\\..\\language\\LangCode.txt\"\nNormalDayQuestConfig = %s", dump(NormalDayQuestConfig))
+    objexcel:WriteFile("data\\config\\taskgameplayconfig\\normaldayquestconfig.txt", str)
+
+    print("========== 导出日常任务配置表完成! ==========")
+
+
+    objexcel:Close()
+    objexcel:Quit_App()
+    objexcel:delete()
+end

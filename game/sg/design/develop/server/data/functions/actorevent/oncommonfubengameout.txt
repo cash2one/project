@@ -1,0 +1,129 @@
+--#include "data\functions\fubennpcfunc\commonfuben.txt" once
+--#include "data\functions\monevent\fbmonsters\huantianfubenmon.txt" once
+--#include "data\functions\monevent\fbmonsters\xinmohuanjingfubenmon.txt" once
+--#include "data\functions\monevent\fbmonsters\tianmotafubenmon.txt" once
+---#include "data\functions\monevent\fbmonsters\xuantianfengyinfubenmon.txt" once
+
+--#include "data\functions\monevent\fbmonsters\newpetfubenmon.txt" once
+
+-- 注册副本结束时的处理
+EventCallDispatcher.OnCommonFuBenGameOver = function(fbPtr)
+	--print("-EventCallDispatcher.OnCommonFuBenGameOver----")
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+	local fbHandle =  Fuben.getFubenHandle(fbPtr)
+
+	if fbVar.inJieSuan  == 0 then
+		--print("fbHandle ---1---  "..fbHandle)
+		local sysarg = Fuben.getFbActorPtr(fbHandle)
+		if sysarg ~= nil then
+			CommonFubenJiesuanConfig.onFubenOver(sysarg,fbHandle)
+			--print("fbHandle ---2---  "..fbHandle)
+		end
+	end
+end
+
+for i=1,#CommonFubenJiesuanConfig.fubenList do
+	--print("-CommonFubenJiesuanConfig.fubenList----"..CommonFubenJiesuanConfig.fubenList[i])
+	EventCallDispatcher.registerFubenGameOver(CommonFubenJiesuanConfig.fubenList[i],EventCallDispatcher.OnCommonFuBenGameOver)
+end
+
+-- 新的一天对关卡的通关情况进行清理
+EventCallDispatcher.OnCommonFuBenNewDay = function(sysarg)
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	if var.tgData == nil then return end
+	
+	for i=1,#CommonFubenJiesuanConfig.fubenList do
+		--print("-CommonFubenJiesuanConfig.OnCommonFuBenNewDay----"..CommonFubenJiesuanConfig.fubenList[i])
+		var.tgData[CommonFubenJiesuanConfig.fubenList[i]] = nil
+	end
+end
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, EventCallDispatcher.OnCommonFuBenNewDay)
+
+-- 注册获取关卡通关数据
+MiscsImplement.GetTongGuanData = function(sysarg,msgid, packet)
+	local fubenId = DataPack.readInt(packet) -- 副本ID
+	--print("---MiscsImplement.GetTongGuanData--"..fubenId)
+	if CommonFubenJiesuanConfig[fubenId] == nil then
+		return
+	end
+	local tgData = CommonFubenJiesuanConfig.getTongGuanData(sysarg,CommonFubenJiesuanConfig[fubenId].fubenId[1])
+
+	-- 发送通关数据
+	local npack = DataPack.allocPacket(sysarg, 139, 140)				-- 通关协议
+	 DataPack.writeInt(npack, tgData)									-- 通关数据
+	 DataPack.flush(npack) 												-- 刷新数据	
+end
+
+MiscsImplement.registerMsgHandler(140, MiscsImplement.GetTongGuanData)
+
+-- 进入幻天密境的处理
+for i=1,#HuanTianMiJingFubenConfig.sceneId do
+	--print("-----sceneId:  "..HuanTianMiJingFubenConfig.sceneId[i])
+	local isFirstScene = 0
+	for j=1,#HuanTianMiJingFubenConfig.fubenToSence do
+		--print("--------"..HuanTianMiJingFubenConfig.fubenToSence[j])
+		if HuanTianMiJingFubenConfig.fubenToSence[j] == HuanTianMiJingFubenConfig.sceneId[i] then
+			isFirstScene = 1
+		end
+	end
+	if isFirstScene == 0 then
+		--print("-HuanTianMiJingFubenConfig.registerSceneEnter----"..HuanTianMiJingFubenConfig.sceneId[i])
+		EventCallDispatcher.registerSceneEnter(HuanTianMiJingFubenConfig.sceneId[i], HuanTianMiJingFubenMon.EnterScene)
+	end
+end
+
+-- 进入心魔幻境的处理
+for i=1,#XinMoHuanJingFubenConfig.sceneId do
+	--print("-----sceneId:  "..XinMoHuanJingFubenConfig.sceneId[i])
+	local isFirstScene = 0
+	for j=1,#XinMoHuanJingFubenConfig.fubenToSence do
+		--print("--------"..XinMoHuanJingFubenConfig.fubenToSence[j])
+		if XinMoHuanJingFubenConfig.fubenToSence[j] == XinMoHuanJingFubenConfig.sceneId[i] then
+			isFirstScene = 1
+		end
+	end
+	if isFirstScene == 0 then
+		--print("-XinMoHuanJingFubenConfig.registerSceneEnter----"..XinMoHuanJingFubenConfig.sceneId[i])
+
+		--wxj暂时屏蔽掉，为了不影响剧情副本
+		--EventCallDispatcher.registerSceneEnter(XinMoHuanJingFubenConfig.sceneId[i], xinMoHuanJingFubenMon.EnterScene)
+	end
+end
+
+-- 进入天魔塔的处理
+for i=1,#TianMoTaConfig.sceneId do
+	--print("-----sceneId:  "..TianMoTaConfig.sceneId[i])
+	local isFirstScene = 0
+	for j=1,#TianMoTaConfig.fubenToSence do
+		--print("--------"..TianMoTaConfig.fubenToSence[j])
+		if TianMoTaConfig.fubenToSence[j] == TianMoTaConfig.sceneId[i] then
+			isFirstScene = 1
+		end
+	end
+	if isFirstScene == 0 then
+		--print("-TianMoTaConfig.registerSceneEnter----"..TianMoTaConfig.sceneId[i])
+		EventCallDispatcher.registerSceneEnter(TianMoTaConfig.sceneId[i], tianMoTaFubenMon.EnterScene)
+	end
+end
+
+---- 进入玄天封印
+--for i=1,#XuanTianFengYinConfig.sceneId do
+--	--print("-----sceneId:  "..XuanTianFengYinConfig.sceneId[i])
+--	local isFirstScene = 0
+--	for j=1,#XuanTianFengYinConfig.fubenToSence do
+--		--print("--------"..XuanTianFengYinConfig.fubenToSence[j])
+--		if XuanTianFengYinConfig.fubenToSence[j] == XuanTianFengYinConfig.sceneId[i] then
+--			isFirstScene = 1
+--		end
+--	end
+--	if isFirstScene == 0 then
+--		--print("-XuanTianFengYinConfig.registerSceneEnter----"..XuanTianFengYinConfig.sceneId[i])
+--		EventCallDispatcher.registerSceneEnter(XuanTianFengYinConfig.sceneId[i], xuanTianFengYinFubenMon.EnterScene)
+--	end
+--end
+
+
+
+
+

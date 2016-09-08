@@ -1,0 +1,922 @@
+﻿--#include "data\language\LangCode.txt"
+
+-- 中秋祝福
+BroadcastItem =
+{
+  {
+    item_id = 2116,            -- 物品Id
+    text =
+    {
+         Lang.ScriptTips.zf001,
+         Lang.ScriptTips.zf002,
+         Lang.ScriptTips.zf003,
+         Lang.ScriptTips.zf004,
+         Lang.ScriptTips.zf005,
+         Lang.ScriptTips.zf006,
+         Lang.ScriptTips.zf007,
+         Lang.ScriptTips.zf008,
+    }
+  }
+}
+
+--[[   --更改实现方式 磨刀石转移到文件UseRepairItem.txt
+--成就礼盒和磨刀石物品
+ChengjiuAndRepairItems = {
+	{item_id = 1557,},
+	{item_id = 1572,},
+}
+
+
+
+--封测登录礼盒
+FengCeRewardItems = {
+	{item_id = 1615,},
+}
+]]
+--使用物品可以添加给玩家任务
+AddTaskItems = {
+	--{item_id = 610, taskid = 755, taskname = Lang.ScriptTips.x00019, taskTalk = Lang.Talk.t02681,},
+	--{item_id = 1462, taskid = 743, taskname = Lang.ScriptTips.x00018, taskTalk = Lang.Talk.t02635,},
+	{item_id = 1708, taskid = 8037, taskname = Lang.Quest.q03598, taskTalk = Lang.Quest.q03599,},
+  {item_id = 1709, taskid = 8035, taskname = Lang.Quest.q03594, taskTalk = Lang.Quest.q03595,},
+  {item_id = 1710, taskid = 8036, taskname = Lang.Quest.q03596, taskTalk = Lang.Quest.q03597,},
+}
+
+--在指定场景使用物品完成任务
+UseTaskItems = {
+
+ {item_id = 611, sceneid=2, posx1=32, posx2=42, posy1=0, posy2=17, taskid=779, id=30001, count=1, DelayType = 4,needdelete=true,},
+ {item_id = 667, sceneid=16, posx1=50, posx2=70, posy1=41, posy2=41, taskid=1259, id=31002, count=1, DelayType = 4,needdelete=true,},
+ {item_id = 668, sceneid=16, posx1=68, posx2=82, posy1=37, posy2=37, taskid=1272, id=31003, count=1, DelayType = 4,needdelete=true,},
+ {item_id = 716, sceneid=23, posx1=33, posx2=53, posy1=21, posy2=21, taskid=1283, id=31004, count=1, DelayType = 4,needdelete=true,},
+ {item_id = 717, sceneid=23, posx1=33, posx2=53, posy1=21, posy2=21, taskid=1292, id=31005, count=1, DelayType = 4,needdelete=true,},
+ {item_id = 718, sceneid=23, posx1=112, posx2=132, posy1=29, posy2=29, taskid=1297, id=31006, count=1, DelayType = 4,needdelete=true,},
+ {item_id = 719, sceneid=23, posx1=29, posx2=57, posy1=29, posy2=29, taskid=1308, id=31007, count=1, DelayType = 4,needdelete=true,},
+ {item_id = 720, sceneid=23, posx1=70, posx2=80, posy1=29, posy2=29, taskid=1311, id=31009, count=1, DelayType = 4,needdelete=true,},
+ {item_id = 721, sceneid=37, posx1=18, posx2=28, posy1=26, posy2=26, taskid=1320, id=31010, count=1, DelayType = 4,needdelete=true,},
+ {item_id = 722, sceneid=37, posx1=60, posx2=88, posy1=30, posy2=30, taskid=1341, id=31011, count=1, DelayType = 4,needdelete=true,},
+ {item_id = 723, sceneid=24, posx1=33, posx2=43, posy1=14, posy2=14, taskid=1348, id=31012, count=1, DelayType = 4,needdelete=true,},
+ {item_id = 724, sceneid=24, posx1=65, posx2=75, posy1=34, posy2=34, taskid=1362, id=31013, count=1, DelayType = 4,needdelete=true,},
+ {item_id = 725, sceneid=39, posx1=19, posx2=35, posy1=49, posy2=49, taskid=1372, id=31015, count=1, DelayType = 4,needdelete=true,},
+ {item_id = 726, sceneid=39, posx1=70, posx2=80, posy1=49, posy2=49, taskid=1378, id=31016, count=1, DelayType = 4,needdelete=true,},
+ {item_id = 727, sceneid=10, posx1=77, posx2=97, posy1=33, posy2=39, taskid=1399, id=31017, count=1, DelayType = 4,needdelete=true,},
+ {item_id = 728, sceneid=10, posx1=74, posx2=94, posy1=30, posy2=30, taskid=1405, id=31018, count=1, DelayType = 4,needdelete=true,},
+ {item_id = 729, sceneid=39, posx1=34, posx2=73, posy1=25, posy2=31, taskid=1420, id=31020, count=1, DelayType = 4,needdelete=true,},
+ {item_id = 730, sceneid=39, posx1=76, posx2=94, posy1=27, posy2=31, taskid=1431, id=31021, count=1, DelayType = 4,needdelete=true,},
+ {item_id = 731, sceneid=36, posx1=54, posx2=74, posy1=32, posy2=32, taskid=1453, id=31022, count=1, DelayType = 4,needdelete=true,},
+ {item_id = 732, sceneid=29, posx1=45, posx2=55, posy1=15, posy2=15, taskid=1462, id=31023, count=1, DelayType = 4,needdelete=true,},
+ {item_id = 733, sceneid=29, posx1=110, posx2=130, posy1=25, posy2=25, taskid=1472, id=31027, count=1, DelayType = 4,needdelete=true,},
+ {item_id = 1641, sceneid=7, posx1=8, posx2=24, posy1=21, posy2=21, taskid=1498, id=31028, count=1, DelayType = 4,needdelete=true,},
+ {item_id = 1642, sceneid=45, posx1=42, posx2=68, posy1=21, posy2=21, taskid=1538, id=31033, count=1, DelayType = 4,needdelete=true,},
+ {item_id = 1643, sceneid=27, posx1=43, posx2=56, posy1=44, posy2=44, taskid=1547, id=31034, count=1, DelayType = 4,needdelete=true,},
+ {item_id = 1644, sceneid=5, posx1=30, posx2=44, posy1=28, posy2=28, taskid=1618, id=31042, count=1, DelayType = 4,needdelete=true,},
+ {item_id = 1645, sceneid=11, posx1=110, posx2=130, posy1=23, posy2=23, taskid=1633, id=31043, count=1, DelayType = 4,needdelete=true,},
+}
+
+RapidEffectItems = {
+	{item_id = 596, propID= PROP_HP, value= 150,needDelete =true},
+
+}
+
+ChuanSongItems =
+{
+	--type:回城卷轴的类型，1、为按城市回城：2、按不同门派回城
+	--SceneName:场景的名称，按城市回城用的
+	--pos_x,pos_y :场景默认的传送点
+	--needDelete : 是否需要删除物品
+  --DelayType: 读进度条的类型
+
+	{item_id = 18200,type = 1, DelayType = 1,needDelete = true},
+}
+
+LianGongFangItems =
+{
+	{item_id = 48263, fbid=67},
+	{item_id = 48264, fbid=68},
+}
+
+--复活石的配置
+ResurrectionItems =
+{
+	--item_id:  物品的ID
+	--{item_id = 99999,needDelete = true},
+}
+
+--减少杀戮值物品的配置
+ReduceKillValueItems =
+{
+	{item_id = 650, value = 10, needDelete = true},
+	{item_id = 651, value = 20, needDelete = true},
+	{item_id = 652, value = 30, needDelete = true},
+}
+
+DeleteBuffItems = {
+	{item_id = 1002, buffType= aHpAdd, buffGroup= 0,needDelete =true},
+}
+
+
+DeputyLearnItems = {
+	{item_id = 22, deputy = 1, value = 4, needDelete = true, groupItems = {172,}, },
+}
+
+--双倍经验药品
+DoubleExpItems =
+{
+	{item_id = 1440, value = 2, needDelete = true },
+}
+--新手奖励的礼包
+PresentItems = {
+	--item_id : 新手礼包的ID，即功能物品的ID
+	--rewardsID : 功能物品ID对应该的奖励礼包ID，这个在RewardConfig.txt配置。
+	--needDelete : 是否需要删除。
+
+{item_id = 1, rewardsID = 1, needDelete =true},
+{item_id = 1444,rewardsID = 2, needDelete =true},
+{item_id = 1445,rewardsID = 3, needDelete =true},
+{item_id = 1446,rewardsID = 4, needDelete =true},
+{item_id = 1447,rewardsID = 5, needDelete =true},
+{item_id = 1448,rewardsID = 6, needDelete =true},
+{item_id = 1449,rewardsID = 7, needDelete =true},
+{item_id = 1450,rewardsID = 8, needDelete =true},
+{item_id = 1451,rewardsID = 9, needDelete =true},
+{item_id = 1548,rewardsID = 10, needDelete =true},
+{item_id = 1549,rewardsID = 11, needDelete =true},
+{item_id = 1550,rewardsID = 12, needDelete =true},
+{item_id = 1591,rewardsID = 21, needDelete =true},
+{item_id = 1592,rewardsID = 22, needDelete =true},
+{item_id = 1593,rewardsID = 23, needDelete =true},
+{item_id = 1594,rewardsID = 24, needDelete =true},
+{item_id = 1595,rewardsID = 25, needDelete =true},
+{item_id = 1596,rewardsID = 26, needDelete =true},
+{item_id = 1609,rewardsID = 27, needDelete =true},
+{item_id = 1610,rewardsID = 28, needDelete =true},
+{item_id = 1611,rewardsID = 29, needDelete =true},
+{item_id = 1612,rewardsID = 30, needDelete =true},
+{item_id = 1613,rewardsID = 31, needDelete =true},
+{item_id = 1614,rewardsID = 32, needDelete =true},
+{item_id = 1616,rewardsID = 33, needDelete =true},
+{item_id = 1617,rewardsID = 34, needDelete =true},
+{item_id = 1618,rewardsID = 35, needDelete =true},
+{item_id = 1619,rewardsID = 36, needDelete =true},
+{item_id = 1655,rewardsID = 37, needDelete =true},
+{item_id = 1662,rewardsID = 38, needDelete =true},
+{item_id = 1663,rewardsID = 39, needDelete =true},
+{item_id = 1666,rewardsID = 40, needDelete =true},
+{item_id = 1676,rewardsID = 41, needDelete =true},
+{item_id = 1677,rewardsID = 42, needDelete =true},
+{item_id = 1682,rewardsID = 43, needDelete =true},
+{item_id = 1683,rewardsID = 44, needDelete =true},
+{item_id = 1684,rewardsID = 45, needDelete =true},
+{item_id = 1685,rewardsID = 46, needDelete =true},
+{item_id = 1686,rewardsID = 47, needDelete =true},
+{item_id = 1687,rewardsID = 48, needDelete =true},
+{item_id = 2050,rewardsID = 49, needDelete =true},
+{item_id = 2051,rewardsID = 50, needDelete =true},
+{item_id = 2052,rewardsID = 51, needDelete =true},
+{item_id = 2053,rewardsID = 52, needDelete =true},
+{item_id = 2060,rewardsID = 53, needDelete =true},
+{item_id = 2075,rewardsID = 54, needDelete =true},
+}
+
+--恢复体力药品
+PhysicalItems = {
+
+	{item_id = 1004, value = 10, needDetele = true},
+	{item_id = 999, value = 20, needDetele = true},
+	--{item_id = 1002, value = 30, needDetele = true},
+	--{item_id = 1003, value = 40, needDetele = true},
+}
+--副本挑战书
+AddFubenCountItems = {
+  {item_id = 1567,type = 1,needDelete =true,},
+	{item_id = 1568,type = 2,needDelete =true,},
+	{item_id = 1569,type = 3,needDelete =true,},
+}
+
+--地牢钥匙碎片一、二、三、四
+DungeonKeyDebrisItems = {
+	{item_id = 1599,otheritem_id = {1599,1600,1601,1602},newitem_id = 1604,needDelete = true},
+	{item_id = 1600,otheritem_id = {1599,1600,1601,1602},newitem_id = 1604,needDelete = true},
+	{item_id = 1601,otheritem_id = {1599,1600,1601,1602},newitem_id = 1604,needDelete = true},
+	{item_id = 1602,otheritem_id = {1599,1600,1601,1602},newitem_id = 1604,needDelete = true},
+}
+--硫磺，用于合成火药包的
+SulfurItems =
+{
+	{item_id = 1603,count = 10,newitem_id = 1598,needDelete = true}
+}
+--火药包
+PowderPacketItem =
+{
+
+	{item_id = 1598,monsterid = 415,pos = 1,x1 = 35,x2 = 39,y = 19,liveTime = 5, usesceneid = 92,DelayType = 3,needDelete = true}
+}
+
+--扩展背包的物品的配置
+EnlargeBagItem =
+{
+  {item_id = 1718,gridCount =1},
+  {item_id = 1719,gridCount =6},
+}
+
+-- VIP充值物品
+VIPChargeItem =
+{
+	-- item_id: 物品Id
+	-- vipType: 对应的VIP类型。 0：红钻 1：蓝钻 2：黄钻
+	-- time: 延长VIP有效时间。以天为单位
+	{ item_id = 1753, vipType=0, time=1,	},  	-- 红钻体验版
+	{ item_id = 1754, vipType=2, time=1,	},  	-- 黄钻体验版
+	{ item_id = 1755, vipType=1, time=1,	},  	-- 蓝钻体验版
+
+	{ item_id = 1756, vipType=0, time=7,	},  	-- 红钻周卡
+	{ item_id = 1757, vipType=0, time=30,	},  	-- 红钻月卡
+	{ item_id = 1758, vipType=0, time=180,},  	-- 红钻半年卡
+
+	{ item_id = 1759, vipType=2, time=7,	},  	-- 黄钻周卡
+	{ item_id = 1760, vipType=2, time=30,	},  	-- 黄钻月卡
+	{ item_id = 1761, vipType=2, time=180,},  	-- 黄钻半年卡
+
+	{ item_id = 1762, vipType=1, time=7,	},  	-- 蓝钻周卡
+	{ item_id = 1763, vipType=1, time=30,	},  	-- 蓝钻月卡
+	{ item_id = 1764, vipType=1, time=180,},  	-- 蓝钻半年卡
+}
+
+-- VIP体验卡
+VIPCardItem =
+{
+	-- item_id: 物品Id
+	-- vipLevel: 体验的vip等级
+	-- time: 体验时间(秒)
+	{ item_id = 48200, vipLevel=3, time=3600},
+	{ item_id = 24453, vipLevel=3, time=2592000},	
+}
+
+-- 刷星任务物品
+RefreshItem = 
+{
+	-- item_id : 物品ID
+	-- quest_id : 刷星任务ID
+	{ item_id = 48222, quest_id = 1 },	-- 斩妖除魔榜
+}
+
+-- 灵器仙魂物品
+GemSoulItem =
+{
+	-- item_id : 物品ID
+	-- soultype : 仙魂种类
+	-- quality : 品质
+	-- expr : 经验
+	-- { item_id = 1111, soultype = 1, quality = 1, expr = 1000 },
+}
+
+-- 狂电紫雷罡
+GemSoulItem =
+{
+	-- item_id : 物品ID
+	-- soultype : 仙魂种类
+	-- quality : 品质
+	-- expr : 经验
+	{ item_id = 48285, soultype = 2, quality = 6, expr = 320 },
+	{ item_id = 48286, soultype = 1, quality = 2, expr = 1600 },
+	{ item_id = 48287, soultype = 7, quality = 6, expr = 320 },
+}
+
+
+-- 给奖励的物品
+RewardItem = 
+{
+	-- item_id : 物品ID
+	-- awardtype : 奖励类型,通用的那种奖励类型，比如真气是1
+	-- awardval : 奖励多少
+	-- { item_id = 48222, awardtype = 1, awardval = 1000, },
+}
+RewardItem = 
+{
+	-- item_id : 物品ID
+	-- awardtype : 奖励类型,通用的那种奖励类型，比如真气是1
+	-- awardval : 奖励多少
+	-- { item_id = 48222, awardtype = 1, awardval = 1000, },
+	{ item_id = 64750, awardtype = 1, awardval = 20000, },
+	{ item_id = 48265, awardtype = 1, awardval = 300000, },
+	{ item_id = 48273, awardtype = 1, awardval = 500000, },
+}
+
+
+
+
+
+-- 宝物灵力功能物品
+GemSpriteStrenItem =
+{
+	-- item_id: 物品Id
+	-- val: 增加的宝物灵力值
+	{item_id = 1909, val=1000,},
+}
+
+-- 宝物功能道具（使用后创建一个宝物）
+GemFuncItem =
+{
+	-- item_id: 物品Id
+	-- gemId:  宝物Id
+	-- gemGrade: 宝物档次
+	{ item_id=1972, gemId=1, gemGrade=1,},
+	{ item_id=1973, gemId=2, gemGrade=1,},
+	{ item_id=1974, gemId=4, gemGrade=1,},
+	{ item_id=1975, gemId=3, gemGrade=1,},
+	{ item_id=2071, gemId=1, gemGrade=4,},
+	{ item_id=2072, gemId=2, gemGrade=4,},
+	{ item_id=2073, gemId=3, gemGrade=4,},
+	{ item_id=2074, gemId=4, gemGrade=4,},
+}
+
+-- 宝物经验功能道具（使用后增加宝物经验）
+GemExpFuncItem =
+{
+	-- item_id: 物品Id
+	-- exp: 增加的经验值
+	{ item_id = 2093, exp = 1000, },
+	{ item_id = 2094, exp = 5000, },
+	{ item_id = 2095, exp = 40000, },
+}
+
+
+--变性物品
+DenaturationItem =
+{
+	{item_id = 14456,},
+}
+
+--背包扩展符
+OpenBagItem =
+{
+	{item_id = 60058,},
+}
+
+--天珠卡
+YuanBaoCard = 
+{
+	-- {item_id = 44739 , yuanbao = 100, },
+	-- {item_id = 44472, yuanbao = 5000, },
+	-- {item_id = 44473, yuanbao = 10000, },
+	-- {item_id = 44474, yuanbao = 20000, },
+	-- {item_id = 44475, yuanbao = 50000, },
+
+	{item_id = 30411, yuanbao = 100, },
+	{item_id = 30412, yuanbao = 400, },
+	{item_id = 30413, yuanbao = 500, },
+	{item_id = 30414, yuanbao = 1000, },
+	{item_id = 30415, yuanbao = 3000, },
+	{item_id = 30416, yuanbao = 5000, },
+	{item_id = 30417, yuanbao = 10000, },
+	{item_id = 30418, yuanbao = 30000, },
+	{item_id = 30419, yuanbao = 50000, },
+	{item_id = 30420, yuanbao = 100000, },
+}
+
+-- 宝物等级提升功能道具
+GemUpLevelFunItem = 
+{
+	-- item_id: 物品Id
+	-- dest_level: 目标等级
+	-- min_grade: 使用此物品的档次需求
+	{ item_id = 2125, dest_level = 20, min_grade = 4,},
+}
+
+--新年烟花
+NewYearYanHua =
+{
+	{ item_id = 14410, exp = 1680, 
+		effect = 
+		{
+			{effect_id = 97, type = 6, time = 5000, delay = 200},
+			{effect_id = 98, type = 6, time = 5000, delay = 100},
+		},
+		--broadcast = "%s热情洋溢，点燃了炫彩烟花，顿时天空一片姹紫嫣红，看的众人如痴如醉！",
+	},
+	{ item_id = 14401, exp = 1680, 
+		effect = 
+		{
+			
+			{effect_id = 99, type = 6, time = 5000, delay = 100},
+		},
+		--broadcast = "%s热情洋溢，点燃了炫彩烟花，顿时天空一片姹紫嫣红，看的众人如痴如醉！",
+	},
+	{ item_id = 14409, exp = 1680, 
+		effect = 
+		{
+			{effect_id = 97, type = 6, time = 5000, delay = 200},
+			{effect_id = 100, type = 6, time = 5000, delay = 100},
+		},
+		--broadcast = "%s热情洋溢，点燃了炫彩烟花，顿时天空一片姹紫嫣红，看的众人如痴如醉！",
+	},
+	{ item_id = 14425, exp = 1680, 
+		effect = 
+		{
+			{effect_id = 97, type = 6, time = 5000, delay = 200},
+			{effect_id = 20000, type = 6, time = 5000, delay = 100},
+		},
+		--broadcast = "%s热情洋溢，点燃了炫彩烟花，顿时天空一片姹紫嫣红，看的众人如痴如醉！",
+	},
+	{ item_id = 14404, exp = 1680, 
+		effect = 
+		{
+			
+			{effect_id = 20001, type = 6, time = 5000, delay = 100},
+		},
+		--broadcast = "%s热情洋溢，点燃了炫彩烟花，顿时天空一片姹紫嫣红，看的众人如痴如醉！",
+	},
+	{ item_id = 14405, exp = 1680, 
+		effect = 
+		{
+		
+			{effect_id = 20002, type = 6, time = 5000, delay = 100},
+		},
+		--screen = 6,
+		--broadcast = "%s热情洋溢，点燃了炫彩烟花，顿时天空一片姹紫嫣红，看的众人如痴如醉！",
+	},
+	{ item_id = 14406, exp = 88888, 
+		--effect = 
+		--{
+		
+			--{effect_id = 20002, type = 6, time = 5000, delay = 100},
+		--},
+		screen = 6,
+		broadcast = "%s热情洋溢，点燃了炫彩烟花，顿时天空一片姹紫嫣红，看的众人如痴如醉！",
+	},
+	{ item_id = 14407, exp = 1680, 
+		effect = 
+		{
+		
+			{effect_id = 20004, type = 6, time = 5000, delay = 100},
+		},
+		--screen = 6,
+		--broadcast = "%s热情洋溢，点燃了炫彩烟花，顿时天空一片姹紫嫣红，看的众人如痴如醉！",
+	},
+	{ item_id = 14408, exp = 1680, 
+		effect = 
+		{
+		
+			{effect_id = 20005, type = 6, time = 5000, delay = 100},
+		},
+		--screen = 6,
+		--broadcast = "%s热情洋溢，点燃了炫彩烟花，顿时天空一片姹紫嫣红，看的众人如痴如醉！",
+	},
+	{ item_id = 14400, exp = 1680, 
+		effect = 
+		{
+		
+			{effect_id = 98, type = 6, time = 5000, delay = 100},
+		},
+		--screen = 6,
+		--broadcast = "%s热情洋溢，点燃了炫彩烟花，顿时天空一片姹紫嫣红，看的众人如痴如醉！",
+	},
+	{ item_id = 14402, exp = 1680, 
+		effect = 
+		{
+		
+			{effect_id = 100, type = 6, time = 5000, delay = 100},
+		},
+		--screen = 6,
+		--broadcast = "%s热情洋溢，点燃了炫彩烟花，顿时天空一片姹紫嫣红，看的众人如痴如醉！",
+	},
+	{ item_id = 14403, exp = 1680, 
+		effect = 
+		{
+		
+			{effect_id = 20000, type = 6, time = 5000, delay = 100},
+		},
+		--screen = 6,
+		--broadcast = "%s热情洋溢，点燃了炫彩烟花，顿时天空一片姹紫嫣红，看的众人如痴如醉！",
+	},
+	
+	
+}
+
+--添加实体特效和buff，场景特效的物品作用
+--  item_id物品的ID
+EffectItemFuncItem=
+{
+
+	--[[   例子，不要删除 
+	{ 
+	
+	item_id = 2125,
+	
+	--实体特效，跟人走的特效
+	entityEffects=
+	{ 
+	    -- effectId 特效的ID ,是特效的配置文件里的ID
+	    -- effectType 特效的类型 无效果=0,挥洒=1,投掷=2,飞行=3,爆炸=4,脚下持续=5,持续=6
+	    -- durTime 持续时间，单位ms
+	    --nDelayTime 延迟多长时间生效，单位ms
+	   --{effectId = 1441, effectType = 5, durTime=1, nDelayTime=0},
+	}, 
+	
+	--场景特效，不跟人走的特效
+	sceneEffects=
+	{ 
+	    -- effectId 特效的ID ,是特效的配置文件里的ID
+	    -- effectType 特效的类型 无效果=0,挥洒=1,投掷=2,飞行=3,爆炸=4,脚下持续=5,持续=6
+	    -- durTime 持续时间，单位ms
+	    --nDelayTime 延迟多长时间生效，单位ms
+	    --x 表示相 对于玩家的位置x
+	    --y 表示相对于玩家的位置y
+	   {effectId = 1441, effectType = 5, durTime=1, nDelayTime=0,x=0,y=0},
+	}, 
+	
+	--buff列表
+	buffs=
+	{
+	    --buffType buff的类型
+	    --buffGroup buff的分组
+	    --value     buff的数值
+	    --times    buff的作用次数
+	    --interval 作用间隔，单位秒 
+	    --timeOverlay =true 时间是否叠加 
+	   {buffType = 7,buffGroup=1,value=1.0, times=1, interval=1,timeOverlay =true},
+	}
+	},
+--]]
+
+	{
+	  --中秋烟花 
+		item_id = 2117,
+		entityEffects={},
+		sceneEffects=
+		{
+      
+		   {effectId = 50070, effectType =5, durTime=3000, nDelayTime=100,x=0,y=-4},
+	     {effectId = 50057, effectType =4, durTime=3000, nDelayTime=100,x=-3,y=-4},
+       {effectId = 50057, effectType =4, durTime=3000, nDelayTime=100,x=3,y=-4},
+		},
+		buffs=
+		{
+		   {buffType = 18,buffGroup=97,value=0.04, times=1, interval=300,timeOverlay =true},
+		   {buffType = 20,buffGroup=97,value=0.04, times=1, interval=300,timeOverlay =true},
+		}
+	},
+	
+	{
+	  --五彩缤纷 
+		item_id = 2118,
+		entityEffects={},
+		sceneEffects=
+		{
+		   {effectId = 50057, effectType =5, durTime=3000, nDelayTime=100,x=-3,y=-4},
+		   {effectId = 50057, effectType =4, durTime=3000, nDelayTime=100,x=0,y=-4},
+		   {effectId = 50057, effectType =4, durTime=3000, nDelayTime=100,x=3,y=-4},
+		},
+		buffs=
+		{
+		   {buffType = 18,buffGroup=97,value=0.04, times=1, interval=300,timeOverlay =true},
+		
+		   {buffType = 20,buffGroup=97,value=0.04, times=1, interval=300,timeOverlay =true},
+		}
+	},
+
+	{
+	  --帮主英明 
+		item_id = 2136,
+		entityEffects={},
+		sceneEffects=
+		{
+		   {effectId = 50053, effectType =5, durTime=5000, nDelayTime=100,x=0,y=-4},
+                   {effectId = 50057, effectType =4, durTime=5000, nDelayTime=100,x=-3,y=-4},
+                   {effectId = 50057, effectType =4, durTime=5000, nDelayTime=100,x=3,y=-4},
+		},
+		buffs=
+		{
+		   {buffType = 18,buffGroup=97,value=0.04, times=1, interval=300,timeOverlay =true},
+
+		   {buffType = 20,buffGroup=97,value=0.04, times=1, interval=300,timeOverlay =true},
+		}
+	},
+
+ --如梦江湖
+ 
+        {		
+                item_id = 2137,
+		entityEffects={},
+		sceneEffects=
+		{
+		   {effectId = 50054, effectType =5, durTime=5000, nDelayTime=100,x=0,y=-4},
+	           {effectId = 50055, effectType =4, durTime=5000, nDelayTime=100,x=3,y=-4},
+                   {effectId = 50057, effectType =4, durTime=3000, nDelayTime=100,x=-3,y=-4},
+
+		},
+		buffs=
+		{
+		   {buffType = 18,buffGroup=97,value=0.04, times=1, interval=300,timeOverlay =true},
+
+		   {buffType = 20,buffGroup=97,value=0.04, times=1, interval=300,timeOverlay =true},
+		}
+	},
+	
+--军团长威武 
+        {
+		item_id = 2138,
+		entityEffects={},
+		sceneEffects=
+		{
+		   {effectId = 50056, effectType =5, durTime=5000, nDelayTime=100,x=0,y=-4},
+                   {effectId = 50057, effectType =4, durTime=5000, nDelayTime=100,x=-3,y=-4},
+                   {effectId = 50057, effectType =4, durTime=5000, nDelayTime=100,x=3,y=-4},
+		},
+		buffs=
+		{
+		   {buffType = 18,buffGroup=97,value=0.04, times=1, interval=300,timeOverlay =true},
+
+		   {buffType = 20,buffGroup=97,value=0.04, times=1, interval=300,timeOverlay =true},
+		}
+	},
+	
+ --火树银花 
+        {
+		item_id = 2139,
+		entityEffects={},
+		sceneEffects=
+		{
+		   {effectId = 50058, effectType =4, durTime=3000, nDelayTime=100,x=-3,y=-4},
+		   {effectId = 50058, effectType =5, durTime=3000, nDelayTime=100,x=0,y=-4},
+		   {effectId = 50058, effectType =4, durTime=3000, nDelayTime=100,x=3,y=-4},
+		},
+		buffs=
+		{
+		   {buffType = 18,buffGroup=97,value=0.04, times=1, interval=300,timeOverlay =true},
+
+		   {buffType = 20,buffGroup=97,value=0.04, times=1, interval=300,timeOverlay =true},
+		}
+	},
+	
+--团结一致
+        {
+		item_id = 2140,
+		entityEffects={},
+		sceneEffects=
+		{
+		   {effectId = 50059, effectType =5, durTime=5000, nDelayTime=100,x=0,y=-4},
+                   {effectId = 50057, effectType =4, durTime=5000, nDelayTime=100,x=-3,y=-4},
+                   {effectId = 50057, effectType =4, durTime=5000, nDelayTime=100,x=3,y=-4}, 
+		},
+		buffs=
+		{
+		   {buffType = 18,buffGroup=97,value=0.04, times=1, interval=300,timeOverlay =true},
+
+		   {buffType = 20,buffGroup=97,value=0.04, times=1, interval=300,timeOverlay =true},
+		}
+	},
+	
+--我们必胜 
+        {
+		item_id = 3,
+		entityEffects={},
+		sceneEffects=
+		{
+		   {effectId = 50060, effectType =5, durTime=5000, nDelayTime=100,x=0,y=-4},
+                   {effectId = 50057, effectType =4, durTime=5000, nDelayTime=100,x=-3,y=-4},
+                   {effectId = 50057, effectType =4, durTime=5000, nDelayTime=100,x=3,y=-4}, 
+		},
+		buffs=
+		{
+		   {buffType = 18,buffGroup=97,value=0.04, times=1, interval=300,timeOverlay =true},
+
+		   {buffType = 20,buffGroup=97,value=0.04, times=1, interval=300,timeOverlay =true},
+		}
+	},
+
+--义结金兰
+        {
+		item_id = 2142,
+		entityEffects={},
+		sceneEffects=
+		{
+		   {effectId = 50061, effectType =5, durTime=5000, nDelayTime=100,x=0,y=-4},
+                   {effectId = 50057, effectType =4, durTime=5000, nDelayTime=100,x=-3,y=-4},
+                   {effectId = 50057, effectType =4, durTime=5000, nDelayTime=100,x=3,y=-4}, 
+		},
+		buffs=
+		{
+		   {buffType = 18,buffGroup=97,value=0.04, times=1, interval=300,timeOverlay =true},
+
+		   {buffType = 20,buffGroup=97,value=0.04, times=1, interval=300,timeOverlay =true},
+		}
+	},
+
+--爱的表白
+        { 
+		item_id = 2143,
+		entityEffects={},
+		sceneEffects=
+		{
+		   {effectId = 50062, effectType =5, durTime=5000, nDelayTime=100,x=0,y=-4},
+                   {effectId = 50057, effectType =4, durTime=5000, nDelayTime=100,x=-3,y=-4},
+                   {effectId = 50057, effectType =4, durTime=5000, nDelayTime=100,x=3,y=-4}, 
+		},
+		buffs=
+		{
+		   {buffType = 18,buffGroup=97,value=0.04, times=1, interval=300,timeOverlay =true},
+
+		   {buffType = 20,buffGroup=97,value=0.04, times=1, interval=300,timeOverlay =true},
+		}
+	},
+	
+--端午烟花
+        { 
+		item_id = 2144,
+		entityEffects={},
+		sceneEffects=
+		{
+		   {effectId = 50063, effectType =5, durTime=5000, nDelayTime=100,x=-0,y=-4},
+                   {effectId = 50057, effectType =4, durTime=5000, nDelayTime=100,x=-3,y=-4},
+                   {effectId = 50057, effectType =4, durTime=5000, nDelayTime=100,x=3,y=-4}, 
+		},
+		buffs=
+		{
+		   {buffType = 18,buffGroup=97,value=0.04, times=1, interval=300,timeOverlay =true},
+
+		   {buffType = 20,buffGroup=97,value=0.04, times=1, interval=300,timeOverlay =true},
+		}
+	},
+	
+--国庆烟花 
+        {
+		item_id = 2145,
+		entityEffects={},
+		sceneEffects=
+		{
+		   {effectId = 50064, effectType =5, durTime=5000, nDelayTime=100,x=0,y=-4},
+                   {effectId = 50057, effectType =4, durTime=5000, nDelayTime=100,x=-3,y=-4},
+                   {effectId = 50057, effectType =4, durTime=5000, nDelayTime=100,x=3,y=-4}, 
+		},
+		buffs=
+		{
+		   {buffType = 18,buffGroup=97,value=0.04, times=1, interval=300,timeOverlay =true},
+
+		   {buffType = 20,buffGroup=97,value=0.04, times=1, interval=300,timeOverlay =true},
+		}
+	},
+	
+--劳动最光荣 
+        {
+		item_id = 2146,
+		entityEffects={},
+		sceneEffects=
+		{
+		   {effectId = 50065, effectType =5, durTime=5000, nDelayTime=100,x=0,y=-4},
+                   {effectId = 50057, effectType =4, durTime=5000, nDelayTime=100,x=-3,y=-4},
+                   {effectId = 50057, effectType =4, durTime=5000, nDelayTime=100,x=3,y=-4}, 
+		},
+		buffs=
+		{
+		   {buffType = 18,buffGroup=97,value=0.04, times=1, interval=300,timeOverlay =true},
+
+		   {buffType = 20,buffGroup=97,value=0.04, times=1, interval=300,timeOverlay =true},
+		}
+	},
+	
+--生日烟花
+        { 
+		item_id = 2147,
+		entityEffects={},
+		sceneEffects=
+		{
+		   {effectId = 50066, effectType =5, durTime=5000, nDelayTime=100,x=0,y=-4},
+                   {effectId = 50057, effectType =4, durTime=5000, nDelayTime=100,x=-3,y=-4},
+                   {effectId = 50057, effectType =4, durTime=5000, nDelayTime=100,x=3,y=-4}, 
+		},
+		buffs=
+		{
+		   {buffType = 18,buffGroup=97,value=0.04, times=1, interval=300,timeOverlay =true},
+
+		   {buffType = 20,buffGroup=97,value=0.04, times=1, interval=300,timeOverlay =true},
+		}
+	},
+--圣诞烟花 
+        {
+		item_id = 2148,
+		entityEffects={},
+		sceneEffects=
+		{
+		   {effectId = 50067, effectType =5, durTime=5000, nDelayTime=100,x=0,y=-4},
+                   {effectId = 50057, effectType =4, durTime=5000, nDelayTime=100,x=-3,y=-4},
+                   {effectId = 50057, effectType =4, durTime=5000, nDelayTime=100,x=3,y=-4}, 
+		},
+		buffs=
+		{
+		   {buffType = 18,buffGroup=97,value=0.04, times=1, interval=300,timeOverlay =true},
+
+		   {buffType = 20,buffGroup=97,value=0.04, times=1, interval=300,timeOverlay =true},
+		}
+	},
+	
+--师傅给力
+        { 
+		item_id = 2149,
+		entityEffects={},
+		sceneEffects=
+		{
+		   {effectId = 50068, effectType =5, durTime=5000, nDelayTime=100,x=0,y=-4},
+                   {effectId = 50057, effectType =4, durTime=5000, nDelayTime=100,x=-3,y=-4},
+                   {effectId = 50057, effectType =4, durTime=5000, nDelayTime=100,x=3,y=-4}, 
+		},
+		buffs=
+		{
+		   {buffType = 18,buffGroup=97,value=0.04, times=1, interval=300,timeOverlay =true},
+
+		   {buffType = 20,buffGroup=97,value=0.04, times=1, interval=300,timeOverlay =true},
+		}
+	},
+--新年烟花
+        {  
+		item_id = 2150,
+		entityEffects={},
+		sceneEffects=
+		{
+		               {effectId = 50069, effectType =5, durTime=5000, nDelayTime=100,x=0,y=-4},
+                   {effectId = 50057, effectType =4, durTime=5000, nDelayTime=100,x=-3,y=-4},
+                   {effectId = 50057, effectType =4, durTime=5000, nDelayTime=100,x=3,y=-4}, 
+		},
+		buffs=
+		{
+		   {buffType = 18,buffGroup=97,value=0.04, times=1, interval=300,timeOverlay =true},
+
+		   {buffType = 20,buffGroup=97,value=0.04, times=1, interval=300,timeOverlay =true},
+		}
+	},
+}
+
+--秘籍消费礼包
+MiJiConsumptionItem = 
+{
+	{   
+		itemId = 34942,--稀世碧橙秘籍卷
+		jobs = {
+			--四个职业送不同的道具, 天\蜀\圆\云
+			{24982},
+			{24986},
+			{24990},
+			{24994},
+		},
+	},
+	{
+		itemId = 34943,--珍宝幽紫秘籍卷
+		jobs = {
+			--四个职业送不同的道具, 天\蜀\圆\云
+			{24981},
+			{24985},
+			{24989},
+			{24993},
+		},
+	},	
+	{
+		itemId = 34944,--珍宝幽紫秘籍卷
+		jobs = {
+			--四个职业送不同的道具, 天\蜀\圆\云
+			{24980},
+			{24984},
+			{24988},
+			{24992},
+		},
+	},		
+	{   
+		itemId = 34973,--稀世碧橙秘籍卷
+		jobs = {
+			--四个职业送不同的道具, 天\蜀\圆\云
+			{24995},
+			{24983},
+			{24987},
+			{24991},
+		},
+	},	
+}
+
+
+
+-- 炫光饲料道具，使用获得炫光鸡
+xuanGuanShiLiaoItem ={
+  { mustHadMountIndex = 1,GetMountIndex= 2,  item_id = 23100},
+ 
+}
+
+-- VIP经验卡卡（单纯给VIP经验，不触发充值的活动）
+VIPCardExpItem =
+{
+	-- item_id: 物品Id vipLevel: vip等级 time: 体验时间(秒)
+	{ item_id = 30801, vipLevel=1, time=0},
+	{ item_id = 30802, vipLevel=2, time=0},
+	{ item_id = 30803, vipLevel=3, time=0},
+	{ item_id = 30804, vipLevel=4, time=0},
+	{ item_id = 30805, vipLevel=5, time=0},
+	{ item_id = 30806, vipLevel=6, time=0},
+	{ item_id = 30807, vipLevel=7, time=0},
+	{ item_id = 30808, vipLevel=8, time=0},
+	{ item_id = 30809, vipLevel=9, time=0},
+	{ item_id = 30810, vipLevel=10, time=0},
+}
+--月卡道具
+MothCardItem = 
+{
+	{ item_id = 30799, type = 1 },
+	{ item_id = 30800, type = 2 },
+}

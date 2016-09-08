@@ -1,0 +1,103 @@
+﻿--玩家的连斩的buff奖励
+--玩家连斩多少次，给buff奖励
+--#include "..\..\language\LangCode.txt"
+DurKillReward=
+{
+	 {
+       time=1,   --连斩必须达到这个次数才有的奖励
+       name=  Lang.Misc.m000160,
+       cdtime=15, -- 连斩CD时间
+       buffs=     --添加的buff
+       {          
+       }
+   },
+   {
+       time=10,   --连斩必须达到这个次数才有的奖励
+       name=  Lang.Misc.m000160,
+       cdtime=15, -- 连斩CD时间
+       buffs=     --添加的buff
+       {
+          --type表示buff的类型,id是buff的组，value为数值,times 表示作用次数,interval表示间隔
+          {type=76,id=64,value=0.1,times =1,interval =5}, 
+          {type=71,id=64,value=0.05,times =1,interval =30},
+       }
+    },
+   {
+       time=20,   --连斩必须达到这个次数才有的奖励
+	   name=  Lang.Misc.m000161,
+	   cdtime=15, -- 连斩CD时间
+       buffs=     --添加的buff
+       {
+          --type表示buff的类型,id是buff的组，value为数值,times 表示作用次数,interval表示间隔
+          {type=76,id=64,value=0.2,times =1,interval =5}, 
+          {type=71,id=64,value=0.08,times =1,interval =30},
+       }
+    },
+   {
+       time=50,   --连斩必须达到这个次数才有的奖励
+	   name=  Lang.Misc.m000162,
+	   cdtime=10, -- 连斩CD时间
+       buffs=     --添加的buff
+       {
+          --type表示buff的类型,id是buff的组，value为数值,times 表示作用次数,interval表示间隔
+          {type=76,id=64,value=0.3,times =1,interval =5}, 
+          {type=71,id=64,value=0.1,times =1,interval =30},
+       }
+    },
+   {
+       time=100,   --连斩必须达到这个次数才有的奖励
+	   name=  Lang.Misc.m000163,
+	   cdtime=8, -- 连斩CD时间
+       buffs=     --添加的buff
+       {
+          --type表示buff的类型,id是buff的组，value为数值,times 表示作用次数,interval表示间隔
+          {type=76,id=65,value=0.4,times =1,interval =5}, 
+          {type=71,id=65,value=0.12,times =1,interval =60},
+       }
+    },
+   {
+       time=200,   --连斩必须达到这个次数才有的奖励
+	   name=  Lang.Misc.m000164,
+	   cdtime=7, -- 连斩CD时间
+       buffs=     --添加的buff
+       {
+          --type表示buff的类型,id是buff的组，value为数值,times 表示作用次数,interval表示间隔
+          {type=76,id=65,value=0.5,times =1,interval =5}, 
+          {type=71,id=65,value=0.14,times =1,interval =60},
+       }
+    },
+   {
+       time=300,   --连斩必须达到这个次数才有的奖励
+	    name=  Lang.Misc.m000165,
+	    cdtime=6, -- 连斩CD时间
+       buffs=     --添加的buff
+       {
+          --type表示buff的类型,id是buff的组，value为数值,times 表示作用次数,interval表示间隔
+          {type=76,id=65,value=0.5,times =1,interval =5}, 
+          {type=71,id=65,value=0.16,times =1,interval =60},
+       }
+    },
+   {
+       time=400,   --连斩必须达到这个次数才有的奖励
+	   name=  Lang.Misc.m000166,
+	   cdtime=5, -- 连斩CD时间
+       buffs=     --添加的buff
+       {
+          --type表示buff的类型,id是buff的组，value为数值,times 表示作用次数,interval表示间隔
+          {type=76,id=65,value=0.5,times =1,interval =5}, 
+          {type=71,id=65,value=0.18,times =1,interval =60},
+       }
+    },
+   {
+       time=500,   --连斩必须达到这个次数才有的奖励
+	   name=  Lang.Misc.m000167,
+	   cdtime=3, -- 连斩CD时间
+       buffs=     --添加的buff
+       {
+          --type表示buff的类型,id是buff的组，value为数值,times 表示作用次数,interval表示间隔
+          {type=76,id=65,value=0.5,times =1,interval =5}, 
+          {type=71,id=65,value=0.2,times =1,interval =60},
+       }
+    },
+
+}

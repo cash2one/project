@@ -1,0 +1,93 @@
+--add wupeng 新手流程副本
+--#include "data\config\newhand\newhandconf.txt" once
+
+newhandFuncList = {}
+
+--玩家进入副本
+newhandFuncList.XinShou_Fuben_Enter = function (sysarg, hfb, way)
+   
+    local xsFBBuff = NewhandFubenConf.NewhandbuffGroup
+    
+    --添加buff
+    for i=1,#xsFBBuff do
+		local buff = xsFBBuff[i]		
+		LActor.addBuff(sysarg, buff.type, NewhandFubenConf.buffGroup, buff.value, buff.times, buff.interval, "新手副本")
+	end	
+	local hscene = LActor.getSceneHandle(sysarg)
+	if hscene == nil or hscene == 0 then
+		return 
+	end
+end
+
+--新手副本开启必杀技
+newhandFuncList.OpensiSkill = function ( sysarg )
+	--开启必杀技
+    LActor.openActorSystem(sysarg, siSkill)
+end
+
+--从副本中把玩家传到出生点
+newhandFuncList.Exitfuben = function ( sysarg )
+
+     LActor.exitFuben(sysarg)  
+     local camp = LActor.getCampId(sysarg)
+
+    --根据阵营传去不同的新手场景，目前只有三个阵营，如果多加阵营这里需要修改
+	if camp == NewhandFubenConf.campId[1] then
+    	LActor.enterScene(sysarg, NewhandFubenConf.sceneId[1], NewhandFubenConf.PosX, NewhandFubenConf.PosY) 
+    elseif camp == NewhandFubenConf.campId[2] then
+        LActor.enterScene(sysarg, NewhandFubenConf.sceneId[2], NewhandFubenConf.PosX, NewhandFubenConf.PosY) 
+    elseif camp == NewhandFubenConf.campId[3] then
+        LActor.enterScene(sysarg, NewhandFubenConf.sceneId[3], NewhandFubenConf.PosX, NewhandFubenConf.PosY) 
+	end
+	local npack = DataPack.allocPacket(sysarg, 138, 114)
+	if npack == nil then return end	
+	DataPack.flush(npack)	  
+end
+
+--给予新手武器
+newhandFuncList.AddEquip = function ( sysarg )
+    local Job = LActor.getIntProperty( sysarg, PROP_VOCATION )
+
+	--根据职业给予不同的武器，目前只有四个职业，如果多加职业这里需要修改
+	if Job == NewhandFubenConf.JobId[1] then
+    	 LActor.addItem(sysarg, NewhandFubenConf.EquipId[1], 0, 0, 1, 1)
+    elseif Job == NewhandFubenConf.JobId[2] then
+         LActor.addItem(sysarg, NewhandFubenConf.EquipId[2], 0, 0, 1, 1)
+    elseif Job == NewhandFubenConf.JobId[3] then
+         LActor.addItem(sysarg, NewhandFubenConf.EquipId[3], 0, 0, 1, 1)
+    elseif Job == NewhandFubenConf.JobId[4] then
+         LActor.addItem(sysarg, NewhandFubenConf.EquipId[4], 0, 0, 1, 1)
+	end
+end
+
+--刷怪
+newhandFuncList.createMonster = function ( sysarg )
+	local hscene = LActor.getSceneHandle(sysarg)
+	if hscene == nil or hscene == 0 then
+		return 
+	end
+
+	-- 刷怪,一行代码刷一个，多个的话照抄改怪物id和坐标即可 
+	--例：Fuben.createMonster(hscene, 255,30, 14, 1800)：255：怪物id，30:X坐标，14:Y坐标，1800:怪物存活时间单位：秒
+	Fuben.createMonster(hscene, 1504,28, 16, 1800)
+	Fuben.createMonster(hscene, 1504,28, 22, 1800)
+	Fuben.createMonster(hscene, 1504,36, 22, 1800)
+	Fuben.createMonster(hscene, 1504,36, 16, 1800)
+end
+
+newhandFuncList.createMonsterBoss = function ( sysarg )
+	local hscene = LActor.getSceneHandle(sysarg)
+	if hscene == nil or hscene == 0 then
+		return 
+	end
+	Fuben.createMonster(hscene, 1501,52, 20, 1800)
+end
+
+--玩家退出副本
+newhandFuncList.XinShou_Exit = function (sysarg, hfb, way)            
+	--删除buff
+    LActor.delBuffGroup(sysarg, NewhandFubenConf.buffGroup)
+end
+
+EventCallDispatcher.registerFubenEnter(NewhandFubenConf.fbid, newhandFuncList.XinShou_Fuben_Enter)
+EventCallDispatcher.registerFubenExit(NewhandFubenConf.fbid, newhandFuncList.XinShou_Exit)

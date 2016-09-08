@@ -1,0 +1,33 @@
+--玩家登陆游戏，开启梦幻之旅
+
+--开启梦幻的飞行，对每个玩家，根据阵营，选择不同的任务和不同的飞行路线
+function startNewPlayFly(sysarg)
+	
+    --[[
+    if(LActor.getCampId(sysarg) ==1) then  --无忌的,飞剑
+		LActor.addQuest(sysarg,1700)
+		LActor.onBoard(sysarg,4,1)  --交通工具ID,路线ID
+		LActor.closeNPCDialog( sysarg )
+	end
+	
+	if(LActor.getCampId(sysarg) ==2) then  --逍遥的,莲花
+		LActor.addQuest(sysarg,1732)
+		LActor.onBoard(sysarg,3,2) --交通工具ID,路线ID
+		LActor.closeNPCDialog( sysarg )
+	end
+	
+	if(LActor.getCampId(sysarg) ==3) then  --日月的,风火轮
+		LActor.addQuest(sysarg,1764)
+		LActor.onBoard(sysarg,1,3) --交通工具ID,路线ID
+		LActor.closeNPCDialog( sysarg )
+	end	
+      --]]
+	LActor.onBoard(sysarg,3,4) --交通工具ID,路线ID
+	--LActor.finishQuest(sysarg,1879)
+	LActor.closeNPCDialog( sysarg )
+	LActor.addQuest(sysarg,1879)
+	--LActor.finishQuest(sysarg,1879)
+	--LActor.addEffect(sysarg,24,6,40000)
+	--LActor.playScrEffect(sysarg,50058,60)
+	--LActor.playScrEffectCode(sysarg,1,60)
+end

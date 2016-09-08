@@ -1,0 +1,229 @@
+--充值送天珠活动
+--#include "data\config\misc\pobingconf.txt" once
+
+PoBingFuncDouBi = {}
+
+--新的一天到来
+PoBingFuncDouBi.NewDay = function (sysarg)
+    --print("充值送天珠活动=================新的一天到来")
+	local state,_,endtime = ONLINEREWARD.GetActivityState(pobingConf.activityId)
+	
+	local var = LActor.getStaticVar(sysarg)
+	if var== nil then return end
+
+	local actorid = LActor.getActorId(sysarg)
+
+	local  nows = System.getCurrMiniTime()
+	if nows >= endtime then 
+		if var.pobingchargethree_reward == 1  then 
+			System.sendGmMailOffLine(actorid, "充值送天珠活动奖励" , 1, pobingConf.rewarditemthree, 1, 1)
+			var.pobingchargethree_reward = 2
+		end
+
+		if var.pobingchargeone_reward == 1 then
+			System.sendGmMailOffLine(actorid, "充值送天珠活动奖励" , 1, pobingConf.rewarditemone, 1, 1)
+			var.pobingchargeone_reward = 2
+		end
+
+		if var.pobingchargetwo_reward == 1 then
+			System.sendGmMailOffLine(actorid, "充值送天珠活动奖励" , 1, pobingConf.rewarditemtwo, 1, 1)
+			var.pobingchargetwo_reward = 2
+		end
+
+		if var.pobingchargeonelimit ~= nil then var.pobingchargeonelimit = nil end 
+		if var.pobingchargetwolimit ~= nil then var.pobingchargetwolimit = nil end 
+		if var.pobingchargethreelimit ~= nil then var.pobingchargethreelimit = nil end 
+
+		if var.pobingchargeone_reward ~= nil then var.pobingchargeone_reward = nil end 
+		if var.pobingchargetwo_reward ~= nil then var.pobingchargetwo_reward = nil end 
+		if var.pobingchargethree_reward ~= nil then var.pobingchargethree_reward = nil end 
+		if var.pobingcharge_sum ~= nil then var.pobingcharge_sum = nil end 
+		if var.pobingtodaycharge ~= nil then var.pobingtodaycharge = nil end 
+	end
+
+	if state == 0 then 
+		--LActor.sendTipmsg( sysarg, Lang.ScriptTips.czsyb01, ttMessage )
+		return 
+	end
+
+	if var.pobingchargeone_reward == 1 then
+		System.sendGmMailOffLine(actorid, "充值送天珠活动奖励" , 1, pobingConf.rewarditemone, 1, 1)
+		var.pobingchargeone_reward = 0
+
+	end
+
+	if var.pobingchargetwo_reward == 1 then
+		System.sendGmMailOffLine(actorid, "充值送天珠活动奖励" , 1, pobingConf.rewarditemtwo, 1, 1)
+		var.pobingchargetwo_reward = 0
+	end
+
+	if var.pobingchargeone_reward ~= 0 then var.pobingchargeone_reward = 0 end
+	if var.pobingchargetwo_reward ~= 0 then var.pobingchargetwo_reward = 0 end
+
+	var.pobingchargeonelimit = 1 
+	var.pobingchargetwolimit = 1
+	var.pobingtodaycharge = 0
+
+	PoBingFuncDouBi.GetActivityFor(sysarg)
+end
+
+--充值
+PoBingFuncDouBi.ActorRecharge = function (sysarg, arg)
+	local state = ONLINEREWARD.GetActivityState(pobingConf.activityId)
+	if state == 0 then return  end
+
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+
+	local value = arg[1]
+
+	if var.pobingtodaycharge == nil then var.pobingtodaycharge = 0 end 
+	if var.pobingcharge_sum == nil then var.pobingcharge_sum = 0 end 
+	if var.pobingchargeonelimit == nil then var.pobingchargeonelimit = 1 end
+	if var.pobingchargetwolimit == nil then var.pobingchargetwolimit = 1 end
+	if var.pobingchargethreelimit == nil then var.pobingchargethreelimit = 1 end
+
+	var.pobingtodaycharge = var.pobingtodaycharge + value
+
+	var.pobingcharge_sum = var.pobingcharge_sum + value
+
+	if var.pobingtodaycharge >= pobingConf.chargeone and var.pobingchargeonelimit == 1 then
+		var.pobingchargeone_reward = 1
+		var.pobingchargeonelimit = 0
+	end
+
+	if var.pobingtodaycharge >= pobingConf.chargetwo  and  var.pobingchargetwolimit == 1 then
+		var.pobingchargetwo_reward = 1
+		var.pobingchargetwolimit = 0
+	end
+
+	if var.pobingcharge_sum >= pobingConf.chargethree and  var.pobingchargethreelimit == 1 then 
+		var.pobingchargethree_reward = 1
+		var.pobingchargethreelimit = 0
+	end
+
+	PoBingFuncDouBi.GetActivityFor(sysarg)
+end
+
+--拉取活动面板
+PoBingFuncDouBi.GetActivityFor = function (sysarg)
+	local state = ONLINEREWARD.GetActivityState(pobingConf.activityId)
+	if state == 0 then return  end
+
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+
+	local npack = DataPack.allocPacket(sysarg,138,245)
+    if npack == nil then return end
+
+    if var.pobingchargeone_reward == nil then var.pobingchargeone_reward = 0 end
+
+	if var.pobingchargetwo_reward == nil then var.pobingchargetwo_reward = 0 end
+
+	if var.pobingchargethree_reward == nil then var.pobingchargethree_reward = 0 end
+
+	if var.pobingcharge_sum == nil then var.pobingcharge_sum = 0 end
+
+	if var.pobingtodaycharge == nil then var.pobingtodaycharge = 0 end
+    
+    DataPack.writeInt(npack,var.pobingtodaycharge) --今日充值数
+    --print("今日充值数:"..var.pobingtodaycharge)
+    DataPack.writeInt(npack,var.pobingcharge_sum) --充值总数
+    --print("充值总数:"..var.pobingcharge_sum)
+    DataPack.writeInt(npack,var.pobingchargeone_reward) --100天珠领取标志
+    --print("100天珠领取标志:"..var.pobingchargeone_reward)
+    DataPack.writeInt(npack,var.pobingchargetwo_reward) -- 500天珠领取标志
+    --print("500天珠领取标志:"..var.pobingchargetwo_reward)
+    DataPack.writeInt(npack,var.pobingchargethree_reward) --1000天珠领取标志
+    --print("1000天珠领取标志:"..var.pobingchargethree_reward)
+
+    DataPack.flush(npack)
+
+end
+
+--领取奖励
+PoBingFuncDouBi.GetActivityReward = function (sysarg,packet)
+	local state = ONLINEREWARD.GetActivityState(pobingConf.activityId)
+	if state == 0 then return  end
+
+	local index = DataPack.readInt(packet)
+
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+
+	local itemid = nil
+	if index == 1 then 
+		if var.pobingchargeone_reward == 1  then
+            itemid = pobingConf.rewarditemone
+            var.pobingchargeone_reward = 2
+		end
+
+	elseif index == 2 then
+		if var.pobingchargetwo_reward == 1  then
+            itemid = pobingConf.rewarditemtwo
+            var.pobingchargetwo_reward = 2
+		end
+
+	elseif index == 3  then
+		if var.pobingchargethree_reward == 1  then
+            itemid = pobingConf.rewarditemthree
+            var.pobingchargethree_reward = 2
+		end
+	end
+
+	if itemid == nil then return end
+
+	-- 背包是否为空
+	if Item.getAddItemNeedGridCount(sysarg, itemid, 1) > Item.getBagEmptyGridCount(sysarg) then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.czsyb02, ttMessage)
+		local actorid = LActor.getActorId(sysarg)
+		System.sendGmMailOffLine(actorid, "充值送天珠活动奖励" , 1, itemid, 1, 1)
+	else
+		LActor.addItem(sysarg, itemid, 0, 0, 1, 1, "charge", 1)
+		
+		-- 播放特效
+		local effects = {}
+		local effect = {}
+		effect.type = 1  -- 1为物品,暂时只支持发物品所以写死
+		effect.id = itemid
+		effect.count = 1
+		effects[#effects+1] = effect
+		if #effects > 0 then
+			MiscFunc.PlayItemEffect(sysarg, 11, effects)
+		end
+
+	end
+	PoBingFuncDouBi.GetActivityFor(sysarg)
+end
+
+--登录
+PoBingFuncDouBi.OnLogin = function (sysarg)
+	--print("充值送天珠活动======================登录")
+	local state = ONLINEREWARD.GetActivityState(pobingConf.activityId)
+	if state == 0 then return  end
+
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+
+	if var.pobingchargeone_reward == nil then var.pobingchargeone_reward = 0 end
+
+	if var.pobingchargetwo_reward == nil then var.pobingchargetwo_reward = 0 end
+
+	if var.pobingchargethree_reward == nil then var.pobingchargethree_reward = 0 end
+
+	if var.pobingchargeonelimit == nil then var.pobingchargeonelimit = 1 end
+
+	if var.pobingchargetwolimit == nil then var.pobingchargetwolimit = 1 end
+
+	if var.pobingchargethreelimit == nil then var.pobingchargethreelimit = 1 end
+
+	if var.pobingcharge_sum == nil then var.pobingcharge_sum = 0 end
+
+	if var.pobingtodaycharge == nil then var.pobingtodaycharge = 0 end
+	
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, PoBingFuncDouBi.OnLogin)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeRecharge, PoBingFuncDouBi.ActorRecharge)
+--EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, PoBingFuncDouBi.NewDay)
+

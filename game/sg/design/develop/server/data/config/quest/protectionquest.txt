@@ -1,0 +1,30 @@
+﻿Protection={
+		--[[{
+			questid = 9000, --任务id
+			questmonster = 1, -- 跟随怪物id
+			buffValue = 500,	--减速百分比
+			BuffType = 15,	--减速buff
+			BuffType1 = 93,	--禁止上坐骑
+			BuffType2 = 94, --禁止速传
+			buffTimes = 1,	--次数
+			buffTime = 180,	--时间
+			buffGroup = 34,	--组别
+			buffName = "减速",	--减速
+			buffName1 = "禁止上坐骑",
+			buffName2 = "禁止速传",
+		},--]]
+		{
+			questid = 9001, --任务id
+			questmonster = 1, -- 跟随怪物id
+			buffValue = 500,	--减速百分比
+			BuffType = 15,	--减速buff
+			BuffType1 = 93,	--禁止上坐骑
+			BuffType2 = 94, --禁止速传
+			buffTimes = 1,	--次数
+			buffTime = 180,	--时间
+			buffGroup = 34,	--组别
+			buffName = "减速",	--减速
+			buffName1 = "禁止上坐骑",
+			buffName2 = "禁止速传",
+		},
+}

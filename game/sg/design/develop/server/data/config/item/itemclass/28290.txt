@@ -1,0 +1,28 @@
+{
+	id = 28290,
+	name = Lang.Item.n28290,
+	desc = Lang.Item.i28290,
+	type = 82,
+	sellType = 28,
+	icon = 543,
+	shape = {0,0,0,0,0,0,0,0},
+	color = 1,
+	dura = 0,
+	dup = 99,
+	colGroup = 9,
+	dealType = 0,
+	dealPrice = 0,
+	time = 0,
+	suitId = 1310,
+	staitcAttrs = {  
+	},
+	strongAttrs = {  
+	},
+	flags = { 
+		recordLog = true,
+                asQuestItem = true, 
+	},
+	conds = { 
+		{ cond = 1, value = 1, }, 
+	},
+},

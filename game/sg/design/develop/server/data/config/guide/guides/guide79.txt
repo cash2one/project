@@ -1,0 +1,34 @@
+﻿{
+  maxLevel = 40,
+  
+  --接受任务后引导自动寻路打怪，自动寻路提交任务
+  trigger = 
+  { 
+    type = 1,
+    value = 325,
+  },
+
+  --引导中锁定的窗口ID
+  lockUI = 
+  {
+    242,
+  },
+
+  --引导的步骤 
+  steps = 
+  {
+
+	--第3步 引导点击上坐骑
+    {
+      cond = { type = 1, helpId = 242, data = 0 },
+
+      action = { type = 1, helpId = 242, data = 0, desc = "" },
+    },
+	--第4步 弹出任务完成界面
+   {
+      cond = { type = 2, helpId = 242, data = 0 },
+
+      action = { type = 16, helpId = 0, data = Lang.GuideLang.func35, desc = "" },
+    },
+  } 
+}

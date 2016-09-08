@@ -1,0 +1,231 @@
+-- 秦皇地宫怪物脚本处理
+--#include "data\functions\globaldefine.txt" once
+--#include "data\config\task\baguadigongconfig.txt"
+--#include "data\functions\tasks\baguadigong\baguastatistic.txt" once
+
+BaGuaMon = {}	-- 密宗佛塔怪物函数处理
+
+
+BaGuaMon.FindMonsterIndex = function ( monId )
+	-- body
+	for k , v in pairs ( BaGuaConfig.TASK ) do
+		if v.ID == monId then
+			return k
+		end
+	end
+end
+-- 怪物死亡
+BaGuaMon.BaGuaMonstersDie = function (monster,sysarg,monId)
+	--活动开始标志
+
+	debug_print(string.format("-------BaGuaMon.BaGuaMonstersDie ----------%d",monId))
+	if BaGuaConfig == nil then return end
+	
+	local sVal = System.getDyanmicVar()
+	--local Val = System.getDyanmicVar()
+	--if Val.BaGuaActing ~= 1 then return end
+	if sVal.BaGuaActing ~= 1 then
+		return
+	end
+	-- 如果是伙伴打死的，找出主人
+	if LActor.isPet(sysarg) then
+		sysarg = LActor.getMonsterOwner(sysarg)
+		if sysarg == nil then
+			debug_print("Ba Gua Monster Killed By Pet No owner")
+			return 
+		end
+	end
+
+    if LActor.isActor(sysarg) == false then
+    	debug_print("Ba Gua Monster Killed, Owner None")
+    	return
+    end
+
+	local var = LActor.getStaticVar(sysarg)
+	if var.BaGuaTaskId == nil then
+		--var.BaGuaTaskId = {}
+		debug_print("没接任何琉璃幻境任务，分发任务有问题")
+		return
+	end 
+
+	if var.BaGuaTaskAmount == nil then
+		debug_print("没接任何琉璃幻境任务，分发任务有问题------1111")
+		return
+	end 
+	if var.BaGuaAward == nil then
+		debug_print("没接任何琉璃幻境任务，分发任务有问题------222")
+		return
+	end
+
+ 	local var_p = System.getStaticVar()
+	tmp = {}
+	-- 当天活动任务 为空 直接返回
+	if var_p.BaGuaTaskId == nil then
+		debug_print("开启琉璃幻境是随机任务有问题------222") 
+		return
+	end
+	for i = 1 , BaGuaConfig.TASK_NUM do
+		tmp[i] = var_p.BaGuaTaskId[i] 
+	end
+    -- debug_print("======tmp",tmp[1])
+
+    for m,n in pairs(tmp) do
+      --  debug_print('========mn',n,m)
+        var.BaGuaTaskId[m] = n
+        if var.BaGuaTaskAmount[m] == nil then
+          var.BaGuaTaskAmount[m] = 0
+        end
+        if var.BaGuaAward[m] == nil then
+            var.BaGuaAward[m] = 0
+        end
+    end
+
+    local actorX, actorY = LActor.getEntityPosition(sysarg, 0, 0)
+	local players = LuaHelp.getTeamMemberList(sysarg)
+	if players ~= nil then
+	    for i = 1,#players do
+	      local player = players[i]
+    	  local playerX, playerY = LActor.getEntityPosition(player, 0, 0)
+	      if LActor.getSceneId(player) == BaGuaConfig.SCENEID and BaGua.IsSameScreen(actorX,actorY,playerX,playerY) then
+	      	local player_var = LActor.getStaticVar(player)
+	      	local TargetIndex = BaGuaMon.FindMonsterIndex( monId )
+			for i=1,#tmp do
+				if monId == player_var.BaGuaTaskId[i] and TargetIndex then
+					player_var.BaGuaTaskAmount[i] = player_var.BaGuaTaskAmount[i] + 1
+
+					if player_var.BaGuaTaskAmount[i]  >= BaGuaConfig.TASK[TargetIndex].AMOUNT then
+		              	player_var.BaGuaTaskAmount[i]  = BaGuaConfig.TASK[TargetIndex].AMOUNT
+		              		if player_var.BaGuaAward[i] == 0 then
+		              			player_var.BaGuaAward[i] = 1
+		              		end
+					  		break
+						end
+					end
+		     	end
+		     	BaGua.BaGua_Statistic(player)
+	      	end
+	    end
+	else
+		local TargetIndex = BaGuaMon.FindMonsterIndex( monId )
+		for i=1,#tmp do
+			if monId == var.BaGuaTaskId[i] and TargetIndex then
+				var.BaGuaTaskAmount[i] = var.BaGuaTaskAmount[i] + 1
+				if var.BaGuaTaskAmount[i]  >= BaGuaConfig.TASK[TargetIndex].AMOUNT then
+	              	var.BaGuaTaskAmount[i]  = BaGuaConfig.TASK[TargetIndex].AMOUNT
+	              	if var.BaGuaAward[i] == 0 then
+	              		var.BaGuaAward[i] = 1
+	              	end
+				  	break
+				end
+			end
+      	end
+		BaGua.BaGua_Statistic(sysarg)
+	end
+
+    if BaGuaConfig.BOSS.ID ~= monId then
+    	return
+    end
+    --BOSS 刷新时间广播
+	sVal.BaGuaBossRefresh = BaGuaConfig.BOSS_REFRESH_TIME + System.getCurrMiniTime()
+	LActor.postEntityScriptCallbackMsg(System.getGlobalNpc(), EntityCallbackMsg.BaguaRefreshBoss, BaGuaConfig.BOSS_REFRESH_TIME*1000)
+
+	local pfb = Fuben.getFubenPtr(sVal.BaGuaFubenHandle)
+	if pfb == nil then
+		debug_print("BaGua error, pfb is nil:")
+		return
+	end
+	local actors = LuaHelp.getFbActorList(pfb)
+	if actors == nil then return end
+	for i = 1,#actors do
+		local player = actors[i]
+		if player then
+			local npack = DataPack.allocPacket(player,139,91)
+		    if npack == nil then return end
+		    local rest =  sVal.BaGuaBossRefresh - System.getCurrMiniTime()
+		    if rest < 0 then
+		    	rest = 0
+		    end
+		    DataPack.writeInt(npack, rest)
+		    DataPack.flush(npack)
+		end
+	end
+end
+
+
+MonDieDispatcher.register(BaGuaConfig.BOSS.ID,BaGuaMon.BaGuaMonstersDie)
+for i=1,#BaGuaConfig.TASK do
+  	if BaGuaConfig.TASK[i].TYPE == 1 then
+  		MonDieDispatcher.register(BaGuaConfig.TASK[i].ID,BaGuaMon.BaGuaMonstersDie)
+  	end
+end
+
+BaGuaMon.MonGatherBaGuaFinish = function (monster,sysarg,monId)
+
+
+	if BaGuaConfig == nil then return end
+	debug_print(string.format("-------BaGuaMon.MonGatherBaGuaFinish----------%d",monId))
+	local var = LActor.getStaticVar(sysarg)
+	local sVar = System.getDyanmicVar()
+	if sVar.BaGuaActing ~= 1 then
+		debug_print("----------gggggg-------")
+		return
+	end
+	
+	if var.BaGuaTaskId == nil then
+		return
+	end 
+
+	local var_p = System.getStaticVar()
+	if var_p.BaGuaTaskId == nil then
+		return
+	end
+	
+    local actorX, actorY = LActor.getEntityPosition(sysarg, 0, 0)
+	local players = LuaHelp.getTeamMemberList(sysarg)
+	if players ~= nil then
+	    for i = 1,#players do
+	      	local player = players[i]
+    	  	local playerX, playerY = LActor.getEntityPosition(player, 0, 0)
+	      	if LActor.getSceneId(player) == BaGuaConfig.SCENEID and BaGua.IsSameScreen(actorX,actorY,playerX,playerY) then
+		      	local player_var = LActor.getStaticVar(player)
+		      	local nTarget = BaGuaMon.FindMonsterIndex(monId)
+			  	for i=1,#player_var.BaGuaTaskId do
+					if monId == player_var.BaGuaTaskId[i] and nTarget then
+						player_var.BaGuaTaskAmount[i] = player_var.BaGuaTaskAmount[i] + 1
+						if player_var.BaGuaTaskAmount[i]  >= BaGuaConfig.TASK[nTarget].AMOUNT then
+		              		player_var.BaGuaTaskAmount[i]  = BaGuaConfig.TASK[nTarget].AMOUNT
+		              		if player_var.BaGuaAward[i] == 0 then
+		              			player_var.BaGuaAward[i] = 1
+		              		end
+		              		break
+				    	end
+					end
+		      	end
+		      	BaGua.BaGua_Statistic(player)
+	      	end
+	    end
+	else
+		local nTarget = BaGuaMon.FindMonsterIndex(monId)
+		for i=1,#var.BaGuaTaskId do
+			if monId == var.BaGuaTaskId[i] and nTarget then
+				var.BaGuaTaskAmount[i] = var.BaGuaTaskAmount[i] + 1
+				if var.BaGuaTaskAmount[i]  >= BaGuaConfig.TASK[nTarget].AMOUNT then
+				  	--local player_var = LActor.getStaticVar(sysarg)	
+	              	var.BaGuaTaskAmount[i]  = BaGuaConfig.TASK[nTarget].AMOUNT
+	              	if var.BaGuaAward[i] == 0 then
+	              		var.BaGuaAward[i] = 1
+	              	end
+				 	break
+				end
+			end
+      	end
+		BaGua.BaGua_Statistic(sysarg)
+	end
+end
+
+--GatherFinishDispatcher.register(2,GatherFinishDispatcher.Mon2GatherFinish)
+for i=1,#BaGuaConfig.TASK do
+	if BaGuaConfig.TASK[i].TYPE == 0 then
+		GatherFinishDispatcher.register(BaGuaConfig.TASK[i].ID,BaGuaMon.MonGatherBaGuaFinish)
+	end
+end

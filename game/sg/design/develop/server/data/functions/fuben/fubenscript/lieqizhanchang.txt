@@ -1,0 +1,402 @@
+
+----猎骑战场
+
+
+lieqifuben = {}
+
+
+--初始化副本
+lieqifuben.OnInitCopy = function(sysarg, Fhandle)
+	debug_print("-----------初始化副本-----猎奇战场------")
+	
+	LActor.enterFuBen( sysarg, Fhandle, LieqiFubenConfig.sceneId[1], LieqiFubenConfig.playerPos[1], LieqiFubenConfig.playerPos[2] )
+	Fuben.SetFubenTime(Fhandle,LieqiFubenConfig.limitTime)
+	fubenbase.Init(sysarg,LieqiFubenConfig.fubenId[1],LieqiFubenConfig.sceneId[1])
+	--特殊化 副本信息
+	local Fhandle = LActor.getFubenHandle(sysarg)
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+	--进入完成任务
+	LActor.OnQuestEvent(50, 0, 1, true, sysarg)
+	LActor.OnQuestEvent(qtShenqushoulie, 0, 1, true, sysarg)
+	--转盘次数
+	if fbVar.turnplate_count == nil then
+		fbVar.turnplate_count = LieqiFubenConfig.turnplate_count
+	end
+
+	debug_print("----------MonsterWave------------",fbVar.MonsterWave)
+	lieqifuben.SendZhuanpanOpen(sysarg)
+
+	local hscene = LActor.getSceneHandle(sysarg)
+	Fuben.clearSceneTimeCall(hscene)
+	Fuben.postSceneTimeCall(hscene, TimerMsg.LieqiZhanchang, 15, 1)
+end
+
+
+-- 刷新怪物
+lieqifuben.OnRefreshMonster = function ( sysarg )
+	local Fhandle = LActor.getFubenHandle(sysarg)
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+	local hscene = Fuben.getSceneHandleById(LieqiFubenConfig.sceneId[1], Fhandle)
+
+	local nDifficult = Fuben.getFubenDifficulty(Fhandle)
+	if nDifficult < 1 or nDifficult > 3 then
+		print("--------lieqifuben error diff-------"..tostring(nDifficult))
+		return
+	end
+
+	if not Fuben.isKillAllMonster(hscene) then
+		print("lieqifuben error still has monster 111111111")
+		return
+	end
+
+	if fbVar.nDropMul == nil or fbVar.nRefreshMonsterNum == nil then
+		print("------error lieqifuben------")
+		return
+	end
+
+	local nDiffMonster = LieqiFubenConfig.RefreshMonster[nDifficult]
+	if nDiffMonster == nil then
+		print("---副本难度- 配置错误--")
+		return
+	end
+	local nDropMonster = nDiffMonster[fbVar.nDropMul]
+	if nDropMonster == nil then
+		print("怪物倍率 怪物配置错误"..tostring(fbVar.nDropMul))
+		return
+	end
+	local nCurRefreshMonster = nDropMonster[fbVar.nRefreshMonsterNum]
+	if nCurRefreshMonster == nil then
+		print("--------配置有错误-------")
+		return
+	end
+	--刷怪规则
+	-- print_table(nCurRefreshMonster)
+	for k ,  v in pairs ( nCurRefreshMonster ) do
+		Fuben.createMonsters(hscene, v.monsterId, v.posX1, v.posX2, v.posY1, v.posY2, v.num,0)
+	end
+	fbVar.nDropMul = nil 
+	fbVar.nRefreshMonsterNum = nil
+	fbVar.IsMonsterAllDie = nil
+end
+
+function lieqifuben.delayRefreshMonster(msgid, pscene, arg)
+	local hscene = Fuben.getSceneHandleByPtr(pscene)
+	if hscene == nil then return end
+	local fbPtr = Fuben.getSceneFuben(pscene)
+	if fbPtr == nil then return end
+
+	if not Fuben.isKillAllMonster(hscene) then return end
+
+	local actor_list = LuaHelp.getFbActorList(fbPtr)
+	if actor_list and actor_list[1] then
+		lieqifuben[2](actor_list[1])
+	else
+		local fbVar = Fuben.getDyanmicVar(fbPtr)
+		if fbVar.turnplate_count == nil then
+			debug_print("------error 猎奇战场 转转盘次数为nil------")
+			return
+		end
+
+		if fbVar.turnplate_count == 0 or fbVar.IsMonsterAllDie == 0 then return end
+
+		fbVar.turnplate_count = fbVar.turnplate_count -1
+
+		local nRefreshMonsterNum = lieqifuben.getRandomNumberResult( 100, LieqiFubenConfig.MonsterNumRate)
+		local nDropMul = lieqifuben.getRandomNumberResult( 100, LieqiFubenConfig.MonsterDropRate)
+
+		local Fhandle = Fuben.getFubenHandle(fbPtr)
+		local nDifficult = Fuben.getFubenDifficulty(Fhandle)
+		if nDifficult < 1 or nDifficult > 3 then return end
+
+		local nDiffMonster = LieqiFubenConfig.RefreshMonster[nDifficult]
+		if nDiffMonster == nil then return end
+
+		local nDropMonster = nDiffMonster[nDropMul]
+		if nDropMonster == nil then
+			print("error lieqifuben 怪物倍率 怪物配置错误      "..nDropMul)
+			return
+		end
+
+		local nCurRefreshMonster = nDropMonster[nRefreshMonsterNum]
+		if nCurRefreshMonster == nil then
+			print("error lieqifuben--------配置有错误-------")
+			return
+		end
+		for k ,  v in pairs ( nCurRefreshMonster ) do
+			Fuben.createMonsters(hscene, v.monsterId, v.posX1, v.posX2, v.posY1, v.posY2, v.num,0)
+		end
+
+		fbVar.nDropMul = nil 
+		fbVar.nRefreshMonsterNum = nil
+		fbVar.IsMonsterAllDie = nil
+	end
+end
+
+-- 当前波所有的怪杀死
+lieqifuben.OnMonsterAllDie = function ( sceneId, scenePtr, flag, monster )
+	local pfb = LActor.getFubenPrt(monster) 
+	local Fhandle =	Fuben.getFubenHandle(pfb)
+	local hscene = Fuben.getSceneHandleById(sceneId, Fhandle)
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+	debug_print("-----lieqifuben.OnMonsterAllDie------",fbVar.IsMonsterAllDie)
+	if fbVar.turnplate_count == nil then
+		debug_print("------转盘 为nil ------")
+		return
+	end
+	local actors = LuaHelp.getFbActorList(pfb)
+	if actors ~= nil and #actors ~= 1 then
+		debug_print("------------单人副本出现多个玩家--------------")
+	end
+	local nVar = LActor.getStaticVar( actors[1] )
+	-- if nVar.LieQiZhanChang_First_Entry == nil then
+	-- 	fbVar.turnplate_count = 0
+	-- end
+	if fbVar.turnplate_count == 0 then
+		fbVar.IsTongguan = 1
+		local nActorList = LuaHelp.getFbActorList(pfb)
+		if nActorList == nil then
+			return
+		end
+		LActor.OnQuestEvent(50, 1, 1, true, nActorList[1])
+
+		local actors = LuaHelp.getFbActorList(pfb)
+		if actors ~= nil and #actors ~= 1 then
+			debug_print("------------单人副本出现多个玩家--------------")
+			-- for i = 1,#actors do
+			-- 	actor = actors[i]
+				
+			-- end
+		end
+		--lieqifuben.SendZhuanpanOpen(actors[1])
+		
+		if nVar.LieQiZhanChang_First_Entry == nil then
+			nVar.LieQiZhanChang_First_Entry = 1
+		end
+		fubenjiesuan.OnMonsterAllDie(sceneId, scenePtr, flag, monster)
+	else
+		fbVar.IsMonsterAllDie = 1
+		local actors = LuaHelp.getFbActorList(pfb)
+		if actors ~= nil then
+			for i = 1,#actors do
+				actor = actors[i]
+				lieqifuben.SendZhuanpanOpen(actor)
+			end
+		end
+
+		local hscene = LActor.getSceneHandle(monster)
+		Fuben.clearSceneTimeCall(hscene)
+		Fuben.postSceneTimeCall(hscene, TimerMsg.LieqiZhanchang, 15, 1)
+	end
+end
+-- 怪物死亡
+lieqifuben.OnMonsterDie = function ( monster, sysarg, monId )
+	fubenjiesuan.OnKillMonster( monster, sysarg, monId )
+end
+
+--玩家死亡
+lieqifuben.OnActorDie = function ( dieobj , killerobj )
+	-- body
+	local nFubenId = LActor.getFubenId( dieobj )
+	if nFubenId ~= LieqiFubenConfig.fubenId[1] then
+		return
+	end
+	local sceneId = LActor.getSceneId( dieobj )
+	local scenePtr = LActor.getScenePtr( dieobj )
+	fubenjiesuan.OnMonsterAllDie(sceneId, scenePtr, 1, dieobj)
+end
+
+lieqifuben.OnExitFuben = function ( sysarg, hfb, way )
+	-- body
+	if not way or way ~= 1 or not sysarg or not hfb then
+		debug_print(" ---------退出副本--------"..tostring(way))
+		return
+	end
+	debug_print(" ---------清空退出副本数据--------"..tostring(way))
+	local fbPtr = Fuben.getFubenPtr( hfb )
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+	fbVar.turnplate_count = nil
+	fubenbase.ExitFubenRestore( sysarg )
+end
+
+lieqifuben.AgainLogin = function (sysarg)
+	local fubenId = LActor.getFubenId(sysarg)
+	local hscene = LActor.getSceneHandle(sysarg)
+	local fbPtr = LActor.getFubenPrt(sysarg)
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+	if not fbVar or not fbVar.turnplate_count or fbVar.turnplate_count == 0 then return end
+
+	for _, v in pairs (LieqiFubenConfig.fubenId) do
+		if v == fubenId then
+			if Fuben.isKillAllMonster(hscene) then
+				lieqifuben.SendZhuanpanOpen(sysarg)
+			end
+		end
+	end
+end
+
+lieqifuben.HandleNetworkData = function ( sysarg, dp)
+	local cmdid = DataPack.readInt(dp)
+	debug_print("--------------"..tostring(cmdid))
+	--local cmdid = tonumber(cmdid)
+	local func = lieqifuben[tonumber(cmdid)]
+	if func ~= nil then
+		lieqifuben[cmdid](sysarg,dp)
+	else
+		debug_print(" 猎奇战场没有该命令",cmdid)
+	end
+end
+
+--发送告诉前端 开启转盘
+lieqifuben.SendZhuanpanOpen = function ( sysarg )
+	-- body
+	local Fhandle = LActor.getFubenHandle(sysarg)
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+	if fbVar.turnplate_count == nil then
+		print("-------副本为空--------")
+		return
+	end
+
+	if fbVar.nDropMul ~= nil or fbVar.nRefreshMonsterNum ~= nil then
+		return
+	end
+
+	local npack = DataPack.allocPacket(sysarg, 167, 11)
+	local nFubenId = LActor.getFubenId ( sysarg )
+	DataPack.writeInt(npack,nFubenId)
+	DataPack.writeInt(npack,1)
+	DataPack.writeInt(npack,fbVar.turnplate_count)
+	local str = string.format("------------发送---命令--------------[%d]----[%d]",nFubenId,fbVar.turnplate_count)
+	debug_print(str)
+	DataPack.flush(npack)
+end 
+
+lieqifuben.getRandomNumberResult = function ( RandomNum , table)
+	-- body
+	local nrate = System.getRandomNumber(RandomNum)
+	if type(table) ~= 'table' then
+		return
+	end
+	local sum = 0
+	for k , v in pairs ( table ) do
+		if nrate <= sum + v.rate then
+			debug_print("---------返回值------------",v.num)
+			return v.num
+		else
+			sum = sum + v.rate
+		end
+	end
+end
+-- 前端 发送 转转盘结果
+lieqifuben[2] = function (sysarg ,datapack)
+	local Fhandle = LActor.getFubenHandle(sysarg)
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+	if fbVar.turnplate_count == nil then
+		debug_print("------猎奇战场 转转盘次数为nil------")
+		return
+	end
+	if fbVar.turnplate_count == 0 then
+		LActor.sendTipmsg( sysarg, Lang.ScriptTips.f00092, ttWarmTip )
+		return
+	end
+
+	if fbVar.IsMonsterAllDie == 0 then
+		LActor.sendTipmsg( sysarg, Lang.ScriptTips.f00093, ttWarmTip )
+		return
+	end
+
+	if fbVar.nDropMul ~= nil or fbVar.nRefreshMonsterNum ~= nil then
+		LActor.sendTipmsg( sysarg, Lang.ScriptTips.f00094, ttWarmTip)
+		return
+	end
+	fbVar.turnplate_count = fbVar.turnplate_count -1
+	local nRefreshMonsterNum = 0
+	local nDropMul = 0
+	-- local nVar = LActor.getStaticVar( sysarg )
+	-- if nVar.LieQiZhanChang_First_Entry == nil then
+	-- 	debug_print("=================================")
+	-- 	nRefreshMonsterNum = 10
+	-- 	nDropMul = 4
+	-- else
+		nRefreshMonsterNum = lieqifuben.getRandomNumberResult( 100, LieqiFubenConfig.MonsterNumRate)
+		nDropMul = lieqifuben.getRandomNumberResult( 100, LieqiFubenConfig.MonsterDropRate)
+	-- end
+	fbVar.nDropMul = nDropMul
+	fbVar.nRefreshMonsterNum = nRefreshMonsterNum
+	local npack = DataPack.allocPacket(sysarg,167,11)
+	DataPack.writeInt( npack, LieqiFubenConfig.fubenId[1])
+	DataPack.writeInt( npack, 3)
+	DataPack.writeInt( npack, nRefreshMonsterNum)
+	DataPack.writeInt( npack, nDropMul)
+	DataPack.flush(npack)
+	local nstr = string.format("-------nRefreshMonsterNum = %d ------nDropMul =%d ---",nRefreshMonsterNum,nDropMul)
+	debug_print(nstr)
+	fbVar.IsMonsterAllDie = 0
+
+	local hscene = Fuben.getSceneHandleById(LieqiFubenConfig.sceneId[1], Fhandle)
+	Fuben.clearSceneTimeCall(hscene)
+	Fuben.postSceneTimeCall(hscene, TimerMsg.LieqiZhanchang, 5, 1)
+end
+
+lieqifuben[4] = function ( sysarg , datapack )
+	local Fhandle = LActor.getFubenHandle(sysarg)
+	-- local fbPtr = Fuben.getFubenPtr( Fhandle )
+	-- local fbVar = Fuben.getDyanmicVar(fbPtr)
+	local hscene = Fuben.getSceneHandleById(LieqiFubenConfig.sceneId[1], Fhandle)
+	Fuben.clearSceneTimeCall(hscene)
+	lieqifuben.OnRefreshMonster(sysarg)
+end
+lieqifuben[5] = function ( sysarg , datapack)
+	-- body
+	local nFubenId = LActor.getFubenId(sysarg )
+	if nFubenId ~= LieqiFubenConfig.fubenId[1] then
+		return
+	end
+	local Fhandle = LActor.getFubenHandle(sysarg)
+	local fbPtr = Fuben.getFubenPtr( Fhandle )
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+	if fbVar.turnplate_count == nil or LieqiFubenConfig.turnplate_count == nil then
+		debug_print("=======cuocucocuyc=======")
+		return
+	end
+	local hscene = Fuben.getSceneHandleById(LieqiFubenConfig.sceneId[1], Fhandle)
+	local nlastTime = Fuben.getFbTime( fbPtr )
+	debug_print("-------nlastTime---------",nlastTime,fbVar.turnplate_count)
+	local npack = DataPack.allocPacket( sysarg , 167 , 11)
+	DataPack.writeInt(npack, nFubenId)
+	DataPack.writeInt(npack, 5)
+	DataPack.writeInt(npack, LieqiFubenConfig.turnplate_count - fbVar.turnplate_count)
+	DataPack.writeInt(npack,nlastTime)
+	DataPack.flush(npack)
+end
+
+FubenMsgHandle.registerMsgHandler(LieqiFubenConfig.fubenId[1],lieqifuben.HandleNetworkData) --注册副本中消息处理协议
+
+-- 注册怪物被杀死事件
+
+for i=1,#LieqiFubenConfig.monsterIdList do
+	--debug_print("------注册怪物 id 事件------",LieqiFubenConfig.monsterIdList[i])
+	MonDieDispatcher.register( LieqiFubenConfig.monsterIdList[i],  lieqifuben.OnMonsterDie)
+end
+
+-- 注册怪物全部杀死
+for i=1,#LieqiFubenConfig.sceneId do
+	--debug_print("------场景怪物全部死亡事件------",LieqiFubenConfig.sceneId[i])
+	MonAllKilledDispatcher.register( LieqiFubenConfig.sceneId[i], lieqifuben.OnMonsterAllDie )
+end
+
+--注册副本初始化函数
+for k, v in pairs ( LieqiFubenConfig.fubenId ) do
+	fubenbase.registerEnterFuben(v, lieqifuben.OnInitCopy)
+	EventCallDispatcher.registerFubenExit(v, lieqifuben.OnExitFuben)
+end
+--EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeOnActorDeath, lieqifuben.OnActorDie)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, lieqifuben.AgainLogin)	-- 重新登陆处理
+TimerMsgFunc.register(TimerMsg.LieqiZhanchang, lieqifuben.delayRefreshMonster)
+--EventCallDispatcher.registerFubenExit(LieqiFubenConfig.fubenId, lieqifuben.LoginOut)		-- 登出处理
+
+

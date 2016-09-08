@@ -1,0 +1,71 @@
+﻿-- 信使守护副本处理
+
+--#include "data\functions\tasks\teamfuben\slshpublic.txt" once
+
+local SlshFunc = {}
+
+
+-- 定时刷怪
+SlshFunc.OnRefreshMonster = function(mon, rd)
+	local pfb = LActor.getFubenPrt(mon)
+	if pfb ~= nil then
+		SlshPublic.CreateMonsters(pfb, rd)
+	end
+end
+
+
+-- 初始化副本
+SlshFunc.InitFuben = function(hfb)
+	local pfb = Fuben.getFubenPtr(hfb)
+	if pfb == nil then return end
+
+	local hscene = Fuben.getSceneHandleById(SlshConf.sceneid, hfb)
+	local mptr = Fuben.createMonster(hscene, SlshConf.dxMonster, SlshConf.dxPos[1], SlshConf.dxPos[2], 0)
+	if mptr ~= nil then
+		LActor.addState(mptr, esStateAttackedForbid)
+	end
+
+	SlshPublic.InitRound(pfb, 1)
+end
+
+-- 
+SlshFunc.OnGameOver = function(pfb)
+	if pfb == nil then return end
+
+	local rd = Fuben.getFubenProgress(pfb)
+
+	-- 检查是否通过,检查是否杀死全部怪物
+	local conf = SlshConf.rounds[rd]
+	if conf == nil then return end
+
+	local hfb = Fuben.getFubenHandle(pfb)
+
+	local fvar = Fuben.getDyanmicVar(pfb)
+
+	-- 挑战失败
+	if fvar.fbRestMonster ~= nil and fvar.fbRestMonster > 0 then
+		SlshPublic.OnFailed(pfb)
+		return
+	end
+
+	-- 已经杀死所有怪。。。应该不会出现这种情况
+end
+
+-- 进入副本
+SlshFunc.OnEnterFuben = function(sysarg, hfb, way)
+	local pfb = Fuben.getFubenPtr(hfb)
+	if pfb ~= nil then
+		Fuben.setCaleRemainMon(pfb, false) -- 不自动发送剩余怪物数
+	end
+
+	-- 队长进入时进行初始化操作
+	if TeamFun.isCaptain(sysarg) then
+		SlshFunc.InitFuben(hfb)
+	end
+
+	SlshPublic.SendCalInfo(sysarg)
+end
+
+EventCallDispatcher.registerFubenGameOver(SlshConf.fbid,  SlshFunc.OnGameOver)
+EventCallDispatcher.registerFubenEnter(SlshConf.fbid, SlshFunc.OnEnterFuben)
+EventCallDispatcher.regEntityCallbackMsg(EntityCallbackMsg.SlshRefresh, SlshFunc.OnRefreshMonster)

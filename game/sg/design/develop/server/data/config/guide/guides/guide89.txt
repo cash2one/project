@@ -1,0 +1,64 @@
+﻿{
+	--接受任务后（帮忙送物1781），引导玩家穿上装备，完成该任务
+  trigger = 
+  { 
+    type = 2,
+    value = 1781,
+  },
+
+  --引导的步骤 
+  steps = 
+  {
+
+    --第1步 打开背包面板（属性面板）
+    {
+      cond = { type = 1,  helpId = 5, data = 0 },
+
+      --引导玩家 打开背包面板
+      action = { type = 1, helpId = 6, data = 0, desc = Lang.GuideLang.desc6 },
+    },
+
+
+	--第2步 打开 5级成长礼包
+    {
+      cond = { type = 6, helpId = 8, data = 0, checkComplex =  
+        {
+        	{ value = 2029, vocation = 2, sex = 0 },
+        	{ value = 2030, vocation = 2, sex = 1 },
+        	{ value = 2031, vocation = 4, sex = 0 },
+        	{ value = 2032, vocation = 4, sex = 1 },
+        	{ value = 2027, vocation = 7, sex = 0 },
+        	{ value = 2028, vocation = 7, sex = 1 },
+        	{ value = 2025, vocation = 8, sex = 0 },
+        	{ value = 2026, vocation = 8, sex = 1 }, 
+        }
+      },
+
+      action = { type = 6, helpId = 8, data = 1445, desc = Lang.GuideLang.desc17 },
+    },
+
+
+    --第3步 穿上装备（武器）
+    {
+      cond =
+      { 
+        type = 4, helpId = 0, data = 0, checkComplex =  
+        {
+        	{ value = 2029, vocation = 2, sex = 0 },
+        	{ value = 2030, vocation = 2, sex = 1 },
+        	{ value = 2031, vocation = 4, sex = 0 },
+        	{ value = 2032, vocation = 4, sex = 1 },
+        	{ value = 2027, vocation = 7, sex = 0 },
+        	{ value = 2028, vocation = 7, sex = 1 },
+        	{ value = 2025, vocation = 8, sex = 0 },
+        	{ value = 2026, vocation = 8, sex = 1 },
+        }
+      },
+
+      --引导玩家 引导玩家穿上装备
+      action = { type = 6, helpId = 8, data = 0, desc = Lang.GuideLang.desc7 },
+    },
+
+
+  } 
+}

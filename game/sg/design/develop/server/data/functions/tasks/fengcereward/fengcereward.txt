@@ -1,0 +1,128 @@
+--lua script
+
+function FengCeRewardMain(sysarg)
+  local str = ""
+  local nYear, nMonth, nDay = System.getDate(0, 0, 0)
+  local var = LActor.getStaticVar( sysarg )
+  local FengCe = var.erCiFengCe           --领取二测大礼包
+  local LoginReward = var.LoginReward     --封测登陆礼盒 
+  if not FengCe then
+    var.erCiFengCe = {}
+    FengCe = var.erCiFengCe
+    FengCe[1] = 0
+  end
+  if not LoginReward then
+    var.LoginReward = {}
+    LoginReward = var.LoginReward
+    LoginReward[1] = 0     --保存礼盒领取月
+    LoginReward[2] = 0     --保存礼盒领取日
+  end 
+  
+  if LoginReward[1] ~= nMonth or LoginReward[2] ~= nDay then
+    str = str..Lang.TaskTalk.t00001
+  end
+  if FengCe[1] ~= 1 then
+    str = str..Lang.TaskTalk.t00002
+  end
+  return str
+end
+--领取封测大礼包 
+function FengCeRewardFunc(sysarg)
+  local var = LActor.getStaticVar( sysarg )
+  local FengCe = var.FengCe
+  if FengCe == nil then
+    --print("FengCe is nil !!")
+    var.FengCe = {} 
+    FengCe = var.FengCe
+    FengCe[1] = 0
+    FengCe[2] = 0
+  end
+  if FengCe[1] == 0 then 
+    if LActor.canAddItem(sysarg,1591,1) then
+      if LActor.addItem(sysarg,1591,0,0,1,1,"fengCe",1) then
+        --print("------------------")
+        FengCe[1] = 1
+      end
+    else
+      -- LActor.sendTipmsg( sysarg, Lang.ScriptTips.n00006,ttTipmsgWindow  )
+      LActor.SendGeneralTips(sysarg, 7, 0, 0)
+      return
+    end
+  else 
+    LActor.sendTipmsg( sysarg, Lang.ScriptTips.x00028,ttTipmsgWindow  )
+  end
+  LActor.closeNPCDialog(sysarg)
+  --print("FengCe:"..FengCe[1])
+end
+
+--领取二测大礼包
+function erCiFengCeRewardFunc(sysarg)
+  local var = LActor.getStaticVar( sysarg )
+  local FengCe = var.erCiFengCe
+  if not FengCe then FengCe[1] = 0 end
+  if FengCe[1] ~= 1 then
+    if LActor.canAddItem(sysarg,1609,1) then
+      if LActor.addItem(sysarg,1609,0,0,1,1,"erCiFengCe",1) then
+        FengCe[1] = 1
+      end
+    else
+      -- LActor.sendTipmsg( sysarg, Lang.ScriptTips.n00006,ttTipmsgWindow  )
+      LActor.SendGeneralTips(sysarg, 7, 0, 0)
+      return
+    end
+  else
+    LActor.sendTipmsg( sysarg, Lang.ScriptTips.x00028,ttTipmsgWindow  )
+  end
+  LActor.closeNPCDialog(sysarg)
+end
+
+--领取封测登录礼盒 
+function FengCeLoginRewardFunc(sysarg)
+  local nYear, nMonth, nDay = System.getDate(0, 0, 0)
+  local var = LActor.getStaticVar(sysarg)
+  local LoginReward = var.LoginReward
+  if not LoginReward then
+    var.LoginReward = {}
+    LoginReward = var.LoginReward
+    LoginReward[1] = 0     --保存礼盒领取月
+    LoginReward[2] = 0     --保存礼盒领取日
+  end
+  --判断是否同一天领取 
+  if LoginReward[1] ~= nMonth or LoginReward[2] ~= nDay then
+    if LActor.canAddItem(sysarg,1615,1) then
+      if LActor.addItem(sysarg,1615,0,0,1,1,"erCiFengCe",1) then
+        LoginReward[1] = nMonth
+        LoginReward[2] = nDay
+      end
+    else
+      -- LActor.sendTipmsg( sysarg, Lang.ScriptTips.n00006,ttTipmsgWindow  )
+      LActor.SendGeneralTips(sysarg, 7, 0, 0)
+      return
+    end
+  else
+    LActor.sendTipmsg( sysarg, Lang.ScriptTips.h00001,ttTipmsgWindow  )
+  end
+  LActor.closeNPCDialog(sysarg) 
+end 
+
+--领取绑定元宝
+--[[
+function FengCeGiveBindYuanbao(sysarg)
+  local var = LActor.getStaticVar( sysarg )
+  local FengCe = var.FengCe 
+  if FengCe == nil then 
+    var.FengCe = {}
+    FengCe = var.FengCe
+    FengCe[1] = 0
+    FengCe[2] = 0
+  end
+  if FengCe[2] == nil then FengCe[2] = 0 end
+  if FengCe[2] == 0 then 
+    LActor.changeMoney(sysarg,mtBindYuanbao,100)
+    FengCe[2] = 1
+  else
+   LActor.sendTipmsg( sysarg, Lang.ScriptTips.x00028,ttTipmsgWindow  )
+  end
+end 
+]]
+table.insert(MainFnTable,FengCeRewardMain)

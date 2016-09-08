@@ -1,0 +1,1845 @@
+--通用活动控制，登陆、充值、消费等角色事件控制
+--#include "activityconf.txt" once
+--#include "activitycontrolhandler.txt" once
+--#include "normalactivitycontrolhandler.txt" once
+---#include "data\functions\miscfunc.txt" once
+
+--连续登陆的天数
+activityFunc.newDayforActivity = function(sysarg)
+	debug_print("-----------------------活动，新的一天到来------------------------------")
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then
+	 return 
+	end
+	--var.First_loging = nil
+	for i,v in ipairs(activityidlist) do
+		local oneConf = activityConf[v]
+		--print("--oneConf:"..v..",download_from:"..var.download_from)
+		--如果活动还没开始则不累加天数
+
+		local state = ONLINEREWARD.GetActivityState(oneConf.activityId , var.download_from , sysarg)
+		--print("-----activityFunc.newDayforActivity activeid:"..v.."state:"..state)
+		--debug_print("======activeid=======",state)
+		if state ~= 0 then
+			--是否重置
+			ONLINEREWARD.CheckResetActivityInfo(sysarg, oneConf.activityId)
+
+			debug_print("activityFunc.newDayforActivity activeid:"..v)
+			if var.activityList == nil then var.activityList = {} end
+			if var.activityList[v] == nil then var.activityList[v] = {} end
+
+			--登陆活动
+			local loginId = activitytypelist[1]
+			if oneConf.activities[loginId] ~= nil and oneConf.activities[loginId].id ~= nil then
+				debug_print("activityFunc.newDayforActivity activeid:"..v..",loginReward")
+				if var.activityList[v].loginnum == nil then var.activityList[v].loginnum = 0 end
+				var.activityList[v].loginnum = var.activityList[v].loginnum + 1
+				if var.activityList[v].loginreward == nil then var.activityList[v].loginreward = 0 end
+				-- if oneConf.activities[loginId].loginReward[1][1] == 1 then
+				-- 	--var.activityList[v].loginreward = System.bitOpSetMask(var.activityList[v].loginreward, 0, false)
+				-- end
+			end
+
+
+			--每日充值,单礼包
+			local dRechargeId = activitytypelist[4]
+			if oneConf.activities[dRechargeId] ~= nil and oneConf.activities[dRechargeId].id ~= nil then
+				--debug_print("activityFunc.newDayforActivity activeid:"..v..",dRechargeId")
+				var.activityList[v].drecharge = 0
+				--如果有奖励以邮件的形式下发奖励
+				--v为活动ID
+				local rewardnum = var.activityList[v].drechargerewardnum
+				--debug_print("================rewardnum::  "..rewardnum)
+				if rewardnum == nil then rewardnum = 0 end 
+				if rewardnum > 0 then
+					System.sendGmMailOffLine(LActor.getActorId(sysarg), "每日充值活动奖励礼包" , 1, oneConf.activities[dRechargeId].awardId, rewardnum, 1)
+					var.activityList[v].drechargerewardnum = 0
+				end
+			end
+
+			--每日消费,单礼包
+			local dConsumeId = activitytypelist[5]
+			if oneConf.activities[dConsumeId] ~= nil and oneConf.activities[dConsumeId].id ~= nil then
+				--debug_print("activityFunc.newDayforActivity activeid:"..v..",dConsumeId")
+				var.activityList[v].dconsume = 0
+			end
+
+			--每日充值,多礼包
+			local dRechargeId2 = activitytypelist[9]
+			if oneConf.activities[dRechargeId2] ~= nil and oneConf.activities[dRechargeId2].id ~= nil then
+				--debug_print("activityFunc.newDayforActivity activeid:"..v..",dRechargeId")
+				var.activityList[v].drecharge = 0
+				var.activityList[v].drechargerewardnum = 0 -- 也要重置为0
+			end
+
+			--每日消费,多礼包
+			local dConsumeId2 = activitytypelist[10]
+			if oneConf.activities[dConsumeId2] ~= nil and oneConf.activities[dConsumeId2].id ~= nil then
+				--debug_print("activityFunc.newDayforActivity activeid:"..v..",dConsumeId")
+				var.activityList[v].dconsume = 0
+			end
+
+			--日常活动累积
+			local dActivity = activitytypelist[12]
+			if oneConf.activities[dActivity] ~= nil and oneConf.activities[dActivity].id ~= nil then
+				--debug_print("activityFunc.newDayforActivity activeid:"..v..",loginId3")
+				var.activityList[v].dailyactivityflag = nil
+			end
+
+			--豪华礼包
+			local nActivityId = activitytypelist[20]
+			if oneConf.activities[nActivityId] ~= nil and oneConf.activities[nActivityId].id ~= nil then
+				var.activityList[v].haoliward = nil
+			end
+			--每日登陆有礼,多礼包
+			local loginId3 = activitytypelist[13]
+			if oneConf.activities[loginId3] ~= nil and oneConf.activities[loginId3].id ~= nil then
+				--debug_print("activityFunc.newDayforActivity activeid:"..v..",loginId3")
+				local level = LActor.getLevel(sysarg)
+				if level >= oneConf.activities[loginId3].level then
+					local runDays = ONLINEREWARD.GetActivityRunDays(oneConf.activityId)
+					if runDays >= 1 then
+						if var.activityList[v].dailyloginrecord == nil then var.activityList[v].dailyloginrecord = 0 end
+						var.activityList[v].dailyloginrecord = System.bitOpSetMask(var.activityList[v].dailyloginrecord, runDays - 1, true)
+					end
+				end
+			end
+			local tjbaozhangId = activitytypelist[28]
+			if oneConf.activities[tjbaozhangId] ~= nil and oneConf.activities[tjbaozhangId].id ~= nil then 
+				if var.activityList[v].tjbaozhangCount == nil then
+				 	var.activityList[v].tjbaozhangCount = 0
+				end
+			end
+			--每日累计充值
+			local week = System.getDayOfWeek()
+			local act30 = activitytypelist[30]
+			if oneConf.activities[act30] ~= nil and oneConf.activities[act30].id ~= nil then
+				local num = var.activityList[v].aggregate_recharge_rebate or 0
+				local rewardflag = var.activityList[v].rechargegivelift_award or 0
+				local rewards = oneConf.activities[act30].target or {}
+				local record = activityFunc.getActivityNumRecord(num, rewards)
+				for index = 1 , #rewards do
+					if  System.bitOPMask(record, index - 1) then				--没纪录即没达成
+						if not System.bitOPMask(rewardflag, index - 1) then
+							--activityFunc.sendEmailRecharData( sysarg ,rewards[index][2] ,  v ,  act30)
+							System.sendGmMailOffLine(LActor.getActorId(sysarg), Lang.ScriptTips.mrljcz1001, 1, rewards[index][2], rewards[index][3] or 1, 1, Lang.ScriptTips.mrljcz1002)
+							System.logCounter(
+												LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), 
+												"activityreward",tostring(v) , tostring(act30), tostring(index), string.format("%s:%s",rewards[index][2],rewards[index][3] or 1),
+												 tostring(LActor.getName(sysarg)), var.download_from, "", lfDB
+											 )
+						end
+					end
+					
+				end
+				var.activityList[v].aggregate_recharge_rebate = nil
+				var.activityList[v].rechargegivelift_award = nil
+			end
+			
+			
+			-- local act44 = activitytypelist[44]
+			-- if oneConf.activities[act44] ~= nil and oneConf.activities[act44].id ~= nil then
+				-- var.activityList[v].first_chongzhi = nil
+				-- local num = var.activityList[v].meirichonzhicount or 0
+				-- local rewardflag = var.activityList[v].meirichonzhireward or 0
+				-- local rewards = oneConf.activities[act30].target or {}
+				-- local record = activityFunc.getActivityNumRecord(num, rewards)
+				-- print("----发送每日充值奖励--")
+				-- for index = 1 , #rewards do
+				-- 	if  System.bitOPMask(record, index - 1) then				--没纪录即没达成
+				-- 		if not System.bitOPMask(rewardflag, index - 1) then
+				-- 			print("---index",index)
+				-- 			--activityFunc.sendEmailRecharData( sysarg ,rewards[index][2] ,  v ,  act30)
+				-- 			System.sendGmMailOffLine(LActor.getActorId(sysarg), Lang.ScriptTips.mrcz1001, 1, rewards[index][2], rewards[index][3] or 1, 1, Lang.ScriptTips.mrcz1002)
+				-- 		end
+				-- 	end
+					
+				-- end
+				-- var.activityList[v].meirichonzhicount = nil
+				-- var.activityList[v].meirichonzhireward = nil
+			--end
+			
+
+			local act34 = activitytypelist[34]  --连续登录
+			if oneConf.activities[act34] ~= nil and oneConf.activities[act34].id ~= nil then
+				 local lxloginReward = oneConf.activities[act34].lxloginReward
+				
+				if var.activityList[v].lianxudenglureward == nil then
+					var.activityList[v].lianxudenglureward = 0
+				end
+
+				local num = var.activityList[v].lianxudengludays or 0
+
+				for index=1,3 do
+					itemid,itemnum = activityFunc.checkActivityNumReward(sysarg, num, lxloginReward, index, var.activityList[v].lianxudenglureward,true)
+					if itemid ~= nil then
+						System.sendGmMailOffLine(LActor.getActorId(sysarg), Lang.ScriptTips.lxdl001, 1, itemid, itemnum, 1, Lang.ScriptTips.lxdl002)
+						var.activityList[v].lianxudenglureward = System.bitOpSetMask(var.activityList[v].lianxudenglureward, index - 1, true) 
+						System.logCounter(
+										  LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), 
+										  "activityreward",tostring(v) , tostring(act34), tostring(index), string.format("%s:%s",itemid,itemnum),
+										  tostring(LActor.getName(sysarg)), var.download_from, "", lfDB
+										 )
+					end
+					
+				end
+				
+
+
+				if var.activityList[v].lianxudengludays  == nil then
+					var.activityList[v].lianxudengludays = 1
+				end
+				if var.activityList[v].lianxudenglutimerecode == nil then
+					var.activityList[v].lianxudenglutimerecode = System.getCurrMiniTime()
+				end
+				local diffday = System.getDayDiff(System.getCurrMiniTime(),var.activityList[v].lianxudenglutimerecode)
+				var.activityList[v].lianxudenglutimerecode = System.getCurrMiniTime()
+				if diffday == 1 then
+					var.activityList[v].lianxudengludays = var.activityList[v].lianxudengludays + 1
+				else
+					var.activityList[v].lianxudengludays = 1
+					if var.activityList[v].lianxudenglureward ~= nil and var.activityList[v].lianxudenglureward ~= 7 then
+						var.activityList[v].lianxudenglureward = 0
+					else
+						var.activityList[v].lianxudengludays = 3
+					end
+				end
+			end
+
+			local act102 = activitytypelist[102]  --七夕连续登录
+			if oneConf.activities[act102] ~= nil and oneConf.activities[act102].id ~= nil then
+				 local lxloginReward = oneConf.activities[act102].lxloginReward
+				
+				if var.activityList[v].lianxudenglureward == nil then
+					var.activityList[v].lianxudenglureward = 0
+				end
+
+				local num = var.activityList[v].lianxudengludays or 0
+
+				for index=1,6 do
+					itemid,itemnum = activityFunc.checkActivityNumReward(sysarg, num, lxloginReward, index, var.activityList[v].lianxudenglureward,true)
+					if itemid ~= nil then
+						System.sendGmMailOffLine(LActor.getActorId(sysarg), Lang.ScriptTips.lxdl001, 1, itemid, itemnum, 1, Lang.ScriptTips.lxdl002)
+						var.activityList[v].lianxudenglureward = System.bitOpSetMask(var.activityList[v].lianxudenglureward, index - 1, true) 
+						System.logCounter(
+										  LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), 
+										  "activityreward",tostring(v) , tostring(act102), tostring(index), string.format("%s:%s",itemid,itemnum),
+										  tostring(LActor.getName(sysarg)), var.download_from, "", lfDB
+										 )
+					end
+					
+				end
+				
+
+
+				if var.activityList[v].lianxudengludays  == nil then
+					var.activityList[v].lianxudengludays = 1
+				end
+				if var.activityList[v].lianxudenglutimerecode == nil then
+					var.activityList[v].lianxudenglutimerecode = System.getCurrMiniTime()
+				end
+				local diffday = System.getDayDiff(System.getCurrMiniTime(),var.activityList[v].lianxudenglutimerecode)
+				var.activityList[v].lianxudenglutimerecode = System.getCurrMiniTime()
+				if diffday == 1 then
+					var.activityList[v].lianxudengludays = var.activityList[v].lianxudengludays + 1
+				else
+					var.activityList[v].lianxudengludays = 1
+					if var.activityList[v].lianxudenglureward ~= nil and var.activityList[v].lianxudenglureward ~= 63 then
+						var.activityList[v].lianxudenglureward = 0
+					else
+						var.activityList[v].lianxudengludays = 6
+					end
+				end
+				QixiTitleTriggerTarget( sysarg, 4, 2, var.activityList[v].lianxudengludays )
+			end
+			--每日累计消费
+			local meirixiaofei_id_list = {[2001] = 45,[2002] = 83,[2003] = 84,[2004] = 85,[2005] = 86,[2006] = 87,[2007] = 88,[2008] = 89,[2009] = 90}
+			if meirixiaofei_id_list[v] ~= nil then
+
+				local act_id = meirixiaofei_id_list[v]
+				if var.activityList[v].mrxfconsumenum == nil then
+		    		var.activityList[v].mrxfconsumenum = 0
+		    	end
+		    	if var.activityList[v].mrxfconsumreward == nil then
+		    		var.activityList[v].mrxfconsumreward = 0
+		    	end
+		   		--print("---新的一天每日累计消费发送奖励  大id:"..v.." 小id:"..act_id)
+		    	local rewards = oneConf.activities[act_id].target or {}
+				for index,_ in ipairs(rewards) do
+					local itemid,itemnum = activityFunc.checkActivityNumReward(sysarg, var.activityList[v].mrxfconsumenum, 
+										rewards, index, var.activityList[v].mrxfconsumreward,true)
+				    	if itemid ~= nil then
+				    		System.sendGmMailOffLine(LActor.getActorId(sysarg), Lang.ScriptTips.mrxf1001, 1, itemid, itemnum, 1, Lang.ScriptTips.mrxf1002)
+				    		var.activityList[v].mrxfconsumreward = System.bitOpSetMask(var.activityList[v].mrxfconsumreward, index - 1, true) 
+				    		System.logCounter(
+											  LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), 
+											  "activityreward",tostring(v) , tostring(act_id), tostring(index), string.format("%s:%s",itemid,itemnum),
+											  tostring(LActor.getName(sysarg)), var.download_from, "", lfDB
+											 )
+				    	end
+				end
+				var.activityList[v].mrxfconsumenum = 0
+				var.activityList[v].mrxfconsumreward = 0
+			end
+
+			local act46 = activitytypelist[46]
+			if oneConf.activities[act46] ~= nil and oneConf.activities[act46].id ~= nil then
+				 local loginreward = oneConf.activities[act46].createactor7_loginreward
+				
+				if var.activityList[v].createactor7_loginreward == nil then
+					var.activityList[v].createactor7_loginreward = 0
+				end
+ 
+				 local createday = ONLINEREWARD.getCreateActorDay( sysarg )
+				 debug_print("createday:"..createday)
+
+				 var.activityList[v].createactor7_loginday=createday 
+ 
+			end
+
+			--每日充值返利活动
+			--local act50 = activitytypelist[50]
+			local mrczfl_id_list = {[24] = 97,[31] = 110,[3001] = 50,[3002] = 92,[3003] = 93,[3004] = 94,[3005] = 95}
+			if mrczfl_id_list[v] ~= nil then
+				local act_id = mrczfl_id_list[v]
+			--if oneConf.activities[act50] ~= nil and oneConf.activities[act50].id ~= nil then
+				if var.activityList[v].meirichongzhifanlicount == nil then
+		    		var.activityList[v].meirichongzhifanlicount = 0
+		    	end
+		    	if var.activityList[v].meirichongzhifanlireward == nil then
+		    		var.activityList[v].meirichongzhifanlireward = 0
+		    	end
+		    	local rewards = oneConf.activities[act_id].target or {}
+				for index,_ in ipairs(rewards) do
+					local itemid,itemnum = activityFunc.checkActivityNumReward(sysarg, var.activityList[v].meirichongzhifanlicount, 
+										rewards, index, var.activityList[v].meirichongzhifanlireward,true)
+				    	if itemid ~= nil then
+				    		System.sendGmMailOffLine(LActor.getActorId(sysarg), Lang.ScriptTips.mrczfl1001, 1, itemid, itemnum, 1, Lang.ScriptTips.mrczfl1002)
+				    		var.activityList[v].meirichongzhifanlireward = System.bitOpSetMask(var.activityList[v].meirichongzhifanlireward, index - 1, true) 
+				    		System.logCounter(
+											  LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), 
+											  "activityreward",tostring(v) , tostring(act_id), tostring(index), string.format("%s:%s",itemid,itemnum),
+											  tostring(LActor.getName(sysarg)), var.download_from, "", lfDB
+											 )
+				    	end
+				end
+				var.activityList[v].meirichongzhifanlicount = nil
+				var.activityList[v].meirichongzhifanlireward = nil
+			end 
+			--在线宝箱
+			local act67 = activitytypelist[67]
+			if oneConf.activities[act67] ~= nil and oneConf.activities[act67].id ~= nil then
+				var.activityList[v].zaixianbaoxiangReward = 0
+			end
+
+			--累计登录
+			local act79 = activitytypelist[79]
+
+			if oneConf.activities[act79] ~= nil and oneConf.activities[act79].id ~= nil then
+				local createday = ONLINEREWARD.getCreateActorDay( sysarg )
+				if var.activityList[v].leijidenglu_count == nil then
+					var.activityList[v].leijidenglu_count = 0
+				end
+				var.activityList[v].leijidenglu_record = var.activityList[v].leijidenglu_record or 0
+				var.activityList[v].leijidenglu_count = var.activityList[v].leijidenglu_count + 1
+				if var.activityList[v].leijidenglu_count > 1 then
+					var.activityList[v].leijidenglu_record = System.bitOpSetMask(var.activityList[v].leijidenglu_record, var.activityList[v].leijidenglu_count - 2, true) 
+				end
+				print("---var.activityList[v].leijidenglurecord",var.activityList[v].leijidenglu_record)
+			end
+
+			--登录邮件礼包
+			local act81 = activitytypelist[81]
+			if oneConf.activities[act81] ~= nil and oneConf.activities[act81].id ~= nil then
+				local itemid,itemnum = oneConf.activities[act81].target[1], oneConf.activities[act81].target[2] or 1 
+				System.sendGmMailOffLine(LActor.getActorId(sysarg), Lang.ScriptTips.dengluyoujian001, 1, itemid, itemnum, 1, Lang.ScriptTips.dengluyoujian002)
+			end
+		else --活动结束发没领取的奖励
+
+		    if var.activityList ~= nil and var.activityList[v] ~= nil then 
+			    --累计消费砖石
+			    local act3 = activitytypelist[3]
+			    if oneConf.activities[act3] ~= nil and oneConf.activities[act3].id ~= nil and var.activityList[v].sendljxfreward == nil then
+			    	if var.activityList[v].consumenum == nil then
+			    		var.activityList[v].consumenum = 0
+			    	end
+			    	if var.activityList[v].consumereward == nil then
+			    		var.activityList[v].consumereward = 0
+			    	end
+			    	local rewards = oneConf.activities[act3].target or {}
+				    for index,_ in ipairs(rewards) do
+				    	local itemid,itemnum = activityFunc.checkActivityNumReward(sysarg, var.activityList[v].consumenum, 
+										rewards, index, var.activityList[v].consumereward,true)
+				    	if itemid ~= nil then
+				    		System.sendGmMailOffLine(LActor.getActorId(sysarg), Lang.ScriptTips.ljxf1001, 1, itemid, itemnum, 1, Lang.ScriptTips.ljxf1002)
+				    		var.activityList[v].consumereward = System.bitOpSetMask(var.activityList[v].consumereward, index - 1, true) 
+				    		System.logCounter(
+											  LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), 
+											  "activityreward",tostring(v) , tostring(act3), tostring(index), string.format("%s:%s",itemid,itemnum),
+											  tostring(LActor.getName(sysarg)), var.download_from, "", lfDB
+											 )
+				    	end
+				
+				    end
+				    var.activityList[v].consumenum = nil
+				    var.activityList[v].consumereward = nil 
+				    var.activityList[v].sendljxfreward = 1
+			    
+				end
+				--限时累计充值
+				local act43 = activitytypelist[43]
+				if oneConf.activities[act43] ~= nil and oneConf.activities[act43].id ~= nil and var.activityList[v].sendljczreward == nil then
+					local num = var.activityList[v].leijichonzhicount or 0
+					local rewardflag = var.activityList[v].leijichonzhireward or 0
+					local rewards = oneConf.activities[act43].target or {}
+					local record = activityFunc.getActivityNumRecord(num, rewards)
+					for index = 1 , #rewards do
+						if  System.bitOPMask(record, index - 1) then				--没纪录即没达成
+							if not System.bitOPMask(rewardflag, index - 1) then
+								--activityFunc.sendEmailRecharData( sysarg ,rewards[index][2] ,  v ,  act30)
+								System.sendGmMailOffLine(LActor.getActorId(sysarg), Lang.ScriptTips.ljcz1001, 1, rewards[index][2], rewards[index][3] or 1, 1, Lang.ScriptTips.ljcz1002)
+								System.logCounter(
+												  LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), 
+												  "activityreward",tostring(v) , tostring(act43), tostring(index), string.format("%s:%s",rewards[index][2],rewards[index][3] or 1),
+												  tostring(LActor.getName(sysarg)), var.download_from, "", lfDB
+												 )
+							end
+						end
+						
+					end
+					var.activityList[v].leijichonzhicount = nil
+					var.activityList[v].leijichonzhireward = nil
+					var.activityList[v].sendljczreward = 1
+				end
+				--单笔充值
+				local danbichongzhi_id_list = { [3] = 31, [4001] = 104, [4002] = 105, [4003] = 106, [4004] = 107, [4005] = 108 }
+				if 	danbichongzhi_id_list[v] ~= nil then
+					local act_id = danbichongzhi_id_list[v]
+					if var.activityList[v].signal_recharge == nil then
+						var.activityList[v].signal_recharge = {}
+					end
+					if var.activityList[v].signal_rechar_award == nil then
+						var.activityList[v].signal_rechar_award = 0
+					end
+					local rewards = oneConf.activities[act_id].target or {}
+					for index,_ in ipairs(rewards) do
+						local itemid,itemnum = activityFunc.check_sign_recharge_reward(sysarg,var.activityList[v].signal_recharge,index,rewards,var.activityList[v].signal_rechar_award,true)
+						if itemid ~= nil then
+							var.activityList[v].signal_rechar_award = System.bitOpSetMask(var.activityList[v].signal_rechar_award, index - 1, true) 
+							System.sendGmMailOffLine(LActor.getActorId(sysarg), Lang.ScriptTips.dbcz1001, 1, itemid, itemnum, 1, Lang.ScriptTips.dbcz1002)
+							System.logCounter(
+											  LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), 
+											  "activityreward",tostring(v) , tostring(act_id), tostring(index), string.format("%s:%s",itemid,itemnum),
+											  tostring(LActor.getName(sysarg)), var.download_from, "", lfDB
+											 )
+						end
+					end
+					var.activityList[v].signal_recharge = {}
+					var.activityList[v].signal_rechar_award = nil
+					var.activityList[v].senddbczreward = 1
+				end
+
+				--每日累计消费
+				--local act45 = activitytypelist[45]
+				local meirixiaofei_id_list = {[2001] = 45,[2002] = 83,[2003] = 84,[2004] = 85,[2005] = 86,[2006] = 87,[2007] = 88,[2008] = 89,[2009] = 90}
+				if meirixiaofei_id_list[v] ~= nil then
+					local act_id = meirixiaofei_id_list[v]
+					if  var.activityList[v].sendmrxfreward == nil and oneConf.activities[act_id] ~= nil and oneConf.activities[act_id].id ~= nil then
+						if var.activityList[v].mrxfconsumenum == nil then
+				    		var.activityList[v].mrxfconsumenum = 0
+				    	end
+				    	if var.activityList[v].mrxfconsumreward == nil then
+				    		var.activityList[v].mrxfconsumreward = 0
+				    	end
+				    	local rewards = oneConf.activities[act_id].target or {}
+						for index,_ in ipairs(rewards) do
+							local itemid,itemnum = activityFunc.checkActivityNumReward(sysarg, var.activityList[v].mrxfconsumenum, 
+												rewards, index, var.activityList[v].mrxfconsumreward,true)
+						    	if itemid ~= nil then
+						
+						    		System.sendGmMailOffLine(LActor.getActorId(sysarg), Lang.ScriptTips.mrxf1001, 1, itemid, itemnum, 1, Lang.ScriptTips.mrxf1002)
+						    		var.activityList[v].mrxfconsumreward = System.bitOpSetMask(var.activityList[v].mrxfconsumreward, index - 1, true) 
+						    		System.logCounter(
+													  LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), 
+													  "activityreward",tostring(v) , tostring(act_id), tostring(index), string.format("%s:%s",itemid,itemnum),
+													  tostring(LActor.getName(sysarg)), var.download_from, "", lfDB
+													 )
+						    	end
+						end
+						var.activityList[v].mrxfconsumenum = nil
+						var.activityList[v].mrxfconsumreward = nil
+						var.activityList[v].sendmrxfreward = 1
+						--print("---每日累计消费活动结束，发送邮件奖励 大id:"..v.." 小id："..act_id)
+					end
+				end
+
+
+				--【开服活动-创角7天】登录福利 结束发未领的奖励
+				local act46 = activitytypelist[46]
+				if oneConf.activities[act46] ~= nil and oneConf.activities[act46].id ~= nil and var.activityList[v].send_loginreward == nil then
+					local num = var.activityList[v].createactor7_loginday or 0
+
+					local rewardflag = var.activityList[v].createactor7_loginreward or 0
+
+					local configrewards = oneConf.activities[act46].createactor7_loginreward or {}
+					local record = activityFunc.getActivityNumRecord(num, configrewards)
+					for index = 1 , #configrewards do
+						if  System.bitOPMask(record, index - 1) then				--没纪录即没达成
+							if not System.bitOPMask(rewardflag, index - 1) then
+								--activityFunc.sendEmailRecharData( sysarg ,rewards[index][2] ,  v ,  act30)
+								System.sendGmMailOffLine(LActor.getActorId(sysarg), Lang.ScriptTips.openserverloginreward001, 1, configrewards[index][2], configrewards[index][3] or 1, 1, Lang.ScriptTips.openserverloginreward002)
+								System.logCounter(
+												  LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), 
+												  "activityreward",tostring(v) , tostring(act46), tostring(index), string.format("%s:%s",configrewards[index][2],configrewards[index][3] or 1),
+												  tostring(LActor.getName(sysarg)), var.download_from, "", lfDB
+												 )
+							end
+						end
+						
+					end
+					var.activityList[v].createactor7_loginday = nil
+					var.activityList[v].createactor7_loginreward = nil
+					var.activityList[v].send_loginreward = 1
+				end
+
+				--【开服活动-创角7天】充值福利 结束
+				local act47 = activitytypelist[47]
+				if oneConf.activities[act47] ~= nil and oneConf.activities[act47].id ~= nil and var.activityList[v].ca7_send_chargereward == nil then
+					--print("v:"..v)
+					local chargeamount = var.activityList[v].ca7_chargeamount or 0
+					local rewardflag = var.activityList[v].ca7_charge_reward or 0
+					local rewards = oneConf.activities[act47].charge_reward or {}
+					local record = activityFunc.getActivityNumRecord(chargeamount, rewards)
+					for index = 1 , #rewards do
+						if  System.bitOPMask(record, index - 1) then				--没纪录即没达成
+							if not System.bitOPMask(rewardflag, index - 1) then
+								--activityFunc.sendEmailRecharData( sysarg ,rewards[index][2] ,  v ,  act30)
+								System.sendGmMailOffLine(LActor.getActorId(sysarg), Lang.ScriptTips.openserverchargereward001, 1, rewards[index][2], rewards[index][3] or 1, 1, Lang.ScriptTips.openserverchargereward002)
+								System.logCounter(
+												  LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), 
+												  "activityreward",tostring(v) , tostring(act47), tostring(index), string.format("%s:%s",rewards[index][2],rewards[index][3] or 1),
+												  tostring(LActor.getName(sysarg)), var.download_from, "", lfDB
+												 )
+							end
+						end
+						
+					end
+					var.activityList[v].ca7_chargeamount = nil
+					var.activityList[v].ca7_charge_reward = nil
+					var.activityList[v].ca7_send_chargereward = 1
+				end
+
+
+				--充值返利活动
+				local act48 = activitytypelist[48]
+				if var.activityList[v].sendczflreward == nil and oneConf.activities[act48] ~= nil and oneConf.activities[act48].id ~= nil then
+					if var.activityList[v].chongzhifanlicount == nil then
+			    		var.activityList[v].chongzhifanlicount = 0
+			    	end
+			    	if var.activityList[v].chongzhifanlireward == nil then
+			    		var.activityList[v].chongzhifanlireward = 0
+			    	end
+			    	local rewards = oneConf.activities[act48].target or {}
+					for index,_ in ipairs(rewards) do
+						local itemid,itemnum = activityFunc.checkActivityNumReward(sysarg, var.activityList[v].chongzhifanlicount, 
+											rewards, index, var.activityList[v].chongzhifanlireward,true)
+					    	if itemid ~= nil then
+					    		System.sendGmMailOffLine(LActor.getActorId(sysarg), Lang.ScriptTips.czfl1001, 1, itemid, itemnum, 1, Lang.ScriptTips.czfl1002)
+					    		var.activityList[v].chongzhifanlireward = System.bitOpSetMask(var.activityList[v].chongzhifanlireward, index - 1, true) 
+					    		System.logCounter(
+												  LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), 
+												  "activityreward",tostring(v) , tostring(act48), tostring(index), string.format("%s:%s",itemid,itemnum),
+												  tostring(LActor.getName(sysarg)), var.download_from, "", lfDB
+												 )
+					    	end
+					end
+					var.activityList[v].chongzhifanlicount = nil
+					var.activityList[v].chongzhifanlireward = nil
+					var.activityList[v].sendczflreward = 1
+				end
+
+				--每日充值返利活动
+				local act50 = activitytypelist[50]
+				local mrczfl_id_list = {[24] = 97,[31] = 110,[3001] = 50,[3002] = 92,[3003] = 93,[3004] = 94,[3005] = 95}
+				if mrczfl_id_list[v] ~= nil then
+					local act_id = mrczfl_id_list[v]
+				--if var.activityList[v].sendmrczflreward == nil and oneConf.activities[act50] ~= nil and oneConf.activities[act50].id ~= nil then
+					if var.activityList[v].meirichongzhifanlicount == nil then
+			    		var.activityList[v].meirichongzhifanlicount = 0
+			    	end
+			    	if var.activityList[v].meirichongzhifanlireward == nil then
+			    		var.activityList[v].meirichongzhifanlireward = 0
+			    	end
+			    	local rewards = oneConf.activities[act_id].target or {}
+					for index,_ in ipairs(rewards) do
+						local itemid,itemnum = activityFunc.checkActivityNumReward(sysarg, var.activityList[v].meirichongzhifanlicount, 
+											rewards, index, var.activityList[v].meirichongzhifanlireward,true)
+					    	if itemid ~= nil then
+					    		System.sendGmMailOffLine(LActor.getActorId(sysarg), Lang.ScriptTips.mrczfl1001, 1, itemid, itemnum, 1, Lang.ScriptTips.mrczfl1002)
+					    		var.activityList[v].meirichongzhifanlireward = System.bitOpSetMask(var.activityList[v].meirichongzhifanlireward, index - 1, true) 
+					    		System.logCounter(
+												  LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), 
+												  "activityreward",tostring(v) , tostring(act_id), tostring(index), string.format("%s:%s",itemid,itemnum),
+												  tostring(LActor.getName(sysarg)), var.download_from, "", lfDB
+												 )
+					    	end
+					end
+					var.activityList[v].meirichongzhifanlicount = nil
+					var.activityList[v].meirichongzhifanlireward = nil
+					var.activityList[v].sendmrczflreward = 1
+				end 
+
+
+
+				--富甲四方（累计消耗类）
+				local act68 = activitytypelist[68]
+				if var.activityList[v].sendfjsfreward == nil and oneConf.activities[act68] ~= nil and oneConf.activities[act68].id ~= nil then
+					if var.activityList[v].fjsfsumenum == nil then
+			    		var.activityList[v].fjsfsumenum = 0
+			    	end
+			    	if var.activityList[v].fjsfreward == nil then
+			    		var.activityList[v].fjsfreward = 0
+			    	end
+			    	local rewards = oneConf.activities[act68].target or {}
+					for index,_ in ipairs(rewards) do
+						local itemid,itemnum = activityFunc.checkActivityNumReward(sysarg, var.activityList[v].fjsfsumenum, 
+											rewards, index, var.activityList[v].fjsfreward,true)
+				    	if itemid ~= nil then
+				    		System.sendGmMailOffLine(LActor.getActorId(sysarg), Lang.ScriptTips.fjsf1001, 1, itemid, itemnum, 1, Lang.ScriptTips.fjsf1002)
+				    		var.activityList[v].fjsfreward = System.bitOpSetMask(var.activityList[v].fjsfreward, index - 1, true) 
+				    		System.logCounter(
+											  LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), 
+											  "activityreward",tostring(v) , tostring(act68), tostring(index), string.format("%s:%s",itemid,itemnum),
+											  tostring(LActor.getName(sysarg)), var.download_from, "", lfDB
+											 )
+				    	end
+					end
+					var.activityList[v].fjsfsumenum = nil
+					var.activityList[v].fjsfreward = nil
+					var.activityList[v].sendfjsfreward = 1
+				end 
+
+				--有粮领豪礼（累计充值类）
+				local act69 = activitytypelist[69]
+				if var.activityList[v].sendyllhlreward == nil and oneConf.activities[act69] ~= nil and oneConf.activities[act69].id ~= nil then
+					if var.activityList[v].yllhl_count == nil then
+			    		var.activityList[v].yllhl_count = 0
+			    	end
+			    	if var.activityList[v].yllhl_reward == nil then
+			    		var.activityList[v].yllhl_reward = 0
+			    	end
+			    	local rewards = oneConf.activities[act69].target or {}
+					for index,_ in ipairs(rewards) do
+						local itemid,itemnum = activityFunc.checkActivityNumReward(sysarg, var.activityList[v].yllhl_count, 
+											rewards, index, var.activityList[v].yllhl_reward,true)
+				    	if itemid ~= nil then
+				    		System.sendGmMailOffLine(LActor.getActorId(sysarg), Lang.ScriptTips.yllhl1001, 1, itemid, itemnum, 1, Lang.ScriptTips.yllhl1002)
+				    		var.activityList[v].yllhl_reward = System.bitOpSetMask(var.activityList[v].yllhl_reward, index - 1, true) 
+				    		System.logCounter(
+											  LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), 
+											  "activityreward",tostring(v) , tostring(act69), tostring(index), string.format("%s:%s",itemid,itemnum),
+											  tostring(LActor.getName(sysarg)), var.download_from, "", lfDB
+											 )
+				    	end
+					end
+					var.activityList[v].yllhl_count = nil
+					var.activityList[v].yllhl_reward = nil
+					var.activityList[v].sendyllhlreward = 1
+				end
+
+
+				--72.寻宝助秀成霸业 结束
+				local act72 = activitytypelist[72]
+				--debug_print("-------------72 end ")
+				if oneConf.activities[act72] ~= nil and oneConf.activities[act72].id ~= nil  then
+				  	 
+ 					local tianjixunbaocount = var.activityList[v].tianjixunbaocount or 0
+					local rewardflag = var.activityList[v].tianjixunbao_reward or 0
+					local rewards = oneConf.activities[act72].target or {}
+					local record = activityFunc.getActivityNumRecord(tianjixunbaocount, rewards)
+					for index = 1 , #rewards do
+						if  System.bitOPMask(record, index - 1) then				--没纪录即没达成
+							if not System.bitOPMask(rewardflag, index - 1) then
+								--activityFunc.sendEmailRecharData( sysarg ,rewards[index][2] ,  v ,  act30)
+								System.sendGmMailOffLine(LActor.getActorId(sysarg), Lang.ScriptTips.xunbaozhuxiureward001, 1, rewards[index][2], rewards[index][3] or 1, 1, Lang.ScriptTips.xunbaozhuxiureward002)
+								System.logCounter(
+												  LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), 
+												  "activityreward",tostring(v) , tostring(act72), tostring(index), string.format("%s:%s",rewards[index][2],rewards[index][3] or 1),
+												  tostring(LActor.getName(sysarg)), var.download_from, "", lfDB
+												 )
+							end
+						end
+						
+					end
+					var.activityList[v].tianjixunbaocount = nil
+					var.activityList[v].tianjixunbao_reward = nil
+					var.activityList[v].send_tianjixunbao_reward = 1
+
+
+				end
+
+				local act79 = activitytypelist[79]
+				--print("===ggggggg  nnnnnnnn")
+				if var.activityList[v].sendleijidenglu == nil and oneConf.activities[act79] ~= nil and oneConf.activities[act79].id ~= nil  then
+
+					local rewards = oneConf.activities[act79].target or {}
+					local record = var.activityList[v].leijidenglu_record or 0
+					local rewardflag = var.activityList[v].leijidenglu_reward or 0
+					for index=1,#rewards do
+						if  System.bitOPMask(record, index - 1) then
+							if not System.bitOPMask(rewardflag, index - 1) then
+								System.sendGmMailOffLine(LActor.getActorId(sysarg), Lang.ScriptTips.leijidenglu001, 1, rewards[index], 1, 1, Lang.ScriptTips.leijidenglu002)
+								System.logCounter(
+												  LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), 
+												  "activityreward",tostring(v) , tostring(act79), tostring(index), string.format("%s:%s",rewards[index],1),
+												  tostring(LActor.getName(sysarg)), var.download_from, "", lfDB
+												 )
+								print("===活动结束，发送累计登录奖励",index)
+							end
+						end
+					end
+					var.activityList[v].leijidenglu_record = nil
+					var.activityList[v].leijidenglu_reward = nil
+
+					var.activityList[v].sendleijidenglu = 1
+				end
+				if v < 1001 or v > 1006 then  --日冲欢乐多需在别处理
+					var.activityList[v] = nil 
+				end
+
+
+
+		    end 
+		    
+
+		end
+
+	end
+	local npack = DataPack.allocPacket( sysarg , 138 , 134)
+	if npack == nil then
+		return
+	end
+	DataPack.flush(npack)
+
+end
+
+activityFunc.sendEmailRecharData = function ( sysarg ,  itemid , activityid , typeid)
+
+	if sysarg == nil or type( sysarg ) ~= 'userdata' or itemid == nil or type(itemid) ~= 'number' or activityid == nil or typeid == nil or type(activityid) ~= 'number' or type(typeid) ~= 'number' then return end
+	local actorid = LActor.getActorId( sysarg )
+	local mailcontext = "GM"
+	local title = "遗失奖励"
+	if activityid == 3 and typeid == 30 then
+		mailcontext = "充值返利"
+	elseif activityid == 3 and typeid == 31 then
+		mailcontext = "单笔充值"
+	end
+	System.sendGmMailOffLine(actorid, mailcontext , 1, itemid, 1, 1, title)
+end
+-- 用户消费排行榜
+activityFunc.updateActivityRank = function( sysarg, rankconf, addcount)
+	if addcount == nil or addcount <= 0 then return end
+	--先查看排行文件是否存在，不存在则创建
+	local rank = Ranking.getRanking(rankconf.rankname)
+
+	if rank == nil then
+	   rank = MiscFunc.InitRank(rankconf.rankname, rankconf.rankname, 5, {"aname", "get"})
+	   Ranking.setAutoSave(rank, true)
+	end
+
+	local aid = LActor.getActorId(sysarg)
+	local name = LActor.getName(sysarg)
+	local item = Ranking.addItem(rank, aid, addcount)
+	if item == nil then   
+		item = Ranking.updateItem(rank, aid, addcount)
+    else
+		Ranking.setSub(item, 0, name)
+		Ranking.save(rank, rankconf.rankname)
+	end
+end
+
+
+-- 用户消费
+activityFunc.Actorconsume = function( sysarg, arg)
+	local val = arg[1]
+	local phy = arg[2]
+	
+	if val == nil or val == 0 or phy == nil or phy == "consignment" or phy == "deal" or phy == "groupon" then return end -- 不处理寄售，交易和团购的消耗 
+
+
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+
+	-- 乾坤兑换的消费处理
+	Exchangehandler1.countPoint(sysarg,0,val)
+
+	if var.activityList == nil then var.activityList = {} end
+
+	for i,v in ipairs(activityidlist) do
+		local oneConf = activityConf[v]
+		--如果活动还没开始
+		local state = ONLINEREWARD.GetActivityState(oneConf.activityId, var.download_from , sysarg)
+
+		if state ~= 0 then
+			--debug_print("activityFunc.Actorconsume activeid:"..oneConf.activityId)
+			--是否重置
+			ONLINEREWARD.CheckResetActivityInfo(sysarg, oneConf.activityId)
+
+			if var.activityList[v] == nil then var.activityList[v] = {} end
+
+			--每日消费
+			local dConsumeId = activitytypelist[5]
+			local dConsumeId2 = activitytypelist[10]
+			local olddconsume = 0
+			if (oneConf.activities[dConsumeId] ~= nil and oneConf.activities[dConsumeId].id ~= nil) or 
+				(oneConf.activities[dConsumeId2] ~= nil and oneConf.activities[dConsumeId2].id ~= nil) then
+				if var.activityList[v].dconsume == nil then var.activityList[v].dconsume = 0 end
+				olddconsume = var.activityList[v].dconsume
+				var.activityList[v].dconsume = var.activityList[v].dconsume + val
+			end
+
+			--每日消费
+			if oneConf.activities[dConsumeId] ~= nil and oneConf.activities[dConsumeId].id ~= nil then
+				if var.activityList[v].dconsumerewardnum == nil then var.activityList[v].dconsumerewardnum = 0 end
+				if oneConf.activities[dConsumeId].ifrepeat ~= nil then
+					if var.activityList[v].dconsume >= oneConf.activities[dConsumeId].consumeLimit then
+						local addnum = oneConf.activities[dConsumeId].consumeLimit
+						local startnum = olddconsume - olddconsume % addnum + 1
+						local endnum = var.activityList[v].dconsume - var.activityList[v].dconsume % addnum
+						for m = startnum,endnum,addnum do
+							var.activityList[v].dconsumerewardnum = var.activityList[v].dconsumerewardnum + 1
+						end
+					end
+				else
+					if olddconsume < oneConf.activities[dConsumeId].consumeLimit and var.activityList[v].dconsume >= oneConf.activities[dConsumeId].consumeLimit then
+						var.activityList[v].dconsumerewardnum = var.activityList[v].dconsumerewardnum + 1
+					end
+				end
+				--debug_print("activityFunc.Actorconsume "..v..",dconsume:"..var.activityList[v].dconsume)
+
+			end
+
+			--活动id,每日消费,多礼包
+			if oneConf.activities[dConsumeId2] ~= nil and oneConf.activities[dConsumeId2].id ~= nil then 
+				if var.activityList[v].dconsumerewardnum == nil then var.activityList[v].dconsumerewardnum = {} end
+				local rewardNum = #oneConf.activities[dConsumeId2].consumerewards
+				if olddconsume < oneConf.activities[dConsumeId2].consumerewards[rewardNum][1] then
+					for p,k in ipairs(oneConf.activities[dConsumeId2].consumerewards) do
+						if olddconsume < k[1] and var.activityList[v].dconsume >= k[1] then
+							if var.activityList[v].dconsumerewardnum[p] == nil then var.activityList[v].dconsumerewardnum[p] = 0 end
+							var.activityList[v].dconsumerewardnum[p] = var.activityList[v].dconsumerewardnum[p] + 1
+						end
+					end
+				end
+			end
+
+			--累计消费活动
+			--debug_print("000000000000000000000000000000000")
+			local consumeId = activitytypelist[3]
+			--debug_print("consumeId==================:"..consumeId)
+			--debug_print("oneConf.activities[consumeId].id ================:"..oneConf.activities[consumeId].id )
+			if oneConf.activities[consumeId] ~= nil and oneConf.activities[consumeId].id ~= nil then
+				if var.activityList[v].consumenum == nil then 
+					var.activityList[v].consumenum = 0 
+				end
+				var.activityList[v].consumenum = var.activityList[v].consumenum + val
+				--debug_print("======================================"..var.activityList[v].consumenum)
+			end
+			--每日累计消费活动
+			local consumeId45 = activitytypelist[45]
+			local consumeId83 = activitytypelist[83]
+			local consumeId84 = activitytypelist[84]
+			local consumeId85 = activitytypelist[85]
+			local consumeId86 = activitytypelist[86]
+			local consumeId87 = activitytypelist[87]
+			local consumeId88 = activitytypelist[88]
+			local consumeId89 = activitytypelist[89]
+			local consumeId90 = activitytypelist[90]
+
+
+			--debug_print("consumeId==================:"..consumeId)
+			local meirixiaofei_id_list = {[2001] = 45,[2002] = 83,[2003] = 84,[2004] = 85,[2005] = 86,[2006] = 87,[2007] = 88,[2008] = 89,[2009] = 90}
+			--debug_print("oneConf.activities[consumeId].id ================:"..oneConf.activities[consumeId].id )
+			-- if  (oneConf.activities[consumeId45] ~= nil and oneConf.activities[consumeId45].id ~= nil) or 
+			-- 	(oneConf.activities[consumeId83] ~= nil and oneConf.activities[consumeId83].id ~= nil) or 
+			-- 	(oneConf.activities[consumeId84] ~= nil and oneConf.activities[consumeId84].id ~= nil) or 
+			-- 	(oneConf.activities[consumeId85] ~= nil and oneConf.activities[consumeId85].id ~= nil) or 
+			-- 	(oneConf.activities[consumeId86] ~= nil and oneConf.activities[consumeId86].id ~= nil) or 
+			-- 	(oneConf.activities[consumeId87] ~= nil and oneConf.activities[consumeId87].id ~= nil) or 
+			-- 	(oneConf.activities[consumeId88] ~= nil and oneConf.activities[consumeId88].id ~= nil) or 
+			-- 	(oneConf.activities[consumeId89] ~= nil and oneConf.activities[consumeId89].id ~= nil) or 
+			-- 	(oneConf.activities[consumeId90] ~= nil and oneConf.activities[consumeId90].id ~= nil) then
+			if meirixiaofei_id_list[v] ~= nil then
+
+				if var.activityList[v].mrxfconsumenum == nil then
+				   var.activityList[v].mrxfconsumenum = 0 
+				end
+				var.activityList[v].mrxfconsumenum = var.activityList[v].mrxfconsumenum + val
+				--print("---每日累计消费活动循环 大id："..v.." 小id："..meirixiaofei_id_list[v].." 总消费额："..var.activityList[v].mrxfconsumenum)
+				--debug_print("======================================"..var.activityList[v].consumenum)
+			end
+
+			--消费活动,重复单礼包
+			local consumeId2 = activitytypelist[8]
+			if oneConf.activities[consumeId2] ~= nil and oneConf.activities[consumeId2].id ~= nil then
+				if var.activityList[v].consumenum == nil then var.activityList[v].consumenum = 0 end
+				local olddconsume = var.activityList[v].consumenum
+				var.activityList[v].consumenum = var.activityList[v].consumenum + val
+				if var.activityList[v].consumereward == nil then var.activityList[v].consumereward = 0 end
+				if oneConf.activities[consumeId2].ifrepeat ~= nil then
+					if var.activityList[v].consumenum >= oneConf.activities[consumeId2].consumeLimit then
+						local addnum = oneConf.activities[consumeId2].consumeLimit
+						local startnum = olddconsume - olddconsume % addnum + 1
+						local endnum = var.activityList[v].consumenum - var.activityList[v].consumenum % addnum
+						for m = startnum,endnum,addnum do
+							var.activityList[v].consumereward = var.activityList[v].consumereward + 1
+						end
+					end
+				else
+					if olddconsume < oneConf.activities[consumeId2].consumeLimit and var.activityList[v].consumenum >= oneConf.activities[consumeId2].consumeLimit then
+						var.activityList[v].consumereward = var.activityList[v].consumereward + 1
+					end
+				end
+				--debug_print("activityFunc.Actorconsume "..v..",consumenum:"..var.activityList[v].consumenum)
+
+			end
+
+			--消费积分排行榜活动
+			local rankactiveid2 = activitytypelist[15]
+			if oneConf.activities[rankactiveid2] ~= nil and oneConf.activities[rankactiveid2].id ~= nil and oneConf.activities[rankactiveid2].rankactivities.typeid == 1 then
+				activityFunc.updateActivityRank(sysarg, oneConf.activities[rankactiveid2].rankactivities, val)
+			end
+
+			--专题：富甲四方（累计消耗类）
+			local act68 = activitytypelist[68]
+			if oneConf.activities[act68] ~= nil and oneConf.activities[act68].id ~= nil then
+				if var.activityList[v].fjsfsumenum == nil then
+				   var.activityList[v].fjsfsumenum = 0 
+				end
+				var.activityList[v].fjsfsumenum = var.activityList[v].fjsfsumenum + val
+			end
+		end			
+
+	end
+end
+
+-- 用户充值
+activityFunc.actorRecharge = function( sysarg, arg)
+	local val = arg[1]
+	if val == nil or val == 0 then return end
+	--debug_print("activityFunc.actorRecharge ..."..val)
+
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+
+	-- 乾坤兑换的消费处理
+	--Exchangehandler1.countPoint(sysarg,val,0)
+
+	if var.activityList == nil then var.activityList = {} end
+
+	for i,v in ipairs(activityidlist) do
+		local oneConf = activityConf[v]
+		--如果活动还没开始
+		local state = ONLINEREWARD.GetActivityState(oneConf.activityId, var.download_from , sysarg)
+
+		if state ~= 0 then
+			--是否重置
+			ONLINEREWARD.CheckResetActivityInfo(sysarg, oneConf.activityId)
+
+			if var.activityList[v] == nil then var.activityList[v] = {} end
+			--每日充值
+			local dRechargeId = activitytypelist[4]
+			if oneConf.activities[dRechargeId] ~= nil and oneConf.activities[dRechargeId].id ~= nil then
+				if var.activityList[v].drecharge== nil then var.activityList[v].drecharge = 0 end
+				if var.activityList[v].drechargerewardnum == nil then var.activityList[v].drechargerewardnum = 0 end
+				local olddrecharge = var.activityList[v].drecharge
+				var.activityList[v].drecharge = var.activityList[v].drecharge + val
+				if oneConf.activities[dRechargeId].ifrepeat ~= nil then
+					if var.activityList[v].drecharge >= oneConf.activities[dRechargeId].rechargeLimit then
+						local addnum = oneConf.activities[dRechargeId].rechargeLimit
+						local startnum = olddrecharge - olddrecharge % addnum + 1
+						local endnum = var.activityList[v].drecharge - var.activityList[v].drecharge % addnum
+						for m = startnum,endnum,addnum do
+							var.activityList[v].drechargerewardnum = var.activityList[v].drechargerewardnum + 1
+						end
+					end
+				else
+					if olddrecharge < oneConf.activities[dRechargeId].rechargeLimit and var.activityList[v].drecharge >= oneConf.activities[dRechargeId].rechargeLimit then
+						var.activityList[v].drechargerewardnum = var.activityList[v].drechargerewardnum + 1
+					end
+				end
+				--debug_print("activityFunc.actorRecharge "..v..",drecharge:"..var.activityList[v].drecharge)
+
+			end
+
+			--每日充值,多礼包
+			local dRechargeId2 = activitytypelist[9]
+			if oneConf.activities[dRechargeId2] ~= nil and oneConf.activities[dRechargeId2].id ~= nil then 
+				
+				if var.activityList[v].drecharge == nil then var.activityList[v].drecharge = 0 end
+					if var.activityList[v].drecharge == nil then
+						var.activityList[v].drecharge = val
+					else
+						var.activityList[v].drecharge = var.activityList[v].drecharge + val
+					end
+--[[
+				local olddrecharge = var.activityList[v].drecharge
+				var.activityList[v].drecharge = var.activityList[v].drecharge + val
+				if var.activityList[v].drechargerewardnum == nil then var.activityList[v].drechargerewardnum = {} end
+				local rewardNum = #oneConf.activities[dRechargeId2].rechargerewards
+				--debug_print("drechargerewardnum olddrecharge:"..olddrecharge..",drecharge:"..var.activityList[v].drecharge)
+				if olddrecharge < oneConf.activities[dRechargeId2].rechargerewards[rewardNum][1] then
+					for p,k in ipairs(oneConf.activities[dRechargeId2].rechargerewards) do
+						if olddrecharge < k[1] and var.activityList[v].drecharge >= k[1] then
+							--debug_print("drechargerewardnum index:"..p)
+							if var.activityList[v].drechargerewardnum[p] == nil then var.activityList[v].drechargerewardnum[p] = 0 end
+							var.activityList[v].drechargerewardnum[p] = var.activityList[v].drechargerewardnum[p] + 1
+						end
+					end
+				end
+				]]
+
+			end
+
+			--充值活动
+			local rechargeId = activitytypelist[2]
+			if oneConf.activities[rechargeId] ~= nil and oneConf.activities[rechargeId].id ~= nil then
+				if var.activityList[v].rechargenum == nil then var.activityList[v].rechargenum = 0 end
+				var.activityList[v].rechargenum = var.activityList[v].rechargenum + val
+				--debug_print("activityFunc.actorRecharge "..v..",rechargenum:"..var.activityList[v].rechargenum)
+			end
+
+			--充值活动,重复单礼包
+			local rechargeId2 = activitytypelist[7]
+			if oneConf.activities[rechargeId2] ~= nil and oneConf.activities[rechargeId2].id ~= nil then
+				if var.activityList[v].rechargenum == nil then var.activityList[v].rechargenum = 0 end
+				local olddrecharge = var.activityList[v].rechargenum
+				var.activityList[v].rechargenum = var.activityList[v].rechargenum + val
+				if var.activityList[v].rechargereward == nil then var.activityList[v].rechargereward = 0 end
+				if oneConf.activities[rechargeId2].ifrepeat ~= nil then
+					if var.activityList[v].rechargenum >= oneConf.activities[rechargeId2].rechargeLimit then
+						local addnum = oneConf.activities[rechargeId2].rechargeLimit
+						local startnum = olddrecharge - olddrecharge % addnum + 1
+						local endnum = var.activityList[v].rechargenum - var.activityList[v].rechargenum % addnum
+						--debug_print("activityFunc.actorRecharge addnum:"..addnum..",startnum:"..startnum..",endnum:"..endnum)
+						for m = startnum,endnum,addnum do
+							--debug_print("activityFunc.actorRecharge index:"..m)
+							var.activityList[v].rechargereward = var.activityList[v].rechargereward + 1
+						end
+					end
+				else
+					if olddrecharge < oneConf.activities[rechargeId2].rechargeLimit and var.activityList[v].rechargenum >= oneConf.activities[rechargeId2].rechargeLimit then
+						var.activityList[v].rechargereward = var.activityList[v].rechargereward + 1
+					end
+				end
+				--debug_print("activityFunc.actorRecharge "..v..",rechargenum:"..var.activityList[v].rechargenum)
+
+			end
+
+			--单笔充值
+			local act16 = activitytypelist[16]
+			if oneConf.activities[act16] ~= nil and oneConf.activities[act16].id ~= nil then
+				if var.activityList[v].record == nil then var.activityList[v].record = {} end
+				if oneConf.activities[act16].ifrepeat ~= nil and oneConf.activities[act16].ifrepeat then
+					for p=#oneConf.activities[act16].awards,1,-1 do
+						if val >= oneConf.activities[act16].awards[p][1] then
+							if var.activityList[v].record[p] == nil then var.activityList[v].record[p] = 0 end
+							var.activityList[v].record[p] = var.activityList[v].record[p] + 1
+							break
+						end
+					end
+				else
+					local ifbreak = false
+					for p=#oneConf.activities[act16].awards,1,-1 do
+						if val >= oneConf.activities[act16].awards[p][1] then
+							if var.activityList[v].record[p] == nil then var.activityList[v].record[p] = 0 end
+							if var.activityList[v].reward == nil then var.activityList[v].reward = 0 end
+							if not System.bitOPMask(var.activityList[v].reward, p-1) then
+								var.activityList[v].record[p] = var.activityList[v].record[p] + 1
+								var.activityList[v].reward = System.bitOpSetMask(var.activityList[v].reward, p-1, true)
+								ifbreak = true
+							end
+							if ifbreak then break end
+						end
+					end
+				end
+			end
+
+			--充值返利,活动结束后按日返利
+			local act17 = activitytypelist[17]
+			if oneConf.activities[act17] ~= nil and oneConf.activities[act17].id ~= nil then
+				if var.activityList[v].record == nil then var.activityList[v].record = 0 end
+				var.activityList[v].record = var.activityList[v].record + val
+			end
+			local week = System.getDayOfWeek()
+			--每日累计充值
+			local act30 = activitytypelist[30]
+			if oneConf.activities[act30] ~= nil and oneConf.activities[act30].id ~= nil then
+				for i , j in pairs (oneConf.activities[act30].need_condition) do
+					if week == j then
+						if var.activityList[v].aggregate_recharge_rebate == nil then
+							var.activityList[v].aggregate_recharge_rebate = val
+						else
+							var.activityList[v].aggregate_recharge_rebate = var.activityList[v].aggregate_recharge_rebate + val
+						end
+						break
+					end
+				end
+			end
+			--单笔充值
+			local danbichongzhi_id_list = { [3] = 31, [4001] = 104, [4002] = 105, [4003] = 106, [4004] = 107, [4005] = 108 }
+			if danbichongzhi_id_list[v] ~= nil then
+				if var.activityList[v].signal_recharge == nil then
+					var.activityList[v].signal_recharge = {}
+				end
+				var.activityList[v].signal_recharge[#var.activityList[v].signal_recharge+1] = val
+			end
+			--累计充值
+			local act43 = activitytypelist[43]
+			if oneConf.activities[act43] ~= nil and oneConf.activities[act43].id ~= nil then
+				if var.activityList[v].leijichonzhicount == nil then
+					var.activityList[v].leijichonzhicount = 0
+				end		
+				var.activityList[v].leijichonzhicount = var.activityList[v].leijichonzhicount + val
+			end
+			
+			--【开服活动-创角7天】充值福利
+			local act47 = activitytypelist[47]
+			if oneConf.activities[act47] ~= nil and oneConf.activities[act47].id ~= nil then
+				 
+				--print("v:"..v)
+				if var.activityList[v].ca7_chargeamount == nil then
+					var.activityList[v].ca7_chargeamount = 0
+				end
+			
+				var.activityList[v].ca7_chargeamount = var.activityList[v].ca7_chargeamount + val
+				debug_print("recharge:"..var.activityList[v].ca7_chargeamount)
+		 
+			end
+			--充值返利活动
+			local act48 = activitytypelist[48]
+			if oneConf.activities[act48] ~= nil and oneConf.activities[act48].id ~= nil then
+				if var.activityList[v].chongzhifanlicount == nil then
+					var.activityList[v].chongzhifanlicount = 0
+				end		
+				var.activityList[v].chongzhifanlicount = var.activityList[v].chongzhifanlicount + val
+			end
+
+			--每日充值返利活动循环
+			local mrczfl_id_list = {[24] = 97,[31] = 110, [3001] = 50,[3002] = 92,[3003] = 93,[3004] = 94,[3005] = 95}
+			--local act50 = activitytypelist[50]
+			if mrczfl_id_list[v] ~= nil then
+			-- if oneConf.activities[act50] ~= nil and oneConf.activities[act50].id ~= nil then
+				if var.activityList[v].meirichongzhifanlicount == nil then
+					var.activityList[v].meirichongzhifanlicount = 0
+				end		
+				var.activityList[v].meirichongzhifanlicount = var.activityList[v].meirichongzhifanlicount + val
+				--print("===每日充值返利活动循环",v,mrczfl_id_list[v],var.activityList[v].meirichongzhifanlicount)
+			end
+
+			--有粮领豪礼
+			local act69 = activitytypelist[69]
+			if oneConf.activities[act69] ~= nil and oneConf.activities[act69].id ~= nil then
+				if var.activityList[v].yllhl_count == nil then
+					var.activityList[v].yllhl_count = 0
+				end		
+				var.activityList[v].yllhl_count = var.activityList[v].yllhl_count + val
+			end
+
+		else
+			--var.activityList[v] = nil
+		end
+	end
+
+end
+
+
+-- 玩家登陆，发送开启活动列表id
+activityFunc.onActorLogin = function(sysarg)
+	--print("--玩家登陆，发送开启活动列表id")
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	
+    local result = {}
+	for i,v in ipairs(activityidlist) do
+		local oneConf = activityConf[v]
+		local state = ONLINEREWARD.GetActivityState(oneConf.activityId, var.download_from , sysarg )
+		table.insert(result, { activityId = oneConf.activityId, state = state })
+	end
+	local npack = DataPack.allocPacket(sysarg,200,22)  --申请一个数据包
+    if npack == nil then return end
+	DataPack.writeInt(npack,#result)
+	for i,v in ipairs(result) do
+		DataPack.writeInt(npack,v.activityId)
+		DataPack.writeInt(npack,v.state)
+		--print("--activityId:"..v.activityId.."state:"..v.state)
+	end
+	DataPack.flush(npack)
+end
+--登陆
+activityFunc.activityLogin = function(sysarg, arg)
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	if var.activityList == nil then var.activityList = {} end
+	--activityFunc.tailActivityAddNum(sysarg, 1, var.c_version)
+
+	for i,v in ipairs(activityidlist) do
+		local oneConf = activityConf[v]
+		--登陆活动
+		local loginId = activitytypelist[1]
+		local loginId2 = activitytypelist[11]
+		local loginId3 = activitytypelist[13]
+		--新手大礼包
+		local loginId4 = activitytypelist[33]
+		local state = ONLINEREWARD.GetActivityState(oneConf.activityId, var.download_from , sysarg)
+		--print("---玩家登陆平台："..var.download_from.."活动id:"..oneConf.activityId.."状态："..state)
+		--活动中
+		if state ~= 0 then
+			--是否重置
+			ONLINEREWARD.CheckResetActivityInfo(sysarg, oneConf.activityId)
+
+			--是不是有这个活动
+			-- if oneConf.activities[loginId] ~= nil and oneConf.activities[loginId].id ~= nil then
+			-- 	if var.activityList[v] == nil then var.activityList[v] = {} end
+			-- 	if var.activityList[v].loginnum == nil then 
+			-- 		var.activityList[v].loginnum = 1
+			-- 	else
+			-- 		if var.First_loging == nil then 
+			-- 			var.First_loging = 1
+			-- 			var.activityList[v].loginnum = var.activityList[v].loginnum + 1
+			-- 		end
+			-- 	end
+			-- end
+			--是不是有这个活动
+			if oneConf.activities[loginId2] ~= nil and oneConf.activities[loginId2].id ~= nil then
+				if var.activityList[v] == nil then var.activityList[v] = {} end
+				if var.activityList[v].onceloginreward == nil then
+					local level = LActor.getLevel(sysarg)
+					if level >= oneConf.activities[loginId2].level then 
+						var.activityList[v].onceloginreward = 1 
+					elseif oneConf.activities[loginId2].iffirst then
+						var.activityList[v].onceloginreward = 0
+					end
+				end
+			end
+			--每日登陆有礼,多礼包
+			if oneConf.activities[loginId3] ~= nil and oneConf.activities[loginId3].id ~= nil then
+				--debug_print("activityFunc.activityLogin activeid:"..v..",loginId3")
+				local level = LActor.getLevel(sysarg)
+				if level >= oneConf.activities[loginId3].level then
+					--debug_print("activityFunc.activityLogin activeid:"..v..",loginId3,level:"..level)
+					if var.activityList[v] == nil then var.activityList[v] = {} end
+					local runDays = ONLINEREWARD.GetActivityRunDays(oneConf.activityId, var.download_from)
+					if runDays >= 1 then
+						--debug_print("activityFunc.activityLogin activeid:"..v..",loginId3,runDays:"..runDays)
+						if var.activityList[v].dailyloginrecord == nil then var.activityList[v].dailyloginrecord = 0 end
+						var.activityList[v].dailyloginrecord = System.bitOpSetMask(var.activityList[v].dailyloginrecord, runDays - 1, true)
+					end
+				end
+			end
+			if oneConf.activities[loginId4] ~= nil and oneConf.activities[loginId4].id ~= nil then
+				if var.activityList[v] == nil then var.activityList[v] = {} end
+				if var.activityList[v].loginyouli == nil then
+					local context = oneConf.activities[loginId4].context
+					local title = oneConf.activities[loginId4].title
+					local itemid1 ,itemnum1, itemid2, itemnum2 = oneConf.activities[loginId4].reward[1][1] ,oneConf.activities[loginId4].reward[1][2] or 1,oneConf.activities[loginId4].reward[2][1] ,oneConf.activities[loginId4].reward[2][2] or 1
+					System.sendGmMailOffLine(LActor.getActorId(sysarg), context , 1, itemid1, itemnum1, 1,title,1,itemid2,itemnum2)
+					var.activityList[v].loginyouli = 1
+				end
+			end
+		end
+	end
+
+	
+
+end
+
+activityFunc.activityid_map_to_which_day = nil
+activityFunc.read_activityid_map_to_which_day=function()
+	--读取配置,保留活动在第几天
+	local openserver_createactor7=CreateActivity_conf.openserver_createactor7
+	local conf={}
+	for i=1,#openserver_createactor7 do
+		for k,activeid in ipairs(openserver_createactor7[i]) do
+			if conf[activeid] ==nil then 
+				conf[activeid] = i 
+			end
+
+		end
+
+	end
+	activityFunc.activityid_map_to_which_day=conf
+
+
+end
+activityFunc.read_activityid_map_to_which_day()
+
+
+-- 升级
+activityFunc.activityLevelup = function(sysarg, arg)
+	local newLevel = arg[1]
+	local oldLevel = arg[2]
+	if newLevel == nil or oldLevel == nil then
+		debug_print("activityLevelup arg error")
+		return 
+	end
+
+	--25级以下的角色都不走下面的检测，主要是25级以下升级太快，检测太频繁，所以活动的等级相关都在25级以上吧
+	if newLevel < 30 then return end
+
+	--debug_print("activityFunc.activityLevelup")
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	if var.activityList == nil then var.activityList = {} end
+
+	for i,v in ipairs(activityidlist) do
+		local oneConf = activityConf[v]
+		--登陆有礼
+		local loginId2 = activitytypelist[11]
+		local loginId3 = activitytypelist[13]
+		local state = ONLINEREWARD.GetActivityState(oneConf.activityId, var.download_from, sysarg )
+		--活动中
+		if state ~= 0 then
+			--是否重置
+			ONLINEREWARD.CheckResetActivityInfo(sysarg, oneConf.activityId)
+
+			if oneConf.activities[loginId2] ~= nil and oneConf.activities[loginId2].id ~= nil and (not oneConf.activities[loginId2].iffirst) then
+				if var.activityList[v] == nil then var.activityList[v] = {} end
+				if var.activityList[v].onceloginreward == nil then
+					if newLevel >= oneConf.activities[loginId2].level then 
+						var.activityList[v].onceloginreward = 1 
+					end
+				end
+			end
+
+			--每日登陆有礼,多礼包
+			if oneConf.activities[loginId3] ~= nil and oneConf.activities[loginId3].id ~= nil then
+				--debug_print("activityFunc.activityLevelup activeid:"..v..",loginId3")
+				if newLevel >= oneConf.activities[loginId3].level then
+					if var.activityList[v] == nil then var.activityList[v] = {} end
+					local runDays = ONLINEREWARD.GetActivityRunDays(oneConf.activityId, var.download_from)
+					if runDays >= 1 then
+						if var.activityList[v].dailyloginrecord == nil then var.activityList[v].dailyloginrecord = 0 end
+						var.activityList[v].dailyloginrecord = System.bitOpSetMask(var.activityList[v].dailyloginrecord, runDays - 1, true)
+					end
+				end
+			end
+		end
+	end
+end
+--当竞技场胜利时处理
+activityFunc.OnfightWint = function(sysarg)
+	--return
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	if var.activityList == nil then var.activityList = {} end
+
+	for i,v in ipairs(activityidlist) do
+		local oneConf = activityConf[v]
+		--登陆活动
+		local loginId = activitytypelist[24]
+		local state = ONLINEREWARD.GetActivityState(oneConf.activityId, var.download_from, sysarg)
+
+		--活动中
+		if state ~= 0 then
+			--是否重置
+			ONLINEREWARD.CheckResetActivityInfo(sysarg, oneConf.activityId)
+
+			--是不是有这个活动
+			if oneConf.activities[loginId] ~= nil and oneConf.activities[loginId].id ~= nil then
+				if var.activityList[v] == nil then var.activityList[v] = {} end
+				if var.activityList[v].fightWintimes == nil then 
+					var.activityList[v].fightWintimes = 0 
+				
+
+				else
+					var.activityList[v].fightWintimes = var.activityList[v].fightWintimes + 1
+				end
+			end
+		end
+	end
+end
+
+--当竞技场失败时处理
+activityFunc.OnfightLost = function(sysarg)
+	--return
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	if var.activityList == nil then var.activityList = {} end
+
+	for i,v in ipairs(activityidlist) do
+		local oneConf = activityConf[v]
+		--登陆活动
+		local loginId = activitytypelist[24]
+		local state = ONLINEREWARD.GetActivityState(oneConf.activityId, var.download_from , sysarg)
+
+		--活动中
+		if state ~= 0 then
+			--是否重置
+			ONLINEREWARD.CheckResetActivityInfo(sysarg, oneConf.activityId)
+
+			--是不是有这个活动
+			if oneConf.activities[loginId] ~= nil and oneConf.activities[loginId].id ~= nil then
+				if var.activityList[v] == nil then var.activityList[v] = {} end
+				var.activityList[v].fightWintimes = 0
+			end
+		end
+	end
+end
+--判断聚宝盆活动是否开启，开启则返回true,暴击倍数
+activityFunc.isBaojiActivityOpen = function(sysarg  )
+	--return false,1
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	for i,v in ipairs(activityidlist) do
+		local oneConf = activityConf[v]
+		--登陆活动
+		local loginId = activitytypelist[27]
+		--local oneConf = activityConf[activeid].activities[activitytype]
+		local state = ONLINEREWARD.GetActivityState(oneConf.activityId, var.download_from, sysarg)
+
+		--活动中
+		if state ~= 0 then
+			--是否重置
+			ONLINEREWARD.CheckResetActivityInfo(sysarg, oneConf.activityId)
+
+			--是不是有这个活动
+			if oneConf.activities[loginId] ~= nil and oneConf.activities[loginId].id ~= nil then
+				local target = oneConf.activities[loginId].target
+				local baojiCount = oneConf.activities[loginId].baojicount
+				for k , v in ipairs ( target ) do
+					local nCurMiniTime = System.getCurrMiniTime()
+					local nYear = 0
+					local nMonth = 0
+					local nDay = 0
+					local nYear , nMonth ,nDay = System.getDate(nYear , nMonth, nDay)
+					local nTimeString = string.format("%d-%d-%d ",nYear,nMonth,nDay)
+					local nStartTimeStr = nTimeString..v[1]
+					local nEndTimeStr = nTimeString..v[2]
+					print(nStartTimeStr)
+					print(nEndTimeStr)
+
+					local nMiniStartTime  = System.toMiniTime(nStartTimeStr)
+					local nMiniEndTime = System.toMiniTime(nEndTimeStr)
+					if nCurMiniTime >= nMiniStartTime and nCurMiniTime <= nMiniEndTime then
+						print("--第"..k.."个时间段的活动")
+						return true,baojiCount[k] or 1
+					end 
+				end
+			end
+		end
+	end
+	return false, 1
+end
+activityFunc.OnTianJiTreasure = function(sysarg)
+	--return
+	local var = LActor.getStaticVar(sysarg)
+	print("--天级十连抽--")
+	if var == nil then return end
+	for i,v in ipairs(activityidlist) do
+		local oneConf = activityConf[v]
+		--登陆活动
+		local tjbaozhangId = activitytypelist[28]
+		--local oneConf = activityConf[activeid].activities[activitytype]
+		local state = ONLINEREWARD.GetActivityState(oneConf.activityId, var.download_from , sysarg)
+
+		--活动中
+		if state ~= 0 then
+			--是否重置
+			ONLINEREWARD.CheckResetActivityInfo(sysarg, oneConf.activityId)
+
+			--是不是有这个活动
+			if oneConf.activities[tjbaozhangId] ~= nil and oneConf.activities[tjbaozhangId].id ~= nil then
+				if var.activityList[v] == nil then 
+					var.activityList[v] = {} 
+				end
+				if var.activityList[v].tjbaozhangCount == nil then
+					var.activityList[v].tjbaozhangCount = 0
+				end
+				var.activityList[v].tjbaozhangCount = var.activityList[v].tjbaozhangCount + 1
+			end
+		end
+	end
+end
+
+activityFunc.SendTianJiTreasureTimes = function (sysarg)
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	for i,v in ipairs(activityidlist) do
+		local oneConf = activityConf[v]
+		--登陆活动
+		local tjbaozhangId = activitytypelist[28]
+		--local oneConf = activityConf[activeid].activities[activitytype]
+		local state = ONLINEREWARD.GetActivityState(oneConf.activityId, var.download_from ,sysarg)
+
+		--活动中
+		if state ~= 0 then
+			--是否重置
+			ONLINEREWARD.CheckResetActivityInfo(sysarg, oneConf.activityId)
+
+			--是不是有这个活动
+			if oneConf.activities[tjbaozhangId] ~= nil and oneConf.activities[tjbaozhangId].id ~= nil then
+				if var.activityList[v] == nil then 
+					var.activityList[v] = {} 
+				end
+				if var.activityList[v].tjbaozhangCount == nil then
+					var.activityList[v].tjbaozhangCount = 0
+				end
+				local tjbaozhangCount = var.activityList[v].tjbaozhangCount
+				--print("---tjbaozhangCount:"..var.activityList[v].tjbaozhangCount)
+				local pack = DataPack.allocPacket(sysarg, 52, 3)
+				if pack == nil then return end
+
+				DataPack.writeInt(pack, tjbaozhangCount)
+				DataPack.flush(pack)
+				--print("--发送十连抽次数，count:"..tjbaozhangCount)
+			end
+		end
+	end
+end
+
+--64.【开服活动-创角7天】天级宝藏 寻宝次数
+activityFunc.OnTianJiTreasureAllTime=function(sysarg,count)
+  debug_print("activityFunc.OnTianJiTreasureAllTime count"..count)
+
+  local var = LActor.getStaticVar(sysarg)
+   
+  if var == nil then return end
+  for i,v in ipairs(activityidlist) do
+    local oneConf = activityConf[v]
+     
+    local huodongid = activitytypelist[64]
+    --local oneConf = activityConf[activeid].activities[activitytype]
+    local state = ONLINEREWARD.GetActivityState(oneConf.activityId, var.download_from , sysarg)
+
+    --活动中
+    if state ~= 0 then
+      --是否重置
+      ONLINEREWARD.CheckResetActivityInfo(sysarg, oneConf.activityId)
+
+ 
+
+
+      if activityFunc.activityid_map_to_which_day==nil then
+      	 activityFunc.read_activityid_map_to_which_day()
+      end
+      --[[
+      local open_at_whichday=activityFunc.activityid_map_to_which_day[huodongid] --在哪天开启
+      if open_at_whichday == nil then return end 
+
+	  local createday = ONLINEREWARD.getCreateActorDay( sysarg )
+	  if createday < open_at_whichday then
+	  	debug_print("createday,"..createday..",open at"..open_at_whichday..",not open") 
+	  	return 
+	  end
+	  ]]
+
+
+      --是不是有这个活动
+      if oneConf.activities[huodongid] ~= nil and oneConf.activities[huodongid].id ~= nil then
+        if var.activityList[v] == nil then 
+          var.activityList[v] = {} 
+        end
+        if var.activityList[v].tianjibaozang_count == nil then
+          var.activityList[v].tianjibaozang_count = 0
+        end
+        var.activityList[v].tianjibaozang_count = var.activityList[v].tianjibaozang_count + count
+
+        debug_print("tianjibaozang_count:"..var.activityList[v].tianjibaozang_count)
+      end
+    end
+  end
+
+end
+
+--（大活动54）72. 寻宝助秀成霸业  天级宝藏 寻宝次数
+activityFunc.onTianjiXunBao=function(sysarg,count)
+  debug_print("XXX--activityFunc.onTianjiXunBao count"..count)
+
+  local var = LActor.getStaticVar(sysarg)
+   
+  if var == nil then return end
+  for i,v in ipairs(activityidlist) do
+    local oneConf = activityConf[v]
+     
+    local huodongid = activitytypelist[72]
+    --local oneConf = activityConf[activeid].activities[activitytype]
+    local state = ONLINEREWARD.GetActivityState(oneConf.activityId, var.download_from , sysarg)
+
+    --活动中
+    if state ~= 0 then
+      --是否重置
+      ONLINEREWARD.CheckResetActivityInfo(sysarg, oneConf.activityId)
+
+  
+      --是不是有这个活动
+      if oneConf.activities[huodongid] ~= nil and oneConf.activities[huodongid].id ~= nil then
+        if var.activityList[v] == nil then 
+          var.activityList[v] = {} 
+        end
+        if var.activityList[v].tianjixunbaocount == nil then
+          var.activityList[v].tianjixunbaocount = 0
+        end
+        
+        var.activityList[v].tianjixunbaocount = var.activityList[v].tianjixunbaocount + count
+
+        debug_print("after tianjixunbao count:"..var.activityList[v].tianjixunbaocount)
+      end
+    end
+  end
+
+end
+
+--65.【开服活动-创角7天】坐骑提升(进阶)
+activityFunc.onMountLevelUpgrade=function(sysarg,stage)
+  debug_print("activityFunc.onMountLevelUpgrade")
+
+ 
+
+  local var = LActor.getStaticVar(sysarg)
+   
+  if var == nil then return end
+
+
+
+  for i,v in ipairs(activityidlist) do
+    local oneConf = activityConf[v]
+     
+    local huodongid = activitytypelist[65]
+
+    if huodongid == nil then return end 
+    --local oneConf = activityConf[activeid].activities[activitytype]
+    local state = ONLINEREWARD.GetActivityState(oneConf.activityId, var.download_from , sysarg)
+
+    --活动中
+    if state ~= 0 then
+      --是否重置
+      ONLINEREWARD.CheckResetActivityInfo(sysarg, oneConf.activityId)
+
+
+       
+      if activityFunc.activityid_map_to_which_day==nil then
+      	 activityFunc.read_activityid_map_to_which_day()
+      end
+
+      --是不是有这个活动
+      if oneConf.activities[huodongid] ~= nil and oneConf.activities[huodongid].id ~= nil then
+        if var.activityList[v] == nil then 
+          var.activityList[v] = {} 
+        end
+        
+        var.activityList[v].mount_level_upgrade_count =stage  --实际存储的是坐骑的阶数
+
+        debug_print("mount_level_upgrade_count:"..var.activityList[v].mount_level_upgrade_count)
+      end
+    end
+  end
+	
+end
+
+--52.【开服活动-创角7天】聚宝盆  count:聚宝的次数
+activityFunc.onJuBaoOperate=function(sysarg,count)
+  debug_print("activityFunc.onJuBaoOperate count:"..count)
+  local var = LActor.getStaticVar(sysarg)
+   
+  if var == nil then return end
+
+  
+  for i,v in ipairs(activityidlist) do
+    local oneConf = activityConf[v]
+     
+    local huodongid = activitytypelist[52]
+
+    if huodongid == nil then return end 
+  
+    --local oneConf = activityConf[activeid].activities[activitytype]
+    local state = ONLINEREWARD.GetActivityState(oneConf.activityId, var.download_from , sysarg)
+
+    --活动中
+    if state ~= 0 then
+      --是否重置
+      ONLINEREWARD.CheckResetActivityInfo(sysarg, oneConf.activityId)
+
+      if activityFunc.activityid_map_to_which_day==nil then
+      	 activityFunc.read_activityid_map_to_which_day()
+      end
+      --[[
+      local open_at_whichday=activityFunc.activityid_map_to_which_day[huodongid] --在哪天开启
+      
+      if open_at_whichday == nil then return end 
+
+	  local createday = ONLINEREWARD.getCreateActorDay( sysarg )
+	  if createday < open_at_whichday then
+	  	debug_print("createday,"..createday..",open at"..open_at_whichday..",not open") 
+	  	return 
+	  end
+	  ]]
+
+
+      --是不是有这个活动
+      if oneConf.activities[huodongid] ~= nil and oneConf.activities[huodongid].id ~= nil then
+        if var.activityList[v] == nil then 
+          var.activityList[v] = {} 
+        end
+        
+        if var.activityList[v].jubao_count == nil then
+         	 var.activityList[v].jubao_count = 0
+        end
+        var.activityList[v].jubao_count = var.activityList[v].jubao_count + count
+        debug_print("a jubao_count:"..var.activityList[v].jubao_count)
+
+
+      end
+    end
+  end
+	
+end
+
+--59装备洗练
+activityFunc.onEquipXiLianActivity=function(sysarg,count)
+  debug_print("activityFunc.onEquipXiLianActivity count:"..count)
+  local var = LActor.getStaticVar(sysarg)
+   
+  if var == nil then return end
+
+  
+  for i,v in ipairs(activityidlist) do
+    local oneConf = activityConf[v]
+     
+    local huodongid = activitytypelist[59]
+
+    if huodongid == nil then return end 
+  
+    --local oneConf = activityConf[activeid].activities[activitytype]
+    local state = ONLINEREWARD.GetActivityState(oneConf.activityId, var.download_from , sysarg)
+
+    --活动中
+    if state ~= 0 then
+      --是否重置
+      ONLINEREWARD.CheckResetActivityInfo(sysarg, oneConf.activityId)
+
+      --[[
+       local open_at_whichday=activityFunc.activityid_map_to_which_day[huodongid] --在哪天开启
+      
+      if open_at_whichday == nil then return end 
+
+	  local createday = ONLINEREWARD.getCreateActorDay( sysarg )
+	  if createday < open_at_whichday then
+	  	debug_print("createday,"..createday..",open at"..open_at_whichday..",not open") 
+	  	return 
+	  end
+	  ]]
+
+
+
+      --是不是有这个活动
+      if oneConf.activities[huodongid] ~= nil and oneConf.activities[huodongid].id ~= nil then
+        if var.activityList[v] == nil then 
+          var.activityList[v] = {} 
+        end
+        
+        if var.activityList[v].equip_xianlian_count == nil then
+         	 var.activityList[v].equip_xianlian_count = 0
+        end
+        var.activityList[v].equip_xianlian_count = var.activityList[v].equip_xianlian_count + count
+        debug_print("a equip_xianlian_count:"..var.activityList[v].equip_xianlian_count)
+
+      end
+    end
+  end
+	
+end
+
+
+
+--80.红包返利
+activityFunc.onSendHongBaoRebate=function(sysarg,money)
+  debug_print("activityFunc.onSendHongBaoRebate money"..money)
+
+  local var = LActor.getStaticVar(sysarg)
+   
+  if var == nil then return end
+  for i,v in ipairs(activityidlist) do
+    local oneConf = activityConf[v]
+     
+    local huodongid = activitytypelist[80]
+
+    if huodongid == nil then return end 
+
+    --local oneConf = activityConf[activeid].activities[activitytype]
+    local state,starttime,endtime = ONLINEREWARD.GetActivityState(oneConf.activityId, var.download_from , sysarg)
+    
+  
+
+    --活动中
+    if state ~= 0 then
+      --是否重置
+      ONLINEREWARD.CheckResetActivityInfo(sysarg, oneConf.activityId)
+
+ 
+      --是不是有这个活动
+      if oneConf.activities[huodongid] ~= nil and oneConf.activities[huodongid].id ~= nil then
+          local year, month, day, hour, minute, sec = 0, 0, 0, 0, 0, 0
+      year, month, day, hour, minute, sec = System.timeDecode(starttime, year, month, day, hour, minute, sec)
+      --local timestr = string.format("%d-%d-%d  %d:%d:%d", year, month, day, hour, minute, sec)
+ 
+      local year2, month2, day2, hour2, minute2, sec2 = 0, 0, 0, 0, 0, 0
+      year2, month2, day2, hour2, minute2, sec2 = System.timeDecode(endtime, year2, month2, day2, hour2, minute2, sec2)
+       
+
+      local returnPercent=oneConf.activities[huodongid].hongbao_return_ratio 
+      local returnMoney=math.floor(money * returnPercent )
+      debug_print("returnMoney:")
+      debug_print(returnMoney)
+           --%d月%d日~%d月%d日  
+      local tipmsg
+      if month == month2 and day == day2   then  --相同日期的话显示一个%d
+      		tipmsg=string.format(Lang.ScriptTips.hongBaoRebate003,month,day,returnPercent*100)
+      else 
+         	tipmsg=string.format(Lang.ScriptTips.hongBaoRebate001,month,day,month2,day2,returnPercent*100)
+      end
+      if returnMoney > 0 then 
+               System.sendGmMailOffLine(LActor.getActorId(sysarg), tipmsg, 2, mtYuanbao, returnMoney, 1, Lang.ScriptTips.hongBaoRebate002)
+      end 
+
+      System.logCounter(
+                LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), 
+                "activityreward",tostring(v) , tostring(huodongid), "", string.format("%s:%s",money,returnMoney),
+                tostring(LActor.getName(sysarg)), var.download_from, "", lfDB
+               )
+       
+
+          debug_print("onSendHongBaoRebate:")
+      end
+    end
+  end
+
+end
+
+
+activityFunc.Activityinit = function()
+	--排行榜活动
+	local rankactiveid = activitytypelist[6]
+	for i,v in ipairs(activityidlist) do
+		--debug_print("activityFunc.Activityinit v:"..v)
+		if activityConf[v].activities[rankactiveid] ~= nil and activityConf[v].activities[rankactiveid].id ~= nil then
+			for p,k in ipairs(activityConf[v].activities[rankactiveid].rankactivities) do
+				local rankName = k.CharmRankName
+				local thisRank = Ranking.getRanking(rankName) --通过排行名称获取排行对象
+				if thisRank == nil then  
+					thisRank = MiscFunc.InitRank(rankName, rankName, 5, {"aname", "get"})
+				end
+			end
+		end
+	end
+end
+
+-- table.insert(InitFnTable, activityFunc.Activityinit)
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeConsumeYuanbao, activityFunc.Actorconsume)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, activityFunc.newDayforActivity)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, activityFunc.activityLogin)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeLevel, activityFunc.activityLevelup)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeRecharge, activityFunc.actorRecharge)
+--EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, activityFunc.onActorLogin)
+

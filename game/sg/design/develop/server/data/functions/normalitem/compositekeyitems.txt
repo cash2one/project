@@ -1,0 +1,39 @@
+﻿--lua script
+
+--地牢钥匙碎片的功能函数，合成一把地牢钥匙 
+
+function compositeKeyItemFunc(sysarg,itemidx,itemPtr,ItemTable)
+   if ItemTable == nil then return end
+   local otheritem = ItemTable.otheritem_id
+   if not LActor.canAddItem(sysarg,ItemTable.newitem_id,1) then
+     -- LActor.sendTipmsg(sysarg,Lang.ScriptTips.f00027,ttDialog)
+     LActor.SendGeneralTips(sysarg, 7, 0, 0)
+     return
+   end
+   local result = 1 
+   for i = 1 ,#otheritem do
+     local id = otheritem[i]
+     if  LActor.getItemCount(sysarg,id) < 1 then 
+       result = 0 
+     end
+   end
+   if result == 1 then 
+     LActor.addItem(sysarg,ItemTable.newitem_id,0,0,1,0,"",1)
+     if ItemTable.needDelete then
+       for i = 1,#otheritem do
+        LActor.removeItem(sysarg,otheritem[i],1,-1,-1,-1,"",5)
+       end
+     end
+     LActor.sendTipmsg(sysarg,Lang.ScriptTips.f00029,ttDialog)
+   else
+     LActor.sendTipmsg(sysarg,Lang.ScriptTips.f00030,ttDialog)
+   end
+end
+function  KeyDebrisItemsInit(sysarg)
+  for i = 1,table.getn(DungeonKeyDebrisItems) do
+	local x = DungeonKeyDebrisItems[i]
+	GlobalItemFn[x.item_id] = { func = compositeKeyItemFunc, params = x }
+  end
+end
+
+table.insert(InitFnTable,KeyDebrisItemsInit)

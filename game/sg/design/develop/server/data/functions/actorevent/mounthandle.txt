@@ -1,0 +1,2170 @@
+﻿--处理坐骑相关的操作
+
+--#include "data\config\mounts\Mounts.txt" once --
+--#include "data\functions\tasks\fengcereward\fcactivefunc.txt" once
+--#include "data\functions\systems\timereward\activityautorun.txt" once
+
+MountOpFuncList = {}
+SpecialMountOpFuncList = {}
+
+MountOpFuncList.MaxLevel = 11 -- 最高等级
+MountOpFuncList.SkillMaxLevel = 10 -- 技能最高等级
+
+-- --初始化 execel导出的配置赋值过来
+-- MountOpFuncList.init = function () 
+-- 	Mounts.SkillConfig = zqSkillConfig
+-- 	Mounts.stagesOther = zqTeShuConfig
+-- 	Mounts.stages = zqPutongConfig
+-- end
+
+-- MountOpFuncList.init()
+
+
+--获取商城物品id
+MountOpFuncList.GetShangChengItem = function ( id_item)
+	local items = GameStore[7].items
+	for k,v in pairs(items) do
+		if v.item == id_item then
+			return v.id
+		end
+	end
+	return -1
+end
+
+--随机出一个索引
+--@param randsTbale概论表
+function MountOpFuncList.getRandomIndex( randsTbale )
+	local rands = System.getRandomNumber(100) + 1
+	local sum = 0
+	for i=1,#randsTbale do
+		if rands <= randsTbale[i] + sum then
+			return i
+		end
+		sum = sum + randsTbale[i]
+	end
+	return 0
+end
+
+EventCallDispatcher.HandlerMountOp = function (sysarg, args)
+	if args[1] == nil then return end   --
+	local func = MountOpFuncList[args[1]]
+	if func ~= nil then
+		func(sysarg, args[2]) 
+	end
+end
+
+EventCallDispatcher.HandleSpecialMount = function (sysarg, args)
+	if args[1] == nil then 
+		return
+	end
+	local func = SpecialMountOpFuncList[ args[1] ]
+	if func ~= nil then 
+		func(sysarg, args)
+	end
+end
+
+--激活特殊坐骑
+SpecialMountOpFuncList[1] = function ( sysarg, args )
+	if not LActor.isActorSystemOpen(sysarg, siMount) then 
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.mount001, ttMessage)
+		return
+	end
+	if #args ~= 4 then 
+		return
+	end
+	local pItem = args[2]
+	local itemId = args[3]
+	local useTime = args[4]
+	--print("------------------------------------here1-------------------------------")
+	--local pItem = Item.getBagItemPtrByGuid(sysarg, guid)
+	if pItem == nil then
+		return
+	end
+	--print("------------------------------------here2-------------------------------")
+
+	--print("itemId:" .. itemId)
+	local index
+	local result = false
+	local conf = Mounts.stagesOther
+	for i=1, #conf do 
+		if itemId == conf[i].openItemId then
+			index = i
+			result = true
+			break
+		end
+	end
+
+	if result then 
+		if MountOpFuncList.openSpecialMount(sysarg, index, useTime) == true then
+			--删除道具 
+			LActor.removeItemByPtr(sysarg, pItem, 1, true, "useSpecialMountItem", 2)
+		end
+
+		--MountOpFuncList.changeShengling(sysarg, 0)
+	end
+end
+
+--特殊坐骑过时
+SpecialMountOpFuncList[2] = function ( sysarg, args )
+	local level, stage, stage_point, lingxi, stage_model, next_level_t = LActor.getMountInfo(sysarg)
+	local conf = Mounts.stagesOther
+	local var_s = LActor.getStaticVar(sysarg)
+	local currTime = System.getCurrMiniTime()
+	if var_s.specialModelId == nil then 
+		var_s.specialModelId = 0
+	end
+	if var_s.specialModelTime == nil then 
+		--这里是严重错误
+		print("SpecialMountOpFuncList[2] major error : " .. LActor.getName(sysarg) )
+		return
+	end
+	for i=1 , #conf do 
+		if var_s.specialModelTime[i] == nil then 
+			print("SpecialMountOpFuncList[2] major error : " .. LActor.getName(sysarg) .. "," .. i)
+			var_s.specialModelTime[i] = 0
+		end
+
+		if var_s.specialModelTime[i] > 0 and var_s.specialModelTime[i] <= currTime then 
+			var_s.specialModelTime[i] = 0
+			--通知客户端时间已过
+			MountOpFuncList.SendSpecialMountState(sysarg, conf[i].modelId, var_s.specialModelTime[i], 0)
+			LActor.setMountSpecialModel( sysarg, i, var_s.specialModelTime[i] , conf[i].modelId )
+			--如果是当前的造型
+
+			--设置当前的特殊坐骑关闭
+			if var_s.specialModelOpened[i] == nil or var_s.specialModelOpened[i] == 1 then
+				var_s.specialModelOpened[i] = 0
+			end
+
+			if var_s.specialModelId == conf[i].modelId then 
+				var_s.specialModelId = 0
+				LActor.setMountSpecialModelId(sysarg, var_s.specialModelId)
+				LActor.setMountModel(sysarg, stage, stage_model, -1)
+			end
+		end
+	end
+
+	--需要重新计算属性
+	local a1, a2, a3, a4, a5, a6 ,a7 = MountOpFuncList.CalcAttr(sysarg, level, stage, stage_point)
+	--print("attr:",a1, a2, a3, a4, a5, a6 ,a7)
+	LActor.setMountAttr(sysarg, a1, a2, a3,a4, a5, a6 ,a7)
+
+	--MountOpFuncList.changeShengling(sysarg, 0)
+end
+
+MountOpFuncList.SendSpecialMountState = function ( sysarg , modelId , useTime, ismodelopen )
+	local pPack = DataPack.allocPacket(sysarg, 19, 14)
+	DataPack.writeInt(pPack , modelId )
+	DataPack.writeUInt(pPack , useTime) 
+	DataPack.writeByte(pPack, ismodelopen)
+	DataPack.flush(pPack)
+end
+
+MountOpFuncList.GetStar = function ( stage, stage_point )
+	-- local per = Mounts.stages[stage].point / 10
+	-- local star = math.floor(stage_point / per) + 1
+	-- if star > 10 then star = 10 end
+	-- return star
+end
+
+MountOpFuncList.CalcAttr = function (sysarg, level, stage, stage_point)
+	
+	local var_s = LActor.getStaticVar(sysarg)
+	--对应每个属性:生命	攻击	物防	道防	暴击	抗暴	会心
+	local specialAttr = {0,0,0,0,0,0,0}
+	if var_s.specialModelTime ~= nil then 
+		local conf = Mounts.stagesOther
+		for i=1 , #conf do 
+			--print("i:"..tostring(i))
+			--print("var_s.specialModelTime[i]:"..tostring(var_s.specialModelTime[i]))
+			--print("var_s.specialModelOpened[i]:"..tostring(var_s.specialModelOpened[i]))
+			if var_s.specialModelTime[i] ~= nil and (var_s.specialModelTime[i] > 0 or var_s.specialModelTime[i] == -1) 
+				and var_s.specialModelOpened ~= nil and var_s.specialModelOpened[i] == 1 then 
+					for j=1, #specialAttr do 
+						specialAttr[j] = specialAttr[j] + (conf[i].base[j] or 0)
+					end
+			end
+		end
+	end
+
+	--local star = MountOpFuncList.GetStar(stage, stage_point)
+	--local stageConf = Mounts.stages[stage].base[star]
+	--local x1, x2, x3, x4, x5 = LActor.getMountXilian(sysarg)
+	local attr = {}
+	local conf =  Mounts.stages[stage].base[level]
+	--print("stage:"..tostring(stage))
+	--print("level:"..tostring(level))
+	for i=1,7 do
+		--print("i:"..tostring(i))
+		--print("conf[i]:"..type(conf[i]).." "..tostring(conf[i]))
+		--print("specialAttr[i]:"..type(specialAttr[i]).." "..tostring(specialAttr[i]))
+		attr[i] = conf[i] +  specialAttr[i] --基础属性加上特殊坐骑属性
+	end
+	-- local a1 = Mounts.rate[1] * level * (x1 + stageConf[1]) + Mounts.attriBase[1] + specialAttr[1]
+	-- local a2 = Mounts.rate[2] * level * (x2 + stageConf[2]) + Mounts.attriBase[2] + specialAttr[2]
+	-- local a3 = Mounts.rate[3] * level * (x3 + stageConf[3]) + Mounts.attriBase[3] + specialAttr[3]
+	-- local a4 = Mounts.rate[4] * level * (x4 + stageConf[4]) + Mounts.attriBase[4] + specialAttr[4]
+	-- local a5 = Mounts.rate[5] * level * (x5 + stageConf[5]) + Mounts.attriBase[5] + specialAttr[5]
+	return attr[1],attr[2],attr[3],attr[4],attr[5],attr[6],attr[7]
+end
+
+MountOpFuncList.GetModel = function (stage, stage_model)
+	-- stage是现在的阶，model是选择的阶
+	-- if stage <= 0 or stage > table.getn(Mounts.stages) then return nil end
+	if stage_model > stage then stage_model = stage end
+	local modelId = Mounts.stages[stage_model].modelId
+	return stage_model, modelId
+end
+
+MountOpFuncList.openSpecialMount = function(sysarg , index , useTime )
+	--print("index:"..tostring(index))
+	--print("useTime:"..tostring(useTime))
+	local var_s = LActor.getStaticVar(sysarg)
+	if var_s.specialModelTime == nil then
+		print("[ MountOpFuncList.openSpecialMount ]")
+		return false
+	end
+	if index < 1 or index > #Mounts.stagesOther then 
+		--print("[ MountOpFuncList.openSpecialMount ] index is invalid, index:" .. index)
+		return false
+	end
+	local conf = Mounts.stagesOther[index]
+	local modelid = conf.modelId
+	if var_s.specialModelTime[index] == nil or var_s.specialModelTime[index] == 0  then
+		var_s.specialModelTime[index] = System.getCurrMiniTime()
+	end
+
+	if var_s.specialModelOpened == nil then
+		var_s.specialModelOpened = {}
+	end
+
+	--print("index:"..tostring(index).." "..type(index))
+	--print("var_s.specialModelOpened[index]:"..tostring(var_s.specialModelOpened[index]).." "..type(var_s.specialModelOpened[index]))
+	if var_s.specialModelOpened[index] == nil or var_s.specialModelOpened[index] == 0 then
+		var_s.specialModelOpened[index] = 1
+	end
+
+	local flag = MountOpFuncList.changeSpecialMountModel(sysarg, modelid)
+	--如果真正成功才加时间
+	if flag == true then 
+		if 0 == useTime then
+			var_s.specialModelTime[index] = -1
+		else
+			var_s.specialModelTime[index] = var_s.specialModelTime[index] + useTime
+		end
+
+		if 0 == useTime then
+			LActor.setMountSpecialModel(sysarg, index, 0)
+		else
+			LActor.setMountSpecialModel(sysarg, index, var_s.specialModelTime[index])
+		end
+
+		--通知客户端激活
+		if 0 == useTime then
+			MountOpFuncList.SendSpecialMountState(sysarg, modelid, 0, 1)
+		else
+			MountOpFuncList.SendSpecialMountState(sysarg, modelid, var_s.specialModelTime[index], 1)
+		end
+	end
+	return flag
+end
+
+MountOpFuncList.changeSpecialMountModel = function(sysarg, specialModelId)
+	local conf = Mounts.stagesOther
+	local result = false
+	local currTime = System.getCurrMiniTime()
+	local index
+	for i=1, #conf do 
+		if conf[i].modelId == specialModelId then 
+			index = i
+			result = true
+			break
+		end
+	end
+	--没有找到这个外观的坐骑
+	if not result then 
+		return false
+	end
+	local var_s = LActor.getStaticVar(sysarg)
+	if var_s.specialModelTime == nil or var_s.specialModelTime[index] == nil then 
+		--不应该出现这个情况
+		print("Mount specialModelTime nil : " .. LActor.getName(sysarg) .. "," .. index )
+		return false
+	end
+
+	if var_s.specialModelOpened[index] == 0 then
+		print("var_s.specialModelOpened[index]:" .. var_s.specialModelOpened[index])
+	end
+
+	if var_s.specialModelOpened == nil or var_s.specialModelOpened[index] == nil or var_s.specialModelOpened[index] == 0 then
+		print("Mount specialModel is not opened: " ..  LActor.getName(sysarg) .. "," .. index)
+		LActor.sendTipmsg(sysarg, Lang.Mount.t19, ttMessage)
+		return false
+	end
+
+	if var_s.specialModelTime[index] > 0 and var_s.specialModelTime[index] < currTime then 
+		--时间已经过了
+		var_s.specialModelTime[index] = 0
+		var_s.specialModelOpened[index] = 0
+		LActor.setMountSpecialModel(sysarg, index, var_s.specialModelTime[index])
+		return false
+	end
+
+	var_s.specialModelId = specialModelId
+	LActor.setMountSpecialModelId( sysarg, var_s.specialModelId )
+	local specialMountSpeed = MountOpFuncList.GetSpecialModelSpeed(specialModelId)
+	local level, stage, stage_point, lingxi, stage_model, next_level_t = LActor.getMountInfo(sysarg)
+	--重新计算速度
+	LActor.setMountStage(sysarg, stage, stage_point, Mounts.stages[stage].moveSpeed + specialMountSpeed)
+	-- 设置坐骑外观
+	LActor.setMountModel(sysarg, stage_model , var_s.specialModelId, -1 )
+	--需要重新计算属性
+	local a1, a2, a3, a4, a5, a6 ,a7 = MountOpFuncList.CalcAttr(sysarg, level, stage, stage_point)
+	--print("a1:" .. a1 .. " a2:" .. a2 .. "a3:" .. a3 .. " a4:" .. a4 .. "a5:" .. a5)
+	LActor.setMountAttr(sysarg, a1, a2, a3, a4, a5, a6 ,a7)
+	return true
+end
+
+MountOpFuncList.hasSpecialModel = function(specialModelId)
+	local conf = Mounts.stagesOther
+	for i=1, #conf do 
+		if conf[i].modelId == specialModelId then 
+			return true
+		end
+	end
+	return false
+end
+
+MountOpFuncList.InitSpecialModelTimes = function(sysarg)
+	local var_s = LActor.getStaticVar(sysarg)
+	local conf = Mounts.stagesOther
+	local currTime = System.getCurrMiniTime()
+
+	if var_s.specialModelId == nil or MountOpFuncList.hasSpecialModel(var_s.specialModelId) == false then 
+		var_s.specialModelId = 0
+	end
+
+	local specialModelId = var_s.specialModelId
+	if var_s.specialModelTime == nil then 
+		--初始化
+		var_s.specialModelTime = {}
+	end
+
+	if var_s.specialModelOpened == nil then
+		var_s.specialModelOpened = {}
+	end
+
+	for i=1, #conf do
+		--初始化特殊坐骑
+		if var_s.specialModelTime[i] == nil then
+			var_s.specialModelTime[i] = 0
+		end
+
+		if var_s.specialModelOpened[i] == nil then
+			var_s.specialModelOpened[i] = 0
+		end
+
+		--[[
+			if var_s.specialModelTime[i] > 0 and var_s.specialModelTime[i] <= currTime then 
+				var_s.specialModelTime[i] = 0
+				--通知客户端时间已过
+				MountOpFuncList.SendSpecialMountState(sysarg, conf[i].modelId, var_s.specialModelTime[i])
+				if specialModelId == conf[i].modelId then 
+					specialModelId = 0
+				end
+			end
+		--]]
+		if var_s.specialModelTime[i] > 0 then
+			LActor.setMountSpecialModel( sysarg, i, var_s.specialModelTime[i] , conf[i].modelId )
+		elseif var_s.specialModelTime[i] < 0 then
+			LActor.setMountSpecialModel( sysarg, i, 0 , conf[i].modelId )
+		end
+	end
+	--重新设置新的特殊坐骑外观
+	var_s.specialModelId = specialModelId
+
+	LActor.setMountSpecialModelId(sysarg, specialModelId)
+
+	return specialModelId
+end
+
+MountOpFuncList.GetSpecialModel = function(sysarg)
+	local var_s = LActor.getStaticVar(sysarg)
+	if var_s.specialModelId == nil then 
+		var_s.specialModelId = 0
+	end
+	return var_s.specialModelId
+end
+
+MountOpFuncList.GetSpecialModelSpeed = function(specialModelId)
+	local conf = Mounts.stagesOther
+	for i=1, #conf do
+		if conf[i].modelId == specialModelId then 
+			return conf[i].moveSpeed
+		end
+	end
+	return 0
+end
+
+
+-- 发送升级天珠不足提示信息,用的是升级协议
+MountOpFuncList.SendErrorTips = function(sysarg)
+	local npack = DataPack.allocPacket(sysarg,19,2)
+    if npack == nil then return end
+
+    DataPack.writeInt(npack, -1)
+    DataPack.writeString(npack, 0) 
+    DataPack.flush(npack)
+end
+
+-- 检查是否触发总资质成就事件
+MountOpFuncList.CheckZiZhiAchieve = function(sysarg, stage)
+	--触发成就事件
+	local level, stage, stage_point, lingxi, stage_model, next_level_t = LActor.getMountInfo(sysarg)
+	--local star = MountOpFuncList.GetStar(stage, stage_point)
+	--local x1, x2, x3, x4, x5 = LActor.getMountXilian(sysarg)
+	local base = Mounts.stages[stage].base[level]
+	local total = 0
+	for i=1,#base do
+		total = total +base[i]
+	end
+	--local total = base[1] + x1 + base[2] + x2 + base[3] + x3 + base[4] + x4 + base[5] + x5
+	LActor.triggerAchieveEvent(sysarg, 58, total)
+end
+
+-- 初始化坐骑数据，计算评分和基本属性
+MountOpFuncList[1] = function (sysarg, flag)
+	if (flag == 1) then
+		LActor.onOpenMount(sysarg, Mounts.stages[1].moveSpeed, 0)
+	end
+	                                          
+	local level, stage, stage_point, lingxi, stage_model, next_level_t = LActor.getMountInfo(sysarg)
+	
+	-- x1-5分别表示各个洗炼值
+	local a1, a2, a3, a4, a5, a6 ,a7 = MountOpFuncList.CalcAttr(sysarg, level, stage, stage_point)
+	LActor.setMountAttr(sysarg, a1, a2, a3,a4, a5, a6 ,a7)
+
+	-- 设置坐骑外观
+	local modelid
+	stage_model, modelid = MountOpFuncList.GetModel(stage, stage_model)
+	--特殊坐骑初始化
+	local specialModel = MountOpFuncList.InitSpecialModelTimes(sysarg)
+	if specialModel ~= 0 then 
+		modelid = specialModel
+	end
+	LActor.setMountModel(sysarg, stage_model, modelid, Mounts.stages[stage].moveSpeed)
+
+	-- 最后才计算属性
+	local a1, a2, a3, a4, a5,a6,a7 = MountOpFuncList.CalcAttr(sysarg, level, stage, stage_point)
+	LActor.setMountAttr(sysarg, a1, a2, a3,a4, a5,a6,a7)
+
+	--触发成就
+	LActor.SetAchieveProcessByType(sysarg, 63, 2, stage)
+end
+
+
+MountOpFuncList.ProcessUpgrade = function(sysarg, autobuy, oneKeyUpgrade)
+	local level, stage, stage_point, lingxi, stage_model, level_exp = LActor.getMountInfo(sysarg)
+	--print("level, stage, stage_point, lingxi, stage_model, level_exp ", level, stage, stage_point, lingxi, stage_model, level_exp)
+
+	--等级判断
+	if level >= MountOpFuncList.MaxLevel then
+		LActor.sendTipmsg(sysarg, Lang.Mount.t14, ttMessage)
+		MountOpFuncList.sendUpgradefail(sysarg)
+		return
+	end-- 已经是最高级
+
+	if (not Mounts.stages[stage]) or (not Mounts.stages[stage].base) or (not Mounts.stages[stage].base[level + 1]) or (#(Mounts.stages[stage].base[level + 1]) <= 0) then
+		LActor.sendTipmsg(sysarg, Lang.Mount.t14, ttMessage)
+		MountOpFuncList.sendUpgradefail(sysarg)
+		return
+	end
+
+	local needExp = Mounts.stages[stage].levelExp[level] --需要经验
+	local useItemId = Mounts.stages[stage].levelItem[level] --需要材料id
+	local needItemCount = Mounts.stages[stage].itemCount[level] --需要材料数量
+	local levelMoney = Mounts.stages[stage].levelMoney[level] --需要铜钱
+	
+	--print("needExp, useItemId, needItemCount, levelMoney ", needExp, useItemId, needItemCount, levelMoney)
+
+	if  not levelMoney or levelMoney <= 0 or
+		not needExp or needExp <= 0 or
+		not useItemId or useItemId <= 0 or
+	    not needItemCount or needItemCount <=0 then
+	    MountOpFuncList.sendUpgradefail(sysarg)
+		return
+	end--配置错误
+
+	--铜钱判断
+	local hasbindcoin = LActor.getMoneyCount(sysarg, mtBindCoin)
+	if hasbindcoin < levelMoney then
+		LActor.SendGeneralTips(sysarg, 1, mtBindCoin, levelMoney-hasbindcoin)
+		MountOpFuncList.sendUpgradefail(sysarg)
+		return
+	end
+
+	--材料判断
+	local needYuanbao = 0
+	local haveItemCount = LActor.getItemCount( sysarg, useItemId )
+	if haveItemCount < needItemCount then
+		if autobuy == 0 then
+			LActor.SendGeneralTips(sysarg, 2, useItemId, needItemCount-haveItemCount)
+			MountOpFuncList.sendUpgradefail(sysarg)
+			return
+		else
+			local goodsId = MountOpFuncList.GetShangChengItem(useItemId)
+			local itemPrice = Item.getItemPrice(goodsId)
+			if itemPrice <= 0 then
+				MountOpFuncList.sendUpgradefail(sysarg)
+				return false, itemPtr
+			end
+			needYuanbao = needYuanbao + itemPrice*(needItemCount-haveItemCount)
+			needItemCount = haveItemCount
+		end
+	end
+
+	--判断天珠
+	if needYuanbao > 0 then
+		local hasyuanbao = LActor.getMoneyCount(sysarg, mtYuanbao)
+		if hasyuanbao < needYuanbao then
+			LActor.SendGeneralTips(sysarg, 1, mtYuanbao, needYuanbao-hasyuanbao)
+			MountOpFuncList.sendUpgradefail(sysarg)
+			return
+		end
+	end
+
+	--升级经验计算
+	local addExp = Mounts.stages[stage].addExp[level]
+	local levelRate = Mounts.stages[stage].levelRate
+	local rateValue = Mounts.stages[stage].rateValue
+	local beilv = 1 --倍率
+	local index = MountOpFuncList.getRandomIndex( levelRate )
+	if index >=1 and index <= #rateValue then
+		beilv = rateValue[index]
+	end
+	addExp = addExp*beilv
+
+	--升级判断
+	local totalExp = level_exp + addExp
+
+	local bTrainContinue = false
+	if totalExp >= needExp then
+		level = level + 1  --升级
+		level_exp = totalExp - needExp
+
+		--OK 升一级成功
+		--print("升一级成功"..level)
+	else
+		level_exp = totalExp
+		--还要继续培养
+		bTrainContinue = true
+	end
+
+	--消耗处理
+	if levelMoney > 0 then
+		LActor.changeMoney(sysarg,mtBindCoin,-levelMoney, 1, true, "mounts", "level")
+	end
+	if needYuanbao > 0 then
+		LActor.changeMoney(sysarg, mtYuanbao, -needYuanbao, 1, true, "mounts", "level_autobuy")
+	end
+
+	--删除物品
+	if useItemId > 0 then
+		LActor.removeItem(sysarg, useItemId, needItemCount, -1, -1, -1, "mounts_level")
+	end
+
+	--升一级
+	LActor.mountUpLevel(sysarg, level, level_exp, beilv)
+
+	-- 更新基础属性
+	local a1, a2, a3, a4, a5, a6 ,a7 = MountOpFuncList.CalcAttr(sysarg, level, stage, stage_point)
+	LActor.setMountAttr(sysarg, a1, a2, a3,a4, a5, a6 ,a7)
+
+	--触发成就
+	LActor.SetAchieveProcessByType(sysarg, 87, 1, 1)
+	--坐骑培养
+	LActor.OnQuestEvent(41, 0, 1, true, sysarg, false)
+	-- 活跃度
+    ActivationTrigger(sysarg, 11)
+
+	local cap = LActor.getMountFightCapacity(sysarg)
+	if cap ~= nil and cap > 0 then
+		System.logCounter(LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), "mount",	tostring(cap),"", "shengji",tostring(level),tostring(stage),"normal","", lfBI)
+	end
+
+	--继续培养
+	if oneKeyUpgrade ~= nil and oneKeyUpgrade == 1 and bTrainContinue == true then --升一阶
+		print("继续培养....")
+		MountOpFuncList.ProcessUpgrade(sysarg, autobuy, oneKeyUpgrade)
+	end
+end
+
+
+--坐骑培养升一级
+MountOpFuncList.AutoProcessUpgrade = function(sysarg, autobuy, oneKeyUpgrade)
+	--取坐骑信息
+	local level, stage, stage_point, lingxi, stage_model, level_exp = LActor.getMountInfo(sysarg)
+	
+	--print("level, level_exp ", level, level_exp)
+
+	--等级判断
+	if level >= MountOpFuncList.MaxLevel then
+		LActor.sendTipmsg(sysarg, Lang.Mount.t14, ttMessage)
+		MountOpFuncList.sendUpgradefail(sysarg)
+		return
+	end-- 已经是最高级
+
+	local curStageInfo = Mounts.stages[stage]
+	if not curStageInfo then
+		MountOpFuncList.sendUpgradefail(sysarg)
+		return
+	end
+
+	--print(Json.Encode(curStageInfo))
+
+	if (not curStageInfo.base) or 
+		(not curStageInfo.base[level + 1]) or 
+		(#(curStageInfo.base[level + 1]) <= 0) then
+			LActor.sendTipmsg(sysarg, Lang.Mount.t14, ttMessage)
+			MountOpFuncList.sendUpgradefail(sysarg)
+			return
+	end
+
+	local needExp = curStageInfo.levelExp[level] --需要经验
+	needExp = needExp - level_exp
+
+	local useItemId = curStageInfo.levelItem[level] --需要材料id
+	local needItemCount = curStageInfo.itemCount[level] --需要材料数量
+	local levelMoney = curStageInfo.levelMoney[level] --需要铜钱
+	
+	--print("needExp, useItemId, needItemCount, levelMoney ", needExp, useItemId, needItemCount, levelMoney)
+
+	if  not levelMoney or levelMoney <= 0 or
+		not needExp or needExp <= 0 or
+		not useItemId or useItemId <= 0 or
+	    not needItemCount or needItemCount <=0 then
+	    MountOpFuncList.sendUpgradefail(sysarg)
+		return
+	end--配置错误
+
+
+	-----------------------------------------------------
+	
+	--升级经验计算
+	local addExp = curStageInfo.addExp[level]
+	local levelRate = curStageInfo.levelRate
+	local rateValue = curStageInfo.rateValue
+
+	--培养升一级所需要的次数
+	local needUpCount = 0
+	local beilv = 1
+	local totalExp = level_exp
+
+	print("needExp: "..needExp)
+
+	local exp_list = {}
+	while true do
+		local beilvtemp = 1 --倍率
+		local index = MountOpFuncList.getRandomIndex( levelRate )
+		--print("index===="..index)
+
+		if index >=1 and index <= #rateValue then
+			beilvtemp = rateValue[index]
+		end
+		local addOneExp = addExp*beilvtemp
+
+		--print("beilvtemp "..beilvtemp)
+		--print("addOneExp "..addOneExp)
+
+		--升级判断
+		totalExp = totalExp + addOneExp
+		--print("totalExp "..totalExp)
+
+		needUpCount = needUpCount + 1
+
+		if totalExp >= needExp then
+			--level = level + 1  --升级
+			--level_exp = totalExp - needExp
+			table.insert(exp_list, totalExp - needExp)
+			--OK 升一级成功
+			print("update sucess"..level)
+			break
+		else
+			table.insert(exp_list, totalExp)
+		end
+
+		if beilvtemp ~= 1 and beilvtemp > beilv then
+			beilv = beilvtemp
+		end
+	end
+	-----------------------------------------------------
+
+	print("needUpCount====="..needUpCount)
+	--print("Json.Encode(exp_list) =="..Json.Encode(exp_list))
+
+
+
+	--铜钱判断
+	local hasbindcoin = LActor.getMoneyCount(sysarg, mtBindCoin)
+	--当前的铜钱满足多少次
+	local coinFulCount = math.floor(hasbindcoin/levelMoney)
+	if coinFulCount <= 0 then
+		LActor.SendGeneralTips(sysarg, 1, mtBindCoin, levelMoney-hasbindcoin)
+		MountOpFuncList.sendUpgradefail(sysarg)
+		return
+	end
+
+
+
+	print("coinFulCount: "..coinFulCount)
+
+	--当前材料满足多少次
+	local haveItemCount = LActor.getItemCount( sysarg, useItemId )
+	local itemFulCount = 0
+
+	if autobuy == 0 then
+		itemFulCount = math.floor(haveItemCount/needItemCount)
+		print("autobuy false: "..itemFulCount)
+
+		if itemFulCount <= 0 then
+			LActor.SendGeneralTips(sysarg, 2, useItemId, needItemCount-haveItemCount)
+			MountOpFuncList.sendUpgradefail(sysarg)
+			return
+		end
+
+	else
+		--材料的价格
+		local goodsId = MountOpFuncList.GetShangChengItem(useItemId)
+		local itemPrice = Item.getItemPrice(goodsId)
+		if itemPrice <= 0 then
+			MountOpFuncList.sendUpgradefail(sysarg)
+			return false, itemPtr
+		end
+
+		--当前元宝数可以购买多少个
+		local hasyuanbao = LActor.getMoneyCount(sysarg, mtYuanbao)
+		local buyItemCount = math.floor(hasyuanbao/itemPrice)
+		local canTotalItem = buyItemCount + haveItemCount
+
+		itemFulCount = math.floor(canTotalItem / needItemCount)
+
+		print("autobuy true: "..itemFulCount)
+	end
+
+	local calUpgrdeCount = math.min(coinFulCount, itemFulCount)
+
+	if calUpgrdeCount <= 0 then
+		MountOpFuncList.sendUpgradefail(sysarg)
+		return
+	end
+
+	--直实的培养次数
+	if calUpgrdeCount < needUpCount then
+		needUpCount = calUpgrdeCount
+	else
+		level = level + 1  --升级
+	end
+	level_exp = exp_list[needUpCount]
+
+	--------------------------------------------------------------------
+
+	--材料判断
+	local needYuanbao = 0
+	needItemCount = needItemCount * needUpCount
+
+	if haveItemCount < needItemCount then
+		if autobuy == 0 then
+			LActor.SendGeneralTips(sysarg, 2, useItemId, needItemCount-haveItemCount)
+			MountOpFuncList.sendUpgradefail(sysarg)
+			return
+		else
+			local goodsId = MountOpFuncList.GetShangChengItem(useItemId)
+			local itemPrice = Item.getItemPrice(goodsId)
+			if itemPrice <= 0 then
+				MountOpFuncList.sendUpgradefail(sysarg)
+				return false, itemPtr
+			end
+			needYuanbao = needYuanbao + itemPrice * ( needItemCount - haveItemCount)
+			needItemCount = haveItemCount
+		end
+	end
+
+	levelMoney = levelMoney * needUpCount
+	if hasbindcoin < levelMoney  then
+		LActor.SendGeneralTips(sysarg, 1, mtBindCoin, levelMoney-hasbindcoin)
+		MountOpFuncList.sendUpgradefail(sysarg)
+		return
+	end
+
+	--判断天珠
+	if needYuanbao > 0 then
+		local hasyuanbao = LActor.getMoneyCount(sysarg, mtYuanbao)
+		if hasyuanbao < needYuanbao then
+			LActor.SendGeneralTips(sysarg, 1, mtYuanbao, needYuanbao-hasyuanbao)
+			MountOpFuncList.sendUpgradefail(sysarg)
+			return
+		end
+	end
+
+
+	--消耗处理
+	if levelMoney > 0 then
+		print("sub mtBindCoin"..levelMoney)
+		LActor.changeMoney(sysarg,mtBindCoin,-levelMoney, 1, true, "mounts", "level")
+	end
+	if needYuanbao > 0 then
+		print("sub mtYuanbao"..needYuanbao)
+		LActor.changeMoney(sysarg, mtYuanbao, -needYuanbao, 1, true, "mounts", "level_autobuy")
+	end
+
+	--删除物品
+	if useItemId > 0 and needItemCount > 0 then
+		print("sub mtYuanbao"..needItemCount)
+		LActor.removeItem(sysarg, useItemId, needItemCount, -1, -1, -1, "mounts_level")
+	end
+
+
+	--升一级
+	LActor.mountUpLevel(sysarg, level, level_exp, beilv)
+
+	-- 更新基础属性
+	local a1, a2, a3, a4, a5, a6 ,a7 = MountOpFuncList.CalcAttr(sysarg, level, stage, stage_point)
+	LActor.setMountAttr(sysarg, a1, a2, a3,a4, a5, a6 ,a7)
+
+
+	--触发成就
+	LActor.SetAchieveProcessByType(sysarg, 87, 1, needUpCount)
+	--坐骑培养
+	LActor.OnQuestEvent(41, 0, needUpCount, true, sysarg, false)
+	-- 活跃度
+    ActivationTrigger(sysarg, 11, needUpCount)
+
+	local cap = LActor.getMountFightCapacity(sysarg)
+	if cap ~= nil and cap > 0 then
+		System.logCounter(LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), "mount",	tostring(cap),"", "shengji",tostring(level),tostring(stage),"normal","", lfBI)
+	end
+
+end
+
+
+--坐骑升级
+MountOpFuncList[2] = function (sysarg, dp)
+	--if not LActor.isMountOpen(sysarg) then return end -- 貌似不需要判断，没开启的话数据不会保存到DB
+
+	local autobuy = DataPack.readByte(dp)
+	local oneKeyUpgrade = DataPack.readByte(dp)
+
+	if autobuy == nil then autobuy = 0 end
+	if oneKeyUpgrade == nil then oneKeyUpgrade = 0 end
+
+	if oneKeyUpgrade == 1 then --进一阶
+		MountOpFuncList.AutoProcessUpgrade(sysarg, autobuy, oneKeyUpgrade)
+	else
+		--升级操作
+		MountOpFuncList.ProcessUpgrade(sysarg, autobuy, oneKeyUpgrade)
+	end
+	
+end
+
+-- 消除升级cd
+MountOpFuncList[3] = function (sysarg, dp)
+	--功能取消
+	if true then return end
+
+	local t = DataPack.readInt(dp)
+	if t == 1 then
+		-- 消除1个小时
+		local money = Mounts.levelCost * 60
+		local hasyuanbao = LActor.getMoneyCount(sysarg, mtYuanbao)
+		if hasyuanbao < money then
+			--LActor.sendTipmsg(sysarg, Lang.Mount.t02, ttTipmsgWindow)	-- 天珠不足
+			LActor.SendGeneralTips(sysarg, 1, mtYuanbao, money-hasyuanbao)
+			return
+		end
+		LActor.changeMoney(sysarg, mtYuanbao, -money, 1, true, "mount", "level_onehour")
+		-- 消除cd
+		local level, stage, stage_point, lingxi, stage_model, next_level_t = LActor.getMountInfo(sysarg)
+		local now_t = System.getCurrMiniTime()
+		next_level_t = next_level_t - now_t - 3600
+		if next_level_t < 0 then next_level_t = 0 end
+		LActor.mountUpLevel(sysarg, -1, next_level_t)	-- -1表示等级不变，cd时间变回0
+	else
+		-- 消除全部cd
+		local level, stage, stage_point, lingxi, stage_model, next_level_t = LActor.getMountInfo(sysarg)
+		if level >= table.getn(Mounts.levelCD) then return end -- 已经是最高级
+		local now_t = System.getCurrMiniTime()
+		next_level_t = next_level_t - now_t
+		-- 如果cd已经变成0，则不做任何事情，出现这种的可能性是用户发了重复的消除cd的包
+		if next_level_t < 0 then return end
+
+		local money = math.ceil(Mounts.levelCost * math.ceil(next_level_t / 60))
+		if money <= 0 then money = 1 end
+		local hasyuanbao = LActor.getMoneyCount(sysarg, mtYuanbao)
+		if hasyuanbao < money then
+			-- LActor.sendTipmsg(sysarg, Lang.Mount.t02, ttMessage)	-- 天珠不足
+			--MountOpFuncList.SendErrorTips(sysarg)
+			LActor.SendGeneralTips(sysarg, 1, mtYuanbao, money-hasyuanbao)
+			return
+		end
+		LActor.changeMoney(sysarg, mtYuanbao, -money, 1, true, "mount", "level_clearcd")
+		
+		LActor.mountUpLevel(sysarg, -1, 0)
+	end
+
+	local cap = LActor.getMountFightCapacity(sysarg)
+	if cap ~= nil and cap > 0 then
+		System.logCounter(LActor.getActorId(sysarg), 
+			LActor.getAccountName(sysarg),
+			tostring(LActor.getLevel(sysarg)),
+			"mount",
+			tostring(cap),
+			"",
+	 		"shengji",
+			tostring(level),
+			tostring(stage),
+			typestr,
+			"", 
+			lfBI)
+	end
+end
+
+
+--发送坐骑进阶失败协议
+MountOpFuncList.sendStageUpfail = function(sysarg)
+	 local npack = DataPack.allocPacket(sysarg,19,20)
+	 DataPack.flush(npack)
+end
+
+--发送坐骑进阶失败协议
+MountOpFuncList.sendUpgradefail = function(sysarg)
+	 local npack = DataPack.allocPacket(sysarg,19,21)
+	 DataPack.flush(npack)
+end
+
+--坐骑进阶一次
+MountOpFuncList.ProcessStage = function(sysarg, autobuy, onekeyUp)
+	local level, stage, stage_point, lingxi, stage_model, level_exp = LActor.getMountInfo(sysarg)
+	if stage >= #Mounts.stages then 
+		LActor.sendTipmsg(sysarg, Lang.Mount.t16, ttMessage)
+		MountOpFuncList.sendStageUpfail(sysarg)
+		return 
+	end -- 已经是最高阶
+
+	if level < MountOpFuncList.MaxLevel then
+		LActor.sendTipmsg(sysarg, Lang.Mount.t22, ttMessage)
+		MountOpFuncList.sendStageUpfail(sysarg)
+		return 
+	end--等级不是满级
+
+	local config =  Mounts.stages[stage]
+	if not config then
+		return --配置错误
+	end
+
+	--铜钱判断
+	local needMoney = config.stageMoney
+	local hasbindcoin = LActor.getMoneyCount(sysarg, mtBindCoin)
+	if hasbindcoin < needMoney then
+		--LActor.sendTipmsg(sysarg, Lang.Mount.t09, ttMessage)
+		LActor.SendGeneralTips(sysarg, 1, mtBindCoin, needMoney-hasbindcoin)
+		MountOpFuncList.sendStageUpfail(sysarg)
+		return
+	end
+
+	local needItemId = config.stageItem
+	local needItemCount = config.stageItemCount
+	--材料判断
+	local needYuanbao = 0
+	local haveItemCount = LActor.getItemCount( sysarg, needItemId )
+	if haveItemCount < needItemCount then
+		if autobuy == 0 then
+			--LActor.sendTipmsg(sysarg, Lang.Mount.t20, ttMessage)	-- 材料不足
+			LActor.SendGeneralTips(sysarg, 2, needItemId, needItemCount-haveItemCount)
+			MountOpFuncList.sendStageUpfail(sysarg)
+			return
+		else
+			local goodsId = MountOpFuncList.GetShangChengItem(needItemId)
+			local itemPrice = Item.getItemPrice(goodsId)
+			if itemPrice <= 0 then
+				MountOpFuncList.sendStageUpfail(sysarg)
+				return false, itemPtr
+			end
+			needYuanbao = needYuanbao + itemPrice*(needItemCount-haveItemCount)
+			needItemCount = haveItemCount
+		end
+	end
+	--判断天珠
+	if needYuanbao > 0 then
+		local hasyuanbao = LActor.getMoneyCount(sysarg, mtYuanbao)
+		if hasyuanbao < needYuanbao then
+			--LActor.sendTipmsg(sysarg, Lang.Mount.t21, ttMessage)	-- 天珠不足
+			LActor.SendGeneralTips(sysarg, 1, mtYuanbao, needYuanbao-hasyuanbao)
+			MountOpFuncList.sendStageUpfail(sysarg)
+			return
+		end
+	end
+
+	--升级经验计算
+	local addExp = config.stageAddExp
+	local stageRate = config.stageRate
+	local rateValue = config.stageRateValue
+	local needExp = config.needExp
+	local beilv = 1 --倍率
+	local index = MountOpFuncList.getRandomIndex( stageRate )
+	if index >=1 and index <= #rateValue then
+		beilv = rateValue[index]
+	end
+	addExp = addExp*beilv
+
+
+	--消耗处理
+	if needMoney > 0 then
+		LActor.changeMoney(sysarg,mtBindCoin,-needMoney, 1, true, "mounts", "stage")
+	end
+	if needYuanbao > 0 then
+		LActor.changeMoney(sysarg, mtYuanbao, -needYuanbao, 1, true, "mounts", "stage_autobuy")
+	end
+	--删除物品
+	if needItemId > 0 then
+		LActor.removeItem(sysarg, needItemId, needItemCount, -1, -1, -1, "mounts_stage")
+	end
+
+	local old_stage = stage
+	--升级判断
+	local totalExp = stage_point + addExp
+
+	local bTrainContinue = false --是否需要继续进阶
+	if totalExp >= needExp then
+		stage = stage + 1  --升级
+		stage_point = totalExp - needExp
+
+		--坐骑进阶
+    	--LActor.OnQuestEvent(3, 30, 1, true, sysarg, false)
+    	--进阶成功
+    	print("进阶成功"..stage)
+    	bTrainContinue = true
+	else
+		stage_point = totalExp
+	end
+
+	local specialModelId = MountOpFuncList.GetSpecialModel(sysarg)
+	local specialMountSpeed = MountOpFuncList.GetSpecialModelSpeed(specialModelId)
+
+
+	if stage > old_stage then -- 升了阶
+
+		LActor.setMountStage(sysarg, stage, stage_point, Mounts.stages[stage].moveSpeed , beilv)
+		--等级回到1
+		LActor.mountUpLevel(sysarg, 1, level_exp)
+		level = 1
+		-- 计算新的基本属性
+		local a1, a2, a3, a4, a5, a6 ,a7 = MountOpFuncList.CalcAttr(sysarg, level, stage, stage_point)
+		LActor.setMountAttr(sysarg, a1, a2, a3, a4, a5, a6 ,a7)
+
+		-- 公告
+		local BroadStr = Lang.Mount['gg'..tostring(stage)]
+		--print("------------Mounts.stages[stage].broadCast:"..tostring(Mounts.stages[stage].broadCast))
+		--print("-------------BroadStr:"..type(BroadStr))
+		if Mounts.stages[stage].broadCast == 1 and BroadStr then
+			local str = string.format(BroadStr, LActor.getName(sysarg))
+			--System.broadcastTipmsg(str, ttScreenCenter )
+			--print("---------坐骑进阶公告-----------------")
+		end
+
+		if stage == 3 then
+			LActor.onEvent(sysarg, 62, 5)
+		end
+
+		if stage == 5 then
+			LActor.onEvent(sysarg, 62, 8)
+		end
+
+		if 9 == stage then
+			qianghongbao.SystemHB(sysarg,10,2)
+		end
+		if 10 == stage then
+			qianghongbao.SystemHB(sysarg,11,2)
+		end
+
+		-- 坐骑外观直接升到最新的
+		local modelid
+		stage, modelid = MountOpFuncList.GetModel(stage, stage)
+
+		if specialModelId ~= 0 then 
+			modelid = specialModelId
+		end
+
+		LActor.setMountModel(sysarg, stage, modelid, -1)
+
+		--进阶后加成资质成就
+		MountOpFuncList.CheckZiZhiAchieve(sysarg, stage)
+
+		--进阶后加成资质成就
+		MountOpFuncList.CheckZiZhiAchieve(sysarg, stage)
+		local capacity = LActor.getMountFightCapacity(sysarg)
+		if capacity ~= nil and capacity > 0 then
+			System.logCounter(LActor.getActorId(sysarg), 
+				LActor.getAccountName(sysarg),
+				tostring(LActor.getLevel(sysarg)),
+				"mount",
+				tostring(capacity),
+				"",
+			 	"jinjie",
+				tostring(level),
+				tostring(stage),
+				"",
+				"", 
+				lfBI)
+		end
+
+		--触发成就
+		LActor.SetAchieveProcessByType(sysarg, 63, 2, stage)
+
+
+		--65.【开服活动-创角7天】坐骑提升 
+		--print("mountHnadle 坐骑:old_stage:"..old_stage) print("stage:"..stage)
+		activityFunc.onMountLevelUpgrade(sysarg,stage)
+
+
+
+
+	else
+		LActor.setMountStage(sysarg, stage, stage_point, Mounts.stages[stage].moveSpeed,beilv)
+
+		local a1, a2, a3, a4, a5, a6 ,a7 = MountOpFuncList.CalcAttr(sysarg, level, stage, stage_point)
+		LActor.setMountAttr(sysarg, a1, a2, a3,a4, a5, a6 ,a7)
+		local capacity = LActor.getMountFightCapacity(sysarg)
+		if capacity ~= nil and capacity > 0 then
+			System.logCounter(LActor.getActorId(sysarg), 
+				LActor.getAccountName(sysarg),
+				tostring(LActor.getLevel(sysarg)),
+				"mount",
+				tostring(capacity),
+				"",
+			 	"tisheng",
+				tostring(level),
+				tostring(stage),
+				"",
+				"", 
+				lfBI)
+		end
+	end
+
+	System.logCounter(LActor.getActorId(sysarg), 
+	LActor.getAccountName(sysarg),
+	tostring(LActor.getLevel(sysarg)),
+	"mount_tisheng",
+	tostring(capacity),
+	"",
+	tostring(level),
+	tostring(stage),
+	tostring(stage_point),
+	"",
+	"", 
+	lfDB)
+
+	if onekeyUp ~= 1 then --升一级操作不提示
+		local str = string.format( Lang.Mount.t13, addExp)
+		LActor.sendTipmsg(sysarg, str, ttMessage)
+	end
+
+	--触发坐骑培养目标
+	LActor.triggerTarget(sysarg, enATMountPY)
+	FCActivityHandler.ActivityReward (sysarg)
+
+	--继续操作
+	if onekeyUp ~= nil and onekeyUp == 1 and bTrainContinue == false then --升一级操作
+		MountOpFuncList.ProcessStage(sysarg, autobuy, onekeyUp)
+	end
+end
+
+--坐骑进阶(进一阶)
+MountOpFuncList.AutoProcessStage = function(sysarg, autobuy, onekeyUp)
+	local level, stage, stage_point, lingxi, stage_model, level_exp = LActor.getMountInfo(sysarg)
+
+	print("stage, stage_point, level, level_exp,",stage, stage_point, level, level_exp)
+
+
+
+	if stage >= #Mounts.stages then 
+		LActor.sendTipmsg(sysarg, Lang.Mount.t16, ttMessage)
+		MountOpFuncList.sendStageUpfail(sysarg)
+		return 
+	end -- 已经是最高阶
+
+	if level < MountOpFuncList.MaxLevel then
+		LActor.sendTipmsg(sysarg, Lang.Mount.t22, ttMessage)
+		MountOpFuncList.sendStageUpfail(sysarg)
+		return 
+	end--等级不是满级
+
+	local config =  Mounts.stages[stage]
+	if not config then
+		return --配置错误
+	end
+
+
+	-------------------------------------------------------------------
+	--升级经验计算
+	local addExp = config.stageAddExp
+	local stageRate = config.stageRate
+	local rateValue = config.stageRateValue
+	local needExp = config.needExp
+
+	local beilv = 1 --倍率
+	local old_stage = stage
+	
+	local needUpgrateCount = 0
+	local totalExp = stage_point
+
+	needExp = needExp - stage_point --需要进阶一阶的经验值
+	print("needExp: "..needExp)
+
+	local exp_list = {}
+
+	while true do
+		local beilvtemp = 1
+		local index = MountOpFuncList.getRandomIndex( stageRate )
+		if index >=1 and index <= #rateValue then
+			beilvtemp = rateValue[index]
+		end
+
+		local addOneExp = addExp*beilvtemp
+
+		--升级判断
+		totalExp = totalExp + addOneExp
+
+		needUpgrateCount = needUpgrateCount + 1
+
+		if totalExp >= needExp then
+			--stage = stage + 1  --升级
+			--stage_point = totalExp - needExp
+
+			--坐骑进阶
+	    	--LActor.OnQuestEvent(3, 30, 1, true, sysarg, false)
+	    	--进阶成功
+	    	table.insert(exp_list, totalExp - needExp)
+	    	break
+		else
+			table.insert(exp_list, totalExp)
+		end
+
+		if beilvtemp ~= 1 and beilvtemp > beilv then
+			beilv = beilvtemp
+		end
+	end
+
+	print("needUpgrateCount: ", needUpgrateCount)
+	--print("Json.Encode(exp_list) =="..Json.Encode(exp_list))
+
+
+	--当前的铜钱满足多少次
+	local hasbindcoin = LActor.getMoneyCount(sysarg, mtBindCoin)
+	local coinFulCount = math.floor(hasbindcoin/config.stageMoney)
+	if coinFulCount <= 0 then
+		LActor.SendGeneralTips(sysarg, 1, mtBindCoin, config.stageMoney - hasbindcoin)
+		MountOpFuncList.sendStageUpfail(sysarg)
+		return
+	end
+
+	print("coinFulCount: "..coinFulCount)
+
+	--当前材料满足多少次
+	local needItemId = config.stageItem
+	local haveItemCount = LActor.getItemCount( sysarg, needItemId )
+	local itemFulCount = 0
+	if autobuy == 0 then
+		itemFulCount = math.floor(haveItemCount/config.stageItemCount)
+		print("autobuy false: "..itemFulCount)
+
+		if itemFulCount <= 0 then
+			LActor.SendGeneralTips(sysarg, 2, needItemId, config.stageItemCount - haveItemCount)
+			MountOpFuncList.sendStageUpfail(sysarg)
+			return
+		end
+	else
+		local goodsId = MountOpFuncList.GetShangChengItem(needItemId)
+		local itemPrice = Item.getItemPrice(goodsId)
+		if itemPrice <= 0 then
+			MountOpFuncList.sendStageUpfail(sysarg)
+			return false, itemPtr
+		end
+
+		--当前元宝数可以购买多少个
+		local hasyuanbao = LActor.getMoneyCount(sysarg, mtYuanbao)
+		local buyItemCount = math.floor(hasyuanbao/itemPrice)
+		local canTotalItem = buyItemCount + haveItemCount
+
+		itemFulCount = math.floor(canTotalItem / config.stageItemCount)
+
+		print("autobuy true: "..itemFulCount)
+	end
+	
+	local calUpgrdeCount = math.min(coinFulCount, itemFulCount)
+
+	if calUpgrdeCount <= 0 then
+		MountOpFuncList.sendStageUpfail(sysarg)
+		return
+	end
+
+	--直实的培养次数
+	if calUpgrdeCount < needUpgrateCount then
+		needUpgrateCount = calUpgrdeCount
+	else
+		stage = stage + 1 --升阶
+		print("update stage sucess"..stage)
+	end
+	stage_point = exp_list[needUpgrateCount]
+	-------------------------------------------------------------------
+
+
+	--铜钱判断
+	local needMoney = config.stageMoney * needUpgrateCount
+	local hasbindcoin = LActor.getMoneyCount(sysarg, mtBindCoin)
+	if hasbindcoin < needMoney then
+		--LActor.sendTipmsg(sysarg, Lang.Mount.t09, ttMessage)
+		LActor.SendGeneralTips(sysarg, 1, mtBindCoin, needMoney-hasbindcoin)
+		MountOpFuncList.sendStageUpfail(sysarg)
+		return
+	end
+
+	local needItemCount = config.stageItemCount * needUpgrateCount
+	--材料判断
+	local needYuanbao = 0
+	local haveItemCount = LActor.getItemCount( sysarg, needItemId )
+	if haveItemCount < needItemCount then
+		if autobuy == 0 then
+			--LActor.sendTipmsg(sysarg, Lang.Mount.t20, ttMessage)	-- 材料不足
+			LActor.SendGeneralTips(sysarg, 2, needItemId, needItemCount-haveItemCount)
+			MountOpFuncList.sendStageUpfail(sysarg)
+			return
+		else
+			local goodsId = MountOpFuncList.GetShangChengItem(needItemId)
+			local itemPrice = Item.getItemPrice(goodsId)
+			if itemPrice <= 0 then
+				MountOpFuncList.sendStageUpfail(sysarg)
+				return false, itemPtr
+			end
+			needYuanbao = needYuanbao + itemPrice*(needItemCount-haveItemCount)
+			needItemCount = haveItemCount
+		end
+	end
+
+	--判断天珠
+	if needYuanbao > 0 then
+		local hasyuanbao = LActor.getMoneyCount(sysarg, mtYuanbao)
+		if hasyuanbao < needYuanbao then
+			--LActor.sendTipmsg(sysarg, Lang.Mount.t21, ttMessage)	-- 天珠不足
+			LActor.SendGeneralTips(sysarg, 1, mtYuanbao, needYuanbao-hasyuanbao)
+			MountOpFuncList.sendStageUpfail(sysarg)
+			return
+		end
+	end
+
+
+	--消耗处理
+	if needMoney > 0 then
+		print("sub mtBindCoin"..needMoney)
+		LActor.changeMoney(sysarg,mtBindCoin,-needMoney, 1, true, "mounts", "stage")
+	end
+	if needYuanbao > 0 then
+		print("sub mtYuanbao"..needYuanbao)
+		LActor.changeMoney(sysarg, mtYuanbao, -needYuanbao, 1, true, "mounts", "stage_autobuy")
+	end
+	--删除物品
+	if needItemId > 0 then
+		print("sub needItemCount"..needItemCount)
+		LActor.removeItem(sysarg, needItemId, needItemCount, -1, -1, -1, "mounts_stage")
+	end
+
+
+
+	local specialModelId = MountOpFuncList.GetSpecialModel(sysarg)
+	local specialMountSpeed = MountOpFuncList.GetSpecialModelSpeed(specialModelId)
+
+
+	if stage > old_stage then -- 升了阶
+
+		LActor.setMountStage(sysarg, stage, stage_point, Mounts.stages[stage].moveSpeed , beilv)
+		--等级回到1
+		LActor.mountUpLevel(sysarg, 1, level_exp)
+		level = 1
+		-- 计算新的基本属性
+		local a1, a2, a3, a4, a5, a6 ,a7 = MountOpFuncList.CalcAttr(sysarg, level, stage, stage_point)
+		LActor.setMountAttr(sysarg, a1, a2, a3, a4, a5, a6 ,a7)
+
+		-- 公告
+		local BroadStr = Lang.Mount['gg'..tostring(stage)]
+		--print("------------Mounts.stages[stage].broadCast:"..tostring(Mounts.stages[stage].broadCast))
+		--print("-------------BroadStr:"..type(BroadStr))
+		if Mounts.stages[stage].broadCast == 1 and BroadStr then
+			local str = string.format(BroadStr, LActor.getName(sysarg))
+			--System.broadcastTipmsg(str, ttScreenCenter )
+			--print("---------坐骑进阶公告-----------------")
+		end
+
+		if stage == 3 then
+			LActor.onEvent(sysarg, 62, 5)
+		end
+
+		if stage == 5 then
+			LActor.onEvent(sysarg, 62, 8)
+		end
+
+		if 9 == stage then
+			qianghongbao.SystemHB(sysarg,10,2)
+		end
+		if 10 == stage then
+			qianghongbao.SystemHB(sysarg,11,2)
+		end
+
+		-- 坐骑外观直接升到最新的
+		local modelid
+		stage, modelid = MountOpFuncList.GetModel(stage, stage)
+
+		if specialModelId ~= 0 then 
+			modelid = specialModelId
+		end
+
+		LActor.setMountModel(sysarg, stage, modelid, -1)
+
+		--进阶后加成资质成就
+		MountOpFuncList.CheckZiZhiAchieve(sysarg, stage)
+
+		--进阶后加成资质成就
+		MountOpFuncList.CheckZiZhiAchieve(sysarg, stage)
+		local capacity = LActor.getMountFightCapacity(sysarg)
+		if capacity ~= nil and capacity > 0 then
+			System.logCounter(LActor.getActorId(sysarg), 
+				LActor.getAccountName(sysarg),
+				tostring(LActor.getLevel(sysarg)),
+				"mount",
+				tostring(capacity),
+				"",
+			 	"jinjie",
+				tostring(level),
+				tostring(stage),
+				"",
+				"", 
+				lfBI)
+		end
+
+		--触发成就
+		LActor.SetAchieveProcessByType(sysarg, 63, 2, stage)
+
+
+		--65.【开服活动-创角7天】坐骑提升 
+		--print("mountHnadle 坐骑:old_stage:"..old_stage) print("stage:"..stage)
+		activityFunc.onMountLevelUpgrade(sysarg,stage)
+
+
+
+
+	else
+		LActor.setMountStage(sysarg, stage, stage_point, Mounts.stages[stage].moveSpeed,beilv)
+
+		local a1, a2, a3, a4, a5, a6 ,a7 = MountOpFuncList.CalcAttr(sysarg, level, stage, stage_point)
+		LActor.setMountAttr(sysarg, a1, a2, a3,a4, a5, a6 ,a7)
+		local capacity = LActor.getMountFightCapacity(sysarg)
+		if capacity ~= nil and capacity > 0 then
+			System.logCounter(LActor.getActorId(sysarg), 
+				LActor.getAccountName(sysarg),
+				tostring(LActor.getLevel(sysarg)),
+				"mount",
+				tostring(capacity),
+				"",
+			 	"tisheng",
+				tostring(level),
+				tostring(stage),
+				"",
+				"", 
+				lfBI)
+		end
+	end
+
+	System.logCounter(LActor.getActorId(sysarg), 
+	LActor.getAccountName(sysarg),
+	tostring(LActor.getLevel(sysarg)),
+	"mount_tisheng",
+	tostring(capacity),
+	"",
+	tostring(level),
+	tostring(stage),
+	tostring(stage_point),
+	"",
+	"", 
+	lfDB)
+
+	if onekeyUp ~= 1 then --升一级操作不提示
+		local str = string.format( Lang.Mount.t13, addExp)
+		LActor.sendTipmsg(sysarg, str, ttMessage)
+	end
+
+	--触发坐骑培养目标
+	LActor.triggerTarget(sysarg, enATMountPY)
+	FCActivityHandler.ActivityReward (sysarg)
+end
+
+
+
+
+
+
+-- 坐骑进阶
+MountOpFuncList[4] = function (sysarg, dp)
+	--print("++++++++++++++坐骑进阶")
+
+	local autobuy = DataPack.readByte(dp) --自动购买（1是0否）
+	local onekeyUp = DataPack.readByte(dp) --是否升一级(0:否,1:是)
+
+	if autobuy == nil then autobuy = 0 end
+	if onekeyUp == nil then onekeyUp = 0 end
+
+	if onekeyUp == 1 then
+		MountOpFuncList.AutoProcessStage(sysarg, autobuy, onekeyUp)
+	else
+		MountOpFuncList.ProcessStage(sysarg, autobuy, onekeyUp)
+	end
+end
+
+-- 洗炼
+MountOpFuncList[5] = function (sysarg, dp)
+	--功能取消 屏蔽洗练
+	if true then return end 
+
+	local level, stage, stage_point, lingxi, stage_model, next_level_t = LActor.getMountInfo(sysarg)
+	if level < Mounts.xilianStart then
+		LActor.sendTipmsg(sysarg, Lang.Mount.t08, ttMessage)
+		return
+	end
+
+	local xlType = DataPack.readInt(dp)
+	--xlType= 3
+	local vipLevel = LActor.getVIPLevel(sysarg)
+	if xlType == 2 and vipLevel < Mounts.xilianYuanbaoVip then
+		LActor.sendTipmsg(sysarg, Lang.Mount.t10, ttMessage)
+		return
+	end
+	if xlType == 3 and vipLevel < Mounts.xilianBatchVip then
+		LActor.sendTipmsg(sysarg, Lang.Mount.t10, ttMessage)
+		return
+	end
+
+
+
+	local star = MountOpFuncList.GetStar(stage, stage_point)
+	local x1, x2, x3, x4, x5 = LActor.getMountXilian(sysarg)
+	local base = Mounts.stages[stage].base[star]
+	local total = {base[1] + x1, base[2] + x2, base[3] + x3, base[4] + x4, base[5] + x5}	
+	local tmpxl = {x1,x2,x3,x4,x5}
+	local xlTimes = 1
+	local ybXilian = 1
+	local moneyType = mtBindCoin
+	if xlType == 2 then
+		ybXilian = 2
+		moneyType = mtYuanbao
+	elseif xlType == 3 then
+		xlTimes = 10
+		ybXilian = 2
+		moneyType = mtYuanbao
+	end
+	local needMoney = Mounts.xilianCoin * xlTimes
+	if moneyType == mtBindCoin then
+		local hasbindcoin = LActor.getMoneyCount(sysarg, mtBindCoin)
+		if hasbindcoin < needMoney then
+		    --LActor.sendTipmsg(sysarg, Lang.Mount.t09, ttMessage)
+		    LActor.SendGeneralTips(sysarg, 1, mtBindCoin, needMoney-hasbindcoin)
+		    return
+		end
+		
+		LActor.changeMoney(sysarg, moneyType, -needMoney, 1, true, "mount", "xilian")
+	end
+	
+	--mod wupeng 2013-11-18 for 坐骑符洗练坐骑,单次洗练,以及批量洗练 begin
+	if xlType == 2 then	
+   	 	if LActor.getItemCount(sysarg, Mounts.zuojixiliancardid) >= 1 then 
+    		LActor.removeItem(sysarg, Mounts.zuojixiliancardid, 1)
+   		 else
+   		    local needMoney = Mounts.xilianYuanbao * xlTimes
+   		    local hasyuanbao = LActor.getMoneyCount(sysarg, mtYuanbao)
+			if hasyuanbao < needMoney then
+				--LActor.sendTipmsg(sysarg, Lang.Mount.t17, ttDialog)
+				LActor.SendGeneralTips(sysarg, 1, mtYuanbao, needMoney-hasyuanbao)
+				return
+			end 	
+	   		LActor.changeMoney(sysarg, moneyType, -needMoney, 1, true, "mount", "xilian") --洗练减去玩家的天珠数量
+		end
+	end
+	if xlType == 3 then
+	   local itemId = Mounts.zuojixiliancardid
+	   local nitem  = LActor.getItemCount(sysarg, itemId)
+	   if nitem >= xlTimes then
+	   	  needItem = xlTimes
+	   	  LActor.removeItem(sysarg, Mounts.zuojixiliancardid, needItem)
+	   else
+	   	  needItem = nitem
+	   	  local needYuanbao = (xlTimes-nitem) * Mounts.xilianYuanbao
+	   	  local hasyuanbao = LActor.getMoneyCount(sysarg, mtYuanbao)
+	   	  if hasyuanbao < needYuanbao then        
+			  --LActor.sendTipmsg(sysarg, Lang.Mount.t17, ttDialog) 
+			  LActor.SendGeneralTips(sysarg, 1, mtYuanbao, needYuanbao-hasyuanbao)        
+		      return
+		  end
+		  LActor.removeItem(sysarg, Mounts.zuojixiliancardid, needItem)
+		  LActor.changeMoney(sysarg, moneyType, -needYuanbao, 1, true, "mount", "xilian")
+		end                                                       
+	end
+	--mod wupeng 2013-11-18 for 坐骑符洗练坐骑,单次洗练,以及批量洗练 end
+		
+		
+	local xilianRes = {0,0,0,0,0,0,0,0,0,0}
+	for i = 1, xlTimes do
+		local xilianIndex, XilianVal = MountOpFuncList.xilian()
+		xilianRes[xilianIndex] = xilianRes[xilianIndex] + XilianVal * ybXilian
+	end
+	--print("xilian pre:"..x1..","..x2..","..x3..","..x4..","..x5)
+	--print("xilian value:"..xilianRes[1]..","..xilianRes[2]..","..xilianRes[3]..","..xilianRes[4]..","..xilianRes[5]..","..xilianRes[6]..","..xilianRes[7]..","..xilianRes[8]..","..xilianRes[9]..","..xilianRes[10])
+	for i = 1, #xilianRes do
+		if xilianRes[i] > 0 then
+			if i <= 5 then
+				total[i] = total[i] + xilianRes[i]
+				tmpxl[i] = tmpxl[i] + xilianRes[i]
+			elseif i == 6 or i == 7 then
+				LActor.addRootExp(sysarg, xilianRes[i])
+			else
+				local moneyTypeConf = {mtBindCoin, mtBindYuanbao, mtCoin}
+				local addMoneyType = moneyTypeConf[i-7]
+				LActor.changeMoney(sysarg, addMoneyType, xilianRes[i], 1, true, "mount", "xilianaward")
+			end
+		end	
+	end
+
+	--print("xilian after:"..tmpxl[1]..","..tmpxl[2]..","..tmpxl[3]..","..tmpxl[4]..","..tmpxl[5])
+	
+	local limitConf = Mounts.stages[stage].limit
+	for i = 1, #tmpxl do
+		local limitval = limitConf[i]
+		if tmpxl[i] > limitval then
+			tmpxl[i] = limitval
+		end
+	end
+
+	-- 记录下来
+	LActor.saveTmpXilian(sysarg, tmpxl[1], tmpxl[2], tmpxl[3], tmpxl[4], tmpxl[5])
+	LActor.saveXilian(sysarg)
+	--重新计算属性
+	local a1, a2, a3, a4, a5, a6 ,a7 = MountOpFuncList.CalcAttr(sysarg, level, stage, stage_point)
+	LActor.setMountAttr(sysarg, a1, a2, a3, a4, a5, a6 ,a7)
+
+	MountOpFuncList.CheckZiZhiAchieve(sysarg, stage)
+
+	--触发坐骑资质洗炼目标
+	LActor.triggerTarget( sysarg, enATMountXL )
+	FCActivityHandler.ActivityReward (sysarg)
+
+	local npack = DataPack.allocPacket(sysarg, 19, 5)
+	if npack == nil then return end
+	for i = 1, #tmpxl do
+		DataPack.writeInt(npack, tmpxl[i])
+	end
+	for i = 1, #xilianRes do
+		DataPack.writeInt(npack, xilianRes[i])
+	end
+	DataPack.flush(npack)
+
+	System.logCounter(LActor.getActorId(sysarg), 
+	LActor.getAccountName(sysarg),
+	tostring(LActor.getLevel(sysarg)),
+	"mount_xilian",
+	tostring(xlType),
+	"",
+ 	tostring(tmpxl[1]),
+	tostring(tmpxl[2]),
+	tostring(tmpxl[3]),
+	tostring(tmpxl[4]),
+	tostring(tmpxl[5]), 
+	lfDB)
+end
+
+MountOpFuncList.xilian = function ()
+	local fightCap = LActor.getMountFightCapacity(sysarg)
+	local randNum = System.getRandomNumber(100) + 1
+	local randidx = 1
+	for i = 1, #Mounts.xilian do
+		if randNum > Mounts.xilian[i] then
+			randNum = randNum - Mounts.xilian[i]
+		else
+			randidx = i
+			break
+		end
+	end
+	return randidx,Mounts.xilianAward[randidx]
+end
+
+
+-- 提升灵犀值
+MountOpFuncList[8] = function (sysarg, dp)
+	--此版本没有灵犀值 先屏蔽
+	if true then return end
+
+	local level, stage, stage_point, lingxi, stage_model, next_level_t = LActor.getMountInfo(sysarg)
+	if lingxi >= 150 then
+		return
+	end
+	local hasitem = LActor.getItemCount(sysarg, Mounts.lingxiItem)
+	if hasitem <= 0 then
+		--LActor.sendTipmsg(sysarg, Lang.Mount.t05, ttMessage)
+		LActor.SendGeneralTips(sysarg, 2, Mounts.lingxiItem, 1)
+		return
+	end
+	LActor.removeItem(sysarg, Mounts.lingxiItem, 1, -1, -1, -1, "mount_add_lingxi", 902)
+	local len = table.getn(Mounts.lxProbability)
+	for i = 1, len do
+		if lingxi >= Mounts.lxProbability[i][1] and lingxi <= Mounts.lxProbability[i][2] then
+			if System.getRandomNumber(100) < Mounts.lxProbability[i][3] then
+				lingxi = lingxi + 1
+				LActor.setMountLingxi(sysarg, lingxi)
+			else
+				LActor.notifyLingxi(sysarg)
+			end
+			break
+		end
+	end
+end
+
+-- 化形
+MountOpFuncList[9] = function (sysarg, dp)
+	local t = DataPack.readInt(dp)
+	if t <= 0 or t > table.getn(Mounts.stages) then return end
+	-- 只能取之前阶的外观
+	local level, stage, stage_point, lingxi, stage_model, level_exp = LActor.getMountInfo(sysarg)
+	if t > stage then
+		LActor.sendTipmsg(sysarg, Lang.Mount.t06, ttMessage)
+		return
+	end
+
+	local modelid
+	t, modelid = MountOpFuncList.GetModel(stage, t)
+	local flag = false
+	local specialModelId = MountOpFuncList.GetSpecialModel(sysarg)
+	if specialModelId ~= 0 then 
+		--重置特殊外形
+		local var_s = LActor.getStaticVar(sysarg)
+		var_s.specialModelId = 0
+		LActor.setMountSpecialModelId(sysarg, var_s.specialModelId)
+		flag = true
+	end
+	LActor.setMountModel(sysarg, t, modelid, -1)
+	if flag then 
+	--重新计算速度
+	LActor.setMountStage(sysarg, stage, stage_point, Mounts.stages[stage].moveSpeed)
+	--需要重新计算属性
+	local a1, a2, a3, a4, a5, a6 ,a7 = MountOpFuncList.CalcAttr(sysarg, level, stage, stage_point)
+	LActor.setMountAttr(sysarg, a1, a2, a3, a4, a5, a6 ,a7)
+	end
+
+	LActor.sendTipmsg(sysarg, Lang.Mount.t18, ttMessage)
+
+	--LActor.sendDcApiProtoLog(sysarg, 19, 9, 1, 0)
+end
+
+--特殊坐骑化形
+MountOpFuncList[13] = function (sysarg, dp)
+	--print("special model change")
+	local specialModelId = DataPack.readInt(dp)
+	if not MountOpFuncList.changeSpecialMountModel(sysarg,specialModelId) then return 
+	end
+
+	LActor.sendTipmsg(sysarg, Lang.Mount.t18, ttMessage)
+end
+
+--激活技能
+MountOpFuncList[15] = function ( sysarg, dp )
+
+	local index = DataPack.readByte(dp)
+	local autobuy = DataPack.readByte(dp)
+	--print("index:"..tostring(index))
+	--print("autobuy:"..tostring(autobuy))
+	--print("MountOpFuncList.SkillMaxLevel:"..tostring(MountOpFuncList.SkillMaxLevel))
+
+	if index > MountOpFuncList.SkillMaxLevel or index <= 0 then
+		return
+	end
+	--判断是否已经激活
+	local slv = {} --技能等级
+	slv[1],slv[2],slv[3],slv[4],slv[5],slv[6],slv[7],slv[8],slv[9],slv[10] = LActor.getMountSkillLevel(sysarg)
+	if slv[index] > 0 then
+		LActor.sendTipmsg(sysarg, Lang.Mount.t23, ttMessage)
+		return 
+	end--已经激活
+
+	local config = Mounts.SkillConfig
+
+	--铜钱判断
+	local needMoney = config.jihuoMoney
+	local hasbindcoin = LActor.getMoneyCount(sysarg, mtBindCoin)
+	if hasbindcoin < needMoney then
+		--LActor.sendTipmsg(sysarg, Lang.Mount.t09, ttMessage)
+		LActor.SendGeneralTips(sysarg, 1, mtBindCoin, needMoney-hasbindcoin)
+		--print("here1")
+		return
+	end
+
+	local needItemId = config.useItem[index]
+	local needItemCount = config.useItemCount[index]
+
+	--材料判断
+	local needYuanbao = 0
+	local haveItemCount = LActor.getItemCount( sysarg, needItemId )
+	if haveItemCount < needItemCount then
+		if autobuy == 0 then
+			--LActor.sendTipmsg(sysarg, Lang.Mount.t20, ttMessage)	-- 材料不足
+			LActor.SendGeneralTips(sysarg, 2, needItemId, needItemCount-haveItemCount)
+			--print("here2")
+			return
+		else
+			local goodsId = MountOpFuncList.GetShangChengItem(needItemId)
+			local itemPrice = Item.getItemPrice(goodsId)
+			if itemPrice <= 0 then
+				--print("here3")
+				return false, itemPtr
+			end
+			needYuanbao = needYuanbao + itemPrice*(needItemCount-haveItemCount)
+			needItemCount = haveItemCount
+		end
+	end
+	--判断天珠
+	if needYuanbao > 0 then
+		local hasyuanbao = LActor.getMoneyCount(sysarg, mtYuanbao)
+		if hasyuanbao < needYuanbao then
+			--LActor.sendTipmsg(sysarg, Lang.Mount.t21, ttMessage)	-- 天珠不足
+			LActor.SendGeneralTips(sysarg, 1, mtYuanbao, needYuanbao-hasyuanbao)
+			--print("here4")
+			return
+		end
+	end
+
+		--消耗处理
+	if needMoney > 0 then
+		LActor.changeMoney(sysarg,mtBindCoin,-needMoney, 1, true, "mounts", "skill_activate")
+	end
+	if needYuanbao > 0 then
+		LActor.changeMoney(sysarg, mtYuanbao, -needYuanbao, 1, true, "mounts", "skill_activate_autobuy")
+	end
+	--删除物品
+	if needItemId > 0 then
+		LActor.removeItem(sysarg, needItemId, needItemCount, -1, -1, -1, "mounst_skill_activate")
+	end
+	--升级
+	slv[index] = 1
+	LActor.setMountSkillLevel(sysarg,slv[1],slv[2],slv[3],slv[4],slv[5],slv[6],slv[7],slv[8],slv[9],slv[10])
+
+	--触发成就
+	LActor.SetAchieveProcessByType(sysarg, 88, 1, 1)
+	--print("here5")
+end
+
+--装备一个技能
+MountOpFuncList[16] = function ( sysarg, dp )
+	local index1 = DataPack.readByte(dp) --技能索引
+	local index2 = DataPack.readByte(dp) --技能槽索引
+	if index1 <= 0 or index1 > MountOpFuncList.SkillMaxLevel then
+		return
+	end
+	print("xx1="..index1.."xx2="..index2)
+	local sid = {} --技能槽数据
+	sid[1],sid[2],sid[3],sid[4],sid[5],sid[6],sid[7],sid[8],sid[9],sid[10] = LActor.getMountUseSkill(sysarg)
+
+	local config = Mounts.SkillConfig
+	local openNum = 10 --开启个数
+	local level, stage, stage_point, lingxi, stage_model, next_level_t = LActor.getMountInfo(sysarg)
+	local skillOpen = config.skillOpen 
+	for i=1,#skillOpen do
+		if stage < skillOpen[i] then
+			openNum = i - 1
+			break
+		end
+	end
+
+	if index2 > 0 and index2 < MountOpFuncList.SkillMaxLevel then
+		if index2 > openNum then
+			return
+		end --大于开启个数
+	elseif index2 == 0 then --自动装备
+		for i=1,openNum do
+			if sid[i] <= 0 then -- -1表示未装备
+				index2 = i
+				break
+			end
+		end
+		if index2 == 0 then
+			LActor.sendTipmsg(sysarg, Lang.Mount.t26, ttMessage)	-- 技能槽已满
+			return
+		end
+	else
+		return
+	end
+
+	sid[index2] = index1
+	LActor.setMountUseSkill(sysarg,sid[1],sid[2],sid[3],sid[4],sid[5],sid[6],sid[7],sid[8],sid[9],sid[10])
+	LActor.sendTipmsg(sysarg, Lang.Mount.t27, ttMessage)
+
+	
+	if 1 == Mounts.SkillConfig.addAttribute[index1] then
+		local slv = {} --技能等级
+		slv[1],slv[2],slv[3],slv[4],slv[5],slv[6],slv[7],slv[8],slv[9],slv[10] = LActor.getMountSkillLevel(sysarg)
+
+		local skillId = Mounts.SkillConfig.skillId[index1]
+		for i = 1 , slv[index1] or 1 do
+			LActor.learnSkill(sysarg, skillId, slv[index1] or 1)
+		end
+	end
+end
+
+--交换装备槽中2个技能
+MountOpFuncList[17] = function ( sysarg, dp )
+	local index1 = DataPack.readByte(dp) --技能槽索引
+	local index2 = DataPack.readByte(dp) --技能槽索引
+
+	local config = Mounts.SkillConfig
+	local openNum = 10 --开启个数
+	local level, stage, stage_point, lingxi, stage_model, next_level_t = LActor.getMountInfo(sysarg)
+	local skillOpen = config.skillOpen 
+	for i=1,#skillOpen do
+		if stage < skillOpen[i] then
+			openNum = i - 1
+			break
+		end
+	end
+
+	if index1 <= 0 or  index1 > openNum or  index2 <= 0 or  index2 > openNum or index1 == index2 then
+		return
+	end
+
+	local sid = {} --技能槽数据
+	sid[1],sid[2],sid[3],sid[4],sid[5],sid[6],sid[7],sid[8],sid[9],sid[10] = LActor.getMountUseSkill(sysarg)
+
+	local temp = sid[index1]
+	sid[index1] = sid[index2]
+	sid[index2] = temp
+	LActor.setMountUseSkill(sysarg,sid[1],sid[2],sid[3],sid[4],sid[5],sid[6],sid[7],sid[8],sid[9],sid[10])
+end
+
+--升级技能
+MountOpFuncList[18] = function ( sysarg, dp )
+	local index = DataPack.readByte(dp)
+	local autobuy = DataPack.readByte(dp)
+
+	if index <= 0 or index > MountOpFuncList.SkillMaxLevel then
+		return
+	end
+
+	--判断是否已经激活
+	local slv = {} --技能等级
+	slv[1],slv[2],slv[3],slv[4],slv[5],slv[6],slv[7],slv[8],slv[9],slv[10] = LActor.getMountSkillLevel(sysarg)
+	if slv[index] <= 0 then
+		LActor.sendTipmsg(sysarg, Lang.Mount.t24, ttMessage)
+		return 
+	end--未激活
+
+	local config = Mounts.SkillConfig
+	--等级上线判断
+	if slv[index] >= (#config.levelExp[index] + 1) then
+		LActor.sendTipmsg(sysarg, Lang.Mount.t25, ttMessage)
+		return 
+	end
+
+
+	--铜钱判断
+	local needMoney = config.levelMoney[index]
+	local hasbindcoin = LActor.getMoneyCount(sysarg, mtBindCoin)
+	if hasbindcoin < needMoney then
+		--LActor.sendTipmsg(sysarg, Lang.Mount.t09, ttMessage)
+		LActor.SendGeneralTips(sysarg, 1, mtBindCoin, needMoney-hasbindcoin)
+		return
+	end
+
+	local needItemId = config.levelUseItem[index]
+	local needItemCount = config.levelItemCount[index]
+
+	--材料判断
+	local needYuanbao = 0
+	local haveItemCount = LActor.getItemCount( sysarg, needItemId )
+	if haveItemCount < needItemCount then
+		if autobuy == 0 then
+			--LActor.sendTipmsg(sysarg, Lang.Mount.t20, ttMessage)	-- 材料不足
+			LActor.SendGeneralTips(sysarg, 2, needItemId, needItemCount-haveItemCount)
+			return
+		else
+			local goodsId = MountOpFuncList.GetShangChengItem(needItemId)
+			local itemPrice = Item.getItemPrice(goodsId)
+			if itemPrice <= 0 then
+				return false, itemPtr
+			end
+			needYuanbao = needYuanbao + itemPrice*(needItemCount-haveItemCount)
+			needItemCount = haveItemCount
+		end
+	end
+	--判断天珠
+	if needYuanbao > 0 then
+		local hasyuanbao = LActor.getMoneyCount(sysarg, mtYuanbao)
+		if hasyuanbao < needYuanbao then
+			--LActor.sendTipmsg(sysarg, Lang.Mount.t21, ttMessage)	-- 天珠不足
+			LActor.SendGeneralTips(sysarg, 1, mtYuanbao, needYuanbao-hasyuanbao)
+			return
+		end
+	end
+
+	--升级计算
+	local exp = {} --技能经验
+	exp[1],exp[2],exp[3],exp[4],exp[5],exp[6],exp[7],exp[8],exp[9],exp[10] = LActor.getMountSkillExp(sysarg)
+
+	local needExp = config.levelExp[index][slv[index]]
+	local addExp = config.addExp[index]
+	exp[index] = exp[index] + addExp
+
+	--消耗处理
+	if needMoney > 0 then
+		LActor.changeMoney(sysarg,mtBindCoin,-needMoney, 1, true, "mounts", "skill_activate")
+	end
+	if needYuanbao > 0 then
+		LActor.changeMoney(sysarg, mtYuanbao, -needYuanbao, 1, true, "mounts", "skill_activate_autobuy")
+	end
+	--删除物品
+	if needItemId > 0 then
+		LActor.removeItem(sysarg, needItemId, needItemCount, -1, -1, -1, "mounst_skill_activate")
+	end
+
+	--升级处理
+	if exp[index] >= needExp then--升级
+		slv[index] = slv[index] + 1
+		LActor.setMountSkillLevel(sysarg,slv[1],slv[2],slv[3],slv[4],slv[5],slv[6],slv[7],slv[8],slv[9],slv[10])
+
+		exp[index] = 0 --经验归零
+
+		if 1 == Mounts.SkillConfig.addAttribute[index] then
+
+			local sid = {} --技能槽数据
+			sid[1],sid[2],sid[3],sid[4],sid[5],sid[6],sid[7],sid[8],sid[9],sid[10] = LActor.getMountUseSkill(sysarg)
+			local isEquipSkill = false
+			for i , v in pairs(sid) do
+				if v == index then
+					isEquipSkill = true
+					break
+				end
+			end
+			if isEquipSkill then
+				local skillId = Mounts.SkillConfig.skillId[index]
+				LActor.learnSkill(sysarg, skillId, slv[index])
+			end
+		end
+
+	end
+	LActor.setMountSkillExp(sysarg,exp[1],exp[2],exp[3],exp[4],exp[5],exp[6],exp[7],exp[8],exp[9],exp[10])
+
+
+
+end
+
+--卸下技能
+MountOpFuncList[19] = function (sysarg, dp )
+	local index = DataPack.readByte(dp)
+	if index <= 0 then
+		return
+	end
+
+	local config = Mounts.SkillConfig
+	local openNum = 10 --开启个数
+	local level, stage, stage_point, lingxi, stage_model, next_level_t = LActor.getMountInfo(sysarg)
+	local skillOpen = config.skillOpen 
+	for i=1,#skillOpen do
+		if stage < skillOpen[i] then
+			openNum = i - 1
+			break
+		end
+	end
+	if index > openNum then
+		return
+	end
+
+	local sid = {} --技能槽数据
+	sid[1],sid[2],sid[3],sid[4],sid[5],sid[6],sid[7],sid[8],sid[9],sid[10] = LActor.getMountUseSkill(sysarg)
+
+	if sid[index] <= 0 then
+		return --没有装备技能
+	end
+
+	local skill_index = sid[index]
+
+	--卸下
+	sid[index] = 0
+	LActor.setMountUseSkill(sysarg,sid[1],sid[2],sid[3],sid[4],sid[5],sid[6],sid[7],sid[8],sid[9],sid[10])
+	LActor.sendTipmsg(sysarg, Lang.Mount.t28, ttMessage)
+
+	if 1 == Mounts.SkillConfig.addAttribute[skill_index] then
+		local skillId = Mounts.SkillConfig.skillId[skill_index]
+		LActor.ForgetSkill(sysarg, skillId)
+	end
+
+end
+-- 是否开启圣灵值培养系统
+--[[
+MountOpFuncList.isOpenShengling = function(sysarg)
+	local level, stage, stage_point, lingxi, stage_model, next_level_t = LActor.getMountInfo(sysarg)
+	return stage >= Mounts.openSlStage
+end
+]]
+
+
+-- 活跃奖励数据已经加载
+MountOpFuncList.OnCheckActivityAward = function(sysarg, arg)
+	local level, stage, stage_point, lingxi, stage_model, next_level_t = LActor.getMountInfo(sysarg)
+
+	if stage >= #Mounts.stages then -- 满阶,配置是10阶，但最大只到8阶
+		LActor.triggerTarget(sysarg, enATMountPY)
+		FCActivityHandler.ActivityReward (sysarg)
+	end
+
+	-- 判断是否满属性
+	--[[
+	local star = MountOpFuncList.GetStar(stage, stage_point)
+	local x1, x2, x3, x4, x5 = LActor.getMountXilian(sysarg)
+	local base = Mounts.stages[stage].base[star]
+	local total = {base[1] + x1, base[2] + x2, base[3] + x3, base[4] + x4, base[5] + x5}
+	-- 要判断是否达到了上限
+	local allMax = true
+	for bi = 1, 5 do
+		if total[bi] < Mounts.stages[stage].limit[bi] then
+			allMax = false
+			break
+		end
+	end
+	if allMax then
+		LActor.triggerTarget(sysarg, enATMountXL)
+	end
+	]]
+end
+
+--读取坐骑技能id到C++
+function getmountskillid()
+	local nTemp = Mounts.SkillConfig.skillId
+	return nTemp[1] , nTemp[2], nTemp[3], nTemp[4], nTemp[5], nTemp[6] , nTemp[7] , nTemp[8] , nTemp[9], nTemp[10]
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeSpecialMount, EventCallDispatcher.HandleSpecialMount)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeMount, EventCallDispatcher.HandlerMountOp)
+--EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeLoadActivityAward, MountOpFuncList.OnCheckActivityAward)
+
+testmount = MountOpFuncList[2]
+
+setmount = function( sysarg, args )
+	local lvl = tonumber(args[1])
+	if lvl == nil then return end
+	local state = tonumber(args[2])
+	if state == nil then return end
+
+	LActor.mountUpLevel(sysarg, lvl, 0)
+	LActor.setMountStage(sysarg, state, 0, 0)
+end
+
+GmEventFuncList.register( "setmount", setmount, 1)

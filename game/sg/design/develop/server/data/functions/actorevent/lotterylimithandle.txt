@@ -1,0 +1,22 @@
+﻿-- 处理抽奖限制相关的操作
+checkLotteryLimit = function(sysarg, id, conf, itemid)
+	if conf == nil or id == nil or itemid == nil then return true end
+	--print("checkLotteryLimit id:"..id..",itemid:"..itemid)
+	if conf[itemid] == nil then return true end
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil or var.lotteryLimit == nil or var.lotteryLimit[id] == nil then return false end
+	--print("checkLotteryLimit id:"..id..",lotteryLimit:"..var.lotteryLimit[id])
+	if var.lotteryLimit[id] >= conf[itemid][1] then return true end
+	return false
+end
+
+addLotteryLimitNum = function (sysarg, id, num)
+	if id == nil or num == nil then return end
+	--print("addLotteryLimitNum id:"..id..",num:"..num)
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	if var.lotteryLimit == nil then var.lotteryLimit = {} end
+	if var.lotteryLimit[id] == nil then var.lotteryLimit[id] = 0 end
+	var.lotteryLimit[id] = var.lotteryLimit[id] + num
+	--print("addLotteryLimitNum id:"..id..",num:"..var.lotteryLimit[id])
+end

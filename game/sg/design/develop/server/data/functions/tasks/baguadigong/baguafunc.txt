@@ -1,0 +1,724 @@
+
+--#include "data\config\TasksConfig.inc" once	--活动开启配置
+--#include "data\config\task\baguadigongconfig.txt" once
+--#include "data\config\globalconfig.txt" once
+--#include "data\functions\tasks\baguadigong\baguastatistic.txt" once
+--#include "data\functions\timermsgfunc.txt" once
+
+BaGua.BaGua_TalkToNpc = function (sysarg)
+    LActor.npcTalkByName(sysarg,Lang.EntityName.n95)
+end
+--boss 刷新
+BaGua.BaGua_BOSS_Refresh = function(npc)
+	local sVal = System.getDyanmicVar()
+	local  hScene = Fuben.getSceneHandleById( BaGuaConfig.SCENEID, sVal.BaGuaFubenHandle)
+	local count = Fuben.getLiveMonsterCount( hScene, BaGuaConfig.BOSS.ID);
+	if count <= 0 then 
+		--debug_print("BaGuaConfig.BOSS.ID==================:"..BaGuaConfig.BOSS.ID)
+		--debug_print("BaGuaConfig.BOSS.POSX==================:"..BaGuaConfig.BOSS.POSX)
+		--debug_print("BaGuaConfig.BOSS.POSY==================:"..BaGuaConfig.BOSS.POSY)
+		Fuben.createMonster( hScene, BaGuaConfig.BOSS.ID, BaGuaConfig.BOSS.POSX, BaGuaConfig.BOSS.POSY, BaGuaConfig.ACTTIME )
+	end
+	Fuben.sendMsgToScene(hScene,Lang.Talk.t10092,ttGmTip)
+end
+--宝箱刷新
+BaGua.BaGua_BOX_Refresh = function()
+	local sVal = System.getDyanmicVar()
+	local  hScene = Fuben.getSceneHandleById( BaGuaConfig.SCENEID, sVal.BaGuaFubenHandle)
+	local count = BaGuaConfig.BOXCOUNT - Fuben.getGatherMonsterCount(hScene, BaGuaConfig.BOX)
+	if count < 0 then
+		count = 0
+	end 
+
+	for i=1,count do
+		local x = Fuben.getSceneMovePosX(hScene);
+		local y = Fuben.getSceneMovePosY(hScene);
+		local test = 0
+		while Fuben.canMove(hScene, x , y) == false do
+			x = Fuben.getSceneMovePosX(hScene);
+			y = Fuben.getSceneMovePosY(hScene);
+			test = test + 1
+			if test > 100 then
+				break
+			end
+		end
+		Fuben.createMonster( hScene, BaGuaConfig.BOX, x, y, BaGuaConfig.ACTTIME )
+		debug_print(string.format("=======box========= x=%d , y=%d", x , y))
+	end
+	Fuben.sendMsgToScene(hScene,Lang.Talk.t10093,ttGmTip)
+end
+--注册宝箱定时器
+TimerMsgFunc.register(TimerMsg.BaGuaRefreshBox, BaGua.BaGua_BOX_Refresh)
+
+-- 玩家死亡
+EventCallDispatcher.BaGua_Actor_Die = function(sysarg, arg)
+
+	
+	local killerprt = arg[1]  --获得杀死该玩家的对象的指针
+	local index = 0
+	if  killerprt == nil then
+		return
+	end
+	--如果筛选出来的任务库为空 直接返回
+	local nSysVar = System.getStaticVar()
+	if nSysVar.BaGuaTaskId == nil then
+		return
+	end
+	local killSceneId = LActor.getSceneId( killerprt )
+	local dieSceneid = LActor.getSceneId( sysarg  )
+	debug_print("==========EventCallDispatcher.BaGua_Actor_Die============",killSceneId,dieSceneid)
+
+	if killSceneId ~= dieSceneid or killSceneId ~= BaGuaConfig.SCENEID then
+		return
+	end
+	if killerprt ~= nil then
+		if LActor.isMonster(killerprt) then
+			killerprt = LActor.getMonsterOwner( killerprt )
+			if killerprt == nil then
+				return
+			end
+		end
+	end
+
+	local var = LActor.getStaticVar( sysarg )
+	-- 将被杀者 一个已经完成但还没有提交的数量减一
+	if var.BaGuaTaskId ~= nil then
+		for i = 1 , #var.BaGuaTaskId do
+			if var.BaGuaTaskAmount[i] > 0 and var.BaGuaAward[i] ~= 2 and var.BaGuaAward[i] ~= 1 then
+				var.BaGuaTaskAmount[i] = var.BaGuaTaskAmount[i] - 1
+				index = var.BaGuaTaskId[i]
+				if var.BaGuaAward[i] == 1 then
+					var.BaGuaAward[i] = 0
+				end
+				break
+			end
+		end
+	end
+	BaGua.BaGua_Statistic(sysarg)
+	if killerprt ~= nil then
+		debug_print("=======2")
+		if LActor.isActor( killerprt ) == false then
+			debug_print("===========这不是一个玩家===========")
+			return
+		end
+		local killervar = LActor.getStaticVar( killerprt )
+		if killervar.BaGuaTaskId ~= nil then
+		    	for k = 1 , #killervar.BaGuaTaskId do
+		    		local taskId = killervar.BaGuaTaskId[k]
+		    		local taskIndex = BaGua.FindMonsterIndex(taskId)
+		    		debug_print("========",taskIndex)
+		    		if BaGuaConfig.TASK[taskIndex] == nil then
+		    			debug_print("========不存在该任务==",taskId,taskIndex)
+		    		end
+		    		if BaGuaConfig.TASK[taskIndex].TYPE == 2 and killervar.BaGuaAward[k] ~= 2 and killervar.BaGuaTaskAmount[k] < BaGuaConfig.TASK[taskIndex].AMOUNT then
+		    			killervar.BaGuaTaskAmount[k] = killervar.BaGuaTaskAmount[k] + 1
+		    			if killervar.BaGuaTaskAmount[k] >= BaGuaConfig.TASK[taskIndex].AMOUNT then
+		    				killervar.BaGuaAward[k] = 1
+		    			end
+		    		end
+		    	end
+	    		BaGua.BaGua_Statistic(killerprt)
+	    	end
+	end
+	--[[
+	if killerprt ~= nil then 
+		BaGua.BaGua_Kill(killerprt)
+	end
+	]]
+end
+
+BaGua.BaGua_Kill = function (sysarg,killerprt)
+	local var = LActor.getStaticVar(sysarg)
+	local pvar = LActor.getStaticVar(killerprt)
+
+	if pvar.BaGuaTaskId == nil then
+		var.BaGuaTaskId = {}
+	end 
+	if pvar.BaGuaTaskAmount == nil then
+		var.BaGuaTaskAmount = {}
+	end 
+
+ 	local var_p = System.getStaticVar()
+ 	if var_p.BaGuaTaskId == nil then
+ 		debug_print("-------var_p.BaGuaTaskId----------")
+ 		return
+ 	end
+	tmp = {}
+	for i = 1, #var_p.BaGuaTaskId do
+		tmp[i] = var_p.BaGuaTaskId[i] 
+	end
+	-- tmp[1] = var_p.BaGuaTaskId[1] 
+	-- tmp[2] = var_p.BaGuaTaskId[2] 
+	-- tmp[3] = var_p.BaGuaTaskId[3] 
+	-- tmp[4] = var_p.BaGuaTaskId[4] 
+	-- tmp[5] = var_p.BaGuaTaskId[5] 
+	-- tmp[6] = var_p.BaGuaTaskId[6] 
+	debug_print("======tmp",tmp[1])
+
+	for m,n in pairs(tmp) do
+		debug_print('========mn',n,m)
+		pvar.BaGuaTaskId[m] = n
+        if pvar.BaGuaTaskAmount[m] == nil then
+          pvar.BaGuaTaskAmount[m] = 0
+        end
+        if pvar.BaGuaAward[m] == nil then
+            pvar.BaGuaAward[m] = 0
+        end
+    end
+
+    local actorX, actorY = LActor.getEntityPosition(sysarg, 0, 0)
+	local players = LuaHelp.getTeamMemberList(sysarg)
+	if players ~= nil then
+	    for i = 1,#players do
+	      local player = players[i]
+    	  local playerX, playerY = LActor.getEntityPosition(player, 0, 0)
+	      if LActor.getSceneId(player) == BaGuaConfig.SCENEID and BaGua.IsSameScreen(actorX,actorY,playerX,playerY) then
+	      	local player_var = LActor.getStaticVar(player)
+			for i=1,#tmp do
+				if monId == player_var.BaGuaTaskId[i] then
+					player_var.BaGuaTaskAmount[i] = player_var.BaGuaTaskAmount[i] + 1
+					if player_var.BaGuaTaskAmount[i]  >= BaGuaConfig.TASK[i].AMOUNT then
+		              	player_var.BaGuaTaskAmount[i]  = BaGuaConfig.TASK[i].AMOUNT
+		              		if player_var.BaGuaAward[i] == 0 then
+		              			player_var.BaGuaAward[i] = 1
+		              		end
+							break
+						end
+					end
+				end
+			BaGua.BaGua_Statistic(player)
+			end
+		end
+	else
+		for i=1,#tmp do
+			if monId == var.BaGuaTaskId[i] then
+				var.BaGuaTaskAmount[i] = var.BaGuaTaskAmount[i] + 1
+				if var.BaGuaTaskAmount[i]  >= BaGuaConfig.TASK[i].AMOUNT then
+				  	local player_var = LActor.getStaticVar(sysarg)
+	              	player_var.BaGuaTaskAmount[i]  = BaGuaConfig.TASK[i].AMOUNT
+	              	if player_var.BaGuaAward[i] == 0 then
+	              		player_var.BaGuaAward[i] = 1
+	              	end
+				  	break
+				end
+			end
+      	end
+		BaGua.BaGua_Statistic(sysarg)
+	end
+
+	if BaGuaConfig.BOSS.ID ~= monId then
+		return
+	end
+
+	sVal.BaGuaBossRefresh = 1200 + System.getCurrMiniTime()
+	LActor.postEntityScriptCallbackMsg(System.getGlobalNpc(), EntityCallbackMsg.BaguaRefreshBoss, 1200*1000)
+
+	local pfb = Fuben.getFubenPtr(sVal.BaGuaFubenHandle)
+	if pfb == nil then
+		debug_print("BaGua error, pfb is nil:")
+		return
+	end
+	local actors = LuaHelp.getFbActorList(pfb)
+	if actors == nil then return end
+	for i = 1,#actors do
+		local player = actors[i]
+		if player then
+			local npack = DataPack.allocPacket(player,139,91)
+		    if npack == nil then return end
+		    local rest =  sVal.BaGuaBossRefresh - System.getCurrMiniTime()
+		    if rest < 0 then
+		    	rest = 0
+		    end
+		    DataPack.writeInt(npack, rest)
+		    DataPack.flush(npack)
+		end
+	end
+end
+
+function BaGua_SysNewDay( )
+	--debug_print("=============testSystme=============")
+	-- body
+	local sVal = System.getStaticVar()
+	if sVal.BaGuaTaskId ~= nil then
+		sVal.BaGuaTaskId = nil
+	end
+	sVal.baguaStartTime = nil
+end
+
+
+
+
+EventCallDispatcher.regEntityCallbackMsg(EntityCallbackMsg.BaguaRefreshBoss, BaGua.BaGua_BOSS_Refresh)
+EventCallDispatcher.regEntityCallbackMsg(EntityCallbackMsg.BaguaTalkToNpc, BaGua.BaGua_TalkToNpc)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeOnActorDeath, EventCallDispatcher.BaGua_Actor_Die)
+
+function BaGua_Start()
+	System.broadcastTipmsg(Lang.ScriptTips.bagd011,ttGmTip)
+	local hFuben = Fuben.createFuBen(BaGuaConfig.FBID)
+	if hFuben == 0 then
+   		return 
+  	end
+	local sVal = System.getDyanmicVar()
+	sVal.BaGuaActing = 1
+	sVal.BaGuaFubenHandle = hFuben
+	--Fuben.setReserveTime(hFuben, System.getCurrMiniTime() + BaGuaConfig.ACTTIME) -- 设置保留时间
+	Fuben.SetFubenTime(hFuben,BaGuaConfig.ACTTIME)
+	--活动开启5分钟创建boss
+	LActor.postEntityScriptCallbackMsg(System.getGlobalNpc(), EntityCallbackMsg.BaguaRefreshBoss, BaGuaConfig.OPEN_ACTIVE_TIME_CREATE_BOSS*1000)
+	local hscene = Fuben.getSceneHandleById(BaGuaConfig.SCENEID, hFuben)
+	--活动开启每10分钟刷一波宝箱
+	Fuben.postSceneTimeCall(hscene, TimerMsg.BaGuaRefreshBox, BaGuaConfig.BOX_REFRESH_TIME, BaGuaConfig.ACTTIME/BaGuaConfig.BOX_REFRESH_TIME)
+	local now = System.getCurrMiniTime()
+	sVal.BaGuaBossRefresh = now + 300
+	BaGua.BaGuaTask()
+
+	local var_p = System.getStaticVar()
+	var_p.baguaStartTime = now 	--记录当天开活动的时间
+end
+
+function BaGua_End()
+	local sVal = System.getDyanmicVar()
+	sVal.BaGuaActing = nil
+    --debug_print("======继续推出")
+	if sVal.BaGuaFubenHandle == nil or sVal.BaGuaFubenHandle == 0 then
+		return 
+	end
+
+	local pfb = Fuben.getFubenPtr(sVal.BaGuaFubenHandle)
+	if pfb == nil then
+		debug_print("BaGua close error, pfb is nil:")
+		return
+	end
+
+	-- 所有人退出副本
+	local actors = LuaHelp.getFbActorList(pfb)
+	if actors == nil then return end
+	for i = 1,#actors do
+		local actor = actors[i]
+		LActor.exitFubenToScene(actor,BaGuaConfig.RETURNMAPID,BaGuaConfig.RETURNMAPX,BaGuaConfig.RETURNMAPY)
+		local var_d = LActor.getStaticVar(actor)
+		if var_d.BaguaPKMode ~= nil then
+			LActor.setPkMode(actor, var_d.BaguaPKMode)
+			var_d.BaguaPKMode = nil
+		end
+		--LActor.postEntityScriptCallbackMsg(actor, EntityCallbackMsg.BaguaTalkToNpc, 2000)
+	end
+
+	sVal.BaGuaBossRefresh = 0
+	Fuben.SetFubenTime(sVal.BaGuaFubenHandle, 1)
+end
+
+-- MiscsImplement.BaGua_Enter = function (sysarg)
+--     debug_print("=====八卦地宫")
+-- 	if System.getOpenServerDay() < 3 then
+--     	LActor.sendTipmsg(sysarg, Lang.ScriptTips.bgdg008, ttMessage)
+--     	return 
+--   	end
+
+-- 	if LActor.getLevel(sysarg) < BaGuaConfig.LEVEL then
+-- 		debug_print("=====1")
+--     	LActor.sendTipmsg(sysarg, Lang.ScriptTips.bgdg001, ttMessage)
+--     	return 
+--   	end
+
+--   	-- 判断副本活动场景
+-- 	if LActor.getFubenId(sysarg) > 0 then
+-- 		debug_print("=====2")
+-- 		LActor.sendTipmsg(sysarg, Lang.ScriptTips.fb0001, ttMessage)
+-- 		return
+-- 	end
+	
+-- 	if LActor.hasState(sysarg, esProtection) then
+-- 		debug_print("=====3")
+--     	LActor.sendTipmsg(sysarg, Lang.ScriptTips.sx019, ttMessage)
+--     	return 
+--   	end
+-- 	local sVal = System.getDyanmicVar()
+-- 	if sVal.BaGuaActing ~= 1 then 
+-- 		debug_print("=====4")
+-- 		LActor.sendTipmsg(sysarg, Lang.ScriptTips.bgdg002, ttMessage)
+-- 		return  
+-- 	end
+    
+--     local var = LActor.getStaticVar(sysarg)
+-- 	if var.bagua_entertime + BaGuaConfig.CHENFA_TIME > System.getCurrMiniTime() then             --判断进入惩罚时间
+-- 		debug_print("惩罚时间",var.bagua_entertime + 180,System.getCurrMiniTime())
+-- 		LActor.sendTipmsg(sysarg,Lang.ScriptTips.bgdg008,ttMessage)
+-- 		return
+-- 	end
+
+-- 	local var_d = LActor.getStaticVar(sysarg)
+-- 	var_d.BaguaPKMode = LActor.getPkMode(sysarg) -- 保存之前的PK模式
+-- 	LActor.enterFuBen(sysarg,sVal.BaGuaFubenHandle,BaGuaConfig.SCENEID,BaGuaConfig.MAPX,BaGuaConfig.MAPY) 
+-- 	LActor.closeNPCDialog( sysarg ) 
+-- 	BaGua.BaGua_Statistic(sysarg)
+-- 	local npack = DataPack.allocPacket(sysarg,139,91)
+--     if npack == nil then return end
+--     local rest =  sVal.BaGuaBossRefresh - System.getCurrMiniTime()
+--     if rest < 0 then
+--     	rest = 0
+--     end
+--     DataPack.writeInt(npack, rest)
+--     DataPack.flush(npack)
+
+--     local spack = DataPack.allocPacket(sysarg,139,92)
+--     if spack == nil then return end
+--     DataPack.flush(spack)
+-- end
+
+MiscsImplement.BaGua_Get_Award = function (sysarg, msgid, packet)
+  	local id = DataPack.readInt(packet)
+  	local var = LActor.getStaticVar(sysarg)
+
+  	debug_print("======八卦")
+  	if var.BaGuaAward == nil then
+    	var.BaGuaAward = {}
+  	end
+
+  	local exp = 0.0
+    	local level = LActor.getLevel(sysarg)
+    	for i=1,#BaGuaConfig.EXP do
+      	if level >= BaGuaConfig.EXP[i][1] and level <= BaGuaConfig.EXP[i][2] then
+        	exp = BaGuaConfig.EXP[i][3]
+        	break
+     	end
+  	end
+
+  	local var_p = System.getStaticVar()
+  	if var_p.BaGuaTaskId == nil then
+  		return
+  	end
+  	if var.BaGuaTaskId == nil then
+  		return
+  	end
+ 	local nTargetIndex = BaGua.FindMonsterIndex( id )
+ 	debug_print("==============",nTargetIndex,id)
+  	for i=1, #var.BaGuaTaskId do
+  		debug_print("====奖励1",var.BaGuaTaskId[i])
+	    	if var.BaGuaTaskId[i] == id and nTargetIndex then
+		      	if var.BaGuaAward[i] == nil or var.BaGuaAward[i] < 1 then
+		      		debug_print("=============奖励2=========")
+				var.BaGuaAward[i] = 0
+				LActor.sendTipmsg(sysarg, Lang.ScriptTips.bgdg003, ttMessage)
+		        		return 
+		      	end
+		      	if var.BaGuaAward[i] > 1 then
+		      		debug_print("====奖励2")
+		        		LActor.sendTipmsg(sysarg, Lang.ScriptTips.bgdg004, ttMessage)
+		     	   	return 
+		      	end
+		      	if var.BaGuaTaskAmount[i] < BaGuaConfig.TASK[nTargetIndex].AMOUNT then
+		      		debug_print("====奖励3",var.BaGuaTaskAmount[i] , BaGuaConfig.TASK[nTargetIndex].AMOUNT , var.BaGuaAward[i])
+		     	   	var.BaGuaAward[i] = 0
+		     	   	LActor.sendTipmsg(sysarg, Lang.ScriptTips.bgdg003, ttMessage)
+		    	    	return 
+		      	end
+		      	
+		      	local week = System.getDayOfWeek()
+			--debug_print("=======今天是"..week)
+			local nDouble = 1
+			for k , v in pairs ( BaGuaConfig.Double_Award ) do
+				if v == week then
+					nDouble = 2
+					break
+				end
+			end
+			    
+			local AwardType = BaGuaConfig.TASK[nTargetIndex].AWARD.AWARDTYPE
+		      	if AwardType == 0 then --经验
+		      		if exp < 1 then
+		      			exp = 1
+		      		end
+		      		local realExp = BaGuaConfig.TASK[nTargetIndex].AWARD.AMOUNT * nDouble * exp
+		      		LActor.addExp(sysarg, realExp, 207, 0, false)
+		      		LActor.sendTipmsg(sysarg, string.format(Lang.ScriptTips.wt021, realExp), ttMessage)
+		      	elseif AwardType == 1 then --货币
+		      		LActor.changeMoney(sysarg, BaGuaConfig.TASK[nTargetIndex].AWARD.ID, BaGuaConfig.TASK[nTargetIndex].AWARD.AMOUNT * nDouble, 1, true, "liu li huang jin", "gamereward")
+		      	elseif AwardType == 2 then --物品
+		      		if LActor.canAddItem(sysarg,BaGuaConfig.TASK[nTargetIndex].AWARD.ID,BaGuaConfig.TASK[nTargetIndex].AWARD.AMOUNT,0,0,true) then
+		      			LActor.addItem(sysarg,BaGuaConfig.TASK[nTargetIndex].AWARD.ID,0,0,BaGuaConfig.TASK[nTargetIndex].AWARD.AMOUNT * nDouble,1)
+		      			local effect = {}
+		      			local effects = {}
+				        	effect.type = 1  -- 1为物品,暂时只支持发物品所以写死
+				       	effect.id = BaGuaConfig.TASK[nTargetIndex].AWARD.ID
+				        	effect.count = BaGuaConfig.TASK[nTargetIndex].AWARD.AMOUNT
+				        	effects[#effects+1] = effect
+				        	if #effects > 0 then
+				          		MiscFunc.PlayItemEffect(sysarg, 11, effects)
+				        	end
+		      		else
+		      			-- LActor.sendTipmsg(sysarg, Lang.ScriptTips.bgdg005, ttMessage)
+		      			LActor.SendGeneralTips(sysarg, 7, 0, 0)
+		      			return
+		      		end
+		      	end
+		        	var.BaGuaAward[i] = 2
+		        	BaGua.BaGua_Statistic(sysarg)
+			-- local  addexp = BaGua.GetExpByLevel(sysarg, exp)
+		  --       LActor.addExp(sysarg, addexp, 207, 0, false)
+		  --       LActor.playExpEffect(sysarg, addexp) -- 播放获取经验特效
+		  --       LActor.SetAchieveProcessByType(sysarg , 100 , 1 ,1)
+		      	break
+	    	end
+  	end
+end
+
+ MiscsImplement.BaGua_Tranfer =function ( sysarg, msgid, packet )
+ debug_print("====...突出")
+    local sceneId = DataPack.readWord(packet)  --读取场景的ID
+    local scenename = DataPack.readString(packet)  --读取场景的名字
+	local pos_x = DataPack.readWord(packet)
+	local pos_y = DataPack.readWord(packet)
+	local sVal = System.getDyanmicVar()
+
+ 	if LActor.getSceneId(sysarg) ~= BaGuaConfig.SCENEID then
+ 		LActor.sendTipmsg(sysarg, Lang.ScriptTips.bgdg006, ttMessage)
+ 		return
+ 	end
+
+ 	local hScene = Fuben.getSceneHandleById(BaGuaConfig.SCENEID, sVal.BaGuaFubenHandle)
+ 	if hScene == nil then
+ 		return
+ 	end
+ 	if Fuben.canMove(hScene, pos_x, pos_y) == false then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.bgdg007, ttMessage)
+ 		return
+ 	end
+ 	LActor.enterScene(sysarg, BaGuaConfig.SCENEID, pos_x, pos_y)
+ end
+--下发任务
+MiscsImplement.getTask = function(sysarg, msgid, packet)
+	-- body
+	BaGua.BaGua_Statistic( sysarg )
+
+end
+--MiscsImplement.registerMsgHandler(92 , MiscsImplement.BaGua_Enter)
+MiscsImplement.registerMsgHandler(93 , MiscsImplement.BaGua_Get_Award)
+MiscsImplement.registerMsgHandler(90 , MiscsImplement.getTask)
+
+EventCallDispatcher.NewDayAcrriveUpdateBaGuaTask = function (sysarg, arg )
+	local var = LActor.getStaticVar( sysarg )
+	if not var then return end
+
+	if var.BaGuaTaskId and var.BaGuaAward and var.BaGuaTaskAmount then
+		local nDouble = 1
+		if var.bagua_enterweek then
+			for k , v in pairs ( BaGuaConfig.Double_Award ) do
+				if v == var.bagua_enterweek then
+					nDouble = 2
+					break
+				end
+			end
+		end
+		for i=1, #var.BaGuaTaskId do
+			local nTargetIndex = BaGua.FindMonsterIndex(var.BaGuaTaskId[i])
+			if nTargetIndex and var.BaGuaTaskAmount[i] == BaGuaConfig.TASK[nTargetIndex].AMOUNT and var.BaGuaAward[i] and var.BaGuaAward[i] == 1 then
+				local awardConfig = BaGuaConfig.TASK[nTargetIndex].AWARD
+				local awardType
+				if awardConfig.AWARDTYPE == 0 then
+					awardType = 6
+				elseif awardConfig.AWARDTYPE == 1 then
+					awardType = 2
+				elseif awardConfig.AWARDTYPE == 2 then
+					awardType = 1
+				end
+				System.sendGmMailOffLine(LActor.getActorId(sysarg), Lang.ScriptTips.bagd013, awardType, awardConfig.ID, awardConfig.AMOUNT * nDouble, 0, Lang.ScriptTips.bagd012)
+			end
+		end
+ 	end
+	var.BaGuaAward = nil
+	var.BaGuaTaskId = nil
+	var.BaGuaTaskAmount = nil
+	var.bagua_entertime = 0
+	var.bagua_enterweek = nil
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, EventCallDispatcher.NewDayAcrriveUpdateBaGuaTask)
+
+
+BaGua.BaGua_Fuben_Enter = function(sysarg, hfb, way)
+	local var_d = LActor.getStaticVar( sysarg )
+	--var_d.BaguaPKMode = LActor.getPkMode(sysarg) -- 保存之前的PK模式
+	BaGua.BaGua_Statistic(sysarg)
+	local npack = DataPack.allocPacket(sysarg,139,91)
+    if npack == nil then return end
+    local sVal = System.getDyanmicVar()
+    if sVal.BaGuaBossRefresh == nil then
+    	sVal.BaGuaBossRefresh = 0
+    end
+    local rest =  sVal.BaGuaBossRefresh - System.getCurrMiniTime()
+    if rest < 0 then
+    	rest = 0
+    end
+    DataPack.writeInt(npack, rest)
+    DataPack.flush(npack)
+
+    -- 活跃度
+    ActivationTrigger( sysarg, 18 )
+
+    -- 日志
+    System.logCounter(
+       	LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), 
+        "daily_act", "", "",
+        "bagua", "attend", "",
+        "", "", lfBI) 
+end
+
+-- 退出副本
+BaGua.BaGua_Exit = function(sysarg, hfb, way)
+	local var_d = LActor.getStaticVar(sysarg)
+	debug_print("ewfwqwejkdswei=============",var_d.BaguaPKMode)
+	LActor.setLastPkMode(sysarg , var_d.BaguaPKMode)
+	LActor.setPkMode(sysarg , var_d.BaguaPKMode)
+	var_d.bagua_entertime = System.getCurrMiniTime()
+	var_d.bagua_enterweek = System.getDayOfWeek()
+	if way == 2 then
+		LActor.exitFuben(sysarg)
+		LActor.setPkMode(sysarg , var_d.BaguaPKMode)
+	end
+	LActor.partnerOnActorRelive( sysarg )
+	--debug_print("===退出时间",var_d.bagua_entertime)
+end
+
+function bagua_oneexit(sysarg)
+	local sVal = System.getDyanmicVar()
+	--sVal.BaGuaActing = nil
+   -- debug_print("======继续推出")
+	if sVal.BaGuaFubenHandle == nil or sVal.BaGuaFubenHandle == 0 then
+		return 
+	end
+
+	local pfb = Fuben.getFubenPtr(sVal.BaGuaFubenHandle)
+	if pfb == nil then
+		debug_print("BaGua close error, pfb is nil:")
+		return
+	end
+
+	if not sVal.BaGuaActing then
+		sVal.BaGuaActing = 1
+	end
+
+
+	local var_d = LActor.getStaticVar(sysarg)
+
+	if not var_d.bagua_entertime then
+		var_d.BaGua_Enter = 0
+	end
+
+	var_d.bagua_entertime = System.getCurrMiniTime()
+	var_d.bagua_enterweek = System.getDayOfWeek()
+	debug_print("===退出时间",var_d.bagua_entertime)
+
+	LActor.exitFubenToScene(sysarg,BaGuaConfig.RETURNMAPID,BaGuaConfig.RETURNMAPX,BaGuaConfig.RETURNMAPY)
+
+	if var_d.BaguaPKMode ~= nil then
+		LActor.setPkMode(actor, var_d.BaguaPKMode)
+		var_d.BaguaPKMode = nil
+	end
+end
+
+EventCallDispatcher.registerFubenEnter(BaGuaConfig.FBID, BaGua.BaGua_Fuben_Enter)
+EventCallDispatcher.registerFubenExit(BaGuaConfig.FBID, BaGua.BaGua_Exit)
+
+
+
+--------GM
+
+function jellmz( sysarg )
+	MiscsImplement.BaGua_Enter(sysarg)   --进入琉璃幻阵
+end
+
+function tcllmz(sysarg)                  --全体退出
+	BaGua_End(sysarg)
+end
+
+function onetcll(sysarg)                  --单人退出
+	bagua_oneexit(sysarg)
+end
+
+function startfb(sysarg)                    --幻阵开始
+	BaGua_Start(sysarg)
+end
+
+
+function lljj(sysarg)                      --下发目标任务
+    BaGua.BaGua_Statistic(sysarg)
+end
+
+function boss(sysarg)                        --boss刷新
+    BaGua.BaGua_BOSS_Refresh(sysarg)
+end
+
+function box(sysarg)						--箱子刷新
+	BaGua.BaGua_BOX_Refresh(sysarg)
+end
+
+function paiming(sysarg)					--任务刷新
+   BaGua.BaGuaTask()	
+end
+
+function xinde(sysarg)						--新的一天
+	EventCallDispatcher.NewDayAcrriveUpdateBaGuaTask(sysarg)
+end
+
+function baguajl(sysarg)
+	MiscsImplement.BaGua_Get_Award(sysarg)
+end
+
+function bagadata( sysarg )
+	-- body
+	local nVar = LActor.getStaticVar( sysarg )
+	if nVar.BaGuaTaskId ~= nil then
+		for i = 1 , #nVar.BaGuaTaskId do
+			debug_print(string.format("==========taskid ,cout , award= %d,%d,%d",nVar.BaGuaTaskId[i], nVar.BaGuaTaskAmount[i] ,nVar.BaGuaAward[i]))
+		end
+	else
+		debug_print("---------没有任务-----------")
+	end
+end
+function setPkMode( sysarg , arg )
+	-- body
+	local mode = tonumber(arg[1])
+	LActor.setPkMode(sysarg , mode)
+end
+function RandNumber( sysarg , arg )
+	-- body
+	--local tg ={}
+	for i = 1 , 1 do
+		BaGua.BaGuaTask()
+	end
+end
+
+function cladata( sysarg , arg)
+	-- body
+	local nVarSys = System.getStaticVar()
+	nVarSys.BaGuaTaskId = nil
+	local nVar = LActor.getStaticVar(sysarg)
+	nVar.BaGuaTaskId = nil
+	nVar.BaGuaAward = nil
+	nVar.BaGuaTaskAmount = nil
+end
+GmEventFuncList.register("spkm",setPkMode,1)
+GmEventFuncList.register("box",box,1)
+GmEventFuncList.register("boss",boss,1)
+GmEventFuncList.register("lljj",lljj,1)
+GmEventFuncList.register( "llmz", jellmz,1)
+GmEventFuncList.register( "tcll", tcllmz,1)
+GmEventFuncList.register( "onetc", onetcll,1)
+GmEventFuncList.register( "baguastart", startfb,1)
+GmEventFuncList.register( "paiming", paiming,1)
+GmEventFuncList.register( "xinde", xinde,1)
+GmEventFuncList.register("baguajl",baguajl,1)
+GmEventFuncList.register( "gsd", bagadata,1)
+GmEventFuncList.register( "rnb", RandNumber,1)
+GmEventFuncList.register( "cda", cladata,1)
+
+function BaGua.baguaGmFunc(sysarg, args)
+	if not sysarg then return end
+
+	local gmid = tonumber(args[1])
+	if gmid == 1 then
+		EventCallDispatcher.NewDayAcrriveUpdateBaGuaTask(sysarg)
+	end
+end
+GmEventFuncList.register( "bagua", BaGua.baguaGmFunc,1)

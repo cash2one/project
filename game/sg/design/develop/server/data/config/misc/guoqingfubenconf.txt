@@ -1,0 +1,111 @@
+﻿--#include "..\..\language\LangCode.txt" once
+
+GuoQingFubenConf = {
+	fbid = 70, -- 副本ID
+
+	broadcast = {851},
+	
+	refreshboss = {
+		ratio = 126,			--刷怪概率
+		livetime = 3600,		--怪物生存时间
+		refresh = {
+			{
+				ratio = 793,	--怪物概率
+				id = 849, 		--怪物种类
+				amount = 1,	--怪物数量
+				count = 9999999, --每天全服刷新多少次
+			},
+			{
+				ratio = 203, 	--怪物概率
+				id = 850,  		--怪物种类
+				amount = 1,	--怪物数量
+				count = 2000, --每天全服刷新多少次
+			},
+			{
+				ratio = 4,	--怪物概率
+				id = 851, 		--怪物种类
+				amount = 1,	--怪物数量
+				count = 5, --每天全服刷新多少次
+			},
+		}
+	},
+
+	scenes = { -- 每一层的场景配置
+		{ -- 第1层
+			sceneid = 1129, -- 场景ID
+			gametime = 60 * 60,       --本层游戏时间
+			--[[
+			传送门信息
+			posx和posy : 表示传送门出现的位置
+			toSceneid : 表示要传送的目的场景id
+			toPosx和toPosy : 分别要传送的目的坐标，此坐标必须是位于toSceneid场景里的
+		 	modelid : 表示外观模型的id
+		 	name : 传送门名称
+		 	]]
+			teleport = { posx = 28, posy = 13,toSceneid = 1130,toPosx = 7, toPosy = 11,modelid = 50000,name = Lang.SceneName.s1130 },
+
+			conds = { type = 1}, -- 通关条件:默认是0，表示脚本自己实现，1表示杀死全部怪物，2表示杀死某个怪物,mid为怪物ID
+			
+
+			monster = -- 本层怪物信息，
+			{
+				type = 0, --0 表示怪物 1 表示植物
+				total = 15, -- 总共多少只怪物(只算需要杀死的怪物)
+				ids = { 847 }, -- 怪物ID
+			},
+
+		},
+		-- 其它层的场景按上面配置
+		
+		{ -- 第2层
+			sceneid = 1130, -- 场景ID
+			gametime = 60 * 60,       --本层游戏时间
+			--[[
+			传送门信息
+			posx和posy : 表示传送门出现的位置
+			toSceneid : 表示要传送的目的场景id
+			toPosx和toPosy : 分别要传送的目的坐标，此坐标必须是位于toSceneid场景里的
+		 	modelid : 表示外观模型的id
+		 	name : 传送门名称
+		 	]]
+			teleport = { posx = 27, posy = 11,toSceneid = 1131,toPosx = 7, toPosy = 15,modelid = 50000,name = Lang.SceneName.s1131 },
+
+			conds = { type = 1 }, -- 通关条件:默认是0，表示脚本自己实现，1表示杀死全部怪物，2表示杀死某个怪物,mid为怪物ID
+
+			monster = -- 本层怪物信息，
+			{
+				type = 1, --0 表示怪物 1 表示植物
+				total = 10, -- 总共多少只怪物(只算需要杀死的怪物)
+				ids = {848 }, -- 怪物ID
+			},
+
+		},
+		-- 其它层的场景按上面配置
+		
+		{ -- 第3层
+			sceneid = 1131, -- 场景ID
+			gametime = 60 * 60,       --本层游戏时间
+			--[[
+			传送门信息
+			posx和posy : 表示传送门出现的位置
+			toSceneid : 表示要传送的目的场景id
+			toPosx和toPosy : 分别要传送的目的坐标，此坐标必须是位于toSceneid场景里的
+		 	modelid : 表示外观模型的id
+		 	name : 传送门名称
+		 	]]
+			teleport = { posx = 28, posy = 15,toSceneid = 11,toPosx = 93, toPosy = 71,modelid = 50000,name = Lang.SceneName.s11 ,comfirm = 1},
+
+			conds = { type = 1}, -- 通关条件:默认是0，表示脚本自己实现，1表示杀死全部怪物，2表示杀死某个怪物,mid为怪物ID
+
+			monster = -- 本层怪物信息，
+			{
+				type = 0, --0 表示怪物 1 表示植物
+				total = 1, -- 总共多少只怪物(只算需要杀死的怪物)
+				ids = { 852 }, -- 怪物ID
+			},
+
+		},
+
+		
+	}
+}

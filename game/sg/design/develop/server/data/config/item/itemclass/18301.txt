@@ -1,0 +1,31 @@
+﻿{
+	id = 18301,
+	name = Lang.Item.n18301,
+	desc = Lang.Item.i18301,
+	type = 83,
+	sellType = 83,
+	icon = 282,
+	shape = {0,0,0,0,0,0,0,0},
+	color = 0,
+	dura = 15000,
+	dup = 99,
+	colGroup = 1,
+	dealType = 0,
+	dealPrice = 10,
+	time = 0,
+	suitId = 0,
+	staitcAttrs = {  
+{type=11,value =500},
+{type=0, value=4 },
+{type=0, value=2 },
+{type=0, value=81},
+	},
+	strongAttrs = {  
+	},
+	flags = {  
+		asQuestItem = true,
+	},
+	conds = { 
+		{ cond = 1, value = 20, }, 
+	},
+},

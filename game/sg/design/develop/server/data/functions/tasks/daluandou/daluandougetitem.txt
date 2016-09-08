@@ -1,0 +1,105 @@
+-- 尤乌战场
+--#include "data\config\gameplay\daluandouconfig.txt" once
+
+function DaLuanDou_Main(sysarg)
+    local cooltime = 0
+    local sys_var = System.getDyanmicVar()
+    if sys_var == nil then return end
+    if sys_var.dld_data ~= nil and sys_var.dld_data.state == 1 then
+        local pfb = Fuben.getFubenPtr(sys_var.dld_data.fbhandle)
+        if not pfb then
+            print("副本指针不存在")
+            return
+        end
+        local fb_var = Fuben.getDyanmicVar(pfb)
+        if fb_var == nil then return end
+
+        if fb_var.exitdldtime == nil then
+            fb_var.exitdldtime = {}
+        end
+
+        -- 退出时间限制
+        local aid = LActor.getActorId(sysarg)
+        if fb_var.exitdldtime[aid] == nil then
+            fb_var.exitdldtime[aid] = 0
+        end
+        cooltime = daluandouconfig.enterlimittime - (System.getCurrMiniTime() - fb_var.exitdldtime[aid])
+        if cooltime < 0 then
+            cooltime = 0
+        end
+    end
+    local str = ""
+    str = string.format("%d", daluandouconfig.fbid or 0)
+    str= str.."/@DaLuanDouEnter"
+    str = str..string.format("/@%d", cooltime)
+
+    return str
+end
+
+-- 请求进入战场
+function DaLuanDouEnter ( sysarg )
+    local sys_var = System.getDyanmicVar()
+    if sys_var == nil then return end
+    if sys_var.dld_data == nil or sys_var.dld_data.state ~= 1 then
+        LActor.sendTipmsg(sysarg, Lang.ScriptTips.dld001, ttMessage)
+        return
+    end
+
+    if sys_var.dld_data.fbhandle == nil or sys_var.dld_data.fbhandle == 0 then
+        print("副本handle不存在")
+        return
+    end
+
+    -- 已经在战场中
+    if LActor.getFubenId(sysarg) == daluandouconfig.fbid then
+        LActor.sendTipmsg(sysarg, Lang.ScriptTips.dld002, ttMessage)
+        return 
+    end
+
+    -- 检查护送任务状态
+    if LActor.hasState(sysarg, esProtection) then
+        LActor.sendTipmsg(sysarg, Lang.ScriptTips.sx019, ttMessage)
+        return 
+    end
+
+    -- 等级
+    if LActor.getLevel( sysarg ) < daluandouconfig.level then
+        --print("level limit")
+        LActor.sendTipmsg(sysarg, Lang.ScriptTips.dld003, ttMessage)
+        return 
+    end
+
+    -- 组队中不能进入
+    local teamid = LActor.getTeamId(sysarg)
+    if teamid > 0 then
+        LActor.sendTipmsg(sysarg, Lang.ScriptTips.dld005, ttMessage)
+        return 
+    end
+
+    local pfb = Fuben.getFubenPtr(sys_var.dld_data.fbhandle)
+    if not pfb then
+        print("副本指针不存在")
+        return
+    end
+    local fb_var = Fuben.getDyanmicVar(pfb)
+    if fb_var == nil then return end
+
+    if fb_var.exitdldtime == nil then
+        fb_var.exitdldtime = {}
+    end
+
+    -- 退出时间限制
+    if fb_var.exitdldtime[LActor.getActorId(sysarg)] ~= nil then
+        local lesstime = daluandouconfig.enterlimittime - (System.getCurrMiniTime() - fb_var.exitdldtime[LActor.getActorId(sysarg)])
+        if lesstime > 0 then
+            LActor.sendTipmsg(sysarg, string.format(Lang.ScriptTips.dld004, lesstime), ttMessage)
+            return 
+        end
+    end
+
+    local x = 10
+    local y = 10
+    x, y = Fuben.getFuBenRandomPos(pfb, daluandouconfig.sceneid, x, y) -- 生成副本场景复活随机点
+    -- 进入副本
+    LActor.enterFuBen(sysarg, sys_var.dld_data.fbhandle, daluandouconfig.sceneid, x, y)
+end

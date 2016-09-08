@@ -1,0 +1,1952 @@
+﻿--处理伙伴相关的操作
+
+--#include "data\config\pet\pet.txt" once --
+--#include "data\config\store\store.txt" once --
+--#include "data\functions\GlobalDefine.txt" once
+--#include "..\Systems\timereward\petactivityhandler.txt" once
+
+PetOpFuncList = {}
+
+EventCallDispatcher.HandlerPetOp = function (sysarg, args)
+	if args[1] == nil then return end   --
+	local func = PetOpFuncList[args[1]]
+	if func ~= nil then
+		func(sysarg, args[2], args) 
+	end
+end
+
+PetOpFuncList.sendBattleResult = function (sysarg, id, t, ret)
+	local npack = DataPack.allocPacket(sysarg,34,2)
+    if npack == nil then return end
+    DataPack.writeInt(npack, id)
+    DataPack.writeInt(npack, t)
+    DataPack.writeInt(npack, ret)
+    DataPack.flush(npack)
+end
+
+PetOpFuncList.getNameColor = function (sysarg, id, idx)
+	local max = LActor.petGetProp(sysarg, id, PI_ZZ_ATTACK_BASE, idx)
+	local tmp = LActor.petGetProp(sysarg, id, PI_ZZ_DEFEN_BASE, idx)
+	if tmp > max then max = tmp end
+	tmp = LActor.petGetProp(sysarg, id, PI_ZZ_LQ_BASE, idx)
+	if tmp > max then max = tmp end
+	tmp = LActor.petGetProp(sysarg, id, PI_ZZ_SF_BASE, idx)
+	if tmp > max then max = tmp end
+
+	local rgb = nil
+	for i,v in ipairs(petConf.zzRange) do
+		if max <= v then 
+			return petConf.zzColors[i]
+		end
+	end
+	return petConf.zzColors[#petConf.zzColors]
+end
+
+--伙伴出战或回收,battle， 
+PetOpFuncList.cmdPetBattle = function(sysarg, id, t)
+	local idx = LActor.getPetById(sysarg, id)
+	if idx < 0 then
+		print("PetOpFuncList.cmdPetBattle, no pet:"..id)
+		return
+	end
+	if LActor.isDeath(sysarg) then return end
+
+	--点将台
+	if LActor.getFubenId(sysarg) == 62 then
+		LActor.sendTipmsg(sysarg, Lang.PetLang.p61, ttMessage)
+		return
+	end
+
+	
+	local var = LActor.getStaticVar( sysarg )
+	if var ~= nil then
+		var.curpetid = id
+	end
+	local ret = 0
+	if t == 0 then
+		-- 回收
+		LActor.petCallBack(sysarg, false)
+		if var ~= nil then
+			var.petbattleid = nil
+		end
+	else
+		-- 出战
+		if LActor.petGetProp(sysarg, id, PI_FUNNY, idx) <= 0 then
+			LActor.sendTipmsg(sysarg, Lang.PetLang.p37, ttDialog)
+			PetOpFuncList.sendBattleResult(sysarg, id, t, 1)
+			return
+		end
+		if LActor.petGetProp(sysarg, id, PI_LIVE, idx) <= 0 then
+			--[[
+			--临时屏蔽,因为此功能没有做
+			--LActor.sendTipmsg(sysarg, Lang.PetLang.p38, ttDialog)
+			--PetOpFuncList.sendBattleResult(sysarg, id, t, 1)
+			--return
+			--]]
+			LActor.petSetProp(sysarg, id, PI_LIVE, petConf.maxLive, idx)
+		end
+
+		local hp = LActor.petGetProp(sysarg, id, PI_HP, idx)
+		local pettype = LActor.petGetProp(sysarg, id, PI_TYPE, idx)
+		local maxhp = LActor.petGetProp(sysarg, id, PI_TOTAL_MAX_HP, idx)
+		-- print(maxhp)
+		-- print(hp)
+		if hp <= 0 then 
+			hp = maxhp * petConf.battleHp
+			LActor.petSetProp(sysarg, id, PI_HP, hp, idx)
+		end
+		-- print(hp)
+		LActor.petSetProp(sysarg, id, PI_MONSERID, petConf.typeMonsterId[pettype], idx)
+
+		-- 根据基本资质计算名字的颜色
+		local rgb = PetOpFuncList.getNameColor(sysarg, id, idx)
+		LActor.petSetRgb(sysarg, id, rgb, idx)
+
+		ret = LActor.petBattle(sysarg, id)
+		if ret then 
+			ret = 0 
+			local var = LActor.getStaticVar( sysarg )
+			if var ~= nil then
+				var.petbattleid = id
+			end
+			PetOpFuncList.setStoneEffect(sysarg, id, idx)
+		else 
+			ret = 1 
+		end
+	end
+
+	PetOpFuncList.sendBattleResult(sysarg, id, t, ret)
+end
+
+--伙伴出战或回收,battle
+PetOpFuncList[2] = function (sysarg, dp)
+	local id = 16185
+	local t = 1
+	if (dp ~= nil) then
+		id = DataPack.readInt(dp)
+		t = DataPack.readInt(dp)
+	end
+	PetOpFuncList.cmdPetBattle(sysarg, id, t)
+end
+
+PetOpFuncList.removePet = function (sysarg, id)
+	LActor.petRemovePet(sysarg, id)
+	local npack = DataPack.allocPacket(sysarg,34,3)
+    if npack == nil then return end
+    DataPack.writeInt(npack, id)
+    DataPack.flush(npack)
+	-- 1:load, 2:add, 3:update,4 delete
+    System.SendToDb(1, 52, 3, dtInt, LActor.getActorId(sysarg), dtInt, 4, dtInt, id)
+end
+
+--删除伙伴， remvoe
+PetOpFuncList[3] = function (sysarg, dp)
+	local id = DataPack.readInt(dp)
+	local idx = LActor.getPetById(sysarg, id)
+	if idx < 0 then
+		print("PetOpFuncList[3]:no pet:"..id)
+		return
+	end
+
+	local fight_value = LActor.petGetProp(sysarg, id, PI_FIGHT_VALUE, idx)
+	local pet_name = LActor.petGetName(sysarg, id, idx)
+	local pet_level = LActor.petGetProp(sysarg, id, PI_LEVEL, idx)
+
+	PetOpFuncList.removePet(sysarg, id)
+
+	local extra = pet_name..id
+
+	--删除伙伴完成之后打印log
+	System.logCounter(LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)),
+		"pet", tostring(fight_value), extra, "deletepet", tostring(pet_name), tostring(pet_level), "", "")
+end
+
+-- 改变伙伴的名字
+PetOpFuncList[4] = function (sysarg, dp)
+	local id = DataPack.readInt(dp)
+	local name = DataPack.readString(dp)
+	local len = System.getStrLenUtf8(name)
+	if len <= 0 or len > 6 then
+		LActor.sendTipmsg(sysarg, Lang.PetLang.p01, ttMessage)
+		return
+	end
+
+	if not LActorMgr.checkNameStr(name) then
+		LActor.sendTipmsg(sysarg, Lang.PetLang.p02, ttMessage)
+		return
+	end
+	local ret = LActor.petChangeName(sysarg, id, name)
+	if ret then ret = 0 else ret = 1 end
+
+	local npack = DataPack.allocPacket(sysarg,34,4)
+    if npack == nil then return end
+    DataPack.writeInt(npack, id)
+    DataPack.writeInt(npack, ret)
+    if ret == 0 then DataPack.writeString(npack, name) end
+    DataPack.flush(npack)
+end
+
+-- 设置伙伴的攻击模式
+PetOpFuncList[5] = function (sysarg, dp)
+	local id = DataPack.readInt(dp)
+	local val = DataPack.readInt(dp)
+
+	LActor.petSetProp(sysarg, id, PI_FIGHT_TYPE, val)
+end
+
+-- 扩展伙伴栏
+PetOpFuncList[6] = function (sysarg, dp)
+	local cnt = LActor.petGetCapacity(sysarg)
+	if cnt >= petConf.maxPet then
+		LActor.sendTipmsg(sysarg, Lang.PetLang.p10, ttMessage)
+		return
+	end
+	if LActor.getMoneyCount( sysarg, 3 ) < petConf.enlarge then
+		LActor.sendTipmsg(sysarg, Lang.PetLang.p11, ttMessage)
+		return
+	end
+
+	LActor.changeMoney( sysarg, 3, -petConf.enlarge, 1, true, "pet_enlarge")
+
+	cnt = cnt + 1
+	LActor.petSetCapacity(sysarg, cnt)
+
+	local npack = DataPack.allocPacket(sysarg,34,6)
+    if npack == nil then return end
+    DataPack.writeInt(npack, 0)
+    DataPack.writeInt(npack, cnt)
+    DataPack.flush(npack)
+end
+
+--延寿，玩耍，喂食操作
+PetOpFuncList[8] = function (sysarg, dp)
+	local id = DataPack.readInt(dp)
+	local t = DataPack.readInt(dp)	
+	local idx = LActor.getPetById(sysarg, id)
+	if idx < 0 then
+		print("PetOpFuncList[8]:no pet:"..id)
+		return
+	end
+
+	--t: 1：延寿，2：玩耍，3：喂食
+	if t == 1 then --(此功能不做)
+		local live = LActor.petGetProp(sysarg, id, PI_LIVE, idx)
+		if (live < 0) then live = 0 end
+		if live >= petConf.maxLive then
+			LActor.sendTipmsg(sysarg, Lang.PetLang.p03, ttMessage)
+			return
+		end
+		local hasitem = LActor.getItemCount(sysarg, petConf.liveItem)
+		if hasitem <= 0 then
+			--LActor.sendTipmsg(sysarg, Lang.PetLang.p04, ttMessage)
+			LActor.SendGeneralTips(sysarg, 2, petConf.liveItem, 1)
+			return
+		end
+		local newLive = live + petConf.live
+		if newLive > petConf.maxLive then newLive = petConf.maxLive	end
+		LActor.petSetProp(sysarg, id, PI_LIVE, newLive, idx)
+		LActor.removeItem(sysarg, petConf.liveItem, 1, -1, -1, -1, "pet_add_life", 821)
+	elseif t == 2 then
+		local fun = LActor.petGetProp(sysarg, id, PI_FUNNY, idx)
+		if (fun < 0) then fun = 0 end
+		if fun >= petConf.maxFunny then
+			LActor.sendTipmsg(sysarg, Lang.PetLang.p05, ttMessage)
+			return
+		end
+		local hasitem = LActor.getItemCount(sysarg, petConf.funItem)
+		if hasitem <= 0 then
+			--LActor.sendTipmsg(sysarg, Lang.PetLang.p06, ttMessage)
+			LActor.SendGeneralTips(sysarg, 2, petConf.funItem, 1)
+			return
+		end
+		local newFun = fun + petConf.funny
+		if newFun > petConf.maxFunny then newFun = petConf.maxFunny end
+		LActor.petSetProp(sysarg, id, PI_FUNNY, newFun, idx)
+		LActor.removeItem(sysarg, petConf.funItem, 1, -1, -1, -1, "pet_add_happy", 822)
+	elseif t == 3 then --(此功能不做)
+		local hp = LActor.petGetHp(sysarg, id, idx)
+		if hp <= 0 then
+			LActor.sendTipmsg(sysarg, Lang.PetLang.p43, ttMessage)
+			return
+		end
+
+		local maxHp = LActor.petGetProp(sysarg, id, PI_TOTAL_MAX_HP, idx)
+		if hp >= maxHp then
+			-- print("hp"..hp.." maxhp:"..maxHp)
+			LActor.sendTipmsg(sysarg, Lang.PetLang.p08, ttMessage)
+			return
+		end
+
+		local itemId = nil 
+		local petLevel = LActor.petGetProp(sysarg, id, PI_LEVEL, idx)
+		for i,v in ipairs(petConf.hpItem) do
+			if petLevel >= petConf.hpItemLevel[i] and LActor.getItemCount(sysarg, v) > 0 then
+				itemId = v
+				break
+			end
+		end
+		if itemId == nil then
+			--LActor.sendTipmsg(sysarg, Lang.PetLang.p07, ttMessage)
+			LActor.SendGeneralTips(sysarg, 2, petConf.hpItem[1], 1)
+			return
+		end
+
+		-- 使用物品 
+		--LActor.removeItem(sysarg,itemId,1,-1,-1,-1,"",2)
+
+		-- local add = Item.getItemPropertyById(itemId, Item.ipItemStaticDuaMax)
+		-- LActor.petChangeHp(sysarg, id, add, idx)
+		LActor.useItemById(sysarg, itemId, 1, id)
+	end
+end
+
+-- 消耗血包
+PetOpFuncList[9] = function (sysarg, dp)
+	local id = DataPack.readInt(dp)
+	local idx = LActor.getPetById(sysarg, id)
+	if idx < 0 then
+		print("PetOpFuncList[10]:no pet:"..id)
+		return
+	end
+
+	local level = LActor.petGetProp(sysarg, id, PI_LEVEL, idx)
+	if level > table.getn(petConf.levelHp) then
+		return
+	end
+	local count = petConf.levelHp[level]
+	local old = LActor.petGetProp(sysarg, id, PI_HP_STORE, idx)
+	if old < count then count = old end
+	LActor.petSetProp(sysarg, id, PI_HP_STORE, old - count, idx)
+
+	-- 给伙伴加血
+	LActor.petChangeHp(sysarg, id, count, idx)
+
+	local npack = DataPack.allocPacket(sysarg,34,9)
+    if npack == nil then return end
+    DataPack.writeInt(npack, id)
+    DataPack.writeInt(npack, 0)
+    DataPack.flush(npack)
+end
+
+PetOpFuncList.GetShangChengItem = function ( id_item)
+	local pet_stroe_item = GameStore[7].items
+	for k,v in pairs(pet_stroe_item) do
+		if v.item == id_item then
+			return v.id
+		end
+	end
+	return -1
+end
+
+-- 提悟
+PetOpFuncList[10] = function (sysarg, dp)
+	local id = DataPack.readInt(dp)
+	local usePro = DataPack.readInt(dp)
+	local useMoney = DataPack.readChar(dp)
+	if useMoney == nil then
+		useMoney = 0
+	end
+	local moneytype = DataPack.readByte(dp)
+	if moneytype == nil or moneytype ~= mtYuanbao and moneytype ~= mtBindYuanbao then return end
+
+	local useMoneyItem = 0
+	local useMoneyPro = 0
+
+	local idx = LActor.getPetById(sysarg, id)
+	if idx < 0 then
+		print("PetOpFuncList[10]:no pet:"..id)
+		return
+	end
+
+	local level = LActor.petGetPropLO16(sysarg, id, PI_WX, idx)
+	if level >= petConf.maxWx then
+		LActor.sendTipmsg(sysarg, Lang.PetLang.p12, ttMessage)
+		return
+	end
+
+	local safe = false
+	if level <= petConf.wxSafe then safe = true end
+
+	-- 消耗贝币
+	local hasbindcoin = LActor.getMoneyCount( sysarg, mtBindCoin )
+	if hasbindcoin < petConf.wxMoney[level+1] then
+		--LActor.sendTipmsg(sysarg, Lang.PetLang.p39, ttMessage)
+		LActor.SendGeneralTips(sysarg, 1, mtBindCoin, petConf.wxMoney[level+1]-hasbindcoin)
+		return
+	end
+
+	local proId = petConf.wxPro[level+1]
+	local hasitem = LActor.getItemCount(sysarg, proId)
+	if usePro == 1 and hasitem <= 0 then
+		if useMoney == 0 then
+			--LActor.sendTipmsg(sysarg, Lang.PetLang.p34, ttMessage)
+			LActor.SendGeneralTips(sysarg, 2, proId, 1)
+			useMoneyPro = 0
+			return
+		else
+			if not safe then
+				local shopItemLabal = PetOpFuncList.GetShangChengItem(proId)
+				if shopItemLabal < 0 then
+					return
+				end
+				useMoneyPro = Item.getItemPrice(shopItemLabal)
+			end
+		end
+	end
+
+	local wxItem = petConf.wxItemId[level+1]
+	local hasitemwx = LActor.getItemCount(sysarg, wxItem)
+	if hasitemwx <= 0 then
+		if useMoney == 0 then 
+			--LActor.sendTipmsg(sysarg, Lang.PetLang.p13, ttMessage)
+			LActor.SendGeneralTips(sysarg, 2, wxItem, 1)
+			useMoneyItem = 0
+			return
+		else
+			local shopItemLabal = PetOpFuncList.GetShangChengItem(wxItem)
+			if shopItemLabal < 0 then
+				return
+			end
+			useMoneyItem = Item.getItemPrice(shopItemLabal)
+		end
+	
+	end
+
+	local change = false
+
+--这里要先判断，后扣物品，判断扣天珠了
+	--print("wx useMoneyItem: "..useMoneyItem.."useMoneyPro: "..useMoneyPro.."level: "..(level+1))
+	local  useMOneyTotalMOney = useMoneyItem + useMoneyPro
+	if useMOneyTotalMOney > 0 then
+		if not LActor.changeMoney( sysarg, moneytype, -useMOneyTotalMOney, 1, true, "pet_wx_level") then
+			if moneytype == mtBindYuanbao then
+				LActor.sendTipmsg(sysarg, Lang.ScriptTips.petcw004, ttMessage)
+			else
+				LActor.sendTipmsg(sysarg, Lang.ScriptTips.petcw003, ttMessage)
+			end
+			return
+		end
+	end
+
+--扣物品了
+	if useMoneyItem <= 0 then 
+		LActor.removeItem(sysarg,wxItem,1,-1,-1,-1,"pet_wx_level",818)
+	end
+
+	if not safe and usePro == 1 then
+		if useMoneyPro <= 0 then
+			LActor.removeItem(sysarg,proId,1,-1,-1,-1,"pet_wx_level",818)
+		end
+	end
+	LActor.changeMoney( sysarg, mtBindCoin, -petConf.wxMoney[level+1], 1, true, "pet_wx_level")
+
+	local pet_name = LActor.petGetName(sysarg, id, idx)
+	local extra = pet_name..id
+
+	if System.getRandomNumber(100) < petConf.wxLevelRate[level+1] then
+		-- 成功
+		level = level + 1
+
+		local maxL = LActor.petGetPropHI16(sysarg, id, PI_WX, idx)
+		if level > maxL then 
+			LActor.petSetPropHI16(sysarg, id, PI_WX, level, idx)
+		end
+
+		LActor.petSetPropLO16(sysarg, id, PI_WX, level, idx)
+		-----------------------------log
+    	local fight_value = LActor.petGetProp(sysarg, id, PI_FIGHT_VALUE, idx)
+		System.logCounter(LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), "pet", tostring(fight_value), extra, "wuxing", "success", tostring(level), "", "")
+		-------------------------------
+
+		if petConf.wxTip[level] == 1 then
+			local name = petConf.typeName[LActor.petGetProp(sysarg, id, PI_TYPE, idx)]
+			local zy = LActor.getIntProperty(sysarg, PROP_CAMP)
+			local str = string.format(Lang.PetLang.p14, CampColor[LActor.getCampId(sysarg)], 
+				CampShortName[zy], LActor.getName(sysarg), name, level)
+			--System.broadcastTipmsg(str, ttHearsay)
+			local str = string.format(Lang.PetLang.p58, CampColor[LActor.getCampId(sysarg)], 
+				CampShortName[zy], LActor.getName(sysarg), name, level)
+			System.broadcastTipmsg(str, ttScreenCenter)
+		end
+
+		if petConf.wxSkillAdd[level] == 1 and level > maxL then
+			local openSlot = LActor.petGetProp(sysarg, id, PI_SKILL_SLOT, idx)
+			if openSlot < petConf.maxSkill then
+				LActor.petSetProp(sysarg, id, PI_SKILL_SLOT, openSlot + 1, idx)
+			end
+		end
+		change = true
+	else
+		local failCoin = petConf.wxFailCoin[level+1]
+		LActor.changeMoney( sysarg, mtBindCoin, failCoin, 1, true, "pet_wx_fail")
+		local str = string.format(Lang.PetLang.p47, failCoin)
+		LActor.sendTipmsg(sysarg, str, ttMessage)
+
+		-- 失败
+		if usePro ~= 1 and not safe then
+			-- 降级
+			level = level - 1
+			if level < 0 then level = 0 end
+			LActor.petSetPropLO16(sysarg, id, PI_WX, level, idx)
+			-----------------------------log
+    		local fight_value = LActor.petGetProp(sysarg, id, PI_FIGHT_VALUE, idx)
+			System.logCounter(LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), "pet", tostring(fight_value), extra, "wuxing", "fail", tostring(level), "", "")
+			-------------------------------
+
+			change = true
+		end
+	end
+
+	if change then
+		-- 重新计算属性
+		PetOpFuncList.refreshAttr(sysarg, id, idx)
+		-- 设置称号
+		LActor.petSetProp(sysarg, id, PI_TITLE_WX, petConf.wxTitle[level+1], idx)
+	end
+end
+
+-- 提成长
+PetOpFuncList[11] = function (sysarg, dp)
+	local id = DataPack.readInt(dp)
+	local usePro = DataPack.readInt(dp)
+
+	local useMoney = DataPack.readChar(dp)
+	if useMoney == nil then
+		useMoney = 0
+	end
+
+	local moneytype = DataPack.readByte(dp)
+	if moneytype == nil or moneytype ~= mtYuanbao and moneytype ~= mtBindYuanbao then return end
+
+	local useMoneyItem = 0
+	local useMoneyPro = 0
+
+	local idx = LActor.getPetById(sysarg, id)
+	if idx < 0 then
+		print("PetOpFuncList[11]:no pet:"..id)
+		return
+	end
+
+	local level = LActor.petGetPropLO16(sysarg, id, PI_GROW, idx)
+	if level >= petConf.growMax then
+		LActor.sendTipmsg(sysarg, Lang.PetLang.p15, ttMessage)
+		return
+	end
+
+	local safe = false
+	if level <= petConf.wxSafe then safe = true end
+
+	-- 消耗贝币
+	local hasbindcoin = LActor.getMoneyCount( sysarg, mtBindCoin )
+	if hasbindcoin < petConf.growMoney[level+1] then
+		--LActor.sendTipmsg(sysarg, Lang.PetLang.p39, ttMessage)
+		LActor.SendGeneralTips(sysarg, 1, mtBindCoin, petConf.growMoney[level+1]-hasbindcoin)
+		return
+	end
+
+	local proId = petConf.growPro[level+1]
+	local hasitem = LActor.getItemCount(sysarg, proId)
+	if usePro == 1 and  hasitem <= 0 then
+		if useMoney == 0 then
+			--LActor.sendTipmsg(sysarg, Lang.PetLang.p34, ttMessage)
+			LActor.SendGeneralTips(sysarg, 2, proId, 1)
+			return
+		else
+			if not safe then
+				local shopItemLabal = PetOpFuncList.GetShangChengItem(proId)
+				if shopItemLabal < 0 then
+					return
+				end
+				useMoneyPro = Item.getItemPrice(shopItemLabal)
+			end
+		end
+	end
+	PetOpFuncList.GetShangChengItem(petConf.growItemId[level+1])
+	local hasitemg = LActor.getItemCount(sysarg, petConf.growItemId[level+1])
+	if hasitemg <= 0 then
+		if useMoney == 0 then 
+			--LActor.sendTipmsg(sysarg, Lang.PetLang.p16, ttMessage)
+			LActor.SendGeneralTips(sysarg, 2, petConf.growItemId[level+1], 1)
+			useMoneyItem = 0
+			return
+		else
+			local shopItemLabal = PetOpFuncList.GetShangChengItem(petConf.growItemId[level+1])
+			if shopItemLabal < 0 then
+				return
+			end
+			useMoneyItem = Item.getItemPrice( shopItemLabal)
+		end
+
+	end
+
+
+	local change = false
+	--print("cz useMoneyItem: "..useMoneyItem.."useMoneyPro: "..useMoneyPro.."level: "..(level+1))
+		--这里要先判断，后扣物品，判断扣天珠了
+	local  useMOneyTotalMOney = useMoneyItem + useMoneyPro
+	if useMOneyTotalMOney > 0 then
+		local hasmoney = LActor.getMoneyCount( sysarg, moneytype )
+		if hasmoney >= useMOneyTotalMOney then 
+			LActor.changeMoney( sysarg, moneytype, -useMOneyTotalMOney, 1, true, "pet_grow_level")
+		else
+			-- if moneytype == mtBindYuanbao then
+			-- 	LActor.sendTipmsg(sysarg, Lang.ScriptTips.petcw004, ttMessage)
+			-- else
+			-- 	LActor.sendTipmsg(sysarg, Lang.ScriptTips.petcw003, ttMessage)
+			-- end
+			LActor.SendGeneralTips(sysarg, 1, moneytype, useMOneyTotalMOney-hasmoney)
+			return
+		end
+	end
+
+	if not safe and usePro == 1 then
+		if useMoneyPro <= 0 then 
+			LActor.removeItem(sysarg,proId,1,-1,-1,-1,"pet_grow_level",810)
+		end
+	end
+
+	if useMoneyItem <= 0 then 
+		LActor.removeItem(sysarg,petConf.growItemId[level+1],1,-1,-1,-1,"pet_grow_level",810)
+	end
+
+	LActor.changeMoney( sysarg, mtBindCoin, -petConf.growMoney[level+1], 1, true, "pet_grow_level")
+
+	local pet_name = LActor.petGetName(sysarg, id, idx)
+	local extra = pet_name..id
+
+	if System.getRandomNumber(100) < petConf.growLevelRate[level+1] then
+		-- 成功
+		level = level + 1
+		local maxL = LActor.petGetPropHI16(sysarg, id, PI_GROW, idx)
+		if level > maxL then 
+			LActor.petSetPropHI16(sysarg, id, PI_GROW, level, idx)
+		end
+
+		LActor.petSetPropLO16(sysarg, id, PI_GROW, level, idx)
+		-----------------------------log
+    	local fight_value = LActor.petGetProp(sysarg, id, PI_FIGHT_VALUE, idx)
+		System.logCounter(LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), "pet", tostring(fight_value), extra, "chengzhang", "success", tostring(level), "", "")
+		-------------------------------
+
+		if petConf.growTip[level] == 1 then
+			local name = petConf.typeName[LActor.petGetProp(sysarg, id, PI_TYPE, idx)]
+			local zy = LActor.getIntProperty(sysarg, PROP_CAMP)
+			local str = string.format(Lang.PetLang.p17, CampColor[LActor.getCampId(sysarg)], 
+				CampShortName[zy], LActor.getName(sysarg), name, level)
+			--System.broadcastTipmsg(str, ttHearsay)
+			local str1 = string.format(Lang.PetLang.p59, CampColor[LActor.getCampId(sysarg)], 
+				CampShortName[zy], LActor.getName(sysarg), name, level)
+			System.broadcastTipmsg(str1, ttScreenCenter)
+		end
+
+		if petConf.growSkillAdd[level] == 1 and level > maxL then
+			local openSlot = LActor.petGetProp(sysarg, id, PI_SKILL_SLOT, idx)
+			if openSlot < petConf.maxSkill then
+				LActor.petSetProp(sysarg, id, PI_SKILL_SLOT, openSlot + 1, idx)
+			end
+		end
+		ONLINEREWARD.petactivitycheck(sysarg, level)
+		change = true
+	else
+		local failCoin = petConf.growFailCoin[level+1]
+		LActor.changeMoney( sysarg, mtBindCoin, failCoin, 1, true, "pet_grow_fail")
+		local str = string.format(Lang.PetLang.p47, failCoin)
+		LActor.sendTipmsg(sysarg, str, ttMessage)
+		-- 失败
+		if usePro ~= 1 and not safe then
+			-- 降级
+			level = level - 1
+			if level < 0 then level = 0 end
+			LActor.petSetPropLO16(sysarg, id, PI_GROW, level, idx)
+
+			-----------------------------log
+    		local fight_value = LActor.petGetProp(sysarg, id, PI_FIGHT_VALUE, idx)
+			System.logCounter(LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), "pet", tostring(fight_value), extra, "chengzhang", "fail", tostring(level), "", "")
+			-------------------------------
+
+			change = true
+		end
+	end
+	
+	
+	if change then
+		-- 重新计算属性
+		PetOpFuncList.refreshAttr(sysarg, id, idx)
+		-- 设置称号
+		LActor.petSetProp(sysarg, id, PI_TITLE_GROW, petConf.growTitle[level+1], idx)
+	end
+end
+
+-- 转换攻击类型
+PetOpFuncList[12] = function (sysarg, dp)
+	local id = DataPack.readInt(dp)
+	local idx = LActor.getPetById(sysarg, id)
+	if idx < 0 then
+		print("PetOpFuncList[12]:no pet:"..id)
+		return
+	end
+
+	local hasitem = LActor.getItemCount(sysarg, petConf.changeAttackItemId)
+	if hasitem <= 0 then
+		--LActor.sendTipmsg(sysarg, Lang.PetLang.p18, ttMessage)
+		LActor.SendGeneralTips(sysarg, 2, petConf.changeAttackItemId, 1)
+		return
+	end
+
+	LActor.removeItem(sysarg,petConf.changeAttackItemId,1,-1,-1,-1,"pet_change_mode", 811)
+
+	local tt = LActor.petGetProp(sysarg, id, PI_ATTACK_TYPE, idx)
+	if tt == 1 then tt = 2 else tt = 1 end
+	LActor.petSetProp(sysarg, id, PI_ATTACK_TYPE, tt, idx)
+
+	-- if id == LActor.petGetCurrId(sysarg) then
+		LActor.petRefreshAttri(sysarg, id)
+	-- end
+end
+
+
+-- 使用了长生丹
+PetOpFuncList.useStoreItem = function (sysarg,itemidx,itemPtr,ItemTable, useCnt, param)
+	-- 给当前的伙伴加
+	local id = LActor.petGetCurrId(sysarg)
+	local idx = LActor.getPetById(sysarg, id)
+	if idx < 0 then
+		print("PetOpFuncList.useStoreItem:no pet:"..id)
+		LActor.sendTipmsg(sysarg, Lang.PetLang.p48, ttMessage)
+		return
+	end
+
+	local old = LActor.petGetProp(sysarg, id, PI_HP_STORE, idx)
+	local newval = old + ItemTable.hp * useCnt
+	if (newval < petConf.maxHpStore) then
+		--删除物品
+		if LActor.removeItem(sysarg,itemidx,useCnt,-1,-1,-1,"pet_add_blood", 812) == useCnt then
+			LActor.petSetProp(sysarg, id, PI_HP_STORE, newval, idx)
+		else
+			print("delete item error in useStoreItem")
+		end
+	else
+		LActor.sendTipmsg(sysarg, Lang.PetLang.p09, ttMessage)
+	end
+end
+
+
+-- 每5分钟触发
+PetOpFuncList[128] = function (sysarg)
+	--去掉寿命和快乐值
+	do
+		return
+	end
+	local id = LActor.petGetBattlePet(sysarg)
+	local idx = LActor.getPetById(sysarg, id)
+
+	if id > 0 then
+		if idx < 0 then
+			-- 没出战的伙伴
+			return
+		end
+		
+		-- 寿命和快乐值减少1点
+		local funny = LActor.petGetProp(sysarg, id, PI_FUNNY, idx)
+		funny = funny - 1
+		local live = LActor.petGetProp(sysarg, id, PI_LIVE, idx)
+		live = live - 5
+
+		if funny < 0 then funny = 0 end
+		if live < 0 then live = 0 end
+
+		LActor.petSetProp(sysarg, id, PI_FUNNY, funny, idx)
+		LActor.petSetProp(sysarg, id, PI_LIVE, live, idx)
+		if live <= 0 then
+			-- 低于0就不能出战
+			LActor.petCallBack(sysarg)
+			LActor.sendTipmsg(sysarg, Lang.PetLang.p38, ttMessage)
+		end
+	end
+end
+
+PetOpFuncList.calcZZ = function (sysarg, id, idx, base, n, grow, growRate, pid)
+	local zz = LActor.petGetProp(sysarg, id, base, idx)
+	zz = zz * (1 + grow * growRate) + n
+	LActor.petSetProp(sysarg, id, pid, zz, idx)
+	return zz
+end
+
+-- zz：总资质，n：第几个资质，level：等级，wx：悟性等级
+PetOpFuncList.calcAttr = function (zz, wx, level, attridx, tt)
+	--攻击=（攻击资质*对应的攻击资质系数*伙伴等级）*（1+悟性*悟性对应的系数+n）+常数2
+	return (zz * petConf.zzRate[attridx] * level) * (1 + wx * petConf.wxRate + petConf.wxLevelBase[wx + 1]) + petConf.typeVal[tt][attridx]
+end
+
+-- 计算伙伴的属性
+PetOpFuncList.refreshAttr = function (sysarg, id, idx)
+	if idx == nil then
+		idx = LActor.getPetById(sysarg, id)
+	end
+	if idx < 0 then
+		print("PetOpFuncList.refreshAttr:no pet:"..id)
+		return
+	end
+
+	-- 先算资质
+	--资质=基础资质*（1+成长*成长对应系数）+ n
+	local growRate = petConf.growRate
+	local level = LActor.petGetProp(sysarg, id, PI_LEVEL, idx)
+	local grow = LActor.petGetPropLO16(sysarg, id, PI_GROW, idx)
+	local n = petConf.growOther[grow + 1]
+	local wx = LActor.petGetPropLO16(sysarg, id, PI_WX, idx)
+	local tt = LActor.petGetProp(sysarg, id, PI_TYPE, idx)
+
+	
+	-- 注意：各个资质的值影响不同的属性的计算，比如攻击资质影响攻击属性，防御资质影响最大血和防御力
+	-- 资质的次序定义：攻击资质为1， 防御资质：2，灵巧：3，身法：4
+	-- 攻击属性
+	local zz = PetOpFuncList.calcZZ(sysarg, id, idx, PI_ZZ_ATTACK_BASE, n, grow, growRate, PI_ZZ_ATTACK) --攻击资质
+	local val = PetOpFuncList.calcAttr(zz, wx, level, 1, tt)
+	LActor.petSetProp(sysarg, id, PI_ATTACK, val, idx)
+
+	zz = PetOpFuncList.calcZZ(sysarg, id, idx, PI_ZZ_DEFEN_BASE, n, grow, growRate, PI_ZZ_DEFEN)	-- 防御资质
+	val = PetOpFuncList.calcAttr(zz, wx, level, 8, tt)-- 最大血
+	LActor.petSetProp(sysarg, id, PI_MAXHP, val, idx)
+	
+	val = PetOpFuncList.calcAttr(zz, wx, level, 4, tt)	-- 内防
+	LActor.petSetProp(sysarg, id, PI_INDEFEN, val, idx)
+	val = PetOpFuncList.calcAttr(zz, wx, level, 3, tt)
+	LActor.petSetProp(sysarg, id, PI_OUTDEFEN, val, idx)	-- 外防
+
+	zz = PetOpFuncList.calcZZ(sysarg, id, idx, PI_ZZ_LQ_BASE, n, grow, growRate, PI_ZZ_LQ)	-- 灵巧资质
+	val = PetOpFuncList.calcAttr(zz, wx, level, 6, tt)		-- 闪避
+	LActor.petSetProp(sysarg, id, PI_DODGERATE, val, idx)
+
+	val = PetOpFuncList.calcAttr(zz, wx, level, 7, tt)		-- 抗暴击
+	LActor.petSetProp(sysarg, id, PI_DEFCRITICALSTRIKES, val, idx)
+
+	zz = PetOpFuncList.calcZZ(sysarg, id, idx, PI_ZZ_SF_BASE, n, grow, growRate, PI_ZZ_SF)	-- 身法资质
+	val = PetOpFuncList.calcAttr(zz, wx, level, 4, tt)		-- 暴击
+	LActor.petSetProp(sysarg, id, PI_CRITICALSTRIKES, val, idx)
+	val = PetOpFuncList.calcAttr(zz, wx, level, 5, tt)		-- 命中
+	LActor.petSetProp(sysarg, id, PI_HITRATE, val, idx)
+
+	-- 如果是当前出战的伙伴，要同步属性到怪物中
+	--if id == LActor.petGetCurrId(sysarg) then
+		LActor.petRefreshAttri(sysarg, id)
+	--end
+end
+
+-- 伙伴升级
+PetOpFuncList.onLevelUp = function (sysarg, id, level, idx)
+	LActor.petSetProp(sysarg, id, PI_LEVEL, level, idx)
+	PetOpFuncList.refreshAttr(sysarg, id)
+	-- 血量加满
+	local maxHp = LActor.petGetProp(sysarg, id, PI_TOTAL_MAX_HP, idx)
+	LActor.petChangeHp(sysarg, id, maxHp, idx)	-- 增加的值为maxHP,c++底层可以保证hp不溢出
+end
+
+PetOpFuncList.addpetexp = function (sysarg, id, exp)
+	-- print("exp1:"..exp)
+	local idx = LActor.getPetById(sysarg, id)
+	if idx < 0 then
+		print("PetOpFuncList[129]:no pet:"..id)
+		return
+	end
+	local nextexp = 0
+	local newlevel = nil
+	local nextlvl = nil
+	-- 伙伴等级>=主人等级+5就不获取经验了
+	local masterLvl = LActor.getLevel(sysarg)
+	local level = LActor.petGetProp(sysarg, id, PI_LEVEL, idx)
+
+	-- print("level"..level)
+	-- 当前总经验
+	exp = exp + LActor.petGetExpEx(sysarg, id, idx)
+	
+	-- print("exp:"..exp)
+	local maxlvl = petConf.maxLevel
+	while exp > 0 do
+		level = LActor.petGetProp(sysarg, id, PI_LEVEL, idx)
+		if level == maxlvl then
+			nextlvl = maxlvl
+		else
+			nextlvl = level + 1
+		end
+		local flag = false
+		if level > (masterLvl + 4) then
+			if exp >= petConf.LevelUpExp[nextlvl] then
+				exp = petConf.LevelUpExp[nextlvl] - 1
+			end
+			LActor.petSetExpEx(sysarg, id, exp, idx)
+			exp = 0
+			break
+		end
+		if level > maxlvl then
+			break
+		end
+		if level == maxlvl then
+			if exp >= petConf.LevelUpExp[maxlvl] then
+				exp = petConf.LevelUpExp[maxlvl] - 1
+			end
+			LActor.petSetExpEx(sysarg, id, exp, idx)
+			break
+		end
+		if level < maxlvl then
+			if exp >= petConf.LevelUpExp[nextlvl] then
+				exp = exp - petConf.LevelUpExp[nextlvl]
+				newlevel = nextlvl
+				LActor.petSetProp(sysarg, id, PI_LEVEL, newlevel, idx)
+			else
+				LActor.petSetExpEx(sysarg, id, exp, idx)
+				break
+			end
+		end
+	end
+	if newlevel ~= nil then
+		PetOpFuncList.onLevelUp(sysarg, id, newlevel, idx)
+	end	
+end
+
+-- 伙伴的经验变化，exp是新增加的经验值,addexp
+PetOpFuncList[129] = function (sysarg, id, arg)
+	PetOpFuncList.addpetexp(sysarg, id, arg[3])
+end
+
+-- 玩家刚进入游戏时执行，计算所有伙伴的属性
+PetOpFuncList[130] = function (sysarg, id, idx)
+	PetOpFuncList.refreshAttr(sysarg, id, idx)	
+end
+
+PetOpFuncList.randBaseZZ = function (list)
+	local r = System.getRandomNumber(100)
+	local total = 0
+	for i,v in ipairs(list) do
+		total = total + v.present
+		if r < total then
+			-- 在s和e之间再随机一个值
+			if v.e == v.s then r = v.s 
+			else r = System.getRandomNumber(v.e - v.s) + v.s + 1 end
+			return r
+		end
+	end
+	return 0
+end
+
+-- 使用经验丹
+PetOpFuncList.usePetExpItem = function (sysarg,itemidx,itemPtr,ItemTable, useCnt, param)
+	-- 给当前的伙伴增加固定经验
+	local id = LActor.petGetBattlePet(sysarg)
+	if id <= 0 then 
+		LActor.sendTipmsg(sysarg, Lang.PetLang.p36, ttMessage)
+		return
+	end
+
+	local idx = LActor.getPetById(sysarg, id)
+	if idx < 0 then
+		print("PetOpFuncList.usePetExpItem:no pet:"..id)
+		return
+	end
+
+	-- local exp = LActor.petGetExp(sysarg, id, idx)
+	-- LActor.petSetExp(sysarg, id, ItemTable.exp, idx)
+	PetOpFuncList.addpetexp(sysarg, id, ItemTable.exp)
+	LActor.removeItemByPtr(sysarg,itemPtr,1,true,"pet_add_exp", 813) 
+end
+
+-- 使用顶级的秘籍，要给客户端弹出界面
+PetOpFuncList.useSpecialSkillBook = function (sysarg,itemidx,itemPtr,ItemTable, useCnt, param)
+	local guid = Item.getItemGuid(itemPtr)
+	local npack = DataPack.allocPacket(sysarg,139,63)
+    if npack == nil then return end
+    DataPack.writeInt64(npack, guid)
+    DataPack.writeInt(npack, #ItemTable)
+    for i=1,#ItemTable do
+    	DataPack.writeInt(npack, ItemTable[i])
+    end
+    DataPack.flush(npack)
+end
+
+-- 任务开启系统后触发
+PetOpFuncList[135] = function (sysarg)
+	-- 通过任务开启后，玩家获取到的伙伴的属性就是配置表中配置的第一个的属性
+	PetOpFuncList.usePetItem(sysarg, 0, nil, petConf.petItem[1], 1, nil, 2)
+end
+
+-- 伙伴出战
+PetOpFuncList[136] = function (sysarg, id)
+	PetOpFuncList.cmdPetBattle(sysarg, id, 1)
+end
+
+-- 使用伙伴蛋,addpet
+PetOpFuncList.usePetItem = function (sysarg,itemidx,itemPtr,ItemTable, useCnt, param, way)
+	if not LActor.isActorSystemOpen(sysarg, siPet) then
+		LActor.sendTipmsg(sysarg, Lang.PetLang.p35, ttMessage)
+		return
+	end
+
+	if LActor.petGetEmpty(sysarg) <= 0 then
+		LActor.sendTipmsg(sysarg, Lang.PetLang.p19, ttMessage)
+		return
+	end
+
+	local id = LActor.petAddPet(sysarg)
+	local idx = LActor.getPetById(sysarg, id)
+	if idx < 0 then
+		print("PetOpFuncList.usePetItem:no pet:"..id)
+		return
+	end
+
+	-- 设置所有的初始属性
+	LActor.petSetProp(sysarg, id, PI_MONSERID, petConf.typeMonsterId[ItemTable.type], idx)	
+	LActor.petSetProp(sysarg, id, PI_LIVE, petConf.maxLive, idx)
+	LActor.petSetProp(sysarg, id, PI_FUNNY, petConf.maxFunny, idx)
+	LActor.petSetProp(sysarg, id, PI_LEVEL, 1, idx)
+	LActor.petSetProp(sysarg, id, PI_FIGHT_TYPE, 1, idx)
+	LActor.petSetProp(sysarg, id, PI_TYPE, ItemTable.type, idx)
+	local at = 1
+	if ItemTable.attactType == 1 or ItemTable.attactType == 2 then
+		at = ItemTable.attactType
+	else
+		at = System.getRandomNumber(2) + 1
+	end
+	LActor.petSetProp(sysarg, id, PI_ATTACK_TYPE, at, idx)
+	LActor.petChangeName(sysarg, id, petConf.typeName[ItemTable.type])
+	LActor.petSetProp(sysarg, id, PI_SKILL_SLOT, 4, idx)
+	-- 随机下基础资质
+	local zz = PetOpFuncList.randBaseZZ(ItemTable.rate[1])	-- 攻击
+	LActor.petSetProp(sysarg, id, PI_ZZ_ATTACK_BASE, zz, idx)
+
+	zz = PetOpFuncList.randBaseZZ(ItemTable.rate[2])
+	LActor.petSetProp(sysarg, id, PI_ZZ_DEFEN_BASE, zz, idx)
+
+	zz = PetOpFuncList.randBaseZZ(ItemTable.rate[3])
+	LActor.petSetProp(sysarg, id, PI_ZZ_LQ_BASE, zz, idx)
+
+	zz = PetOpFuncList.randBaseZZ(ItemTable.rate[4])
+	LActor.petSetProp(sysarg, id, PI_ZZ_SF_BASE, zz, idx)
+
+	PetOpFuncList.refreshAttr(sysarg, id, idx)
+
+	local maxHp = LActor.petGetProp(sysarg, id, PI_TOTAL_MAX_HP, idx)
+	LActor.petSetProp(sysarg, id, PI_HP, maxHp, idx)
+
+	-- 随机抽技能
+	if ItemTable ~= nil then
+		local conf = ItemTable.skill
+		if System.getRandomNumber(100) < conf.present then
+			--抽中
+			local r = System.getRandomNumber(table.getn(conf.list))
+			local sid = conf.list[r+1]
+			LActor.petAddNewSkill(sysarg, id, sid, idx, conf.level)
+		end
+	end
+	
+	if itemPtr ~= nil then
+		LActor.removeItemByPtr(sysarg,itemPtr,1,true,"pet_egg", 814) 
+	end
+	if way == nil then way = 1 end
+	LActor.petSendAddPetToClient(sysarg, id, way)
+
+	-- 发送到数据库保存
+	-- 1:load, 2:add, 3:update,4 delete
+	local pettype = LActor.petGetProp(sysarg, id, PI_TYPE, idx)
+	local hp = LActor.petGetProp(sysarg, id, PI_HP, idx)
+	local live = LActor.petGetProp(sysarg, id, PI_LIVE, idx)
+	local funny = LActor.petGetProp(sysarg, id, PI_FUNNY, idx)
+	local level = LActor.petGetProp(sysarg, id, PI_LEVEL, idx)
+	local fight_type = LActor.petGetProp(sysarg, id, PI_FIGHT_TYPE, idx)
+	local hp_store = LActor.petGetProp(sysarg, id, PI_HP_STORE, idx)
+	local exp = LActor.petGetExp(sysarg, id, idx)
+	local wx = LActor.petGetProp(sysarg, id, PI_WX, idx)
+	local grow = LActor.petGetProp(sysarg, id, PI_GROW, idx)
+	local attack_type = LActor.petGetProp(sysarg, id, PI_ATTACK_TYPE, idx)
+	local title_wx = LActor.petGetProp(sysarg, id, PI_TITLE_WX, idx)
+	local title_grow = LActor.petGetProp(sysarg, id, PI_TITLE_GROW, idx)
+	local attack_base = LActor.petGetProp(sysarg, id, PI_ZZ_ATTACK_BASE, idx)
+	local def_base = LActor.petGetProp(sysarg, id, PI_ZZ_DEFEN_BASE, idx)
+	local lq_base = LActor.petGetProp(sysarg, id, PI_ZZ_LQ_BASE, idx)
+	local sf_base = LActor.petGetProp(sysarg, id, PI_ZZ_SF_BASE, idx)
+	local skill_slot = LActor.petGetProp(sysarg, id, PI_SKILL_SLOT, idx)
+	local fight_value = LActor.petGetProp(sysarg, id, PI_FIGHT_VALUE, idx)
+	local name = LActor.petGetName(sysarg, id, idx)
+
+	System.SendToDb(1, 52, 23, dtInt, LActor.getActorId(sysarg), dtInt, 2, dtInt, id,
+		dtInt, pettype,
+		dtInt, hp,
+		dtInt, live,
+		dtInt, funny,
+		dtInt, level,
+		dtInt, fight_type,
+		dtInt, hp_store,
+		dtInt64, exp,
+		dtInt, wx,
+		dtInt, grow,
+		dtInt, attack_type,
+		dtInt, title_wx,
+		dtInt, title_grow,
+		dtInt, attack_base,
+		dtInt, def_base,
+		dtInt, lq_base,
+		dtInt, sf_base,
+		dtInt, skill_slot,
+		dtInt, fight_value,
+		dtString, name)
+
+	local extra = name..id
+
+	--增加伙伴完成之后打印log
+	System.logCounter(LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)),
+		"pet", tostring(fight_value), extra, "addpet", tostring(petConf.typeName[ItemTable.type]), "1", "", "")
+end
+
+-- 保存数据 save
+PetOpFuncList[131] = function (sysarg, id, arg)
+	local idx = arg[2]
+	local pettype = LActor.petGetProp(sysarg, id, PI_TYPE, idx)
+	local hp = LActor.petGetHp(sysarg, id, idx)
+	local live = LActor.petGetProp(sysarg, id, PI_LIVE, idx)
+	local funny = LActor.petGetProp(sysarg, id, PI_FUNNY, idx)
+	local level = LActor.petGetProp(sysarg, id, PI_LEVEL, idx)
+	local fight_type = LActor.petGetProp(sysarg, id, PI_FIGHT_TYPE, idx)
+	local hp_store = LActor.petGetProp(sysarg, id, PI_HP_STORE, idx)
+	local exp = LActor.petGetExp(sysarg, id, idx)
+	local wx = LActor.petGetProp(sysarg, id, PI_WX, idx)
+	local grow = LActor.petGetProp(sysarg, id, PI_GROW, idx)
+	local attack_type = LActor.petGetProp(sysarg, id, PI_ATTACK_TYPE, idx)
+	local title_wx = LActor.petGetProp(sysarg, id, PI_TITLE_WX, idx)
+	local title_grow = LActor.petGetProp(sysarg, id, PI_TITLE_GROW, idx)
+	local attack_base = LActor.petGetProp(sysarg, id, PI_ZZ_ATTACK_BASE, idx)
+	local def_base = LActor.petGetProp(sysarg, id, PI_ZZ_DEFEN_BASE, idx)
+	local lq_base = LActor.petGetProp(sysarg, id, PI_ZZ_LQ_BASE, idx)
+	local sf_base = LActor.petGetProp(sysarg, id, PI_ZZ_SF_BASE, idx)
+	local skill_slot = LActor.petGetProp(sysarg, id, PI_SKILL_SLOT, idx)
+	local fight_value = LActor.petGetProp(sysarg, id, PI_FIGHT_VALUE, idx)
+	local name = LActor.petGetName(sysarg, id, idx)
+	-- 1:load, 2:add, 3:update,4 delete
+	System.SendToDb(1, 52, 23, dtInt, LActor.getActorId(sysarg), dtInt, 3, dtInt, id,
+		dtInt, pettype,
+		dtInt, hp,
+		dtInt, live,
+		dtInt, funny,
+		dtInt, level,
+		dtInt, fight_type,
+		dtInt, hp_store,
+		dtInt64, exp,
+		dtInt, wx,
+		dtInt, grow,
+		dtInt, attack_type,
+		dtInt, title_wx,
+		dtInt, title_grow,
+		dtInt, attack_base,
+		dtInt, def_base,
+		dtInt, lq_base,
+		dtInt, sf_base,
+		dtInt, skill_slot,
+		dtInt, fight_value,
+		dtString, name)
+end
+
+-- 数据库返回数据
+PetOpFuncList[132] = function (sysarg, dp)
+	-- 1:load, 2:add, 3:update,4 delete
+	local dt = DataPack.readInt(dp)	
+	if dt ~= 1 then return end
+
+	local count = DataPack.readInt(dp)
+	if count > petConf.maxPet then
+		print("too many pet"..count)
+		return
+	end
+	for i=1,count do
+
+		local id = DataPack.readInt(dp) -- petid
+		local idx = LActor.petAddPetById(sysarg, id)
+
+		local pettype =	DataPack.readInt(dp)
+		local hp =	DataPack.readInt(dp)
+		local live =	DataPack.readInt(dp)
+		local funny =	DataPack.readInt(dp)
+		local level =	DataPack.readInt(dp)
+		local fight_type =	DataPack.readInt(dp)
+		local hp_store =	DataPack.readInt(dp)
+		local exp =	DataPack.readInt64(dp)
+		local wx =	DataPack.readInt(dp)
+		local grow =	DataPack.readInt(dp)
+		local attack_type =	DataPack.readInt(dp)
+		local title_wx =	DataPack.readInt(dp)
+		local title_grow =	DataPack.readInt(dp)
+		local attack_base =	DataPack.readInt(dp)
+		local def_base =	DataPack.readInt(dp)
+		local lq_base =	DataPack.readInt(dp)
+		local sf_base =	DataPack.readInt(dp)
+		local skill_slot = DataPack.readInt(dp)
+		local name =	DataPack.readString(dp)
+		if skill_slot < 4 then skill_slot = 4 end -- 技能槽最小是4个，修正之前保存到db的错误
+
+		LActor.petSetProp(sysarg, id, PI_MONSERID, petConf.typeMonsterId[pettype], idx)	
+		LActor.petSetProp(sysarg, id, PI_LIVE, live, idx)
+		LActor.petSetProp(sysarg, id, PI_FUNNY, funny, idx)
+		LActor.petSetProp(sysarg, id, PI_LEVEL, level, idx)
+		LActor.petSetProp(sysarg, id, PI_FIGHT_TYPE, fight_type, idx)
+		LActor.petSetProp(sysarg, id, PI_HP_STORE, hp_store, idx)
+		LActor.petSetExp(sysarg, id, exp, idx)
+		LActor.petSetProp(sysarg, id, PI_WX, wx, idx)
+		LActor.petSetProp(sysarg, id, PI_GROW, grow, idx)
+		LActor.petSetProp(sysarg, id, PI_TYPE, pettype, idx)
+		LActor.petSetProp(sysarg, id, PI_ATTACK_TYPE, attack_type, idx)
+		LActor.petSetProp(sysarg, id, PI_TITLE_WX, title_wx, idx)
+		LActor.petSetProp(sysarg, id, PI_TITLE_GROW, title_grow, idx)
+		LActor.petSetProp(sysarg, id, PI_HP, hp, idx)
+		LActor.petSetName(sysarg, id, name, idx)
+
+		LActor.petSetProp(sysarg, id, PI_ZZ_ATTACK_BASE, attack_base, idx)
+		LActor.petSetProp(sysarg, id, PI_ZZ_DEFEN_BASE, def_base, idx)
+		LActor.petSetProp(sysarg, id, PI_ZZ_LQ_BASE, lq_base, idx)
+		LActor.petSetProp(sysarg, id, PI_ZZ_SF_BASE, sf_base, idx)
+		LActor.petSetProp(sysarg, id, PI_SKILL_SLOT, skill_slot, idx)
+
+		PetOpFuncList.refreshAttr(sysarg, id, idx)	
+	end
+end
+
+PetOpFuncList.maxOp = function (a, b)
+	if a >= b then return a else return b end
+end
+PetOpFuncList.minOp = function (a, b)
+	if a < b then return a else return b end
+end
+
+-- 融合
+PetOpFuncList[13] = function (sysarg, dp)
+	local mainId = DataPack.readInt(dp)
+	local secId = DataPack.readInt(dp)
+	local currId = LActor.petGetBattlePet(sysarg)
+	if mainId == currId or secId == currId then
+		--LActor.sendTipmsg(sysarg, Lang.PetLang.p20, ttMessage)
+		-- return
+		LActor.petCallBack(sysarg, true)
+	end
+
+	local idx1 = LActor.getPetById(sysarg, mainId)
+	if idx1 < 0 then
+		print("PetOpFuncList[13]:no pet:"..mainId)
+		return
+	end
+
+	local idx2 = LActor.getPetById(sysarg, secId)
+	if idx2 < 0 then
+		print("PetOpFuncList[13]:no pet:"..secId)
+		return
+	end
+
+	--融合成功后主宠副宠都消失。得到的第三只伙伴将会获得主宠的外观，主宠副宠中较高的伙伴的等级，经验，资质，悟性等级和成长等级，
+	--融合得到的伙伴的寿命，取参与融合的主宠的寿命值。
+	-- local pettype 
+	-- local hp 
+	local live = LActor.petGetProp(sysarg, mainId, PI_LIVE, idx1)
+	LActor.petSetProp(sysarg, mainId, PI_LIVE, live, idx1)	
+	local funny  = PetOpFuncList.minOp(LActor.petGetProp(sysarg, mainId, PI_FUNNY, idx1), LActor.petGetProp(sysarg, secId, PI_FUNNY, idx2))
+	LActor.petSetProp(sysarg, mainId, PI_FUNNY, funny, idx1)
+	local level = PetOpFuncList.maxOp(LActor.petGetProp(sysarg, mainId, PI_LEVEL, idx1), LActor.petGetProp(sysarg, secId, PI_LEVEL, idx2))
+	LActor.petSetProp(sysarg, mainId, PI_LEVEL, level, idx1)
+	local hp_store = LActor.petGetProp(sysarg, mainId, PI_HP_STORE, idx1) + LActor.petGetProp(sysarg, secId, PI_HP_STORE, idx2)
+	LActor.petSetProp(sysarg, mainId, PI_HP_STORE, hp_store, idx1)
+	local exp = PetOpFuncList.maxOp(LActor.petGetExpEx(sysarg, mainId, idx1), LActor.petGetExpEx(sysarg, secId, idx2))
+	LActor.petSetExpEx(sysarg, mainId, exp, idx1)
+
+	local wx = PetOpFuncList.maxOp(LActor.petGetPropLO16(sysarg, mainId, PI_WX, idx1), LActor.petGetPropLO16(sysarg, secId, PI_WX, idx2))
+	LActor.petSetPropLO16(sysarg, mainId, PI_WX, wx, idx1)
+	local wxH1 = LActor.petGetPropHI16(sysarg, mainId, PI_WX, idx1)
+	local wxH2 = LActor.petGetPropHI16(sysarg, secId, PI_WX, idx2)
+	local wxH = PetOpFuncList.maxOp(wxH1, wxH2)
+	LActor.petSetPropHI16(sysarg, mainId, PI_WX, wxH, idx1)
+
+	local grow = PetOpFuncList.maxOp(LActor.petGetPropLO16(sysarg, mainId, PI_GROW, idx1), LActor.petGetPropLO16(sysarg, secId, PI_GROW, idx2))
+	LActor.petSetPropLO16(sysarg, mainId, PI_GROW, grow, idx1)
+	local growH1 = LActor.petGetPropHI16(sysarg, mainId, PI_GROW, idx1)
+	local growH2 = LActor.petGetPropHI16(sysarg, secId, PI_GROW, idx2)
+	local growH = PetOpFuncList.maxOp(growH1, growH2)
+	LActor.petSetPropHI16(sysarg, mainId, PI_GROW, growH, idx1)
+
+	local title_wx = PetOpFuncList.maxOp(LActor.petGetProp(sysarg, mainId, PI_TITLE_WX, idx1), LActor.petGetProp(sysarg, secId, PI_TITLE_WX, idx2))
+	LActor.petSetProp(sysarg, mainId, PI_TITLE_WX, title_wx, idx1)
+	local title_grow = PetOpFuncList.maxOp(LActor.petGetProp(sysarg, mainId, PI_TITLE_GROW, idx1), LActor.petGetProp(sysarg, secId, PI_TITLE_GROW, idx2))
+	LActor.petSetProp(sysarg, mainId, PI_TITLE_GROW, title_grow, idx1)
+	local attack_base  = PetOpFuncList.maxOp(LActor.petGetProp(sysarg, mainId, PI_ZZ_ATTACK_BASE, idx1), LActor.petGetProp(sysarg, secId, PI_ZZ_ATTACK_BASE, idx2))
+	LActor.petSetProp(sysarg, mainId, PI_ZZ_ATTACK_BASE, attack_base, idx1)
+	local def_base = PetOpFuncList.maxOp(LActor.petGetProp(sysarg, mainId, PI_ZZ_DEFEN_BASE, idx1), LActor.petGetProp(sysarg, secId, PI_ZZ_DEFEN_BASE, idx2))
+	LActor.petSetProp(sysarg, mainId, PI_ZZ_DEFEN_BASE, def_base, idx1)
+	local lq_base  = PetOpFuncList.maxOp(LActor.petGetProp(sysarg, mainId, PI_ZZ_LQ_BASE, idx1), LActor.petGetProp(sysarg, secId, PI_ZZ_LQ_BASE, idx2))
+	LActor.petSetProp(sysarg, mainId, PI_ZZ_LQ_BASE, lq_base, idx1)
+	local sf_base   = PetOpFuncList.maxOp(LActor.petGetProp(sysarg, mainId, PI_ZZ_SF_BASE, idx1), LActor.petGetProp(sysarg, secId, PI_ZZ_SF_BASE, idx2))
+	LActor.petSetProp(sysarg, mainId, PI_ZZ_SF_BASE, sf_base, idx1)
+
+
+	local skill_slot = LActor.petGetProp(sysarg, mainId, PI_SKILL_SLOT, idx1)
+
+	if wxH1 < wxH2 then 
+		for i,v in ipairs(petConf.wxLvSkillAdd) do
+			if wxH1 < v and wxH2 >= v then
+				skill_slot = skill_slot + 1
+			end
+		end
+	end
+
+	if growH1 < growH2 then 
+		for i,v in ipairs(petConf.growLvSkillAdd) do
+			if growH1 < v and growH2 >= v then
+				skill_slot = skill_slot + 1
+			end
+		end
+	end
+
+	LActor.petSetProp(sysarg, mainId, PI_SKILL_SLOT, skill_slot, idx1)
+
+	-- 刷新属性要在删除之前，或者不带idx参数
+	PetOpFuncList.refreshAttr(sysarg, mainId, idx1)
+
+	PetOpFuncList.removePet(sysarg, secId)
+
+	local npack = DataPack.allocPacket(sysarg,34,13)
+    if npack == nil then return end
+    DataPack.writeInt(npack, 0)
+    DataPack.flush(npack)
+
+    -----------------------------log
+    --print("-----------ronghe")
+    local fight_value = LActor.petGetProp(sysarg, mainId, PI_FIGHT_VALUE, idx1)
+    local petname_log = LActor.petGetName(sysarg, mainId, idx1)
+	local petlevel_log = LActor.petGetProp(sysarg, mainId, PI_LEVEL, idx1)
+	local extra = petname_log..mainId
+
+	System.logCounter(LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), "pet", tostring(fight_value), extra, "ronghe", tostring(petname_log), tostring(petlevel_log), "", "")
+	-------------------------------
+	
+    --如果伙伴融合前是出战状态，则融合后也出战
+	if mainId == currId or secId == currId then
+		PetOpFuncList.cmdPetBattle(sysarg, mainId, 1)
+		return
+	end
+
+	--若融合前没有伙伴出战且当前伙伴已经被融合掉了,则把主宠设为当前伙伴且更新伙伴头像
+	local var = LActor.getStaticVar( sysarg )
+	if var == nil then return end
+	if currId == 0 and var.curpetid == secId then
+		var.curpetid = mainId
+		PetOpFuncList.sendCurrentPetId( sysarg )
+	end
+end
+
+-- 学习或者升级技能
+PetOpFuncList[14] = function (sysarg, dp)
+	local id = 16185
+	if (dp ~= nil) then
+		id = DataPack.readInt(dp)
+	end
+
+	local idx = LActor.getPetById(sysarg, id)
+	if idx < 0 then
+		print("PetOpFuncList[14]:no pet:"..id)
+		return
+	end
+
+	local guid = DataPack.readInt64(dp)
+	
+	-- 从物品中获取技能的id
+	local itemPtr = Item.getBagItemPtrByGuid(sysarg, guid)
+	if itemPtr == nil then
+		LActor.sendTipmsg(sysarg, Lang.PetLang.p21, ttMessage)
+		return
+	end
+
+	local itemid = Item.getItemId(itemPtr)
+	local skillid = Item.getSuitIdByItemId(itemid)
+
+	-- 是否技能书
+	if Item.getItemProperty(sysarg, itemPtr, Item.ipItemType, 0) ~= 89 then
+		LActor.sendTipmsg(sysarg, Lang.PetLang.p29, ttMessage)
+		return
+	end
+
+	-- 技能书的等级
+	local skillLevel = Item.getItemPropertyById(itemid, Item.ipItemStaticDuaMax)
+
+	-- 是否已经学了这技能
+	local learnLevel = LActor.petGetSkillLevel(sysarg, id, skillid, idx)
+
+	if learnLevel <= 0 then
+		-- 技能是否已满
+		local skillCnt = LActor.petSkillCount(sysarg, id, idx)
+		if skillCnt >= petConf.maxSkill then
+			LActor.sendTipmsg(sysarg, Lang.PetLang.p23, ttMessage)
+			return
+		end
+		if skillCnt >= LActor.petGetProp(sysarg, id, PI_SKILL_SLOT, idx) then
+			LActor.sendTipmsg(sysarg, Lang.PetLang.p42, ttMessage)
+			return
+		end
+	end
+
+	if (learnLevel <= 0 and skillLevel ~= 1) then
+		LActor.sendTipmsg(sysarg, Lang.PetLang.p22, ttMessage)
+		return
+	end
+
+	if (skillLevel - learnLevel) ~= 1 then
+		LActor.sendTipmsg(sysarg, Lang.PetLang.p41, ttMessage)
+		return
+	end
+
+	LActor.removeItemByPtr(sysarg, itemPtr, 1, true, "pet_learn_skill", 815)
+
+	local pet_name = LActor.petGetName(sysarg, id, idx)
+	local extra = pet_name..id
+
+	-- 伙伴增加一个技能
+	if (learnLevel <= 0) then
+		learnLevel = 1
+		LActor.petAddNewSkill(sysarg, id, skillid, idx, learnLevel)
+
+		PetOpFuncList.setStoneEffect(sysarg, id, idx)
+		
+		-----------------------------------log
+		local isCheck = 0
+		local skill_quality = "1"
+		for i = 1, #(petConf.skillBoolLevel) do
+			for j = 1, #(petConf.skillBoolLevel[i]) do
+				if petConf.skillBoolLevel[i][j] == itemid then
+					if i == 2 then
+						skill_quality = "2"
+					elseif i == 3 then
+						skill_quality = "3"
+					elseif i== 4 then
+						skill_quality = "4"
+					end
+					isCheck = 1
+					break
+				end
+			end
+		end
+		if isCheck == 0 then
+			for i = 1 , #(petConf.specialSkillBook) do
+				for j = 1, #(petConf.specialSkillBook[i].list) do
+					if petConf.specialSkillBook[i].list[j] == itemid then
+						skill_quality = "4"
+						break
+					end
+				end
+			end
+		end
+
+		local fight_value = LActor.petGetProp(sysarg, id, PI_FIGHT_VALUE, idx)
+		System.logCounter(LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), "pet", tostring(fight_value), extra, "jineng_study", tostring(skillid), skill_quality, "", "")
+		-----------------------------------
+	else
+		-- 升级
+		learnLevel = learnLevel + 1
+		local skill_quality = "1"
+
+		if learnLevel == 2 then
+			skill_quality = "2"
+		elseif learnLevel == 3 then
+			skill_quality = "3"
+		elseif learnLevel == 4 then
+			skill_quality = "4"
+		end
+
+		local fight_value = LActor.petGetProp(sysarg, id, PI_FIGHT_VALUE, idx)
+		System.logCounter(LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), "pet", tostring(fight_value), extra, "jineng_levelup", tostring(skillid), skill_quality, "", "")
+		--------------------------------------
+
+		LActor.petUpgradSkill(sysarg, id, skillid, idx, learnLevel)
+	end
+
+	PetOpFuncList.refreshAttr(sysarg, id, idx)
+
+	local npack = DataPack.allocPacket(sysarg,34,14)
+    if npack == nil then return end
+    DataPack.writeInt(npack, id)
+    DataPack.writeInt(npack, skillid)
+    DataPack.writeInt(npack, learnLevel)	-- 等级，一开始是1
+    DataPack.flush(npack)
+end
+
+-- 设置伙伴的脚底光效
+PetOpFuncList.setStoneEffect = function (sysarg, id, idx)
+	local skillCnt = LActor.petSkillCount(sysarg, id, idx)
+	local eff = petConf.stoneEff[skillCnt]
+	if eff ~= nil and eff ~= 0 and LActor.petGetBattlePet(sysarg) == id then
+		local monPtr = LActor.petGetBattlePetPtr(sysarg)
+		LActor.setStoneEffect(monPtr, eff)
+	end
+end
+
+-- 遗忘技能
+PetOpFuncList[15] = function (sysarg, dp)
+	local id = DataPack.readInt(dp)
+	local idx = LActor.getPetById(sysarg, id)
+	if idx < 0 then
+		print("PetOpFuncList[15]:no pet:"..id)
+		return
+	end
+	local skillid = DataPack.readInt(dp)
+	if not LActor.petHasSkill(sysarg, id, skillid, idx) then
+		LActor.sendTipmsg(sysarg, Lang.PetLang.p24, ttMessage)
+		return
+	end
+
+	if LActor.getItemCount(sysarg, petConf.delSkillItem) <= 0 then
+		LActor.sendTipmsg(sysarg, Lang.PetLang.p25, ttMessage)
+		return
+	end
+	LActor.removeItem(sysarg, petConf.delSkillItem, 1, -1, -1, -1, "pet_lose_skill", 816)
+
+	local learnLevel = LActor.petGetSkillLevel(sysarg, id, skillid, idx)
+
+	LActor.petRemoveSkill(sysarg, id, skillid, idx)
+
+	PetOpFuncList.setStoneEffect(sysarg, id, idx)
+
+	PetOpFuncList.refreshAttr(sysarg, id, idx)
+	
+	local npack = DataPack.allocPacket(sysarg,34,15)
+    if npack == nil then return end
+    DataPack.writeInt(npack, id)
+    DataPack.writeInt(npack, skillid)
+    DataPack.flush(npack)
+
+    local pet_name = LActor.petGetName(sysarg, id, idx)
+	local extra = pet_name..id
+
+    System.logCounter(LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), "pet", "", extra, "yiwang_jineng", tostring(skillid), tostring(learnLevel), "", "")
+end
+
+PetOpFuncList.moveToStore = function (sysarg, id, skillid, idx)
+	if not LActor.petHasSkill(sysarg, id, skillid, idx) then
+		LActor.sendTipmsg(sysarg, Lang.PetLang.p24, ttMessage)
+		return
+	end
+
+	if LActor.petGetStoreEmpty(sysarg) <= 0 then
+		LActor.sendTipmsg(sysarg, Lang.PetLang.p46, ttMessage)
+		return
+	end
+
+	local ret = false
+	local level, seal = 1, false
+	ret, level, seal = LActor.petGetSkillData(sysarg, id, skillid, level, seal)
+	if not ret then return end
+	if not seal then
+		LActor.sendTipmsg(sysarg, Lang.PetLang.p27, ttMessage)
+		return
+	end
+
+	LActor.petRemoveSkill(sysarg, id, skillid, idx)
+
+	PetOpFuncList.setStoneEffect(sysarg, id, idx)
+	
+	local guid = LActor.petStoreAddSkill(sysarg, skillid, level)
+
+	local npack = DataPack.allocPacket(sysarg,34,18)
+    if npack == nil then return end
+    DataPack.writeInt(npack, id)
+    DataPack.writeInt(npack, skillid)
+    DataPack.writeInt64(npack, guid)
+    DataPack.flush(npack)
+end
+
+--技能刻印
+PetOpFuncList[17] = function (sysarg, dp)
+	local id = DataPack.readInt(dp)
+
+	local currId = LActor.petGetBattlePet(sysarg)
+	if currId == id then
+		LActor.sendTipmsg(sysarg, Lang.PetLang.p40, ttMessage)
+		return
+	end
+
+	local idx = LActor.getPetById(sysarg, id)
+	if idx < 0 then
+		print("PetOpFuncList[17]:no pet:"..id)
+		return
+	end
+	local skillid = DataPack.readInt(dp)
+	local level = LActor.petGetSkillLevel(sysarg, id, skillid, idx)
+	if level <= 0 then
+		LActor.sendTipmsg(sysarg, Lang.PetLang.p24, ttMessage)
+		return
+	end
+
+	local ret = false
+	local level, seal = 1, false
+	ret, level, seal = LActor.petGetSkillData(sysarg, id, skillid, level, seal)
+	if not ret then return end
+	if not seal then
+		-- 如果还没刻印，就刻印
+		if LActor.getItemCount(sysarg, petConf.shy[level]) <= 0 then
+			LActor.sendTipmsg(sysarg, Lang.PetLang.p26, ttMessage)
+		return
+		end
+		LActor.removeItem(sysarg, petConf.shy[level], 1, -1, -1, -1, "pet_update_skill", 817)
+
+		LActor.petSkillSeal(sysarg, id, skillid, idx)
+
+		local npack = DataPack.allocPacket(sysarg,34,17)
+	    if npack == nil then return end
+	    DataPack.writeInt(npack, id)
+	    DataPack.writeInt(npack, skillid)
+	    DataPack.flush(npack)
+	end
+
+	-- 已刻印或者刻印成功就放到仓库里
+	PetOpFuncList.moveToStore(sysarg, id, skillid, idx)
+
+	-- 触发成就事件
+	LActor.triggerAchieveEvent(sysarg, 9)
+
+	local pet_name = LActor.petGetName(sysarg, id, idx)
+	local extra = pet_name..id
+	System.logCounter(LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), "pet", "", extra, "keyin_jineng", tostring(skillid), tostring(level), "", "")
+end
+
+-- 移到技能仓库
+PetOpFuncList[18] = function (sysarg, dp)
+	local id = DataPack.readInt(dp)
+	local idx = LActor.getPetById(sysarg, id)
+	if idx < 0 then
+		print("PetOpFuncList[18]:no pet:"..id)
+		return
+	end
+	local skillid = DataPack.readInt(dp)
+	local learnLevel = LActor.petGetSkillLevel(sysarg, id, skillid, idx)
+	PetOpFuncList.moveToStore(sysarg, id, skillid, idx)
+	local pet_name = LActor.petGetName(sysarg, id, idx)
+	local extra = pet_name..id
+	System.logCounter(LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), "pet", "", extra, "yidong_jineng", tostring(skillid), tostring(learnLevel), "", "")
+end
+
+-- 从仓库移出, store
+PetOpFuncList[19] = function (sysarg, dp)
+	local guid = DataPack.readInt64(dp)
+	local id = DataPack.readInt(dp)
+	
+	local currId = LActor.petGetBattlePet(sysarg)
+	if currId == id then
+		LActor.sendTipmsg(sysarg, Lang.PetLang.p40, ttMessage)
+		return
+	end
+
+	local idx = LActor.getPetById(sysarg, id)
+	if idx < 0 then
+		print("PetOpFuncList[19]:no pet:"..id)
+		return
+	end
+	local skillCnt = LActor.petSkillCount(sysarg, id, idx)
+	if skillCnt >= LActor.petGetProp(sysarg, id, PI_SKILL_SLOT, idx) then
+		LActor.sendTipmsg(sysarg, Lang.PetLang.p45, ttMessage)
+		return
+	end
+
+	local level = 0
+	local sid,level = LActor.petGetStoreSkillId(sysarg, guid, level)
+	if sid >= 0 and LActor.petHasSkill(sysarg, id, sid, idx) then
+		LActor.sendTipmsg(sysarg, Lang.PetLang.p44, ttMessage)
+		return
+	end
+
+	local ret = LActor.petSkillMoveToPet(sysarg, guid, id, idx)
+	if not ret then
+		LActor.sendTipmsg(sysarg, Lang.PetLang.p28, ttMessage)
+		return
+	end
+
+	PetOpFuncList.setStoneEffect(sysarg, id, idx)
+
+	PetOpFuncList.refreshAttr(sysarg, id, idx)
+
+	local npack = DataPack.allocPacket(sysarg,34,19)
+    if npack == nil then return end
+    DataPack.writeInt64(npack, guid)
+    DataPack.writeInt(npack, id)
+    DataPack.flush(npack)
+
+    local pet_name = LActor.petGetName(sysarg, id, idx)
+	local extra = pet_name..id
+    System.logCounter(LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), "pet", "", extra, "yichucangku_jineng", tostring(sid), tostring(level), "", "")
+end
+
+-- 根据刷新次数随机获得技能书的id,返回0表示没有抽到物品
+PetOpFuncList.getYhsSkillBookId = function(star)
+	for i,v in ipairs(petConf.yhsRate) do
+		if star >= v.s and star <= v.e then
+			local r = System.getRandomNumber(100)
+			local total = 0
+			for j=1,4 do
+				total = total + v.rate[j]
+				if r < total then
+					local conf = petConf.skillBoolLevel[j]
+					r = System.getRandomNumber(table.getn(conf))
+					return conf[r+1]
+				end
+			end
+		end
+	end
+
+	return 0
+end
+
+PetOpFuncList.checkYhs = function (sysarg, guid)
+	local itemPtr = Item.getBagItemPtrByGuid(sysarg, guid)
+	if itemPtr == nil then
+		--LActor.sendTipmsg(sysarg, Lang.PetLang.p30, ttMessage)
+		return false,nil
+	end
+
+	local itemid = Item.getItemId(itemPtr)
+	if itemid ~= petConf.yhs then
+		--LActor.sendTipmsg(sysarg, Lang.PetLang.p30, ttMessage)
+		return false,nil
+	end
+	return true,itemPtr
+end
+
+
+-- 刷新唤魂玉,yhs
+PetOpFuncList[21] = function (sysarg, dp)
+	local guid = DataPack.readInt64(dp)
+	local t = DataPack.readInt(dp)
+
+	local checkRet, itemPtr = PetOpFuncList.checkYhs(sysarg, guid)
+	if not checkRet then return end
+
+	local itemid = LActor.petGetYhsItem(sysarg, guid, 0)
+	local bookid = 0
+	-- 第一次免费给个初始技能
+	if itemid <= 0 then
+		bookid = PetOpFuncList.getYhsSkillBookId(0)
+		-- 设置到对应的位置
+		LActor.petSetYhsProp(sysarg, guid, 0, 0, bookid)
+	end
+
+	if t == 3 then
+		LActor.petSendYhsDataToClient(sysarg, guid)
+		return
+	end
+	if t ~= 1 and t ~= 2 then return end
+	-- 1：天珠，2：绑定天珠
+	local moneytype = DataPack.readInt(dp)
+	if moneytype ~= 1 and moneytype ~= 2 then return end
+
+	local money = petConf.yhs9[moneytype]
+	if t == 1 then
+		money = petConf.yhs1[moneytype]
+	end
+
+	local mt = mtYuanbao
+	if moneytype == 2 then mt = mtBindYuanbao end
+
+	local hasmoney = LActor.getMoneyCount( sysarg, mt )
+	if hasmoney < money then
+		--LActor.sendTipmsg(sysarg, Lang.PetLang.p32, ttMessage)
+		LActor.SendGeneralTips(sysarg, 1, mt, money-hasmoney)
+		return
+	end
+
+	LActor.changeMoney( sysarg, mt, -money, 1, true, "pet_yhs")
+
+	-- 单次刷新
+	local star = LActor.petGetYhsStar(sysarg, guid) -- 这个唤魂玉刷新的次数
+	local loopCnt = 1
+	local startIdx = 0
+	if t == 2 then
+		loopCnt = 6
+		startIdx = 1
+	end
+	for i=1,loopCnt do
+		bookid = PetOpFuncList.getYhsSkillBookId(star)
+		-- 设置到对应的位置
+		LActor.petSetYhsProp(sysarg, guid, star + loopCnt, startIdx, bookid)
+		startIdx = startIdx + 1
+		System.logCounter(LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), "pet", "0", "", "yhs_refresh", tostring(bookid), tostring(startIdx), "", "")
+	end
+
+	LActor.petSendYhsDataToClient(sysarg, guid)
+	-- 刷新后就绑定
+	Item.setItemProperty(sysarg, itemPtr, Item.ipItemBind, 1)
+end
+
+-- 技能苏醒
+PetOpFuncList[23] = function (sysarg, dp)
+	local guid = DataPack.readInt64(dp)
+	local idx = DataPack.readInt(dp)
+	local ret, itemPtr = PetOpFuncList.checkYhs(sysarg, guid)
+	if not ret then return end
+
+
+	if Item.getBagEmptyGridCount(sysarg) < 1 then
+		LActor.sendTipmsg(sysarg, Lang.PetLang.p33, ttMessage)
+		return
+	end
+
+	local itemid = LActor.petGetYhsItem(sysarg, guid, idx)
+	if itemid <= 0 then 
+		return 
+	end
+
+	-- 获取技能书，并删除唤魂玉
+	LActor.addItem(sysarg, itemid, 0,0,1,1, "pet_shuxing", 67)
+	LActor.removeItemByPtr(sysarg, itemPtr, 1, true, "pet_shuxing", 67)
+	LActor.petRemoveYhs(sysarg, guid)
+
+	local zy = LActor.getIntProperty(sysarg, PROP_CAMP)
+	local color = Item.getColorName(itemid)
+
+	-- 技能书的等级
+	local skillLevel = Item.getItemPropertyById(itemid, Item.ipItemStaticDuaMax)
+	if skillLevel >= 3 and color ~= nil then
+		local str = string.format(Lang.ScriptTips.petcw001, CampColor[zy], CampShortName[zy], LActor.getName(sysarg), color)
+		System.broadcastTipmsg(str, ttScreenCenter)
+		str = string.format(str..Lang.ScriptTips.petcw002)
+		--System.broadcastTipmsg(str, ttHearsay)
+	end
+	System.logCounter(LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), "pet", "0", "", "yhs_getskill", tostring(itemid), tostring(skillLevel), "", "", lfDB)
+end
+
+-- 玩家的伙伴死亡
+PetOpFuncList[133] = function (sysarg, monster)
+	local id = LActor.petGetBattlePet(sysarg)
+	if id <= 0 then 
+		return
+	end
+
+	local idx = LActor.getPetById(sysarg, id)
+	if idx < 0 then
+		print("PetOpFuncList[133]:no curr pet:"..id)
+		return
+	end
+
+	--[[--临时屏蔽(此功能没有实现)
+	local live = LActor.petGetProp(sysarg, id, PI_LIVE, idx)
+	live = live - petConf.dieLive
+	if live < 0 then live = 0 end
+	LActor.petSetProp(sysarg, id, PI_LIVE, live, idx)
+	--]]
+
+	local funny = LActor.petGetProp(sysarg, id, PI_FUNNY, idx)
+	funny = funny - petConf.dieFunny
+	if funny < 0 then funny = 0 end
+	LActor.petSetProp(sysarg, id, PI_FUNNY, funny, idx)
+
+	-- 回收伙伴
+	LActor.petCallBack(sysarg, true)
+
+	-- 通知客户端伙伴死亡
+	local npack = DataPack.allocPacket(sysarg,34,16)
+    if npack == nil then return end
+    DataPack.writeInt(npack, id)
+    DataPack.flush(npack)
+end
+
+-- 玩家进入游戏的时候触发
+PetOpFuncList[134] = function (sysarg)
+	local var = LActor.getStaticVar( sysarg )
+	if var == nil then return end
+	PetOpFuncList.sendCurrentPetId( sysarg )
+
+	if var.petbattleid ~= nil then
+		local id = var.petbattleid
+		local idx = LActor.getPetById(sysarg, id)
+		if idx < 0 then
+			return
+		end
+		local live = LActor.petGetProp(sysarg, id, PI_LIVE, idx)
+		if live <= 0 then return end
+		local funny = LActor.petGetProp(sysarg, id, PI_FUNNY, idx)
+		if funny <= 0 then return end
+		PetOpFuncList.cmdPetBattle(sysarg, var.petbattleid, 1)
+
+		local skill_slot = 4
+		local wx = LActor.petGetPropHI16(sysarg, id, PI_WX, idx)
+		local wxl = LActor.petGetPropLO16(sysarg, id, PI_WX, idx)
+		local grow = LActor.petGetPropHI16(sysarg, id, PI_GROW, idx)
+		local growl = LActor.petGetPropLO16(sysarg, id, PI_GROW, idx)
+		if wxl > wx then wx = wxl end
+		if growl > grow then grow = growl end
+
+		for i,v in ipairs(petConf.wxLvSkillAdd) do
+			if wx >= v then
+				skill_slot = skill_slot + 1
+			else
+				break
+			end
+		end
+ 
+		for i,v in ipairs(petConf.growLvSkillAdd) do
+			if grow >= v then
+				skill_slot = skill_slot + 1
+			else
+				break
+			end
+		end
+
+		local skill_slot_pre = LActor.petGetProp(sysarg, id, PI_SKILL_SLOT, idx)
+
+		if skill_slot > skill_slot_pre then
+			LActor.petSetProp(sysarg, id, PI_SKILL_SLOT, skill_slot, idx)
+		end
+	end
+end
+
+PetOpFuncList.sendCurrentPetId = function (sysarg)
+	local var = LActor.getStaticVar( sysarg )
+	if var == nil then return end
+	if var.curpetid ~= nil then
+		-- 通知客户端当前的伙伴ID
+		local npack = DataPack.allocPacket(sysarg,34,29)
+	    if npack ~= nil then
+		    DataPack.writeInt(npack, var.curpetid)
+		    DataPack.flush(npack)
+	    end
+	end
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aePet, EventCallDispatcher.HandlerPetOp)
+
+function PetItemsInit()
+	for i = 1,table.getn(petConf.storeItem) do
+		local x = petConf.storeItem[i]
+		GlobalItemFn[x.itemid] = { func = PetOpFuncList.useStoreItem,params = x }
+	end
+
+	for i,v in ipairs(petConf.petItem) do
+		GlobalItemFn[v.itemid] = { func = PetOpFuncList.usePetItem,params = v }
+	end
+
+	for i,v in ipairs(petConf.expItem) do
+		GlobalItemFn[v.itemid] = { func = PetOpFuncList.usePetExpItem,params = v }
+	end
+
+	for i,v in ipairs(petConf.specialSkillBook) do
+		GlobalItemFn[v.itemid] = { func = PetOpFuncList.useSpecialSkillBook,params = v.list }
+	end
+end
+
+table.insert(InitFnTable, PetItemsInit)
+
+-- test
+testPet = PetOpFuncList[2]
+
+addpetexp = function (sysarg, exp)
+	local cid = LActor.petGetCurrId(sysarg)
+	PetOpFuncList.addpetexp(sysarg, cid, exp)
+end
+addpethp = function (sysarg, hp)
+	local cid = LActor.petGetCurrId(sysarg)
+	LActor.petChangeHp(sysarg, cid, hp)
+end
+
+changepetprop = function (sysarg, pid, val)
+	local id = LActor.petGetCurrId(sysarg)
+	if id <= 0 then 
+		return
+	end
+	LActor.petSetProp(sysarg, id, pid, val)
+	PetOpFuncList.refreshAttr(sysarg, id)
+end

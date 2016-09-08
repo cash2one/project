@@ -1,0 +1,344 @@
+zhanlilib = {}
+zhanlilib.ActivityId = 0
+zhanlilib.SubActivityId = 66
+
+zhanlilib.Init = function()
+	for i,v in pairs(activityConf) do
+		for j,w in pairs(v.activities) do
+			if w and w.id == zhanlilib.SubActivityId then
+				zhanlilib.ActivityId = tonumber(v.activityId)
+				return
+			end
+		end
+	end
+end
+
+zhanlilib.get_conf = function ()
+	if activityConf[zhanlilib.ActivityId] then 
+		return activityConf[zhanlilib.ActivityId].activities[zhanlilib.SubActivityId] 
+	end
+	return nil
+end
+zhanlilib.is_open = function (sysarg)
+	local state = ONLINEREWARD.GetActivityState(zhanlilib.ActivityId,nil,sysarg)
+	local isOpen = true
+	if state == 0 then
+		isOpen = false
+	end
+	return isOpen
+end
+
+zhanlilib.get_info = function (sysarg)
+	--print("----查询新战力礼包信息--")
+	--print(ONLINEREWARD.getCreateActorDay( sysarg ))
+	if not zhanlilib.is_open(sysarg) then
+		return
+	end
+	local conf = zhanlilib.get_conf() 
+	if not conf then
+		return
+	end
+	local activeid = zhanlilib.ActivityId
+	local var = LActor.getStaticVar(sysarg)
+	if not var then return end
+	if not var.activityList[activeid] then
+		var.activityList[activeid] = {}
+	end
+	if var.activityList[activeid].max_zhanli_1 == nil then
+		var.activityList[activeid].max_zhanli_1 = 0
+	end
+	if var.activityList[activeid].max_zhanli_2 == nil then
+		var.activityList[activeid].max_zhanli_2 = 0
+	end
+	if var.activityList[activeid].max_zhanli == nil then
+		var.activityList[activeid].max_zhanli = 0
+	end
+	if var.activityList[activeid].zhanli_status == nil then
+		var.activityList[activeid].zhanli_status = {}
+	end
+	if var.activityList[activeid].zhanli_status[2] == nil then
+		var.activityList[activeid].zhanli_status[2] = {}
+	end
+	if var.activityList[activeid].zhanli_status[3] == nil then
+		var.activityList[activeid].zhanli_status[3] = {}
+	end
+	local zhanli =  LActor.getActorFightCapacity(sysarg)
+	if zhanli > var.activityList[activeid].max_zhanli then
+		var.activityList[activeid].max_zhanli = zhanli
+	end
+	local create_actor_days =  ONLINEREWARD.getCreateActorDay( sysarg )
+	if create_actor_days == 1 or create_actor_days == 2 then
+		if zhanli > var.activityList[activeid].max_zhanli_2 then
+			var.activityList[activeid].max_zhanli_2 = zhanli
+		end
+		if create_actor_days == 1 and  zhanli > var.activityList[activeid].max_zhanli_1 then
+			var.activityList[activeid].max_zhanli_1 = zhanli
+		end
+	end
+	
+	local npack = DataPack.allocPacket(sysarg,139,225)  --申请一个数据包
+	if npack == nil then return end
+	DataPack.writeInt(npack,var.activityList[activeid].max_zhanli)
+	DataPack.writeInt(npack,create_actor_days)
+	-- if var.activityList[activeid].login_2 then
+	-- 	DataPack.writeInt(npack,1)
+	-- else
+	DataPack.writeInt(npack,0)
+	-- end
+	-- print("----max_zhanli:"..var.activityList[activeid].max_zhanli)
+	-- print("----create_actor_days:"..create_actor_days)
+	--if create_actor_days == 1 or create_actor_days == 2 then
+	DataPack.writeInt(npack,#conf.target[2])
+		--print
+		--if create_actor_days == 1 then
+	for index,v in ipairs(conf.target[2]) do
+		if var.activityList[activeid].max_zhanli_1 < v[1] then --未达到条件
+			var.activityList[activeid].zhanli_status[2][index] = 1
+			DataPack.writeInt(npack,var.activityList[activeid].zhanli_status[2][index])
+			--print(var.activityList[activeid].zhanli_status[2][index])
+		elseif var.activityList[activeid].zhanli_status[2][index] == nil or var.activityList[activeid].zhanli_status[2][index] ~= 3 then
+			var.activityList[activeid].zhanli_status[2][index] = 2
+			DataPack.writeInt(npack,var.activityList[activeid].zhanli_status[2][index])
+			--print(var.activityList[activeid].zhanli_status[2][index])
+		else
+			DataPack.writeInt(npack,var.activityList[activeid].zhanli_status[2][index])
+			--print(var.activityList[activeid].zhanli_status[2][index])
+		end
+	end
+		--end
+	DataPack.writeInt(npack,#conf.target[3])
+	--print("===========222222222222======")
+	for index,v in ipairs(conf.target[3]) do
+		if var.activityList[activeid].max_zhanli_2 < v[1] then --未达到条件
+			var.activityList[activeid].zhanli_status[3][index] = 1
+			DataPack.writeInt(npack,var.activityList[activeid].zhanli_status[3][index])
+			--print(var.activityList[activeid].zhanli_status[3][index])
+		elseif var.activityList[activeid].zhanli_status[3][index] == nil or var.activityList[activeid].zhanli_status[3][index] ~= 3 then
+			var.activityList[activeid].zhanli_status[3][index] = 2
+			DataPack.writeInt(npack,var.activityList[activeid].zhanli_status[3][index])
+			--print(var.activityList[activeid].zhanli_status[3][index])
+		else
+			DataPack.writeInt(npack,var.activityList[activeid].zhanli_status[3][index])
+			--print(var.activityList[activeid].zhanli_status[3][index])
+		end
+	end
+	--end
+	-- elseif create_actor_days == 3 then
+	-- 	DataPack.writeInt(npack,#conf.target[2])
+	-- 	--print("==============33333333===")
+	-- 	if var.activityList[activeid].login_2 then
+	-- 		for index,v in ipairs(conf.target[2]) do		
+	-- 			DataPack.writeInt(npack,var.activityList[activeid].zhanli_status[2][index])	
+	-- 			--print(var.activityList[activeid].zhanli_status[2][index])	
+	-- 		end
+	-- 	else
+	-- 		for index,v in ipairs(conf.target[2]) do
+	-- 			--print("======777777==")
+	-- 			if var.activityList[activeid].max_zhanli < v[1] then --未达到条件
+	-- 				var.activityList[activeid].zhanli_status[2][index] = 1
+	-- 				DataPack.writeInt(npack,var.activityList[activeid].zhanli_status[2][index])
+	-- 				--print(var.activityList[activeid].zhanli_status[2][index])
+	-- 			elseif var.activityList[activeid].zhanli_status[2][index] == nil or var.activityList[activeid].zhanli_status[2][index] ~= 3 then
+	-- 				var.activityList[activeid].zhanli_status[2][index] = 2
+	-- 				DataPack.writeInt(npack,var.activityList[activeid].zhanli_status[2][index])
+	-- 				--print(var.activityList[activeid].zhanli_status[2][index])
+	-- 			else
+	-- 				DataPack.writeInt(npack,var.activityList[activeid].zhanli_status[2][index])
+	-- 				--print(var.activityList[activeid].zhanli_status[2][index])
+	-- 			end
+	-- 		end
+	-- 	end
+	-- 	DataPack.writeInt(npack,#conf.target[3])
+	-- 	--print("================4444444444=")
+	-- 	for index,v in ipairs(conf.target[3]) do
+	-- 		if var.activityList[activeid].max_zhanli < v[1] then --未达到条件
+	-- 			var.activityList[activeid].zhanli_status[3][index] = 1
+	-- 			DataPack.writeInt(npack,var.activityList[activeid].zhanli_status[3][index])
+	-- 			--print(var.activityList[activeid].zhanli_status[3][index])
+	-- 		elseif var.activityList[activeid].zhanli_status[3][index] == nil or var.activityList[activeid].zhanli_status[3][index] ~= 3 then
+	-- 			var.activityList[activeid].zhanli_status[3][index] = 2
+	-- 			DataPack.writeInt(npack,var.activityList[activeid].zhanli_status[3][index])
+	-- 			--print(var.activityList[activeid].zhanli_status[3][index])
+	-- 		else
+	-- 			DataPack.writeInt(npack,var.activityList[activeid].zhanli_status[3][index])
+	-- 			--print(var.activityList[activeid].zhanli_status[3][index])
+	-- 		end
+	-- 	end
+	-- end
+	DataPack.writeInt(npack,var.activityList[activeid].max_zhanli_1)
+	DataPack.writeInt(npack,var.activityList[activeid].max_zhanli_2)
+	--print("--第一天的战力",var.activityList[activeid].max_zhanli_1)
+	--print("--第一天的战力",var.activityList[activeid].max_zhanli_2)
+	DataPack.flush(npack)
+end
+zhanlilib.get_reward = function (sysarg,msgid,packet)
+	local reward_days = DataPack.readInt(packet)
+	local index = DataPack.readInt(packet)
+
+	--只能领取第二天和第三天的
+	if reward_days < 2 or reward_days > 3 then
+		return
+	end
+	--print("----领取新战力礼包奖励--",reward_days,index)
+	if not zhanlilib.is_open(sysarg) then
+		return
+	end
+	local conf = zhanlilib.get_conf() 
+	if not conf then
+		return
+	end
+	local create_actor_days =  ONLINEREWARD.getCreateActorDay( sysarg )
+	if create_actor_days <= 1 or create_actor_days >= 4 then
+		return
+	end
+
+	if index > #conf.target[create_actor_days] then
+		return
+	end
+	--第二天不能领第三天的
+	if create_actor_days == 2 and reward_days == 3 then
+		return
+	end
+	local activeid = zhanlilib.ActivityId
+	local var = LActor.getStaticVar(sysarg)
+	if not var then return end
+	
+	--第二天已经登录了，第三天就不能领取第二天的奖励了
+	-- if reward_days == 2 and create_actor_days == 3 and var.activityList[activeid].login_2 then 
+	-- 	return
+	-- end
+	
+	
+	if var.activityList[activeid].zhanli_status[reward_days][index] ~= 2 then
+		return
+	end
+	local bagGrid = Item.getBagEmptyGridCount(sysarg)      --玩家身上有多少个格子
+	if bagGrid == 0 then
+		LActor.SendGeneralTips(sysarg, 7, 0, 0)
+		return
+	end
+	local itemid, itemnum = conf.target[reward_days][index][2],conf.target[reward_days][index][3] or 1
+	--给物品
+	LActor.addItem(sysarg, itemid, 0, 0, itemnum, 1, "getactivityReward"..activeid, 1)
+	System.logCounter(
+						LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), 
+					  	"activityreward",tostring(activeid) , tostring(zhanlilib.SubActivityId), tostring(index), 
+					 	string.format("%s:%s",itemid,itemnum), tostring(LActor.getName(sysarg)), var.download_from, "", lfDB
+					 )
+	-- 播放特效
+	local effects = {}
+	local effect = {}
+	effect.type = 1  -- 1为物品,暂时只支持发物品所以写死
+	effect.id = itemid
+	effect.count = 1
+	effects[#effects+1] = effect
+	if #effects > 0 then
+		MiscFunc.PlayItemEffect(sysarg, 11, effects)
+	end
+	var.activityList[activeid].zhanli_status[reward_days][index] = 3
+	zhanlilib.get_info(sysarg)
+end
+zhanlilib.NewDay = function ( sysarg )
+	local activeid = zhanlilib.ActivityId
+	local var = LActor.getStaticVar(sysarg)
+	if not var then return end
+	if zhanlilib.is_open(sysarg) then
+		local conf = zhanlilib.get_conf() 
+		if not conf then
+			return
+		end			
+		if not var.activityList then
+			var.activityList = {}
+		end
+		if not var.activityList[activeid] then
+			var.activityList[activeid] = {}
+		end
+		if var.activityList[activeid].max_zhanli_1 == nil then
+			var.activityList[activeid].max_zhanli_1 = 0
+		end
+		if var.activityList[activeid].max_zhanli_2 == nil then
+			var.activityList[activeid].max_zhanli_2 = 0
+		end
+		if var.activityList[activeid].max_zhanli == nil then
+			var.activityList[activeid].max_zhanli = 0
+		end
+		if var.activityList[activeid].zhanli_status == nil then
+			var.activityList[activeid].zhanli_status = {}
+		end
+		if var.activityList[activeid].zhanli_status[2] == nil then
+			var.activityList[activeid].zhanli_status[2] = {}
+		end
+		if var.activityList[activeid].zhanli_status[3] == nil then
+			var.activityList[activeid].zhanli_status[3] = {}
+		end
+		-- local create_actor_days =  ONLINEREWARD.getCreateActorDay( sysarg )
+		-- if create_actor_days == 2 then		
+		-- 	var.activityList[activeid].login_2 = 1
+		-- elseif create_actor_days == 3 then
+		-- 	var.activityList[activeid].login_3 = 2
+		-- 	--第三天上线了，并且第二天也上线但第二天的奖励达到条件，则邮件发送第二天的奖励
+		-- 	if var.activityList[activeid].login_2 then
+		-- 		for index,v in ipairs(conf.target[2]) do
+		-- 			if  var.activityList[activeid].zhanli_status[2][index] == 2 then
+		-- 				local itemid , itemnum = v[2] , v[3] or 1
+		-- 				System.sendGmMailOffLine(LActor.getActorId(sysarg), Lang.ScriptTips.zhanli1001, 1, itemid, itemnum, 1, Lang.ScriptTips.zhanli1002)
+		-- 				System.logCounter(
+		-- 									LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), 
+		-- 								  	"activityreward",tostring(activeid) , tostring(zhanlilib.SubActivityId), tostring(index), 
+		-- 								 	string.format("%s:%s",itemid,itemnum), tostring(LActor.getName(sysarg)), var.download_from, "", lfDB
+		-- 								 )
+		-- 				var.activityList[activeid].zhanli_status[2][index] = 3
+		-- 			end
+		-- 		end
+				
+		-- 	end
+		-- end
+		
+	else --如果活动结束，则发送第二天和第三天的奖励
+		if var.activityList == nil or var.activityList[activeid] == nil or var.activityList[activeid].zhanli_status == nil then
+			return
+		end
+		if var.activityList[activeid].sendzhanlilib == nil then
+			local conf = zhanlilib.get_conf() 
+			if not conf then
+				return
+			end
+			--if var.activityList[activeid].login_2 then
+			for index,v in ipairs(conf.target[2]) do
+				if  var.activityList[activeid].zhanli_status[2][index] == 2 then
+					local itemid , itemnum = v[2] , v[3] or 1
+					System.sendGmMailOffLine(LActor.getActorId(sysarg), Lang.ScriptTips.zhanli1001, 1, itemid, itemnum, 1, Lang.ScriptTips.zhanli1002)
+					System.logCounter(
+										LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), 
+									  	"activityreward",tostring(activeid) , tostring(zhanlilib.SubActivityId), tostring(index), 
+									 	string.format("%s:%s",itemid,itemnum), tostring(LActor.getName(sysarg)), var.download_from, "", lfDB
+									 )
+					var.activityList[activeid].zhanli_status[2][index] = 3
+				end
+			end
+			--end
+			--if var.activityList[activeid].login_3 then
+			for index,v in ipairs(conf.target[3]) do
+				if  var.activityList[activeid].zhanli_status[3][index] == 2 then
+					local itemid , itemnum = v[2] , v[3] or 1
+					System.sendGmMailOffLine(LActor.getActorId(sysarg), Lang.ScriptTips.zhanli1001, 1, itemid, itemnum, 1, Lang.ScriptTips.zhanli1002)
+					System.logCounter(
+										LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), 
+									  	"activityreward",tostring(activeid) , tostring(zhanlilib.SubActivityId), tostring(index), 
+									 	string.format("%s:%s",itemid,itemnum), tostring(LActor.getName(sysarg)), var.download_from, "", lfDB
+									 )
+					var.activityList[activeid].zhanli_status[3][index] = 3
+				end
+			end
+			--end
+			var.activityList[activeid].sendzhanlilib = 1
+		end
+	end
+
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, zhanlilib.NewDay)
+MiscsImplement.registerMsgHandler(225, zhanlilib.get_info)
+MiscsImplement.registerMsgHandler(226, zhanlilib.get_reward)
+table.insert(InitFnTable, zhanlilib.Init)
+

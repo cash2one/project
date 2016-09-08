@@ -1,0 +1,258 @@
+﻿JianShiYunTaiConfig = {
+	fubenId = 15, -- 副本ID
+	sceneId = 95, -- 默认进入第一层的场景ID
+	position = { 34, 16 }, -- 默认进入第一层的位置x, y
+	timeNext = 3, -- 杀完当前层怪物后多少秒触发进入下一层
+	monsterList = {
+		[1] = { -- 普通难度
+			  { -- 第一层的怪物
+				{ -- 怪物
+				monsterId = 3120,
+				monsterNum = 1,
+				position = { 21,48,10,21 }, -- x1, x2, y1, y2
+				},
+				},
+
+				  { -- 第一层的怪物
+				{ -- 怪物
+				monsterId = 3121,
+				monsterNum = 1,
+				position = { 21,48,10,21 }, -- x1, x2, y1, y2
+				},
+				},
+
+				  { -- 第一层的怪物
+				{ -- 怪物
+				monsterId = 3122,
+				monsterNum = 1,
+				position = { 21,48,10,21 }, -- x1, x2, y1, y2
+				},
+				},
+
+				  { -- 第一层的怪物
+				{ -- 怪物
+				monsterId = 3123,
+				monsterNum = 1,
+				position = { 21,48,10,21 }, -- x1, x2, y1, y2
+				},
+				},
+
+				{ -- 第一层的怪物
+				{ -- 怪物
+				monsterId = 3124,
+				monsterNum = 1,
+				position = { 21,48,10,21 }, -- x1, x2, y1, y2
+				},
+				},
+
+				{ -- 第一层的怪物
+				{ -- 怪物
+				monsterId = 3125,
+				monsterNum = 1,
+				position = { 21,48,10,21 }, -- x1, x2, y1, y2
+				},
+				},
+
+				{ -- 第一层的怪物
+				{ -- 怪物
+				monsterId = 3126,
+				monsterNum = 1,
+				position = { 21,48,10,21 }, -- x1, x2, y1, y2
+				},
+				},
+
+				{ -- 第一层的怪物
+				{ -- 怪物
+				monsterId = 3127,
+				monsterNum = 1,
+				position = { 21,48,10,21 }, -- x1, x2, y1, y2
+				},
+				},
+
+				  { -- 第一层的怪物
+				{ -- 怪物
+				monsterId = 3128,
+				monsterNum = 1,
+				position = { 21,48,10,21 }, -- x1, x2, y1, y2
+				},
+				},
+
+				  { -- 第一层的怪物
+				{ -- 怪物
+				monsterId = 3129,
+				monsterNum = 1,
+				position = { 21,48,10,21 }, -- x1, x2, y1, y2
+				},
+				},
+
+				},
+		[2] = { -- 困难难度
+			  { -- 第一层的怪物
+					{ -- 怪物
+					monsterId = 3140,
+					monsterNum = 1,
+					position = { 21,48,10,21 }, -- x1, x2, y1, y2
+					},
+					},
+
+					  { -- 第一层的怪物
+					{ -- 怪物
+					monsterId = 3141,
+					monsterNum = 1,
+					position = { 21,48,10,21 }, -- x1, x2, y1, y2
+					},
+					},
+
+					  { -- 第一层的怪物
+					{ -- 怪物
+					monsterId = 3142,
+					monsterNum = 1,
+					position = { 21,48,10,21 }, -- x1, x2, y1, y2
+					},
+					},
+
+					  { -- 第一层的怪物
+					{ -- 怪物
+					monsterId = 3143,
+					monsterNum = 1,
+					position = { 21,48,10,21 }, -- x1, x2, y1, y2
+					},
+					},
+
+					  { -- 第一层的怪物
+					{ -- 怪物
+					monsterId = 3144,
+					monsterNum = 1,
+					position = { 21,48,10,21 }, -- x1, x2, y1, y2
+					},
+					},
+
+					  { -- 第一层的怪物
+					{ -- 怪物
+					monsterId = 3145,
+					monsterNum = 1,
+					position = { 21,48,10,21 }, -- x1, x2, y1, y2
+					},
+					},
+
+					  { -- 第一层的怪物
+					{ -- 怪物
+					monsterId = 3146,
+					monsterNum = 1,
+					position = { 21,48,10,21 }, -- x1, x2, y1, y2
+					},
+					},
+
+					  { -- 第一层的怪物
+					{ -- 怪物
+					monsterId = 3147,
+					monsterNum = 1,
+					position = { 21,48,10,21 }, -- x1, x2, y1, y2
+					},
+					},
+
+					  { -- 第一层的怪物
+					{ -- 怪物
+					monsterId = 3148,
+					monsterNum = 1,
+					position = { 21,48,10,21 }, -- x1, x2, y1, y2
+					},
+					},
+
+					  { -- 第一层的怪物
+					{ -- 怪物
+					monsterId = 3149,
+					monsterNum = 1,
+					position = { 21,48,10,21 }, -- x1, x2, y1, y2
+					},
+					},
+
+
+
+		},
+		[3] = { -- 深渊难度
+		  { -- 第一层的怪物
+{ -- 怪物
+monsterId = 3160,
+monsterNum = 1,
+position = { 21,48,10,21 }, -- x1, x2, y1, y2
+},
+ },
+
+  { -- 第一层的怪物
+{ -- 怪物
+monsterId = 3161,
+monsterNum = 1,
+position = { 21,48,10,21 }, -- x1, x2, y1, y2
+},
+ },
+
+  { -- 第一层的怪物
+{ -- 怪物
+monsterId = 3162,
+monsterNum = 1,
+position = { 21,48,10,21 }, -- x1, x2, y1, y2
+},
+ },
+
+  { -- 第一层的怪物
+{ -- 怪物
+monsterId = 3163,
+monsterNum = 1,
+position = { 21,48,10,21 }, -- x1, x2, y1, y2
+},
+ },
+
+  { -- 第一层的怪物
+{ -- 怪物
+monsterId = 3164,
+monsterNum = 1,
+position = { 21,48,10,21 }, -- x1, x2, y1, y2
+},
+ },
+
+  { -- 第一层的怪物
+{ -- 怪物
+monsterId = 3165,
+monsterNum = 1,
+position = { 21,48,10,21 }, -- x1, x2, y1, y2
+},
+ },
+
+  { -- 第一层的怪物
+{ -- 怪物
+monsterId = 3166,
+monsterNum = 1,
+position = { 21,48,10,21 }, -- x1, x2, y1, y2
+},
+ },
+
+  { -- 第一层的怪物
+{ -- 怪物
+monsterId = 3167,
+monsterNum = 1,
+position = { 21,48,10,21 }, -- x1, x2, y1, y2
+},
+ },
+
+  { -- 第一层的怪物
+{ -- 怪物
+monsterId = 3168,
+monsterNum = 1,
+position = { 21,48,10,21 }, -- x1, x2, y1, y2
+},
+ },
+
+  { -- 第一层的怪物
+{ -- 怪物
+monsterId = 3169,
+monsterNum = 1,
+position = { 21,48,10,21 }, -- x1, x2, y1, y2
+},
+ },
+
+
+
+	},
+	}
+	}

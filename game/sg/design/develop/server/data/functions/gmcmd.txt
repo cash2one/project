@@ -1,0 +1,331 @@
+﻿-- 处理后台发出的gm命令
+--#include "data\functions\systems\timereward\receiveflowerhandler.txt" once
+--#include "data\functions\systems\timereward\singledayhandler.txt" once
+
+function CmdGM(cmd, dp)
+	if cmd == "present" then
+		local p1 = DataPack.readString(dp)
+		local actor = LActor.getActorByName(p1)
+		if actor == nil then return end
+
+		local p2 = DataPack.readString(dp)
+		local p3 = DataPack.readString(dp)
+		local p4 = DataPack.readString(dp)
+
+		LActor.addItem(actor, p2, 0, p4, p3, 1, "cmdgm")
+
+	elseif cmd == "setguide" then
+		local p1 = DataPack.readString(dp)
+		local actor = LActor.getActorByName(p1)
+		if actor == nil then return end
+
+		local p2 = DataPack.readString(dp)
+		if p2 == "1" then
+			LActor.GiveTitle(actor, GlobalConfig.guiderTitleId)
+		else
+			LActor.GiveupTitle(actor, GlobalConfig.guiderTitleId)
+		end
+	elseif cmd == "zyzy" then --设置让其自言自语
+		local p1 = DataPack.readString(dp)
+		local actor = LActor.getActorById(tonumber(p1))
+		if actor == nil then return end
+ 		local var = LActor.getStaticVar(actor)
+ 		if var == nil then return end
+		local p2 = DataPack.readString(dp)
+		if p2 == "1" then
+			--LActor.setIntProperty(actor, PROP_CHAT_ZYZY, 1)
+   			var.zyzyState = true
+			LActor.setZyzyState(actor, true)
+		else
+			--LActor.setIntProperty(actor, PROP_CHAT_ZYZY, 0)
+			var.zyzyState = nil
+			LActor.setZyzyState(actor, false)
+		end
+	elseif cmd == "recharge" then -- 充值
+		local name = DataPack.readString(dp)
+		local addVal = DataPack.readString(dp)
+
+		if name == nil or addVal == nil then return end
+
+		local actor = LActor.getActorByName(name)
+		if actor == nil then
+			return
+		end
+
+	  	LActor.recharge( actor, tonumber(addVal) )
+
+	  elseif cmd == "addcdkey" then --用于管理后台热更新cdkey
+		local p2 = DataPack.readString(dp)
+		if p2 ~= "" then
+			System.addCdkey(p2)
+		end
+	elseif cmd == "setserverupdate" then  -- 设置版本公告更新
+		print("setserverupdate ======================== ")
+		  local sysVar = System.getStaticVar()
+		  sysVar.serverUpdate = System.getCurrMiniTime()
+
+		  local actors = LuaHelp.getAllActorList()
+		  if actors ~= nil then
+		    for i=1,#actors do
+		      local actor = actors[i]
+		      local avar = LActor.getStaticVar(actor)
+		      avar.notifyUpdateOnline = 1
+		    end
+		  end
+	elseif cmd == "comsumeboxstart" then  --开启消费礼包返利活动
+		print("comsumeboxstart ======================== ")
+		local arg1 = DataPack.readString(dp)
+		local lastDay = tonumber(arg1) -- 活动持续几天
+		if lastDay == nil or lastDay < 1 then
+			print("comsumebox open day error")
+			return
+		end
+
+		local sysVar = System.getStaticVar()
+
+		sysVar.comsumeBoxStartTime = System.getToday()
+		sysVar.comsumeBoxEndTime = System.getToday() + lastDay * 86400
+
+		local year, month, day, hour, minute, sec = 0, 0, 0, 0, 0, 0
+		year, month, day, hour, minute, sec = System.timeDecode(sysVar.comsumeBoxStartTime, year, month, day, hour, minute, sec)
+		local comsumeBoxStartTime = string.format("%d-%d-%d %d:%d:%d", year, month, day, hour, minute, sec)
+		print("comsumeBoxStartTime sysVar.comsumeBoxStartTime = ".. sysVar.comsumeBoxStartTime .. " ("..comsumeBoxStartTime ..")")
+		year, month, day, hour, minute, sec = System.timeDecode(sysVar.comsumeBoxEndTime, year, month, day, hour, minute, sec)
+		local comsumeBoxEndTime = string.format("%d-%d-%d %d:%d:%d", year, month, day, hour, minute, sec)
+		print("ComsumptionBox sysVar.comsumeBoxEndTime = ".. sysVar.comsumeBoxEndTime .. " ("..comsumeBoxEndTime ..")")
+
+		local actors = LuaHelp.getAllActorList()
+		if actors ~= nil then
+			for i=1,#actors do
+			  local actor = actors[i]
+			  LoginCheckFunc.ComsumptionBoxAward(actor)
+			end
+		end
+	elseif cmd == "hzzyw" then		
+		local arg1 = DataPack.readString(dp)		
+		local sysVar = System.getStaticVar()
+		if arg1 == "on" then
+			sysVar.openhzzyw = 1
+			print("open hzzyw")
+		else
+			sysVar.openhzzyw = nil
+			print("close hzzyw")
+		end
+	elseif cmd == "openfcm" then		
+		local arg1 = DataPack.readString(dp)		
+		local sysVar = System.getStaticVar()
+		if arg1 == "on" then
+			sysVar.openfcm = 1
+			sysVar.openfcmtime = System.getCurrMiniTime()
+			print("open fcm")
+		else
+			sysVar.openfcm = nil
+			sysVar.openfcmtime = nil
+			print("close fcm")
+		end
+	elseif cmd == "shoptime" then
+		local st = DataPack.readString(dp)
+		local et = DataPack.readString(dp)
+		if st == nil or et == nil then
+			print("shoptime cmd param error")
+			return
+		end
+		local var_sys = System.getStaticVar()
+
+		print("gm shoptime:"..st..","..et)
+
+		var_sys.limitshopstart = System.toMiniTime(st)
+		var_sys.limitshopend = System.toMiniTime(et)
+
+		LActor.callFunc(nil, "GmCheckShopState") -- 通知刷新状态
+	elseif cmd == "hefutime" then
+		local st = DataPack.readString(dp)
+		local sreset = DataPack.readString(dp)
+
+		local var_sys = System.getStaticVar()
+		if st == nil or st == "" then
+			var_sys.hefutime = 0
+			print("gm hefutime:0")
+		else
+			print("gm hefutime:"..st)
+			var_sys.hefutime = System.toMiniTime(st)
+		end
+
+		local breset = 0
+		if sreset ~= nil and sreset == "1" then
+			breset = 1
+		end
+
+		LActor.callFunc(nil, "GmCheckHefuState", breset) -- 通知刷新状态
+	elseif cmd == "agreload" then
+		System.actorMgrReloadScript()
+	elseif cmd == "reloadchargelist" then
+		System.reloadChargeList()
+	elseif cmd == "startqingming" then
+		local var_sys = System.getStaticVar()
+		if var_sys == nil then return end
+		var_sys.qingmingstatus = 1
+
+		LActor.callFunc(System.getGlobalNpc(), "QingMingActivityStart", 0) -- 触发清明活动事件
+		LActor.callFunc(System.getGlobalNpc(), "CreateQingmingNpc", 0) -- 触发清明活动事件
+	elseif cmd == "hefudata" then -- 处理合服活动的数据
+		LActor.callFunc(nil, "ClearMergeArena")
+		--LActor.callFunc(nil, "ClearMergeCampBattle")
+		--LActor.callFunc(nil, "ClearMergeTianYuan")
+	elseif cmd == "cbgopen" then
+		cangbaoge_open()
+	elseif cmd == "Start3366BlueActivity" then
+		ONLINEREWARD.VipLoginRewardImplement.StartBlueConsumptionGivingAwardActivity()
+	elseif cmd == "forbidmail" then --设置禁止发邮件
+		local aid = DataPack.readString(dp)
+		local time = DataPack.readString(dp)
+
+		local actor = LActor.getActorById(tonumber(aid))
+		if actor == nil then
+			print("forbidmail error: actor not exist")
+			return
+		end
+ 		
+ 		LActor.setForbidMailTime(actor, tonumber(time))
+ 	elseif cmd == "forbidchat" then --设置禁言
+		local name = DataPack.readString(dp)
+		local time = DataPack.readString(dp)
+
+		local actor = LActor.getActorByName(name)
+		if actor == nil then
+			print("forbidchat error: actor not exist")
+			return
+		end
+ 		
+ 		LActor.setForbidChatTime(actor, tonumber(time))
+ 	elseif cmd == "SetActivityTime" then --设置活动时间
+ 		local id  = tonumber(DataPack.readString(dp))
+ 		local startTime = DataPack.readString(dp)
+		local endTime = DataPack.readString(dp)
+		local flag = tonumber(DataPack.readString(dp))
+		local pflimit = DataPack.readString(dp)
+		local type = tonumber(DataPack.readString(dp))
+
+		if id == 10 or id == 11 or id == 15 or id == 16 or id == 17 then
+			startTime = System.toMiniTime(startTime)
+			endTime = System.toMiniTime(endTime)
+			if id == 10 then
+				FightRankActivity.setActivityTime(startTime, endTime)
+			elseif id == 11 then
+				LevelRankActivity.setActivityTime(startTime, endTime)
+			elseif id == 15 then
+				--专题活动的双倍奖励活动的，flag表示活动id，具体id 在c++  DoubleAward
+				setDoubleActivityTime(2, flag, startTime, endTime)
+			elseif id == 16 then
+				RankActivity.setActivityTime(11, startMiniTime, endMiniTime)
+			elseif id == 17 then
+				--一般活动的双倍奖励活动的，flag表示活动id，具体id 在c++  DoubleAward
+				setDoubleActivityTime(1, flag, startTime, endTime)
+			end
+		else
+			ONLINEREWARD.SetActivityTime(id,startTime,endTime, flag, pflimit, type)
+		end
+	elseif cmd == "tehuikuanghuan" then
+		local activityId = DataPack.readString(dp)
+		SetTeHuiKuangHuanOpenTime(activityId)
+ 	elseif cmd == "setlimitopen" then --设置限制物品自动补齐是否开启
+		local flag = tonumber(DataPack.readString(dp))
+		if flag == 1 then
+			System.setLimitOpen(true)
+		else
+			System.setLimitOpen(false)
+		end
+ 	elseif cmd == "setlimitpara" then --设置限制物品自动补齐参数
+		    local low = tonumber(DataPack.readString(dp))
+		    local add = tonumber(DataPack.readString(dp))
+		    System.setLimitPara(low, add)
+ 	elseif cmd == "setlimitopendays" then --设置限制物品自动补齐的开服天数
+		    local days = tonumber(DataPack.readString(dp))
+		    System.setLimitOpenDays(days)
+	elseif cmd == "setarenastate" then --设置活动时间
+ 		print("setarenastate .......")
+ 		local var_sys = System.getStaticVar()
+		if var_sys == nil then return end
+ 		local id  = tonumber(DataPack.readString(dp)) --自由赛：1，争霸赛：2
+ 		local type = tonumber(DataPack.readString(dp)) --开始：1，结束：2
+		local im = tonumber(DataPack.readString(dp)) --正常时间段开始：1，立即开始：2
+		local rd = tonumber(DataPack.readString(dp)) --第几轮自由赛，自由赛立即开始才要用到
+		if im == nil then im = 1 end
+		if rd == nil then rd = 1 end
+		if var_sys.arenastate == nil then var_sys.arenastate = 0 end
+		print("setarenastate id:"..id..",type:"..type..",im:"..im..",rd:"..rd)
+		if id == 1 then	--自由赛
+			if type == 1 then --开始
+				if im == 1 then --按正常时间段开始
+					var_sys.arenastate = System.bitOpSetMask(var_sys.arenastate, 0, false)
+				elseif im == 2 then --立即开始
+					var_sys.arenastate = System.bitOpSetMask(var_sys.arenastate, 0, false)
+					--立即开始
+					ArenaFuncList.OnZysStart(rd)
+				end
+			elseif type == 2 then --结束并禁止开放
+				var_sys.arenastate = System.bitOpSetMask(var_sys.arenastate, 0, true)
+			end
+		elseif id == 2 then --争霸赛
+			if type == 1 then --开始
+				if im == 1 then --按正常时间段开始
+					var_sys.arenastate = System.bitOpSetMask(var_sys.arenastate, 1, false)
+				elseif im == 2 then --立即开始
+					var_sys.arenastate = System.bitOpSetMask(var_sys.arenastate, 1, false)
+					--立即开始
+					ArenaFuncList.OnZbsStart()
+				end
+			elseif type == 2 then --结束并禁止开放
+				var_sys.arenastate = System.bitOpSetMask(var_sys.arenastate, 1, true)
+			end
+		end
+	elseif cmd == "addtitle" then --后台设置称号
+		local titleId = tonumber(DataPack.readString(dp))
+		local name = DataPack.readString(dp)
+		print("addtitle: "..titleId.."   "..name)
+		if not titleId then return end
+		if not name then return end
+
+		local actor = LActor.getActorByName(name)
+		if actor == nil then 
+			print("actor is offline!")
+			return 
+		end
+		LActor.GiveTitle(actor,titleId)
+	elseif cmd == "removetitle" then --后台删除称号
+		local titleId = tonumber(DataPack.readString(dp))
+		local name = DataPack.readString(dp)
+		print("removetitle: "..titleId.."   "..name)
+		if not titleId then return end
+		if not name then return end
+
+		local actor = LActor.getActorByName(name)
+		if actor == nil then 
+			print("actor is offline!")
+			return 
+		end
+		LActor.GiveupTitle(actor,titleId)
+	elseif cmd == "broadcast" then
+		local p1 = DataPack.readString(dp)
+		local p2 = tonumber(DataPack.readString(dp) or "64")
+		if p1 and p1 ~= "" and p2 then
+			System.broadcastTipmsg(p1, p2)
+		end	
+	elseif cmd == "corpsfix" then
+		-- 设置合服标记
+		local svar = System.getStaticVar()
+		if not svar then return end
+		if svar.sys_corps_is_hefu == nil then
+			svar.sys_corps_is_hefu = 0
+		end
+		svar.sys_corps_is_hefu = svar.sys_corps_is_hefu + 1
+		print("-- SetCorpsFixFlag OK --")
+	end
+end
+
+function SendGmResultToSys(cmdid)
+	-- 发送结果给后台，说明gameworld执行了gm命令
+	if cmdid ~= 0 then
+		LActor.txSendScriptUrl(System.getServerId(), "/gmcallback.jsp", "&cmdid="..cmdid.."&serverid="..System.getServerId(), 0, false)
+	end
+end

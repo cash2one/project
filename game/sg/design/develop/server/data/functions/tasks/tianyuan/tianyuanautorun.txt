@@ -1,0 +1,660 @@
+--#include "data\functions\Tasks\TianYuan\TianYuanSet.txt" once
+--#include "data\config\task\TianYuanConfig.txt" once
+--#include "data\config\TasksConfig.inc" once
+--#include "data\functions\Tasks\TianYuan\TianYuanGetItem.txt" once
+--#include "data\config\task\TianYuanReardConfig.txt" once
+--#include "data\functions\mergepublic.txt" once
+--#include "data\functions\tasks\tianyuan\tianyuanfunc.txt" once
+--#include "data\functions\systems\timereward\hefuhandler.txt" once
+
+LocalDT.TianYuanAutoRunFunc ={}  
+--世界头顶公告
+LocalDT.TianYuanAutoRunFunc.NOTICE = {
+
+  --TIME = "2012-06-3 9:58:00",   --首次执行时间
+  TIME = "2012-06-3 19:58:00",   --首次执行时间
+  --CYCLE = 1*24*3600,     --自动执行周期(秒)
+  CYCLE = 7*24*3600,     --自动执行周期(秒)
+}
+--传送玩家
+LocalDT.TianYuanAutoRunFunc.START = {
+ -- TIME = "2012-06-3 10:00:00",   --首次执行时间
+  TIME = "2012-06-3 20:00:00",   --首次执行时间
+  CYCLE = 7*24*3600,     --自动执行周期(秒)
+  --CYCLE = 1*24*3600,     --自动执行周期(秒)
+  
+}
+--活动结束
+LocalDT.TianYuanAutoRunFunc.EXIT = {
+  
+  TIME = "2012-06-3 20:30:00",   --首次执行时间
+  --TIME = "2012-06-3 22:00:00",   --首次执行时间
+  CYCLE = 7*24*3600,     --自动执行周期(秒)
+  --CYCLE = 1*24*3600,     --自动执行周期(秒)
+}
+
+--清除周排行 
+LocalDT.TianYuanAutoRunFunc.CLEARWEEKRANK = {
+ 
+  --TIME = "2012-06-03 9:58:00",   --首次执行时间
+  TIME = "2012-06-03 19:58:00",   --首次执行时间
+  CYCLE = 7*24*3600,     --自动执行周期(秒)
+  --CYCLE = 1*24*3600,     --自动执行周期(秒)  
+}
+LocalDT.TianYuanAutoRunFunc.NOTICE1 = {
+ TIME = "2012-06-03 20:08:00",
+ CYCLE = 7*24*3600,
+}
+LocalDT.TianYuanAutoRunFunc.NOTICE2 = {
+ TIME = "2012-06-03 20:18:00",
+ CYCLE = 7*24*3600,
+}
+LocalDT.TianYuanAutoRunFunc.NOTICE3 = {
+ TIME = "2012-06-03 20:28:00",
+ CYCLE = 7*24*3600,
+}
+LocalDT.TianYuanAutoRunFunc.InitData = nil
+LocalDT.TianYuanAutoRunFunc.NoticeData = nil
+LocalDT.TianYuanAutoRunFunc.ExitData = nil
+LocalDT.TianYuanAutoRunFunc.ClearWeekRankData = nil
+LocalDT.TianYuanAutoRunFunc.NoticeData1 = nil
+LocalDT.TianYuanAutoRunFunc.NoticeData2 = nil
+LocalDT.TianYuanAutoRunFunc.NoticeData3 = nil
+
+LocalDT.TianyuanAttackBossRecode = {}
+--轩辕之战结束
+
+function TianYuanExitData()
+	-- 设置合服完成
+	local sVal = System.getDyanmicVar()
+	--debug_print("=====================TianYuanExitData========================",sVal.TianYuanActing)
+	if sVal.TianYuanActing == nil or sVal.TianYuanActing ~= 1 then return end
+	sVal.TianYuanActing = nil
+	--debug_print("==============TianYuanExitData========2222============")
+	local RankNameList = Ranking.getRanking(TianYuanRankName) --通过排行名称获取排行对象
+	if RankNameList~= nil then
+		local itemCount = Ranking.getRankItemCount(RankNameList)
+		if itemCount == 0 then
+			local nModeid = 0
+			local nName , nModeid = LActor.getNpcEntityNameAndMode( TianYuanConfig.CHENGZHUNPCID, nModeid)
+			if nName == nil then
+				debug_print("-------配置错误-------")
+				return
+			end
+			local scene = Fuben.getSceneHandleById(TianYuanConfig.STATUENPCSCENE,0)
+			Fuben.setSceneNpcmodel(scene,TianYuanConfig.STATUENPCX,TianYuanConfig.STATUENPCY, nModeid,nName)
+			local str1 = Lang.TaskTalk.ty0063
+			System.broadcastTipmsg(str1,ttGmTip)
+			return
+		end
+	end
+	if RankNameList ~= nil then
+	--	debug_print("==============TianYuanExitData========3333============")
+		Ranking.save(RankNameList,TianYuanRankFile)
+		------------消息通知--------------------
+		-- 给每一个参加王城之战的玩家发送1条奖励领取提示（个人积分不小于10）； 
+		local personal_reward = TianYuanReward.personal_rank_reward
+		local itemCount = Ranking.getRankItemCount(RankNameList)
+		local rankTbl3 = LuaHelp.getRankingItemList(RankNameList,itemCount)
+		if rankTbl3 ~= nil then
+			--local mailcontext = "轩辕之战奖励"
+			--print_table(personal_reward)
+			for k , v in pairs ( personal_reward ) do
+				local nStartIndex = 0
+				local nEndIndex = 0
+				if v.rankRange[2] <= itemCount then
+					nStartIndex = v.rankRange[1]
+					nEndIndex = v.rankRange[2]
+				elseif v.rankRange[1] <= itemCount and  v.rankRange[2] >= itemCount then
+					nStartIndex = v.rankRange[1]
+					nEndIndex = itemCount
+				end
+				if nEndIndex == 0 or nStartIndex == 0 then
+					break
+				end
+				for n = nStartIndex, nEndIndex do
+					local actorId = Ranking.getId( rankTbl3[n] )
+					local point = Ranking.getPoint( rankTbl3[n] )
+					local mailcontext = string.format(Lang.TaskTalk.ty0065, n)
+					if point >= 10 then
+						--	{ type = 2 , id = 0 , count = 400000 }, 	--贝币
+						local t = {}
+						for i , j in pairs ( v.award ) do
+							local mtp = { type = j.type, id = j.id, count = j.count , bind = 0}
+							table.insert( t , mtp )
+						end
+						local len = #t
+						local remainder = 5 - math.mod(len , 5)
+						for i = 1 , remainder do
+							local mtp = { type = 0, id = 0, count = 0 , bind = 0}
+							table.insert(t , mtp)
+						end
+						local AwardLen = math.floor(#t / 5)
+						for i = 1 , AwardLen do
+							System.sendGmMailOffLine(actorId, mailcontext , t[i].type, t[i].id, t[i].count, t[i].bind, Lang.TaskTalk.ty0064, t[i+1].type, t[i+1].id, t[i+1].count, t[i+1].bind, t[i+2].type, t[i+2].id, t[i+2].count, t[i+2].bind, t[i+3].type, t[i+3].id, t[i+3].count, t[i+3].bind,t[i+4].type, t[i+4].id, t[i+4].count, t[i+4].bind)
+						end
+					end
+				end
+			end
+		end
+		------------end 消息通知--------------------
+	end
+
+
+	local GuildRankNameList = Ranking.getRanking(TianYuanGuildRankName) --通过排行名称获取排行对象
+
+	-- 删除原来天元城主的称号 getTianYuanStaicLeaderId 玩家不在线??
+
+	local old_leader = LGuild.getTianYuanStaicLeaderId()
+	if old_leader > 0 then
+		local pleader = System.getEntityPtrByActorID(old_leader)
+		if pleader ~= nil then
+			LActor.GiveupTitle(pleader, TianYuanConfig.TITLEID)
+		end
+	end
+	--计算最高分的帮派获得天元之城控制权
+	local guildid
+	local leadersex
+	local leaderjob
+	local leadername
+	local guildname
+	if GuildRankNameList ~= nil then
+		local itemCount = Ranking.getRankItemCount(GuildRankNameList)
+		local rankTbl = LuaHelp.getRankingItemList(GuildRankNameList,itemCount)
+		if rankTbl ~= nil then
+			local guild_award = TianYuanReward.guild_reward
+			for k , v in pairs ( guild_award ) do
+				local nStartIndex = 0
+				local nEndIndex = 0
+				if v.rankRange[2] <= itemCount then
+					nStartIndex = v.rankRange[1]
+					nEndIndex = v.rankRange[2]
+				elseif v.rankRange[1] <= itemCount and  v.rankRange[2] >= itemCount then
+					nStartIndex = v.rankRange[1]
+					nEndIndex = itemCount
+				end
+				if nEndIndex == 0 or nStartIndex == 0 then
+					break
+				end
+
+				for n = nStartIndex , nEndIndex do
+					local guildid = Ranking.getId(rankTbl[n])
+					local guidptr = LGuild.getGuildById( guildid )
+					if guidptr == nil then
+						break
+					end
+					local GuildBuild = 0
+					local GuildProperty = 0
+					for i , j in pairs ( v.award ) do
+						if j.type == 23 then
+							GuildProperty = j.count
+							LGuild.addGuildProperty(guidptr , GuildProperty)
+						elseif j.type == 22 then
+							GuildBuild = j.count
+							LGuild.addGuildBuild(guidptr, GuildBuild)
+						end
+					end
+					local sendtips = string.format(Lang.TaskTalk.ty0061,nStartIndex,GuildProperty,GuildBuild)
+					LGuild.sendChannelMsg(guildid,sendtips,ttHearsay)
+				end
+			end
+		end
+		--设置 轩辕城中部展示台
+		if rankTbl and #rankTbl > 0 then
+			guildid = Ranking.getId(rankTbl[1]) --获取第一名的帮派ID
+			
+			local point = Ranking.getPoint(rankTbl[1])
+			guildname = LGuild.getGuildName(guildid)
+			--str1 = string.format(Lang.TaskTalk.ty0027,guildname)
+			--System.broadcastTipmsg(str1,ttGmTip)
+			
+			LGuild.setTianYuanGuildId(guildid)
+			leadersex = LGuild.getTianYuanLeaderSex() --设置雕像
+			leaderjob = LGuild.getTianYuanLeaderJob()
+			leadername = LGuild.getTianYuanLeaderName()
+			leaderid = LGuild.getTianYuanLeaderId()
+			LGuild.setTianYuanStaicLeaderId(leaderid)
+			
+			Ranking.setSub(rankTbl[1], 3, leadername)
+			Ranking.setSub(rankTbl[1], 4, leaderjob)
+			Ranking.setSub(rankTbl[1], 5, leadersex)
+			Ranking.setSub(rankTbl[1], 6, leaderid)
+			local z
+			for z=1,#TianYuanConfig.TIANYUANMAPID do --设置天元城城主名字
+				LGuild.SetTianYuanName(guildname,TianYuanConfig.TIANYUANMAPID[z],0)
+			end
+		end	
+	end
+	--local leaderid  = LGuild.getTianYuanLeaderId();
+	if GuildRankNameList ~= nil then
+		Ranking.save(GuildRankNameList,TianYuanGuildRankFile)
+	end
+	-- 改变场景npc 模型
+	local scene = Fuben.getSceneHandleById(TianYuanConfig.STATUENPCSCENE,0)
+	if guildid then 
+		--LActor.triggerAchieveEvent() --完成成就
+		local i
+		for i=1,#TianYuanConfig.MODEL do
+			if  TianYuanConfig.MODEL[i].job == tonumber(leaderjob) and  TianYuanConfig.MODEL[i].sex == tonumber(leadersex) then
+				Fuben.setSceneNpcmodel(scene,TianYuanConfig.STATUENPCX,TianYuanConfig.STATUENPCY, TianYuanConfig.MODEL[i].modelid,leadername)
+			end
+		end
+	end
+	-- 给帮主 称号
+	local actor = LGuild.getTianYuanLeader()
+	if actor then
+		LActor.GiveTitle(actor,TianYuanConfig.TITLEID) --给称号
+		--LActor.sendTipmsg(actor, Lang.TaskTalk.ty0043, ttGmTip) -- 通知去领奖, TODO: 应该用类似技能哪种提示
+		LGuild.updateMasterData(actor) -- 更新天元之主装备信息
+	end
+	--把所有玩家踢出场景
+	for i=1, #TianYuanConfig.CLEARMAPID do
+		local playerList = LuaHelp.getSceneActorListById(TianYuanConfig.CLEARMAPID[i])  --获取某场景玩家对象列表
+		if playerList ~= nil then
+			local j
+			for j = 1, #playerList do
+			local player = playerList[j]
+				if player then
+					--直接把玩家传出来
+					LActor.enterScene(player,TianYuanConfig.RETURNMAPID,TianYuanConfig.RETURNMAPX,TianYuanConfig.RETURNMAPY)
+					-- 日志
+				    System.logCounter(
+				       	LActor.getActorId(player), LActor.getAccountName(player), tostring(LActor.getLevel(player)), 
+				        "daily_act", "", "",
+				        "xuanduzhengba", "chuanchu", "",
+				        "", "", lfBI) 
+				end
+			end
+		end
+	end
+	-- BI统计, 延时1秒
+	LActor.postEntityScriptCallbackMsg(System.getGlobalNpc(), EntityCallbackMsg.TianYuanLog, 1000)
+
+	HefuFuncList.checktianyuanstate()
+	if sVal.XuanYuanZhiZhan_FuBen_Handle ~= nil then
+		Fuben.closeFuben( sVal.XuanYuanZhiZhan_FuBen_Handle )
+		sVal.XuanYuanZhiZhan_FuBen_Handle = nil
+	end
+	debug_print("=============注销定时器========unregScriptCallback=============",sVal.Broadcast_Guild_And_Persion_Handle)
+	if sVal.Broadcast_Guild_And_Persion_Handle ~= nil then
+		local sthal = sVal.Broadcast_Guild_And_Persion_Handle
+		LActor.unregScriptCallback(System.getGlobalNpc() , sVal.Broadcast_Guild_And_Persion_Handle , true)
+		sVal.Broadcast_Guild_And_Persion_Handle = nil
+	end
+	local str1 = ""
+	if guildname == nil then
+		str1 = Lang.TaskTalk.ty0063
+	else
+		str1 = string.format(Lang.TaskTalk.ty0027,guildname)
+	end
+	System.broadcastTipmsg(str1,ttGmTip)
+--	Friend_share_handler.notify_state(actor, tianyuanTile)
+end
+
+-- BI统计
+function OnTianYuanLog(npc)
+	-- debug_print("tianyuan log start")
+	local rankList = Ranking.getRanking(TianYuanRankName) --通过排行名称获取排行对象
+	local itemCount = Ranking.getRankItemCount(rankList)
+	local items = LuaHelp.getRankingItemList(rankList,itemCount)
+	if items ~= nil then
+		for i=1, #items do
+			local item = items[i]
+			local actorId = Ranking.getId( item )
+			local point = Ranking.getPoint( item )
+			local account = Ranking.getSub(item, 2)
+			local camp = Ranking.getSub(item, 3)
+			local level = Ranking.getSub(item, 4)
+			local fight = Ranking.getSub(item, 5)
+
+			System.logCounter(actorId, account, level, "", fight, tostring(point), "tian_yuan", camp, "", "", "", lfBI)
+		end
+	end
+end
+
+function TianYuanNoticeData()
+  --System.broadcastTipmsg(Lang.TaskTalk.ty0019, ttGmTip)
+  System.broadcastTipmsg(Lang.TaskTalk.ty0019..Lang.TaskTalk.ty0048, ttChatWindow)
+end
+
+function TianYuanInitData()
+	--debug_print("TianYuanInitData")
+	System.broadcastTipmsg(Lang.TaskTalk.ty0020,ttGmTip)
+	--System.broadcastTipmsg(Lang.TaskTalk.ty0020, ttGmTip)
+	--System.broadcastTipmsg(Lang.TaskTalk.ty0020, ttChatWindow)--..Lang.TaskTalk.ty0048
+
+	local RankNameList = Ranking.getRanking(TianYuanRankName) --通过排行名称获取排行对象
+	if RankNameList ~= nil then
+		Ranking.clearRanking(RankNameList)         --清除排行榜对象
+	    Ranking.save(RankNameList,TianYuanRankFile)
+	end
+	local GuildRankNameList = Ranking.getRanking(TianYuanGuildRankName) --通过排行名称获取排行对象
+	if GuildRankNameList ~= nil then
+	    Ranking.clearRanking(GuildRankNameList)         --清除排行榜对象
+	    Ranking.save(GuildRankNameList,TianYuanGuildRankFile)
+	end
+
+	local hFuben = Fuben.createFuBen(TianYuanConfig.FBID)
+	if hFuben == nil then
+   		return 
+  	end
+	local sVal = System.getDyanmicVar()
+	sVal.XuanYuanZhiZhan_FuBen_Handle = hFuben
+	Fuben.SetFubenTime(hFuben,TianYuanConfig.ACTTIME)
+	sVal.TianYuanActing = 1
+	local BossConfig = TianYuanConfig.refreshNpc
+	if BossConfig == nil then
+		return
+	end
+	for k , v in pairs ( BossConfig ) do
+		LActor.regScriptCallback( System.getGlobalNpc(), nil, v.firstTime*1000, v.firstTime*1000, 1, "TianYuanRefreshBoss", v.id)
+	end
+	if sVal.Broadcast_Guild_And_Persion_Handle == nil then
+		local nHandle = LActor.regScriptCallback( System.getGlobalNpc(), nil, TianYuanConfig.NOTICEPOINTTIEM*1000, TianYuanConfig.NOTICEPOINTTIEM*1000, -1, "TianYuanNoticeBossPos", 0)
+		if nHandle ~= nil and nHandle ~= 0 then
+			sVal.Broadcast_Guild_And_Persion_Handle = nHandle
+		end
+	end
+end
+
+function TianYuanRefreshBoss(monster, monsterid)
+	debug_print("======TianYuanRefreshBoss=========",monsterid)
+	local sVal = System.getDyanmicVar()
+	if sVal.TianYuanActing == nil or sVal.TianYuanActing ~= 1 then return end
+	if monsterid == nil then
+		debug_print("======麻痹 参数出问题了=========")
+		return
+	end
+	local monsterId = tonumber(monsterid)
+	if monsterId == 0 then
+		debug_print("=========操蛋 monster id 为0==========")
+		return
+	end
+
+	local BossConfig = TianYuanConfig.refreshNpc
+	if sVal.XuanYuanZhiZhan_FuBen_Handle == nil then
+		return
+	end
+	local hScene = Fuben.getSceneHandleById(TianYuanConfig.SCENEID, sVal.XuanYuanZhiZhan_FuBen_Handle)
+	if hScene == 0 then
+		debug_print("======获取场景句柄错误====")
+		return
+	end
+	local nMonsterConfig = TianYuanConfig.refreshNpc[monsterId]
+	if nMonsterConfig == nil then
+		debug_print("没有此boss")
+		return
+	end
+	local posX = nMonsterConfig.areas.mapx1 + System.getRandomNumber(nMonsterConfig.areas.mapx2 - nMonsterConfig.areas.mapx1 + 1)
+	local posY = nMonsterConfig.areas.mapy1 + System.getRandomNumber(nMonsterConfig.areas.mapy2 - nMonsterConfig.areas.mapy1 + 1)
+	local monsterPtr = Fuben.createMonster(hScene, nMonsterConfig.id, posX, posY, 0)
+	TianYuanNoticeBoss(posX, posY)
+end
+
+function TianYuanNoticeBoss(posx, posy)
+	debug_print("------TianYuanNoticeBoss------",posx, posy)
+	local broadmsg = string.format(Lang.TaskTalk.ty0053, posx, posy)
+	System.broadcastTipmsg(broadmsg, ttGmTip)
+	TianYuanNoticeBossPos()
+end
+
+function TianYuanNoticeBossPos()
+	local nSysVar = System.getDyanmicVar()
+	if nSysVar.XuanYuanZhiZhan_FuBen_Handle == nil then
+		debug_print("====not handle======")
+		return
+	end
+	local fbptr = Fuben.getFubenPtr( nSysVar.XuanYuanZhiZhan_FuBen_Handle )
+	local playerList = LuaHelp.getFbActorList(fbptr)  --获取某场景玩家对象列表
+	if playerList ~= nil then
+		local j
+		for j = 1, #playerList do
+		local player = playerList[j]
+			if player then
+				MiscsImplement.TianYuanRank(player, 35, nil)
+			end
+		end
+	end
+end
+function XuanYuanZhiZhanNoticePersion( sysarg )
+	-- body
+	MiscsImplement.XuanYuan_Persion_Rank( sysarg )
+end
+
+function TianYuanSorceNotice1()
+	local sVal = System.getDyanmicVar()
+	if sVal.TianYuanActing ~= 1 then return end
+	local GuildRankNameList = Ranking.getRanking(TianYuanGuildRankName) --通过排行名称获取排行对象
+	if GuildRankNameList ~= nil then
+		local rankTbl = LuaHelp.getRankingItemList(GuildRankNameList,1)
+		if rankTbl and #rankTbl > 0 then
+				guildid = Ranking.getId(rankTbl[1]) --获取第一名的帮派ID
+				local point = Ranking.getPoint(rankTbl[1])
+				local guildname = LGuild.getGuildName(guildid)
+				local str1 = string.format(Lang.TaskTalk.ty0026,guildname,point)
+				--System.broadcastTipmsg(str1,ttGmTip + ttTipmsgWindow+ttChatWindow)
+		end
+	end
+end
+
+function TianYuanSorceNotice2()
+	local sVal = System.getDyanmicVar()
+	if sVal.TianYuanActing ~= 1 then return end
+		local GuildRankNameList = Ranking.getRanking(TianYuanGuildRankName) --通过排行名称获取排行对象
+		if GuildRankNameList ~= nil then
+		local rankTbl = LuaHelp.getRankingItemList(GuildRankNameList,1)
+		if rankTbl and #rankTbl > 0 then
+				guildid = Ranking.getId(rankTbl[1]) --获取第一名的帮派ID
+				local point = Ranking.getPoint(rankTbl[1])
+				local guildname = LGuild.getGuildName(guildid)
+				local str1 = string.format(Lang.TaskTalk.ty0026,guildname,point)
+				--System.broadcastTipmsg(str1,ttGmTip + ttTipmsgWindow+ttChatWindow)
+		end
+	end
+end
+
+function TianYuanSorceNotice3()
+ local sVal = System.getDyanmicVar()
+ if sVal.TianYuanActing ~= 1 then return end
+  local GuildRankNameList = Ranking.getRanking(TianYuanGuildRankName) --通过排行名称获取排行对象
+  	if GuildRankNameList ~= nil then
+		local rankTbl = LuaHelp.getRankingItemList(GuildRankNameList,1)
+		if rankTbl and #rankTbl > 0 then
+				guildid = Ranking.getId(rankTbl[1]) --获取第一名的帮派ID
+				local point = Ranking.getPoint(rankTbl[1])
+				local guildname = LGuild.getGuildName(guildid)
+				local str1 = string.format(Lang.TaskTalk.ty0026,guildname,point)
+				--System.broadcastTipmsg(str1,ttGmTip + ttTipmsgWindow+ttChatWindow)
+		end
+	end
+end
+
+LocalDT.TianYuanAutoRunFunc.TianYuanAutoRun_Init = function (npcobj)
+   --debug_print("........TianYuanAutoRun_Init")
+	if TasksConfig ~= nil and TasksConfig.TianYuan == false then return end  --活动开
+
+	if LocalDT.TianYuanAutoRunFunc.InitData == nil then
+	LocalDT.TianYuanAutoRunFunc.InitData = System.registerTimeCall(thisNPC,"TianYuanInitData",LocalDT.TianYuanAutoRunFunc.START.TIME, LocalDT.TianYuanAutoRunFunc.START.CYCLE, true)
+	end
+
+	--if LocalDT.TianYuanAutoRunFunc.NoticeData == nil then
+	--LocalDT.TianYuanAutoRunFunc.NoticeData = System.registerTimeCall(thisNPC,"TianYuanNoticeData",LocalDT.TianYuanAutoRunFunc.NOTICE.TIME, LocalDT.TianYuanAutoRunFunc.NOTICE.CYCLE, true)
+	--end
+
+	if LocalDT.TianYuanAutoRunFunc.ExitData == nil then
+	LocalDT.TianYuanAutoRunFunc.ExitData = System.registerTimeCall(thisNPC,"TianYuanExitData",LocalDT.TianYuanAutoRunFunc.EXIT.TIME, LocalDT.TianYuanAutoRunFunc.EXIT.CYCLE, true)
+	end
+
+	if LocalDT.TianYuanAutoRunFunc.NoticeData1 == nil then
+	LocalDT.TianYuanAutoRunFunc.NoticeData = System.registerTimeCall(thisNPC,"TianYuanSorceNotice1",LocalDT.TianYuanAutoRunFunc.NOTICE1.TIME, LocalDT.TianYuanAutoRunFunc.NOTICE1.CYCLE, true)
+	end
+
+	if LocalDT.TianYuanAutoRunFunc.NoticeData2 == nil then
+	LocalDT.TianYuanAutoRunFunc.NoticeData = System.registerTimeCall(thisNPC,"TianYuanSorceNotice2",LocalDT.TianYuanAutoRunFunc.NOTICE2.TIME, LocalDT.TianYuanAutoRunFunc.NOTICE2.CYCLE, true)
+	end
+
+	if LocalDT.TianYuanAutoRunFunc.NoticeData3 == nil then
+	LocalDT.TianYuanAutoRunFunc.NoticeData = System.registerTimeCall(thisNPC,"TianYuanSorceNotice3",LocalDT.TianYuanAutoRunFunc.NOTICE3.TIME, LocalDT.TianYuanAutoRunFunc.NOTICE3.CYCLE, true)
+	end
+end
+
+
+
+LocalDT.TianYuanAutoRunFunc.TianYuanAutoRun_Fina = function (npcobj)
+	
+	if LocalDT.TianYuanAutoRunFunc.InitData  then
+		System.unregisterTimeCall(LocalDT.TianYuanAutoRunFunc.InitData)
+		LocalDT.TianYuanAutoRunFunc.InitData = nil
+	end
+	
+	if LocalDT.TianYuanAutoRunFunc.NoticeData  then
+		System.unregisterTimeCall(LocalDT.TianYuanAutoRunFunc.NoticeData)
+		LocalDT.TianYuanAutoRunFunc.NoticeData = nil
+	end
+	
+	if LocalDT.TianYuanAutoRunFunc.ExitData then
+		System.unregisterTimeCall(LocalDT.TianYuanAutoRunFunc.ExitData)
+		LocalDT.TianYuanAutoRunFunc.ExitData = nil
+	end
+	
+	if  LocalDT.TianYuanAutoRunFunc.NoticeData1 then
+		System.unregisterTimeCall(LocalDT.TianYuanAutoRunFunc.NoticeData1)
+		LocalDT.TianYuanAutoRunFunc.NoticeData1 = nil
+	end
+	
+	if  LocalDT.TianYuanAutoRunFunc.NoticeData2 then
+		System.unregisterTimeCall(LocalDT.TianYuanAutoRunFunc.NoticeData2)
+		LocalDT.TianYuanAutoRunFunc.NoticeData2 = nil
+	end
+	
+	if  LocalDT.TianYuanAutoRunFunc.NoticeData3 then
+		System.unregisterTimeCall(LocalDT.TianYuanAutoRunFunc.NoticeData3)
+		LocalDT.TianYuanAutoRunFunc.NoticeData3 = nil
+	end
+	local sVal = System.getDyanmicVar()
+	if sVal.Broadcast_Guild_And_Persion_Handle ~= nil then
+		--LActor.unregScriptCallback(System.getGlobalNpc() , sVal.Broadcast_Guild_And_Persion_Handle , true)
+		--sVal.Broadcast_Guild_And_Persion_Handle = nil
+	end
+end
+
+-- 获得天元城之权的军团成员每天上线收到一个系统提示
+EventCallDispatcher.OnLoginTianYuan = function(sysarg, arg)
+	local guildId = LActor.getGuildId(sysarg)
+	if guildId < 1 or guildId ~= LGuild.getTianYuanGuildId() then -- 没加入军团或不是王城之战胜利后的帮派不用处理
+		return
+	end
+
+	if not LGuild.IsTianYuanTime(sysarg) then return end -- 已经领取过奖励
+
+	--debug_print("go to get tianyan award")
+
+	-- 发消息通知去领奖
+	local npack = DataPack.allocPacket(sysarg, 139, 48)  --申请一个数据包
+	if npack == nil then return end
+	DataPack.flush(npack)
+end
+EventCallDispatcher.OnGuildLogin = function(sysarg, arg)
+
+	local GuildRankNameList = Ranking.getRanking(TianYuanGuildRankName)
+	if GuildRankNameList == nil then
+		return
+	end
+	local rankTbl = LuaHelp.getRankingItemList(GuildRankNameList,1)
+	if rankTbl == nil then
+		return
+	end
+	local Guild_first_Aid = Ranking.getSub(rankTbl[1], 6)
+	local Aid = LActor.getActorId( sysarg )
+	if tonumber(Guild_first_Aid) == tonumber(Aid) then
+		local actorname = LActor.getName(sysarg)
+		if actorname == nil then
+			return
+		end
+		local str1 = string.format(Lang.TaskTalk.ty0060,actorname)
+		System.broadcastTipmsg(str1,ttGmTip)
+	end
+end
+
+--EventCallDispatcher.OnExitI
+
+--退出场景时 记录退出场景的时间
+EventCallDispatcher.TianYuanExitScene = function(sysarg, arg )
+	-- body
+	if arg[1] ~= TianYuanConfig.SCENEID then
+		debug_print("======EventCallDispatcher.TianYuanExitScene=========",arg[1])
+		return
+	end
+
+	local nStaticVar = LActor.getStaticVar(sysarg)
+	nStaticVar.XuanYuanZhiZhan_Exit_time = System.getCurrMiniTime()
+	debug_print("=============nStaticVar.XuanYuanZhiZhan_Exit_time=========",nStaticVar.XuanYuanZhiZhan_Exit_time)
+	--LActor.setExitSceneEvent( sysarg, false )
+end
+
+EventCallDispatcher.TianYuanExitFuben = function ( sysarg , hfb ,way)
+	local nStaticVar = LActor.getStaticVar(sysarg)
+	nStaticVar.XuanYuanZhiZhan_Exit_time = System.getCurrMiniTime()
+	debug_print("==============way==============",way)
+	if way == 2 then
+		LActor.exitFuben(sysarg)
+	end
+end
+
+EventCallDispatcher.TianYuanNewDay = function ( actorobj , nFlag)
+	if actorobj == nil then
+		return
+	end
+	local nVar = LActor.getStaticVar( actorobj )
+	if nVar.TianYuan_First_Guild_Reward ~= nil then
+		nVar.TianYuan_First_Guild_Reward = nil
+	end
+end
+
+EventCallDispatcher.TianYuanEnterFuben = function( sysarg, hfb, way )
+	-- 活跃度
+	ActivationTrigger( sysarg, 19 )
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, EventCallDispatcher.TianYuanNewDay)
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, EventCallDispatcher.OnLoginTianYuan)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, EventCallDispatcher.OnGuildLogin)
+EventCallDispatcher.regEntityCallbackMsg(EntityCallbackMsg.TianYuanLog, OnTianYuanLog)
+EventCallDispatcher.registerFubenExit(TianYuanConfig.FBID,EventCallDispatcher.TianYuanExitFuben)
+EventCallDispatcher.registerFubenEnter(TianYuanConfig.FBID, EventCallDispatcher.TianYuanEnterFuben)
+--EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeExitScene, EventCallDispatcher.TianYuanExitScene)
+
+--debug_print("......InitFnTable,LocalDT.TianYuanAutoRunFunc.TianYuanAutoRun_Init")
+
+table.insert(InitFnTable,LocalDT.TianYuanAutoRunFunc.TianYuanAutoRun_Init)   
+table.insert(FinaFnTable,LocalDT.TianYuanAutoRunFunc.TianYuanAutoRun_Fina) 
+
+--
+testTianYuanNotice = function(sysarg)
+	TianYuanNoticeData()
+end
+
+-- 测试王城之战
+testTianYuan = function(sysarg)
+	TianYuanInitData()
+end
+-- 测试结束王城之战
+testEndTianYuan = function(sysarg)
+	TianYuanExitData()
+end
+
+tianyuanchengTest = function(sysarg)
+	local scene = Fuben.getSceneHandleById(TianYuanConfig.STATUENPCSCENE,0) 
+	Fuben.setSceneNpcmodel(scene,TianYuanConfig.STATUENPCX,TianYuanConfig.STATUENPCY, TianYuanConfig.MODEL[2].modelid,"leadername")
+end
+
+function clearxuanyuanzhizhantime( sysarg , args )
+	-- body
+	local nVar = LActor.getStaticVar(sysarg)
+	nVar.XuanYuanZhiZhan_Exit_time = 0
+end
+
+GmEventFuncList.register( "tycs",testTianYuan,1)
+GmEventFuncList.register( "tyce",testEndTianYuan,1)
+GmEventFuncList.register( "tyct",tianyuanchengTest,1)

@@ -1,0 +1,24 @@
+﻿
+MiscsImplement.setUpSystemDataMsgFunc = function (sysarg,msgid, packet)
+   if packet == nil then return end
+   local sysData = DataPack.readUInt(packet)
+   local sysData1 = DataPack.readUInt(packet)
+   local sysData2 = DataPack.readUInt(packet)
+   local sysData3 = DataPack.readUInt(packet)
+   if sysData == nil then return end
+   local var = LActor.getStaticVar( sysarg )
+   local systemInstall = var.systemInstall
+   if systemInstall == nil then 
+     var.systemInstall = {}
+     systemInstall = var.systemInstall 
+   end
+   systemInstall[1] = sysData 
+   systemInstall[2] = sysData1
+   systemInstall[3] = sysData2 
+   systemInstall[4] = sysData3
+
+   
+end
+
+
+MiscsImplement.registerMsgHandler(10, MiscsImplement.setUpSystemDataMsgFunc)

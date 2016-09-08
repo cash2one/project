@@ -1,0 +1,635 @@
+--[[
+专题副本公共模块
+Author: LiaoYuDong
+Date: 2016-07-15
+--]]
+
+--#include "data\config\gameplay\specialfubenconfig.txt" once
+--#include "data\config\gameplay\specialfubenmonsterconfig.txt" once
+
+SpecialFubenFuncs = {}
+
+-- 初始化副本数据
+function SpecialFubenFuncs.initActorData (actorobj)
+	local openServerDay = System.getOpenServerDay()
+	local actorVar = LActor.getStaticVar(actorobj)
+	if actorVar == nil then
+		return false
+	end
+	
+	if actorVar.specialfuben_var == nil then
+		actorVar.specialfuben_var = {}
+		actorVar.specialfuben_var.fuben_enter_var = {}
+		actorVar.specialfuben_var.record_day = openServerDay
+		actorVar.specialfuben_var.fuben_enter_var[actorVar.specialfuben_var.record_day] = {}
+	end
+
+	-- 记录当天这个副本可以进入了
+	if openServerDay ~= actorVar.specialfuben_var.record_day then
+		-- 清空昨天的记录
+		actorVar.specialfuben_var.fuben_enter_var[actorVar.specialfuben_var.record_day] = nil
+		-- 初始化今天的记录
+		actorVar.specialfuben_var.record_day = openServerDay
+		actorVar.specialfuben_var.fuben_enter_var[actorVar.specialfuben_var.record_day] = {}
+	end
+	return true
+end
+
+-- 检查副本今日是否还需要重新检查物品
+function SpecialFubenFuncs.isFubenNeedCheckAgainToday (actorobj, fubenId)
+	if fubenId == nil then
+		return true
+	end
+	if SpecialFubenFuncs.initActorData(actorobj) == true then
+		local actorVar = LActor.getStaticVar(actorobj)
+		if actorVar.specialfuben_var.fuben_enter_var[actorVar.specialfuben_var.record_day][fubenId] == nil then
+			actorVar.specialfuben_var.fuben_enter_var[actorVar.specialfuben_var.record_day][fubenId] = {}
+			actorVar.specialfuben_var.fuben_enter_var[actorVar.specialfuben_var.record_day][fubenId].has_chk = 0
+			actorVar.specialfuben_var.fuben_enter_var[actorVar.specialfuben_var.record_day][fubenId].has_rmv = 0
+			return true
+		end
+		if actorVar.specialfuben_var.fuben_enter_var[actorVar.specialfuben_var.record_day][fubenId].has_chk ~= 1 then
+			return true
+		end
+		return false
+	end
+	return true
+end
+
+-- 检查是否足够删除对应副本需要的物品或者直接删除物品
+function SpecialFubenFuncs.checkOrDelFubenNeedItems (actorobj, fubenId, del, needTips)
+	needTips = needTips or 1
+	local fubenConfig = SpecialFubenConfig[fubenId]
+	if fubenConfig == nil then
+		return false
+	end
+	local removeItems = {}
+	for k, v in pairs(fubenConfig.openNeedItems) do
+		if v.itemType == catItem then
+			local myItemNum = LActor.getItemCount(actorobj, v.itemId)
+			if myItemNum < v.itemNum then
+				if needTips == 1 then
+					LActor.sendTipmsg(actorobj, string.format(Lang.SpecialFubenLang.sfl001, Item.getItemName(v.itemId)), ttMessage)
+				end
+				debug_print("======================> SpecialFubenFuncs.checkOrDelFubenNeedItems 物品不足")
+				return false
+			else
+				table.insert(removeItems, v)
+			end
+		end
+	end
+	if del == 1 then
+		-- 开始删除物品
+		debug_print("===========> SpecialFubenFuncs.checkOrDelFubenNeedItems 开始删除物品")
+		for k, v in ipairs(removeItems) do
+			if v.itemType == catItem then
+				LActor.removeItem(actorobj, v.itemId, v.itemNum) -- 删除物品
+			end
+		end
+	end
+	return true
+end
+
+-- 是否专题副本的副本id
+function SpecialFubenFuncs.isSpecialFubenId (fubenId)
+	return SpecialFubenConfig[fubenId] ~= nil
+end
+
+-- 检查是否专题副本的剧情key
+function SpecialFubenFuncs.isOwnJuQingKey (key, start)
+	for k, v in pairs(SpecialFubenMonsterConfig) do
+		if start == 1 then -- 检查是否开始剧情key
+			if v.beganJuQingKey == key then
+				return true
+			end
+		else
+			if v.endedJuQingKey == key then
+				return true
+			end
+		end
+	end
+	return false
+end
+
+-- 获取对应副本中对应难度的波数
+function SpecialFubenFuncs.getFubenIdStageNum (fubenId)
+	local fubenConfig = CommFubenPlayFuncConfig[fubenId]
+	if fubenConfig == nil then
+		return 0
+	end
+	if fubenConfig.monsterList == nil then
+		return 0
+	end
+	local num = 0
+	for k, v in pairs(fubenConfig.monsterList) do -- 第一层代表波数
+		num = num + 1
+	end
+	return num
+end
+
+-- 注册所有副本的进入事件处理
+function SpecialFubenFuncs.registerAllEnterFuben ()
+	for k, v in pairs(SpecialFubenConfig) do
+		fubenbase.registerEnterFuben(tonumber(k), SpecialFubenFuncs.enterInit)
+		EventCallDispatcher.registerFubenExit(tonumber(k), SpecialFubenFuncs.goFubenExit)
+		fubenjiesuan.AddFubenConfig(tonumber(k), v)
+		fubenjiesuan.AddActivationType(tonumber(k), v.activationType)
+	end
+	for k, v in pairs(SpecialFubenFuncs.panelCheckFunc) do
+		fubenbase.registerCheckEnterFuben(tonumber(k), v)
+	end
+end
+
+-- 副本怪物都死亡的注册事件
+function SpecialFubenFuncs.registerAllMonsterDeath ()
+	for k, v in pairs(SpecialFubenMonsterConfig) do
+		MonAllKilledDispatcher.register(v.sceneId, SpecialFubenFuncs.killStageAllMonster, 1)
+	end
+end
+
+-- 副本结算
+function SpecialFubenFuncs.goGameOver (fubenPtr, success, actorobj)
+	success = success or 0 -- 默认不成功
+	local fubenId = Fuben.getFubenIdbyFuBenPtr(fubenPtr)
+	debug_print("==================> 进行副本结算:" .. tostring(fubenId))
+	local fbActorList = LuaHelp.getFbActorList(fubenPtr)
+	if fbActorList == nil then
+		return
+	end
+	Fuben.setStopMonsterRunOne(fbActorList[1])
+
+	if actorobj == nil then -- 所有人结算
+		for i = 1 , #fbActorList do
+			SpecialFubenFuncs.crossJieSuan(fbActorList[i], success)
+		end
+	else
+		SpecialFubenFuncs.crossJieSuan(actorobj, success)
+	end
+	local fubenHandle = Fuben.getFubenHandle(fubenPtr)
+	if #fbActorList < 2 then -- 少于2人时设置销毁时间
+		debug_print("===========> 设置专题副本销毁时间")
+		Fuben.SetFubenTime(fubenHandle, 12) -- 默认12秒后踢出来
+	end
+end
+
+-- 进入副本前的检查函数 通用检查 仅检查时间等级
+function SpecialFubenFuncs.normalEnterCheck (actorobj, fubenId)
+	debug_print("===========> 进入检查函数:" .. tostring(fubenId))
+	local fubenConfig = SpecialFubenConfig[fubenId]
+	if fubenConfig == nil then
+		return
+	end
+	local nowTime = System.getCurrMiniTime()
+	local startTime = System.toMiniTime(fubenConfig.openTimeStr)
+	local endedTime = System.toMiniTime(fubenConfig.closeTimeStr)
+	if nowTime >= startTime and nowTime <= endedTime then -- 合法时间内
+		-- 检查是否有进入物品限制
+		if fubenConfig.openNeedItems ~= nil and #fubenConfig.openNeedItems > 0 then
+			-- 调用检查函数
+			if SpecialFubenFuncs.isFubenNeedCheckAgainToday(actorobj, fubenId) == false then
+				return 1
+			end
+
+			if SpecialFubenFuncs.checkOrDelFubenNeedItems (actorobj, fubenId) ~= true then
+				return nil
+			end
+
+			local actorVar = LActor.getStaticVar(actorobj)
+			-- 记录天数的副本可通过
+			actorVar.specialfuben_var.fuben_enter_var[actorVar.specialfuben_var.record_day][fubenId].has_chk = 1 -- 是否需要再次检查道具
+			actorVar.specialfuben_var.fuben_enter_var[actorVar.specialfuben_var.record_day][fubenId].has_rmv = 0 -- 是否已扣除道具
+			return 1
+		end
+		return 1
+	else
+		LActor.sendTipmsg(actorobj, Lang.SpecialFubenLang.sfl000, ttMessage)
+		return nil
+	end
+end
+
+-- 副本退出
+function SpecialFubenFuncs.goFubenExit (actorobj, fubenHandle, exitWay)
+	-- body
+	if not exitWay or exitWay ~= 1 or not actorobj or not fubenHandle then
+		return
+	end
+	local fbPtr = Fuben.getFubenPtr(fubenHandle)
+
+	--恢复技能cd
+	LActor.restoreRecordCD(actorobj)
+	fubenbase.ExitFubenRestore(actorobj)
+end
+
+-- 是否副本内所有玩家都死亡了
+function SpecialFubenFuncs.isFubenAllActorDie (fubenPtr)
+	local isAllDie = true
+	local actorList = LuaHelp.getFbActorList(fubenPtr)
+	if actorList ~= nil then
+		for i = 1 , #actorList do
+            if LActor.ActorIsDie(actorList[i]) == true then
+                isAllDie = false
+                break
+            end
+		end
+	end
+	return isAllDie
+end
+
+-- 玩家死亡触发
+function SpecialFubenFuncs.actorDeath (actorobj, killerEntity)
+	local fubenId = LActor.getFubenId(actorobj)
+	if SpecialFubenMonsterConfig[fubenId] == nil then
+		return
+	end
+	local fbPtr = LActor.getFubenPrt(actorobj)
+
+	if SpecialFubenFuncs.isFubenAllActorDie(fbPtr) == true then
+		SpecialFubenFuncs.goGameOver(fbPtr, 0)
+	end
+	-- 标记当前玩家已死亡
+	fbVar = Fuben.getDyanmicVar(fbPtr)
+	if fbVar.specialfuben_var.deathActor == nil then
+		fbVar.specialfuben_var.deathActor = {}
+	end
+	local actorId = LActor.getActorId(actorobj)
+	fbVar.specialfuben_var.deathActor[actorId] = {} -- 标记死亡
+	fbVar.specialfuben_var.deathActor[actorId].death = 1
+	fbVar.specialfuben_var.deathActor[actorId].hp = 0
+	fbVar.specialfuben_var.deathActor[actorId].mp = LActor.getIntProperty(actorobj, PROP_MP)
+end
+
+-- 玩家登录检查
+function SpecialFubenFuncs.actorLogin (actorobj, firstLogin)
+	local fbPtr = LActor.getFubenPrt(actorobj)
+	if fbPtr ~= nil then
+		local fubenId = Fuben.getFubenIdbyFuBenPtr(fbPtr)
+		local fubenConfig = SpecialFubenMonsterConfig[fubenId]
+		if fubenConfig == nil then
+			return
+		end
+		local fbVar = Fuben.getDyanmicVar(fbPtr)
+		if fbVar.specialfuben_var ~= nil then
+			local totalStage = SpecialFubenFuncs.getFubenIdStageNum(fubenId)
+			local actorId = LActor.getActorId(actorobj)
+			if fbVar.specialfuben_var.deathActor ~= nil and fbVar.specialfuben_var.deathActor[actorId] ~= nil then
+				if fbVar.specialfuben_var.deathActor[actorId].death == 1 then -- 已死亡
+					LActor.setIntProperty(actorobj, PROP_HP, fbVar.specialfuben_var.deathActor[actorId].hp)
+					LActor.setIntProperty(actorobj, PROP_HP, fbVar.specialfuben_var.deathActor[actorId].mp)
+				end
+			end
+			SpecialFubenFuncs.sendNowStage(actorobj, fubenId, 1, fbVar.specialfuben_var.now_stage, totalStage)
+			SpecialFubenFuncs.sendClientSearchStage (actorobj, fubenId, fbVar.specialfuben_var.now_stage)
+
+			local fubenProcess = Fuben.getFubenProgress(fbPtr)
+
+			if fubenProcess == 100 then
+				fbVar.specialfuben_var.ended_time[LActor.getActorId(actorobj)] = System.getCurrMiniTime() -- 记录结束时间
+				if fubenConfig.endedJuQingKey ~= nil then
+					LActor.setActorGoJuQing(actorobj, fubenConfig.endedJuQingKey)
+				else
+					SpecialFubenFuncs.goGameOver(fbPtr, 1, actorobj)
+				end
+			end
+		end
+	end
+end
+
+-- 创建怪物
+function SpecialFubenFuncs.createMonsters (fubenHandle, sceneId, stage)
+	local sceneHandle = Fuben.getSceneHandleById(sceneId, fubenHandle)
+	if sceneHandle <= 0 then
+		debug_print("========> 通用副本创建怪物失败 sceneHandle 不存在")
+		return
+	end
+	local fbPtr = Fuben.getFubenPtr(fubenHandle)
+	local fubenId = Fuben.getFubenIdbyFuBenPtr(fbPtr)
+
+	local fubenConfig = SpecialFubenMonsterConfig[fubenId]
+
+	if fubenConfig == nil then
+		debug_print("========> 通用副本无此副本id:" .. tostring(fubenId))
+		return
+	end
+	local monsterListConf = fubenConfig.monsterList[stage]
+	if monsterListConf == nil then
+		debug_print("========> 通用副本无对应波数刷怪配置文件:" .. tostring(stage))
+		return
+	end
+	for k, v in pairs(monsterListConf) do
+		Fuben.createMonsters(sceneHandle, v.monsterId, v.position[1], v.position[2], v.position[3], v.position[4], v.monsterNum, 0, true)
+	end
+end
+
+-- 杀光了整层的怪物
+function SpecialFubenFuncs.killStageAllMonster (sceneId, scenePtr, flag, monsterEntity)
+	debug_print("=======================> SpecialFubenFuncs.killStageAllMonster")
+	local sceneHandle = Fuben.getSceneHandleByPtr(scenePtr)
+	if sceneHandle <= 0 then
+		debug_print("=========> 场景sceneHandle为空")
+		return
+	end
+	local fbPtr = Fuben.getSceneFuben(scenePtr)
+	if fbPtr == nil then
+		debug_print("=========> 副本指针为空")
+		return
+	end
+	local fubenHandle = Fuben.getFubenHandle(fbPtr)
+	local fubenId = Fuben.getFubenIdbyFuBenPtr(fbPtr)
+	if SpecialFubenFuncs.isSpecialFubenId(fubenId) == true then
+		local fubenConfig = SpecialFubenMonsterConfig[fubenId]
+		local fbVar = Fuben.getDyanmicVar(fbPtr)
+		if fbVar.specialfuben_var == nil then
+			debug_print("=============> 副本变量为空")
+			return
+		end
+
+		local actorList = LuaHelp.getFbActorList(fbPtr)
+		local stage = fbVar.specialfuben_var.now_stage + 1
+		if fubenConfig.monsterList[stage] == nil then -- 没有配置了 或者达到最大波数了 结算
+			Fuben.setFubenProgress(fbPtr, 100)
+			-- 结束通关
+			debug_print("===============> 达到最大波数 通关")
+			if actorList ~= nil then
+				for i = 1, #actorList do
+					fbVar.specialfuben_var.ended_time[LActor.getActorId(actorList[i])] = System.getCurrMiniTime() -- 记录结束时间
+					if fubenConfig.endedJuQingKey ~= nil then
+						LActor.setActorGoJuQing(actorList[i], fubenConfig.endedJuQingKey)
+					else
+						SpecialFubenFuncs.goGameOver(fbPtr, 1, actorList[i])
+					end
+				end
+			end
+			return
+		end
+		local totalStage = SpecialFubenFuncs.getFubenIdStageNum(fubenId)
+		fbVar.specialfuben_var.now_stage = fbVar.specialfuben_var.now_stage + 1 -- 波数增加1
+		if actorList ~= nil then
+			for i = 1, #actorList do
+		  		SpecialFubenFuncs.sendNowStage(actorList[i], fubenId, 1, fbVar.specialfuben_var.now_stage, totalStage)
+				SpecialFubenFuncs.sendClientSearchStage (actorList[i], fubenId, fbVar.specialfuben_var.now_stage)
+			end
+		end
+		-- 创建怪物
+		SpecialFubenFuncs.createMonsters(fubenHandle, sceneId, fbVar.specialfuben_var.now_stage)
+	end
+end
+
+-- 副本进入
+function SpecialFubenFuncs.enterInit (actorobj, fubenHandle)
+	local fbPtr = Fuben.getFubenPtr(fubenHandle)
+	if fbPtr == nil then
+		return
+	end
+	local fubenId = Fuben.getFubenIdbyFuBenPtr(fbPtr)
+	local fubenConfig = SpecialFubenMonsterConfig[fubenId]
+	if fubenConfig == nil then
+		return
+	end
+
+	local fbVar = Fuben.getDyanmicVar(fbPtr)
+	fbVar.specialfuben_var = {}
+	fbVar.specialfuben_var.start_time = {}
+	fbVar.specialfuben_var.ended_time = {}
+	fbVar.specialfuben_var.now_stage = 1 -- 初始化在第一波
+
+	local sceneHandle = Fuben.getSceneHandleById(fubenConfig.sceneId, fubenHandle)
+	-- 设置结界区域
+	Fuben.initDyanmicObstacleData(sceneHandle)
+
+	local totalStage = SpecialFubenFuncs.getFubenIdStageNum(fubenId)
+
+	-- 创建该场景内的怪物
+	SpecialFubenFuncs.createMonsters(fubenHandle, fubenConfig.sceneId, fbVar.specialfuben_var.now_stage)
+
+	local nTeam = LActor.getTeamId(actorobj)
+	if nTeam > 0 then
+		local actorList = LuaHelp.getTeamMemberList(actorobj)
+		for i = 1 , #actorList do
+      		LActor.enterFuBen(actorList[i], fubenHandle, fubenConfig.sceneId, fubenConfig.position[1], fubenConfig.position[2])
+      		if i == 1 then
+				local scenePtr = LActor.getScenePtr(actorList[i])
+				Fuben.setDyanmicObstacleDataBySquare(scenePtr , -1, fubenConfig.blockArea)
+      		end
+		  	fubenbase.Init(actorList[i], fubenId, fubenConfig.sceneId)
+      		SpecialFubenFuncs.sendNowStage(actorList[i], fubenId, 1, fbVar.specialfuben_var.now_stage, totalStage)
+			SpecialFubenFuncs.sendClientSearchStage (actorList[i], fubenId, fbVar.specialfuben_var.now_stage)
+      		if fubenConfig.beganJuQingKey ~= nil then
+      			LActor.setActorGoJuQing(actorList[i], fubenConfig.beganJuQingKey)
+      		else
+      			fbVar.specialfuben_var.start_time[LActor.getActorId(actorList[i])] = System.getCurrMiniTime() -- 记录开始时间
+      		end
+      	end
+ 	else
+ 		if SpecialFubenConfig[fubenId].openNeedItems ~= nil and #SpecialFubenConfig[fubenId].openNeedItems > 0 then
+	 		if SpecialFubenFuncs.isFubenNeedCheckAgainToday(actorobj, fubenId) == false then
+	 			-- 扣物品
+	 			local actorVar = LActor.getStaticVar(actorobj)
+	 			if actorVar.specialfuben_var.fuben_enter_var[actorVar.specialfuben_var.record_day][fubenId].has_rmv ~= 1 then
+	 				actorVar.specialfuben_var.fuben_enter_var[actorVar.specialfuben_var.record_day][fubenId].has_rmv = 1 -- 标记已清理
+	 				SpecialFubenFuncs.checkOrDelFubenNeedItems (actorobj, fubenId, 1) -- 删除物品
+	 			end
+	 		end
+	 	end
+ 		LActor.enterFuBen(actorobj, fubenHandle, fubenConfig.sceneId, fubenConfig.position[1], fubenConfig.position[2])
+		local scenePtr = LActor.getScenePtr(actorobj)
+		Fuben.setDyanmicObstacleDataBySquare(scenePtr , -1, fubenConfig.blockArea)
+	  	fubenbase.Init(actorobj, fubenId, fubenConfig.sceneId)
+  		SpecialFubenFuncs.sendNowStage(actorobj, fubenId, 1, fbVar.specialfuben_var.now_stage, totalStage)
+		SpecialFubenFuncs.sendClientSearchStage (actorobj, fubenId, fbVar.specialfuben_var.now_stage)
+  		if fubenConfig.beganJuQingKey ~= nil then
+  			LActor.setActorGoJuQing(actorobj, fubenConfig.beganJuQingKey)
+  		else
+  			fbVar.specialfuben_var.start_time[LActor.getActorId(actorobj)] = System.getCurrMiniTime() -- 记录开始时间
+  		end
+  	end
+end
+
+function SpecialFubenFuncs.doJuQingStateChangeFunc (actorobj, key)
+	if key ~= nil and key ~= "none" then
+		local fubenId = LActor.getFubenId(actorobj)
+		if fubenId > 0 then
+			local fubenConfig = SpecialFubenMonsterConfig[fubenId]
+			if fubenConfig == nil then
+				return
+			end
+			local fbPtr = LActor.getFubenPrt(actorobj)
+			local fbVar = Fuben.getDyanmicVar(fbPtr)
+			if fbVar.specialfuben_var ~= nil then
+				local isStartKey = SpecialFubenFuncs.isOwnJuQingKey(key, 1)
+				local isEndedKey = SpecialFubenFuncs.isOwnJuQingKey(key)
+				local actorList = LuaHelp.getFbActorList(fbPtr)
+				if isEndedKey == true then
+					-- 结束通关
+					debug_print("===============> 玩家看完剧情后 通关")
+					SpecialFubenFuncs.goGameOver(fbPtr, 1, actorobj) -- 独立结算
+				end
+				if isStartKey == true then
+					fbVar.specialfuben_var.start_time[LActor.getActorId(actorobj)] = System.getCurrMiniTime() -- 记录开始时间
+				end
+			end
+		end
+	end
+end
+
+-- =========================== 发送协议部分 start =====================================
+
+-- 发送当前波数
+function SpecialFubenFuncs.sendNowStage (actorobj, fubenId, difficul, nowStage, totalStage)
+	local pack = DataPack.allocPacket(actorobj, 167, 11)
+	DataPack.writeInt(pack, fubenId)
+	DataPack.writeInt(pack, 1) -- 副本协议1 发送当前波数
+	DataPack.writeInt(pack, nowStage)
+	DataPack.writeInt(pack, totalStage)
+	DataPack.writeInt(pack, 0) -- 是否boss波
+	DataPack.flush(pack)
+end
+
+-- 发推送剧情副本方式当前波数
+function SpecialFubenFuncs.sendClientSearchStage (actorobj, fubenId, nowStage)
+	local pack = DataPack.allocPacket(actorobj, 53, 6)
+	DataPack.writeInt(pack, 0) -- 剧情副本的enterid
+	DataPack.writeInt(pack, fubenId)
+	DataPack.writeInt(pack, 1) -- 难度
+	DataPack.writeInt(pack, nowStage) -- 波数
+	DataPack.flush(pack)
+end
+
+-- 结算
+function SpecialFubenFuncs.crossJieSuan (actorobj, isTongGuan)
+	local fubenPtr = LActor.getFubenPrt(actorobj)
+	local fubenId = Fuben.getFubenIdbyFuBenPtr(fubenPtr)
+	local fubenConfig = SpecialFubenConfig[fubenId]
+	if fubenConfig == nil then
+		return
+	end
+	local fbVar = Fuben.getDyanmicVar(fubenPtr)
+	if fbVar == nil or fbVar.specialfuben_var == nil then
+		return
+	end
+
+	local actorId = LActor.getActorId(actorobj)
+
+	if fbVar.specialfuben_var.start_time[actorId] == nil then
+		fbVar.specialfuben_var.start_time[actorId] = System.getCurrMiniTime()
+	end
+	if fbVar.specialfuben_var.ended_time[actorId] == nil then
+		fbVar.specialfuben_var.ended_time[actorId] = System.getCurrMiniTime()
+	end
+
+	local costTime = fbVar.specialfuben_var.ended_time[actorId] - fbVar.specialfuben_var.start_time[actorId]
+
+	-- 整理奖励
+	local exp = 0
+	local coin = 0
+	local yuanbao = 0
+	local notMoneyAwards = {}
+
+	local forwhat = ""
+	-- 通关并且是首次即可有奖励
+	if isTongGuan == 1 then
+		forwhat = string.format("specialfuben_%d_win", fubenId)
+	else
+		forwhat = string.format("specialfuben_%d_fail", fubenId)
+	end
+
+	if fubenConfig.crossAwards ~= nil and isTongGuan == 1 then
+		CommAwardFunc.giveToActor(actorobj, fubenConfig.crossAwards, forwhat, "specialfuben_jiesuan")
+		
+		for k, v in ipairs(fubenConfig.crossAwards) do
+			if v.itemType == catItem then -- 物品
+				table.insert(notMoneyAwards, v)
+			elseif v.itemType == catMoney then
+				table.insert(notMoneyAwards, v)
+			end
+		end
+	end
+
+	-- 统计副本掉落的结算
+	if fbVar.fbAwardList ~= nil and fbVar.fbAwardList[actorId] ~= nil then
+		local count = #fbVar.fbAwardList[actorId]
+		for k = 1, count  do
+			local t = {}
+			t.itemType = 1
+			t.itemId = fbVar.fbAwardList[actorId][k][1]
+			t.itemNum = fbVar.fbAwardList[actorId][k][2]
+			table.insert(notMoneyAwards, t)
+		end
+	end
+
+	local pack = DataPack.allocPacket(actorobj, 167, 10)
+	DataPack.writeInt(pack, fubenId)
+	DataPack.writeInt(pack, exp)
+	DataPack.writeInt(pack, coin)
+	DataPack.writeInt(pack, costTime)
+	DataPack.writeChar(pack, isTongGuan)
+	local awardSize = #notMoneyAwards
+	DataPack.writeInt(pack, awardSize)
+	for k , v in pairs (notMoneyAwards) do
+		DataPack.writeWord(pack, v.itemType)
+		DataPack.writeWord(pack, v.itemId)
+		DataPack.writeInt(pack, v.itemNum)
+	end
+	DataPack.writeChar(pack, 0)
+	DataPack.writeChar(pack, 0)
+	DataPack.writeInt(pack, 0)
+	DataPack.flush(pack)
+end
+
+-- 请求专题副本是否已收集满且开放
+function SpecialFubenFuncs.responseEnterFunc (actorobj, packet)
+	local fubenId = DataPack.readUInt(packet)
+	if fubenId > 0 then
+		if SpecialFubenFuncs.isSpecialFubenId(fubenId) == true then
+			local fubenConfig = SpecialFubenConfig[fubenId]
+			local nowTime = System.getCurrMiniTime()
+			local startTime = System.toMiniTime(fubenConfig.openTimeStr)
+			local endedTime = System.toMiniTime(fubenConfig.closeTimeStr)
+			if nowTime >= startTime and nowTime <= endedTime then -- 合法时间内
+				if fubenConfig.openNeedItems ~= nil and #fubenConfig.openNeedItems > 0 then
+					local result = 0
+					local ret = SpecialFubenFuncs.isFubenNeedCheckAgainToday(actorobj, fubenId)
+					if ret == false then
+						result = 1
+					else
+						-- 检查物品
+						if SpecialFubenFuncs.checkOrDelFubenNeedItems(actorobj, fubenId, 0, 0) == true then
+							result = 1
+						end
+					end
+					local pack = DataPack.allocPacket(actorobj, 167, 12)
+					DataPack.writeUInt(pack, fubenId)
+					DataPack.writeChar(pack, result)
+					DataPack.flush(pack)
+				end
+			end
+		end
+	end
+end
+
+-- =========================== 发送协议部分 ended =====================================
+
+-- 每个副本的入口检查函数
+SpecialFubenFuncs.panelCheckFunc = {
+	[19] = SpecialFubenFuncs.normalEnterCheck,
+	[20] = SpecialFubenFuncs.normalEnterCheck,
+	[21] = SpecialFubenFuncs.normalEnterCheck,
+	[22] = SpecialFubenFuncs.normalEnterCheck,
+}
+
+-- 注册接口
+SpecialFubenFuncs.registerAllEnterFuben()
+SpecialFubenFuncs.registerAllMonsterDeath()
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeOnActorDeath, SpecialFubenFuncs.actorDeath)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, SpecialFubenFuncs.actorLogin)
+ThePlotHandleFuncs.registerJuQingStateFunc(SpecialFubenFuncs.doJuQingStateChangeFunc) -- 注册前端播放剧情结束后处理
+
+function SpecialFubenFuncs.gmFunc(actorobj, args)
+	local cmd = tonumber(args[1]) or 1
+	if cmd == 1 then -- 初始化玩家专题副本数据
+		local actorVar = LActor.getStaticVar(actorobj)
+		if actorVar == nil then return end
+		actorVar.specialfuben_var = nil
+	end
+end
+
+GmEventFuncList.register( "spc", SpecialFubenFuncs.gmFunc, 1)

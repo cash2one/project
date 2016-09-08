@@ -1,0 +1,1068 @@
+--导出法宝配置表
+--#include "tabledump.txt"
+----------------------------------------------------------------------------------------
+-- 裁切函数 sep裁切依据
+function Split(str, sep)
+    local sep, fields = sep or "\t", {}
+    local pattern = string.format("([^%s]+)", sep)
+    str:gsub(pattern, function(c)
+        if tonumber(c) ~= nil then
+            c = tonumber(c)
+        end
+        fields[#fields + 1] = c
+    end)
+    return fields
+end
+
+function tableCopy(srcTab)
+    local retTab = {}
+    if srcTab and type(srcTab) == "table" then
+        for k, v in pairs(srcTab) do
+            retTab[k] = v
+        end
+    end
+    return retTab
+end
+
+-- 函数集
+local PartnerFuncs = {}
+
+-- 读取伙伴基本属性
+function PartnerFuncs.readBaseProperty(objexcel)
+    --[[
+    local BaseProperty = {
+        {
+            mid = 2, -- 模板id
+            raceType = 2, -- 伙伴类型 RaceType
+            qualityType = 1, -- 伙伴品质 QualityType
+            name = "傻逼2",
+            attrs = { -- 属性表 攻击 命中 暴击 会心
+                { type = 30, value = 20 },
+                { type = 31, value = 10 },
+                { type = 32, value = 15 },
+                { type = 33, value = 20 },
+            },
+            modelId = 1, -- 模型id
+            getFromItemId = 1, -- 从该道具获得
+        },
+    }
+    ]]--
+    local BaseProperty = {}
+
+    -- 属性类型定义
+    local attrTypes = { -- 攻击,命中,暴击,会心
+        21, 39, 35, 63
+    }
+
+    if not objexcel then return BaseProperty end
+
+    local cCount = objexcel:GetCurrentSheetColCount()
+    local rCount = objexcel:GetCurrentSheetRowCount()
+
+    -- 第二行开始读
+    for i = 2, rCount do
+        local rowTable = {
+            attrs = {}
+        }
+        local value = objexcel:ReadCellAsString(i, 1)
+        rowTable.mid = tonumber(value)
+
+        value = objexcel:ReadCellAsString(i, 2)
+        rowTable.name = value
+
+        value = objexcel:ReadCellAsString(i, 3)
+        rowTable.raceType = tonumber(value)
+
+        value = objexcel:ReadCellAsString(i, 4)
+        rowTable.qualityType = tonumber(value) + 1
+
+        -- -- 用于判断是否可助战字段 无用字段
+        -- value = objexcel:ReadCellAsString(i, 5)
+        -- rowTable.canBattle = tonumber(value)
+
+        -- 属性
+        local t = {}
+        value = objexcel:ReadCellAsString(i, 6)
+        t.type = attrTypes[1]
+        t.value = tonumber(value) or 0
+        table.insert(rowTable.attrs, tableCopy(t))
+
+        value = objexcel:ReadCellAsString(i, 7)
+        t.type = attrTypes[2]
+        t.value = tonumber(value) or 0
+        table.insert(rowTable.attrs, tableCopy(t))
+
+        value = objexcel:ReadCellAsString(i, 8)
+        t.type = attrTypes[3]
+        t.value = tonumber(value) or 0
+        table.insert(rowTable.attrs, tableCopy(t))
+
+        value = objexcel:ReadCellAsString(i, 9)
+        t.type = attrTypes[4]
+        t.value = tonumber(value) or 0
+        table.insert(rowTable.attrs, tableCopy(t))
+
+        value = objexcel:ReadCellAsString(i, 10)
+        rowTable.modelId = tonumber(value)
+
+        value = objexcel:ReadCellAsString(i, 11)
+        rowTable.getFromItemId = tonumber(value)
+
+        -- 添加到总表
+        table.insert(BaseProperty, rowTable)
+    end
+    return BaseProperty
+end
+
+-- 读取伙伴资质列表属性
+function PartnerFuncs.readTalents(objexcel)
+    --[[
+    local Talents = {
+        { -- 资质等级0
+            itemId = 18600, -- 该资质消耗道具id
+            itemNum = 1, -- 该资质消耗道具数量
+            coinNum = 1000, -- 该资质消耗金钱数量
+            attrs = { -- 该资质属性加成系数
+                { type = 21, value = 100 },
+                { type = 39, value = 100 },
+                { type = 35, value = 100 },
+                { type = 63, value = 100 },
+            },
+            succRate = 1, -- 成功率
+        },
+    }
+    ]]--
+    local Talents = {}
+
+    -- 属性类型定义
+    local attrTypes = { -- 攻击,命中,暴击,会心
+        21, 39, 35, 63
+    }
+
+    if not objexcel then return Talents end
+
+    local cCount = objexcel:GetCurrentSheetColCount()
+    local rCount = objexcel:GetCurrentSheetRowCount()
+
+    -- 第二行开始读
+    for i = 2, rCount do
+        local rowTable = {
+            attrs = {}
+        }
+
+        -- 属性
+        local t = {}
+        value = objexcel:ReadCellAsString(i, 2)
+        t.type = attrTypes[1]
+        t.value = tonumber(value) or 0
+        table.insert(rowTable.attrs, tableCopy(t))
+
+        value = objexcel:ReadCellAsString(i, 3)
+        t.type = attrTypes[2]
+        t.value = tonumber(value) or 0
+        table.insert(rowTable.attrs, tableCopy(t))
+
+        value = objexcel:ReadCellAsString(i, 4)
+        t.type = attrTypes[3]
+        t.value = tonumber(value) or 0
+        table.insert(rowTable.attrs, tableCopy(t))
+
+        value = objexcel:ReadCellAsString(i, 5)
+        t.type = attrTypes[4]
+        t.value = tonumber(value) or 0
+        table.insert(rowTable.attrs, tableCopy(t))
+
+        value = objexcel:ReadCellAsString(i, 6)
+        rowTable.itemId = tonumber(value)
+
+        value = objexcel:ReadCellAsString(i, 7)
+        rowTable.itemNum = tonumber(value)
+
+        value = objexcel:ReadCellAsString(i, 8)
+        rowTable.coinNum = tonumber(value)
+
+        value = objexcel:ReadCellAsString(i, 9)
+        rowTable.succRate = tonumber(value)
+
+        -- 添加到总表
+        table.insert(Talents, rowTable)
+    end
+    return Talents
+end
+
+-- 读取伙伴成长列表属性
+function PartnerFuncs.readGrows(objexcel)
+    --[[
+    local Grows = {
+        { -- 资质等级0
+            itemId = 18600, -- 该资质消耗道具id
+            itemNum = 1, -- 该资质消耗道具数量
+            coinNum = 1000, -- 该资质消耗金钱数量
+            attrs = { -- 该资质属性加成系数
+                { type = 21, value = 100 },
+                { type = 39, value = 100 },
+                { type = 35, value = 100 },
+                { type = 63, value = 100 },
+            },
+            succRate = 1, -- 成功率
+        },
+    }
+    ]]--
+    local Grows = {}
+
+    -- 属性类型定义
+    local attrTypes = { -- 攻击,命中,暴击,会心
+        21, 39, 35, 63
+    }
+
+    if not objexcel then return Grows end
+
+    local cCount = objexcel:GetCurrentSheetColCount()
+    local rCount = objexcel:GetCurrentSheetRowCount()
+
+    -- 第二行开始读
+    for i = 2, rCount do
+        local rowTable = {
+            attrs = {}
+        }
+
+        -- 属性
+        local t = {}
+
+        value = objexcel:ReadCellAsDouble(i, 2)
+        t.type = attrTypes[1]
+        t.value = value or 0
+        table.insert(rowTable.attrs, tableCopy(t))
+
+        value = objexcel:ReadCellAsDouble(i, 3)
+        t.type = attrTypes[2]
+        t.value = value or 0
+        table.insert(rowTable.attrs, tableCopy(t))
+
+        value = objexcel:ReadCellAsDouble(i, 4)
+        t.type = attrTypes[3]
+        t.value = value or 0
+        table.insert(rowTable.attrs, tableCopy(t))
+
+        value = objexcel:ReadCellAsDouble(i, 5)
+        t.type = attrTypes[4]
+        t.value = value or 0
+        table.insert(rowTable.attrs, tableCopy(t))
+
+
+        value = objexcel:ReadCellAsString(i, 6)
+        rowTable.itemId = tonumber(value)
+
+        value = objexcel:ReadCellAsString(i, 7)
+        rowTable.itemNum = tonumber(value)
+
+        value = objexcel:ReadCellAsString(i, 8)
+        rowTable.coinNum = tonumber(value)
+
+        value = objexcel:ReadCellAsString(i, 9)
+        rowTable.succRate = tonumber(value)
+
+        -- 添加到总表
+        table.insert(Grows, rowTable)
+    end
+    return Grows
+end
+
+-- 读取额外伙伴资质列表属性
+function PartnerFuncs.readTalentsExt(objexcel)
+    --[[
+    local TalentsExt = {
+        { -- 资质等级0
+            level = 10, -- 需要的资质等级
+            attrs = { -- 该资质属性加成系数
+                { type = 21, value = 100 },
+                { type = 39, value = 100 },
+                { type = 35, value = 100 },
+                { type = 63, value = 100 },
+            },
+            icon = 1, -- 前端的图标
+        },
+    }
+    ]]--
+    local TalentsExt = {}
+
+    -- 属性类型定义
+    local attrTypes = { -- 攻击,命中,暴击,会心
+        21, 39, 35, 63
+    }
+
+    if not objexcel then return TalentsExt end
+
+    local cCount = objexcel:GetCurrentSheetColCount()
+    local rCount = objexcel:GetCurrentSheetRowCount()
+
+    -- 第二行开始读
+    for i = 2, rCount do
+        local rowTable = {
+            attrs = {}
+        }
+
+        value = objexcel:ReadCellAsString(i, 1)
+        rowTable.level = tonumber(value) or 0
+
+        -- 属性
+        local t = {}
+        value = objexcel:ReadCellAsString(i, 2)
+        t.type = attrTypes[1]
+        t.value = tonumber(value) or 0
+        table.insert(rowTable.attrs, tableCopy(t))
+
+        value = objexcel:ReadCellAsString(i, 3)
+        t.type = attrTypes[2]
+        t.value = tonumber(value) or 0
+        table.insert(rowTable.attrs, tableCopy(t))
+
+        value = objexcel:ReadCellAsString(i, 4)
+        t.type = attrTypes[3]
+        t.value = tonumber(value) or 0
+        table.insert(rowTable.attrs, tableCopy(t))
+
+        value = objexcel:ReadCellAsString(i, 5)
+        t.type = attrTypes[4]
+        t.value = tonumber(value) or 0
+        table.insert(rowTable.attrs, tableCopy(t))
+
+        value = objexcel:ReadCellAsString(i, 6)
+        rowTable.icon = tonumber(value) or 0
+
+        -- 添加到总表
+        table.insert(TalentsExt, rowTable)
+    end
+    return TalentsExt
+end
+
+-- 读取额外伙伴成长列表属性
+function PartnerFuncs.readGrowsExt(objexcel)
+   --[[
+    local GrowsExt = {
+        { -- 资质等级0
+            level = 10, -- 需要的资质等级
+            attrs = { -- 该资质属性加成系数
+                { type = 21, value = 100 },
+                { type = 39, value = 100 },
+                { type = 35, value = 100 },
+                { type = 63, value = 100 },
+            },
+        },
+    }
+    ]]--
+    local GrowsExt = {}
+
+    -- 属性类型定义
+    local attrTypes = { -- 攻击,命中,暴击,会心
+        21, 39, 35, 63
+    }
+
+    if not objexcel then return GrowsExt end
+
+    local cCount = objexcel:GetCurrentSheetColCount()
+    local rCount = objexcel:GetCurrentSheetRowCount()
+
+    -- 第二行开始读
+    for i = 2, rCount do
+        local rowTable = {
+            attrs = {}
+        }
+
+        value = objexcel:ReadCellAsString(i, 1)
+        rowTable.level = tonumber(value) or 0
+
+        -- 属性
+        local t = {}
+        value = objexcel:ReadCellAsDouble(i, 2)
+        t.type = attrTypes[1]
+        t.value = value or 0
+        table.insert(rowTable.attrs, tableCopy(t))
+
+        value = objexcel:ReadCellAsDouble(i, 3)
+        t.type = attrTypes[2]
+        t.value = value or 0
+        table.insert(rowTable.attrs, tableCopy(t))
+
+        value = objexcel:ReadCellAsDouble(i, 4)
+        t.type = attrTypes[3]
+        t.value = value or 0
+        table.insert(rowTable.attrs, tableCopy(t))
+
+        value = objexcel:ReadCellAsDouble(i, 5)
+        t.type = attrTypes[4]
+        t.value = value or 0
+        table.insert(rowTable.attrs, tableCopy(t))
+
+        -- 添加到总表
+        table.insert(GrowsExt, rowTable)
+    end
+    return GrowsExt
+end
+
+-- 助战伙伴信息列表
+function PartnerFuncs.readBattleProperty(objexcel)
+    --[[
+    BattleProperty = {
+        { -- 助战伙伴1
+            mid = 1, -- 对应基本属性配置里面的模板id
+            aboutClose = { -- 亲密度相关
+                givenItemId = 18600, -- 赠送消耗道具id
+                givenItemNum = 1, -- 赠送消耗道具数量
+                givenAddClose = 20, -- 赠送增加亲密度
+                closes = { -- 亲密度阶段加成配置
+                    { -- 阶段1
+                        needClose = 0, -- 达到亲密度需求
+                        attrs = { -- 加成属性
+                            { type = 30, value = 20 },
+                            { type = 31, value = 20 },
+                            { type = 32, value = 20 },
+                            { type = 33, value = 20 },
+                            { type = 34, value = 20 },
+                            { type = 35, value = 20 },
+                            { type = 36, value = 20 },
+                            { type = 37, value = 20 },
+                            { type = 38, value = 20 },
+                            { type = 39, value = 20 },
+                        },
+                    },
+                },
+            },
+        },
+    ]]--
+    local BattleProperty = {}
+    if not objexcel then return BattleProperty end
+
+    local cCount = objexcel:GetCurrentSheetColCount()
+    local rCount = objexcel:GetCurrentSheetRowCount()
+
+    local function findTableByMid(tab, mid)
+        for k, v in pairs(tab) do
+            if v.mid == mid then
+                return v
+            end
+        end
+        return {}
+    end
+    -- 属性类型定义
+    local attrTypes = { -- 生命   攻击  物防  道防  命中  闪避  暴击  抗暴
+        17, 21, 23, 33, 39, 37, 35, 25
+    }
+
+    -- 第二行开始读
+    for i = 2, rCount do
+        value = objexcel:ReadCellAsString(i, 1)
+        local mid = tonumber(value)
+
+        local rowTable = findTableByMid(BattleProperty, mid)
+        rowTable.mid = mid
+
+        if not rowTable.aboutClose then
+            rowTable.aboutClose = {}
+            rowTable.aboutClose.closes = {}
+            table.insert(BattleProperty, rowTable)
+        end
+
+        -- 属性
+        local close = {}
+        close.attrs = {}
+        local t = {}
+
+        value = objexcel:ReadCellAsString(i, 2)
+        close.needClose = tonumber(value) or 0
+
+        value = objexcel:ReadCellAsString(i, 3)
+        t.type = attrTypes[1]
+        t.value = tonumber(value) or 0
+        table.insert(close.attrs, tableCopy(t))
+
+        value = objexcel:ReadCellAsString(i, 4)
+        t.type = attrTypes[2]
+        t.value = tonumber(value) or 0
+        table.insert(close.attrs, tableCopy(t))
+
+        value = objexcel:ReadCellAsString(i, 5)
+        t.type = attrTypes[3]
+        t.value = tonumber(value) or 0
+        table.insert(close.attrs, tableCopy(t))
+
+        value = objexcel:ReadCellAsString(i, 6)
+        t.type = attrTypes[4]
+        t.value = tonumber(value) or 0
+        table.insert(close.attrs, tableCopy(t))
+
+        value = objexcel:ReadCellAsString(i, 7)
+        t.type = attrTypes[5]
+        t.value = tonumber(value) or 0
+        table.insert(close.attrs, tableCopy(t))
+
+        value = objexcel:ReadCellAsString(i, 8)
+        t.type = attrTypes[6]
+        t.value = tonumber(value) or 0
+        table.insert(close.attrs, tableCopy(t))
+
+        value = objexcel:ReadCellAsString(i, 9)
+        t.type = attrTypes[7]
+        t.value = tonumber(value) or 0
+        table.insert(close.attrs, tableCopy(t))
+
+        value = objexcel:ReadCellAsString(i, 10)
+        t.type = attrTypes[8]
+        t.value = tonumber(value) or 0
+        table.insert(close.attrs, tableCopy(t))
+
+        table.insert(rowTable.aboutClose.closes, close)
+
+        value = objexcel:ReadCellAsString(i, 11)
+        rowTable.aboutClose.givenItemId = tonumber(value)
+
+        value = objexcel:ReadCellAsString(i, 12)
+        rowTable.aboutClose.givenItemNum = tonumber(value)
+
+        value = objexcel:ReadCellAsString(i, 13)
+        rowTable.aboutClose.givenAddClose = tonumber(value)
+    end
+    return BattleProperty
+end
+
+-- 助战伙伴情缘属性信息列表
+function PartnerFuncs.readFates(objexcel)
+    --[[
+    Fates = {
+        { -- 组合1
+            fid = 1, -- 组合id
+            mid = 1, -- 生效mid
+            partners = { -- 需要包含的情缘伙伴id列表
+                2, 3
+            },
+            attrs = { -- 情缘属性加成
+                { type = 30, value = 10 },
+                { type = 31, value = 10 },
+                { type = 32, value = 10 },
+                { type = 33, value = 10 },
+                { type = 34, value = 10 },
+                { type = 35, value = 10 },
+            },
+        },
+    ]]--
+    local Fates = {}
+    if not objexcel then return Fates end
+
+    local cCount = objexcel:GetCurrentSheetColCount()
+    local rCount = objexcel:GetCurrentSheetRowCount()
+    -- 属性类型定义
+    local attrTypes = { -- 生命   攻击  物防  道防  命中  闪避  暴击  抗暴  伤害加成    物理免伤    道法免伤
+        17, 21, 23, 33, 39, 37, 35, 25, 41, 49, 51
+    }
+
+    -- 第二行开始读
+    for i = 2, rCount do
+        local rowTable = {}
+
+        local value = objexcel:ReadCellAsString(i, 1)
+        rowTable.fid = tonumber(value)
+
+        value = objexcel:ReadCellAsString(i, 2)
+        rowTable.mid = tonumber(value) or 0
+
+        -- 伙伴列表
+        rowTable.partners = {}
+        rowTable.attrs = {}
+
+        value = objexcel:ReadCellAsString(i, 3)
+        value = tonumber(value) or 0
+        if value > 0 then
+            table.insert(rowTable.partners, value)
+        end
+
+        value = objexcel:ReadCellAsString(i, 4)
+        value = tonumber(value) or 0
+        if value > 0 then
+            table.insert(rowTable.partners, value)
+        end
+
+        value = objexcel:ReadCellAsString(i, 5)
+        value = tonumber(value) or 0
+        if value > 0 then
+            table.insert(rowTable.partners, value)
+        end
+
+        local t = {}
+
+        value = objexcel:ReadCellAsString(i, 6)
+        t.type = attrTypes[1]
+        t.value = tonumber(value) or 0
+        table.insert(rowTable.attrs, tableCopy(t))
+
+        value = objexcel:ReadCellAsString(i, 7)
+        t.type = attrTypes[2]
+        t.value = tonumber(value) or 0
+        table.insert(rowTable.attrs, tableCopy(t))
+
+        value = objexcel:ReadCellAsString(i, 8)
+        t.type = attrTypes[3]
+        t.value = tonumber(value) or 0
+        table.insert(rowTable.attrs, tableCopy(t))
+
+        value = objexcel:ReadCellAsString(i, 9)
+        t.type = attrTypes[4]
+        t.value = tonumber(value) or 0
+        table.insert(rowTable.attrs, tableCopy(t))
+
+        value = objexcel:ReadCellAsString(i, 10)
+        t.type = attrTypes[5]
+        t.value = tonumber(value) or 0
+        table.insert(rowTable.attrs, tableCopy(t))
+
+        value = objexcel:ReadCellAsString(i, 11)
+        t.type = attrTypes[6]
+        t.value = tonumber(value) or 0
+        table.insert(rowTable.attrs, tableCopy(t))
+
+        value = objexcel:ReadCellAsString(i, 12)
+        t.type = attrTypes[7]
+        t.value = tonumber(value) or 0
+        table.insert(rowTable.attrs, tableCopy(t))
+
+        value = objexcel:ReadCellAsString(i, 13)
+        t.type = attrTypes[8]
+        t.value = tonumber(value) or 0
+        table.insert(rowTable.attrs, tableCopy(t))
+
+        value = objexcel:ReadCellAsDouble(i, 14)
+        t.type = attrTypes[9]
+        t.value = value or 0
+        table.insert(rowTable.attrs, tableCopy(t))
+
+        value = objexcel:ReadCellAsDouble(i, 15)
+        t.type = attrTypes[10]
+        t.value = value or 0
+        table.insert(rowTable.attrs, tableCopy(t))
+
+        value = objexcel:ReadCellAsDouble(i, 16)
+        t.type = attrTypes[11]
+        t.value = value or 0
+        table.insert(rowTable.attrs, tableCopy(t))
+
+        table.insert(Fates, rowTable)
+    end
+    return Fates
+end
+
+-- 读取伙伴类型定义
+function PartnerFuncs.readRaceType(objexcel)
+    -- -- 伙伴类型定义
+    -- local RaceType = {
+    --     [1] = "人形-物理",
+    --     [2] = "人形-道法",
+    --     [3] = "兽型-物理",
+    --     [4] = "兽型-道法",
+    -- }
+    local RaceType = {}
+    if not objexcel then return RaceType end
+
+    local cCount = objexcel:GetCurrentSheetColCount()
+    local rCount = objexcel:GetCurrentSheetRowCount()
+
+    for i = 2, rCount do
+        local value = objexcel:ReadCellAsString(i, 5)
+        RaceType = Split(value, ",")
+    end
+    return RaceType
+end
+
+-- 读取伙伴品质定义
+function PartnerFuncs.readQualityType(objexcel)
+    -- -- 伙伴品质定义
+    -- local QualityType = {
+    --     [1] = "白",
+    --     [2] = "绿",
+    --     [3] = "蓝",
+    --     [4] = "紫",
+    --     [5] = "橙",
+    -- }
+    local QualityType = {}
+    if not objexcel then return QualityType end
+
+    local cCount = objexcel:GetCurrentSheetColCount()
+    local rCount = objexcel:GetCurrentSheetRowCount()
+
+    for i = 2, rCount do
+        local value = objexcel:ReadCellAsString(i, 6)
+        QualityType = Split(value, ",")
+    end
+    return QualityType
+end
+
+-- 读取技能配置
+function PartnerFuncs.readSkills(objexcel)
+    --[[
+    Skills = {
+        advs = {
+            {
+                skillId = 1,
+                skillType = 1,
+                active = {
+                    coinNum = 1000,
+                    activeType = 1,
+                    activeId = 1,
+                    activeNum = 1,
+                },
+                upgrades = {
+                    {
+                        needProgress = 10,
+                        coinNum = 1000,
+                        itemId = 18600,
+                        itemNum = 1,
+                        itemProgress = 2,
+                        mediId = 18601,
+                        mediNum = 1,
+                        mediProgress = 1,
+                    },
+                }
+            },
+        },
+        nors = {
+
+        },
+    }
+    ]]--
+    local Skills = {}
+    Skills.advs = {}
+    Skills.nors = {}
+    if not Skills then return Skills end
+
+    local cCount = objexcel:GetCurrentSheetColCount()
+    local rCount = objexcel:GetCurrentSheetRowCount()
+
+    local function findSkillBySkillId(tab, skillId)
+        for k, v in pairs(tab.advs) do
+            if v.skillId == skillId then
+                return v
+            end
+        end
+        for k, v in pairs(tab.nors) do
+            if v.skillId == skillId then
+                return v
+            end
+        end
+        return {}
+    end
+
+    for i = 2, rCount do
+        local value = objexcel:ReadCellAsString(i, 1)
+        local skillId = tonumber(value)
+
+        local rowTable = findSkillBySkillId(Skills, skillId)
+
+        value = objexcel:ReadCellAsString(i, 2)
+        local sType = tonumber(value) -- 技能类型 1 通用 2 天赋
+        rowTable.skillType = sType
+
+        if not rowTable.active then
+            rowTable.active = {}
+            rowTable.upgrades = {}
+
+            if sType == 1 then
+                table.insert(Skills.nors, rowTable)
+            elseif sType == 2 then
+                table.insert(Skills.advs, rowTable)
+            end
+
+            -- 第一条记录才需要读取
+            value = objexcel:ReadCellAsString(i, 4)
+            rowTable.active.coinNum = tonumber(value)
+
+            value = objexcel:ReadCellAsString(i, 5)
+            rowTable.active.activeType = tonumber(value) -- 激活条件 1 道具 2 伙伴
+
+            value = objexcel:ReadCellAsString(i, 6)
+            rowTable.active.activeId = tonumber(value)
+
+            value = objexcel:ReadCellAsString(i, 7)
+            rowTable.active.activeNum = tonumber(value)
+        end
+
+        rowTable.skillId = skillId
+
+        value = objexcel:ReadCellAsString(i, 3)
+        local skillLevel = tonumber(value) -- 技能等级
+
+        local skillInfo = rowTable.upgrades[skillLevel]
+        if not skillInfo then
+            skillInfo = {}
+            rowTable.upgrades[skillLevel] = skillInfo
+        end
+
+        value = objexcel:ReadCellAsString(i, 8)
+        skillInfo.coinNum = tonumber(value)
+
+        value = objexcel:ReadCellAsString(i, 9)
+        skillInfo.itemId = tonumber(value)
+
+        value = objexcel:ReadCellAsString(i, 10)
+        skillInfo.itemNum = tonumber(value)
+
+        value = objexcel:ReadCellAsString(i, 11)
+        skillInfo.itemProgress = tonumber(value)
+
+        value = objexcel:ReadCellAsString(i, 12)
+        skillInfo.mediId = tonumber(value)
+
+        value = objexcel:ReadCellAsString(i, 13)
+        skillInfo.mediNum = tonumber(value)
+
+        value = objexcel:ReadCellAsString(i, 14)
+        skillInfo.mediProgress = tonumber(value)
+
+        value = objexcel:ReadCellAsString(i, 15)
+        skillInfo.needProgress = tonumber(value)
+    end
+
+    return Skills
+end
+
+-- 读取技能槽开启条件限制
+function PartnerFuncs.readSkillSlotLimit(objexcel)
+    --[[
+    SkillSlotLimit = {
+        {
+            index = 1,
+            needLimit = 1,
+            needPotLevel = 10,
+            needGrowLevel = 0,
+        },
+    }
+    ]]--
+    local SkillSlotLimit = {}
+    if not SkillSlotLimit then return SkillSlotLimit end
+
+    local cCount = objexcel:GetCurrentSheetColCount()
+    local rCount = objexcel:GetCurrentSheetRowCount()
+
+    for i = 2, rCount do
+        local rowTable = {}
+
+        local value = objexcel:ReadCellAsString(i, 1)
+        rowTable.index = tonumber(value)
+
+        value = objexcel:ReadCellAsString(i, 2)
+        rowTable.needLimit = tonumber(value) -- 是否需要开启条件 0 不需要 1 需要
+
+        value = objexcel:ReadCellAsString(i, 3) -- 资质等级
+        rowTable.needPotLevel = tonumber(value) or 0
+
+        value = objexcel:ReadCellAsString(i, 4) -- 成长等级
+        rowTable.needGrowLevel = tonumber(value) or 0
+
+        table.insert(SkillSlotLimit, rowTable)
+    end
+
+    return SkillSlotLimit
+end
+
+-- 读取伙伴经验
+function PartnerFuncs.readPartnerExps(objexcel)
+    --[[
+    PartnerExps = {
+        100, -- 1级
+        200, -- 2级
+    }
+    ]]--
+    local PartnerExps = {}
+    if not PartnerExps then return PartnerExps end
+
+    local cCount = objexcel:GetCurrentSheetColCount()
+    local rCount = objexcel:GetCurrentSheetRowCount()
+
+    for i = 2, rCount do
+        local level = tonumber(objexcel:ReadCellAsString(i, 1)) or 0
+        local exp = tonumber(objexcel:ReadCellAsString(i, 2)) or 0
+        if level > 0 and exp > 0 then
+            table.insert(PartnerExps, exp)
+        end
+    end
+
+    return PartnerExps
+end
+
+function ReadPartnerConfig()
+    -- 总表
+    local PartnerConfig = {}
+
+    local objexcel = CExcelReader:new()
+    if not objexcel then
+        print("objexcel is null")
+        return
+    end
+
+    objexcel:Init_App()
+    objexcel:OpenRead()
+
+    local obj = objexcel:LoadSheetByIndex(1)
+    if not obj then
+        print("LoadSheetByIndex失败!")
+        objexcel:Close()
+        objexcel:Quit_App()
+        return
+    end
+    -- 先读属性表
+    local BaseProperty = PartnerFuncs.readBaseProperty(objexcel)
+    PartnerConfig.BaseProperty = BaseProperty
+
+    local obj = objexcel:LoadSheetByIndex(2)
+    if not obj then
+        print("LoadSheetByIndex失败!")
+        objexcel:Close()
+        objexcel:Quit_App()
+        return
+    end
+    -- 资质列表属性表
+    local Talents = PartnerFuncs.readTalents(objexcel)
+    PartnerConfig.Talents = Talents
+
+    local obj = objexcel:LoadSheetByIndex(3)
+    if not obj then
+        print("LoadSheetByIndex失败!")
+        objexcel:Close()
+        objexcel:Quit_App()
+        return
+    end
+    -- 成长列表属性表
+    local Grows = PartnerFuncs.readGrows(objexcel)
+    PartnerConfig.Grows = Grows
+
+    local obj = objexcel:LoadSheetByIndex(4)
+    if not obj then
+        print("LoadSheetByIndex失败!")
+        objexcel:Close()
+        objexcel:Quit_App()
+        return
+    end
+    -- 额外资质列表属性表
+    local TalentsExt = PartnerFuncs.readTalentsExt(objexcel)
+    PartnerConfig.TalentsExt = TalentsExt
+
+    local obj = objexcel:LoadSheetByIndex(5)
+    if not obj then
+        print("LoadSheetByIndex失败!")
+        objexcel:Close()
+        objexcel:Quit_App()
+        return
+    end
+    -- 额外成长列表属性表
+    local GrowsExt = PartnerFuncs.readGrowsExt(objexcel)
+    PartnerConfig.GrowsExt = GrowsExt
+
+    local obj = objexcel:LoadSheetByIndex(6)
+    if not obj then
+        print("LoadSheetByIndex失败!")
+        objexcel:Close()
+        objexcel:Quit_App()
+        return
+    end
+    -- 助战伙伴列表
+    local BattleProperty = PartnerFuncs.readBattleProperty(objexcel)
+    PartnerConfig.BattleProperty = BattleProperty
+
+    local obj = objexcel:LoadSheetByIndex(7)
+    if not obj then
+        print("LoadSheetByIndex失败!")
+        objexcel:Close()
+        objexcel:Quit_App()
+        return
+    end
+    -- 助战伙伴情缘属性列表
+    local Fates = PartnerFuncs.readFates(objexcel)
+    PartnerConfig.Fates = Fates
+
+    local obj = objexcel:LoadSheetByIndex(8)
+    if not obj then
+        print("LoadSheetByIndex失败!")
+        objexcel:Close()
+        objexcel:Quit_App()
+        return
+    end
+    -- 读取伙伴类型定义
+    local RaceType = PartnerFuncs.readRaceType(objexcel)
+    PartnerConfig.RaceType = RaceType
+
+    -- 读取伙伴品质定义
+    local QualityType = PartnerFuncs.readQualityType(objexcel)
+    PartnerConfig.QualityType = QualityType
+
+    --[[ 该部分直接读取信息
+    -- -- 助战亲密度相关
+    -- maxClose = 1000, -- 最大亲密度
+    -- maxDayGiven = 1, -- 每日最大赠送次数
+    -- vipAddGivenCounts = { -- vip赠送次数追加
+    --     1, 2, 3, 4, 5, 6, 7, 8, 9, 10
+    -- },
+    -- -- 上阵槽位开启等级限制表
+    -- battleMasks = {
+    --     1, 10, 20, 30, 40, 50, 60, 70
+    -- },]]--
+    -- 第二行开始 仅一行
+    local value = objexcel:ReadCellAsString(2, 1)
+    PartnerConfig.maxClose = tonumber(value) or 0
+
+    value = objexcel:ReadCellAsString(2, 2)
+    PartnerConfig.maxDayGiven = tonumber(value) or 0
+
+    value = objexcel:ReadCellAsString(2, 3)
+    PartnerConfig.vipAddGivenCounts = Split(value, ",")
+
+    value = objexcel:ReadCellAsString(2, 4)
+    PartnerConfig.battleMasks = Split(value, ",")
+
+    local obj = objexcel:LoadSheetByIndex(9)
+    if not obj then
+        print("LoadSheetByIndex失败!")
+        objexcel:Close()
+        objexcel:Quit_App()
+        return
+    end
+    -- 读取伙伴类型定义
+    local Skills = PartnerFuncs.readSkills(objexcel)
+    PartnerConfig.Skills = Skills
+
+    local obj = objexcel:LoadSheetByIndex(10)
+    if not obj then
+        print("LoadSheetByIndex失败!")
+        objexcel:Close()
+        objexcel:Quit_App()
+        return
+    end
+    -- 读取伙伴类型定义
+    local SkillSlotLimit = PartnerFuncs.readSkillSlotLimit(objexcel)
+    PartnerConfig.SkillSlotLimit = SkillSlotLimit
+
+    -- 读取伙伴经验
+    local obj = objexcel:LoadSheetByIndex(11)
+    if not obj then
+        print("LoadSheetByIndex失败!")
+        objexcel:Close()
+        objexcel:Quit_App()
+        return
+    end
+    -- 读取伙伴经验
+    local PartnerExps = PartnerFuncs.readPartnerExps(objexcel)
+    PartnerConfig.PartnerExps = PartnerExps
+
+    local str = ""
+    str = dump(PartnerConfig)
+    -- str = string.sub(str, 1, string.len(str) - 1)
+    str = string.format("--#include \"..\\..\\language\\LangCode.txt\" once\nPartnerConfig = %s\n", str)
+
+    objexcel:WriteFile("data\\config\\partner\\partnerconfig.txt", str)
+
+    print("========== 导出伙伴配置表完成! ==========")
+
+    objexcel:Close()
+    objexcel:Quit_App()
+    objexcel:delete()
+end
+----------------------------------------------------------------------------------------
+
+
+

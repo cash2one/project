@@ -1,0 +1,23 @@
+{
+	id = 24,	--行为ID
+	trigger = 2,	--触发类型，血量为1，时间为2
+	loop = 9999,
+
+	isInit = 0 ,
+	--创建的时候会调用,和info里的sequence一样
+	initSequence =
+	{
+		
+	},
+
+	infos = 
+	{
+		{
+			sequId = 1,
+			param = 100 ,
+			sequence = {
+				{ type = 17, duration = 1, range = 3, addBuffConfigId = 2 }, --怪物range范围内向玩家添加buff(怪物位置range范围)
+			}
+		},
+	},
+},

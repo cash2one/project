@@ -1,0 +1,92 @@
+{
+	id = 1,	--行为ID
+	trigger = 1,	--触发类型，血量为1，时间为2
+	infos = 
+	{
+		--血量100%
+		{
+			sequId = 1,
+			param = 100,
+			sequence = 
+			{
+				--{ type = 2, duration = 5, id = 1, time = 5 }	,	--特效
+				--{ type = 1, duration = 2, talk=Lang.Actions.a000001, talkType=1 }	,	--对白
+			} 
+		},
+		--其它按上面配置
+		--血量90%
+		{
+			sequId = 2,
+			param = 90,
+			sequence = 
+			{
+				--{ type = 1, duration = 5, talk=Lang.Actions.a000002, talkType=1 }	,	--对白
+			} 
+		},
+		--血量70%
+		{
+			sequId = 3,
+			param = 70,
+			sequence = 
+			{
+				{ --动作列表
+					type = 12,
+					duration = 2, 
+					items =
+					{
+						--{ type = 7, func = "callOnStory" },	--设置boss和玩家之间不能攻击
+						--{ type = 1, talk=Lang.Actions.a000003, talkType=1 },	--对白
+					} ,
+				},
+				--{ type = 6, duration = 5, mosterId=87, posX = -2, posY = -2, liveTime = 150000, relative = true, asPartner = true },	--召唤怪物
+				--{ type = 8, duration = 5, talk=Lang.Actions.a000004, talkType=1 },	--伙伴对白
+				--{ type = 1, duration = 5, talk=Lang.Actions.a000005, talkType=1 },	--对白
+				--{ type = 8, duration = 5, talk=Lang.Actions.a000006, talkType=1 },	--伙伴对白
+				--{ type = 1, duration = 5, talk=Lang.Actions.a000007, talkType=1 },	--对白
+				{ type = 9, duration = 5, id = 3, value = 10000 }	,	--变身踏云狐,设置外观ID属性
+				--{ type = 8, duration = 5, talk=Lang.Actions.a000008, talkType=1 },	--伙伴对白
+				--{ type = 7, duration = 0, func = "callAddition" },	--赤元子分身附身到玩家
+			} 
+		},
+		--血量50%
+		{
+			sequId = 4,
+			param = 50,
+			sequence = 
+			{
+				--{ type = 1, duration = 5, talk=Lang.Actions.a000009, talkType=1 }	,	--对白
+				--{ type = 1, duration = 5, talk=Lang.Actions.a000010, talkType=1 }	,	--对白
+				--{ type = 1, duration = 5, talk=Lang.Actions.a000003, talkType=1 }	,	--对白
+				{ type = 11, id = 46, posX =0, posY=0, needLearn = false, level = 1 },	--怪物使用技能,满屏白色小狐狸四散快速冲击而出，
+																		--对当前屏幕所有玩家造成一定量的伤害,
+			} 
+		},
+		--血量20%
+		{
+			sequId = 5,
+			param = 20,
+			sequence = 
+			{
+				--{ type = 1, duration = 5, talk=Lang.Actions.a000011, talkType=1 }	,	--对白
+			} 
+		},
+		--血量5%
+		{
+			sequId = 6,
+			param = 5,
+			sequence = 
+			{
+				--{ type = 1, duration = 5, talk=Lang.Actions.a0000012, talkType=1 }	,	--对白
+			} 
+		},
+		----血量0%
+		{
+			sequId = 7,
+			param = 0,
+			sequence = 
+			{
+				{ type = 10, duration = 0, msg = Lang.Actions.n000002 }, 	--公告
+			} 
+		},
+	},
+},

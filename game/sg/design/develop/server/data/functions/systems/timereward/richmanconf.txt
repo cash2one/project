@@ -1,0 +1,93 @@
+﻿
+--[[
+	大富翁配置表
+]]
+richManConf ={
+	-- 活动id
+	activityId = 34,
+
+	itemList = 
+	{
+		-- 配置奖励的物品
+		{count = 1, itemid =	60285	, strong= 0, bind=0,present= 	15		, broadcast=	true	,},--礼包
+		{count = 1, itemid =	48284	, strong= 0, bind=0,present=	500 		, broadcast=	false	,},--贝币通票
+		{count = 1, itemid =	18605	, strong= 0, bind=0,present=	300		, broadcast=	false	,},--高级美人玉
+		{count = 1, itemid =	64700	, strong= 0, bind=0,present=	500		, broadcast=	false	,},--坐骑洗炼符
+		{count = 1, itemid =	64751	, strong= 0, bind=0,present=	200		, broadcast=	false	,},--1000威望丹
+		{count = 1, itemid =	18604	, strong= 0, bind=0,present=	500		, broadcast=	false	,},--中级美人玉
+		{count = 1, itemid =	18629	, strong= 0, bind=0,present=	500 		, broadcast=	false	,},--三阶化羽丹
+		{count = 1, itemid =	18713	, strong= 0, bind=0,present=	50		, broadcast=	true    ,},--特级强化石
+		{count = 1, itemid =	19300	, strong= 0, bind=0,present= 	500		, broadcast=	false	,},--初级舒筋丸 
+		{count = 1, itemid =	18600	, strong= 0, bind=0,present=	500		, broadcast=	false	,},--还魂丹 
+		{count = 1, itemid =	34440	, strong= 0, bind=0,present=	4		, broadcast=	true    ,},--宠物
+		{count = 1, itemid =	18720	, strong= 0, bind=0,present=	500		, broadcast=	false	,},--中级保护符(3)
+		{count = 1, itemid =	18606	, strong= 0, bind=0,present=	500		, broadcast=	false	,},--秦皇令
+		{count = 1, itemid =	28236	, strong= 0, bind=0,present=	500		, broadcast=	false	,},--中级成长保护珠(4)
+		{count = 1, itemid =	18712	, strong= 0, bind=0,present=	100 		, broadcast=	true	,},--高级强化石
+		{count = 1, itemid =	39606	, strong= 0, bind=0,present=	500		, broadcast=	false	,},--完美秘籍经验丹
+		{count = 1, itemid =	34943	, strong= 0, bind=0,present=	15		, broadcast=	true    ,},--珍宝幽紫秘籍卷
+		{count = 1, itemid =	19200	, strong= 0, bind=0,present=	500		, broadcast=	false	,},--初级活络丸
+		{count = 1, itemid =	39605	, strong= 0, bind=0,present=	500		, broadcast=	false	,},--精良秘籍经验丹
+		{count = 1, itemid =	48261	, strong= 0, bind=0,present=	40		, broadcast=	false	,},--3级宝石
+		{count = 1, itemid =	28226	, strong= 0, bind=0,present=	500		, broadcast=	false	,},--中级悟性保护珠
+		{count = 1, itemid =	34886	, strong= 0, bind=0,present=	4		, broadcast=	true    ,},--坐骑
+		{count = 1, itemid =	18612	, strong= 0, bind=0,present=	500		, broadcast=	false	,},--坐骑口粮
+		{count = 1, itemid =	18635	, strong= 0, bind=0,present=	500		, broadcast=	false	,},--高级化羽技能书
+		{count = 1, itemid =	48265	, strong= 0, bind=0,present=	15		, broadcast=	true    ,},--300000真气丹
+		{count = 1, itemid =	48296	, strong= 0, bind=0,present=	500		, broadcast=	false	,},--解环石
+		{count = 1, itemid =	18607	, strong= 0, bind=0,present=	500		, broadcast=	false	,},--周王令
+		{count = 1, itemid =	18713	, strong= 0, bind=0,present=	100		, broadcast=	true	,},--特级强化石
+		{count = 1, itemid =	18720	, strong= 0, bind=0,present=	500		, broadcast=	false	,},--中级保护符
+		{count = 1, itemid =	18609	, strong= 0, bind=0,present=	500		, broadcast=	false	,},--9朵玫瑰
+		{count = 1, itemid =	18740	, strong= 0, bind=0,present=	500		, broadcast=	true	,},--鎏金铜
+		{count = 1, itemid =	11660	, strong= 0, bind=0,present=	4		, broadcast=	true    ,},--时装
+		{count = 1, itemid =	18730	, strong= 0, bind=0,present=	500 		, broadcast=	true	,},--百炼钢
+		{count = 1, itemid =	48284	, strong= 0, bind=0,present=	500 		, broadcast=	false	,},--贝币通票
+		{count = 1, itemid =	18606	, strong= 0, bind=0,present=	500		, broadcast=	false	,},--秦皇令
+		{count = 1, itemid =	18634	, strong= 0, bind=0,present=	500		, broadcast=	false	,},--中级化羽技能书
+		{count = 1, itemid =	18712	, strong= 0, bind=0,present=	100		, broadcast=	true	,},--高级强化石
+		{count = 1, itemid =	34943	, strong= 0, bind=0,present=	6	 	, broadcast=	true	,},--珍宝幽紫秘籍卷
+		{count = 1, itemid =	18603	, strong= 0, bind=0,present=	500		, broadcast=	false	,},--初级美人玉
+		{count = 1, itemid =	18722	, strong= 0, bind=0,present=	20		, broadcast=	true    ,},--特级保护符(7)
+		{count = 1, itemid =	48296	, strong= 0, bind=0,present= 	500		, broadcast=	false	,},--解环石 
+		{count = 1, itemid =	48278	, strong= 0, bind=0,present=	10		, broadcast=	true    ,},--20000威望丹
+		
+	},	
+
+	-- 普通骰子花费天珠
+	normalDiceCost = 20,
+	-- 所占梦境格子(也用于normalDiceCost能抽几次)
+	normalNeedGrid = 1,
+
+	-- 黄金骰子花费天珠	
+	goldDiceCost = 200,
+	-- 所占梦境格子(也用于goldDiceCost能抽几次)
+	goldNeedGrid = 10,
+
+	-- 免费骰子次数
+	freeDiceNum = 3,
+
+	-- 免费掷骰子时间间隔(单位分钟)
+	freeDiceInterval = 30,
+
+	-- 开放等级
+	openLevel = 30,
+	names = 
+	{
+		Lang.ScriptTips.dm012,
+		Lang.ScriptTips.dm013,
+	},
+	-- 完成一圈奖励礼包
+	loopGift = 60285,
+
+	-- 达成环游圈数奖励礼包(第二个活动)
+	loopRwards=
+	{-- 礼包id			 礼包个数	环游圈数
+		{itemId = 60279, count = 1, circle = 5},
+		{itemId = 60280, count = 1, circle = 10},
+		{itemId = 60281, count = 1, circle = 20},
+		{itemId = 60282, count = 1, circle = 40},
+		{itemId = 60283, count = 1, circle = 70},
+		{itemId = 60284, count = 1, circle = 118},
+	},
+}

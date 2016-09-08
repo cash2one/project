@@ -1,0 +1,155 @@
+﻿--#include "data\config\task\SLFYConf.txt" once --仙灵封印配置
+--#include "data\functions\bifunc.txt" once
+
+--获取杀死仙灵的奖励
+--返回奖励对应的表
+
+MonDieDispatcher.OnShouLingDie = function (monster,sysarg,monId)
+	--print( "shouling is killed" )
+	local Fhandle = LActor.getFubenHandle(monster)
+	local sceneid = LActor.getSceneId(monster)
+	local hscene = Fuben.getSceneHandleById(sceneid,Fhandle)
+	local var_sys_d = System.getDyanmicVar()
+	Fuben.sendMsgToScene(hscene,Lang.ScriptTips.slfy0001,ttScreenCenter)
+	--记录仙灵已经被杀死
+	local randPlayer = nil
+	local fbPtr = Fuben.getGuildFuBenPtr(sysarg)
+	if fbPtr~=nil then
+		local var = Fuben.getDyanmicVar(fbPtr)
+		if var ~= nil then
+			var.bossIsKilled = true
+			BiFunc.LogFengYin(var.guildid, var.bossStage, System.getCurrMiniTime()) -- 记录到BI
+		end
+		local hPlayer = var.randPlayer
+		if hPlayer ~= nil then
+			randPlayer = LActor.getEntity( hPlayer )
+			if randPlayer ~= nil then
+				LActor.delBuff( randPlayer, SLFYConf.addBuffInfo1.type, SLFYConf.addBuffInfo1.group )
+				LActor.delBuff( randPlayer, SLFYConf.addBuffInfo2.type, SLFYConf.addBuffInfo2.group )
+				--[[ --先注释这个变身
+				local largenBuff = SLFYConf.largenBuff
+				LActor.delBuff( randPlayer, largenBuff.type, largenBuff.group )	--先删除禁止刷新外观buff，删除这个buff后会自动刷新外观
+				]]
+				LActor.setExitSceneEvent( randPlayer, false ) -- 退出场景时就不需要触发脚本了
+			end
+		end 
+	end
+	--玩家奖励
+	local stage = 0
+	local fbPtr = Fuben.getGuildFuBenPtr(sysarg)
+	if fbPtr~=nil then
+		local var = Fuben.getDyanmicVar(fbPtr)
+		if var ~= nil then
+			if var.bossStage ~= nil then
+				stage = var.bossStage
+			end
+			var.monsterId = nil -- 清除怪物Id
+		end
+	end
+	if stage > 0 then
+		local players = LuaHelp.getFbActorList(fbPtr)	--场景中的所有玩家
+		if players ~= nil then
+			for i = 1, #players do
+				local player = players[i]
+				if player then
+					local level = LActor.getIntProperty(player,PROP_LEVEL)
+					local awards = SLFYConf.stages[stage].awards	--不同等级玩家的奖励配置
+					if awards ~= nil then
+						local expr = awards.expFactor
+						local oldexp = expr
+						local money = awards.yinliang
+						-- 被附身的玩家经验和银两都增加一倍
+						if randPlayer ~= nil and randPlayer == player then
+							if expr then expr = expr * 2 end
+							if money then money = money * 2 end
+						end
+						if expr and expr > 0 then
+							if var_sys_d.ZhongqiuDoubleExpTwo ~= nil and var_sys_d.ZhongqiuDoubleExpTwo == 1 then -- 中秋双倍经验活动期间经验翻倍
+								expr = expr + oldexp
+							end
+							LActor.addExpByLevel(player,expr,0,0)
+						end
+						if money and money > 0 then
+							LActor.changeMoney(player,1,money, 1, true, "xlfy", "award")
+						end
+					end
+				end
+			end
+		end
+	end
+end
+
+
+-- for i=1,#SLFYConf.stages do
+-- 	local monsterId = SLFYConf.stages[i].monsterId
+-- 	MonDieDispatcher.register( monsterId, MonDieDispatcher.OnShouLingDie )
+-- end
+
+MonsterActionFunc["callAddition"] = function( monster, monId, item )
+	--获取某场景玩家对象列表
+	local fbPtr = LActor.getFubenPrt( monster )
+	local players = LuaHelp.getFbActorList(fbPtr)
+	--赤元子分身消失
+	local partner = LActor.getMonsterPartner( monster )
+	if partner ~= nil then
+		local hPartner = LActor.getHandle( partner )
+		if players ~= nil and hPartner ~= nil then -- 播放光点特效
+			for i=1,#players do
+				local npack = DataPack.allocPacket(players[i],0,51)
+				if npack ~= nil then
+					DataPack.writeInt64(npack, hPartner)
+					DataPack.flush(npack)
+				end
+			end
+		end
+		-- 赤元子消失
+		Fuben.clearMonster( hPartner, true )
+	end
+
+	--随机选一位玩家
+	if players ~= nil or #players > 0 then
+		local player = players[System.getRandomNumber(#players)+1]
+		if player == nil then
+			print( "can't find random player" )
+			return
+		end
+		--触发化身boss成就事件
+		LActor.triggerAchieveEvent(player, 31, SLFYConf.callMonsterId)
+		--保存被附身的玩家句柄和原来的外观
+		local hPlayer = LActor.getHandle( player )
+		local var = Fuben.getDyanmicVar(fbPtr)
+		if var ~= nil then
+			var.randPlayer = hPlayer
+		end
+		--设置玩家退出场景的时候触发脚本
+		LActor.setExitSceneEvent( player, true )
+		LActor.entitySay( player, Lang.Actions.a000013, 1 )
+		--场景屏幕公告
+		local playerName  = LActor.getName( player )
+		if playerName ~= nil then
+			local hscene = LActor.getSceneHandle( monster )
+			local tipMsg = string.format( Lang.Actions.n000001, playerName )
+			Fuben.sendMsgToScene(hscene,tipMsg,ttScreenCenter)
+		end
+		--[[
+		LActor.setIntProperty( player, PROP_ENTITY_MODELID, SLFYConf.callMonsterModelId )	--此玩家变身为赤元子分身的外观
+		LActor.addBuff( player, 67, 0, 1, 20, 1, Lang.Actions.b002 )	--设置禁止刷新外观buff
+		local largenBuff = SLFYConf.largenBuff
+		LActor.addBuff( player, largenBuff.type, largenBuff.group,largenBuff.value, largenBuff.times, largenBuff.interval, largenBuff.name, largenBuff.timeOverlay )
+		]]
+		local buff1 = SLFYConf.addBuffInfo1
+		local buff2 = SLFYConf.addBuffInfo2
+		LActor.addBuff( player, buff1.type, buff1.group,buff1.value, buff1.times, buff1.interval, buff1.name, buff1.timeOverlay )
+		LActor.addBuff( player, buff2.type, buff2.group,buff2.value, buff2.times, buff2.interval, buff2.name, buff2.timeOverlay )
+	end
+
+	LActor.setDenyBeAttack( monster, false )	--boss恢复可攻击可被攻击
+	LActor.setDenyAttackActor( monster, false )
+end
+
+MonsterActionFunc["callOnStory"] = function( monster, monId, item )
+	--print( "callOnStory" )
+	--设置boss和玩家之间不能相互被攻击
+	LActor.setDenyBeAttack( monster, true )
+	LActor.setDenyAttackActor( monster, true )
+end

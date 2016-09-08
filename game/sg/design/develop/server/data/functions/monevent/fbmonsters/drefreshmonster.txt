@@ -1,0 +1,158 @@
+﻿--#include "data\config\misc\drefreshmonsterconf.txt" once
+--#include "data\language\LangCode.txt" once
+
+MonAllKilledDispatcher.NormalRfreshAfterKillAllMonster = function(sceneId, scenePtr, flag, monster)
+	--print("MonDieDispatcher.NormalRfreshAfterKillAllMonster sceneId:"..sceneId)
+	local pfb = LActor.getFubenPrt(monster)
+	local hfb =	Fuben.getFubenHandle(pfb)
+	local hscene = Fuben.getSceneHandleById(sceneId, hfb)
+	local Monid = LActor.getIntProperty( monster, PROP_ENTITY_ID )
+	local fbid = LActor.getFubenId(monster)
+	local var = Fuben.getDyanmicVar(pfb)
+	local index
+	for i,v in ipairs(DRefreshMonsterConf) do
+		if v.fbid == fbid then
+			index = i
+			break
+		end
+	end
+	if index == nil then return end
+	local monsters = DRefreshMonsterConf[index].monsters
+	local refreshindex = 0
+	for i,v in ipairs(monsters) do
+		for p,k in ipairs(v) do
+			if k.monsterId == Monid then
+				refreshindex = i
+				break
+			end
+		end
+		if refreshindex ~= 0 then
+			break
+		end
+	end
+
+	--没有找到这个怪？？？
+	if refreshindex == 0 then return end
+	--是不是最后一波怪
+	--是最后一波怪,结算
+	if monsters[refreshindex+1] == nil then
+		--print("MonAllKilledDispatcher.NormalRfreshAfterKillAllMonster 2")
+		Fuben.postSceneTimeCall(hscene, TimerMsg.FbJieSuan, 0, 1, fbid)
+	--不是最后一波怪,刷出下一波怪
+	else
+		--print("MonAllKilledDispatcher.NormalRfreshAfterKillAllMonster 2")
+		--var.fbRestMonster = 0
+		for i,v in ipairs(monsters[refreshindex+1]) do
+			--var.fbRestMonster = var.fbRestMonster + v.num
+			Fuben.createMonsters(hscene, v.monsterId, v.posX1, v.posX2, v.posY1, v.posY2, v.num, 0)
+		end
+
+		local actors = LuaHelp.getFbActorList(pfb)
+		if actors ~= nil then
+			for i = 1,#actors do
+				actor = actors[i]
+				--LActor.SendAndChangeCaleValue(actor, caleRemainMonster, var.fbRestMonster, false)
+
+				--是否指引到下一波怪
+				if DRefreshMonsterConf[index].ifgonext ~= nil and DRefreshMonsterConf[index].ifgonext then
+					local npack = DataPack.allocPacket(actor, 139, 135)
+					DataPack.writeInt(npack, fbid)
+					DataPack.flush(npack)
+				end
+			end
+		end
+	end
+
+end
+
+MonDieDispatcher.NormalRfreshMonstersDie = function (monster,sysarg,monId)
+	local fbprt = LActor.getFubenPrt(sysarg)
+	local var = Fuben.getDyanmicVar(fbprt)
+	local fbid = LActor.getFubenId(sysarg)
+	for i,v in ipairs(DRefreshMonsterConf) do
+		if v.fbid == fbid then
+			index = i
+			break
+		end
+	end
+	if index == nil then return end
+ 
+	--print("MonDieDispatcher.NormalRfreshMonstersDie monId:"..monId)
+
+	--[[if var.fbRestMonster == nil then
+		var.fbRestMonster = 0
+	end
+
+	if var.fbRestMonster > 0 then
+		var.fbRestMonster = var.fbRestMonster -1
+	end]]
+	local monsters = DRefreshMonsterConf[index].monsters
+
+	local refreshindex = 0
+	for i,v in ipairs(monsters) do
+		for p,k in ipairs(v) do
+			if k.monsterId == monId then
+				if k.anger ~= nil and k.anger ~= 0 then
+					LActor.changeAnger(sysarg, k.anger)
+				end
+				refreshindex = i
+				break
+			end
+		end
+		if refreshindex ~= 0 then
+			break
+		end
+	end
+
+	LActor.SendAndChangeCaleValue(sysarg, caleRemainMonster, -1, true)
+end
+
+EventCallDispatcher.onEnterNormalFuben = function(sysarg, hfb, way)
+	local fbprt = LActor.getFubenPrt(sysarg)
+	local var = Fuben.getDyanmicVar(fbprt)
+	local fbid = LActor.getFubenId(sysarg)
+	local hscene = LActor.getSceneHandle(sysarg)
+
+	--print("EventCallDispatcher.onEnterNormalFuben fbid:"..fbid)
+
+	for i,v in ipairs(DRefreshMonsterConf) do
+		if v.fbid == fbid then
+			index = i
+			break
+		end
+	end
+	if index == nil then return end
+
+	local monsters = DRefreshMonsterConf[index].monsters
+
+
+	if DRefreshMonsterConf[index].initanger ~= nil then
+		local anger = DRefreshMonsterConf[index].initanger
+		if anger < 0 then anger = 0 end
+		if anger > 100 then anger = 100 end
+		LActor.setIntProperty(sysarg, PROP_ACTOR_ANGER, anger)
+	end
+
+	--var.fbRestMonster = 0
+	for i,v in ipairs(monsters[1]) do
+		--var.fbRestMonster = var.fbRestMonster + v.num
+		Fuben.createMonsters(hscene, v.monsterId, v.posX1, v.posX2, v.posY1, v.posY2, v.num, 0)
+	end
+
+	Fuben.setCaleRemainMon(fbprt, false) -- 不自动发送剩余怪物数
+	LActor.ChangeCaleValue(sysarg, caleRemainMonster, DRefreshMonsterConf[index].monsternum, false)
+	local gametime = Fuben.GetFubenGameTime(fbprt)
+	LActor.ChangeCaleValue(sysarg, caleGameTime, gametime, false)
+	LActor.SendAllCaleValue(sysarg)
+end
+
+
+for _,v in ipairs(DRefreshMonsterConf) do
+	MonAllKilledDispatcher.register( v.sceneid, MonAllKilledDispatcher.NormalRfreshAfterKillAllMonster )
+	EventCallDispatcher.registerFubenEnter(v.fbid, EventCallDispatcher.onEnterNormalFuben)
+	for _,k in ipairs(v.monsters) do
+		for _,n in ipairs(k) do
+			MonDieDispatcher.register(n.monsterId, MonDieDispatcher.NormalRfreshMonstersDie)
+		end
+	end
+end

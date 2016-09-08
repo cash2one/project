@@ -1,0 +1,464 @@
+﻿-- 连续登录奖励配置
+
+--#include "data\config\misc\yqhyconf.txt" once
+--#include "data\functions\miscfunc.txt"  once
+--#include "data\functions\gmevent.txt" once
+
+ONLINEREWARD.YqhyImplement = 
+{
+	TypeQuests = {}, -- 每种任务类型对应的多个任务配置
+	-- 初始化
+	OnInit = function()
+		local invites = YqhyConf.invites
+
+		for i=1,#invites do
+			local pconf = invites[i]
+			if ONLINEREWARD.YqhyImplement.TypeQuests[pconf.type] == nil then
+				ONLINEREWARD.YqhyImplement.TypeQuests[pconf.type] = {}
+			end
+			table.insert(ONLINEREWARD.YqhyImplement.TypeQuests[pconf.type], pconf)
+		end
+
+		print("yqhy system init")
+	end,
+
+	-- 发送领取结果
+	SendGetResult = function(sysarg, atype, idx, ret, lcount)
+		local npack = DataPack.allocPacket(sysarg,138,63)
+		if npack == nil then return end
+		DataPack.writeInt(npack, atype)
+		DataPack.writeInt(npack, idx)
+		DataPack.writeInt(npack, ret)
+		DataPack.writeInt(npack, lcount)
+		DataPack.flush(npack)
+	end,
+
+	-- 获取邀请好友信息
+	OnGetInfo = function(sysarg, packet)
+		local account = LActor.getAccountName(sysarg)
+		local var = LActor.getStaticVar(sysarg)
+
+		local info = var.yqhyinfos
+		if info == nil then 
+			info = {}
+		end
+
+		local lcount = var.lotterycount -- 抽奖次数
+		if lcount == nil then lcount = 0 end
+
+		local invites = YqhyConf.invites
+
+		local npack = DataPack.allocPacket(sysarg,138,59)
+		if npack == nil then return end
+		DataPack.writeInt(npack, lcount)
+		DataPack.writeInt(npack, #invites)
+
+		for i=1, #invites do
+			if info[i] == nil or info[i].status == nil then
+				DataPack.writeByte(npack, 0) -- 不可领取
+			else
+				DataPack.writeByte(npack, info[i].status) -- 保存的状态
+			end
+		end
+
+		-- 分享信息
+		DataPack.writeInt(npack, #YqhyConf.shares)
+
+		local shareinfos = var.shareinfos
+		if shareinfos == nil then shareinfos = {} end
+		for i=1,#YqhyConf.shares do
+			if shareinfos[i] == nil then
+				DataPack.writeByte(npack, 0)
+			else
+				DataPack.writeByte(npack, shareinfos[i])
+			end
+		end
+
+		DataPack.flush(npack)
+
+	end,
+
+	-- 邀请好友
+	OnInvite = function(sysarg, packet)
+		local var = LActor.getStaticVar(sysarg)
+		if var == nil then return end
+
+		local cur_t = System.getCurrMiniTime()
+		if var.lastInvite == nil or (not System.isSameDay(var.lastInvite, cur_t)) then -- 今天第一次邀请
+			var.lastInvite = cur_t
+
+			ONLINEREWARD.YqhyImplement.OnEvent(sysarg, LActor.getAccountName(sysarg), 1, 1) -- 通知客户端
+		end
+	end,
+
+	-- 分享
+	OnShare = function(sysarg, packet, pid)
+		local idx
+		if pid ~= nil then
+			idx = pid
+		else
+			idx = DataPack.readInt(packet)
+		end
+
+		if idx == nil or idx < 1 or idx > #YqhyConf.shares then print("share idx error") return end
+
+		local var = LActor.getStaticVar(sysarg)
+		if var.shareinfos == nil then
+			var.shareinfos = {}
+		end
+
+		-- print(var.shareinfos[idx])
+
+		-- 未达到条件或已经分享
+		if var.shareinfos[idx] == nil or var.shareinfos[idx] == 0 or var.shareinfos[idx] == 2 then
+			return 
+		end
+
+		-- 增加领奖次数
+		local lcount = var.lotterycount
+		if lcount == nil then lcount = 0 end
+		lcount = lcount + 1
+		var.lotterycount = lcount
+
+		var.shareinfos[idx] = 2
+	end,
+
+	-- 抽奖
+	OnLottery = function(sysarg, packet)
+		local var = LActor.getStaticVar(sysarg)
+		if var == nil then return end
+
+		local idx = 0 -- 没有次数
+		if var.lotterycount ~= nil and var.lotterycount > 0 then
+			idx = System.getRandomNumber(#YqhyConf.lottery) + 1
+		end
+
+		--print(var.lotterycount)
+
+		-- 给于奖励
+		if idx > 0 then
+			local reward = YqhyConf.lottery[idx]
+			if reward.type == 0 then
+				if Item.getBagEmptyGridCount(sysarg) < Item.getAddItemNeedGridCount(sysarg, reward.id, reward.count) then
+					-- LActor.sendTipmsg(sysarg, Lang.ScriptTips.yq001, ttMessage)
+					LActor.SendGeneralTips(sysarg, 7, 0, 0)
+					return 
+				end
+				LActor.addItem(sysarg,reward.id,0,0,reward.count,1,"yqhylottery")
+
+				local tips = string.format(Lang.ScriptTips.yq027, Item.getItemName(reward.id), reward.count)
+				LActor.sendTipmsg(sysarg, tips, ttMessage)
+			elseif reward.type == 5 then
+				LActor.changeMoney(sysarg, reward.id, reward.count, 1, false)
+			end
+
+			var.lotterycount = var.lotterycount - 1
+		end
+
+		-- 返回抽奖结果
+		local npack = DataPack.allocPacket(sysarg,138,62)
+		if npack == nil then return end
+		DataPack.writeInt(npack, idx)
+		DataPack.flush(npack)
+	end,
+
+	-- 触发事件
+	-- yqid : 邀请人ID
+	-- type : 1 邀请， 2 当天充值， 3 升级 
+	-- aname : 被邀请人ID
+	OnEvent = function(sysarg, yqid, etype, param, aname)
+		-- print(yqid)
+		-- print(etype)
+		-- print(param)
+		-- print(aname)
+		if sysarg == nil then
+			sysarg = LActor.getActorByAccountName(yqid)
+			if sysarg == nil then -- 玩家不在线，发送离线消息
+				local dp = LDataPack.allocPacket()
+				if dp == nil then return end
+				LDataPack.writeByte(dp, etype)
+				LDataPack.writeInt(dp, param)
+				LDataPack.writeString(dp, aname)
+				System.addOfflineMsgByAccountName(yqid, omInviteEvent, dp, 0)
+				return
+			end
+		end
+
+		local var = LActor.getStaticVar(sysarg)
+		if var.yqhyinfos == nil then
+			var.yqhyinfos = {}
+		end
+		local info = var.yqhyinfos -- 邀请好友信息
+
+		--print(etype)
+		--print(#ONLINEREWARD.YqhyImplement.TypeQuests)
+
+		local confs = ONLINEREWARD.YqhyImplement.TypeQuests[etype]
+		if confs == nil then print("yqhy event type error") return end
+		-- print(aname)
+
+		for i=1,#confs do
+			local pconf = confs[i]
+			local id = pconf.id
+			local pinfo = info[id]
+			if (pinfo == nil or pinfo.status == nil or pinfo.status == 0) and (pconf.param == nil or param >= pconf.param) then -- 未完成且满足条件
+				if info[id] == nil then
+					info[id] = {}
+					pinfo = info[id]
+				end
+				if pconf.count == nil or pconf.count < 2 then -- 小于2个的
+					pinfo.status = 1 -- 完成了
+					ONLINEREWARD.YqhyImplement.OnFinish(sysarg, id) -- 通知客户端
+				else
+					if pinfo.actors ~= nil then
+						for j=1,pconf.count do
+							if pinfo.actors[j] ~= nil then
+								if pinfo.actors[j] == aname then -- 同名，不用保存
+									-- print("same name:"..id)
+									break
+								end
+							else
+								if j == pconf.count then -- 最后一个，完成了
+									pinfo.status = 1
+									pinfo.actors = nil -- 可以清空数据了
+									ONLINEREWARD.YqhyImplement.OnFinish(sysarg, id) -- 通知客户端
+								else
+									pinfo.actors[j] = aname
+								end
+								break
+							end
+						end
+					else
+						pinfo.actors = {}
+						pinfo.actors[1] = aname -- 保存玩家信息
+					end
+				end
+			end
+		end
+	end,
+
+	-- 完成一个邀请好友任务
+	OnFinish = function(sysarg, id)
+		-- print("onfinish")
+		if sysarg == nil or id == nil then return end
+
+		-- print("onfinish:"..id)
+
+		-- 增加领奖次数
+		local var = LActor.getStaticVar(sysarg)
+		local lcount = var.lotterycount
+		if lcount == nil then lcount = 0 end
+		lcount = lcount + 1
+		var.lotterycount = lcount
+
+		local npack = DataPack.allocPacket(sysarg,138,64) -- 通知客户端
+		if npack == nil then return end
+		DataPack.writeInt(npack, id)
+
+		DataPack.flush(npack)
+
+	end,
+}
+
+
+-- 用户登录
+EventCallDispatcher.OnYqhyLogin = function(sysarg, arg)
+
+	-- 测试
+	-- local var = LActor.getStaticVar(sysarg)
+	-- var.iopenid = "mytest16"
+
+	local result = false
+	LActor.postEntityScriptDelayMsg(sysarg, 5000, result, 22)
+end
+
+-- 升级
+EventCallDispatcher.OnYqhyLevel = function(sysarg, arg)
+	local var = LActor.getStaticVar(sysarg)
+
+	if arg[1] >= 30 then -- 触发分享事件
+		LActor.onEvent(sysarg, 62, 2)
+	end
+
+	if var.iopenid == nil then return end -- 不是通过邀请好友进游戏的不处理
+
+	local aname = LActor.getAccountName(sysarg)
+
+	ONLINEREWARD.YqhyImplement.OnEvent(nil, var.iopenid, 4, arg[1], aname)
+end
+
+-- 玩家充值
+EventCallDispatcher.OnYqhyRecharge = function(sysarg, arg)
+	local var = LActor.getStaticVar(sysarg)
+	if var.iopenid == nil then return end -- 不是通过邀请好友进游戏的不处理
+
+	if var.yqtime ~= nil and System.isSameDay(var.yqtime, System.getCurrMiniTime()) then -- 邀请当天充了值
+		local aname = LActor.getAccountName(sysarg)
+		ONLINEREWARD.YqhyImplement.OnEvent(nil, var.iopenid, 3, 1, aname)
+	end
+end
+
+-- 新的一天
+EventCallDispatcher.OnYqhyNewDay = function(sysarg, arg)
+	if arg == nil or arg[1] == nil then return end
+
+	local var = LActor.getStaticVar(sysarg) 
+
+	local change = false
+	local yqhyinfos = var.yqhyinfos
+	if yqhyinfos ~= nil then
+		if yqhyinfos[1] ~= nil and yqhyinfos[1].status ~= nil and yqhyinfos[1].status == 1 then -- 清空邀请好友状态
+			yqhyinfos[1].status = 0
+			change = true
+		end
+	end
+
+	local shareinfos = var.shareinfos
+	if shareinfos ~= nil then
+		local infos = YqhyConf.shares
+		for i=1,#infos do
+			if infos[i].dayclear then
+				if shareinfos[i] ~= nil and shareinfos[i] == 2 then -- 如果已经完成了就变成不可领取状态
+					shareinfos[i] = 0
+					change = true
+				end
+			end
+		end
+	end
+
+	-- print("yqhy new day")
+
+	if change and arg[1] == 0 then -- 改变了且是凌晨触发的才改变
+		ONLINEREWARD.YqhyImplement.OnGetInfo(sysarg)
+	end
+end
+
+-- 延时消息
+EventCallDispatcher.OnYqhyDelay = function(sysarg, arg)
+	local var = LActor.getStaticVar(sysarg) 
+	if var.iopenid ~= nil and var.firstyqhy == nil then -- 被邀请后的第一次登录才触发
+		local aname = LActor.getAccountName(sysarg)
+		ONLINEREWARD.YqhyImplement.OnEvent(nil, var.iopenid, 2, 1, aname)
+		var.firstyqhy = 1
+
+		local yqactor = LActor.getActorByAccountName(var.iopenid) -- 第一次上来就加为好友
+		if yqactor ~= nil then
+			LActor.addFriend(sysarg, yqactor)
+			LActor.addFriend(yqactor, sysarg)
+		end
+	end 
+end
+
+-- 处理离线消息
+EventCallDispatcher.OnYqhyOfflineMsg = function(sysarg, msgType, dp, num)
+	if msgType == nil or dp == nil then return end
+	if msgType ~= omInviteEvent then return end -- 只处理邀请好友消息
+
+	local etype = LDataPack.readByte(dp)
+	local param = LDataPack.readInt(dp)
+	local aname = LDataPack.readString(dp)
+	if etype ~= nil and param ~= nil and aname ~= nil then
+		ONLINEREWARD.YqhyImplement.OnEvent(sysarg, LActor.getAccountName(sysarg), etype, param, aname)
+	end
+end
+
+-- 处理好友分享事件
+EventCallDispatcher.OnYqhyShare = function(sysarg, arg)
+	local idx = arg[1]
+	if idx == nil then return end
+
+	if idx == nil or idx < 1 or idx > #YqhyConf.shares then print("share idx error") return end
+
+	local var = LActor.getStaticVar(sysarg)
+	if var.shareinfos == nil then
+		var.shareinfos = {}
+	end
+
+	if var.shareinfos[idx] ~= nil and var.shareinfos[idx] ~= 0 then return end
+
+	var.shareinfos[idx] = 1
+
+	local npack = DataPack.allocPacket(sysarg,138,63) -- 通知客户端
+	if npack == nil then return end
+	DataPack.writeInt(npack, idx)
+	DataPack.flush(npack)
+
+	--print("share:"..idx)
+end
+
+-- GM命令
+-- 触发邀请好友事件
+GmEventFuncList.OnYqhyEvent = function(sysarg, args)
+	if args == nil or (#args ~= 3 and #args ~= 4) then
+		LActor.sendTipmsg(sysarg, "yqhyevent param error", ttTipmsgWindow)
+		return
+	end
+	local yqid, etype, param, aname
+	if #args == 3 then
+		etype = args[1]
+		param = args[2]
+		aname = args[3]
+	else
+		yqid = args[1]
+		etype = args[2]
+		param = args[3]
+		aname = args[4]
+	end
+	if etype == nil or param == nil or aname == nil then
+		LActor.sendTipmsg(sysarg, "yqhyevent param error", ttTipmsgWindow)
+		return 
+	end
+	etype = tonumber(etype)
+	param = tonumber(param)
+	if yqid == nil then
+		ONLINEREWARD.YqhyImplement.OnEvent(sysarg, LActor.getAccountName(sysarg), etype, param, aname)
+	else
+		ONLINEREWARD.YqhyImplement.OnEvent(nil, yqid, etype, param, aname)
+	end
+end
+
+-- 设置抽奖次数
+GmEventFuncList.OnYqhyLCount = function(sysarg, args)
+	local count = args[1]
+	if count == nil then
+		LActor.sendTipmsg(sysarg, "yqhylottery param error", ttTipmsgWindow)
+		return
+	end
+
+	count = tonumber(count)
+
+	local var = LActor.getStaticVar(sysarg)
+	var.lotterycount = count
+
+	ONLINEREWARD.YqhyImplement.OnGetInfo(sysarg)
+end
+
+-- 触发分享事件
+GmEventFuncList.OnYqhyShare = function(sysarg, args)
+	local idx = args[1]
+	
+	LActor.onEvent(sysarg, 62, idx)
+end
+
+-- 分享
+GmEventFuncList.OnYqhyShare2 = function(sysarg, args)
+	local idx = args[1]
+	if idx == nil then return end
+	
+	ONLINEREWARD.YqhyImplement.OnShare(sysarg, nil, tonumber(idx))
+end
+
+table.insert(InitFnTable,ONLINEREWARD.YqhyImplement.OnInit) 
+table.insert(LocalDT.ScriptDelayConfig[22], EventCallDispatcher.OnYqhyDelay)
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, EventCallDispatcher.OnYqhyLogin)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeLevel, EventCallDispatcher.OnYqhyLevel)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeRecharge, EventCallDispatcher.OnYqhyRecharge)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, EventCallDispatcher.OnYqhyNewDay)
+OffLineMsgDispatcher.registerEventCall(omInviteEvent, EventCallDispatcher.OnYqhyOfflineMsg)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeShareEvent, EventCallDispatcher.OnYqhyShare)
+
+GmEventFuncList.register( "yqhyevent", GmEventFuncList.OnYqhyEvent, 1)
+GmEventFuncList.register( "yqhylcount", GmEventFuncList.OnYqhyLCount, 1)
+GmEventFuncList.register( "yqhyshare", GmEventFuncList.OnYqhyShare, 1)
+GmEventFuncList.register( "yqhyshare2", GmEventFuncList.OnYqhyShare2, 1)

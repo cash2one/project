@@ -1,0 +1,31 @@
+{
+	id = 508,
+	name = Lang.Skill.s508Name,
+	desc = Lang.Skill.s508Desc,
+	vocation = 0,
+	skillType = 11,
+	skillSpellType = 0,
+	skillClass = 5,
+	commonCd = 0,
+	canbeDefault = false,
+	specialBuffCond = 0,
+	notAutoUse = false,
+ 	actions=
+{
+
+	{act=2,effect=1601,type=2},
+		
+},
+	skillSubLevel = { 
+--#include "Skill_508_1.txt"
+--#include "Skill_508_2.txt"
+--#include "Skill_508_3.txt"
+--#include "Skill_508_4.txt"
+--#include "Skill_508_5.txt" 
+--#include "Skill_508_6.txt"
+--#include "Skill_508_7.txt"
+--#include "Skill_508_8.txt"
+--#include "Skill_508_9.txt"
+--#include "Skill_508_10.txt" 
+	},
+},

@@ -1,0 +1,51 @@
+--神秘宝箱 
+--杀怪时有极小概率掉落神秘宝箱，每个玩家每天获得的神秘宝箱有数量上限，达到上限则无法继续获得宝箱
+--#include "data\config\shenmibaoxiang\shenmibaoxiangconfig.txt" once
+
+ShenMiBaoXiang={}
+
+ShenMiBaoXiang.onMonsterKilled=function(monster, killer, monId)
+	local monsterDrops= ShenMiBaoXiangConf.monsterDrops
+	if monsterDrops[monId] == nil then return end
+
+	local monsterDrop=monsterDrops[monId]
+
+	local randNum=System.getRandomNumber(100000)
+	if(randNum>monsterDrop.propability) then return end 
+
+	if LActor.isPet(killer) then -- 如果是伙伴打死的，找出主人
+		killer = LActor.getMonsterOwner(killer)
+		if killer == nil then
+			print("OnFightMonsterDie error : killer is pet, but owner is nil")
+			return 
+		end
+	end
+
+	local var = LActor.getStaticVar(killer)
+	if var == nil then return end 
+
+	if var.shenmibaoxiang_get_times == nil then 
+	var.shenmibaoxiang_get_times = 0
+	end 
+	-- print("var.shenmibaoxiang_get_times"..var.shenmibaoxiang_get_times)
+
+	if var.shenmibaoxiang_get_times >= ShenMiBaoXiangConf.daily_get_limit  then return end 
+
+	var.shenmibaoxiang_get_times = var.shenmibaoxiang_get_times + 1 
+
+	--void dropPackage(void* et, int nItemID, int nCount, int nBind, int nStrong, bool triggerEvent, int broadType);
+
+	local double = getAcitivityIsDouble(daShenmibaoxiang)
+	System.dropPackage(monster, ShenMiBaoXiangConf.item_id, monsterDrop.count*double, 0, 0, true, 0)
+end
+ 
+--注册怪物死亡事件
+ShenMiBaoXiang.registerEvent=function()
+	local monsterDrops= ShenMiBaoXiangConf.monsterDrops
+ 	for monId,_ in pairs(monsterDrops) do 
+		--print("MY@@@@@@@@@@@@@@MonId:"..monId)
+		MonDieDispatcher.register(monId, ShenMiBaoXiang.onMonsterKilled)
+	end
+end
+
+ShenMiBaoXiang.registerEvent()

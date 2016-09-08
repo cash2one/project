@@ -1,0 +1,23 @@
+﻿--lua script
+--宝石相关处理
+
+--拉取宝石材料的数量
+EnhanceTable.getStoneMaterialNum = function(sysarg, type)
+  local var = LActor.getStaticVar(sysarg)
+  if var.stonemateriallist == nil or var.stonemateriallist[type] == nil then return 0 end
+  return var.stonemateriallist[type]
+end
+
+--修改宝石材料的数量
+EnhanceTable.changeStoneMaterialNum = function( sysarg, type, changeNum )
+  local var = LActor.getStaticVar(sysarg)
+  if var.stonemateriallist == nil then var.stonemateriallist = {} end
+  if var.stonemateriallist[type] == nil then var.stonemateriallist[type] = 0 end
+
+  if var.stonemateriallist[type] + changeNum < 0 then return false end
+
+  var.stonemateriallist[type] = var.stonemateriallist[type] + changeNum
+
+  return true
+end
+

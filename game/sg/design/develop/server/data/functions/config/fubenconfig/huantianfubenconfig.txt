@@ -1,0 +1,114 @@
+HuanTianMiJingFubenConfig = {}			-- 幻天密境副本配置
+
+HuanTianMiJingFubenConfig = {
+	fubenId = {65,84,85,86,87,88},																					-- 副本ID
+	sceneId = {1106,1107,1108,1109,1110,1111,1112,1113,1114,1115,1116,1117,1118,1119,1120,1121,1122,1123},			-- 场景ID
+	sceneJieSuan = {1108,1111,1114,1117,1120,1123},
+
+	toNextTeleport = {			-- 传送门
+		{ posx = 8, posy = 7,toSceneid = 1107,toPosx = 41, toPosy = 32,modelid = 50000,name = Lang.SceneName.s1107 ,comfirm =0},
+		{ posx = 8, posy = 7,toSceneid = 1108,toPosx = 41, toPosy = 32,modelid = 50000,name = Lang.SceneName.s1108 ,comfirm =0},
+		{ posx = 8, posy = 7,toSceneid = 1109,toPosx = 41, toPosy = 32,modelid = 50000,name = Lang.SceneName.s1109 ,comfirm =0},
+		{ posx = 8, posy = 7,toSceneid = 1110,toPosx = 41, toPosy = 32,modelid = 50000,name = Lang.SceneName.s1110 ,comfirm =0},
+		{ posx = 8, posy = 7,toSceneid = 1111,toPosx = 41, toPosy = 32,modelid = 50000,name = Lang.SceneName.s1111 ,comfirm =0}, 
+		{ posx = 8, posy = 7,toSceneid = 1112,toPosx = 41, toPosy = 32,modelid = 50000,name = Lang.SceneName.s1112 ,comfirm =0}, 
+		{ posx = 8, posy = 7,toSceneid = 1113,toPosx = 41, toPosy = 32,modelid = 50000,name = Lang.SceneName.s1113 ,comfirm =0}, 
+		{ posx = 8, posy = 7,toSceneid = 1114,toPosx = 41, toPosy = 32,modelid = 50000,name = Lang.SceneName.s1114 ,comfirm =0},
+		{ posx = 8, posy = 7,toSceneid = 1116,toPosx = 41, toPosy = 32,modelid = 50000,name = Lang.SceneName.s1116 ,comfirm =0},
+		{ posx = 8, posy = 7,toSceneid = 1117,toPosx = 41, toPosy = 32,modelid = 50000,name = Lang.SceneName.s1117 ,comfirm =0}, 
+		{ posx = 8, posy = 7,toSceneid = 1118,toPosx = 41, toPosy = 32,modelid = 50000,name = Lang.SceneName.s1118 ,comfirm =0},
+		{ posx = 8, posy = 7,toSceneid = 1119,toPosx = 41, toPosy = 32,modelid = 50000,name = Lang.SceneName.s1119 ,comfirm =0}, 
+		{ posx = 8, posy = 7,toSceneid = 1120,toPosx = 41, toPosy = 32,modelid = 50000,name = Lang.SceneName.s1120 ,comfirm =0},
+		{ posx = 8, posy = 7,toSceneid = 1121,toPosx = 41, toPosy = 32,modelid = 50000,name = Lang.SceneName.s1121 ,comfirm =0},
+		{ posx = 8, posy = 7,toSceneid = 1122,toPosx = 41, toPosy = 32,modelid = 50000,name = Lang.SceneName.s1122 ,comfirm =0},
+		{ posx = 8, posy = 7,toSceneid = 1123,toPosx = 41, toPosy = 32,modelid = 50000,name = Lang.SceneName.s1123 ,comfirm =0},
+	},
+
+	gameTime = 150,				-- 游戏时间
+
+	playerPos = {10,13},		-- 玩家进入副本的位置
+	monsterCount = 11,			-- 怪物个数
+
+	limitTime = 0,				-- 结算的时间限制
+
+	itemRecharge = {100},		-- 怪物掉落的物品配置,里面是物品ID
+
+	monsterRecharge = {
+		{400,10,1000},			-- {怪物ID,奖励ID,奖励物品数量},
+		{401,10,1000},			-- {怪物ID,奖励ID,奖励物品数量},
+		{402,10,1000},			-- {怪物ID,奖励ID,奖励物品数量},
+		{403,10,1000},			-- {怪物ID,奖励ID,奖励物品数量},
+	},
+
+	gradeType = 1,				-- 评级类型：1表示时间，2表示层数
+	gradeList = {
+		{
+			floor = 1,
+			time = 10,			-- 单位秒
+			value = 10,			-- 百分比
+		},
+		{
+			floor = 9,
+			time = 20,			-- 单位秒
+			value = 20,			-- 百分比
+		},
+        {
+			floor = 15,
+			time = 30,			-- 单位秒	
+			value = 30,			-- 百分比
+		},
+	},
+
+	boxPool = {					-- 结算物品池
+		{ --第一个宝箱
+			itemList = 
+			{
+				-- 配置奖励的物品
+				{count = 1, itemid =	18730	,present= 	4000,},
+				{count = 1, itemid =	18740	,present=	1000,},
+				{count = 1, itemid =	18512	,present=	500	,},
+				{count = 1, itemid =	18522	,present=	500	,},
+				{count = 1, itemid =	18532	,present=	500	,},
+				{count = 1, itemid =	18542	,present=	500	,},
+				{count = 1, itemid =	18604	,present=	500	,},
+				{count = 1, itemid =	28221	,present=	500	,},
+				{count = 1, itemid =	28231	,present=	1000,},
+				{count = 1, itemid =	18510	,present=	1000,},
+			},
+	    },
+	    { --第二个宝箱
+			itemList = 
+			{
+				-- 配置奖励的物品
+				{count = 1, itemid =	18730	,present= 	4000,},
+				{count = 1, itemid =	18740	,present=	1000,},
+				{count = 1, itemid =	18512	,present=	500	,},
+				{count = 1, itemid =	18522	,present=	500	,},
+				{count = 1, itemid =	18532	,present=	500	,},
+				{count = 1, itemid =	18542	,present=	500	,},
+				{count = 1, itemid =	18604	,present=	500	,},
+				{count = 1, itemid =	28221	,present=	500	,},
+				{count = 1, itemid =	28231	,present=	1000,},
+				{count = 1, itemid =	18510	,present=	1000,},
+
+			},
+	    },
+	    {--第三个宝箱
+			itemList = 
+			{
+				-- 配置奖励的物品
+				{count = 1, itemid =	18730	,present= 	4000,},
+				{count = 1, itemid =	18740	,present=	1000,},
+				{count = 1, itemid =	18512	,present=	500,},
+				{count = 1, itemid =	18522	,present=	500,},
+				{count = 1, itemid =	18532	,present=	500,},
+				{count = 1, itemid =	18542	,present=	500,},
+				{count = 1, itemid =	18604	,present=	500,},
+				{count = 1, itemid =	28221	,present=	500,},
+				{count = 1, itemid =	28231	,present=	1000,},
+				{count = 1, itemid =	18510	,present=	1000,},
+
+			},
+	    },		
+	},		
+}

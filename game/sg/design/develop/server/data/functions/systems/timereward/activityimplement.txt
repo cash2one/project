@@ -1,0 +1,18 @@
+﻿--#include "hefuhandler.txt" once
+--#include "miscactivityhandler.txt" once	
+
+ACTIVITYSYSTEM = {}
+
+ACTIVITYSYSTEM.RewardImplement = 
+{
+MessageAssign = function (sysarg, systemid, msgid, packet)
+  --print("msgid:"..msgid)
+    if msgid >= 1 and msgid <= 8 then
+    	HefuFuncList[msgid](sysarg, packet)
+    elseif msgid == 9 then
+    	MiscActFunc.getSeveAward(sysarg, packet)
+	end
+end
+}
+
+SystemHandlerDispatcher.registerSystemHander(BaseTypes.SystemId.activitySystem, ACTIVITYSYSTEM.RewardImplement.MessageAssign)

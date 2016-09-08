@@ -1,0 +1,269 @@
+﻿--按怪物的死亡爆率掉落物品，比如端午节的粽子这种物品，玩家点击能够按照爆率获取物品
+RollItemConfig=
+{
+	--端午节粽子
+	{
+		item_id = 1667,     --item_id表示物品的id
+        itemCount =1, --消耗物品的数目，默认是1，可以不配置，就是一次roll消耗多少个道具	
+		needDelete = true,  --needDelete 表示是否需要删除
+		needMinBagGrid = 1, --至少需要多少个背包格子的数量 
+		onlyDoRoll = true, --是否只执行爆物品的操作，如果程序还有其他的业务逻辑处理，这里使用false(自身注册函数单独处理)，否则使用true,
+		dropName = "data/config/item/scriptItemConfig/RollItemDrops/drops1.txt",     --爆率的配置文件，同怪物的掉落
+	},
+	--日常大礼盒（40级）
+	{
+		item_id = 1678,     --item_id表示物品的id
+		needDelete = true,  --needDelete 表示是否需要删除
+		needMinBagGrid = 1, --至少需要多少个背包格子的数量 
+		onlyDoRoll = true, --是否只执行爆物品的操作，如果程序还有其他的业务逻辑处理，这里使用false(自身注册函数单独处理)，否则使用true,
+		dropName = "data/config/item/scriptItemConfig/RollItemDrops/drops2.txt",     --爆率的配置文件，同怪物的掉落
+	},
+	--日常大礼盒（50级）
+	{
+		item_id = 1679,     --item_id表示物品的id
+		needDelete = true,  --needDelete 表示是否需要删除
+		needMinBagGrid = 1, --至少需要多少个背包格子的数量 
+		onlyDoRoll = true, --是否只执行爆物品的操作，如果程序还有其他的业务逻辑处理，这里使用false(自身注册函数单独处理)，否则使用true,
+		dropName = "data/config/item/scriptItemConfig/RollItemDrops/drops3.txt",     --爆率的配置文件，同怪物的掉落
+	},
+	--日常大礼盒（60级）
+	{
+		item_id = 1680,     --item_id表示物品的id
+		needDelete = true,  --needDelete 表示是否需要删除
+		needMinBagGrid = 1, --至少需要多少个背包格子的数量 
+		onlyDoRoll = true, --是否只执行爆物品的操作，如果程序还有其他的业务逻辑处理，这里使用false(自身注册函数单独处理)，否则使用true,
+		dropName = "data/config/item/scriptItemConfig/RollItemDrops/drops4.txt",     --爆率的配置文件，同怪物的掉落
+	},
+	--父亲节礼盒
+	{
+		item_id = 1707,     --item_id表示物品的id
+		needDelete = true,  --needDelete 表示是否需要删除
+		needMinBagGrid = 1, --至少需要多少个背包格子的数量 
+		onlyDoRoll = true, --是否只执行爆物品的操作，如果程序还有其他的业务逻辑处理，这里使用false(自身注册函数单独处理)，否则使用true,
+		dropName = "data/config/item/scriptItemConfig/RollItemDrops/drops5.txt",     --爆率的配置文件，同怪物的掉落
+	},
+	--隐龙无影宝箱
+	{
+		item_id = 1926,     --item_id表示物品的id
+		needDelete = true,  --needDelete 表示是否需要删除
+		needMinBagGrid = 1, --至少需要多少个背包格子的数量 
+		onlyDoRoll = true, --是否只执行爆物品的操作，如果程序还有其他的业务逻辑处理，这里使用false(自身注册函数单独处理)，否则使用true,
+		dropName = "data/config/item/scriptItemConfig/RollItemDrops/drops9.txt",     --爆率的配置文件，同怪物的掉落
+	},
+	--杀意断山岳宝箱
+	{
+		item_id = 1927,     --item_id表示物品的id
+		needDelete = true,  --needDelete 表示是否需要删除
+		needMinBagGrid = 1, --至少需要多少个背包格子的数量 
+		onlyDoRoll = true, --是否只执行爆物品的操作，如果程序还有其他的业务逻辑处理，这里使用false(自身注册函数单独处理)，否则使用true,
+		dropName = "data/config/item/scriptItemConfig/RollItemDrops/drops10.txt",     --爆率的配置文件，同怪物的掉落
+	},
+	--青云暖风宝箱
+	{
+		item_id = 1928,     --item_id表示物品的id
+		needDelete = true,  --needDelete 表示是否需要删除
+		needMinBagGrid = 1, --至少需要多少个背包格子的数量 
+		onlyDoRoll = true, --是否只执行爆物品的操作，如果程序还有其他的业务逻辑处理，这里使用false(自身注册函数单独处理)，否则使用true,
+		dropName = "data/config/item/scriptItemConfig/RollItemDrops/drops11.txt",     --爆率的配置文件，同怪物的掉落
+	},
+	--风月轻烟宝箱
+	{
+		item_id = 1929,     --item_id表示物品的id
+		needDelete = true,  --needDelete 表示是否需要删除
+		needMinBagGrid = 1, --至少需要多少个背包格子的数量 
+		onlyDoRoll = true, --是否只执行爆物品的操作，如果程序还有其他的业务逻辑处理，这里使用false(自身注册函数单独处理)，否则使用true,
+		dropName = "data/config/item/scriptItemConfig/RollItemDrops/drops12.txt",     --爆率的配置文件，同怪物的掉落
+	},
+	--暗弑魅杀宝箱
+	{
+		item_id = 1930,     --item_id表示物品的id
+		needDelete = true,  --needDelete 表示是否需要删除
+		needMinBagGrid = 1, --至少需要多少个背包格子的数量 
+		onlyDoRoll = true, --是否只执行爆物品的操作，如果程序还有其他的业务逻辑处理，这里使用false(自身注册函数单独处理)，否则使用true,
+		dropName = "data/config/item/scriptItemConfig/RollItemDrops/drops13.txt",     --爆率的配置文件，同怪物的掉落
+	},
+	--黑煞千钧宝箱
+	{
+		item_id = 1931,     --item_id表示物品的id
+		needDelete = true,  --needDelete 表示是否需要删除
+		needMinBagGrid = 1, --至少需要多少个背包格子的数量 
+		onlyDoRoll = true, --是否只执行爆物品的操作，如果程序还有其他的业务逻辑处理，这里使用false(自身注册函数单独处理)，否则使用true,
+		dropName = "data/config/item/scriptItemConfig/RollItemDrops/drops14.txt",     --爆率的配置文件，同怪物的掉落
+	},
+	--紫电苍茫宝箱
+	{
+		item_id = 1932,     --item_id表示物品的id
+		needDelete = true,  --needDelete 表示是否需要删除
+		needMinBagGrid = 1, --至少需要多少个背包格子的数量 
+		onlyDoRoll = true, --是否只执行爆物品的操作，如果程序还有其他的业务逻辑处理，这里使用false(自身注册函数单独处理)，否则使用true,
+		dropName = "data/config/item/scriptItemConfig/RollItemDrops/drops15.txt",     --爆率的配置文件，同怪物的掉落
+	},
+	--碧落生死宝箱
+	{
+		item_id = 1933,     --item_id表示物品的id
+		needDelete = true,  --needDelete 表示是否需要删除
+		needMinBagGrid = 1, --至少需要多少个背包格子的数量 
+		onlyDoRoll = true, --是否只执行爆物品的操作，如果程序还有其他的业务逻辑处理，这里使用false(自身注册函数单独处理)，否则使用true,
+		dropName = "data/config/item/scriptItemConfig/RollItemDrops/drops16.txt",     --爆率的配置文件，同怪物的掉落
+	},
+	--阎魔千杀宝箱
+	{
+		item_id = 1934,     --item_id表示物品的id
+		needDelete = true,  --needDelete 表示是否需要删除
+		needMinBagGrid = 1, --至少需要多少个背包格子的数量 
+		onlyDoRoll = true, --是否只执行爆物品的操作，如果程序还有其他的业务逻辑处理，这里使用false(自身注册函数单独处理)，否则使用true,
+		dropName = "data/config/item/scriptItemConfig/RollItemDrops/drops17.txt",     --爆率的配置文件，同怪物的掉落
+	},
+	--斩鬼修罗宝箱
+	{
+		item_id = 1935,     --item_id表示物品的id
+		needDelete = true,  --needDelete 表示是否需要删除
+		needMinBagGrid = 1, --至少需要多少个背包格子的数量 
+		onlyDoRoll = true, --是否只执行爆物品的操作，如果程序还有其他的业务逻辑处理，这里使用false(自身注册函数单独处理)，否则使用true,
+		dropName = "data/config/item/scriptItemConfig/RollItemDrops/drops18.txt",     --爆率的配置文件，同怪物的掉落
+	},
+	--紫霄帝恨宝箱
+	{
+		item_id = 1936,     --item_id表示物品的id
+		needDelete = true,  --needDelete 表示是否需要删除
+		needMinBagGrid = 1, --至少需要多少个背包格子的数量 
+		onlyDoRoll = true, --是否只执行爆物品的操作，如果程序还有其他的业务逻辑处理，这里使用false(自身注册函数单独处理)，否则使用true,
+		dropName = "data/config/item/scriptItemConfig/RollItemDrops/drops19.txt",     --爆率的配置文件，同怪物的掉落
+	},
+	--六道轮回宝箱
+	{
+		item_id = 1937,     --item_id表示物品的id
+		needDelete = true,  --needDelete 表示是否需要删除
+		needMinBagGrid = 1, --至少需要多少个背包格子的数量 
+		onlyDoRoll = true, --是否只执行爆物品的操作，如果程序还有其他的业务逻辑处理，这里使用false(自身注册函数单独处理)，否则使用true,
+		dropName = "data/config/item/scriptItemConfig/RollItemDrops/drops20.txt",     --爆率的配置文件，同怪物的掉落
+	},
+	--1级宝石箱
+	{
+		item_id = 1942,     --item_id表示物品的id
+		needDelete = true,  --needDelete 表示是否需要删除
+		needMinBagGrid = 1, --至少需要多少个背包格子的数量 
+		onlyDoRoll = true, --是否只执行爆物品的操作，如果程序还有其他的业务逻辑处理，这里使用false(自身注册函数单独处理)，否则使用true,
+		dropName = "data/config/item/scriptItemConfig/RollItemDrops/drops21.txt",     --爆率的配置文件，同怪物的掉落
+	},
+		--40级攻击模具 
+	{
+		item_id = 2101,     --item_id表示物品的id
+		needDelete = true,  --needDelete 表示是否需要删除
+		needMinBagGrid = 1, --至少需要多少个背包格子的数量 
+		onlyDoRoll = true, --是否只执行爆物品的操作，如果程序还有其他的业务逻辑处理，这里使用false(自身注册函数单独处理)，否则使用true,
+		dropName = "data/config/item/scriptItemConfig/RollItemDrops/drops22.txt",     --爆率的配置文件，同怪物的掉落
+	},
+		--40级防御模具
+	{
+		item_id = 2102,     --item_id表示物品的id
+		needDelete = true,  --needDelete 表示是否需要删除
+		needMinBagGrid = 1, --至少需要多少个背包格子的数量 
+		onlyDoRoll = true, --是否只执行爆物品的操作，如果程序还有其他的业务逻辑处理，这里使用false(自身注册函数单独处理)，否则使用true,
+		dropName = "data/config/item/scriptItemConfig/RollItemDrops/drops23.txt",     --爆率的配置文件，同怪物的掉落
+	},
+		--50级攻击模具
+	{
+		item_id = 2103,     --item_id表示物品的id
+		needDelete = true,  --needDelete 表示是否需要删除
+		needMinBagGrid = 1, --至少需要多少个背包格子的数量 
+		onlyDoRoll = true, --是否只执行爆物品的操作，如果程序还有其他的业务逻辑处理，这里使用false(自身注册函数单独处理)，否则使用true,
+		dropName = "data/config/item/scriptItemConfig/RollItemDrops/drops24.txt",     --爆率的配置文件，同怪物的掉落
+	},
+		--50级防御模具
+	{
+		item_id = 2104,     --item_id表示物品的id
+		needDelete = true,  --needDelete 表示是否需要删除
+		needMinBagGrid = 1, --至少需要多少个背包格子的数量 
+		onlyDoRoll = true, --是否只执行爆物品的操作，如果程序还有其他的业务逻辑处理，这里使用false(自身注册函数单独处理)，否则使用true,
+		dropName = "data/config/item/scriptItemConfig/RollItemDrops/drops25.txt",     --爆率的配置文件，同怪物的掉落
+	},
+	    --60级攻击模具
+	{
+		item_id = 2105,     --item_id表示物品的id
+		needDelete = true,  --needDelete 表示是否需要删除
+		needMinBagGrid = 1, --至少需要多少个背包格子的数量 
+		onlyDoRoll = true, --是否只执行爆物品的操作，如果程序还有其他的业务逻辑处理，这里使用false(自身注册函数单独处理)，否则使用true,
+		dropName = "data/config/item/scriptItemConfig/RollItemDrops/drops26.txt",     --爆率的配置文件，同怪物的掉落
+	},
+		--60级防御模具
+	{
+		item_id = 2106,     --item_id表示物品的id
+		needDelete = true,  --needDelete 表示是否需要删除
+		needMinBagGrid = 1, --至少需要多少个背包格子的数量 
+		onlyDoRoll = true, --是否只执行爆物品的操作，如果程序还有其他的业务逻辑处理，这里使用false(自身注册函数单独处理)，否则使用true,
+		dropName = "data/config/item/scriptItemConfig/RollItemDrops/drops27.txt",     --爆率的配置文件，同怪物的掉落
+	},
+			--6级宝石礼包
+	{
+		item_id = 2126,     --item_id表示物品的id
+		needDelete = true,  --needDelete 表示是否需要删除
+		needMinBagGrid = 1, --至少需要多少个背包格子的数量 
+		onlyDoRoll = true, --是否只执行爆物品的操作，如果程序还有其他的业务逻辑处理，这里使用false(自身注册函数单独处理)，否则使用true,
+		dropName = "data/config/item/scriptItemConfig/RollItemDrops/drops28.txt",     --爆率的配置文件，同怪物的掉落
+	},
+	--月宫宝箱 
+	{
+		item_id = 2108,     --item_id表示物品的id
+		needDelete = true,  --needDelete 表示是否需要删除
+		needMinBagGrid = 2, --至少需要多少个背包格子的数量
+		onlyDoRoll = true, --是否只执行爆物品的操作，如果程序还有其他的业务逻辑处理，这里使用false(自身注册函数单独处理)，否则使用true,
+		dropName = "data/config/item/scriptItemConfig/RollItemDrops/drops29.txt",     --爆率的配置文件，同怪物的掉落
+	},
+   --花
+	{
+		item_id = 2119,     --item_id表示物品的id
+		needDelete = true,  --needDelete 表示是否需要删除
+		needMinBagGrid = 2, --至少需要多少个背包格子的数量
+		onlyDoRoll = true, --是否只执行爆物品的操作，如果程序还有其他的业务逻辑处理，这里使用false(自身注册函数单独处理)，否则使用true,
+		dropName = "data/config/item/scriptItemConfig/RollItemDrops/drops30.txt",     --爆率的配置文件，同怪物的掉落
+	},
+	 --好
+	{
+		item_id = 2120,     --item_id表示物品的id
+		needDelete = true,  --needDelete 表示是否需要删除
+		needMinBagGrid = 2, --至少需要多少个背包格子的数量
+		onlyDoRoll = true, --是否只执行爆物品的操作，如果程序还有其他的业务逻辑处理，这里使用false(自身注册函数单独处理)，否则使用true,
+		dropName = "data/config/item/scriptItemConfig/RollItemDrops/drops31.txt",     --爆率的配置文件，同怪物的掉落
+	},
+  --月
+	{
+		item_id = 2121,     --item_id表示物品的id
+		needDelete = true,  --needDelete 表示是否需要删除
+		needMinBagGrid = 2, --至少需要多少个背包格子的数量
+		onlyDoRoll = true, --是否只执行爆物品的操作，如果程序还有其他的业务逻辑处理，这里使用false(自身注册函数单独处理)，否则使用true,
+		dropName = "data/config/item/scriptItemConfig/RollItemDrops/drops32.txt",     --爆率的配置文件，同怪物的掉落
+	},
+ --圆
+	{
+		item_id = 2122,     --item_id表示物品的id
+		needDelete = true,  --needDelete 表示是否需要删除
+		needMinBagGrid = 2, --至少需要多少个背包格子的数量
+		onlyDoRoll = true, --是否只执行爆物品的操作，如果程序还有其他的业务逻辑处理，这里使用false(自身注册函数单独处理)，否则使用true,
+		dropName = "data/config/item/scriptItemConfig/RollItemDrops/drops33.txt",     --爆率的配置文件，同怪物的掉落
+	},
+ --VIP优惠大礼包
+	{
+		item_id = 2158,     --item_id表示物品的id
+		needDelete = true,  --needDelete 表示是否需要删除
+		needMinBagGrid = 3, --至少需要多少个背包格子的数量
+		onlyDoRoll = true, --是否只执行爆物品的操作，如果程序还有其他的业务逻辑处理，这里使用false(自身注册函数单独处理)，否则使用true,
+		dropName = "data/config/item/scriptItemConfig/RollItemDrops/drops34.txt",     --爆率的配置文件，同怪物的掉落
+	},
+ --圣火包
+	{
+		item_id = 2161,     --item_id表示物品的id
+		needDelete = true,  --needDelete 表示是否需要删除
+		needMinBagGrid = 3, --至少需要多少个背包格子的数量
+		onlyDoRoll = true, --是否只执行爆物品的操作，如果程序还有其他的业务逻辑处理，这里使用false(自身注册函数单独处理)，否则使用true,
+		dropName = "data/config/item/scriptItemConfig/RollItemDrops/drops35.txt",     --爆率的配置文件，同怪物的掉落
+	},
+ --明焱包
+	{
+		item_id = 2162,     --item_id表示物品的id
+		needDelete = true,  --needDelete 表示是否需要删除
+		needMinBagGrid = 2, --至少需要多少个背包格子的数量
+		onlyDoRoll = true, --是否只执行爆物品的操作，如果程序还有其他的业务逻辑处理，这里使用false(自身注册函数单独处理)，否则使用true,
+		dropName = "data/config/item/scriptItemConfig/RollItemDrops/drops36.txt",     --爆率的配置文件，同怪物的掉落
+	},
+}

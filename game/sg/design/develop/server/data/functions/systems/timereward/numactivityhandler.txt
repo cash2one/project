@@ -1,0 +1,49 @@
+--活动累计达标处理，为活动系统服务
+--#include "numactivityconf.txt" once
+
+activityFunc.tailActivitylist = {}
+
+--加达标次数
+ONLINEREWARD.tailActivityAddNum = function(sysarg, typeid, num)
+	if num == nil or typeid == nil or sysarg == nil then return end
+	print("ONLINEREWARD.tailActivityAddNum typeid:"..typeid..",num:"..num)
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+
+	for i,v in ipairs(activityFunc.tailActivitylist) do
+		--print("ONLINEREWARD.tailActivityAddNum id:"..v)
+		local oneConf = activityConf[v]
+
+		--如果活动还没开始则不累加天数
+		local state = ONLINEREWARD.GetActivityState(oneConf.activityId)
+
+		if state ~= 0 then
+			--是否重置
+			ONLINEREWARD.CheckResetActivityInfo(sysarg, oneConf.activityId)
+
+			for p,k in ipairs(numActivityConf.typelist) do
+				if oneConf.activities[k] == nil or oneConf.activities[k].id == nil or oneConf.activities[k].typeid == nil or oneConf.activities[k].typeid ~= typeid then break end
+				if num >= numActivityConf.numaction[typeid] then 
+					if var.activityList == nil then var.activityList = {} end
+					if var.activityList[v] == nil then var.activityList[v] = {} end
+					if var.activityList[v].tailactivitynum == nil then  var.activityList[v].tailactivitynum = 0 end
+					var.activityList[v].tailactivitynum = var.activityList[v].tailactivitynum + 1
+					--print("ONLINEREWARD.tailActivityAddNum activityid:"..v..",typeid:"..typeid..",tailactivitynum:"..var.activityList[v].tailactivitynum)
+				end
+			end
+		end
+	end
+end
+
+activityFunc.tailActivityinit = function()
+	for i,v in ipairs(activityidlist) do
+		local oneConf = activityConf[v]
+		for p,k in ipairs(numActivityConf.typelist) do
+			if oneConf.activities[k] ~= nil and oneConf.activities[k].id ~= nil then
+				table.insert(activityFunc.tailActivitylist, v)
+			end
+		end
+	end
+end
+
+table.insert(InitFnTable, activityFunc.tailActivityinit)

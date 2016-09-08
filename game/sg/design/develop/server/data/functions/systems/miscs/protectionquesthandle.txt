@@ -1,0 +1,45 @@
+﻿--#include "data\config\quest\ProtectionQuest.txt" once
+--#include "data\functions\Tasks\ProectionFun\ProectionFun.txt" once
+EventCallDispatcher.OnProtectionQuest = function( sysarg, arg )
+	--print("测试保护任务")
+	local event = arg[1]
+	local questId = arg[2]
+	local taskId = arg[3]
+	if event == nil or questId == nil or taskId == nil then return end
+	if event == seAddQuest then
+	
+	local svar = LActor.getDyanmicVar(sysarg)
+		for i = 1,#Protection do 
+			if taskId == Protection[i].questid then
+				local x, y = LActor.getEntityPosition(sysarg, 0, 0)
+				monster = LActor.createMonster(sysarg, Protection[i].questmonster, x, y, 0)	
+				if (monster ~= nil) then
+					svar.ProtectionMonster = LActor.getHandle(monster) --怪物句柄
+					LActor.refreshActorObserveList(sysarg)     --刷新观察者，防止客户端延迟 
+					LActor.followActor(monster, sysarg, 1, 30, true) --跟随某个玩家
+					LActor.setEntityTelByOwnderAttr(monster, true)   --设置实体是否跟着归属者传送
+					LActor.setEntityLazyFollow(monster, false)        --设置实体是否惰性跟随
+					LActor.setDenyAttackedByActor(monster, false)     --设置实体是否不可被玩家攻击
+					LActor.setDenyBeAttack(monster,false)
+					LActor.addBuff(sysarg,Protection[i].BuffType,Protection[i].buffGroup, Protection[i].buffValue, Protection[i].buffTimes,Protection[i].buffTime, Protection[i].buffName, false) --添加buff
+					
+					LActor.ChangeStatus(sysarg)
+					LActor.addBuff(sysarg,Protection[i].BuffType1,Protection[i].buffGroup, Protection[i].buffValue, Protection[i].buffTimes,Protection[i].buffTime, Protection[i].buffName1, false) --添加buff
+					LActor.addBuff(sysarg,Protection[i].BuffType2,Protection[i].buffGroup, Protection[i].buffValue, Protection[i].buffTimes,Protection[i].buffTime, Protection[i].buffName2, false) --添加buff
+					
+					--LActor.addState(sysarg,17)
+					--LActor.addState(sysarg,18)
+					break
+				end
+			end
+		end
+	end
+	if event == seFinish then
+		
+	end
+	if event == seGiveUp or event == seTimeout then
+		clearProectionMon(sysarg,taskId)
+	end
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeStarQuest, EventCallDispatcher.OnProtectionQuest)

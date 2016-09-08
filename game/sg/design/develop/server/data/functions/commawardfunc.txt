@@ -1,0 +1,258 @@
+-- 通用发奖励
+-- Author: LiaoYuDong
+-- Date: 2016-07-04
+
+CommAwardFunc = {}
+
+CommAwardFunc.giveFunctions = {} -- 在线奖励对应擦欧洲哦函数
+
+--[[
+//统一的奖励类型
+enum tagCommAwardType
+{
+	catItem = 1, // 物品 LActor.addItem
+	catMoney = 2, // 金钱，type(0：铜钱, 1：银两(取消)，2：绑定元宝，3：元宝） LActor.changeMoney
+	catGuildContribution = 3, // 世族贡献 LActor.giveAward
+	catXingHun = 5, // 星魂	qatRootExp LActor.giveAward
+	catExp = 6, // 经验 LActor.addExp
+	catTitle = 8, // 称号 此时item_id表示称号ID LActor.GiveTitle
+	catShengWang = 10, // 威望 LActor.giveAward
+	catHonor = 16, // 荣誉值
+	catPassKey = 17, // 钥匙值
+// 	18：技艺值琴
+// 	19：技艺值棋
+// 	20：技艺值书
+// 	21：技艺值画
+	catGuildBuild = 22, // 世族繁荣度
+	catGuildProperty = 23, // 世族财产
+};
+玩家实体 类型 数量 日志id 没特别意义的额外参数 日志描述
+bool giveAward(void* pEntity, int nType, int nValue, int nLogId, int auxParam, char* pLogStr,
+	int value, bool needLog, -- 日志value参数 是否需要记录日志
+	const char* phylum, -- 日志pyhlum参数
+	const char* classfield, -- 日志classfield参数
+	const char* family, -- 日志family参数
+	const char* genus, -- 日志genus参数
+	bool isSendTipMsg) -- 是否需要发送tips
+--]]
+CommAwardFunc.giveFunctions[catItem] = function (actorobj, itemId, itemNum, forwhat)
+	if actorobj == nil or tonumber(itemId) == nil or tonumber(itemNum) == nil then return end
+	if type(forwhat) ~= "string" then
+		forwhat = "CommAwardFunc_giveFunctions[catItem]"
+	end
+	-- 道具比较特殊 需要把不够塞背包的物品发邮件
+	local more = LActor.addItem(actorobj, itemId, 0, 0, itemNum, 0, forwhat)
+	local needSendMailNum = itemNum - more
+	if needSendMailNum > 0 then -- 需要发邮箱
+		System.sendGmMailOffLine(LActor.getActorId(actorobj), Lang.ScriptTips.fi00034, 1, itemId, needSendMailNum, 0, forwhat)
+	end
+end
+
+CommAwardFunc.giveFunctions[catMoney] = function (actorobj, id, num, forwhat, ...)
+	if actorobj == nil or tonumber(id) == nil or tonumber(num) == nil then return end
+	if type(forwhat) ~= "string" then
+		forwhat = "CommAwardFunc_giveFunctions[catMoney]"
+	end
+	local moneyType = id
+	if moneyType == 0 then
+		moneyType = qatBindMoney
+	else
+		moneyType = CommAwardFunc.getMoneyType(id)
+	end
+	LActor.giveAward(actorobj, moneyType, num, 0, 0, forwhat, 1, true, ...)
+end
+
+CommAwardFunc.giveFunctions[catGuildContribution] = function (actorobj, id, num, forwhat)
+	if actorobj == nil or tonumber(num) == nil then return end
+	if type(forwhat) ~= "string" then
+		forwhat = "CommAwardFunc_giveFunctions[catGuildContribution]"
+	end
+	LActor.giveAward(actorobj, qatGuildContribution, num, 0, 0, forwhat)
+end
+
+CommAwardFunc.giveFunctions[catXingHun] = function (actorobj, id, num, forwhat)
+	if actorobj == nil or tonumber(num) == nil then return end
+	if type(forwhat) ~= "string" then
+		forwhat = "CommAwardFunc_giveFunctions[catXingHun]"
+	end
+	LActor.giveAward(actorobj, qatRootExp, num, 0, 0, forwhat)
+end
+
+CommAwardFunc.giveFunctions[catExp] = function (actorobj, id, num, forwhat)
+	if actorobj == nil or tonumber(num) == nil then return end
+	if type(forwhat) ~= "string" then
+		forwhat = "CommAwardFunc_giveFunctions[catExp]"
+	end
+	LActor.giveAward(actorobj, qatExp, num, 0, 0, forwhat)
+end
+
+CommAwardFunc.giveFunctions[catTitle] = function (actorobj, id, num, forwhat)
+	if actorobj == nil or tonumber(num) == nil then return end
+	if type(forwhat) ~= "string" then
+		forwhat = "CommAwardFunc_giveFunctions[catTitle]"
+	end
+	LActor.giveAward(actorobj, qatTitle, num, 0, 0, forwhat)
+end
+
+CommAwardFunc.giveFunctions[catShengWang] = function (actorobj, id, num, forwhat, ...)
+	if actorobj == nil or tonumber(num) == nil then return end
+	if type(forwhat) ~= "string" then
+		forwhat = "CommAwardFunc_giveFunctions[catShengWang]"
+	end
+	LActor.giveAward(actorobj, qatShengWang, num, 0, 0, forwhat, 0, true, ...)
+	LActor.SetAchieveProcessByType(actorobj, 43, 1, num)
+end
+
+CommAwardFunc.giveFunctions[catHonor] = function (actorobj, id, num, forwhat)
+	if actorobj == nil or tonumber(num) == nil then return end
+	if type(forwhat) ~= "string" then
+		forwhat = "CommAwardFunc_giveFunctions[catHonor]"
+	end
+	LActor.giveAward(actorobj, qatHonor, num, 0, 0, forwhat)
+end
+
+CommAwardFunc.giveFunctions[catPassKey] = function (actorobj, id, num, forwhat)
+	if actorobj == nil or tonumber(num) == nil then return end
+	if type(forwhat) ~= "string" then
+		forwhat = "CommAwardFunc_giveFunctions[catPassKey]"
+	end
+	LActor.giveAward(actorobj, qatPassKey, num, 0, 0, forwhat)
+end
+
+CommAwardFunc.giveFunctions[catGuildBuild] = function (actorobj, id, num, forwhat)
+	if actorobj == nil or tonumber(num) == nil then return end
+	if type(forwhat) ~= "string" then
+		forwhat = "CommAwardFunc_giveFunctions[catGuildBuild]"
+	end
+	LActor.giveAward(actorobj, qatGuildBuild, num, 0, 0, forwhat)
+end
+
+CommAwardFunc.giveFunctions[catGuildProperty] = function (actorobj, id, num, forwhat)
+	if actorobj == nil or tonumber(num) == nil then return end
+	if type(forwhat) ~= "string" then
+		forwhat = "CommAwardFunc_giveFunctions[catGuildProperty]"
+	end
+	LActor.giveAward(actorobj, qatGuildProperty, num, 0, 0, forwhat)
+end
+
+--[[
+actorobj 玩家对象
+awards = { -- 奖励表
+	items = { -- 奖励列表
+		{
+			itemType = 0,
+			itemId = 0,
+			itemNum = 0,
+		},
+	},
+}
+forwhat 用于做什么
+--]]
+function CommAwardFunc.giveToActor (actorobj, awards, forwhat, ...)
+	if actorobj == nil or awards == nil or type(awards) ~= "table" then
+		return
+	end
+	forwhat = forwhat or "CommAwardFunc_giveToActor"
+	local giveTable = {}
+	local optTable = awards
+	if awards.items ~= nil and type(awards.items) == "table" then
+		optTable = awards.items
+	end
+	if optTable ~= nil and type(optTable) == "table" and #optTable > 0 then
+		for k, v in ipairs(optTable) do
+			if v.itemType ~= nil and v.itemId ~= nil and v.itemNum ~= nil then
+				if CommAwardFunc.giveFunctions[v.itemType] ~= nil and type(CommAwardFunc.giveFunctions[v.itemType]) == "function" then
+					CommAwardFunc.giveFunctions[v.itemType](actorobj, v.itemId, v.itemNum, forwhat, ...)
+					table.insert(giveTable, v)
+				end
+			end
+		end
+	end
+	return giveTable
+end
+
+--[[
+有普通catType转邮箱type对应
+1 物品
+2 金钱
+3 世族贡献
+4 世族繁荣度
+5 星魂
+6 经验
+10 威望
+16 荣誉值
+17 钥匙值
+18 ~ 21 琴棋书画
+22 战队个人积分
+--]]
+function CommAwardFunc.transformEmailType (itemType)
+	if itemType == catGuildBuild then
+		return 4
+	end
+	return itemType
+end
+
+--[[
+发送邮件
+actorobj 玩家对象
+awards = { -- 奖励表
+	items = { -- 奖励列表
+		{
+			itemType = 0,
+			itemId = 0,
+			itemNum = 0,
+		},
+	},
+}
+title 标题
+desc 内容
+--]]
+function CommAwardFunc.giveToActorOffLine (actorid, awards, title, desc)
+	if tonumber(actorid) == nil or awards == nil or type(awards) ~= "table" or title == nil or desc == nil then
+		return
+	end
+	desc = desc or Lang.ScriptTips.fi00034
+	local giveTable = {}
+	local optTable = awards
+	if awards.items ~= nil and type(awards.items) == "table" then
+		optTable = awards.items
+	end
+	if optTable ~= nil and type(optTable) == "table" and #optTable > 0 then
+		local cnt = #optTable
+		local loop = math.floor((cnt - 1) / 5) + 1 -- 需要分几次发
+		for n = 1, loop do
+			local tmpTable = {}
+			for i = 1, 5 do
+				local index = (n - 1) * 5 + i
+				tmpTable[i] = {}
+				if optTable[index] == nil then
+					tmpTable[i].itemType = 0
+					tmpTable[i].itemId = 0
+					tmpTable[i].itemNum = 0
+				else
+					tmpTable[i].itemType = optTable[index].itemType
+					tmpTable[i].itemId = optTable[index].itemId
+					tmpTable[i].itemNum = optTable[index].itemNum
+					table.insert(giveTable, optTable[index])
+				end
+			end
+			System.sendGmMailOffLine(actorid, desc, CommAwardFunc.transformEmailType(tmpTable[1].itemType), tmpTable[1].itemId, tmpTable[1].itemNum, 0, title,
+				CommAwardFunc.transformEmailType(tmpTable[2].itemType), tmpTable[2].itemId, tmpTable[2].itemNum, 0,
+				CommAwardFunc.transformEmailType(tmpTable[3].itemType), tmpTable[3].itemId, tmpTable[3].itemNum, 0,
+				CommAwardFunc.transformEmailType(tmpTable[4].itemType), tmpTable[4].itemId, tmpTable[4].itemNum, 0,
+				CommAwardFunc.transformEmailType(tmpTable[5].itemType), tmpTable[5].itemId, tmpTable[5].itemNum, 0)
+		end
+	end
+	return giveTable
+end
+
+function CommAwardFunc.getMoneyType (moneyType)
+	if moneyType == qatBindMoney then
+		return 0
+	elseif moneyType == qatLiJin then
+		return 2
+	elseif moneyType == qatYuanbao then
+		return 3
+	end
+	return moneyType
+end

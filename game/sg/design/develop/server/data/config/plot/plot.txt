@@ -1,0 +1,336 @@
+--#include "..\..\language\LangCode.txt"
+--[[
+剧情配置
+情景的索引即情景的id，所以游戏上线后情景的顺序不可以随意更改，
+也不可以随意删除和在中间插入情景，只能一直往后添加
+--]]
+Plot = 
+{
+	--[[情景0
+	{
+	
+		情景触发条件
+		type	触发类型，0-完成某任务、1-首次进入某副本、2-击杀某怪物
+		ids		id列表，按触发类型分别为任务id、副本id、怪物id
+		
+		trigger = {type = 0, ids = {16, 44, 72},},
+		
+	
+		演员表
+		注意：
+		1、请把主角放在最前；
+		2、对白中出现主角名称的地方使用$mainActor$代替；
+		3、演员的顺序一旦确定就不可以随意更改，剧本中将会引用演员的顺序
+		race		演员种族，0-人类、1-怪物、2-NPC。这个决定演员的外观
+		name		演员名称，主角名称使用$mainActor$代替
+		model		模型编号，已经存在的角色则填-1，例如：主角、NPC等
+		face		头像编号，主角头像填1000，头像在svn\design\hlxx\envir\client\data\interface\bigHeadFace下面
+		faceSide	头像显示哪一边，0-右边，1-左边
+		mapX		地图网格x坐标，对已存在的角色无效，但主角除外
+		mapY		地图网格y坐标，对已存在的角色无效，但主角除外
+		toward		演员朝向，2-向右、6-向左，对已存在的角色无效，但主角除外
+		delayAppear	是否延迟出场，不填默认为false，表示情景一开始就会出现，对需要延迟出场的演员设置为true
+		
+		actors = 
+		{
+			{race = 0, name = Lang.Plot.t00000, model = -1, face = 0, faceSide = 1, mapX = 21, mapY = 20, toward = 2,},
+			{race = 2, name = Lang.PlotName.p0, model = -1, face = 0,},
+			{race = 1, name = Lang.PlotName.p1, model = 8 , face = 0, mapX = 23, mapY = 21, toward = 2,},
+			{race = 1, name = Lang.PlotName.p2, model = 9 , face = 0, mapX = 25, mapY = 21, toward = 6,},
+		},
+		
+	
+		剧本，即剧情过程配置
+		type		动作类型，0-对话、1-直接消失、2-跑出屏幕消失、3-演员出场、4-调节屏幕亮度、5-浮现文字、6-播放特效
+		actors		执行动作的演员索引列表，索引为在演员表中的顺序，从0开始；
+					当类型为5时，{中心x偏移, 中心y偏移, 特效帧频, 特效播放次数}，并且必须配置，不然会引起错误
+					当类型为6时，{中心x偏移, 中心y偏移}，并且必须配置，不然会引起错误
+		text		文本，可用作对话文本内容，也可用作黑幕上显示的文本
+		duration	执行动作花费的时间，单位毫秒。当类型为0时无效
+		runToward	方向，类型为2时，2-向右跑，6-向左跑；类型为4时，0-暗，1-亮
+		effect		特效编号
+	
+		scripts = 
+		{
+			{type = 0, actors = {3,}, text = Lang.Plot.t00001,},
+			{type = 0, actors = {2,}, text = Lang.Plot.t00002,},
+			{type = 3, actors = {2,}, duration = 500},
+			{type = 2, actors = {2,}, duration = 2000, runToward = 2,},
+			{type = 2, actors = {3,}, duration = 2000, runToward = 6,},
+			{type = 0, actors = {0,}, text = Lang.Plot.t00002,},
+			{type = 4, duration = 1000, runToward = 0,},
+			{type = 6, actors = {0, 50, 0, 1}, duration = 1000, effect = 8,},
+			{type = 5, actors = {0, -20}, duration = 4000, text = Lang.Plot.t00011,},
+			{type = 4, duration = 1000, runToward = 1,},
+		},
+	},
+	--]]
+	--情景1
+	--[[{
+		trigger = {type = 0, ids = {8, 37, 66},},
+		actors = 
+		{
+			{race = 0, name = Lang.Plot.t00000, model = -1, face = 1000, faceSide = 1, mapX = 30, mapY = 36, toward = 2,},--玩家
+			{race = 2, name = Lang.PlotName.p0, model = -1, face = 11,},--踏云狐王
+			{race = 1, name = Lang.PlotName.p1, model = 10003 , face = 0, mapX = 33, mapY = 39, toward = 2,},--踏云狐
+		},
+		scripts = 
+		{
+			{actors = {1,}, text = Lang.Plot.t00001,},
+			{actors = {0,}, text = Lang.Plot.t00002,},
+			{actors = {1,}, text = Lang.Plot.t00003,},
+			{actors = {0,}, text = Lang.Plot.t00004,},
+			{actors = {1,}, text = Lang.Plot.t00005,},
+		},
+	},--]]
+	--情景2
+	--[[{
+		trigger = {type = 1, ids = {1, 2, 3},},
+		actors = 
+		{
+			{race = 0, name = Lang.Plot.t00000, model = -1, face = 1000, faceSide = 1, mapX = 4, mapY = 11, toward = 2,},--玩家
+			{race = 1,name = Lang.PlotName.p3, model = -1, face = 1011,mapX = 14, mapY = 10, toward = 6,},--炎魔万剑愁
+			{race = 2,name = Lang.PlotName.p4, model = -1, face = 13,mapX = 10, mapY = 9, toward = 6,},--慕容玉仙
+		},
+		scripts = 
+		{
+			{actors = {1,}, text = Lang.Plot.t00007,},
+			{actors = {2,}, text = Lang.Plot.t00008,},
+			{actors = {0,}, text = Lang.Plot.t00009,},
+			{actors = {1,}, text = Lang.Plot.t00010,},
+		},
+	},--]]
+	--情景3
+	{
+		trigger = {type = 2, ids = {17},},
+		actors = 
+		{
+			{race = 0, name = Lang.Plot.t00000, model = -1, face = 1000, faceSide = 1, mapX =9, mapY = 10, toward = 2,},--玩家
+			{race = 0, name = Lang.Plot.t00012, model = -1, face = 1008, faceSide = 1,},--萱儿
+			{race = 1, name = Lang.PlotName.p23, model = 35, face = 1019,delayAppear = true ,mapX = 16, mapY = 10, toward = 6,},--熔岩魔将
+			{race = 1, name = Lang.PlotName.p24, model = 35, face = 1019,delayAppear = true ,mapX = 14, mapY = 9, toward = 6,},--熔岩魔兵
+			{race = 1, name = Lang.PlotName.p25, model = 35, face = 1019,delayAppear = true ,mapX = 15, mapY = 12, toward = 6,},--熔岩魔卒
+		},
+		scripts = 
+		{
+			{actors = {1,}, text = Lang.Plot.t00013,},
+			{actors = {0,}, text = Lang.Plot.t00014,},
+			{type = 3,actors = {2,3,4},  duration = 500,},
+			{actors = {1,}, text = Lang.Plot.t00017,},
+		},
+	},
+	--情景4
+	{
+		trigger = {type = 1, ids = {5},},
+		actors = 
+		{
+			{race = 0, name = Lang.Plot.t00000, model = -1, face = 1000, faceSide = 1, mapX = 6, mapY = 9, toward = 2,},--玩家
+			{race = 0, name = Lang.Plot.t00012, model = -1, face = 1008, faceSide = 1},--萱儿
+			{race = 1, name = Lang.PlotName.p5, model = 33, face = 1012, mapX = 15, mapY = 9, toward = 6,},--蚩尤残魂
+		},
+		scripts = 
+		{
+			{actors = {1,}, text = Lang.Plot.t00018,},
+			{actors = {2,}, text = Lang.Plot.t00019,},
+			{actors = {1,}, text = Lang.Plot.t00020,},
+			{actors = {2,}, text = Lang.Plot.t00021,},
+			{type = 2,actors = {2,},  duration = 2500, runToward = 2,},
+		},
+	},
+	--情景5
+	{
+		trigger = {type = 2, ids = {33},},
+		actors = 
+		{
+			{race = 0, name = Lang.Plot.t00000, model = -1, face = 1000, faceSide = 1, mapX = 25, mapY = 9, toward = 2,},--玩家
+			{race = 0, name = Lang.Plot.t00012, model = -1, face = 1008, faceSide = 1},--萱儿
+			{race = 1, name = Lang.PlotName.p5, model = 33, face = 1012, mapX = 25, mapY = 9, toward = 6,},--蚩尤残魂
+		},
+		scripts = 
+		{
+			{actors = {2,}, text = Lang.Plot.t00022,},
+			{actors = {0,}, text = Lang.Plot.t00023,},
+			{actors = {2,}, text = Lang.Plot.t00024,},
+			{type = 1,actors = {2,}, duration = 2000,},
+			{actors = {1,}, text = Lang.Plot.t00025,},
+		},
+	},
+	--情景6
+	{
+		trigger = {type = 1, ids = {6},},
+		actors = 
+		{
+			{race = 0, name = Lang.Plot.t00000, model = -1, face = 1000, faceSide = 1, mapX = 5, mapY = 9, toward = 2,},--玩家
+			{race = 0, name = Lang.Plot.t00012, model = -1, face = 1008, faceSide = 1},--萱儿
+			{race = 2, name = Lang.PlotName.p6, model = 29, face = 29, mapX = 9 , mapY = 8 , toward = 2,},--采臣
+			{race = 2, name = Lang.PlotName.p7, model = 30, face = 30, mapX = 11, mapY = 7 , toward = 2,},--小倩
+			{race = 1, name = Lang.PlotName.p8, model = 9 , face = 1013, mapX = 10 , mapY = 10, toward = 2,},--赤霞
+			{race = 1, name = Lang.PlotName.p9, model = 38, face = 1014, mapX = 15, mapY = 9 , toward = 6,},--姥魔
+		},
+		scripts = 
+		{
+			{actors = {3,}, text = Lang.Plot.t00026,},
+			{actors = {5,}, text = Lang.Plot.t00027,},
+			{actors = {1,}, text = Lang.Plot.t00028,},
+			{actors = {5,}, text = Lang.Plot.t00029,},
+			{type = 2,actors = {5,},  duration = 2000,runToward = 2,},
+			{actors = {4,}, text = Lang.Plot.t00030,},
+			{type = 2,actors = {4,},  duration = 2500,runToward = 2,},
+		},
+	},
+	--情景7
+	{
+		trigger = {type = 2, ids = {38},},
+		actors = 
+		{
+			{race = 0, name = Lang.Plot.t00000, model = -1, face = 1000, faceSide = 1, mapX = 22, mapY = 9, toward = 2,},--玩家
+			{race = 0, name = Lang.Plot.t00012, model = -1, face = 1008, faceSide = 1},--萱儿
+			{race = 2, name = Lang.PlotName.p6, model = 29, face = 29, mapX = 24, mapY = 8 , toward = 6,},--采臣
+			{race = 2, name = Lang.PlotName.p7, model = 30, face = 30, mapX = 23, mapY = 11, toward = 6,},--小倩
+			{race = 1, name = Lang.PlotName.p8, model = 9 , face = 1013, mapX = 24, mapY = 10, toward = 6,},--赤霞
+			{race = 1, name = Lang.PlotName.p10, model = 10002, face = 0, mapX = 25, mapY = 10, toward = 6,},--轩辕剑
+		},
+		scripts = 
+		{
+			{actors = {4,}, text = Lang.Plot.t00031,},
+			{actors = {1,}, text = Lang.Plot.t00032,},
+			{actors = {3,}, text = Lang.Plot.t00033,},
+			{actors = {4,}, text = Lang.Plot.t00034,},
+			{type = 2,actors = {4,},  duration = 3000,runToward = 2,},
+			{actors = {3,}, text = Lang.Plot.t00035,},
+			{actors = {1,}, text = Lang.Plot.t00036,},
+		},
+	},
+	--情景8
+	{
+		trigger = {type = 2, ids = {47},},
+		actors = 
+		{
+			{race = 0, name = Lang.Plot.t00000, model = -1, face = 1000, faceSide = 1, mapX = 30, mapY = 9, toward = 2,},--玩家
+			{race = 1, name = Lang.PlotName.p11, model = 8, face = 1015,delayAppear = true ,mapX = 31, mapY = 12, toward = 6,},--冰女
+			{race = 1, name = Lang.PlotName.p12, model = 47, face = 1016, mapX = 33, mapY = 12, toward = 6,},--云霄
+			{race = 1, name = Lang.PlotName.p13, model = 10001, face = 0, delayAppear = true ,mapX = 30, mapY = 12, toward = 6,},--万载寒魄
+		},
+		scripts = 
+		{
+			{actors = {1,}, text = Lang.Plot.t00037,},
+			{type = 3,actors = {1,},  duration = 500,},
+			{type = 3,actors = {3,},  duration = 1000,},
+			{actors = {2,}, text = Lang.Plot.t00038,},
+			{actors = {0,}, text = Lang.Plot.t00039,},
+			{actors = {2,}, text = Lang.Plot.t00040,},
+			{actors = {1,}, text = Lang.Plot.t00041,},
+			{actors = {2,}, text = Lang.Plot.t00042,},
+		},
+	},
+	--情景9
+	{
+		trigger = {type = 1, ids = {57},},
+		actors = 
+		{
+			{race = 0, name = Lang.Plot.t00000, model = -1, face = 1000, faceSide = 1, mapX = 8, mapY = 6, toward = 2,},--玩家
+			{race = 0, name = Lang.Plot.t00012, model = -1, face = 1008, faceSide = 1},--萱儿
+			{race = 1, name = Lang.PlotName.p14, model = 17, face = 1017, mapX = 14, mapY = 9, toward = 6,},--炎帝怨念
+		},
+		scripts = 
+		{
+			{actors = {2,}, text = Lang.Plot.t00043,},
+			{actors = {1,}, text = Lang.Plot.t00044,},
+			{actors = {2,}, text = Lang.Plot.t00045,},
+			{actors = {1,}, text = Lang.Plot.t00046,},
+			{actors = {2,}, text = Lang.Plot.t00047,},
+			{type = 2,actors = {2,},  duration = 3000,runToward = 2,},
+		},
+	},
+	--情景10
+	{
+		trigger = {type = 2, ids = {57},},
+		actors = 
+		{
+			{race = 0, name = Lang.Plot.t00000, model = -1, face = 1000, faceSide = 1, mapX = 25, mapY = 10, toward = 2,},--玩家
+			{race = 1, name = Lang.PlotName.p14, model = 17, face = 1017,},--炎帝怨念
+			{race = 1, name = Lang.PlotName.p10, model = 14, face = 0, mapX = 27, mapY = 8, toward = 6,},--轩辕剑
+		},
+		scripts = 
+		{
+			{actors = {1,}, text = Lang.Plot.t00048,},
+		},
+	},
+	--情景11
+	{
+		trigger = {type = 0, ids = {220},},
+		actors = 
+		{
+			{race = 0, name = Lang.Plot.t00000, model = -1, face = 1000, faceSide = 1, mapX = 54, mapY = 12, toward = 2,},--玩家
+			{race = 2, name = Lang.PlotName.p15, model = 42, face = 42, mapX = 57, mapY = 12, toward = 6,},--拜月
+			{race = 2, name = Lang.PlotName.p16, model = -1, face = 41, },--南诏王
+			{race = 2, name = Lang.PlotName.p17, model = -1, face = 40, },--青儿
+			{race = 2, name = Lang.PlotName.p18, model = 39, face = 39, delayAppear = true ,mapX = 48, mapY = 11, toward = 2,},--素贞
+			{race = 1, name = Lang.PlotName.p19, model = 64, face = 1018, delayAppear = true ,mapX = 57, mapY = 12, toward = 6,},--水魔怪·拜月
+		},
+		scripts = 
+		{
+			{actors = {1,}, text = Lang.Plot.t00049,},
+			{actors = {2,}, text = Lang.Plot.t00050,},
+			{actors = {3,}, text = Lang.Plot.t00051,},
+			{type = 3,actors = {4,},  duration = 500,},
+			{actors = {4,}, text = Lang.Plot.t00052,},
+			{actors = {1,}, text = Lang.Plot.t00053,},
+			{actors = {4,}, text = Lang.Plot.t00054,},
+		    {type = 4, duration = 1000, runToward = 0,},
+			{type = 5, actors = {0, 0},duration = 4000, text = Lang.Plot.t00055,},
+			{type = 4, duration = 1000, runToward = 1,},
+			{type = 1, actors = {1,},duration = 500, },
+			{type = 3, actors = {5,},duration = 500, },
+			{actors = {4,}, text = Lang.Plot.t00056,},
+			{actors = {1,}, text = Lang.Plot.t00057,},
+		},
+	},
+	--情景12
+	{
+		trigger = {type = 0, ids = {244},},
+		actors = 
+		{
+			{race = 0, name = Lang.Plot.t00000, model = -1, face = 1000, faceSide = 1, mapX = 37, mapY = 11, toward = 6,},--玩家
+			{race = 2, name = Lang.PlotName.p20, model = -1, face = 46, },--黑龙之魂
+			{race = 2, name = Lang.PlotName.p21, model = 45, face = 45, mapX = 39, mapY = 11, toward = 6,},--小龙女
+		},
+		scripts = 
+		{
+			{actors = {2,}, text = Lang.Plot.t00058,},
+			{actors = {1,}, text = Lang.Plot.t00059,},
+			{actors = {2,}, text = Lang.Plot.t00060,},
+			{actors = {1,}, text = Lang.Plot.t00061,},
+		},
+	},
+	--情景13
+	{
+		trigger = {type = 1, ids = {9},},
+		actors = 
+		{
+			{race = 0, name = Lang.Plot.t00000, model = -1, face = 1000, faceSide = 1, mapX = 21, mapY = 13, toward = 6,},--玩家
+			{race = 0, name = Lang.Plot.t00012, model = -1, face = 1008, faceSide = 1},--萱儿
+			--{race = 1, name = Lang.PlotName.p22, model = 129, face = 0, mapX = 30, mapY = 15, toward = 6,},--一阶天雷
+		},
+		scripts = 
+		{
+			{actors = {1,}, text = Lang.Plot.t00062,},
+			{actors = {0,}, text = Lang.Plot.t00064,},
+		},
+	},
+	--情景14
+	{
+		trigger = {type = 0, ids = {285},},
+		actors = 
+		{
+			{race = 0, name = Lang.Plot.t00000, model = -1, face = 1000, faceSide = 1, mapX = 58, mapY = 45, toward = 2,},--玩家
+			{race = 2, name = Lang.PlotName.p26, model = -1, face = 1, },--黑龙之魂
+		},
+		scripts = 
+		{
+			{actors = {1,}, text = Lang.Plot.t00065,},
+			{actors = {0,}, text = Lang.Plot.t00066,},
+			{actors = {1,}, text = Lang.Plot.t00067,},
+		},
+	},
+}

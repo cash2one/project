@@ -1,0 +1,15 @@
+﻿--群体伤害-近程-冰剑特效
+{
+	id = 102,
+	name = Lang.Skill.s96Name,
+	desc = Lang.Skill.s96Desc,
+	vocation = 0,
+	skillType = 6,
+	skillSpellType = 0,
+	skillClass = 7,
+	commonCd = 0,
+	specialBuffCond =0,
+	skillSubLevel = { 
+--#include "Skill_102_1.txt"
+	},
+},

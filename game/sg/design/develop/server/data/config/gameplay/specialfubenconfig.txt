@@ -1,0 +1,140 @@
+--#include "..\..\language\LangCode.txt" once
+SpecialFubenConfig = {
+	-- [副本ID] = {}
+	[19] = { -- 诛莽复汉
+		activationType = 23, -- 触发的活跃度类型
+		openNeedItems = { -- 进入需要的条件
+		},
+		openDesc = Lang.SpecialFubenLang.sfl003, -- 前端的活动时间描述
+		openTimeStr = "2016-7-27 00:00:00", -- 开放日期
+		closeTimeStr = "2016-8-31 23:59:59", -- 结束日期
+		levelLimit = 30, -- 等级限制
+		actorCount = 3, -- 3人最多
+		challengeCount = 1, -- 挑战次数
+		recommendFight = 24000, -- 推荐战力
+		bossDesc = Lang.SpecialFubenLang.sfl002, -- boss介绍
+		crossAwards = { -- 奖励 可以不配 支配怪物掉落也行
+			{ -- 其中一个奖励
+				itemType = 1, -- 奖励类型
+				itemId = 26102, -- 奖励物品ID
+				itemNum = 2, -- 奖励物品数量
+			},
+			{ -- 其中一个奖励
+				itemType = 2, -- 奖励类型
+				itemId = 3, -- 奖励物品ID
+				itemNum = 10, -- 奖励物品数量
+			},
+			{ -- 其中一个奖励
+				itemType = 1, -- 奖励类型
+				itemId = 27111, -- 奖励物品ID
+				itemNum = 5, -- 奖励物品数量
+			},
+		},
+	},
+	[20] = {--帝魂惊梦
+		openNeedItems = { -- 进入需要的条件
+		},
+		openDesc = Lang.SpecialFubenLang.sfl004, -- 前端的活动时间描述
+		activationType = 23, -- 触发的活跃度类型
+		openTimeStr = "2016-8-5 00:00:00", -- 开放日期
+		closeTimeStr = "2016-8-31 23:59:59", -- 结束日期
+		levelLimit = 30, -- 等级限制
+		actorCount = 3, -- 3人最多
+		challengeCount = 1, -- 挑战次数
+		recommendFight = 100000, -- 推荐战力
+		bossDesc = Lang.SpecialFubenLang.sfl013, -- boss介绍
+		crossAwards = { -- 奖励
+			{ -- 其中一个奖励
+				itemType = 1, -- 奖励类型
+				itemId = 26102, -- 奖励物品ID
+				itemNum = 2, -- 奖励物品数量
+			},
+			{ -- 其中一个奖励
+				itemType = 2, -- 奖励类型
+				itemId = 3, -- 奖励物品ID
+				itemNum = 10, -- 奖励物品数量
+			},
+			{ -- 其中一个奖励
+				itemType = 1, -- 奖励类型
+				itemId = 27112, -- 奖励物品ID
+				itemNum = 5, -- 奖励物品数量
+			},
+		},
+	},
+	[21] = {--斩奸奠魂
+		openNeedItems = { -- 进入需要的条件
+			{
+				itemType = 1, -- 物品
+				itemId = 27204, -- 琥珀灵魄
+				itemNum = 30, -- 数量
+			},
+		},
+		getFromDesc = {
+				Lang.SpecialFubenLang.sfl007,
+	    },
+		openDesc = Lang.SpecialFubenLang.sfl005, -- 前端的活动时间描述
+		activationType = 23, -- 触发的活跃度类型
+		openTimeStr = "2016-8-12 00:00:00", -- 开放日期
+		closeTimeStr = "2016-8-31 23:59:59", -- 结束日期
+		levelLimit = 30, -- 等级限制
+		actorCount = 1, -- 3人最多
+		challengeCount = 1, -- 挑战次数
+		recommendFight = 100000, -- 推荐战力
+		bossDesc = Lang.SpecialFubenLang.sfl014, -- boss介绍
+		crossAwards = { -- 奖励
+			{ -- 其中一个奖励
+				itemType = 1, -- 奖励类型
+				itemId = 26102, -- 奖励物品ID
+				itemNum = 2, -- 奖励物品数量
+			},
+			{ -- 其中一个奖励
+				itemType = 2, -- 奖励类型
+				itemId = 3, -- 奖励物品ID
+				itemNum = 10, -- 奖励物品数量
+			},
+			{ -- 其中一个奖励
+				itemType = 1, -- 奖励类型
+				itemId = 27113, -- 奖励物品ID
+				itemNum = 5, -- 奖励物品数量
+			},
+		},
+	},
+	[22] = {--断情绝梦
+		openNeedItems = { -- 进入需要的条件
+			{
+				itemType = 1, -- 物品
+				itemId = 27205, -- 竹简
+				itemNum = 30, -- 数量
+			},
+		},
+		getFromDesc = {
+			    Lang.SpecialFubenLang.sfl010,
+	    },
+		openDesc = Lang.SpecialFubenLang.sfl006, -- 前端的活动时间描述
+		activationType = 23, -- 触发的活跃度类型
+		openTimeStr = "2016-8-16 00:00:00", -- 开放日期
+		closeTimeStr = "2016-8-31 23:59:59", -- 结束日期
+		levelLimit = 30, -- 等级限制
+		actorCount = 1, -- 3人最多
+		challengeCount = 1, -- 挑战次数
+		recommendFight = 100000, -- 推荐战力
+		bossDesc = Lang.SpecialFubenLang.sfl015, -- boss介绍
+		crossAwards = { -- 奖励
+			{ -- 其中一个奖励
+				itemType = 1, -- 奖励类型
+				itemId = 26102, -- 奖励物品ID
+				itemNum = 2, -- 奖励物品数量
+			},
+			{ -- 其中一个奖励
+				itemType = 2, -- 奖励类型
+				itemId = 3, -- 奖励物品ID
+				itemNum = 10, -- 奖励物品数量
+			},
+			{ -- 其中一个奖励
+				itemType = 1, -- 奖励类型
+				itemId = 27114, -- 奖励物品ID
+				itemNum = 5, -- 奖励物品数量
+			},
+		},
+	},
+}

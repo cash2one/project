@@ -1,0 +1,23 @@
+﻿{
+	id = 44,
+	name = Lang.Skill.s78Name,
+	desc = Lang.Skill.s78Desc,
+	vocation = 4,
+	skillType = 7,
+	skillSpellType = 0,
+	skillClass = 1,
+	commonCd = 0,
+	canbeDefault = false,
+	specialBuffCond = 0,
+	notAutoUse = false,
+	
+actions=
+{
+	{ act = 2, effect = 0 },    
+    { act = 3, effect = 0 }, 
+    { act = 9, effect = 0 }
+},
+	skillSubLevel = { 
+--#include "Skill_44_1.txt"
+	},
+},

@@ -1,0 +1,60 @@
+--boss冰魂动作配置
+{
+	id = 2,	--行为ID
+	trigger = 1,	--触发类型，血量为1，时间为2
+	infos = 
+	{
+		--血量99%
+		{
+			sequId = 1,
+			param = 99,
+			sequence = 
+			{
+				{ type = 1, duration = 2, talk=Lang.Actions.a000101, talkType=1 }	,	--对白
+			} 
+		},
+		--血量80%
+		{
+			sequId = 2,
+			param = 80,
+			sequence = 
+			{
+				{	-- 动作列表
+					type = 12,
+					duration = 2,
+					items =
+					{
+						{ type = 1, talk=Lang.Actions.a000102, talkType=1 },	--对白
+						{ type = 11, id = 37, posX = 0, posY = 0, needLearn = false, level = 1 },	--冰冻技能，id未定
+					}
+				},
+			} 
+		},
+		--血量40%
+		{
+			sequId = 3,
+			param = 40,
+			sequence = 
+			{
+				{	--动作列表
+					type = 12,
+					duration = 0,
+					items = 
+					{
+						{ type = 1, talk=Lang.Actions.a000103, talkType=1 },	--对白
+						{ type = 11, id = 38, posX = 0, posY = 0, needLearn = false, level = 1 },	--群攻技能，id未定
+					},
+				},
+			} 
+		},
+		--血量5%
+		{
+			sequId = 4,
+			param = 5,
+			sequence = 
+			{
+				{ type = 1, duration = 2, talk=Lang.Actions.a000104, talkType=1 }	,	--对白
+			} 
+		},
+	},
+},

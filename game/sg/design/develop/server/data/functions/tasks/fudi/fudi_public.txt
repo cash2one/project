@@ -1,0 +1,169 @@
+
+--#include "data\language\LangCode.txt" once
+
+--#include "data\config\task\fudi_conf.txt" once
+
+local FudiPublic = {}
+
+-- 获取领地配置
+FudiPublic.getFudiData = function(pChar)
+	local pGuild = LActor.getGuildPtr(pChar)
+	if pGuild == nil then return end
+	local var = LGuild.getStaticVar(pGuild)
+	local count = var.fudi_count or 0
+
+	local var = LActor.getStaticVar(pChar)
+	local pcount = var.fudi_count or 0
+
+	local dp = DataPack.allocPacket(pChar, 10, 37)
+	if dp == nil then return end
+	DataPack.writeByte(dp, 2 - count)
+	DataPack.writeByte(dp, 2 - pcount)
+	DataPack.flush(dp)
+end
+
+FudiPublic.getFudiConfig = function(fLevel)
+	return FudiConf[fLevel]
+end
+
+local function canOpen(pChar, fLevel)
+	local pGuild = LActor.getGuildPtr(pChar)
+	if pGuild == nil then return false end
+	local pos = LActor.getGuildPos(pChar)
+	-- 宗主、副宗主才能开启
+	if pos ~= smGuildAssistLeader and pos ~= smGuildLeader then return false end
+	local gLevel = LActor.getGuildLevel(pChar)
+	if gLevel < 2 or fLevel > (gLevel - 1) then 
+		return false, LActor.sendTipmsg(pChar, Lang.GuildLang.t10, ttMessage)
+	end
+	local var = LGuild.getStaticVar(pGuild)
+	if (var.fudi_count or 0) >= 2 then
+		return false, LActor.sendTipmsg(pChar, Lang.GuildLang.t12, ttMessage)
+	end
+	if var.fudi_handle ~= nil and Fuben.getFubenPtr(var.fudi_handle) ~= nil then
+		return false
+	end
+	if var.ymmy_handle ~= nil and Fuben.getFubenPtr(var.ymmy_handle) ~= nil then
+		print("var.ymmy_handle ~= nil and Fuben.getFubenPtr(var.ymmy_handle) ~= nil")
+		return false, LActor.sendTipmsg(pChar, "其他军团副本已开启", ttMessage)
+	end
+	--[[if var.fudi_time ~= nil and System.getCurrMiniTime() - var.fudi_time < 3600 then
+		return false, LActor.sendTipmsg(pChar, Lang.GuildLang.t14, ttMessage)
+	end]]
+
+	return true
+end
+
+local function onFudiOpened(guildId, pGuild, pFudi, fLevel)
+	-- 广播活动
+	-- local dp = LDataPack.allocPacket()
+	-- if dp == nil then return end
+	-- LDataPack.writeByte(dp, 26)
+	-- LDataPack.writeByte(dp, 36)
+	-- LDataPack.writeInt(dp, 1)
+	-- LDataPack.writeInt(dp, 19)
+	-- LDataPack.writeInt(dp, 2)
+	-- LDataPack.writeInt(dp, Fuben.getFbTime(pFudi))
+	-- LGuild.broadcastData(pGuild, dp)
+
+	-- 广播副本难度
+	local dp = LDataPack.allocPacket()
+	if dp == nil then return end
+	LDataPack.writeByte(dp, 10)
+	LDataPack.writeByte(dp, 39)
+	LDataPack.writeByte(dp, fLevel)
+	LGuild.broadcastData(pGuild, dp)
+
+	-- 广播文字信息
+	System.broadcastGuildTipmsg(guildId, Lang.GuildLang.t15, ttChatWindow)
+end
+
+-- 开启领地
+FudiPublic.openFudi = function(pChar, dp)
+	local fLevel = type(dp) == "userdata" and DataPack.readByte(dp) or dp
+	local config = FudiPublic.getFudiConfig(fLevel)
+	if config == nil then return end
+	if not canOpen(pChar, fLevel) then return end
+	local hl = Fuben.createFuBen(config.fbid)
+
+	local pGuild = LActor.getGuildPtr(pChar)
+	local var = LGuild.getStaticVar(pGuild, true)
+	var.fudi_handle = hl
+	var.fudi_level = fLevel
+	var.fudi_time = System.getCurrMiniTime()
+	var.fudi_count = (var.fudi_count or 0) + 1
+
+	local pFudi = Fuben.getFubenPtr(hl)
+	local fvar = Fuben.getDyanmicVar(pFudi)
+	local guildId = LActor.getGuildId(pChar)
+	fvar.guildId = guildId
+	fvar.fudi_level = fLevel
+	fvar.totalstone = 0
+	local index = 13
+	for i = 1, 4 do
+		fvar["fudi_hp"..(index + i)] = 100
+	end
+	onFudiOpened(guildId, pGuild, pFudi, fLevel)
+
+	FudiPublic.getFudiData(pChar)
+
+	System.logCounter(
+		LActor.getActorId(pChar), LActor.getAccountName(pChar), tostring(LActor.getLevel(pChar)),
+		"xianzong", LActor.getGuildName(pChar), "",
+		"openfudi", tostring(Fuben.getFubenIdbyFuBenPtr(pFudi)), "",
+		"", "", lfDB)
+
+	print("open fudi :"..LActor.getGuildId(pChar)..","..LActor.getActorId(pChar)..","..fLevel)
+end
+
+local function canEnter(pChar)
+	local pGuild = LActor.getGuildPtr(pChar)
+	if pGuild == nil then return false end
+	local var = LGuild.getStaticVar(pGuild)
+	if var.fudi_handle == nil or Fuben.getFubenPtr(var.fudi_handle) == nil then 
+		return false
+	end
+	if LActor.getLevel(pChar) < 35 then 
+		return false, LActor.sendTipmsg(pChar, Lang.GuildLang.t13, ttMessage)
+	end
+	local cvar = LActor.getStaticVar(pChar)
+	if (cvar.fudi_count or 0) >= 2 then 
+		return false, LActor.sendTipmsg(pChar, Lang.GuildLang.t11, ttMessage)
+	end
+
+	return true, var.fudi_handle, var.fudi_level
+end
+
+-- 进入领地
+FudiPublic.enterFudi = function(pChar)
+	local flag, hl, fLevel = canEnter(pChar)
+	if not flag then return end
+
+	local config = FudiPublic.getFudiConfig(fLevel)
+	LActor.enterFuBen(pChar, hl, config.sceneid, 0, 0)
+
+	local var = LActor.getStaticVar(pChar)
+	var.fudi_count = (var.fudi_count or 0) + 1
+	var.fudi_time = System.getCurrMiniTime()
+
+	FudiPublic.getFudiData(pChar)
+end
+
+-- 查询是否已经开启领地
+FudiPublic.isOpenFudi = function(pGuild)
+	local var = LGuild.getStaticVar(pGuild)
+	if var.fudi_handle == nil then return false end
+	local pFudi = Fuben.getFubenPtr(var.fudi_handle)
+	if pFudi == nil then return false end
+	return true, pFudi
+end
+
+FudiPublic.onLeftGuild = function(pChar)
+	local fubenId = LActor.getFubenId(pChar)
+	for _, config in ipairs(FudiConf) do
+		if fubenId == config.fbid then
+			LActor.exitFuben(pChar)
+			return
+		end
+	end
+end

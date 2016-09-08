@@ -1,0 +1,315 @@
+--XP技能万剑归宗
+{
+	actions=
+	{
+	{act=2,effect=0,},
+	},
+	
+	desc=Lang.Skill.s274L1Desc,
+	
+	iconID=174,
+	
+
+	actRange=
+	{
+		{
+			xStart=-7,
+			xEnd=7,
+			yStart=-7,
+			yEnd=7,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+				
+				{
+					conds=
+					{
+					{cond = 5,value =1},
+					{cond = 13,value =true},
+					},
+
+					results=
+					{
+						{mj=0,timeParam=1,type=1,delay=700,value={type=11,id=50,rate=0,value=-6000,interval=1,vt=0}},
+
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=476,keepTime=0,delay=700,always=false},
+					},
+				},
+						
+				{
+					conds=
+					{
+					{cond = 3,value =true},
+					},
+
+					results=
+					{
+
+					    {mj=0,timeParam=1,type=18,delay=200,value={rate=7,value=300}},
+						{mj=0,timeParam=1,type=18,delay=700,value={rate=7,value=300}},
+						{mj=0,timeParam=1,type=18,delay=1200,value={rate=7,value=300}},
+					
+						},
+					specialEffects=
+					{
+						{type=1,mj=0,id=921,keepTime=0,delay=0,always=false},
+
+					},
+				},
+			},
+		},
+		{
+			xStart=2,
+			xEnd=2,
+			yStart=0,
+			yEnd=0,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=73,keepTime=400,delay=0,always=true},
+					},
+				},
+			},
+		},
+		
+		
+		{
+			xStart=-2,
+			xEnd=-2,
+			yStart=0,
+			yEnd=0,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=73,keepTime=400,delay=0,always=true},
+					},
+				},
+			},
+		},
+		
+		{
+			xStart=4,
+			xEnd=4,
+			yStart=0,
+			yEnd=0,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=73,keepTime=400,delay=400,always=true},
+					},
+				},
+			},
+		},
+		
+		{
+			xStart=-4,
+			xEnd=-4,
+			yStart=0,
+			yEnd=0,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=73,keepTime=400,delay=400,always=true},
+					},
+				},
+			},
+		},
+		
+		{
+			xStart=6,
+			xEnd=6,
+			yStart=0,
+			yEnd=0,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=73,keepTime=400,delay=800,always=true},
+					},
+				},
+			},
+		},
+		
+		{
+			xStart=-6,
+			xEnd=-6,
+			yStart=0,
+			yEnd=0,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=73,keepTime=400,delay=800,always=true},
+					},
+				},
+			},
+		},
+		
+		{
+			xStart=8,
+			xEnd=8,
+			yStart=0,
+			yEnd=0,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=73,keepTime=400,delay=1200,always=true},
+					},
+				},
+			},
+		},
+		
+		
+		{
+			xStart=-8,
+			xEnd=-8,
+			yStart=0,
+			yEnd=0,
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+
+				{
+				    targetType=1,--不进行目标筛选也可以施放
+					conds=
+					{
+
+					},
+
+					results=
+					{
+					 
+					},
+					specialEffects=
+					{
+					{type=4,mj=0,id=73,keepTime=400,delay=1200,always=true},
+					},
+				},
+			},
+		},
+	},
+		
+	
+		
+
+	trainConds=
+	{
+	{cond=6,value=2,consume=false},--职业要求
+	},
+	
+	spellConds=
+	{
+
+	},
+	singTime=0,
+
+	cooldownTime=0,
+},

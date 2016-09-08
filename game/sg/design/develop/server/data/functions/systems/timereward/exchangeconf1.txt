@@ -1,0 +1,22 @@
+﻿--#include "..\..\..\language\LangCode.txt" once
+--盛世兑换 exchangeconf1.txt
+
+Exchangeconf1 = 
+{	
+	--活动ID
+	activityID = 22,
+    exchangeItem =
+    {
+        --itemID:可兑换的ID,count:一次兑换可获得的数量,exchangecount:可兑换的数量,point:需要消耗的积分,bind:是否绑定,broadcast:是否广播
+        {itemID = 18320, count = 1,exchangecount = 10, point = 10,bind = 1,broadcast = true,},
+        {itemID = 18321, count = 2,exchangecount = 10, point = 20,bind = 1,broadcast = true,},
+        {itemID = 18322, count = 3,exchangecount = 10, point = 30,bind = 1,broadcast = true,},
+    },
+    --是否每日重置
+    isReset = true
+}
+
+ExchangeConf = 
+{
+    Exchangeconf1,
+}

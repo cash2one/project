@@ -1,0 +1,287 @@
+﻿--#include "activitysimpleconf.txt" once
+--#include "activity9conf.txt" once
+--#include "activity8conf.txt" once
+--#include "activity7conf.txt" once
+--#include "activity43conf.txt" once
+--#include "activity53conf.txt" once
+
+--#include "activity10conf.txt" once		--元宵节活动
+--#include "activity11conf.txt" once		--妇女节活动
+--#include "activity12conf.txt" once		--白色情人节活动
+--#include "activity13conf.txt" once		--集纸鸢定情谊
+--#include "activity14conf.txt" once		--纸鸢再叙深情
+--#include "activity17conf.txt" once
+--#include "activity18conf.txt" once
+--#include "activity19conf.txt" once
+--#include "activity20conf.txt" once
+--#include "activity21conf.txt" once
+--#include "activity22conf.txt" once		--限量购买
+--#include "activity23conf.txt" once		--限时购买
+--#include "activity24conf.txt" once		--七夕充值返利
+--#include "activity25conf.txt" once		--每日充值
+--#include "activity26conf.txt" once
+--#include "activity27conf.txt" once
+--#include "activity28conf.txt" once
+--#include "activity29conf.txt" once
+--#include "activity31conf.txt" once
+--#include "activity32conf.txt" once
+--#include "activity35conf.txt" once
+
+--#include "activity54conf.txt"  once -- 寻宝助秀成霸业
+--#include "activity55conf.txt"  once -- 有粮领豪礼（累计充值类） 
+--#include "activity56conf.txt"  once -- --富甲四方（累计消耗）
+--#include "activity57conf.txt"  once -- --富甲四方（累计消耗）
+--#include "activity58conf.txt"  once -- --累计消耗
+--#include "activity59conf.txt"  once -- --七夕boss
+--#include "activity60conf.txt"  once -- --七夕称号
+
+--#include "activity1001conf.txt" once --日冲欢乐多循环
+--#include "activity1002conf.txt" once --日冲欢乐多循环
+--#include "activity1003conf.txt" once --日冲欢乐多循环
+--#include "activity1004conf.txt" once --日冲欢乐多循环
+--#include "activity1005conf.txt" once --日冲欢乐多循环
+
+--#include "activity2001conf.txt" once --每日累计消费循环
+--#include "activity2002conf.txt" once --每日累计消费循环
+--#include "activity2003conf.txt" once --每日累计消费循环
+--#include "activity2004conf.txt" once --每日累计消费循环
+--#include "activity2005conf.txt" once --每日累计消费循环
+--#include "activity2006conf.txt" once --每日累计消费循环
+--#include "activity2007conf.txt" once --每日累计消费循环
+--#include "activity2008conf.txt" once --每日累计消费循环
+--#include "activity2009conf.txt" once --每日累计消费循环
+
+--#include "activity3001conf.txt" once --每日充值返利活动循环
+--#include "activity3002conf.txt" once --每日充值返利活动循环
+--#include "activity3003conf.txt" once --每日充值返利活动循环
+--#include "activity3004conf.txt" once --每日充值返利活动循环
+--#include "activity3005conf.txt" once --每日充值返利活动循环
+
+--#include "activity4001conf.txt" once --单笔充值活动循环
+--#include "activity4002conf.txt" once --单笔充值活动循环
+--#include "activity4003conf.txt" once --单笔充值活动循环
+--#include "activity4004conf.txt" once --单笔充值活动循环
+--#include "activity4005conf.txt" once --单笔充值活动循环
+
+
+--#include "foreveractivity_conf.txt" once --封测活动
+--#include "newserver7_conf.txt" once --开服7天
+--#include "newweekactivity.txt" once --周活动
+--#include "newserver5_conf.txt" once --开服5天
+--#include "createactor_conf.txt" once --与创角有关
+--#include "data\config\misc\answerquestionconfig.txt" once --答题活动
+--#include "newserver.txt" once --夺宝活动
+--#include "newserver3.txt" once --开服后三天有这个活动
+--#include "createactor_conf3.txt" once --创角色3天活动
+--通用活动配置
+activityidlist =
+{
+	1,2,3,4,5,6,7,8,9,12,13,
+	18,19,20,21,22,23,24,25,
+	26,27,28,29,31,32,35,43,53,54,55,56,57,58,59,60,
+	1001,1002,1003,1004,1005,
+	2001,2002,2003,2004,2005,
+	2006,2007,2008,2009,3001,
+	3002,3003,3004,3005,
+	4001,4002,4003,4004,4005,				
+}
+
+activityConf = 
+{
+	[1] = ForeverActivity_conf,   --永久活动 ForeverActivity_conf
+	[2] = NewServer7_conf,        --开服后活动 NewServer7_conf
+	[3] = NewWeekActivity_conf,   --周活动
+	[4] = NewServer5_conf,        --开服后活动 NewServer5_conf
+	[5] = CreateActivity_conf,        --开服后活动 createactor_conf
+	[6] = AnswerQuestions,        --答题活动 answerquestionconfig
+	[7] = Newserver,           --Newserver
+	[8] = Newserver_3,           --Newserver
+	[9] = CreateActivity_conf3,  --创建色3天活动 createactor_conf3
+	-- [10] = activity10Conf,
+	-- [11] = activity11Conf,
+	[12] = activity12Conf,
+	[13] = activity13Conf,
+	[14] = activity14Conf,
+	-- [17] = activity17Conf,
+	[18] = activity18Conf,
+	[19] = activity19Conf,
+	[20] = activity20Conf,	--七夕活动
+	[21] = activity21Conf,
+	[22] = activity22Conf,
+	[23] = activity23Conf,
+	[24] = activity24Conf,
+	[25] = activity25Conf,
+	[26] = activity26Conf,
+	[27] = activity27Conf,
+	[28] = activity28Conf,
+	[29] = activity29Conf,
+	--[30] = activity30Conf,
+	[31] = activity31Conf,
+	[32] = activity32Conf,
+	[35] = activity35Conf,
+	[43] = activity43Conf,
+	[53] = activity53Conf,
+	[54] = activity54Conf,
+	[55] = activity55Conf,
+	[56] = activity56Conf,
+	[57] = activity57Conf,
+	[58] = activity58Conf,
+	[59] = activity59Conf,
+	[60] = activity60Conf,
+	[1001] = activity1001Conf,
+	[1002] = activity1002Conf,
+	[1003] = activity1003Conf,
+	[1004] = activity1004Conf,
+	[1005] = activity1005Conf,
+	[2001] = activity2001Conf,
+	[2002] = activity2002Conf,
+	[2003] = activity2003Conf,
+	[2004] = activity2004Conf,
+	[2005] = activity2005Conf,
+	[2006] = activity2006Conf,
+	[2007] = activity2007Conf,
+	[2008] = activity2008Conf,
+	[2009] = activity2009Conf,
+	[3001] = activity3001Conf,
+	[3002] = activity3002Conf,
+	[3003] = activity3003Conf,
+	[3004] = activity3004Conf,
+	[3005] = activity3005Conf,
+	[4001] = activity4001Conf,
+	[4002] = activity4002Conf,
+	[4003] = activity4003Conf,
+	[4004] = activity4004Conf,
+	[4005] = activity4005Conf,
+}
+
+
+--活动类型列表
+--[[{
+1.每日签到
+2.充值活动
+3.累计消费（在用）
+4.每日充值
+5.每日消费
+6.排行榜活动
+7.充值活动,重复单礼包
+8.消费活动,重复单礼包
+9.每日累计充值
+10.每日消费,多礼包
+11.登陆有礼
+12.日常累积活动
+13.每日登陆有礼活动
+14.累积活动
+15.活动期间排行榜
+16.单笔充值
+17.充值返利,活动结束后按日返利
+18.花费天珠,按日返利}
+19.冲刺达人
+20.豪礼送不停
+21.收集有礼
+22.成长基金
+23.基友满天下
+24.齐天大圣
+25.异兽摸摸看
+26.登高望远
+27.暴击聚宝盆
+28.天级宝藏
+29.特价礼包
+30.每日累计充值(弃用)
+31.单笔充值循环
+32.王者归来
+33.新手大礼包
+34.连续登录
+35.快速答题
+36.一般的答题
+37.vip专享
+38.限量购买
+39.限时购买
+40.x元夺宝
+41.战力礼包
+42.幸运转盘
+43.累计充值
+44.每日充值
+45.每日累计消费循环
+46.【开服活动-创角7天】登录福利 
+47.【开服活动-创角7天】充值福利 
+48.充值返利活动
+49.一元礼包
+50.每日充值返利活动循环
+51.每日限量购买
+52【开服活动-创角7天】聚宝盆
+53【开服活动-创角7天】伙伴收集
+54【开服活动-创角7天】演武场
+55【开服活动-创角7天】武将收集
+56【开服活动-创角7天】玫瑰之约
+57【开服活动-创角7天】宝石镶嵌
+58【开服活动-创角7天】武力试炼
+59【开服活动-创角7天】装备洗练
+60【开服活动-创角7天】世族捐献
+61【开服活动-创角7天】战力提升
+
+62.【开服活动-创角7天】半价福利48
+63.【开服活动-创角7天】装备提升
+64.【开服活动-创角7天】天级宝藏
+65.【开服活动-创角7天】坐骑提升
+66.新战力礼包
+67.在线宝箱
+68.富甲四方（累计消耗钻石）
+69.有粮领豪礼（累计充值类）
+70.观剧齐成长（挂机经验双倍）
+71.集纸鸢定情谊（兑换类）
+72.寻宝助秀成霸业
+73.专题活动 世界boss改变外形
+74.纸鸢再叙深情
+75.每日充值循环
+76.每日充值循环
+77.每日充值循环
+78.每日充值循环
+79.累计登录
+80.红包返利
+81.登录邮件礼包
+82.七夕兑换物品
+83.每日累计消费循环
+84.每日累计消费循环
+85.每日累计消费循环
+86.每日累计消费循环
+87.每日累计消费循环
+88.每日累计消费循环
+89.每日累计消费循环
+90.每日累计消费循环
+91:限时日充
+92.每日充值返利活动循环
+93.每日充值返利活动循环
+94.每日充值返利活动循环
+95.每日充值返利活动循环
+96.七夕活动
+97.七夕充值返利
+98.限量购买1
+99.限量购买2
+100.限时购买1
+101.限时购买2
+102.七夕连续登录
+103.七夕称号
+104.单笔充值循环
+105.单笔充值循环
+106.单笔充值循环
+107.单笔充值循环
+108.单笔充值循环
+109.开服7天的排行榜活动
+110.充值返利
+111.专题兑换
+--]]
+activitytypelist = {
+		1,2,3,4,5,6,7,8,9,10,
+		11,12,13,14,15,16,17,18,19,20,
+		21,22,23,24,25,26,27,28,29,30,
+		31,32,33,34,35,36,37,38,39,40,
+		41,42,43,44,45,46,47,48,49,50,
+		51,52,53,54,55,56,57,58,59,60,
+		61,62,63,64,65,66,67,68,69,70,
+		71,72,73,74,75,76,77,78,79,80,
+		81,82,83,84,85,86,87,88,89,90,
+		91,92,93,94,95,96,97,98,99,100,
+		101,102,103,104,105,106,107,108,
+		109,110,111,
+
+}

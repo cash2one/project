@@ -1,0 +1,146 @@
+--导出每日签到奖励配置表
+----------------------------------------------------------------------------------------
+--写文件
+function writeConfig(configname, concent)
+	if not concent then
+		print("concent is null")
+		return
+	end
+
+	if not configname then
+		print("configname is null")
+		return
+	end
+
+	local f = io.open(configname, "w")
+	f:write(concent)
+	f:close()
+end
+
+
+--切割字符串
+local function split(str, splitChar)
+    local subStrTab = {};
+    while true do
+        local pos = string.find(str, splitChar);
+        if (not pos) then
+            subStrTab[#subStrTab + 1] = str;
+            break;
+        end
+        local subStr = string.sub(str, 1, pos - 1);
+        subStrTab[#subStrTab + 1] = subStr;
+        str = string.sub(str, pos + 1, #str);
+    end
+    return subStrTab;
+end
+
+
+local function var_dump(data, max_level, prefix)
+    if type(prefix) ~= "string" then
+        prefix = ""
+    end
+    if type(data) ~= "table" then
+        print(prefix .. tostring(data))
+    else
+        print(data)
+        if max_level ~= 0 then
+            local prefix_next = prefix .. "    "
+            print(prefix .. "{")
+            for k,v in pairs(data) do
+                io.stdout:write(prefix_next .. k .. " = ")
+                if type(v) ~= "table" or (type(max_level) == "number" and max_level <= 1) then
+                    print(v)
+                else
+                    if max_level == nil then
+                        var_dump(v, nil, prefix_next)
+                    else
+                        var_dump(v, max_level - 1, prefix_next)
+                    end
+                end
+            end
+            print(prefix .. "}")
+        end
+    end
+    return prefix
+end
+
+local function getVipDouble(str)
+    print("str:"..tostring(str))
+    if type(str) ~= "string" then
+        return {}
+    end
+    if #str < 3 then
+        print("#str:"..#str)
+        return {}
+    end
+    local oneDouble = split(str,',')
+    
+    print("oneDouble num:"..#oneDouble)
+    local retVipDouble = {}
+
+    for i , v in ipairs(oneDouble) do
+        local oneConfig = split(v,'_')
+        retVipDouble[tonumber(oneConfig[1])] = tonumber(oneConfig[2])
+    end
+    return retVipDouble
+end
+
+
+function ReadSignReward()
+    local objexcel = CExcelReader:new()
+    if not objexcel then
+        print("objexcel is null")
+        return
+    end
+    print("start1")
+    objexcel:Init_App()
+    objexcel:OpenRead()
+    print("start2")
+    local obj = objexcel:LoadSheetByIndex(1)
+    print("start3")
+    if not obj then
+        print("LoadSheetByIndex失败!")
+        objexcel:Close()
+        objexcel:Quit_App()
+        return
+    end
+    local nCount = objexcel:GetCurrentSheetColCount()
+    local mCount = objexcel:GetCurrentSheetRowCount()
+
+
+    print("nCount", nCount)
+    print("mCount", mCount)
+
+    local SignReward = {}
+    for i = 2, mCount do
+        local currMonth = tonumber(objexcel:ReadCellAsString(i, 1))
+        if nil == SignReward[currMonth] then
+            SignReward[currMonth] = {}
+        end
+        local currDay = tonumber(objexcel:ReadCellAsString(i, 2))
+        SignReward[currMonth][currDay] = {}
+
+        local currConfig = SignReward[currMonth][currDay]
+        currConfig.reward = objexcel:ReadCellAsString(i, 3)
+
+        local vip_double = getVipDouble(objexcel:ReadCellAsString(i, 4))
+        currConfig.vip_double = vip_double
+        print("vip_double:"..type(vip_double))
+
+        local ExtraSignCost = tonumber(objexcel:ReadCellAsString(i, 5)) or 0
+        currConfig.ExtraSignCost = ExtraSignCost
+
+    end
+
+    print("var ok")
+    --local str = var_dump(objexcel, "data/config/vip/sign_reward_config.txt", SignReward,1)
+    dump_to_file(objexcel , "SignReward_config" , 'SignReward' , "data/config/vip/sign_reward_config.txt" , SignReward)
+    print("go ok")
+
+
+    objexcel:Close()
+    objexcel:Quit_App()
+    objexcel:delete()
+
+
+end

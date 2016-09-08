@@ -1,0 +1,145 @@
+--观剧齐成长（双倍奖励活动）
+
+DoubleAwards = {}
+
+--id: 1一般的活动，2专题活动 里面的双倍奖励
+function DoubleAwards.getSystemVar()
+	local sysVar = System.getStaticVar()
+	if not sysVar then return end
+
+	if not sysVar.doubleAwards then sysVar.doubleAwards = {} end
+	return sysVar.doubleAwards
+end
+
+function DoubleAwards.sendInfo(actor)
+	if not actor then return end
+
+	local sysVar = DoubleAwards.getSystemVar()
+	if not sysVar or not sysVar.id then return end
+
+	local now = System.getCurrMiniTime()
+	local openActivitys = {}
+	if sysVar.activity then
+		for i = daMin+1, daMax-1 do
+			if sysVar.activity[i] and sysVar.activity[i].startTime and sysVar.activity[i].endTime and now > sysVar.activity[i].startTime and now < sysVar.activity[i].endTime then
+				table.insert(openActivitys, {activityId = i, startTime = sysVar.activity[i].startTime, endTime = sysVar.activity[i].endTime})
+			end
+		end
+	end
+
+	local pack = DataPack.allocPacket(actor, BaseTypes.SystemId.timeRewardSystem, 161)
+	if not pack then return end
+
+	DataPack.writeByte(pack, sysVar.id)
+	DataPack.writeByte(pack, #openActivitys)
+	for _, conf in pairs(openActivitys) do
+		DataPack.writeByte(pack, conf.activityId)
+		DataPack.writeUInt(pack, conf.startTime)
+		DataPack.writeUInt(pack, conf.endTime)
+	end
+
+	DataPack.flush(pack)
+end
+
+function setDoubleActivityTime(id, activityId, startTime, endTime)
+	local sysVar = DoubleAwards.getSystemVar()
+	if not sysVar then return end
+
+	if sysVar.id then
+		if sysVar.id ~= id then
+			sysVar.id = id 	--当前开的活动（一般活动或专题活动）
+			sysVar.activity = nil 	--新的活动，清数据
+		end
+	else
+		sysVar.id = id 	--当前开的活动（一般活动或专题活动）
+	end
+
+	local now = System.getCurrMiniTime()
+	local isFirstActivity = 1
+	if sysVar.activity then
+		for i = daMin+1, daMax-1 do
+			if sysVar.activity[i] and sysVar.activity[i].startTime and sysVar.activity[i].endTime and now > sysVar.activity[i].startTime and now < sysVar.activity[i].endTime then
+				isFirstActivity = 0
+				break
+			end
+		end
+	else
+		sysVar.activity = {}
+	end
+	if not sysVar.activity[activityId] then sysVar.activity[activityId] = {} end
+
+	sysVar.activity[activityId].startTime = startTime
+	sysVar.activity[activityId].endTime = endTime
+
+	System.setDoubleActivityTime(activityId, startTime, endTime)
+
+	if isFirstActivity == 1 then
+		local pack = LDataPack.allocPacket()
+		if pack == nil then return end
+
+		LDataPack.writeByte(pack, BaseTypes.SystemId.timeRewardSystem)
+		LDataPack.writeByte(pack, 161)
+
+		LDataPack.writeByte(pack, 1)
+		LDataPack.writeByte(pack, activityId)
+		LDataPack.writeUInt(pack, startTime)
+		LDataPack.writeUInt(pack, endTime)
+
+		System.broadcastData(pack)
+	end
+end
+
+--返回是否双倍
+function getAcitivityIsDouble(activityId)
+	local sysVar = DoubleAwards.getSystemVar()
+	if not sysVar or not sysVar.activity or not sysVar.activity[activityId] then return 1 end
+
+	if not sysVar.activity[activityId].startTime or not sysVar.activity[activityId].endTime then return 1 end
+
+	local now = System.getCurrMiniTime()
+	if now <= sysVar.activity[activityId].startTime or now >= sysVar.activity[activityId].endTime then return 1 end
+
+	return 2
+end
+
+function DoubleAwards.onServerStart()
+	local sysVar = DoubleAwards.getSystemVar()
+	if not sysVar or not sysVar.id then return end
+
+	for activityId = daMin+1, daMax-1 do
+		if sysVar[activityId] and sysVar[activityId].startTime and sysVar[activityId].endTime then
+			System.setDoubleActivityTime(activityId, sysVar[activityId].startTime, sysVar[activityId].endTime)
+		end
+	end
+end
+
+GameStartEventList.registerEvent(DoubleAwards.onServerStart)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, DoubleAwards.sendInfo)
+
+
+function DoubleAwards.check(actor, args)
+	local tmp1 = tonumber(args[1])
+	local today = System.getToday()
+	if tmp1 == 1 then
+		setDoubleActivityTime(tonumber(args[3]), tonumber(args[2]), today, today + 24*3600)
+	elseif tmp1 == 2 then
+		DoubleAwards.sendInfo(actor)
+	elseif tmp1 == 3 then
+		local tmp2 = tonumber(args[2])
+		if tmp2 ~= 0 then
+			setDoubleActivityTime(1, tmp2, 0, 0)
+		else
+			for i = daMin+1, daMax-1 do
+				setDoubleActivityTime(1, i, 0, 0)
+			end
+		end
+	elseif tmp1 == 4 then
+		for i = daMin+1, daMax-1 do
+			setDoubleActivityTime(tonumber(args[2]), i, today, today + 24*3600*i)
+		end
+	elseif tmp1 == 5 then
+		LActor.finishQuest(actor, 15001)
+	end
+end
+
+GmEventFuncList.register( "double", DoubleAwards.check, 1)

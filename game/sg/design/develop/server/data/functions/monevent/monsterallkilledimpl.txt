@@ -1,0 +1,73 @@
+﻿--#ifndef _MONSTER_ALLKILLED_DISPATCHER_INCLUDED_
+--#define _MONSTER_ALLKILLED_DISPATCHER_INCLUDED_
+
+--场景中的所有怪物被杀死
+local MonAllKilledDispatcher = {}
+
+MonAllKilledDispatcher.register = function (sceneId, proc, delay)
+	sceneId = tonumber(sceneId)
+	local callTable = MonAllKilledDispatcher[sceneId]
+	-- print("MonAllKilledDispatcher.register.."..sceneId)
+	if not callTable or type(callTable) ~= "table" then
+		MonAllKilledDispatcher[sceneId] = {}
+	else
+		for i = 1, #callTable do
+			if callTable[i].proc == proc then
+				return false
+			end
+		end
+	end
+	local t = {}
+	t.proc = proc
+	t.delay = delay or 0
+	--这里不能用局部table插入，否则不会修改到MonAllKilledDispatcher中
+	table.insert(MonAllKilledDispatcher[sceneId], t)
+	return true
+end
+
+MonAllKilledDispatcher.unregister = function (sceneId, proc)  
+	sceneId = tonumber(sceneId)   
+	local i
+	local callTable = MonAllKilledDispatcher[sceneId]
+	for i = 1, #callTable do
+		if callTable[i].proc == proc then
+			--这里不能从局部table中删除，否则不会修改到MonAllKilledDispatcher中
+			table.remove(MonAllKilledDispatcher[sceneId], i)
+			return true
+		end
+	end
+	return false
+end
+
+MonAllKilledDispatcher.dispatch = function (sceneId, scenePtr, flag, et)
+	--print( "kill all monster dispatch" )  
+	local callTable = MonAllKilledDispatcher[sceneId]
+	if callTable == nil then
+		-- print( "kill all monster table is nil:"..sceneId )
+		return 
+	end
+
+	for i = 1, #callTable do
+		if callTable[i].delay ~= nil and callTable[i].delay > 0 then
+			 LActor.regScriptCallback(System.getGlobalNpc(), nil, callTable[i].delay * 1000, 0, 1, "MonsterDiedelayDispatch", sceneId, scenePtr, flag, et)
+		else
+			callTable[i].proc(sceneId, scenePtr, flag, et)
+		end
+	end
+end
+
+function MonsterDiedelayDispatch (globalNpc, sceneId, scenePtr, flag, et)
+	local callTable = MonAllKilledDispatcher[sceneId]
+	if callTable == nil then
+		-- print( "kill all monster table is nil:"..sceneId )
+		return 
+	end
+
+	for i = 1, #callTable do
+		if callTable[i].delay ~= nil and callTable[i].delay > 0 then
+			callTable[i].proc(sceneId, scenePtr, flag, et)
+		end
+	end
+end
+
+--#endif //_MONSTER_ALLKILLED_DISPATCHER_INCLUDED_

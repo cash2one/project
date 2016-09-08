@@ -1,0 +1,24 @@
+{
+	--过关斩将副本玩法1
+	id = 43,	--行为ID
+	trigger = 1,	--触发类型，血量为1，时间为2
+
+	isInit = 0 ,
+	--创建的时候会调用,和info里的sequence一样
+	initSequence =
+	{
+
+	},
+
+	infos = 
+	{
+		{
+			sequId = 1,
+			param = 0 ,
+			sequence = {
+				{ type = 15, duration = 2, preKillMonster = {1121} , addTargetMonster = {1121,1123,1124} , buffType=27, groupId=0, value=50000, times=600,  interval=1, buffName="疯魔降世" },  --必须先杀某些怪物preKill 否则向preKill怪物增加buff
+			}
+
+		},
+	},
+},

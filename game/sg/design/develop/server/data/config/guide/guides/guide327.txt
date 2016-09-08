@@ -1,0 +1,50 @@
+﻿{
+  maxLevel = 40,
+  
+  --接受任务后引导自动寻路打怪，自动寻路提交任务
+  trigger = 
+  { 
+    type = 1,
+    value = 85,
+  },
+
+  --引导中锁定的窗口ID
+  lockUI = 
+  {
+  },
+
+  --引导的步骤 
+  steps = 
+  {
+
+	--第1步 引导自动寻路打怪，寻找NPC
+    {
+      cond = { type = 1, helpId = 53, data = 0 },
+
+      action = { type = 5, helpId = 85, data = Lang.GuideLang.npc43, desc = Lang.GuideLang.desc127, showType = 1 },
+	  
+	  hideCond = { type = 2, helpId = 53, data = 0 },
+    },
+
+    {
+      cond = { type = 30, helpId = 0, data = 85 },
+
+      action = { type = 5, helpId = 85, data = Lang.GuideLang.npc41, desc = Lang.GuideLang.desc125, showType = 1 },
+	  
+	  hideCond = { type = 2, helpId = 53, data = 0 },
+    },
+
+	--第3步 引导点击上坐骑
+    {
+      cond = { type = 1, helpId = 18, data = 0 },
+
+      action = { type = 1, helpId = 18, data = 0, desc = "" , showType = 2},
+    },
+	--第4步 弹出任务完成界面
+   {
+      cond = { type = 2, helpId = 18, data = 0 },
+
+      action = { type = 16, helpId = 0, data = Lang.GuideLang.func27, desc = "" },
+    },
+  } 
+}

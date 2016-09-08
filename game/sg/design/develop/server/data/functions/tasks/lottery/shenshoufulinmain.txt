@@ -1,0 +1,33 @@
+﻿-- 十一抽宝箱
+
+--#include "data\config\lottery\lottery_sy.txt" once
+
+-- 活动时间
+LotteryStart = 0
+LotteryEnd = 0
+
+-- 打开抽奖窗口
+function ShiYiLottery(sysarg)
+	LActor.openDialogs(sysarg, diLotterySY)
+end
+
+function Lottery_SY_Main(sysarg, str)
+	local cur_t = System.getCurrMiniTime()
+	if cur_t < LotteryStart or cur_t > LotteryEnd then
+		str = string.format(Lang.TaskTalk.sy002, LotterySYConf.startTime, LotterySYConf.endTime)
+	else
+		str = str.."<#BL"..Lang.TaskTalk.sy001.."/@ShiYiLottery>"
+	end
+	return str
+end
+
+-- 初始化
+function Lottery_Init( npcobj )
+	LotteryStart = System.toMiniTime(LotterySYConf.startTime)
+	LotteryEnd = System.toMiniTime(LotterySYConf.endTime)
+end
+
+--[[
+table.insert(MainFnTable,Lottery_SY_Main)
+table.insert(InitFnTable,Lottery_Init)
+]]

@@ -1,0 +1,111 @@
+﻿--#include "..\..\language\LangCode.txt"
+
+-- 活动状态变更的配置
+ActivityTime = 
+{
+	--21级协作世界BOSS
+	{
+		id = 1001,	-- 活动类型，具体id对应什么活动协商而定 
+		level = 21,
+		status = 
+		{
+			--表示每天12点00分，持续1800秒，至于活动id和状态id的含义，由服务器端和客户端协定好
+			{week = -1,hour=12, min=00, time=1800, statusid=2},
+			{week = -1,hour=12, min=30, time=0, statusid=3},
+		}
+	},
+
+	--40级协作世界BOSS
+	{
+		id = 1002,	-- 活动类型，具体id对应什么活动协商而定 
+		level = 40,
+		status = 
+		{
+			--表示每天12点00分，持续1800秒，至于活动id和状态id的含义，由服务器端和客户端协定好
+			{week = -1,hour=19, min=00, time=1800, statusid=2},
+			{week = -1,hour=19, min=30, time=0, statusid=3},
+		}
+	},
+
+	--箴机奇图
+	{
+		id = 18,	-- 活动类型，具体id对应什么活动协商而定 
+		level = 27,
+		status = 
+		{
+			--表示每天10点50分，活动1变成状态1，持续600秒，至于活动id和状态id的含义，由服务器端和客户端协定好
+			{week = -1,hour=13, min=30, time=3600, statusid=2},
+			{week = -1,hour=20, min=30, time=3600, statusid=2},
+
+			{week = -1,hour=14, min=30, time=0, statusid=3},
+			{week = -1,hour=21, min=30, time=0, statusid=3},
+		}
+	},
+
+	--逐鹿中原
+	{
+		id = 19,	-- 活动类型，具体id对应什么活动协商而定 
+		level = 31,
+		status = 
+		{
+			--表示每天10点50分，活动1变成状态1，持续600秒，至于活动id和状态id的含义，由服务器端和客户端协定好
+			{week = 0,hour=20, min=00, time=1800, statusid=2},	-- statusid不能写0 week设置0 - 6分别 星期日 到 星期六,设置 -1为不使用星期来检测
+			{week = 0,hour=20, min=30, time=0, statusid=3},
+		}
+	},
+
+	--单人天梯
+	{
+		id = 20,	-- 活动类型，具体id对应什么活动协商而定 
+		level = 31,
+		status = 
+		{
+			--表示每天10点50分，活动1变成状态1，持续600秒，至于活动id和状态id的含义，由服务器端和客户端协定好
+			{week = 1,hour=20, min=00, time=1800, statusid=2},	-- statusid不能写0 week设置0 - 6分别 星期日 到 星期六,设置 -1为不使用星期来检测
+			{week = 3,hour=20, min=00, time=1800, statusid=2},	-- statusid不能写0 week设置0 - 6分别 星期日 到 星期六,设置 -1为不使用星期来检测
+
+			{week = 1,hour=20, min=30, time=0, statusid=3},
+			{week = 3,hour=20, min=30, time=0, statusid=3},
+		}
+	},
+
+	--组队天梯
+	{
+		id = 21,	-- 活动类型，具体id对应什么活动协商而定 
+		level = 31,
+		status = 
+		{
+			--表示每天10点50分，活动1变成状态1，持续600秒，至于活动id和状态id的含义，由服务器端和客户端协定好
+			{week = 2,hour=20, min=00, time=1800, statusid=2},	-- statusid不能写0 week设置0 - 6分别 星期日 到 星期六,设置 -1为不使用星期来检测
+			{week = 4,hour=20, min=00, time=1800, statusid=2},	-- statusid不能写0 week设置0 - 6分别 星期日 到 星期六,设置 -1为不使用星期来检测
+
+			{week = 2,hour=20, min=30, time=0, statusid=3},
+			{week = 4,hour=20, min=30, time=0, statusid=3},
+		}
+	},
+
+	--大乱斗
+	{
+		id = 22,	-- 活动类型，具体id对应什么活动协商而定 
+		level = 31,
+		status = 
+		{
+			--表示每天10点50分，活动1变成状态1，持续600秒，至于活动id和状态id的含义，由服务器端和客户端协定好
+			{week = 5,hour=20, min=00, time=1800, statusid=2},	-- statusid不能写0 week设置0 - 6分别 星期日 到 星期六,设置 -1为不使用星期来检测
+			{week = 5,hour=20, min=30, time=0, statusid=3},
+		}
+	},
+
+	--阵营战
+	{
+		id = 23,	-- 活动类型，具体id对应什么活动协商而定 
+		level = 31,
+		status = 
+		{
+			--表示每天10点50分，活动1变成状态1，持续600秒，至于活动id和状态id的含义，由服务器端和客户端协定好
+			{week = 6,hour=20, min=00, time=1800, statusid=2},	-- statusid不能写0 week设置0 - 6分别 星期日 到 星期六,设置 -1为不使用星期来检测
+			{week = 6,hour=20, min=30, time=0, statusid=3},
+		}
+	},
+
+}

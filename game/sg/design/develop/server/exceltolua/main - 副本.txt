@@ -1,0 +1,285 @@
+--#include "stditems.txt"
+--#include "item.lua"
+
+----------------------------------------------------------------------------------------
+--写文件
+function writeConfig(configname, concent)
+	if not concent then
+		print("concent is null")
+		return
+	end
+
+	if not configname then
+		print("configname is null")
+		return
+	end
+
+	local f = io.open(configname, "w")
+	f:write(concent)
+	f:close()
+end
+
+----------------------------------------------------------------------------------------
+--读主角裸装属性 excel表
+function ReadActorInitProp(filename)
+	local objexcel = CExcelReader:new()
+	if not objexcel then
+		print("objexcel is null")
+		return
+	end
+
+	objexcel:Init_App()
+	objexcel:OpenRead()
+
+	--------------------------------------------------------------------
+	--插入注释
+	--数组下标表示每一等级,表里属性分别表示{最大生命,最大灵力,物理攻击,道法攻击,物理防御,道法防御,命中值,闪避值,暴击值,抗暴值,暴击倍数(会心)}
+	--level	max_hp	max_mp	phy_atk	mag_atk	phy_def	mag_def	hit_val	dodge_val	crit_v	anti_crit_v	crit_multi
+
+
+
+local allprop = "--数组下标表示每一等级,表里属性分别表示{最大生命,最大灵力,物理攻击,道法攻击,物理防御,道法防御,命中值,闪避值,暴击值,抗暴值,暴击倍数(会心)}\n"
+for nJob = 1, 4 do
+	local strJob = string.format("[%d] = {\n", nJob)
+
+	local obj = objexcel:LoadSheetByIndex(nJob) --战士 主角裸装属性
+	if not obj then
+		print("LoadSheetByIndex失败!")
+		objexcel:Close()
+		objexcel:Quit_App()
+		return
+	end
+
+	local nCount = objexcel:GetCurrentSheetColCount()
+	local mCount = objexcel:GetCurrentSheetRowCount()
+
+	local nValue = 0
+	local strAllLevel = ""
+
+	for m = 3, mCount do
+		local strLevel
+
+		for k=1, nCount do
+			local strMsg = objexcel:ReadCellAsString(m, k)
+			--print(strMsg)
+			if k == 1 then
+				strLevel = string.format("\t[%d]={", tonumber(strMsg))
+			else
+				strLevel = strLevel..strMsg..","
+			end
+
+			if nCount == k then
+				strLevel =  strLevel.."},\n"
+				strAllLevel = strAllLevel..strLevel
+			end
+		end
+	end
+
+
+	strJob = strJob..strAllLevel.."},\n"
+	print(strJob)
+
+	allprop = allprop..strJob
+end
+
+	--写文件
+	writeConfig("actorinitprop.txt", allprop)
+
+
+
+	objexcel:Close()
+	objexcel:Quit_App()
+	objexcel:delete()
+end
+----------------------------------------------------------------------------------------
+
+
+
+
+
+function testwriteexcel()
+	local objexcel = CExcelWriter:new()
+	if not objexcel then
+		print("CExcelWriter objexcel is null")
+		return
+	end
+
+	--[[
+	if not objexcel:CreateXlsFile("c:\\test.xlsx") then
+		print(" CreateXlsFile failed!")
+		return
+	end
+	--]]
+
+	objexcel:Init_App()
+	objexcel:OpenWrite()
+	if not objexcel:LoadSheetByIndex(1) then
+		print("LoadSheetByIndex failed!")
+		return
+	end
+
+	for i=1, 10 do 
+		objexcel:WriteCellAsString(i,i, "#$#$#$#$#$#你即吗")
+	end
+
+	objexcel:Close()
+	objexcel:Quit_App()
+	objexcel:delete()
+end
+
+
+
+--导出语言包
+function export_item_lang()
+
+	local tt = {}
+	for k, v in pairs(Item) do
+		local n = string.sub(k, 1, 1)
+		if n == 'n' then
+			local itemid = string.sub(k, 2, string.len(k))
+			if tt[itemid] then
+				tt[itemid][1] = v
+			else
+				tt[itemid] = {[1]=v,}
+			end
+		elseif n == 'i' then
+			local itemid = string.sub(k, 2, string.len(k))
+			if tt[itemid] then
+				tt[itemid][2] = v
+			else
+				tt[itemid]={[2]=v,}
+			end
+			--print(v)
+		end
+	end
+
+
+	--table.sort(tt)
+	--for m, n in pairs(tt) do
+	--	print(m, n[1], n[2])
+	--end
+
+	--Lang.Item.n1000
+	--Lang.Item.i1000
+
+
+
+
+	--写入excel
+	local objexcel = CExcelWriter:new()
+	if not objexcel then
+		print("CExcelWriter objexcel is null")
+		return
+	end
+
+	objexcel:Init_App()
+	objexcel:OpenWrite()
+	if not objexcel:LoadSheetByIndex(1) then
+		print("LoadSheetByIndex failed!")
+		return
+	end
+	
+	local i = 1
+	for m, n in pairs(tt) do
+		--print(m, n[1], n[2])
+		objexcel:WriteCellAsString(i,1, tostring(m))
+		objexcel:WriteCellAsString(i,2, tostring(n[1]))
+		objexcel:WriteCellAsString(i,3, tostring(n[2]))
+		i = i + 1
+	end
+
+	objexcel:Close()
+	objexcel:Quit_App()
+	objexcel:delete()
+
+
+end
+
+
+
+
+--导出装备信息
+function export_equipt()
+
+
+	
+
+
+
+end
+
+
+
+function main()
+
+
+	while true do
+		print("---------------------------------------------")
+		print("\t1、导出主角裸装属性;")
+		print("\t2、导出主角裸装属性;")
+		print("\t3、导出主角裸装属性;")
+		print("\t4、导出主角裸装属性;")
+		print("\t5、导出主角裸装属性;")
+		print("\t6、导出主角裸装属性;")
+		print("\t7、导出主角裸装属性;")
+		print("\t8、导出主角裸装属性;")
+		print("\t9、测试写excel")
+		print("\t10、导出语言包")
+		print("\t100、退出;")
+		print("---------------------------------------------")
+
+		print ("请选择：")
+		local index = io.read()
+
+
+		if tonumber(index) == 100 then
+			break
+
+		elseif tonumber(index) == 1 then
+			ReadActorInitProp("")
+		elseif tonumber(index) == 2 then
+			print("procedure export 2");
+		elseif tonumber(index) == 3 then
+			print("procedure export 3");
+		elseif tonumber(index) == 4 then
+			print("procedure export 4");
+		elseif tonumber(index) == 5 then
+			print("procedure export 5");
+		elseif tonumber(index) == 6 then
+			print("procedure export 6");
+		elseif tonumber(index) == 7 then
+			print("procedure export 7");
+		elseif tonumber(index) == 8 then
+			print("procedure export 8");
+		elseif tonumber(index) == 9 then
+			testwriteexcel()
+		elseif tonumber(index) == 10 then
+			export_item_lang()
+		else
+			print("非法输入")
+			index = nil
+		end
+	end
+
+
+end
+
+
+
+
+
+
+--ReadActorInitProp("c:\\主角裸装属性.xlsx")
+
+function OnMain(sysid, cmd)
+
+	print("===============================================")
+	main()
+end
+
+
+
+
+
+
+

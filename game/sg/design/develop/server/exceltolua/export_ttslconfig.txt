@@ -1,0 +1,183 @@
+
+
+
+
+
+
+
+
+--#include "tabledump.txt"
+ttsl_monstercomfig = {}
+ttsl_extre_award = {}
+
+
+function InsertRecordToTable( targettable , srctable , layer )
+	-- body
+	if type( targettable ) ~= 'table' or type(srctable) ~= 'table' or not layer then
+		return
+	end
+	local nflag = false
+	for k , v in pairs ( targettable ) do
+		if v.layer == layer then
+			if v.monster_list == nil then
+				targettable[k].monster_list = {}
+			end
+			nflag = true
+			table.insert( targettable[k].monster_list , srctable)
+			break
+		end
+	end
+	if nflag == false then
+		print("-------没找到层--------")
+	end
+
+end
+
+function ReadTTSLConfig( )
+	-- body
+	local objexcel = CExcelReader:new()
+	if not objexcel then
+		print("objexcel is null")
+		return
+	end
+	objexcel:Init_App()
+	objexcel:OpenRead()
+	local obj = objexcel:LoadSheetByIndex(1)
+	if not obj then
+		print("LoadSheetByIndex失败!")
+		objexcel:Close()
+		objexcel:Quit_App()
+		return
+	end
+	local nCount = objexcel:GetCurrentSheetColCount()
+	local mCount = objexcel:GetCurrentSheetRowCount()
+	print("nCount", nCount)
+	print("mCount", mCount)
+	--local nAwardList = "[%d] = { % s}"
+	--local nAward = ""
+	for i = 2, mCount do
+		--local fubenid_index = tonumber(objexcel:ReadCellAsString(i, 1))
+		local nlayer = tonumber(objexcel:ReadCellAsString(i, 1)) --强化等级
+		local nfigth = tonumber(objexcel:ReadCellAsString(i, 2))
+		local ntemp = {
+		layer = nlayer,
+		Fight = nfigth,
+		}
+		table.insert( ttsl_monstercomfig , ntemp)
+	end
+
+	local obj1 = objexcel:LoadSheetByIndex(2)
+	if not obj1 then
+		print("LoadSheetByIndex失败!")
+		objexcel:Close()
+		objexcel:Quit_App()
+		return
+	end
+
+	local nCol = objexcel:GetCurrentSheetColCount()
+	local nRow = objexcel:GetCurrentSheetRowCount()
+
+	for i = 2 , nRow do
+		local nLayer = tonumber(objexcel:ReadCellAsString(i, 1))
+		local nmonsterid = tonumber(objexcel:ReadCellAsString(i, 2))
+		local nPx1 = tonumber(objexcel:ReadCellAsString(i, 3))
+		local nPx2 = tonumber(objexcel:ReadCellAsString(i, 4))
+		local nPy1 = tonumber(objexcel:ReadCellAsString(i, 5))
+		local nPy2 = tonumber(objexcel:ReadCellAsString(i, 6))
+		local cout = tonumber(objexcel:ReadCellAsString(i, 7))
+		local ntemp = 
+		{
+			monsterid = nmonsterid,
+			pos = { nPx1 , nPx2 , nPy1 , nPy2},
+			num = cout,
+		}
+		InsertRecordToTable( ttsl_monstercomfig , ntemp , nLayer )
+	end
+
+	local str = dump(ttsl_monstercomfig)
+	--str = string.sub(str, 1, string.len(str) - 1)
+	str = string.format("--#include \"..\\..\\language\\LangCode.txt\" \nTTSL_Monster = \n%s", str)
+	objexcel:WriteFile("data\\config\\gameplay\\tongtianshilianmonster.txt", str)
+	objexcel:Close()
+	objexcel:Quit_App()
+	objexcel:delete()
+	ttsl_monstercomfig = {}
+end
+
+
+function InserExtraTable( targettable , srctable )
+	-- body
+	if type( targettable ) == 'table' or type (srctable) == 'table' then
+		return
+	end
+	local nIndex = 0
+	for k , v in pairs( targettable ) do
+		if v.layer == srctable.layer then
+			nIndex = k
+			break
+		end
+	end
+	if nIndex == 0 then
+		table.insert(targettable,srctable)
+	else
+		table.insert(targettable.list,srctable.list[1])
+	end
+end
+
+
+function ReadExtraAwardConfig( )
+
+
+	local objexcel = CExcelReader:new()
+	if not objexcel then
+		print("objexcel is null")
+		return
+	end
+	objexcel:Init_App()
+	objexcel:OpenRead()
+	local obj = objexcel:LoadSheetByIndex(3)
+	if not obj then
+		print("LoadSheetByIndex失败!")
+		objexcel:Close()
+		objexcel:Quit_App()
+		return
+	end
+	local nCount = objexcel:GetCurrentSheetColCount()
+	local mCount = objexcel:GetCurrentSheetRowCount()
+	print("nCount", nCount)
+	print("mCount", mCount)
+	--local nAwardList = "[%d] = { % s}"
+	--local nAward = ""
+	for i = 2, mCount do
+		--local fubenid_index = tonumber(objexcel:ReadCellAsString(i, 1))
+		local nLayer = tonumber(objexcel:ReadCellAsString(i, 1))
+		local nItemId = tonumber(objexcel:ReadCellAsString(i, 2)) --强化等级
+		local nCount = tonumber(objexcel:ReadCellAsString(i, 3))
+		local ntemp = {
+			layer = nLayer,
+			list =
+			{
+				{
+					id = nItemId,
+					count = nCount,
+				},
+			},
+		}
+		--InserExtraTable( ttsl_extre_award , ntemp )
+		table.insert( ttsl_extre_award , ntemp)
+	end
+	local str = dump(ttsl_extre_award)
+	str = string.format("--#include \"..\\..\\language\\LangCode.txt\" \nTTSL_Extra_Award = \n%s", str)
+	objexcel:WriteFile("data\\config\\gameplay\\tongtianshilianextraaward.txt", str)
+	objexcel:Close()
+	objexcel:Quit_App()
+	objexcel:delete()
+	ttsl_extre_award = {}
+end
+
+
+
+
+
+
+----------------------------------------------------------------------------------------

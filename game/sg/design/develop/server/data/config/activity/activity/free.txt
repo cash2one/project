@@ -1,0 +1,64 @@
+ 
+ --全天：免费抽奖
+   {
+       --活动的名字
+       name =Lang.ActivityName.name00008,
+       --活动的描述
+       desc=Lang.ActivityName.desc00008,
+       timeDesc = Lang.ActivityName.timeDesc00001,
+       level =1, --活动的等级
+       icon =2,
+       --活动的开启时间
+       openTimes=
+       {
+            {
+                 months={}, 
+                 days ={}, 
+                 weeks={0}, 
+                 minutes=  --时和分，使用起始和结束的时间格式,这个一定要填，	全天开放使用00:00-33:59
+                 {
+                    "00:00-23:59",
+                  }
+             },
+        },
+       awards=
+       {
+            {type=0,id=1663,count=1,bind=1,strong=0,quality=0}, -- 绑定元宝袋 *1
+            {type=0,id=1656,count=1,bind=1,strong=0,quality=0}, -- 初级经验丹 *1
+            {type=0,id=1658,count=1,bind=1,strong=0,quality=0}, -- 中级经验丹 *1
+            {type=0,id=1660,count=1,bind=1,strong=0,quality=0}, -- 高级经验丹 *1
+            {type=0,id=1657,count=1,bind=1,strong=0,quality=0}, -- 初级修为丹 *1
+            {type=0,id=1659,count=1,bind=1,strong=0,quality=0}, -- 中级修为丹 *1
+            {type=0,id=1661,count=1,bind=1,strong=0,quality=0}, -- 高级修为丹 *1
+            {type=0,id=1655,count=1,bind=1,strong=0,quality=0}, -- 小型银两袋 *1
+            {type=0,id=1662,count=1,bind=1,strong=0,quality=0}, -- 绑定银两票 *1
+            {type=0,id=1002,count=1,bind=1,strong=0,quality=0}, -- 初级强化石 *1
+            {type=0,id=1646,count=1,bind=1,strong=0,quality=0}, -- 中级强化石 *1
+            {type=0,id=1647,count=1,bind=1,strong=0,quality=0}, -- 高级强化石 *1
+       },
+       npc= 
+       {
+		--1无忌，2逍遥，3日月
+           {
+               sceneId=120,name=Lang.EntityName.n00456, --无忌城 肖飞
+               conds=
+	       {
+		{condType=1,values={1}}
+               },
+	    },
+           {
+               sceneId=122,name=Lang.EntityName.n00457, --逍遥城 肖跃
+               conds=
+	       {
+		{condType=1,values={2}}
+               },
+	    },
+           {
+               sceneId=124,name=Lang.EntityName.n00458, --日月城 肖风
+               conds=
+	       {
+		{condType=1,values={3}}
+               },
+	    },
+       },
+   }, 

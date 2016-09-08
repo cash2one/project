@@ -1,0 +1,62 @@
+﻿
+
+--#include "data\language\LangCode.txt" once   --语言包
+--#include "data\config\activity\GuildActivity.txt" once   --采集蟠桃相关的常量定义
+--#include "data\config\TasksConfig.inc" once --活动开启状态设置
+function motoGatherPeach(sysarg)
+	if GuildActivity == nil then return end
+	--local nstartdifftime = System.getDiffendTime(GuildActivity.starthour,GuildActivity.startminute)
+	--local nenddifftime = System.getDiffendTime(GuildActivity.endhour,GuildActivity.endminute) 
+	--print(nstartdifftime)
+	--print(nenddifftime)
+	--if (nstartdifftime == 0) and (nenddifftime > 0) and (nenddifftime <= (GuildActivity.endminute - GuildActivity.startminute)*60) then
+	
+	local sceneid = LActor.getSceneId(sysarg)
+	--print("sceneid:"..sceneid)
+	--local ndifftime=System.getDiffendTime(GuildActivity.endhour,GuildActivity.endminute)
+	local Hfuben = Fuben.createGuildFuBen(GuildActivity.Fbid,0,sysarg)
+	
+	if Hfuben ~= 0 then
+		LActor.enterGuildFuBen(sysarg,GuildActivity.Fbid,GuildActivity.startx,GuildActivity.starty)
+
+	end
+	LActor.closeNPCDialog(sysarg)
+end
+function GatherPeach_Main(sysarg)
+  if TasksConfig ~= nil and TasksConfig.GatherPeach == false then return "" end
+  if GuildActivity == nil then return "" end
+  local var = LActor.getStaticVar(sysarg) 
+	if var.getherpeachMaxcount == nil then --初始化采集上限
+	   var.getherpeachMaxcount=10
+
+	   -- 不同的VIP等级每天增加采集次数
+		
+	   
+	 end
+	if var.getherpeachcount ~= nil then
+		if var.getherpeachcount>=var.getherpeachMaxcount then
+			--发送消息是否消费2天珠,消费后增加采集上限
+			--LActor.sendTipmsg(sysarg,Lang.TaskTalk.t00669,ttGmTip)
+			return
+		end
+	end
+	if var.getherpeachcount == nil then
+	  var.getherpeachcount = 0
+	end
+	LActor.ChangeStatus(sysarg)
+	local npack = DataPack.allocPacket(sysarg,139,32)
+	if npack == nil then return end
+	DataPack.writeInt(npack,GuildActivity.time)
+	DataPack.flush(npack)
+    
+	LActor.SendAndChangeCaleValue(sysarg,caleOther1,var.getherpeachMaxcount-var.getherpeachcount,false)
+	--LActor.BroadGather(sysarg)
+end
+
+function CallPeachMessageBox(sysarg)
+
+end
+
+EventCallDispatcher.PeachVIPChanged = function(sysarg,arg)
+	
+end

@@ -1,0 +1,221 @@
+﻿--#include "data\functions\Tasks\ShangJin\ShangJinSet.txt" once
+--#include "data\functions\timermsgfunc.txt" once
+
+function getbufftimekillmon(killtimes)
+
+    for i = 1, #ShangJinkillMonSet do
+		if killtimes <= ShangJinkillMonSet[i].killmoncount then
+			return ShangJinkillMonSet[i].buffTimes
+		end
+		
+	end
+	return 1
+	
+end
+
+MonAllKilledDispatcher.ShangJinKillAllMonster = function(sceneId, scenePtr, flag, monster)
+	local pfb = LActor.getFubenPrt(monster)
+	local hfb =	Fuben.getFubenHandle(pfb)
+	local hscene = Fuben.getSceneHandleById(sceneId, hfb)
+	local Monid = LActor.getIntProperty( monster, PROP_ENTITY_ID )
+	local bossid = 0
+	local var = Fuben.getDyanmicVar(pfb)
+	for i=1,#ShangJinMonster do
+		--print ("ShangJinKillAllMonster Monid = "..Monid)
+		if ShangJinMonster[i].monsterId == Monid then
+			if ShangJinMonster[i].bboss == "false" then --非boss怪,刷boss怪
+				bossid = ShangJinMonster[i].bossid
+						--print ("ShangJinKillAllMonster bossid = "..bossid)
+				for j = 1, #ShangJinMonster do
+					if bossid == ShangJinMonster[j].monsterId then
+							--print ("createMonsters bossid = "..bossid)
+						var.fbRestMonster = ShangJinMonster[j].nCount
+						Fuben.createMonsters(hscene, ShangJinMonster[j].monsterId, ShangJinMonster[j].posX1, ShangJinMonster[j].posX2, ShangJinMonster[j].posY1, ShangJinMonster[j].posY2, ShangJinMonster[j].nCount,0)
+						return
+					end
+				end
+			end		
+		end
+		
+	end
+	local actors = LuaHelp.getFbActorList(pfb)
+	if actors ~= nil then
+		for i = 1,#actors do
+			actor = actors[i]
+			LActor.SendAndChangeCaleValue(actor,caleRemainMonster, var.fbRestMonster,false)
+		end
+	end
+
+end
+
+MonDieDispatcher.ShangJinMonstersDie = function (monster,sysarg,monId)
+	local fbprt = LActor.getFubenPrt(sysarg)
+	local Hfuben = Fuben.getFubenHandle(fbprt)
+	local hscene = Fuben.getSceneHandleById(ShangJinSet.Scene, Hfuben)
+	local var = Fuben.getDyanmicVar(fbprt)
+	if var.ShJMonStep == nil then return end
+	if var.killMonCount == nil then 
+		var.killMonCount = 1
+	end
+
+	if var.fbRestMonster == nil then
+		var.fbRestMonster = 0
+	end
+
+	--if var.coin == nil then var.coin = 0 end
+	--if var.yuanbao = nil then var.yuanbao = 0 end
+	
+	for i=1,#ShangJinMonster do
+		if ShangJinMonster[i].monsterId == monId then
+			if ShangJinMonster[i].bboss == "true" then --boss怪
+				--if LActor.isKillAllMonster(sysarg,monId) then
+				var.ShJMonStep =  var.ShJMonStep + 1 --记录第几波怪
+
+				if var.ShJMonStep == 10 then
+					LActor.sendTipmsg(sysarg, Lang.TaskTalk.ShJin006, ttScreenCenter)
+					LActor.triggerAchieveEvent( sysarg, 46, ShangJinSet.Fbid ) 
+					Fuben.postSceneTimeCall(hscene, TimerMsg.ShangJinKick, 5, 1)
+					return
+				end 
+				
+				local rand = System.getRandomNumber(table.getn(ShangJinSet.GameTime)) + 1
+				var.gametime = ShangJinSet.GameTime[rand];	
+				Fuben.SetFubenTime(Hfuben,10+var.gametime) --需要设置游戏时间
+				--var.gametime = 20 --测试
+				
+				LActor.SendAndChangeCaleValue(sysarg,caleFubenTime,var.gametime,false)
+				LActor.SendAndChangeCaleValue(sysarg,caleOther1,var.ShJMonStep + 1,false)
+				LActor.SendAndChangeCaleValue(sysarg,caleRemainMonster, var.fbRestMonster,false)
+
+				--if var.ShJMonStep == 10 then
+				--怪物第十波怪时不用退出玩家,因为要玩游戏
+				--else
+				--开始游戏 需要设置开始游戏的标识
+				var.ShJGameStart = 1
+				--print("139,34")
+				local npack = DataPack.allocPacket(sysarg,139,34)
+				if npack == nil then return end
+				DataPack.writeInt(npack,var.gametime)
+				DataPack.flush(npack)
+					--print("flush 139,34")
+				LActor.sendTipmsg(sysarg, Lang.TaskTalk.ShJin005, ttScreenCenter)
+				Fuben.postSceneTimeCall(hscene, TimerMsg.ShangJinRefresh, ShangJinSet.NextInterval, 1)
+				if hscene ~= 0 then 
+					Fuben.sendCountDown(hscene, ShangJinSet.NextInterval, 0)
+				end
+
+				EntrustFunc.SetFubenValue(sysarg, ShangJinSet.Fbid, var.ShJMonStep) -- 设置副本委托相关值
+				--end
+			--end
+			else--非boss怪
+				--如果没buff就不额外加仙币,而且怪物死亡时加buff,有buff就替换	
+				local totalMoney = 0 -- 总共获得的仙币
+				local fixMoney = 0
+				local restMoney = 0
+				if LActor.hasBuff(sysarg,ShangJinSet.BuffType,-1) then 
+			  		--加钱..和加buff
+			  		LActor.delBuff(sysarg, ShangJinSet.BuffType, -1)
+					var.killMonCount = var.killMonCount + 1
+					var.ShJYuanBao = var.ShJYuanBao + ShangJinMonster[i].ShJYuanBao -- 额外的
+					fixMoney = ShangJinMonster[i].monsterYuanBao
+					restMoney = var.ShJYuanBao 
+					totalMoney = fixMoney + restMoney
+					local nbufftime = getbufftimekillmon(var.killMonCount)
+					--print("addbuff..time1 ="..nbufftime)
+					LActor.addBuff(sysarg,ShangJinSet.BuffType,-1, ShangJinSet.buffValue, ShangJinSet.buffTimes,nbufftime, ShangJinSet.buffName, false) --添加buff
+					--print("ShangJin....addbuff1.."..ShangJinSet.BuffType)
+				else
+					var.killMonCount = 0
+					var.ShJYuanBao = 0
+					local nbufftime = getbufftimekillmon(var.killMonCount)
+					--print("addbuff..time2 ="..nbufftime)
+					fixMoney = ShangJinMonster[i].monsterYuanBao
+					totalMoney = fixMoney
+					LActor.addBuff(sysarg,ShangJinSet.BuffType,-1, ShangJinSet.buffValue,ShangJinSet.buffTimes, nbufftime, ShangJinSet.buffName, false) --添加buff
+					--print("ShangJin....addbuff2.."..ShangJinSet.BuffType)
+			 --加buff
+				end
+
+				if var.fbRestMonster > 0 then
+					var.fbRestMonster = var.fbRestMonster -1
+				end
+
+				LActor.changeMoney(sysarg, mtBindCoin, fixMoney, 1, true, "activity", "shangjin")
+				LActor.SendAndChangeCaleValue(sysarg, caleBindCoin, fixMoney)
+				LActor.changeMoney(sysarg, mtCoin, restMoney, 1, true, "activity", "shangjin")
+				LActor.SendAndChangeCaleValue(sysarg, caleCoin, restMoney)
+				LActor.SendAndChangeCaleValue(sysarg,caleRemainMonster, var.fbRestMonster,false)
+
+				--print("139,46")
+				local npack = DataPack.allocPacket(sysarg,139,46)
+				if npack == nil then return end
+				local monhandle = LActor.getHandle(monster)
+				--print(monhandle)
+				--print("ShangJinMonster[i].monsterYuanBao ================== "..ShangJinMonster[i].monsterYuanBao)
+				--print("totalMoney ========================== "..totalMoney)
+				DataPack.writeUint64(npack,monhandle)
+				DataPack.writeInt(npack,ShangJinMonster[i].monsterYuanBao)
+				DataPack.writeInt(npack,totalMoney)
+				DataPack.flush(npack)
+				--print("flush,139,46")
+
+			end
+			break
+		end
+	end	
+end
+
+MonDieDispatcher.RefreshShangJinNextWave = function (msgid, pscene)
+	local pfb = Fuben.getSceneFuben(pscene)
+	local actors = LuaHelp.getFbActorList(pfb)
+	local hfb =	Fuben.getFubenHandle(pfb)
+	local var = Fuben.getDyanmicVar(pfb)
+
+	if actors == nil then return end
+
+	for i=1,#ShangJinMonster do
+		if ShangJinMonster[i].bossstep == var.ShJMonStep+1 then
+			if ShangJinMonster[i].bboss == "false" then
+				var.fbRestMonster = ShangJinMonster[i].nCount 
+				local hScene = Fuben.getSceneHandleById(ShangJinSet.Scene, hfb)
+				Fuben.SetFubenTime(hfb,ShangJinSet.LimitTime[var.ShJMonStep+1]) 
+				Fuben.createMonsters(hScene, ShangJinMonster[i].monsterId, ShangJinMonster[i].posX1, ShangJinMonster[i].posX2, ShangJinMonster[i].posY1, ShangJinMonster[i].posY2, ShangJinMonster[i].nCount,0)
+			end
+		end
+	end
+
+	for i = 1,#actors do
+		actor = actors[i]
+		LActor.enterScene(actor,ShangJinSet.Scene,ShangJinSet.nx,ShangJinSet.ny)
+
+		 if var.ShJMonStep == 10 then
+			LActor.triggerAchieveEvent( actor, 46, ShangJinSet.Fbid ) --
+			LActor.exitFuben(actor)
+			break
+		end 
+		LActor.SendAndChangeCaleValue(actor,caleFubenTime,ShangJinSet.LimitTime[var.ShJMonStep+1],false)
+		LActor.SendAndChangeCaleValue(sysarg,caleOther1,var.ShJMonStep + 1,false)
+		LActor.SendAndChangeCaleValue(sysarg,caleRemainMonster, var.fbRestMonster,false)
+	end
+end
+
+MonDieDispatcher.ShangJinKick = function (msgid, pscene)
+	local pfb = Fuben.getSceneFuben(pscene)
+	local actors = LuaHelp.getFbActorList(pfb)
+
+	if actors == nil then return end
+
+	for i = 1,#actors do
+		actor = actors[i]
+		LActor.exitFuben(actor)
+	end
+end
+
+TimerMsgFunc.register(TimerMsg.ShangJinRefresh, MonDieDispatcher.RefreshShangJinNextWave)
+TimerMsgFunc.register(TimerMsg.ShangJinKick, MonDieDispatcher.ShangJinKick)
+
+for i=1,#ShangJinMonster do
+  MonDieDispatcher.register(ShangJinMonster[i].monsterId,MonDieDispatcher.ShangJinMonstersDie)
+end
+
+MonAllKilledDispatcher.register( ShangJinSet.Scene, MonAllKilledDispatcher.ShangJinKillAllMonster )

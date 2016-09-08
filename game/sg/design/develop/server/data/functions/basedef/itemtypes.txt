@@ -1,0 +1,25 @@
+--物品类型定义表 
+itemTypes = 
+{
+    itWeapon = 1,				--武器
+		itDress = 2,				--衣服
+		itHelmet = 3,				--头盔
+		itCuff= 4,					--护腕
+		itTrousers = 5,				--裤子
+		itRing = 6,					--戒指
+		itNecklace = 7,				--项链
+		itDecorations = 8,			--饰品
+		itGirdle = 9,				--腰带
+		itShoes = 10,				--鞋子
+		itMount =11,                --坐骑
+		itHpSource=12,              --HP源泉
+		itMpSource=13,              --MP源泉
+		itEquipMax = 14,                 --最大的装备ID
+
+		itQuestItem = 101,			--任务物品
+		itFunctionItem = 102,		--功能物品，可以双击执行功能脚本的
+		itMedicaments = 103,		--普通药品
+		itFastMedicaments = 104,	--速回药品
+		itItemDiamond=105,          --宝石
+		itItemEquivalence =106,     --等价道具，可以用来出售换钱的道具
+}

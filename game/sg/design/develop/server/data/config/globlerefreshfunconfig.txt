@@ -1,0 +1,14 @@
+﻿--#include "..\language\LangCode.txt"
+Refresh_config =
+{
+	time_conf = 
+	{
+		-- time 时间 整点   dothing 1 ,清理副本次数 2 是清理任务次数
+		{ time = 18 ,dothing = { 2 },},
+	},
+	cleandata = 
+	{
+		--时间  clearfb 清除副本次数  副本id , questtype 清理任务数据   任务类型
+		[18] = { questtype = { 3 },},
+	},
+}

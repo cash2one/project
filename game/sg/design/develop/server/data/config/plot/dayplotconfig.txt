@@ -1,0 +1,755 @@
+-- 每日剧情信息配置
+--#include "data\language\langcode.txt" once
+local DayPlotConfig = {
+	-- {
+	-- 	openTimeStr = "2016-6-17", -- 开放日期
+	-- 	fubenId = 101, -- 进入的副本ID
+	-- 	sceneId = 101, -- 场景ID
+	-- 	pos = { 22, 76 }, -- 进入副本的初始坐标
+	-- 	todayActor = { -- 今日主角的配置
+	-- 		modelId = 2121, -- 主角模型ID
+	-- 		actorName = Lang.DayPlotLang.dpl001, -- 主角名字
+	-- 		actorDesc = Lang.DayPlotLang.dpl002, -- 主角介绍
+	-- 	},
+	-- 	todayDesc = Lang.DayPlotLang.dpl003, -- 今日剧情介绍
+	-- 	tomorrowDesc = Lang.DayPlotLang.dpl004, -- 明日剧情预告
+	-- 	todayAwards = { -- 今日奖励
+	-- 		{ -- 其中一个奖励
+	-- 			itemType = 1, -- 奖励类型
+	-- 			itemId = 1001, -- 奖励物品ID
+	-- 			itemNum = 1, -- 奖励物品数量
+	-- 		},
+	-- 	},
+	-- },
+	[1] = {
+		openTimeStr = "2016-7-13", -- 开放日期
+		fubenId = 215, -- 进入的副本ID
+		sceneId = 215, -- 场景ID
+		todayActor = { -- 今日主角的配置
+			modelId = 53, -- 主角模型ID
+			actorName = Lang.DayPlotLang.dp15001, -- 主角名字
+			actorDesc = Lang.DayPlotLang.dp15002, -- 主角介绍
+		},
+		todayDesc = Lang.DayPlotLang.dp15003, -- 今日剧情介绍
+		tomorrowDesc = Lang.DayPlotLang.dp12004, -- 明日剧情预告
+		todayAwards = { -- 今日奖励
+			{ -- 其中一个奖励
+				itemType = 2, -- 奖励类型
+				itemId = 2, -- 奖励物品ID
+				itemNum = 80, -- 奖励物品数量
+			},
+			{ -- 其中一个奖励
+				itemType = 2, -- 奖励类型
+				itemId = 3, -- 奖励物品ID
+				itemNum = 20, -- 奖励物品数量
+			},
+			{ -- 其中一个奖励
+				itemType = 1, -- 奖励类型
+				itemId = 30202, -- 奖励物品ID
+				itemNum = 1, -- 奖励物品数量
+			},
+		},
+	},
+	[2] = {
+		openTimeStr = "2016-6-20", -- 开放日期
+		fubenId = 212, -- 进入的副本ID
+		sceneId = 212, -- 场景ID
+		todayActor = { -- 今日主角的配置
+			modelId = 53, -- 主角模型ID
+			actorName = Lang.DayPlotLang.dp12001, -- 主角名字
+			actorDesc = Lang.DayPlotLang.dp12002, -- 主角介绍
+		},
+		todayDesc = Lang.DayPlotLang.dp12003, -- 今日剧情介绍
+		tomorrowDesc = Lang.DayPlotLang.dp05004, -- 明日剧情预告
+		todayAwards = { -- 今日奖励
+			{ -- 其中一个奖励
+				itemType = 2, -- 奖励类型
+				itemId = 2, -- 奖励物品ID
+				itemNum = 80, -- 奖励物品数量
+			},
+			{ -- 其中一个奖励
+				itemType = 2, -- 奖励类型
+				itemId = 3, -- 奖励物品ID
+				itemNum = 20, -- 奖励物品数量
+			},
+			{ -- 其中一个奖励
+				itemType = 1, -- 奖励类型
+				itemId = 30202, -- 奖励物品ID
+				itemNum = 1, -- 奖励物品数量
+			},
+		},
+	},
+	[3] = {
+		openTimeStr = "2016-6-20", -- 开放日期
+		fubenId = 205, -- 进入的副本ID
+		sceneId = 205, -- 场景ID
+		todayActor = { -- 今日主角的配置
+			modelId = 8, -- 主角模型ID
+			actorName = Lang.DayPlotLang.dp05001, -- 主角名字
+			actorDesc = Lang.DayPlotLang.dp05002, -- 主角介绍
+		},
+		todayDesc = Lang.DayPlotLang.dp05003, -- 今日剧情介绍
+		tomorrowDesc = Lang.DayPlotLang.dp01004, -- 明日剧情预告
+		todayAwards = { -- 今日奖励
+			{ -- 其中一个奖励
+				itemType = 2, -- 奖励类型
+				itemId = 2, -- 奖励物品ID
+				itemNum = 80, -- 奖励物品数量
+			},
+			{ -- 其中一个奖励
+				itemType = 2, -- 奖励类型
+				itemId = 3, -- 奖励物品ID
+				itemNum = 20, -- 奖励物品数量
+			},
+			{ -- 其中一个奖励
+				itemType = 1, -- 奖励类型
+				itemId = 30202, -- 奖励物品ID
+				itemNum = 1, -- 奖励物品数量
+			},
+		},
+	},
+	[4] = {
+		openTimeStr = "2016-6-20", -- 开放日期
+		fubenId = 201, -- 进入的副本ID
+		sceneId = 201, -- 场景ID
+		todayActor = { -- 今日主角的配置
+			modelId = 30, -- 主角模型ID
+			actorName = Lang.DayPlotLang.dp01001, -- 主角名字
+			actorDesc = Lang.DayPlotLang.dp01002, -- 主角介绍
+		},
+		todayDesc = Lang.DayPlotLang.dp01003, -- 今日剧情介绍
+		tomorrowDesc = Lang.DayPlotLang.dp03004, -- 明日剧情预告
+		todayAwards = { -- 今日奖励
+			{ -- 其中一个奖励
+				itemType = 2, -- 奖励类型
+				itemId = 2, -- 奖励物品ID
+				itemNum = 80, -- 奖励物品数量
+			},
+			{ -- 其中一个奖励
+				itemType = 2, -- 奖励类型
+				itemId = 3, -- 奖励物品ID
+				itemNum = 20, -- 奖励物品数量
+			},
+			{ -- 其中一个奖励
+				itemType = 1, -- 奖励类型
+				itemId = 30202, -- 奖励物品ID
+				itemNum = 1, -- 奖励物品数量
+			},
+		},
+	},
+	[5] = {
+		openTimeStr = "2016-6-20", -- 开放日期
+		fubenId = 203, -- 进入的副本ID
+		sceneId = 203, -- 场景ID
+		todayActor = { -- 今日主角的配置
+			modelId = 1, -- 主角模型ID
+			actorName = Lang.DayPlotLang.dp03001, -- 主角名字
+			actorDesc = Lang.DayPlotLang.dp03002, -- 主角介绍
+		},
+		todayDesc = Lang.DayPlotLang.dp03003, -- 今日剧情介绍
+		tomorrowDesc = Lang.DayPlotLang.dp04004, -- 明日剧情预告
+		todayAwards = { -- 今日奖励
+			{ -- 其中一个奖励
+				itemType = 2, -- 奖励类型
+				itemId = 2, -- 奖励物品ID
+				itemNum = 80, -- 奖励物品数量
+			},
+			{ -- 其中一个奖励
+				itemType = 2, -- 奖励类型
+				itemId = 3, -- 奖励物品ID
+				itemNum = 20, -- 奖励物品数量
+			},
+			{ -- 其中一个奖励
+				itemType = 1, -- 奖励类型
+				itemId = 30202, -- 奖励物品ID
+				itemNum = 1, -- 奖励物品数量
+			},
+		},
+	},
+	[6] = {
+		openTimeStr = "2016-6-20", -- 开放日期
+		fubenId = 204, -- 进入的副本ID
+		sceneId = 204, -- 场景ID
+		todayActor = { -- 今日主角的配置
+			modelId = 1, -- 主角模型ID
+			actorName = Lang.DayPlotLang.dp04001, -- 主角名字
+			actorDesc = Lang.DayPlotLang.dp04002, -- 主角介绍
+		},
+		todayDesc = Lang.DayPlotLang.dp04003, -- 今日剧情介绍
+		tomorrowDesc = Lang.DayPlotLang.dp07004, -- 明日剧情预告
+		todayAwards = { -- 今日奖励
+			{ -- 其中一个奖励
+				itemType = 2, -- 奖励类型
+				itemId = 2, -- 奖励物品ID
+				itemNum = 80, -- 奖励物品数量
+			},
+			{ -- 其中一个奖励
+				itemType = 2, -- 奖励类型
+				itemId = 3, -- 奖励物品ID
+				itemNum = 20, -- 奖励物品数量
+			},
+			{ -- 其中一个奖励
+				itemType = 1, -- 奖励类型
+				itemId = 30202, -- 奖励物品ID
+				itemNum = 1, -- 奖励物品数量
+			},
+		},
+	},
+	[7] = {
+		openTimeStr = "2016-6-20", -- 开放日期
+		fubenId = 207, -- 进入的副本ID
+		sceneId = 207, -- 场景ID
+		todayActor = { -- 今日主角的配置
+			modelId = 14, -- 主角模型ID
+			actorName = Lang.DayPlotLang.dp07001, -- 主角名字
+			actorDesc = Lang.DayPlotLang.dp07002, -- 主角介绍
+		},
+		todayDesc = Lang.DayPlotLang.dp07003, -- 今日剧情介绍
+		tomorrowDesc = Lang.DayPlotLang.dp08004, -- 明日剧情预告
+		todayAwards = { -- 今日奖励
+			{ -- 其中一个奖励
+				itemType = 2, -- 奖励类型
+				itemId = 2, -- 奖励物品ID
+				itemNum = 80, -- 奖励物品数量
+			},
+			{ -- 其中一个奖励
+				itemType = 2, -- 奖励类型
+				itemId = 3, -- 奖励物品ID
+				itemNum = 20, -- 奖励物品数量
+			},
+			{ -- 其中一个奖励
+				itemType = 1, -- 奖励类型
+				itemId = 30202, -- 奖励物品ID
+				itemNum = 1, -- 奖励物品数量
+			},
+		},
+	},
+	[8] = {
+		openTimeStr = "2016-6-20", -- 开放日期
+		fubenId = 208, -- 进入的副本ID
+		sceneId = 208, -- 场景ID
+		todayActor = { -- 今日主角的配置
+			modelId = 14, -- 主角模型ID
+			actorName = Lang.DayPlotLang.dp08001, -- 主角名字
+			actorDesc = Lang.DayPlotLang.dp08002, -- 主角介绍
+		},
+		todayDesc = Lang.DayPlotLang.dp08003, -- 今日剧情介绍
+		tomorrowDesc = Lang.DayPlotLang.dp09004, -- 明日剧情预告
+		todayAwards = { -- 今日奖励
+			{ -- 其中一个奖励
+				itemType = 2, -- 奖励类型
+				itemId = 2, -- 奖励物品ID
+				itemNum = 80, -- 奖励物品数量
+			},
+			{ -- 其中一个奖励
+				itemType = 2, -- 奖励类型
+				itemId = 3, -- 奖励物品ID
+				itemNum = 20, -- 奖励物品数量
+			},
+			{ -- 其中一个奖励
+				itemType = 1, -- 奖励类型
+				itemId = 30202, -- 奖励物品ID
+				itemNum = 1, -- 奖励物品数量
+			},
+		},
+	},
+	[9] = {
+		openTimeStr = "2016-6-22", -- 开放日期
+		fubenId = 209, -- 进入的副本ID
+		sceneId = 209, -- 场景ID
+		todayActor = { -- 今日主角的配置
+			modelId = 47, -- 主角模型ID
+			actorName = Lang.DayPlotLang.dp09001, -- 主角名字
+			actorDesc = Lang.DayPlotLang.dp09002, -- 主角介绍
+		},
+		todayDesc = Lang.DayPlotLang.dp09003, -- 今日剧情介绍
+		tomorrowDesc = Lang.DayPlotLang.dp10004, -- 明日剧情预告
+		todayAwards = { -- 今日奖励
+			{ -- 其中一个奖励
+				itemType = 2, -- 奖励类型
+				itemId = 2, -- 奖励物品ID
+				itemNum = 80, -- 奖励物品数量
+			},
+			{ -- 其中一个奖励
+				itemType = 2, -- 奖励类型
+				itemId = 3, -- 奖励物品ID
+				itemNum = 20, -- 奖励物品数量
+			},
+			{ -- 其中一个奖励
+				itemType = 1, -- 奖励类型
+				itemId = 30202, -- 奖励物品ID
+				itemNum = 1, -- 奖励物品数量
+			},
+		},
+	},
+	[10] = {
+		openTimeStr = "2016-6-20", -- 开放日期
+		fubenId = 210, -- 进入的副本ID
+		sceneId = 210, -- 场景ID
+		todayActor = { -- 今日主角的配置
+			modelId = 23, -- 主角模型ID
+			actorName = Lang.DayPlotLang.dp10001, -- 主角名字
+			actorDesc = Lang.DayPlotLang.dp10002, -- 主角介绍
+		},
+		todayDesc = Lang.DayPlotLang.dp10003, -- 今日剧情介绍
+		tomorrowDesc = Lang.DayPlotLang.dp11004, -- 明日剧情预告
+		todayAwards = { -- 今日奖励
+			{ -- 其中一个奖励
+				itemType = 2, -- 奖励类型
+				itemId = 2, -- 奖励物品ID
+				itemNum = 80, -- 奖励物品数量
+			},
+			{ -- 其中一个奖励
+				itemType = 2, -- 奖励类型
+				itemId = 3, -- 奖励物品ID
+				itemNum = 20, -- 奖励物品数量
+			},
+			{ -- 其中一个奖励
+				itemType = 1, -- 奖励类型
+				itemId = 30202, -- 奖励物品ID
+				itemNum = 1, -- 奖励物品数量
+			},
+		},
+	},
+	[11] = {
+		openTimeStr = "2016-6-20", -- 开放日期
+		fubenId = 211, -- 进入的副本ID
+		sceneId = 211, -- 场景ID
+		todayActor = { -- 今日主角的配置
+			modelId = 2, -- 主角模型ID
+			actorName = Lang.DayPlotLang.dp11001, -- 主角名字
+			actorDesc = Lang.DayPlotLang.dp11002, -- 主角介绍
+		},
+		todayDesc = Lang.DayPlotLang.dp11003, -- 今日剧情介绍
+		tomorrowDesc = Lang.DayPlotLang.dp14004, -- 明日剧情预告
+		todayAwards = { -- 今日奖励
+			{ -- 其中一个奖励
+				itemType = 2, -- 奖励类型
+				itemId = 2, -- 奖励物品ID
+				itemNum = 80, -- 奖励物品数量
+			},
+			{ -- 其中一个奖励
+				itemType = 2, -- 奖励类型
+				itemId = 3, -- 奖励物品ID
+				itemNum = 20, -- 奖励物品数量
+			},
+			{ -- 其中一个奖励
+				itemType = 1, -- 奖励类型
+				itemId = 30202, -- 奖励物品ID
+				itemNum = 1, -- 奖励物品数量
+			},
+		},
+	},
+	[12] = {
+		openTimeStr = "2016-6-20", -- 开放日期
+		fubenId = 214, -- 进入的副本ID
+		sceneId = 214, -- 场景ID
+		todayActor = { -- 今日主角的配置
+			modelId = 18, -- 主角模型ID
+			actorName = Lang.DayPlotLang.dp14001, -- 主角名字
+			actorDesc = Lang.DayPlotLang.dp14002, -- 主角介绍
+		},
+		todayDesc = Lang.DayPlotLang.dp14003, -- 今日剧情介绍
+		tomorrowDesc = Lang.DayPlotLang.dp13004, -- 明日剧情预告
+		todayAwards = { -- 今日奖励
+			{ -- 其中一个奖励
+				itemType = 2, -- 奖励类型
+				itemId = 2, -- 奖励物品ID
+				itemNum = 80, -- 奖励物品数量
+			},
+			{ -- 其中一个奖励
+				itemType = 2, -- 奖励类型
+				itemId = 3, -- 奖励物品ID
+				itemNum = 20, -- 奖励物品数量
+			},
+			{ -- 其中一个奖励
+				itemType = 1, -- 奖励类型
+				itemId = 30202, -- 奖励物品ID
+				itemNum = 1, -- 奖励物品数量
+			},
+		},
+	},
+	[13] = {
+		openTimeStr = "2016-6-20", -- 开放日期
+		fubenId = 213, -- 进入的副本ID
+		sceneId = 213, -- 场景ID
+		todayActor = { -- 今日主角的配置
+			modelId = 13, -- 主角模型ID
+			actorName = Lang.DayPlotLang.dp13001, -- 主角名字
+			actorDesc = Lang.DayPlotLang.dp13002, -- 主角介绍
+		},
+		todayDesc = Lang.DayPlotLang.dp13003, -- 今日剧情介绍
+		tomorrowDesc = Lang.DayPlotLang.dp06004, -- 明日剧情预告
+		todayAwards = { -- 今日奖励
+			{ -- 其中一个奖励
+				itemType = 2, -- 奖励类型
+				itemId = 2, -- 奖励物品ID
+				itemNum = 80, -- 奖励物品数量
+			},
+			{ -- 其中一个奖励
+				itemType = 2, -- 奖励类型
+				itemId = 3, -- 奖励物品ID
+				itemNum = 20, -- 奖励物品数量
+			},
+			{ -- 其中一个奖励
+				itemType = 1, -- 奖励类型
+				itemId = 30202, -- 奖励物品ID
+				itemNum = 1, -- 奖励物品数量
+			},
+		},
+	},
+	[14] = {
+		openTimeStr = "2016-6-20", -- 开放日期
+		fubenId = 206, -- 进入的副本ID
+		sceneId = 206, -- 场景ID
+		todayActor = { -- 今日主角的配置
+			modelId = 55, -- 主角模型ID
+			actorName = Lang.DayPlotLang.dp06001, -- 主角名字
+			actorDesc = Lang.DayPlotLang.dp06002, -- 主角介绍
+		},
+		todayDesc = Lang.DayPlotLang.dp06003, -- 今日剧情介绍
+		tomorrowDesc = Lang.DayPlotLang.dp02004, -- 明日剧情预告
+		todayAwards = { -- 今日奖励
+			{ -- 其中一个奖励
+				itemType = 2, -- 奖励类型
+				itemId = 2, -- 奖励物品ID
+				itemNum = 80, -- 奖励物品数量
+			},
+			{ -- 其中一个奖励
+				itemType = 2, -- 奖励类型
+				itemId = 3, -- 奖励物品ID
+				itemNum = 20, -- 奖励物品数量
+			},
+			{ -- 其中一个奖励
+				itemType = 1, -- 奖励类型
+				itemId = 30202, -- 奖励物品ID
+				itemNum = 1, -- 奖励物品数量
+			},
+		},
+	},
+	[15] = {
+		openTimeStr = "2016-6-22", -- 开放日期
+		fubenId = 202, -- 进入的副本ID
+		sceneId = 202, -- 场景ID
+		todayActor = { -- 今日主角的配置
+			modelId = 6, -- 主角模型ID
+			actorName = Lang.DayPlotLang.dp02001, -- 主角名字
+			actorDesc = Lang.DayPlotLang.dp02002, -- 主角介绍
+		},
+		todayDesc = Lang.DayPlotLang.dp02003, -- 今日剧情介绍
+		tomorrowDesc = Lang.DayPlotLang.dp16004, -- 明日剧情预告
+		todayAwards = { -- 今日奖励
+			{ -- 其中一个奖励
+				itemType = 2, -- 奖励类型
+				itemId = 2, -- 奖励物品ID
+				itemNum = 80, -- 奖励物品数量
+			},
+			{ -- 其中一个奖励
+				itemType = 2, -- 奖励类型
+				itemId = 3, -- 奖励物品ID
+				itemNum = 20, -- 奖励物品数量
+			},
+			{ -- 其中一个奖励
+				itemType = 1, -- 奖励类型
+				itemId = 30202, -- 奖励物品ID
+				itemNum = 1, -- 奖励物品数量
+			},
+		},
+	},
+	[16] = {
+		openTimeStr = "2016-6-20", -- 开放日期
+		fubenId = 216, -- 进入的副本ID
+		sceneId = 216, -- 场景ID
+		todayActor = { -- 今日主角的配置
+			modelId = 1, -- 主角模型ID
+			actorName = Lang.DayPlotLang.dp16001, -- 主角名字
+			actorDesc = Lang.DayPlotLang.dp16002, -- 主角介绍
+		},
+		todayDesc = Lang.DayPlotLang.dp16003, -- 今日剧情介绍
+		tomorrowDesc = Lang.DayPlotLang.dp17004, -- 明日剧情预告
+		todayAwards = { -- 今日奖励
+			{ -- 其中一个奖励
+				itemType = 2, -- 奖励类型
+				itemId = 2, -- 奖励物品ID
+				itemNum = 80, -- 奖励物品数量
+			},
+			{ -- 其中一个奖励
+				itemType = 2, -- 奖励类型
+				itemId = 3, -- 奖励物品ID
+				itemNum = 20, -- 奖励物品数量
+			},
+			{ -- 其中一个奖励
+				itemType = 1, -- 奖励类型
+				itemId = 30202, -- 奖励物品ID
+				itemNum = 1, -- 奖励物品数量
+			},
+		},
+	},
+	[17] = {
+		openTimeStr = "2016-6-20", -- 开放日期
+		fubenId = 217, -- 进入的副本ID
+		sceneId = 217, -- 场景ID
+		todayActor = { -- 今日主角的配置
+			modelId = 30, -- 主角模型ID
+			actorName = Lang.DayPlotLang.dp17001, -- 主角名字
+			actorDesc = Lang.DayPlotLang.dp17002, -- 主角介绍
+		},
+		todayDesc = Lang.DayPlotLang.dp17003, -- 今日剧情介绍
+		tomorrowDesc = Lang.DayPlotLang.dp18004, -- 明日剧情预告
+		todayAwards = { -- 今日奖励
+			{ -- 其中一个奖励
+				itemType = 2, -- 奖励类型
+				itemId = 2, -- 奖励物品ID
+				itemNum = 80, -- 奖励物品数量
+			},
+			{ -- 其中一个奖励
+				itemType = 2, -- 奖励类型
+				itemId = 3, -- 奖励物品ID
+				itemNum = 20, -- 奖励物品数量
+			},
+			{ -- 其中一个奖励
+				itemType = 1, -- 奖励类型
+				itemId = 30202, -- 奖励物品ID
+				itemNum = 1, -- 奖励物品数量
+			},
+		},
+	},
+	[18] = {
+		openTimeStr = "2016-6-20", -- 开放日期
+		fubenId = 218, -- 进入的副本ID
+		sceneId = 218, -- 场景ID
+		todayActor = { -- 今日主角的配置
+			modelId = 3, -- 主角模型ID
+			actorName = Lang.DayPlotLang.dp18001, -- 主角名字
+			actorDesc = Lang.DayPlotLang.dp18002, -- 主角介绍
+		},
+		todayDesc = Lang.DayPlotLang.dp18003, -- 今日剧情介绍
+		tomorrowDesc = Lang.DayPlotLang.dp19004, -- 明日剧情预告
+		todayAwards = { -- 今日奖励
+			{ -- 其中一个奖励
+				itemType = 2, -- 奖励类型
+				itemId = 2, -- 奖励物品ID
+				itemNum = 80, -- 奖励物品数量
+			},
+			{ -- 其中一个奖励
+				itemType = 2, -- 奖励类型
+				itemId = 3, -- 奖励物品ID
+				itemNum = 20, -- 奖励物品数量
+			},
+			{ -- 其中一个奖励
+				itemType = 1, -- 奖励类型
+				itemId = 30202, -- 奖励物品ID
+				itemNum = 1, -- 奖励物品数量
+			},
+		},
+	},
+	[19] = {
+		openTimeStr = "2016-6-20", -- 开放日期
+		fubenId = 219, -- 进入的副本ID
+		sceneId = 219, -- 场景ID
+		todayActor = { -- 今日主角的配置
+			modelId = 6, -- 主角模型ID
+			actorName = Lang.DayPlotLang.dp19001, -- 主角名字
+			actorDesc = Lang.DayPlotLang.dp19002, -- 主角介绍
+		},
+		todayDesc = Lang.DayPlotLang.dp19003, -- 今日剧情介绍
+		tomorrowDesc = Lang.DayPlotLang.dp20004, -- 明日剧情预告
+		todayAwards = { -- 今日奖励
+			{ -- 其中一个奖励
+				itemType = 2, -- 奖励类型
+				itemId = 2, -- 奖励物品ID
+				itemNum = 80, -- 奖励物品数量
+			},
+			{ -- 其中一个奖励
+				itemType = 2, -- 奖励类型
+				itemId = 3, -- 奖励物品ID
+				itemNum = 20, -- 奖励物品数量
+			},
+			{ -- 其中一个奖励
+				itemType = 1, -- 奖励类型
+				itemId = 30202, -- 奖励物品ID
+				itemNum = 1, -- 奖励物品数量
+			},
+		},
+	},
+	[20] = {
+		openTimeStr = "2016-6-20", -- 开放日期
+		fubenId = 220, -- 进入的副本ID
+		sceneId = 220, -- 场景ID
+		todayActor = { -- 今日主角的配置
+			modelId = 6, -- 主角模型ID
+			actorName = Lang.DayPlotLang.dp20001, -- 主角名字
+			actorDesc = Lang.DayPlotLang.dp20002, -- 主角介绍
+		},
+		todayDesc = Lang.DayPlotLang.dp20003, -- 今日剧情介绍
+		tomorrowDesc = Lang.DayPlotLang.dp21004, -- 明日剧情预告
+		todayAwards = { -- 今日奖励
+			{ -- 其中一个奖励
+				itemType = 2, -- 奖励类型
+				itemId = 2, -- 奖励物品ID
+				itemNum = 80, -- 奖励物品数量
+			},
+			{ -- 其中一个奖励
+				itemType = 2, -- 奖励类型
+				itemId = 3, -- 奖励物品ID
+				itemNum = 20, -- 奖励物品数量
+			},
+			{ -- 其中一个奖励
+				itemType = 1, -- 奖励类型
+				itemId = 30202, -- 奖励物品ID
+				itemNum = 1, -- 奖励物品数量
+			},
+		},
+	},
+
+	[21] = {
+		openTimeStr = "2016-6-20", -- 开放日期
+		fubenId = 221, -- 进入的副本ID
+		sceneId = 221, -- 场景ID
+		todayActor = { -- 今日主角的配置
+			modelId = 23, -- 主角模型ID
+			actorName = Lang.DayPlotLang.dp21001, -- 主角名字
+			actorDesc = Lang.DayPlotLang.dp21002, -- 主角介绍
+		},
+		todayDesc = Lang.DayPlotLang.dp21003, -- 今日剧情介绍
+		tomorrowDesc = Lang.DayPlotLang.dp23004, -- 明日剧情预告
+		todayAwards = { -- 今日奖励
+			{ -- 其中一个奖励
+				itemType = 2, -- 奖励类型
+				itemId = 2, -- 奖励物品ID
+				itemNum = 80, -- 奖励物品数量
+			},
+			{ -- 其中一个奖励
+				itemType = 2, -- 奖励类型
+				itemId = 3, -- 奖励物品ID
+				itemNum = 20, -- 奖励物品数量
+			},
+			{ -- 其中一个奖励
+				itemType = 1, -- 奖励类型
+				itemId = 30202, -- 奖励物品ID
+				itemNum = 1, -- 奖励物品数量
+			},
+		},
+	},
+
+	[22] = {
+		openTimeStr = "2016-6-20", -- 开放日期
+		fubenId = 223, -- 进入的副本ID
+		sceneId = 223, -- 场景ID
+		todayActor = { -- 今日主角的配置
+			modelId = 6, -- 主角模型ID
+			actorName = Lang.DayPlotLang.dp23001, -- 主角名字
+			actorDesc = Lang.DayPlotLang.dp23002, -- 主角介绍
+		},
+		todayDesc = Lang.DayPlotLang.dp23003, -- 今日剧情介绍
+		tomorrowDesc = Lang.DayPlotLang.dp24004, -- 明日剧情预告
+		todayAwards = { -- 今日奖励
+			{ -- 其中一个奖励
+				itemType = 2, -- 奖励类型
+				itemId = 2, -- 奖励物品ID
+				itemNum = 80, -- 奖励物品数量
+			},
+			{ -- 其中一个奖励
+				itemType = 2, -- 奖励类型
+				itemId = 3, -- 奖励物品ID
+				itemNum = 20, -- 奖励物品数量
+			},
+			{ -- 其中一个奖励
+				itemType = 1, -- 奖励类型
+				itemId = 30202, -- 奖励物品ID
+				itemNum = 1, -- 奖励物品数量
+			},
+		},
+	},
+
+	[23] = {
+		openTimeStr = "2016-6-20", -- 开放日期
+		fubenId = 224, -- 进入的副本ID
+		sceneId = 224, -- 场景ID
+		todayActor = { -- 今日主角的配置
+			modelId = 14, -- 主角模型ID
+			actorName = Lang.DayPlotLang.dp24001, -- 主角名字
+			actorDesc = Lang.DayPlotLang.dp24002, -- 主角介绍
+		},
+		todayDesc = Lang.DayPlotLang.dp24003, -- 今日剧情介绍
+		tomorrowDesc = Lang.DayPlotLang.dp25004, -- 明日剧情预告
+		todayAwards = { -- 今日奖励
+			{ -- 其中一个奖励
+				itemType = 2, -- 奖励类型
+				itemId = 2, -- 奖励物品ID
+				itemNum = 80, -- 奖励物品数量
+			},
+			{ -- 其中一个奖励
+				itemType = 2, -- 奖励类型
+				itemId = 3, -- 奖励物品ID
+				itemNum = 20, -- 奖励物品数量
+			},
+			{ -- 其中一个奖励
+				itemType = 1, -- 奖励类型
+				itemId = 30202, -- 奖励物品ID
+				itemNum = 1, -- 奖励物品数量
+			},
+		},
+	},
+
+	[24] = {
+		openTimeStr = "2016-6-20", -- 开放日期
+		fubenId = 225, -- 进入的副本ID
+		sceneId = 225, -- 场景ID
+		todayActor = { -- 今日主角的配置
+			modelId = 12, -- 主角模型ID
+			actorName = Lang.DayPlotLang.dp25001, -- 主角名字
+			actorDesc = Lang.DayPlotLang.dp25002, -- 主角介绍
+		},
+		todayDesc = Lang.DayPlotLang.dp25003, -- 今日剧情介绍
+		tomorrowDesc = Lang.DayPlotLang.dp26004, -- 明日剧情预告
+		todayAwards = { -- 今日奖励
+			{ -- 其中一个奖励
+				itemType = 2, -- 奖励类型
+				itemId = 2, -- 奖励物品ID
+				itemNum = 80, -- 奖励物品数量
+			},
+			{ -- 其中一个奖励
+				itemType = 2, -- 奖励类型
+				itemId = 3, -- 奖励物品ID
+				itemNum = 20, -- 奖励物品数量
+			},
+			{ -- 其中一个奖励
+				itemType = 1, -- 奖励类型
+				itemId = 30202, -- 奖励物品ID
+				itemNum = 1, -- 奖励物品数量
+			},
+		},
+	},
+
+	[25] = {
+		openTimeStr = "2016-6-20", -- 开放日期
+		fubenId = 226, -- 进入的副本ID
+		sceneId = 226, -- 场景ID
+		todayActor = { -- 今日主角的配置
+			modelId = 24, -- 主角模型ID
+			actorName = Lang.DayPlotLang.dp26001, -- 主角名字
+			actorDesc = Lang.DayPlotLang.dp26002, -- 主角介绍
+		},
+		todayDesc = Lang.DayPlotLang.dp26003, -- 今日剧情介绍
+		tomorrowDesc = Lang.DayPlotLang.dp01004, -- 明日剧情预告
+		todayAwards = { -- 今日奖励
+			{ -- 其中一个奖励
+				itemType = 2, -- 奖励类型
+				itemId = 2, -- 奖励物品ID
+				itemNum = 80, -- 奖励物品数量
+			},
+			{ -- 其中一个奖励
+				itemType = 2, -- 奖励类型
+				itemId = 3, -- 奖励物品ID
+				itemNum = 20, -- 奖励物品数量
+			},
+			{ -- 其中一个奖励
+				itemType = 1, -- 奖励类型
+				itemId = 30202, -- 奖励物品ID
+				itemNum = 1, -- 奖励物品数量
+			},
+		},
+	},
+	
+}

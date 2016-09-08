@@ -1,0 +1,99 @@
+﻿--按概率的总和的方式掉落物品
+--比如那种箱子的方式，策划从一堆物品里按配置的概率抽取n个出来,具体的抽取的方式见后面的配置 
+
+ProabolityItemConfig=
+{
+
+	--开阳印
+	{
+		item_id = 1703,     --item_id表示物品的id
+		itemCount =1, --消耗物品的数目，默认是1，可以不配置，就是一次roll消耗多少个道具	
+		needMinBagGrid =1,   --最小需要多少个格子 
+		needDelete = true,  --needDelete 表示是否需要删除
+    dropName = "data/config/item/scriptItemConfig/ProabilityDrops/probDrops1.txt",     --爆率的配置文件，同怪物的掉落
+	},
+	
+	
+	--玉衡印
+	{
+		item_id = 1704,     --item_id表示物品的id
+		needMinBagGrid =1,   --最小需要多少个格子
+		needDelete = true,  --needDelete 表示是否需要删除   
+   dropName = "data/config/item/scriptItemConfig/ProabilityDrops/probDrops2.txt",     --爆率的配置文件，同怪物的掉落
+    
+	},
+	
+	--璇玑印
+	{
+		item_id = 1705,     --item_id表示物品的id
+		needMinBagGrid =1,   --最小需要多少个格子
+		needDelete = true,  --needDelete 表示是否需要删除
+		dropName = "data/config/item/scriptItemConfig/ProabilityDrops/probDrops3.txt",     --爆率的配置文件，同怪物的掉落
+
+	},
+	--NPC见面礼
+	{
+		item_id = 1706,     --item_id表示物品的id
+		needMinBagGrid =1,   --最小需要多少个格子
+		needDelete = true,  --needDelete 表示是否需要删除
+		dropName = "data/config/item/scriptItemConfig/ProabilityDrops/probDrops4.txt",     --爆率的配置文件，同怪物的掉落
+
+	},
+	--无字天书 
+	{
+		item_id = 2042,     --item_id表示物品的id
+		needMinBagGrid =1,   --最小需要多少个格子
+		needDelete = true,  --needDelete 表示是否需要删除
+		dropName = "data/config/item/scriptItemConfig/ProabilityDrops/probDrops5.txt",     --爆率的配置文件，同怪物的掉落
+
+	},
+
+	--秘籍残页 
+	{
+		item_id = 2041,     --item_id表示物品的id
+		itemCount =10,       --物品需求数量
+		needMinBagGrid =1,   --最小需要多少个格子
+		needDelete = true,  --needDelete 表示是否需要删除
+		dropName = "data/config/item/scriptItemConfig/ProabilityDrops/probDrops6.txt",     --爆率的配置文件，同怪物的掉落
+
+	},
+	
+
+	--玉兔金箱 
+	{
+		item_id = 2109,     --item_id表示物品的id
+		itemCount =1,       --物品需求数量
+		needMinBagGrid =2,   --最小需要多少个格子
+		needDelete = true,  --needDelete 表示是否需要删除
+		dropName = "data/config/item/scriptItemConfig/ProabilityDrops/probDrops7.txt",     --爆率的配置文件，同怪物的掉落
+
+	},
+	--玉兔银箱 
+	{
+		item_id = 2110,     --item_id表示物品的id
+		itemCount =1,       --物品需求数量
+		needMinBagGrid =2,   --最小需要多少个格子
+		needDelete = true,  --needDelete 表示是否需要删除
+		dropName = "data/config/item/scriptItemConfig/ProabilityDrops/probDrops8.txt",     --爆率的配置文件，同怪物的掉落
+
+	},
+	--玉兔铜箱
+	{
+		item_id = 2111,     --item_id表示物品的id
+		itemCount =1,       --物品需求数量
+		needMinBagGrid =2,   --最小需要多少个格子
+		needDelete = true,  --needDelete 表示是否需要删除
+		dropName = "data/config/item/scriptItemConfig/ProabilityDrops/probDrops9.txt",     --爆率的配置文件，同怪物的掉落
+
+       },  	
+       --玉兔礼包
+	{
+		item_id = 2112,     --item_id表示物品的id
+		itemCount =1,       --物品需求数量
+		needMinBagGrid =2,   --最小需要多少个格子
+		needDelete = true,  --needDelete 表示是否需要删除
+		dropName = "data/config/item/scriptItemConfig/ProabilityDrops/probDrops10.txt",     --爆率的配置文件，同怪物的掉落
+
+       },
+
+}

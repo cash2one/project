@@ -1,0 +1,18 @@
+--#include "..\..\..\language\LangCode.txt"
+activity4005Conf = {
+	activityId = 4005,
+
+	activities =
+	{
+			[108]= 
+			{
+				id = 108,
+				--reward_type = 2,
+				target = {{3280,2,39016},{6480,1,{11705,12705,0,14705}},},
+				icon={4,5},
+				name={"陨铁","七夕时装"},
+				fight={0,-1},
+			},
+	},
+}
+		

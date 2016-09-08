@@ -1,0 +1,192 @@
+-- 护送任务
+
+--#include "data\config\taskgameplayconfig\protectquestconfig.txt"
+
+local ProtectQuest_funcs = {}
+
+-- 放弃任务回调，重置状态
+-- 任务超时回调，重置状态
+-- 完成任务回调，重置状态
+ProtectQuest_funcs.OnResetState = function(sysarg, qid)
+    local actor_var = LActor.getStaticVar(sysarg)
+	if actor_var == nil then return end
+	if actor_var.protect_quest == nil then
+		actor_var.protect_quest = {}
+	end
+
+	if actor_var.protect_quest.qid ~= qid then
+		return
+	end
+
+	if actor_var.protect_quest and actor_var.protect_quest.baby and actor_var.protect_quest.baby ~= 0 then
+		local pbaby = LActor.getEntity(actor_var.protect_quest.baby)
+		LActor.removeOwnedEntity(sysarg, pbaby)
+		actor_var.protect_quest.baby = 0
+	end
+	actor_var.protect_quest.qid = 0
+	LActor.setTmpMoveSpeed(sysarg, ActorInitConfig.nMoveSpeed)
+	LActor.removeState(sysarg, esProtection)
+	LActor.refreshActor(sysarg)
+end
+
+-- 任务目标数量改变
+ProtectQuest_funcs.OnUpdateTarget = function( sysarg , qid )
+	-- print("------------------",qid)
+	if LActor.canFinishQuest(sysarg, qid) == true then
+		-- print("------------------111")
+		local actor_var = LActor.getStaticVar(sysarg)
+		if actor_var == nil then return end
+		if actor_var.protect_quest == nil then
+			actor_var.protect_quest = {}
+		end
+
+		if actor_var.protect_quest.qid == qid then
+			if actor_var.protect_quest and actor_var.protect_quest.baby and actor_var.protect_quest.baby ~= 0 then
+				local pbaby = LActor.getEntity(actor_var.protect_quest.baby)
+				LActor.removeOwnedEntity(sysarg, pbaby)
+				actor_var.protect_quest.baby = 0
+			end
+			actor_var.protect_quest.qid = 0
+			LActor.setTmpMoveSpeed(sysarg, ActorInitConfig.nMoveSpeed)
+			LActor.removeState(sysarg, esProtection)
+			LActor.refreshActor(sysarg)
+		end
+	end
+end
+
+-- 接受任务回调
+ProtectQuest_funcs.OnAcceptQuest = function(sysarg, qid)
+	local actor_var = LActor.getStaticVar(sysarg)
+	if actor_var == nil then return end
+	if actor_var.protect_quest == nil then
+		actor_var.protect_quest = {}
+	end
+
+	if actor_var.protect_quest.qid and actor_var.protect_quest.qid ~= 0 then
+		print("!!!护送任务错误 OnAcceptQuest actor_var.protect_quest.qid ~= 0!!!")
+		return
+	end
+
+	actor_var.protect_quest.qid = qid
+
+	-- 没有配置
+	if protectquestconfig.info[qid] == nil then 
+		print("!!!缺少护送任务配置!!!")
+		return
+	end
+
+	local monsterId = protectquestconfig.info[qid].monsterid -- 对应的怪物ID
+	local speed = protectquestconfig.info[qid].speed
+	local pbaby = LActor.addSlave(sysarg, monsterId, 0, protectquestconfig.info[qid].timelimit + 10) -- 添加宝宝，存活时间比任务时间多10秒
+	if pbaby ~= nil then
+		LActor.setEntityTelByOwnderAttr(pbaby, true)
+		local pname = LActor.getName(sysarg)
+		local etname = LActor.getName(pbaby)
+		-- local showname = string.format(Lang.ScriptTips.sx014, pname, etname)
+		LActor.setIntProperty(pbaby, PROP_MOVETIME, speed)
+		actor_var.protect_quest.baby = LActor.getHandle(pbaby) -- 保存宝宝句柄
+	end
+	LActor.ChangeStatus(sysarg) -- 下坐骑
+	LActor.addState(sysarg, esProtection)
+	LActor.setTmpMoveSpeed(sysarg, speed)
+	LActor.refreshActor(sysarg)
+end
+
+-- 接受任务前检查
+ProtectQuest_funcs.CheckAcceptQuest = function(sysarg, qid)
+	-- 处于护送状态中
+	if LActor.hasState(sysarg, esProtection) == true then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.hs001, ttMessage)
+		return false
+	end
+	-- 再检查一次
+	local actor_var = LActor.getStaticVar(sysarg)
+	if actor_var == nil then return end
+	if actor_var.protect_quest == nil then
+		actor_var.protect_quest = {}
+	end
+	if actor_var.protect_quest.qid and actor_var.protect_quest.qid ~= 0 then
+		print("!!!护送任务错误 CheckAcceptQuest actor_var.protect_quest.qid ~= 0!!!")
+		return false
+	end
+	return true
+end
+
+-- 登录
+ProtectQuest_funcs.OnActorLogin = function(sysarg, arg)
+	local actor_var = LActor.getStaticVar(sysarg)
+	if actor_var == nil then return end
+
+	if actor_var.protect_quest and actor_var.protect_quest.qid and actor_var.protect_quest.qid ~= 0 then
+		local qid = actor_var.protect_quest.qid
+		if LActor.hasQuest(sysarg, actor_var.protect_quest.qid) then
+			-- 没有配置
+			if protectquestconfig.info[qid] == nil then 
+				--print("!!!缺少护送任务配置!!!")
+				return
+			end
+			local monsterId = protectquestconfig.info[qid].monsterid -- 对应的怪物ID
+			local speed = protectquestconfig.info[qid].speed
+			local pbaby = LActor.addSlave(sysarg, monsterId, 0, protectquestconfig.info[qid].timelimit + 10) -- 添加宝宝，存活时间比任务时间多10秒
+			if pbaby ~= nil then
+				LActor.setEntityTelByOwnderAttr(pbaby, true)
+				local pname = LActor.getName(sysarg)
+				local etname = LActor.getName(pbaby)
+				-- local showname = string.format(Lang.ScriptTips.sx014, pname, etname)
+				LActor.setIntProperty(pbaby, PROP_MOVETIME, speed)
+				actor_var.protect_quest.baby = LActor.getHandle(pbaby) -- 保存宝宝句柄
+			end
+			LActor.ChangeStatus(sysarg) -- 下坐骑
+			LActor.addState(sysarg, esProtection)
+			LActor.setTmpMoveSpeed(sysarg, speed)
+			LActor.refreshActor(sysarg)
+		else
+			actor_var.protect_quest = {}
+		end
+	end
+end
+
+-- 登出
+ProtectQuest_funcs.OnActorLogout = function(sysarg, arg)
+	if LActor.hasState(sysarg, esProtection) == false then
+		-- 护送任务状态才处理
+		return 
+	end
+
+	local actor_var = LActor.getStaticVar(sysarg)
+	if actor_var == nil then return end
+
+	if actor_var.protect_quest and actor_var.protect_quest.baby and actor_var.protect_quest.baby ~= 0 then
+		local pbaby = LActor.getEntity(actor_var.protect_quest.baby)
+		LActor.removeOwnedEntity(sysarg, pbaby)
+		actor_var.protect_quest.baby = 0
+	end
+	LActor.removeState(sysarg, esProtection)
+
+	-- 下线任务失败
+	-- if actor_var.protect_quest.qid and actor_var.protect_quest.qid ~= 0 then
+	-- 	LActor.GiveUpQuest(sysarg, actor_var.protect_quest.qid)
+	-- 	actor_var.protect_quest.qid = 0
+	-- end
+end
+
+-- 死亡不删除任务
+
+-- 复活
+
+-- 注册完成任务的侦听
+ActorQuestCallDispatcher.registerPlayType(BaseTypes.BaseQuestAction.qaAccept, BaseTypes.BaseQuestPlayType.qptProtect, ProtectQuest_funcs.OnAcceptQuest)
+ActorQuestCallDispatcher.registerPlayType(BaseTypes.BaseQuestAction.qaCommit, BaseTypes.BaseQuestPlayType.qptProtect, ProtectQuest_funcs.OnResetState)
+ActorQuestCallDispatcher.registerPlayType(BaseTypes.BaseQuestAction.qaGiveUp, BaseTypes.BaseQuestPlayType.qptProtect, ProtectQuest_funcs.OnResetState)
+ActorQuestCallDispatcher.registerPlayType(BaseTypes.BaseQuestAction.qaTimeOut, BaseTypes.BaseQuestPlayType.qptProtect, ProtectQuest_funcs.OnResetState)
+ActorQuestCallDispatcher.registerCheck(BaseTypes.BaseQuestAction.qaAccept, BaseTypes.BaseQuestPlayType.qptProtect, ProtectQuest_funcs.CheckAcceptQuest)
+ActorQuestCallDispatcher.registerPlayType(BaseTypes.BaseQuestAction.qaTargetFinish, BaseTypes.BaseQuestPlayType.qptProtect, ProtectQuest_funcs.OnUpdateTarget)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, ProtectQuest_funcs.OnActorLogin) 
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogout, ProtectQuest_funcs.OnActorLogout)
+
+function protectquesttest( sysarg )
+	-- if not sysarg then return end
+	-- print("-------------ddd",LActor.getIntProperty(sysarg,PROP_MOVETIME))
+end
+
+GmEventFuncList.register( "pqt", protectquesttest, 1) -- 增加献果次数

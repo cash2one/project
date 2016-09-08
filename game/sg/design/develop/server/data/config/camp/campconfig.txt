@@ -1,0 +1,71 @@
+﻿--玩家的阵营的配置
+--#include "..\..\language\LangCode.txt"
+CampConfig=
+{
+    --没有阵营的，占位用的,不要删除
+    {
+        id=0,                       --阵营的id
+        nFbID =0, 		    --出生的副本ID,如果是普通场景是0
+        nSceneID =1,               --出生的场景ID
+        nPosX =8,                  --出生点x
+        nPosY =24,                  --出生点y
+        name=Lang.Misc.m000200,			-- 阵营名称
+        shortname="",    -- 阵营名称简写
+        campLeaderSceneId=49,				-- 阵营领袖NPC所在的场景ID
+        campLeaderName=Lang.EntityName.n00000, -- 阵营领袖NPC名称
+        campEquipNpcName=Lang.EntityName.n00000, -- 阵营徽印兑换NPC名称
+        campEquipSceneName=Lang.SceneName.s00120, -- 阵营徽印兑换NPC所在场景名称
+        campEquipNpcPosX=118, -- 阵营徽印兑换NPC坐标X
+       	campEquipNpcPosY=29, -- 阵营徽印兑换NPC坐标Y
+    },
+
+     --逍遥(神武)
+    {
+        id=1,                       --阵营的id
+        nFbID =0, 		    --出生的副本ID,如果是普通场景是0
+        nSceneID =1,               --出生的场景ID
+        nPosX =8,                  --出生点x
+        nPosY =24,                  --出生点y
+        name=Lang.Misc.m000200,			-- 阵营名称
+        shortname=Lang.Misc.camp001,    -- 阵营名称简写
+        campLeaderSceneId=49,				-- 阵营领袖NPC所在的场景ID
+        campLeaderName=Lang.EntityName.n00000, -- 阵营领袖NPC名称
+        campEquipNpcName=Lang.EntityName.n00383, -- 阵营徽印兑换NPC名称
+        campEquipSceneName=Lang.SceneName.s00120, -- 阵营徽印兑换NPC所在场景名称
+        campEquipNpcPosX=135, -- 阵营徽印兑换NPC坐标X
+       	campEquipNpcPosY=33, -- 阵营徽印兑换NPC坐标Y
+    },
+
+   --星辰(天机)
+    {
+        id=2,                       --阵营的id
+        nFbID =0, 		    --出生的副本ID,如果是普通场景是0
+        nSceneID =2,               --出生的场景ID
+        nPosX =8,                  --出生点x
+        nPosY =24,                  --出生点y
+        name=Lang.Misc.m000201,			-- 阵营名称
+        shortname=Lang.Misc.camp002,    -- 阵营名称简写
+        campLeaderSceneId=49,				-- 阵营领袖NPC所在的场景ID
+        campLeaderName=Lang.EntityName.n00000, -- 阵营领袖NPC名称
+        campEquipNpcName=Lang.EntityName.n00401, -- 阵营徽印兑换NPC名称
+        campEquipSceneName=Lang.SceneName.s00122, -- 阵营徽印兑换NPC所在场景名称
+        campEquipNpcPosX=128, -- 阵营徽印兑换NPC坐标X
+       	campEquipNpcPosY=28, -- 阵营徽印兑换NPC坐标Y
+    },
+
+   --逸仙
+    {
+        id=3,                       --阵营的id
+        nFbID =0, 		    --出生的副本ID,如果是普通场景是0
+        nSceneID =3,               --出生的场景ID
+        nPosX =8,                  --出生点x
+        nPosY =24,                  --出生点y
+        name=Lang.Misc.m000202,			-- 阵营名称
+        shortname=Lang.Misc.camp003,    -- 阵营名称简写
+        campLeaderSceneId=49,				-- 阵营领袖NPC所在的场景ID
+       	campEquipNpcName=Lang.EntityName.n00417, -- 阵营徽印兑换NPC名称
+       	campEquipSceneName=Lang.SceneName.s00124, -- 阵营徽印兑换NPC所在场景名称
+       	campEquipNpcPosX=118, -- 阵营徽印兑换NPC坐标X
+       	campEquipNpcPosY=29, -- 阵营徽印兑换NPC坐标Y
+    },
+}

@@ -1,0 +1,210 @@
+﻿--绑定天珠，只显示绑定天珠购买的东西
+
+{
+	name = Lang.Store.c00007, --分类名称
+        showAreaId =0,  --显示的区域ID,0表示商城普通区，1表示商城限量抢购区，2表示背包0元抢购区，3表示背包1元抢购区，4表示背包热销商品区
+	labelId =0,  --0表示是普通的商城，1表示背包限时抢购，2表示0元抢购,3表示1元抢购
+	totalBuyLimit =0,    --表示大类的数目的限制个数,0表示无限制，1表示限制一个
+        desc =Lang.Store.desc0001,   --分类的刷新描述
+	--该分类中的商品表
+	items = 
+	{
+		--[[	金风玉露		
+		{						
+			id =	50014	,			
+			item =	21654	,			
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 2, price =	6440, bind = true,oldPrice=12880 }, 
+			},							
+		},]]
+
+		--	筋斗云					
+		{						
+			id =	50001	,			
+			item =	18601	,			
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 2, price =	15	, bind = true,oldPrice=	30	 }, 
+			},					
+		},						
+		--	初级经验丹					
+		{						
+			id =	50002	,			
+			item =	18210	,			
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 2, price = 	25	, bind = true,oldPrice=	50	 }, 
+			},					
+		},				
+		--	一阶羽翼晶石					
+		{						
+			id =	50003	,			
+			item =	18627	,			
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 2, price =	40	, bind = true,oldPrice=	80	 }, 
+			},					
+		},			
+		--	初级强化石					
+		{						
+			id =	50004	,			
+			item =	18710	,			
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 2, price =	30	, bind = true,oldPrice=	60	 }, 
+			},					
+		},							
+		--	初级悟性丹					
+		{						
+			id =	50005	,			
+			item =	28220	,			
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 2, price =	140	, bind = true,oldPrice=	280	 }, 
+			},							
+		},	
+		--	初级成长丹					
+		{						
+			id =	50016	,			
+			item =	28230	,			
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 2, price =	125	, bind = true,oldPrice=	250	 }, 
+			},							
+		},								
+		--	初级生命包					
+		{						
+			id =	50007	,			
+			item =	19300	,			
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 2, price =	25	, bind = true,oldPrice=	50	 }, 
+			},							
+		},	
+		--	初级法力包					
+		{						
+			id =	50008	,			
+			item =	19200	,			
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 2, price =	25	, bind = true,oldPrice=	50	 }, 
+			},							
+		},	
+		--	初级伙伴长生丹					
+		{						
+			id =	50009	,			
+			item =	19100	,			
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 2, price =	25	, bind = true,oldPrice=	50	 }, 
+			},							
+		},	
+		--	复活石					
+		{						
+			id =	50010	,			
+			item =	18600	,			
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 2, price =	50	, bind = true,oldPrice=	100	 }, 
+			},							
+		},				
+			--	初级兽魂印		
+		{						
+			id =	50011	,			
+			item =	28241	,			
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 2, price =	40	, bind = true,oldPrice=	80	 }, 
+			},							
+		},			
+			--[[	拓印符		
+		{						
+			id =	50015	,			
+			item =	18646	,			
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 2, price =	190	, bind = true,oldPrice=	380 }, 
+			},
+		},]]
+			--	初级法宝晶石		
+		{						
+			id =	50012	,			
+			item =	18603	,			
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 2, price =	50	, bind = true,oldPrice=	100	 }, 
+			},							
+		},
+			--	99朵玫瑰		
+		{						
+			id =	50013	,			
+			item =	18610	,			
+			quality =	0	,			
+			strong =	0	,			
+			singleBuyLimit =	0 	,			
+								
+			price = 					
+			{					
+				{ spid = "*", type = 2, price =	600	, bind = true,oldPrice=	1200 }, 
+			},													
+		},
+	},
+},
+

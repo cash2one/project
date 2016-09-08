@@ -1,0 +1,104 @@
+﻿--lua script
+--处理商城相关的操作
+
+--#include "data\config\quest\StoreQuest.txt" once --任务相关的配置
+
+local StoreOpId = 
+{  
+	enStoreBuy 	= 1,	--购买物品	
+}
+
+StoreOpFuncList = {}
+
+EventCallDispatcher.HandlerStoreOp = function (sysarg, args)
+  if args[1] == nil then return end   --
+  local func = StoreOpFuncList[args[1]]
+  if func ~= nil then
+    func(sysarg, args) 
+  end
+end
+
+--[[
+--购买某个物品
+StoreOpFuncList[StoreOpId.enStoreBuy] = function (sysarg,args)
+	local level = LActor.getLevel(sysarg)
+
+	local var = LActor.getStaticVar(sysarg)
+
+	for i,v in ipairs(StoreActivityData)  do
+		if v.storeid == args[2] and level >= v.limitlevel and v.moneytype == args[5] then
+			--print("StoreOpFuncList.enStoreBuy".. args[2])
+			if var.storeactivitydata == nil then 
+				var.storeactivitydata = {} 
+				var.storeactivitydata.record = 0
+				var.storeactivitydata.reward = 0
+			end
+			--print("StoreOpFuncList.enStoreBuy".. var.storeactivitydata.record)
+			if not System.bitOPMask(var.storeactivitydata.record, i - 1) then
+				var.storeactivitydata.record = System.bitOpSetMask(var.storeactivitydata.record, i - 1, true)
+				StoreOpFuncList.sendstroeactivity(sysarg)
+			end
+
+			--完成相关的任务
+			local qData = StoreQuestData[i]
+			if qData then
+				for k=1,#qData do
+					LActor.setQuestValue(sysarg, qData[k].qid, qData[k].tid, qData[k].count)			
+				end
+			end
+		end
+	end
+
+	--活动统计数据上报
+	local itemid = args[2]
+	if itemid == 64710 then
+		System.logCounter(LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), "box_act", "", "", "buy_qizhenyibao_box")
+	end
+end
+--]]
+
+--购买某个物品
+StoreOpFuncList[StoreOpId.enStoreBuy] = function (sysarg,args)
+	--完成相关的任务
+	local qData = StoreQuestData[args[2]]
+	if qData then
+		for i=1,#qData do
+			LActor.setQuestValue(sysarg, qData[i].qid, qData[i].tid, qData[i].count)
+		end
+	end
+
+	if tonumber(args[2]) ~= nil then
+	    LActor.OnQuestEvent(qtGouMaiShangPin, tonumber(args[2]), 1, true, sysarg)
+	end
+
+    -- 任务事件触发
+    LActor.OnQuestEvent(qtGouMaiShangPin, 0, 1, true, sysarg)
+    -- 活跃度
+    ActivationTrigger( sysarg, 13, args[3] )
+end
+
+StoreOpFuncList.onlogin = function (sysarg,args)
+	StoreOpFuncList.sendstroeactivity(sysarg)
+end
+
+StoreOpFuncList.sendstroeactivity = function (sysarg)
+	--print("StoreOpFuncList.sendstroeactivity")
+	local var = LActor.getStaticVar(sysarg)
+	local record = 0
+	local reward = 0
+	if var.storeactivitydata ~= nil then
+		record = var.storeactivitydata.record or 0
+		reward = var.storeactivitydata.reward or 0
+	end
+	local npack = DataPack.allocPacket(sysarg, 139, 129)
+	DataPack.writeInt(npack, record)
+	DataPack.writeInt(npack, reward)
+	DataPack.flush(npack)
+
+	--print("StoreOpFuncList.sendstroeactivity .."..record..","..reward)
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeStore, EventCallDispatcher.HandlerStoreOp)
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, StoreOpFuncList.onlogin)
+

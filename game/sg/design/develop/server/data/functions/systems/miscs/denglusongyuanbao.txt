@@ -1,0 +1,218 @@
+-- 登陆送天珠逻辑处理文件
+DengLuSongYuanbaoFunc = {}
+
+
+DengLuSongYuanbaoFunc.GetInfo = function(sysarg, msgid, dp)
+	--print("----------DengLuSongYuanbaoFunc.GetInfo")
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	
+	-- 初始化
+	if var.DengLuSongYuanbao == nil then
+		var.DengLuSongYuanbao = {}
+	end
+
+	if var.DengLuSongYuanbao.day == nil then
+		var.DengLuSongYuanbao.day = {}
+		for i=1,3 do
+			if var.DengLuSongYuanbao.day[i] == nil then
+				var.DengLuSongYuanbao.day[i] = -1
+			end
+		end
+	end
+
+	var.DengLuSongYuanbao.hasGetReward = var.DengLuSongYuanbao.hasGetReward or 0
+
+	-- 发送数据
+	local npack = DataPack.allocPacket(sysarg, 139, 145)
+	if npack == nil then return end
+
+	DataPack.writeChar(npack,var.DengLuSongYuanbao.hasGetReward)		-- 是否领过奖励
+	--DataPack.writeChar(npack,3)											-- 抽奖天数	
+	--print("hasGetReward:  "..var.DengLuSongYuanbao.hasGetReward)
+    for i=1,3 do
+    	DataPack.writeChar(npack, var.DengLuSongYuanbao.day[i])			-- 每天抽取的数据，为抽取为-1	
+    end
+    DataPack.flush(npack)
+end
+
+DengLuSongYuanbaoFunc.Lottery = function(sysarg, msgid, dp)
+	--print("----------DengLuSongYuanbaoFunc.Lottery")
+	local cday = DataPack.readInt(dp)
+	local var = LActor.getStaticVar(sysarg)
+	if cday == nil then return end 			-- 客户端如果没法送数据过来，直接返回
+	if cday < 1 or cday > 3 then return end  -- 不是1到3，直接返回，说明客户端发送数据错误
+
+	-- 初始化
+	if var == nil then return end
+	if var.DengLuSongYuanbao == nil then
+		var.DengLuSongYuanbao = {}
+	end
+
+	if var.DengLuSongYuanbao.day == nil then
+		var.DengLuSongYuanbao.day = {}
+		for i=1,3 do
+			if var.DengLuSongYuanbao.day[i] == nil then
+				var.DengLuSongYuanbao.day[i] = -1
+			end
+		end
+	end
+
+	--服务端与客户端时间对比，若不对，直接返回（不做）
+	if cday == 1 and var.DengLuSongYuanbao.day[cday] == -1 then
+		local year=0
+		local month=0
+		local day=0
+		year,month,day= System.getDate(year,month,day)       --获取天 
+
+		var.DengLuSongYuanbao.year = year		
+		var.DengLuSongYuanbao.month = month		
+		var.DengLuSongYuanbao.Date = day		
+
+		var.DengLuSongYuanbao.open = 1
+	end
+
+	-- 获取一个随机数
+	if var.DengLuSongYuanbao.day[cday] ~= -1 then 
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.denglu001,ttMessage)
+		return 
+	end -- 已经抽过奖了
+
+	local sday = 0
+	if var.DengLuSongYuanbao.open ~= nil then
+		local year=0
+		local month=0
+		local day=0
+		year,month,day= System.getDate(year,month,day)       --获取天 
+
+		if month == var.DengLuSongYuanbao.month then
+			sday = day - var.DengLuSongYuanbao.Date 
+		end
+	end
+
+	if sday+1 ~= cday then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.denglu001,ttMessage)
+		return 
+	end
+
+	if cday == 1 then
+		var.DengLuSongYuanbao.day[cday] = 9
+	else
+		local random = System.getRandomNumber(9)
+		var.DengLuSongYuanbao.day[cday] = random
+	end
+	
+	-- 发送数据
+	DengLuSongYuanbaoFunc.GetInfo(sysarg, msgid, dp)
+end
+
+DengLuSongYuanbaoFunc.GetReward = function(sysarg, msgid, dp)
+	--print("------DengLuSongYuanbaoFunc.GetReward")
+
+	-- 是否已经领过奖
+	local var = LActor.getStaticVar(sysarg)
+	if var.DengLuSongYuanbao == nil then
+		var.DengLuSongYuanbao = {}
+	end
+	var.DengLuSongYuanbao.hasGetReward = var.DengLuSongYuanbao.hasGetReward or 0
+	if var.DengLuSongYuanbao.hasGetReward ~= 0 then 
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.denglu002,ttMessage)
+		return 
+	end
+
+	-- 初始化
+	if var.DengLuSongYuanbao == nil then
+		var.DengLuSongYuanbao = {}
+	end
+
+	if var.DengLuSongYuanbao.day == nil then
+		var.DengLuSongYuanbao.day = {}
+		for i=1,3 do
+			if var.DengLuSongYuanbao.day[i] == nil then
+				var.DengLuSongYuanbao.day[i] = -1
+			end
+		end
+	end
+
+	for i=1,3 do
+		if var.DengLuSongYuanbao.day[i] == -1 then
+			var.DengLuSongYuanbao.day[i] = 0
+		end
+	end
+
+	-- 发送奖励
+	local rewardValue = var.DengLuSongYuanbao.day[1] * 100 + var.DengLuSongYuanbao.day[2] * 10 + var.DengLuSongYuanbao.day[3] 
+	var.DengLuSongYuanbao.hasGetReward = 1  -- 标记已经领过了
+
+	if rewardValue <= 0 then 
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.denglu003,ttMessage)
+		DengLuSongYuanbaoFunc.GetInfo(sysarg, msgid, dp)
+		return 
+	end
+
+	local useItemResult = LActor.changeMoney( sysarg, 2, rewardValue, 1, true, "DengLuSongYuanbao", "add")
+	if useItemResult then
+		local effects = {} -- 特效项
+		local effect = {} -- 特效
+		effect.type = 2
+		effect.id = 2
+		effect.count = rewardValue
+		effects[#effects+1] = effect
+		MiscFunc.PlayItemEffect(sysarg, 3, effects)
+	end
+
+	-- 发送领奖之后的数据
+	DengLuSongYuanbaoFunc.GetInfo(sysarg, msgid, dp)
+end
+
+-- 新的一天到来，要进行随机生成
+DengLuSongYuanbaoFunc.onUserLogin = function (sysarg, arg)
+	local var = LActor.getStaticVar(sysarg)
+
+	-- 初始化
+	if var.DengLuSongYuanbao == nil then
+		var.DengLuSongYuanbao = {}
+	end
+
+	if var.DengLuSongYuanbao.day == nil then
+		var.DengLuSongYuanbao.day = {}
+		for i=1,3 do
+			if var.DengLuSongYuanbao.day[i] == nil then
+				var.DengLuSongYuanbao.day[i] = -1
+			end
+		end
+	end
+
+
+	if var.DengLuSongYuanbao.open == nil or var.DengLuSongYuanbao.open ~= 1 then
+		return 
+	end
+	
+	--print("var.DengLuSongYuanbao.open -- "..var.DengLuSongYuanbao.open)
+
+	local year=0
+	local month=0
+	local day=0
+	year,month,day= System.getDate(year,month,day)       --获取天 
+
+	local sday = 0
+	if month == var.DengLuSongYuanbao.month then
+		sday = day - var.DengLuSongYuanbao.Date
+	end
+
+	if sday == 0 then
+		return 
+	end
+
+	for i=2,sday do
+		if var.DengLuSongYuanbao.day[i] == -1 then
+			var.DengLuSongYuanbao.day[i] = 0
+		end		
+	end
+end
+
+MiscsImplement.registerMsgHandler(145, DengLuSongYuanbaoFunc.GetInfo)  			-- 获取登陆送天珠数据
+MiscsImplement.registerMsgHandler(146, DengLuSongYuanbaoFunc.Lottery)        	-- 摇奖
+MiscsImplement.registerMsgHandler(147, DengLuSongYuanbaoFunc.GetReward)   		-- 领奖
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, DengLuSongYuanbaoFunc.onUserLogin)

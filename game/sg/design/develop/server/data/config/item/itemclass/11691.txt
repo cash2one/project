@@ -1,0 +1,32 @@
+﻿{
+	id = 11691,
+	name = Lang.Item.n11691,
+	desc = Lang.Item.i11691,
+	type = 16,
+    sellType = 33,	
+	icon = 99999,
+	shape = {21007,21107,22007,22107,23007,23107,24007,24107},
+	color = 3,
+	dura = 0,
+	dup = 0,
+	colGroup = 0,
+	dealType = 0,
+	dealPrice = 0,
+	time = 0,
+	suitId = 0,
+	staitcAttrs = { 
+		{ type = 27, value = 50, }, 
+                { type = 17, value = 500, },
+                { type = 23, value = 50, },
+		{ type = 33, value = 50, }, 
+	},
+	strongAttrs = {  
+	},
+	flags = { 
+		recordLog = true, 
+	},
+	conds = { 
+		{ cond = 1, value = 1, },	
+        { cond = 2, value = 2, },		
+	},
+},

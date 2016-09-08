@@ -1,0 +1,989 @@
+﻿--处理任务刷星相关操作
+--#include "data\language\LangCode.txt" once
+--#include "data\config\quest\RefreshQuests.txt" once
+--#include "data\functions\refreshstarfunc.txt" once
+--#include "data\functions\customquestfunc.txt" once
+--#include "data\functions\tasks\fengcereward\fcactivefunc.txt" once
+
+-- 获取该刷星任务今天的剩余次数
+MiscsImplement.GetLeftRefreshQuestCount = function(sysarg, starQuest, info)
+	local times
+	local vipLevel = LActor.getVIPLevel(sysarg) -- VIP用户和普通任务的总次数
+	if vipLevel > 0 then
+		times = starQuest.timesVips[vipLevel]
+	else
+		times = starQuest.times
+	end
+	if info ~= nil and info.count ~= nil then -- 减去已经使用的次数
+		times = times - info.count
+	end
+
+	-- print("times:"..times)
+
+	return times
+end
+
+-- 获取刷星任务状态，供C++调用
+-- id : 刷星任务ID
+-- 返回状态 -1: 不可接 0：可接 1： 可完成 2：进行中
+
+
+function GetRefreshQuestState(sysarg, id)
+	local questConf = RefreshQuests[id]
+	if questConf == nil then return -1 end -- 错误的ID
+
+	local info
+	local var = LActor.getStaticVar( sysarg )
+	if var ~= nil and var.star ~= nil then
+		info = var.star[id]
+	end
+
+	local quest = nil
+
+	--print(info.quest)
+
+	-- 未有任务
+	if info == nil or info.quest == nil then
+		if MiscsImplement.GetLeftRefreshQuestCount(sysarg, questConf, info) > 0 then
+			local level = LActor.getLevel(sysarg)
+			local grade = CalcGradeByLevel(questConf.grades, level)
+			if grade ~= nil and grade > 0 then
+				quest = questConf.grades[grade].starLevels[1][1]
+			end
+		end
+	else
+		quest = info.quest -- 任务id
+	end
+
+	--print(quest)
+
+	if quest == nil then return -1 end
+
+	local state = -1
+	if LActor.hasQuest( sysarg, quest ) then
+		if LActor.canFinishQuest(sysarg, quest) then
+			state = 1 -- 可完成
+		else
+			state = 2 -- 进行中
+		end
+	elseif LActor.addQuest(sysarg, quest, false) then -- 可接
+		state = 0
+	end
+	--print("refresh state:"..state)
+	return state
+end
+
+
+
+-- 获取刷星任务奖励倍率
+function GetRefreshAwardRatios(sysarg, id)
+	local var = LActor.getStaticVar(sysarg)
+	local starVar = var.star --刷星任务相关变量
+
+	local ratio = 1
+	if starVar ~= nil then
+		local info = starVar[id]
+		if info ~= nil then
+			if info.extraaward ~= nil and info.extraaward == 1 then
+				local conf = RefreshQuests[id]
+				if conf and conf.infos and conf.infos.awardRate then
+					ratio = conf.infos.awardRate
+				end
+			end
+		end
+	end
+
+	if id == 2 then -- 情人节活动护送仙女双倍奖励
+		local var_sys_d = System.getDyanmicVar()
+		if var_sys_d.ZhongqiuDoubleExpSix ~= nil and var_sys_d.ZhongqiuDoubleExpSix == 1 then --中秋活动,双倍
+			ratio = ratio + 1
+		end
+	end
+
+	return ratio
+end
+
+
+--更新刷星任务状态
+MiscsImplement.UpdateRefreshStarState = function( sysarg, send )
+	local var = LActor.getStaticVar( sysarg )
+	if var == nil then return end
+	local starVar = var.star
+
+	-- if starVar == nil then print( "star var nil" ) end
+
+	--可接任务列表
+	local acceptQuest = {}
+	local level = LActor.getLevel( sysarg )
+	for i=1, #RefreshQuests do
+		if starVar == nil or starVar[i] == nil or starVar[i].quest == nil or ( not LActor.hasQuest( sysarg, starVar[i].quest ) ) then  --还没接的任务
+			local quest = RefreshQuests[i]
+			local info = nil
+			if starVar ~= nil then info = starVar[i] end
+			local tmp = MiscsImplement.GetLeftRefreshQuestCount(sysarg, quest, info)
+			if tmp and tmp > 0 then
+				local grade = CalcGradeByLevel( quest.grades, level )
+				-- print( "grade:"..grade )
+				if grade > 0 then
+					local taskId = quest.grades[grade].starLevels[1][1] --取对应该等级段的第一个星级的第一个任务ID
+					if taskId ~= nil and LActor.addQuest(sysarg, taskId, false) then	--能接的任务才添加到列表
+						table.insert( acceptQuest, taskId )
+					end
+				end
+			end
+		end
+	end
+
+	--print( "accept refresh quest count:"..#acceptQuest )
+
+	if send == nil then
+		send = false
+	end
+
+    LActor.updateAcceptRefresh(sysarg, send, acceptQuest)
+end
+
+-- 发送刷星任务剩余次数
+MiscsImplement.SendLeftRfreshQuestCount = function( sysarg, id, count )
+	local npack = DataPack.allocPacket(sysarg,139,45)  --申请一个数据包
+    if npack == nil then return end
+
+    DataPack.writeInt( npack, id )
+	DataPack.writeInt( npack, count )
+
+    DataPack.flush(npack)
+end
+
+
+--接受刷星任务
+MiscsImplement.AcceptRefreshHandler = function( sysarg, msgid, pack )
+	local quest = DataPack.readInt(pack)	--任务ID
+	-- print("quest:"..quest)
+	-- local quest = 2
+	if quest < 1 or quest > #RefreshQuests then
+		print( "accept refresh quest error:"..quest )
+		return
+	end
+
+	local starQuest = RefreshQuests[quest]
+
+	local var = LActor.getStaticVar( sysarg )
+	local starVar = var.star --刷星任务相关变量
+	if starVar == nil then 
+		print( "accept refresh quest var error" )
+		return 
+	end
+
+	local info = starVar[quest]
+	if info == nil then
+		print( "accept refresh quest info error" )
+		return 
+	end
+
+	local grade = info.grade
+	local star = info.star
+	local questId = info.quest
+
+	-- print(info.grade)
+	-- print(info.star)
+	-- print(info.quest)
+
+	if questId == nil then --没有可接受的任务
+		LActor.sendTipmsg( sysarg,Lang.ScriptTips.sx005,ttTipmsgWindow )
+		return 
+	end
+
+	local ret = 0
+	if not LActor.addQuest( sysarg, questId ) then
+		ret = -1
+		LActor.sendTipmsg( sysarg,Lang.ScriptTips.sx006,ttTipmsgWindow )
+	end
+
+	if ret == 0 then
+		MiscsImplement.UpdateRefreshStarState( sysarg )
+	end
+
+	-- 发送接受任务结果
+	local npack = DataPack.allocPacket(sysarg,139,45)  --申请一个数据包
+    if npack == nil then return end
+
+    DataPack.writeInt( npack, quest )
+	DataPack.writeInt( npack, ret )
+
+    DataPack.flush(npack)
+
+    info.level = LActor.getLevel( sysarg ) -- 保存接任务时候的等级，后面特殊处理用到
+
+    -- 护送仙女任务记录日志
+    -- BI
+    if quest == 2 then
+    	System.logCounter(LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg))
+    		, "daily_act", "", "", "husong", tostring(star), "", "", "", lfBI)
+    end
+
+end
+
+--任务刷星
+MiscsImplement.RefreshStarHandler = function( sysarg, msgid, pack )
+	local quest = DataPack.readInt(pack)	--任务ID
+	local full = DataPack.readByte(pack) --是否刷到满星
+	-- local quest = 2
+	-- local full = 1
+
+	--print("full:"..full)
+
+	if full == nil or quest == nil or quest < 1 or quest > #RefreshQuests then
+		print( " refresh quest error:"..quest )
+		return
+	end
+
+	-- 获取任务id
+	local var = LActor.getStaticVar( sysarg )
+	local starVar = var.star --刷星任务相关变量
+	if starVar == nil then 
+		print( " refresh quest var error" )
+		return 
+	end
+
+	local info = starVar[quest]
+	if info == nil then
+		print( " refresh quest info error" )
+		return 
+	end
+
+	-- 一般不会出现,防止数据有问题
+	if info.grade == nil then
+		info.grade = 1
+	end
+	if info.star == nil then
+		info.star = 1
+	end
+
+	local questInfo = RefreshQuests[quest]
+
+	--任务次数没了
+	if MiscsImplement.GetLeftRefreshQuestCount(sysarg, questInfo, info) < 1 then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.sx022, ttMessage)
+		return
+	end
+
+	local questId = info.quest --已经接受的任务不能再刷星
+	if questId ~= nil and LActor.hasQuest( sysarg, questId ) then
+		if questInfo.type ~= nil and questInfo.type == 2 then
+			LActor.sendTipmsg( sysarg, Lang.ScriptTips.sx020, ttMessage )
+		else
+			LActor.sendTipmsg( sysarg, Lang.ScriptTips.sx007, ttDialog )
+		end
+		return 
+	end
+
+	local grade = info.grade
+	local star = info.star
+
+	--print(grade)
+	--print(star)
+
+	local stars = RefreshQuests[quest].grades[grade].starLevels
+	if stars == nil then
+		print( " refresh quest get star info error" )
+		return 
+	end
+
+	if star < 1 then star = 1 end
+	if star >= #stars then --已经满星
+		if questInfo.type ~= nil and questInfo.type == 2 then
+			LActor.sendTipmsg( sysarg,Lang.ScriptTips.sx021,ttMessage)
+		else
+			LActor.sendTipmsg( sysarg,Lang.ScriptTips.sx003,ttMessage)
+		end
+		return 
+	end
+
+	local newQuest = info.quest
+	local newStar = star
+	local newRefresh = info.refresh -- 刷星次数
+	local rates = questInfo.refreshRate
+
+	local totalMoney = 0 -- 总的花费
+	local moneyCount = LActor.getMoneyCount(sysarg, 3) --总天珠数
+	local itemId = 0 -- 花费物品
+	local itemCount = 0 -- 花费物品数
+	local totalItem = nil -- 物品总数
+
+	if newRefresh == nil then
+		newRefresh = 0
+	end
+
+	for i = 1, 30 do -- 出于性能的考虑这里还是限定最大次数
+		--计算花费
+		local money = 0
+
+		if full == 1 and questInfo.refreshBestYB ~= nil then
+			-- 直接刷到5星
+			money = questInfo.refreshBestYB
+			if moneyCount < money then
+				LActor.sendTipmsg(sysarg, Lang.ScriptTips.sx011, ttMessage)
+				return 
+			end
+			newStar = #stars
+		else
+			if newRefresh >= questInfo.refreshFree then --免费刷星次数用完
+				local needMoney = true
+				if questInfo.refreshItem ~= nil then
+					if totalItem == nil then -- 第一次先计算物品总数
+						itemId = questInfo.refreshItem
+						totalItem = LActor.getItemCount(sysarg, itemId)
+					end
+					if itemCount + questInfo.refreshItemCount <= totalItem then -- 是否有足够的物品
+						itemCount = itemCount + questInfo.refreshItemCount
+						needMoney = false
+					end
+				end
+				if needMoney then
+					money = questInfo.refreshYB
+					if moneyCount < money then
+						LActor.sendTipmsg( sysarg, Lang.ScriptTips.sx011, ttMessage )
+						return 
+					end
+				end
+			end
+
+			local proc = false
+			if quest == 1 and full ~= 1 then
+				if var.zycmrefreshcount == nil then
+					var.zycmrefreshcount = 1
+				end
+				if var.zycmrefreshcount < 4 then
+					if var.zycmrefreshcount == 1 then -- 第一次打开斩妖除魔的第几次刷星
+						newStar = 3
+					elseif var.zycmrefreshcount == 2 then
+						newStar = 4
+					elseif var.zycmrefreshcount == 3 then
+						newStar = 5
+					end
+					proc = true
+				end
+				var.zycmrefreshcount = var.zycmrefreshcount + 1
+			end
+
+			if not proc then
+				-- 累加星级概率，后面计算星级用
+				local total = 0
+				for j = newStar, #stars do	--从当前星级开始刷
+					total = total + rates[j]
+				end
+				if total <= 0 then
+					print( "refresh rate error:"..total )
+					break
+				end
+
+				-- 计算星级
+				local sum = 0
+				local nhit = System.getRandomNumber( total ) + 1
+				for i=newStar, #stars do
+					sum = sum + rates[i]
+					if nhit < sum then
+						newStar = i
+						break
+					end
+				end
+			end
+		end
+
+		-- 在该星级下随机一个任务ID
+		local quests = stars[newStar]
+		newQuest = quests[System.getRandomNumber(#quests)+1]
+
+		-- print( "newStar:"..newStar.."newQuest:"..newQuest )
+
+		if money ~= nil and money > 0 then
+			totalMoney = totalMoney + money
+			moneyCount = moneyCount - money
+		end
+
+		-- 累加刷星次数，一件满星不消耗刷星次数
+		if full ~= 1 or questInfo.refreshBestYB == nil then
+			newRefresh = newRefresh + 1
+		end
+
+		--print(full..","..newStar)
+
+		if full ~= 1 or newStar >= #stars then break end --不刷到满星或已经满星
+	end
+
+	-- 扣除物品
+	if itemId ~= nil and itemId > 0 and itemCount > 0 then
+		LActor.removeItem(sysarg, itemId, itemCount)
+	end
+
+	-- 扣除天珠
+	if totalMoney > 0 then
+		LActor.changeMoney( sysarg, 3, -totalMoney, 1, true, "quest", "star", "", tostring(newStar))
+	end
+
+	-- 保存结果
+	info.star = newStar
+	info.quest = newQuest
+	info.refresh = newRefresh
+
+	--剩余免费刷星次数
+	local freeRefresh = 0
+	if info.refresh ~= nil then
+		freeRefresh = info.refresh
+	end
+	freeRefresh = questInfo.refreshFree - freeRefresh
+	if freeRefresh < 0 then
+		freeRefresh = 0
+	end
+
+	--print( "free refresh count:".. freeRefresh )
+
+	-- 发送刷星结果
+	local npack = DataPack.allocPacket(sysarg,139,37)  --申请一个数据包
+    if npack == nil then return end
+    DataPack.writeInt(npack,quest)
+	DataPack.writeInt(npack,grade)
+	DataPack.writeInt(npack,newStar)
+	DataPack.writeInt(npack,newQuest)
+	DataPack.writeInt(npack,freeRefresh)
+    DataPack.flush(npack)
+end
+
+--完成刷星任务
+MiscsImplement.FinishRefreshHandler = function( sysarg, msgid, pack )
+	local quest = DataPack.readInt(pack)	--刷星任务ID
+	local imme = DataPack.readByte(pack) -- 是否立即完成
+	--local quest = 2
+	--local imme = 1
+
+	--print( quest )
+	--print( imme )
+
+	if quest < 1 or quest > #RefreshQuests then
+		print( " refresh quest error:"..quest )
+		return
+	end
+
+	local starQuest = RefreshQuests[quest]
+
+	--获取任务数据
+	local var = LActor.getStaticVar( sysarg )
+	local starVar = var.star --刷星任务相关变量
+	if starVar == nil then 
+		print( "finish refresh quest var error" )
+		return 
+	end
+
+	local info = starVar[quest]
+	if info == nil then
+		print( "finish refresh quest info error" )
+		return 
+	end
+
+	local questId = info.quest
+	if questId == nil then
+		print( "finish refresh quest info error: questId is nil" )
+		return 
+	end
+	--任务次数没了
+	if MiscsImplement.GetLeftRefreshQuestCount(sysarg, starQuest, info) < 1 then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.sx022, ttMessage)
+		return
+	end
+	-- 判断是否有接受该任务
+	if not LActor.hasQuest( sysarg, questId ) then
+		LActor.sendTipmsg( sysarg, Lang.ScriptTips.sx010, ttTipmsgWindow )
+		return 
+	end
+
+	-- 判断能否完成任务
+	if LActor.canFinishQuest( sysarg, questId ) then
+		--完成任务
+		if not LActor.finishQuest( sysarg, questId ) then
+			LActor.sendTipmsg( sysarg, Lang.ScriptTips.sx004, ttTipmsgWindow )
+			return 
+		end
+	else
+		if imme then
+			local money = starQuest.finishYB
+			if LActor.getMoneyCount( sysarg, 3 ) < money then
+				LActor.sendTipmsg( sysarg, Lang.ScriptTips.sx009, ttTipmsgWindow )
+				return 
+			end
+			LActor.changeMoney( sysarg, 3, -money, 1, true, "quest", "finish_immedi", "", tostring(questId));
+			LActor.finishQuest( sysarg, questId, -1, true )
+		else
+			LActor.sendTipmsg( sysarg, Lang.ScriptTips.sx004, ttTipmsgWindow )
+			return 
+		end
+	end
+
+	if quest == 1 then
+		var.zycmrefreshcount = 4 -- 斩妖除魔任务，设置一个大于4的值
+	end
+
+	-- info.quest = nil
+
+end
+
+--一键完成满星任务
+MiscsImplement.FinishFullStarsHandler = function (sysarg)
+	--获取任务数据
+	local var = LActor.getStaticVar( sysarg )
+	if var == nil then return end
+	
+	local starVar = var.star --刷星任务相关变量
+	if starVar == nil then 
+		print( "finish refresh quest var error" )
+		return 
+	end
+	--需要充值任意金额
+	if LActor.getRecharge(sysarg) <= 0 then
+		LActor.sendTipmsg( sysarg, Lang.ScriptTips.sx023, ttTipmsgWindow )
+		return
+	end
+	local info = starVar[1]
+	--已经接到任务不能使用此功能
+	local questId = info.quest
+	-- 判断是否有接受该任务
+	if questId and LActor.hasQuest( sysarg, questId ) then
+		LActor.sendTipmsg( sysarg, Lang.ScriptTips.sx007, ttTipmsgWindow )
+		return 
+	end
+	local questInfo = RefreshQuests[1] --默认是斩妖除魔
+	--任务次数没了
+	if MiscsImplement.GetLeftRefreshQuestCount(sysarg, questInfo, info) < 1 then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.sx022, ttMessage)
+		return
+	end
+	-- 直接刷到5星
+	local money = questInfo.fullFinish
+	if LActor.getMoneyCount( sysarg, 3 ) < money then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.sx011, ttMessage)
+		return 
+	end
+	--防止数据报错
+	if not info.grade then
+		local level = LActor.getLevel(sysarg)
+		info.grade = CalcGradeByLevel(questInfo.grades, level)
+	end
+	if info.grade then
+		local stars = questInfo.grades[info.grade].starLevels
+		if stars == nil then
+			print( " refresh quest get star info error" )
+			return 
+		end
+		local newStar = #stars
+		-- 在该星级下随机一个任务ID
+		local quests = stars[newStar]
+		local newQuest = quests[System.getRandomNumber(#quests)+1]
+		LActor.changeMoney( sysarg, 3, -money, 1, true, "quest", "full_finish_immedi", "", tostring(newQuest));
+		LActor.addQuest( sysarg, newQuest)
+		LActor.finishQuest( sysarg, newQuest, -1, true )
+		var.zycmrefreshcount = 4 -- 斩妖除魔任务，设置一个大于4的值
+	end
+end
+
+function CalcGradeByLevel( grades, level )
+	local ret = 0
+	for i = 1, #grades do
+		if level < grades[i].miniLevel then
+			break
+		end
+		ret = i
+	end
+	return ret
+end
+
+--每日刷星任务数据初始化
+EventCallDispatcher.NewDayAcrriveStarInit = function (sysarg,arg)
+	--print( "NewDayAcrriveStarInit" )
+	local var = LActor.getStaticVar( sysarg )
+	local star = var.star
+	if star ~= nil then
+		for i=1, #RefreshQuests do
+			if star[i] ~= nil then
+				star[i].count = nil --进入次数
+				star[i].refresh = nil --刷星次数
+			end
+		end
+	end
+end
+
+--角色等级改变后的处理
+EventCallDispatcher.handlerLevelUpRefreshStar = function (sysarg, arg)
+	--print( "update refresh star on levelup" )
+	MiscsImplement.UpdateRefreshStarState( sysarg )
+end
+
+--刷星任务事件
+EventCallDispatcher.OnRefresStarQuest = function( sysarg, arg )
+	local event = arg[1]
+	local questId = arg[2]
+	local taskId = arg[3]
+	if event == nil or questId == nil or taskId == nil then return end
+
+	--强化石换装备支线任务特殊处理
+	--==============================================
+	if taskId == 320 or taskId == 321 or taskId == 322 or taskId == 323 then
+		if seTimeout == event then
+			local actorvar = LActor.getStaticVar(sysarg)
+			if not actorvar then return end
+			if actorvar.exchagetaskequipt == nil then
+				print("seTimeout")
+				LActor.finishQuest(sysarg, taskId, -1, true)
+				actorvar.exchagetaskequipt = true
+			end
+		elseif seFinish == event then
+			print("seFinish")
+		end
+		return
+	end
+	--==============================================
+	
+	if event == seShowAccept then
+		MiscsImplement.UpdateRefreshStarState(sysarg, true)
+		return 
+	end
+
+	local var = LActor.getStaticVar( sysarg )
+	local starVar = var.star --刷星任务相关变量
+	if starVar == nil then return end
+
+	local info = starVar[questId]
+	if info == nil then return end
+
+	local questConf = RefreshQuests[questId]
+	if questConf == nil then return end
+
+	-- 完成或放弃后清空任务信息
+
+	if event == seGiveUp or event == seTimeout then
+		info.grade = nil
+		info.star = nil
+		info.quest = nil
+		MiscsImplement.UpdateRefreshStarState( sysarg )
+
+		-- 还有剩余次数，增加一个可接任务
+		if MiscsImplement.GetLeftRefreshQuestCount(sysarg, questConf, info) > 0 then
+			local level = LActor.getLevel(sysarg)
+			local grade = CalcGradeByLevel(questConf.grades, level)
+			if grade ~= nil and grade > 0 then
+				local addId = questConf.grades[grade].starLevels[1][1]
+				if addId ~= nil and LActor.addQuest(sysarg, addId, false) then	--能接的任务才添加到列表
+					local qids = {addId}
+					LActor.sendAddAcceptRefresh(sysarg, qids)
+				end
+			end
+		end
+
+		-- 护送任务
+		if questConf.type ~= nil and questConf.type == 2 then
+			if info.hbaby ~= nil and info.hbaby ~= 0 then
+				local pbaby = LActor.getEntity(info.hbaby)
+				LActor.removeOwnedEntity(sysarg, pbaby)
+				info.hbaby = 0
+			end
+			LActor.removeState(sysarg, esProtection)
+			info.extraaward = 0
+
+			-- 重新获取玩家速度
+			LActor.refreshActor(sysarg)
+
+			if event == seTimeout then
+				LActor.sendTipmsg(sysarg, Lang.ScriptTips.sx015, ttMessage) -- 失败提示
+			end
+		end
+		
+	elseif event == seAddQuest then
+		-- 接受了任务
+		if not questConf.canGiveup then -- 不能放弃的任务，接受就累加进入次数
+			if info.count == nil then 
+				info.count = 1
+			else
+				info.count = info.count + 1
+			end
+		end
+		MiscsImplement.UpdateRefreshStarState(sysarg)
+		-- 从可接任务列表中删除
+		if info.grade ~= nil and info.grade > 0 then
+			local removeId = questConf.grades[info.grade].starLevels[1][1]
+			LActor.sendRemoveAcceptRefresh(sysarg, removeId)
+		end
+
+		-- 护送任务
+		if questConf.type ~= nil and questConf.type == 2 then
+			if info.star == nil or info.star < 1 or info.star > 5 then
+				info.star = 1
+			end
+
+			if info.star == 5 then -- 刷出帝姬仙子并成功领取任务后，全服公告, 在这里处理不太好
+				local camp = LActor.getCampId(sysarg)
+				local tips = string.format(Lang.ScriptTips.sx017, CampColor[camp], CampShortName[camp], LActor.getName(sysarg))
+				System.broadcastTipmsg(tips, ttScreenCenter)
+			end
+			local monsterId = questConf.infos.monsters[info.star] -- 对应的怪物ID
+			local pbaby = LActor.addSlave(sysarg, monsterId, 0, questConf.infos.timelimit + 10) -- 添加宝宝，存活时间比任务时间多10秒
+			if pbaby ~= nil then
+				LActor.setEntityTelByOwnderAttr(pbaby, true)
+				local pname = LActor.getName(sysarg)
+				local etname = LActor.getName(pbaby)
+				local showname = string.format(Lang.ScriptTips.sx014, pname, etname)
+				local speed = questConf.infos.speed
+				--print("speed:"..speed)
+				LActor.setIntProperty(sysarg, PROP_MOVETIME, speed)
+				LActor.setIntProperty(pbaby, PROP_MOVETIME, speed)
+				info.hbaby = LActor.getHandle(pbaby) -- 保存宝宝句柄
+			end
+			LActor.addState(sysarg, esProtection)
+
+			LActor.ChangeStatus(sysarg) -- 下坐骑
+
+			if questConf.infos.activityTime ~= nil then -- 该活动在某时段有双倍奖励
+				local atime = questConf.infos.activityTime
+				if System.isInTimeRange(atime[1], atime[2], 0, atime[3], atime[4], 0) then
+					info.extraaward = 1 -- 设置为双倍奖励
+				end
+			end
+		end
+	elseif event == seFinish then
+		if questConf.canGiveup then	-- 可以放弃的任务，接受就累加进入次数
+			if info.count == nil then
+				info.count = 1
+			else
+				info.count = info.count + 1
+			end
+		end
+
+		-- 如果是刷星的任务则触发完成星级任务事件
+		if questConf.refreshRate ~= nil and info.star ~= nil then
+			LActor.triggerAchieveEvent(sysarg, 69, questId, info.star)
+		end
+
+		info.grade = nil
+		info.star = nil
+		info.quest = nil
+		MiscsImplement.UpdateRefreshStarState( sysarg )
+
+		if questId == 1 then -- 斩妖除魔任务记录完成次数，引导的特殊要求
+			if var.zycmfinishcount == nil then
+				var.zycmfinishcount = 1
+			else
+				var.zycmfinishcount = var.zycmfinishcount + 1
+			end
+			-- print("count:"..var.zycmfinishcount)
+		end
+
+		-- 还有剩余次数，增加一个可接任务
+		local left = MiscsImplement.GetLeftRefreshQuestCount(sysarg, questConf, info)
+		if left > 0 then
+			local level = LActor.getLevel(sysarg)
+			local grade = CalcGradeByLevel(questConf.grades, level)
+			if grade ~= nil and grade > 0 then
+				local addId = questConf.grades[grade].starLevels[1][1]
+				if addId ~= nil and LActor.addQuest(sysarg, addId, false) then	--能接的任务才添加到列表
+					local qids = {addId}
+					LActor.sendAddAcceptRefresh(sysarg, qids)
+				end
+			end
+
+			if questConf.itemQuest then -- 完成后自动打开窗口
+				local needOpen = true
+				local nowLevel = LActor.getLevel(sysarg)
+				if info.level and ((info.level == 25 and  nowLevel == 26) or (info.level == 26 and  nowLevel == 27)) then -- 特殊情况不用弹出窗口
+					needOpen = false
+				end
+				if needOpen then -- 再排除斩妖除魔的特殊要求，引导的特殊要求
+					if questId == 1 and var.zycmfinishcount ~= nil and var.zycmfinishcount == 3 then
+						needOpen = false
+					end
+				end
+				if needOpen then
+					RefreshFunc.OpenRefreshDialog(sysarg, questId)
+				end
+			end
+		else
+			if questId == 1 then -- 斩妖除魔次数用完
+				LActor.sendTipmsg(sysarg, Lang.ScriptTips.sx022, ttMessage)
+			end
+		end
+
+		--给予活跃奖励
+		if questConf.activityAward ~= nil then
+			LActor.triggerTarget( sysarg, questConf.activityAward )
+			FCActivityHandler.ActivityReward (sysarg)
+		end
+
+		--自定义任务
+		CustomQuestFunc.CheckQuest(sysarg, RefreshQuestData[questId])
+
+		-- 护送任务
+		if questConf.type ~= nil and questConf.type == 2 then
+			if info.hbaby ~= nil and info.hbaby ~= 0 then
+				local pbaby = LActor.getEntity(info.hbaby)
+				LActor.removeOwnedEntity(sysarg, pbaby)
+				info.hbaby = 0
+			end
+			LActor.removeState(sysarg, esProtection)
+			info.extraaward = 0
+
+			-- 重新获取玩家速度
+			LActor.refreshActor(sysarg)
+
+			-- 还有剩余次数,通知客户端提示
+			if left > 0 then
+				LActor.openDialogs(sysarg, diProtectionTips, tostring(left))
+			end
+		end
+
+		-- 日志，军团任务
+		if questId == 3 then
+			System.logCounter(
+				LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), 
+				"xianzong", LActor.getGuildName(sysarg), "",
+				"mission", tostring(taskId), "",
+				"", "", lfBI)
+		end
+	elseif event == seCanFinish then
+		if questConf.itemQuest then
+			RefreshFunc.OpenRefreshDialog(sysarg, questId)
+		end
+	end
+
+	--print( "count:"..info.count )
+end
+
+--登录
+EventCallDispatcher.OnActorLoginRefreshStar = function( sysarg, arg )
+	--print( "update refresh star on login" )
+	MiscsImplement.UpdateRefreshStarState(sysarg, true)
+
+	LActor.removeState(sysarg, esProtection) -- 先清除护送状态
+
+	local var = LActor.getStaticVar(sysarg)
+	local star = var.star
+	if star == nil then return end
+	for i=1, #RefreshQuests do
+		local quest = RefreshQuests[i]
+		if quest.type == 2 and star[i] ~= nil and star[i].quest ~= nil then
+			local info = star[i]
+			if info.star == nil or info.star < 1 or info.star > 5 then
+				info.star = 1
+			end
+			if info.quest ~= nil and LActor.hasQuest(sysarg, info.quest) then
+				local monsterId = quest.infos.monsters[info.star] -- 对应的怪物ID
+				local pbaby = LActor.addSlave(sysarg, monsterId, 0, quest.infos.timelimit + 10) -- 添加宝宝，存活时间比任务时间多10秒
+				if pbaby ~= nil then
+					LActor.setEntityTelByOwnderAttr(pbaby, true)
+					local pname = LActor.getName(sysarg)
+					local etname = LActor.getName(pbaby)
+					local showname = string.format(Lang.ScriptTips.sx014, pname, etname)
+					-- System.setEntityShowName(pbaby, showname)
+					local speed = quest.infos.speed
+					--print("speed:"..speed)
+					LActor.setIntProperty(sysarg, PROP_MOVETIME, speed)
+					LActor.setIntProperty(pbaby, PROP_MOVETIME, speed)
+					info.hbaby = LActor.getHandle(pbaby) -- 保存宝宝句柄
+				end
+				LActor.addState(sysarg, esProtection)
+			end
+		end
+	end
+end
+
+-- 登出
+EventCallDispatcher.OnActorLogoutRefreshStar = function(sysarg, arg)
+	if LActor.hasState(sysarg, esProtection) == false then
+		-- 护送任务状态才处理
+		return 
+	end
+
+	local var = LActor.getStaticVar(sysarg)
+	local star = var.star
+	if star == nil then return end
+	for i=1, #RefreshQuests do
+		local quest = RefreshQuests[i]
+		if quest.type == 2 and star[i] ~= nil and star[i].quest ~= nil then
+			local info = star[i]
+			if info.hbaby ~= nil and info.hbaby ~= 0 then
+				local pbaby = LActor.getEntity(info.hbaby)
+				LActor.removeOwnedEntity(sysarg, pbaby)
+				info.hbaby = 0
+			end
+		end
+	end
+
+	LActor.removeState(sysarg, esProtection) -- 先清除护送状态
+end
+
+-- 玩家死亡
+EventCallDispatcher.OnPlayerDieRefreshStar = function(sysarg, arg)
+	if LActor.hasState(sysarg, esProtection) == false then
+		-- 护送任务状态才处理
+		return 
+	end
+
+	local var = LActor.getStaticVar(sysarg)
+	local star = var.star
+	if star == nil then return end
+	for i=1, #RefreshQuests do
+		local quest = RefreshQuests[i]
+		if quest.type == 2 and star[i] ~= nil and star[i].quest ~= nil then
+			LActor.GiveUpQuest(sysarg, star[i].quest)
+		end
+	end
+
+	LActor.removeState(sysarg, esProtection)
+
+	-- 重新获取玩家速度
+	LActor.refreshActor(sysarg)
+
+	LActor.sendTipmsg(sysarg, Lang.ScriptTips.sx018, ttMessage)
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, EventCallDispatcher.NewDayAcrriveStarInit)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeLevel, EventCallDispatcher.handlerLevelUpRefreshStar)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeStarQuest, EventCallDispatcher.OnRefresStarQuest)
+--[[ 护送提到protectquest.txt单独做，这边如果要用的话需要修改
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, EventCallDispatcher.OnActorLoginRefreshStar)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogout, EventCallDispatcher.OnActorLogoutRefreshStar)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeOnActorDeath, EventCallDispatcher.OnPlayerDieRefreshStar)]]
+
+MiscsImplement.registerMsgHandler(37,MiscsImplement.AcceptRefreshHandler)
+MiscsImplement.registerMsgHandler(38,MiscsImplement.RefreshStarHandler)
+MiscsImplement.registerMsgHandler(39,MiscsImplement.FinishRefreshHandler)
+MiscsImplement.registerMsgHandler(154,MiscsImplement.FinishFullStarsHandler)
+
+--测试函数
+--print( ".....................test refresh star" )
+testRefresh1 = function( sysarg )
+	MiscsImplement.AcceptRefreshHandler( sysarg )
+end
+
+testRefresh2 = function( sysarg )
+	MiscsImplement.RefreshStarHandler( sysarg )
+end
+
+testRefresh3 = function( sysarg )
+	MiscsImplement.FinishRefreshHandler( sysarg )
+end
+
+--清空刷星任务的脚本数据
+clearStar = function( sysarg )
+	local var = LActor.getStaticVar( sysarg )
+	var.star = nil
+end
+
+-- 测试设置当天刷星次数
+setRefreshCount = function( sysarg )
+	local var = LActor.getStaticVar( sysarg )
+	local starVar = var.star --刷星任务相关变量
+	if starVar == nil then return end
+
+	--print( "2" )
+
+	local info = starVar[4]
+	if info == nil then return end
+
+	info.count = 9
+end

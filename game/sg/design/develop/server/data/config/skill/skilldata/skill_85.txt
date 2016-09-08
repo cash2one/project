@@ -1,0 +1,15 @@
+﻿--BOSS单体物理爆发
+{
+	id = 85,
+	name = Lang.Skill.s85Name,
+	desc = Lang.Skill.s85Desc,
+	vocation = 9,
+	skillType = 0,
+	skillSpellType = 0,
+	skillClass = 9,
+	commonCd = 0,
+	specialBuffCond = 0,
+	skillSubLevel = { 
+--#include "Skill_85_1.txt"
+	},
+},

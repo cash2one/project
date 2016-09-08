@@ -1,0 +1,134 @@
+﻿
+--#include "data\config\task\slshconf.txt" once
+
+local SlshPublic = {}
+
+-- 给每个玩家发送统计信息
+SlshPublic.SendCalInfo = function(sysarg)
+	local pfb = LActor.getFubenPrt(sysarg)
+	if pfb == nil then
+		print("SlshFunc.OnSendCal pfb == nil")
+		return
+	end
+	local rd = Fuben.getFubenProgress(pfb)
+
+	local fvar = Fuben.getDyanmicVar(pfb)
+	local nmon = fvar.fbRestMonster
+	if nmon == nil then
+		nmon = 0
+	end
+
+	LActor.ChangeCaleValue(sysarg, caleOther3, rd, false) -- 第几波
+	LActor.ChangeCaleValue(sysarg, caleGameTime, Fuben.GetFubenGameTime(pfb), false) -- 游戏剩余时间
+	LActor.ChangeCaleValue(sysarg, caleRemainMonster, nmon, false) -- 剩余怪物数
+	LActor.ChangeCaleValue(sysarg, caleOther1, 0, true) -- 获得的代币
+	LActor.ChangeCaleValue(sysarg, caleOther2, SlshConf.token, false) -- 该轮总共可以获得的代币
+	LActor.SendAllCaleValue(sysarg)
+end
+
+-- 通关处理
+SlshPublic.OnTongGuan = function(pfb, rd)
+	local conf = SlshConf.rounds[rd]
+
+	local hfb = Fuben.getFubenHandle(pfb)
+	local actors = LuaHelp.getFbActorList(pfb)
+	if actors ~= nil then
+		local ef = SlshConf.passEffect
+		for i=1,#actors do
+			local actor = actors[i]
+			if rd < #SlshConf.rounds then
+				LActor.playCenterEffect(actor, ef.id, ef.time)
+			end
+			LActor.changeTeamToken(actor, SlshConf.tokenType, conf.token) -- 奖励
+			LActor.SendAndChangeCaleValue(actor, caleOther1, conf.token, true)-- 统计
+		end
+	end
+
+	local gettoken = SlshConf.rounds[rd].token -- 玩家当前获得的代币数
+
+	local fvar = Fuben.getDyanmicVar(pfb)
+
+	if rd < #SlshConf.rounds then
+		-- 下一波
+		rd = rd + 1
+		SlshPublic.InitRound(pfb, rd)
+
+		-- 统计信息
+		local actors = LuaHelp.getFbActorList(pfb)
+		if actors ~= nil then
+			for i=1,#actors do
+				local actor = actors[i]
+				LActor.ChangeCaleValue(actor, caleOther3, rd, false) -- 第几波
+				LActor.ChangeCaleValue(actor, caleGameTime, Fuben.GetFubenGameTime(pfb), false) -- 游戏剩余时间
+				LActor.ChangeCaleValue(actor, caleRemainMonster, fvar.fbRestMonster, false) -- 剩余怪物数
+				LActor.SendAllCaleValue(actor)
+			end
+		end
+	else
+		local actors = LuaHelp.getFbActorList(pfb)
+		if actors ~= nil then
+			local ef = SlshConf.finalEffect
+			for i=1,#actors do
+				local actor = actors[i]
+				LActor.playCenterEffect(actor, ef.id, ef.time)
+			end
+		end
+		Fuben.SetFubenTime(hfb, 1) -- 10秒后副本销毁
+	end
+end
+
+-- 挑战失败
+SlshPublic.OnFailed = function(pfb)
+	local actors = LuaHelp.getFbActorList(pfb)
+	if actors ~= nil then
+		local ef = SlshConf.failEffect
+		for i=1,#actors do
+			local actor = actors[i]
+			LActor.playCenterEffect(actor, ef.id, ef.time)
+		end
+	end
+	Fuben.SetFubenTime(Fuben.getFubenHandle(pfb), 1) -- 10秒后副本销毁
+end
+
+-- 初始化刷怪配置
+SlshPublic.CreateMonsters = function(pfb, rd)
+	local conf = SlshConf.rounds[rd].refreshs
+	if conf == nil then return end
+
+	local fvar = Fuben.getDyanmicVar(pfb)
+
+	local hscene = Fuben.getSceneHandleById(SlshConf.sceneid, Fuben.getFubenHandle(pfb))
+
+	if fvar.nrefresh ~= nil and fvar.nrefresh > 0 then
+		local monsters = conf[fvar.nrefresh].monsters
+		for i=1,#monsters do
+			local monconf = monsters[i]
+			Fuben.createMonsters(hscene, monconf.id, monconf.mapx1, monconf.mapx2, monconf.mapy1, monconf.mapy2, monconf.count, 0)
+		end
+		fvar.nrefresh = fvar.nrefresh + 1
+	else
+		fvar.nrefresh = 1 -- 第一个
+	end
+
+	if fvar.nrefresh <= #conf then -- 下次刷怪
+		local mconf = conf[fvar.nrefresh]
+
+		local mon = Fuben.getMonsterPtrById(hscene, SlshConf.dxMonster)
+		if mon ~= nil then
+			LActor.postEntityScriptCallbackMsg(mon, EntityCallbackMsg.SlshRefresh, mconf.delay * 1000, rd)
+		end
+	end
+end
+
+-- 新的一轮
+SlshPublic.InitRound = function(pfb, rd)
+	local hfb = Fuben.getFubenHandle(pfb)
+	local fvar = Fuben.getDyanmicVar(pfb)
+	fvar.fbRestMonster = SlshConf.rounds[rd].nmonster -- 怪物总数
+	fvar.nrefresh = 0 -- 刷怪时间点
+
+	Fuben.setFubenProgress(pfb, rd)
+	Fuben.SetFubenGameTime(hfb, SlshConf.roundTime)
+
+	SlshPublic.CreateMonsters(pfb, rd) -- 创建怪物
+end

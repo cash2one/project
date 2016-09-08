@@ -1,0 +1,297 @@
+﻿-- 炽翼秘窟副本处理脚本
+--#include "data\functions\globaldefine.txt" once
+--#include "data\functions\tasks\teamfuben\cymkfunc.txt" once
+
+CymkFunc = {}
+CymkFunc.SceneFloors = {} -- 每个场景对应的层数
+
+
+-- 发送统计消息
+CymkFunc.OnCalSend = function(sysarg, arg)
+	local rd = arg[2]
+	local sconf = CymkConf.scenes[rd]
+	if sconf == nil then
+		print("cymk scene conf error"..rd)
+		return 
+	end
+
+	local pfb = LActor.getFubenPrt(sysarg)
+	if pfb == nil then
+		print("CymkFunc.OnSendCal pfb == nil")
+		return
+	end
+
+	local fvar = Fuben.getDyanmicVar(pfb)
+	if fvar == nil then
+		print("CymkFunc.OnSendCal fvar == nil")
+		return
+	end
+
+	LActor.ChangeCaleValue(sysarg, caleOther1, rd, false) -- 波数
+	LActor.ChangeCaleValue(sysarg, caleGameTime, Fuben.GetFubenGameTime(pfb), false) -- 剩余时间
+	-- LActor.ChangeCaleValue(sysarg, caleOther2, 0, false) -- 已获得代币数
+	LActor.ChangeCaleValue(sysarg, caleOther3, CymkConf.award, false) -- 全部通过获得代币数
+	LActor.SendAllCaleValue(sysarg)
+end
+
+-- 死亡炽翼技能
+CymkFunc.OnSwcySkill = function(sysarg, arg)
+	if LActor.getSceneId(sysarg) ~= CymkConf.scenes[3].sceneid then -- 已经离开场景，就不放技能了
+		return 
+	end
+
+	local sconf = CymkConf.swcySkill
+	LActor.useSkill(sysarg, sconf.skillId, sconf.posX, sconf.posY, false, sconf.level)
+end
+
+-- 进入天场景的通用处理
+CymkFunc.OnEnterScene = function (sysarg, hscene)
+	local pfb = LActor.getFubenPrt(sysarg)
+	if pfb == nil then return end
+
+	local sid = LActor.getSceneId(sysarg)
+	local rd = CymkFunc.SceneFloors[sid]
+	if rd == nil or rd < 1 or rd > #CymkConf.scenes then
+		print("cymk scene error:"..sid)
+		return 
+	end
+
+	local sconf = CymkConf.scenes[rd]
+	if sconf == nil then
+		print("cymk scene conf error"..rd)
+		return 
+	end
+
+	local result = false
+	LActor.postEntityScriptDelayMsg(sysarg, 1000, result, 28, rd)
+end
+
+
+-- 定时释放特效配置
+CymkFunc.OnEffectTimer = function(msgId, pscene, rd, eidx)
+	local pfb = Fuben.getSceneFuben(pscene)
+	if pfb == nil then return end
+
+	local actors = LuaHelp.getFbActorList(pfb)
+	if actors == nil or #actors < 1 then return end
+	local sysarg = actors[System.getRandomNumber(#actors)+1]
+	if sysarg == nil then return end
+
+	local sconf = CymkConf.scenes[rd]
+	if sconf == nil then
+		print("cymk scene conf error"..rd)
+		return 
+	end
+
+	local econf = sconf.effects[eidx]
+	if econf == nil then return end
+
+	local ef = CymkConf.effect[econf.type]
+
+	-- 位置
+	local posx, posy
+	if econf.hittype == 1 then
+		posx = LActor.getIntProperty(sysarg, PROP_ENTITY_POSX)
+		posy = LActor.getIntProperty(sysarg, PROP_ENTITY_POSY)
+	else
+		local range = econf.range
+		if range[3]-range[1] > 0 then
+			posx = range[1] + System.getRandomNumber(range[3]-range[1])
+		else
+			posx = range[1]
+		end
+		if range[4]-range[2] > 0 then
+			posy = range[2] + System.getRandomNumber(range[4]-range[2])
+		else
+			posy = range[2]
+		end
+	end
+
+	local delay = 0
+	for i=1,#ef do
+		local eff = ef[i]
+		delay = eff.delay
+		LActor.addSceneEffect(sysarg, eff.id, eff.type, eff.time, delay, posx, posy, false)
+	end
+
+	LActor.postEntityScriptCallbackMsg(sysarg, EntityCallbackMsg.CymkTakeEffect, delay, rd, eidx, posx, posy) -- 作用时间
+end
+
+-- 定时释放技能
+CymkFunc.OnSkillTimer = function(msgId, pscene, rd, eidx)
+	local pfb = Fuben.getSceneFuben(pscene)
+	if pfb == nil then return end
+
+	local sconf = CymkConf.scenes[rd]
+	if sconf == nil then
+		print("cymk scene conf error"..rd)
+		return 
+	end
+
+	local pconf = sconf.skills[eidx]
+	if pconf == nil then return end
+
+	local hscene = Fuben.getSceneHandleByPtr(pscene)
+	local mon = Fuben.getMonsterPtrById(hscene, pconf.mid)
+	if mon == nil then
+		print(pconf.mid)
+		print("mon ptr is nil")
+		return
+	end
+
+	if pconf.talk ~= nil then -- 同时说话
+		LActor.monsterSay(mon, pconf.talk, pconf.talkType)
+	end
+
+	LActor.useSkill(mon, pconf.skillId, pconf.posX, pconf.posY, false, pconf.level)
+end
+
+-- 死亡炽翼定时释放技能
+CymkFunc.OnSwcySkillTimer = function(msgId, pscene)
+	local hscene = Fuben.getSceneHandleByPtr(pscene)
+	local mon = Fuben.getMonsterPtrById(hscene, CymkConf.swcyId)
+
+	if mon == nil then return end
+
+	local pfb = Fuben.getSceneFuben(pscene)
+	if pfb == nil then return end
+
+	-- 随机选中一个玩家
+	local actor = nil
+	local actors = LuaHelp.getFbActorList(pfb)
+	if actors ~= nil and #actors > 0 then
+		actor = actors[System.getRandomNumber(#actors)+1]
+	end
+
+	if actor == nil then return end
+
+	local result = false
+	LActor.postEntityScriptDelayMsg(actor, 1000, result, 29)
+
+	local tips = string.format(Lang.ScriptTips.zd020, LActor.getName(actor))
+	LActor.monsterSay(mon, tips, 1)
+end
+
+-- 给怪物加buff
+CymkFunc.OnMonsterBuff = function(msgId, pscene, rd)
+	local sconf = CymkConf.scenes[rd]
+	if sconf == nil then return end
+
+	local hscene = Fuben.getSceneHandleByPtr(pscene)
+
+	-- 怪物加buff
+	local buffs = sconf.buffs
+	if buffs ~= nil then
+		for i=1,#buffs do
+			local bconf = buffs[i]
+			local mon = Fuben.getMonsterPtrById(hscene, bconf.mid)
+			if mon ~= nil then
+				LActor.addBuff(mon, bconf.bufftype, bconf.group, bconf.value, bconf.times, bconf.interval, bconf.name, bconf.timeOverlay)
+			end
+		end
+	end
+end
+
+-- 特效作用
+CymkFunc.OnTakeEffect = function(sysarg, layer, eidx, posx, posy)
+	local pfb = LActor.getFubenPrt(sysarg)
+	if pfb == nil then print("pfb is nil") return end
+
+	local hscene = LActor.getSceneHandle(sysarg)
+	if hscene == 0 then print("hscene is nil") return end
+
+	if Fuben.getFubenProgress(pfb) ~= layer then -- 玩家已经离开这层了
+		print("layer error")
+		return 
+	end
+
+	local myx = LActor.getIntProperty(sysarg, PROP_ENTITY_POSX)
+	local myy = LActor.getIntProperty(sysarg, PROP_ENTITY_POSY)
+
+	-- 击中
+	if myx == posx and myy == posy then
+		-- print("effect hit")
+		local sconf = CymkConf.scenes[layer]
+		if sconf == nil then return end
+
+		local results = sconf.effects[eidx].results -- 击中伤害结果
+		for i=1,#results do
+			local buff = results[i]
+			LActor.addBuff(sysarg, buff.bufftype, buff.group, buff.value, buff.times, buff.interval, buff.name, false)
+		end
+	end
+end
+
+-- 延时添加buff
+CymkFunc.OnDelayBuff = function(sysarg, layer, mid, bidx)
+	local pfb = LActor.getFubenPrt(sysarg)
+	if pfb == nil then return end
+
+	local hscene = LActor.getSceneHandle(sysarg)
+	if hscene == 0 then return end
+
+	local myLayer = Fuben.getFubenProgress(pfb)
+	if myLayer ~= layer then
+		-- 玩家已经离开这层了
+		return 
+	end
+
+	local sconf = CymkConf.scenes[layer]
+	if sconf == nil then return end
+
+	local buffs = sconf.buffs[mid]
+	if buffs == nil then return end
+
+	local buff = buffs[bids]
+	if buff == nil then return end
+
+	local mon = Fuben.getMonsterPtrById(hscene, mid) -- 无敌的boss的怪物ID
+	if mon == nil then
+		print("enter scene error:can not get monster:"..bconf.mid)
+		return 
+	end
+
+	LActor.addBuff( mon, buff.bufftype, buff.group, buff.value, buff.times, buff.interval, buff.name, buff.timeOverlay)
+end
+
+-- 副本初始化
+CymkFunc.OnInitFuben = function(hfb)
+	local pfb = Fuben.getFubenPtr(hfb)
+	if pfb == nil then return end
+
+	Fuben.setCaleRemainMon(pfb, false) -- 不自动发送剩余怪物数
+	CymkPublic.InitRound(pfb, 1)
+end
+
+-- 进入副本
+CymkFunc.OnEnterFuben = function(sysarg, hfb, way)
+	-- 
+end
+
+-- 该层的游戏结束
+
+CymkFunc.OnGameOver = function(pfb)
+	CymkPublic.OnFailed(pfb)
+end
+
+TimerMsgFunc.register(TimerMsg.CymkEffect, CymkFunc.OnEffectTimer)
+TimerMsgFunc.register(TimerMsg.CymkSkill, CymkFunc.OnSkillTimer)
+TimerMsgFunc.register(TimerMsg.CymkSwcySkill, CymkFunc.OnSwcySkillTimer)
+TimerMsgFunc.register(TimerMsg.CymkBuff, CymkFunc.OnMonsterBuff)
+EventCallDispatcher.regEntityCallbackMsg(EntityCallbackMsg.CymkDelayBuff, CymkFunc.OnDelayBuff)
+EventCallDispatcher.regEntityCallbackMsg(EntityCallbackMsg.CymkTakeEffect, CymkFunc.OnTakeEffect)
+EventCallDispatcher.registerFubenGameOver(CymkConf.fbid,  CymkFunc.OnGameOver)
+EventCallDispatcher.registerFubenEnter(CymkConf.fbid, CymkFunc.OnEnterFuben)
+EventCallDispatcher.registerFubenInit(CymkConf.fbid, CymkFunc.OnInitFuben)
+
+-- 进入场景处理
+for i=1, #CymkConf.scenes do
+	local sconf = CymkConf.scenes[i]
+	EventCallDispatcher.registerSceneEnter(sconf.sceneid, CymkFunc.OnEnterScene)
+
+	CymkFunc.SceneFloors[sconf.sceneid] = i
+
+end
+
+table.insert(LocalDT.ScriptDelayConfig[28], CymkFunc.OnCalSend)
+table.insert(LocalDT.ScriptDelayConfig[29], CymkFunc.OnSwcySkill)

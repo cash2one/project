@@ -1,0 +1,146 @@
+﻿--lua script
+--#include "..\language\LangCode.txt"
+
+Summon = 
+{
+	--id流水号id,这里需要连续的数字
+	--name为任务的名字，具体名字在语言包里包含如：诛仙阵。
+	--minLevel是进入副本的最低等级要求。
+	--type类型 1：任务 2：打开窗口
+	--entityName是超链接名，具体名字在语言包里包含如：诛仙阵 张天师
+	--value如果是任务为场景名 否则为窗口编号
+	--starLevel评价
+	--infoType类型1：如何升级 2：如何变强3：如何赚钱
+	
+	{
+		id=  1 ,
+		name= Lang.FubenName.fname0009 ,  --诛仙阵 
+		minLevel = 25,
+		type = 1,                         --1：任务 2：打开窗口
+		entityName= Lang.EntityName.n63,   --诛仙阵 
+		value= Lang.SceneName.s11,         --地图id 
+		starLevel=5,
+		infoType=1,
+	},	--诛仙阵
+	
+	{
+		id=  2 ,
+		name= Lang.Quest.n8001 ,  --斩妖除魔
+		minLevel = 28,
+		type = 1,                          --1：任务 2：打开窗口
+		entityName= Lang.EntityName.n26,   --张天师 
+		value= Lang.SceneName.s11,         --地图id
+		starLevel=5,
+		infoType=1,
+	},	--斩妖除魔
+	
+	{
+		id=  3 ,
+		name= Lang.Quest.n8001 ,  --仙踪任务 
+		minLevel = 28,
+		type = 1,                          --1：任务 2：打开窗口
+		entityName= Lang.EntityName.n19,   --仙踪管理员 
+		value= Lang.SceneName.s11,         --地图id
+		starLevel=5,
+		infoType=1,
+	},	--仙踪任务
+	
+	{
+		id=  3 ,
+		name= Lang.zhaohuanxuaner.z3 ,  --精彩活动 
+		minLevel = 25,
+		type = 2,                          --1：任务 2：打开窗口
+		entityName= Lang.zhaohuanxuaner.z1,   --这边配置一个语言包“查看和传到” 
+		value= 9,   --窗口id 9:活动 13:装备打造 23:坐骑 7:灵器提升 43:渡劫 -2:未开通 
+		starLevel=4,
+		infoType=1,
+	},	--精彩活动
+	
+	{
+		id=  4 ,
+		name= Lang.zhaohuanxuaner.z4 ,  --装备打造
+		minLevel = 25,
+		type = 2,                          --1：任务 2：打开窗口
+		entityName= Lang.zhaohuanxuaner.z2,   --这边配置一个语言包“查看和传到”
+		value= 13,   --窗口id 9:活动 13:装备打造 23:坐骑 7:灵器提升 43:渡劫 -2:未开通
+		starLevel=5,
+		infoType=2,
+	},	--装备打造
+	
+	{
+		id=  5 ,
+		name= Lang.zhaohuanxuaner.z5 ,  --坐骑升级 
+		minLevel = 25,
+		type = 2,                          --1：任务 2：打开窗口
+		entityName= Lang.zhaohuanxuaner.z2,   --这边配置一个语言包“查看和传到”
+		value= 23,   --窗口id 9:活动 13:装备打造 23:坐骑 7:灵器提升 43:渡劫 -2:未开通
+		starLevel=5,
+		infoType=2,
+	},	--坐骑升级
+	
+	{
+		id=  6 ,
+		name= Lang.zhaohuanxuaner.z6 ,  --灵器提升
+		minLevel = 25,
+		type = 2,                          --1：任务 2：打开窗口
+		entityName= Lang.zhaohuanxuaner.z2,   --这边配置一个语言包“查看和传到”
+		value= 7,   --窗口id 9:活动 13:装备打造 23:坐骑 7:灵器提升 43:渡劫 -2:未开通
+		starLevel=5,
+		infoType=2,
+	},	--灵器提升
+	
+	{
+		id=  7 ,
+		name= Lang.zhaohuanxuaner.z7 ,  --渡劫
+		minLevel = 25,
+		type = 2,                          --1：任务 2：打开窗口
+		entityName= Lang.EntityName.n82,   --这边配置一个语言包“查看和传到”
+		value= 43,   --窗口id 9:活动 13:装备打造 23:坐骑 7:灵器提升 43:渡劫 -2:未开通
+		starLevel=5,
+		infoType=2,
+	},	--渡劫
+	
+	{
+		id=  8 ,
+		name= Lang.zhaohuanxuaner.z8 ,  --灵根参悟
+		minLevel = 25,
+		type = 2,                          --1：任务 2：打开窗口
+		entityName= Lang.EntityName.n82,   --这边配置一个语言包“查看和传到”
+		value= -2,   --窗口id 9:活动 13:装备打造 23:坐骑 7:灵器提升 43:渡劫 -2:未开通
+		starLevel=5,
+		infoType=2,
+	},	--灵根参悟
+	
+	{
+		id=  3 ,
+		name= Lang.FubenName.fname0006 ,  --赏金副本
+		minLevel = 28,
+		type = 1,                          --1：任务 2：打开窗口
+		entityName= Lang.EntityName.n51,   --仙踪管理员
+		value= Lang.SceneName.s11,         --地图id
+		starLevel=5,
+		infoType=3,
+	},	--赏金副本
+	
+	{
+		id=  3 ,
+		name= Lang.Quest.n8359 ,  --银两任务
+		minLevel = 28,
+		type = 1,                          --1：任务 2：打开窗口
+		entityName= Lang.EntityName.n23,   --仙踪管理员
+		value= Lang.SceneName.s11,         --地图id
+		starLevel=4,
+		infoType=3,
+	},	--银两任务
+	
+	{
+		id=  3 ,
+		name= Lang.zhaohuanxuaner.z3 ,  --精彩活动
+		minLevel = 25,
+		type = 2,                          --1：任务 2：打开窗口
+		entityName= Lang.zhaohuanxuaner.z1,   --这边配置一个语言包“查看和传到”
+		value= 9,   --窗口id 9:活动 13:装备打造 23:坐骑 7:灵器提升 43:渡劫 -2:未开通
+		starLevel=4,
+		infoType=3,
+	},	--精彩活动
+}

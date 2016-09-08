@@ -1,0 +1,72 @@
+
+--#include "data\config\taskgameplayconfig\puzhuaconfig.txt" once
+
+local PuZhua = { }
+
+--接任务
+function PuZhua.AcceptTask(  )
+	-- body
+end
+--交任务
+function PuZhua.CommitTask( )
+	-- body
+end
+--更新任务
+function PuZhua.UpDateTask( )
+	-- body
+end
+--击杀任务目标
+function PuZhua.KillerMonster( monster, sysarg, monId )
+	--debug_print("----------monId------------=  "..tostring( monId))
+	--[[
+	for k , v in pairs ( PuZhua_config.task_list) do
+		if v.monsterid == monId then
+			if LActor.hasQuest( sysarg , v.taskid ) == true then
+				local nVar = LActor.getStaticVar( sysarg )
+				if nVar.PuZhua_task == nil then
+					nVar.PuZhua_task = {}
+				end
+				if nVar.PuZhua_task[monId] == nil then
+					nVar.PuZhua_task[monId] = 1
+				else
+					nVar.PuZhua_task[monId] = nVar.PuZhua_task[monId] + 1
+				end
+				if nVar.PuZhua_task[monId] == v.killmonsternum then
+					LActor.addQuestValue( sysarg , v.taskid , v.petid , 1 )
+				end
+				return
+			end
+		end
+	end
+	]]
+end
+
+
+
+--玩家登陆
+function PuZhua.Login( sysarg, arg )
+	-- body
+	local actorLoginOutTime = LActor.getLastLogoutTime( sysarg )
+	local actorLoginTime = LActor.getLoginTime( sysarg )
+	debug_print("-----------PuZhua.Login------------",actorLoginTime , actorLoginOutTime, actorLoginTime - actorLoginOutTime ,  PuZhua_config.clearTaskTime)
+	if ( actorLoginTime - actorLoginOutTime ) >= PuZhua_config.clearTaskTime then
+		for k , v in pairs ( PuZhua_config.task_list ) do
+			if LActor.hasQuest( sysarg , v.taskid ) == true then
+				--下线30分钟没上线 清除该任务的目标数量
+				--ptint("--------------PuZhua.Login 清除数据-----------------------", v.taskid , v.monsterid)
+				--LActor.setQuestValue( sysarg , v.taskid , v.monsterid , 0)
+				LActor.clearOneQuestData( sysarg , v.taskid)
+			end
+		end
+	end
+end
+
+--怪物死亡
+for k , v in pairs ( PuZhua_config.task_list ) do
+	--MonDieDispatcher.register( v.monsterid,  PuZhua.KillerMonster)
+end
+
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, PuZhua.Login)
+ActorQuestCallDispatcher.registerPlayType(BaseTypes.BaseQuestAction.qaAccept, BaseTypes.BaseQuestPlayType.qptCatches, PuZhua.AcceptTask) -- 注册接受任务的侦听
+ActorQuestCallDispatcher.registerPlayType(BaseTypes.BaseQuestAction.qaCommit, BaseTypes.BaseQuestPlayType.qptCatches, PuZhua.CommitTask) -- 注册完成任务的侦听

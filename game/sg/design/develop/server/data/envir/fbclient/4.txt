@@ -1,0 +1,15 @@
+  {
+	--阎王寨
+         fbid = 4 ,fbname = Lang.FubenName.fname0004,fbDesc = Lang.FubenName.fdesc0004,minLevel = 40,minPlayCount = 2,maxPlayCount = 5,type = 0,fbTime=3600,
+	  awards=
+	 {
+		{type=12,id=0,count=210,bind=0,strong=0,quality=0},  --210声望
+		{type=2,id=0,count=2100000,bind=0,strong=0,quality=0},  --210万经验值
+	 },
+	 npc=
+        {
+            --杭州 张将军
+            {sceneId=50,name=Lang.EntityName.n00461,conds={}},
+	},
+	
+  },

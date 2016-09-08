@@ -1,0 +1,9 @@
+-- 玩家定期会执行的函数
+
+function OnActorTime(sysarg, arg)
+	-- 每分钟检查一次
+	for i = 1, #ActorTimeFnTable do
+		local func = ActorTimeFnTable[i]
+		func(sysarg)
+	end
+end

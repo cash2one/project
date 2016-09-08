@@ -1,0 +1,273 @@
+﻿--万圣节活动奖励配置表
+
+-- 领取时间配置
+
+-- 万圣节活动配置
+WsjConfig = {
+	activityid = 28,--活动ID
+	times = { 60, 600, 1200, 1800, 2400, 3000, 3600},	-- 奖励时间间隔(秒)
+
+	-- 奖励配置，同在线奖励
+	rewards = {--[[
+		{  -- 奖励ID 13  1分钟在线时间奖励         
+			{
+	                {
+							{ rewardtype = 1, type = 0, amount = 3, itemid = 18601,  quality=0, strong=0, bind=1 }, --1至19级玩家奖励1
+	                },
+					{
+							{ rewardtype = 1, type = 0, amount = 3, itemid = 18601,  quality=0, strong=0, bind=1 }, --1至19级玩家奖励2
+	                },
+					{
+							{ rewardtype = 1, type = 0, amount = 3, itemid = 18601,  quality=0, strong=0, bind=1 }, --1至19级玩家奖励3
+	                },
+			},		
+			{
+	                {
+						{ rewardtype = 1, type = 0, amount = 3, itemid = 18601,  quality=0, strong=0, bind=1 }, --20至39级玩家奖励1
+					},
+	                {
+						{ rewardtype = 1, type = 0, amount = 3, itemid = 18601,  quality=0, strong=0, bind=1 }, --20至39级玩家奖励2   
+					},
+					{
+						{ rewardtype = 1, type = 0, amount = 3, itemid = 18601,  quality=0, strong=0, bind=1 }, --20至39级玩家奖励3 
+					},
+			},
+			{
+					{
+	                	{ rewardtype = 1, type = 0, amount = 3, itemid = 18601,  quality=0, strong=0, bind=1 }, --40至150级玩家奖励1    
+					},
+					{
+	                	{ rewardtype = 1, type = 0, amount = 3, itemid = 18601,  quality=0, strong=0, bind=1 }, --40至150级玩家奖励2      
+		            },
+					{
+						{ rewardtype = 1, type = 0, amount = 3, itemid = 18601,  quality=0, strong=0, bind=1 }, --40至150级玩家奖励3    	
+		            },
+			},
+		},
+		{  -- 奖励ID 14  10分钟在线时间奖励       
+			{
+	                {
+						{ rewardtype = 1, type = 0, amount = 1, itemid = 18401,  quality=0, strong=0, bind=1 }, --1至19级玩家奖励1
+	                },
+
+	                {
+						{ rewardtype = 1, type = 0, amount = 1, itemid = 18401,  quality=0, strong=0, bind=1 }, --1至19级玩家奖励2
+	                },
+
+	                {
+						{ rewardtype = 1, type = 0, amount = 1, itemid = 18401,  quality=0, strong=0, bind=1}, --1至19级玩家奖励3
+	                },
+			},		
+			{
+	                {
+						{ rewardtype = 1, type = 0, amount = 1, itemid = 18401,  quality=0, strong=0, bind=1 }, --20至39级玩家奖励1   
+
+		            },
+	                {
+						{ rewardtype = 1, type = 0, amount = 1, itemid = 18401,  quality=0, strong=0, bind=1 }, --20至39级玩家奖励2   
+		            },
+	                {
+						{ rewardtype = 1, type = 0, amount = 1, itemid = 18401,  quality=0, strong=0, bind=1 }, --20至39级玩家奖励3  
+					},
+			},
+			{
+					{
+	                	{ rewardtype = 1, type = 0, amount = 1, itemid = 18401,  quality=0, strong=0, bind=1 }, --40至150级玩家奖励1      
+					},
+					{
+	                	{ rewardtype = 1, type = 0, amount = 1, itemid = 18401,  quality=0, strong=0, bind=1 }, --40至150级玩家奖励2      
+		            },
+					{
+						{ rewardtype = 1, type = 0, amount = 1, itemid = 18401,  quality=0, strong=0, bind=1 }, --40至150级玩家奖励3    	
+		            },
+			},
+		},
+		{  -- 奖励ID 15  20分钟在线时间奖励
+	         
+			{
+	                {
+						{ rewardtype = 1, type = 0, amount = 1, itemid = 48284,  quality=0, strong=0, bind=1 }, --1至19级玩家奖励1
+	                },
+	                {
+						{ rewardtype = 1, type = 0, amount = 1, itemid = 48284,  quality=0, strong=0, bind=1 }, --1至19级玩家奖励2 
+	                },
+	                {
+						{ rewardtype = 1, type = 0, amount = 1, itemid = 48284,  quality=0, strong=0, bind=1},  --1至19级玩家奖励3 
+	                },
+			},		
+			{
+	                {
+						{ rewardtype = 1, type = 0, amount = 1, itemid = 48284,  quality=0, strong=0, bind=1 }, --20至39级玩家奖励1
+					},
+	                {
+						{ rewardtype = 1, type = 0, amount = 1, itemid = 48284,  quality=0, strong=0, bind=1 }, --20至39级玩家奖励2  
+
+					},
+	                {
+						{ rewardtype = 1, type = 0, amount = 1, itemid = 48284,  quality=0, strong=0, bind=1 }, --20至39级玩家奖励3      
+					},
+			},
+			{
+	                {
+						{ rewardtype = 1, type = 0, amount = 1, itemid = 48284,  quality=0, strong=0, bind=1 }, --40至150级玩家奖励1	
+					},
+	                {
+						{ rewardtype = 1, type = 0, amount = 1, itemid = 48284,  quality=0, strong=0, bind=1 }, --40至150级玩家奖励2  
+					},
+	                {
+						{ rewardtype = 1, type = 0, amount = 1, itemid = 48284,  quality=0, strong=0, bind=1 }, --40至150级玩家奖励3 
+					},
+			},
+		},
+		{  -- 奖励ID 16  30分钟在线时间奖励
+	         
+			{
+	                {
+						{ rewardtype = 1, type = 0, amount = 1, itemid = 18540,  quality=0, strong=0, bind=1 }, --1至19级玩家奖励1
+	                },
+
+	                {
+						{ rewardtype = 1, type = 0, amount = 1, itemid = 18540,  quality=0, strong=0, bind=1 }, --1至19级玩家奖励2
+	                },
+	                {
+						{ rewardtype = 1, type = 0, amount = 1, itemid = 18540,  quality=0, strong=0, bind=1}, --1至19级玩家奖励3
+					},
+
+			},		
+			{
+	                {
+						{ rewardtype = 1, type = 0, amount = 1, itemid = 18540,  quality=0, strong=0, bind=1 }, --20至39级玩家奖励1   
+		            },
+	                {
+						{ rewardtype = 1, type = 0, amount = 1, itemid = 18540,  quality=0, strong=0, bind=1 }, --20至39级玩家奖励2   
+		            },
+	                {
+						{ rewardtype = 1, type = 0, amount = 1, itemid = 18540,  quality=0, strong=0, bind=1 }, --20至39级玩家奖励3  
+		            },
+			},
+			{
+					{
+						{ rewardtype = 1, type = 0, amount = 1, itemid = 18540,  quality=0, strong=0, bind=1 }, --40至150级玩家奖励1      
+
+		            },
+					{
+	                	{ rewardtype = 1, type = 0, amount = 1, itemid = 18540,  quality=0, strong=0, bind=1 }, --40至150级玩家奖励2  
+		            },
+					{
+						{ rewardtype = 1, type = 0, amount = 1, itemid = 18540,  quality=0, strong=0, bind=1 }, --40至150级玩家奖励3    	
+		            },
+			},
+		},
+		{  -- 奖励ID 17  40分钟在线时间奖励
+	         
+			{
+	                {
+						{ rewardtype = 1, type = 0, amount = 1, itemid = 18606,  quality=0, strong=0, bind=1 }, --1至19级玩家奖励
+	                },
+					{
+						{ rewardtype = 1, type = 0, amount = 1, itemid = 18606,  quality=0, strong=0, bind=1 }, --1至19级玩家奖励
+	                },
+					{
+						{ rewardtype = 1, type = 0, amount = 1, itemid = 18606,  quality=0, strong=0, bind=1 }, --1至19级玩家奖励
+	                },
+			},		
+			{
+	                {
+						{ rewardtype = 1, type = 0, amount = 1, itemid = 18606,  quality=0, strong=0, bind=1 }, --20至39级玩家奖励
+	                },	
+					{
+						{ rewardtype = 1, type = 0, amount = 1, itemid = 18606,  quality=0, strong=0, bind=1 }, --20至39级玩家奖励
+	                },	
+					{
+						{ rewardtype = 1, type = 0, amount = 1, itemid = 18606,  quality=0, strong=0, bind=1 }, --20至39级玩家奖励
+	                },	
+			},
+			{
+	                {
+						{ rewardtype = 1, type = 0, amount = 1, itemid = 18606,  quality=0, strong=0, bind=1 }, --40至150级玩家奖励
+					},
+					{
+						{ rewardtype = 1, type = 0, amount = 1, itemid = 18606,  quality=0, strong=0, bind=1 }, --40至150级玩家奖励
+					},
+					{
+						{ rewardtype = 1, type = 0, amount = 1, itemid = 18606,  quality=0, strong=0, bind=1 }, --40至150级玩家奖励
+					},
+			},
+		},
+		{  -- 奖励ID 18  50分钟在线时间奖励     
+			{
+	                {
+						{ rewardtype = 1, type = 0, amount = 1, itemid = 18600,  quality=0, strong=0, bind=1 }, --1至19级玩家奖励
+	                },
+					{
+						{ rewardtype = 1, type = 0, amount = 1, itemid = 18600,  quality=0, strong=0, bind=1 }, --1至19级玩家奖励
+	                },
+					{
+						{ rewardtype = 1, type = 0, amount = 1, itemid = 18600,  quality=0, strong=0, bind=1 }, --1至19级玩家奖励
+	                },
+			},		
+			{
+	                {
+						{ rewardtype = 1, type = 0, amount = 1, itemid = 18600,  quality=0, strong=0, bind=1 }, --20至39级玩家奖励
+					},
+					{
+						{ rewardtype = 1, type = 0, amount = 1, itemid = 18600,  quality=0, strong=0, bind=1 }, --20至39级玩家奖励
+					},
+					{
+						{ rewardtype = 1, type = 0, amount = 1, itemid = 18600,  quality=0, strong=0, bind=1 }, --20至39级玩家奖励
+					},
+
+			},
+			{
+	                {
+						{ rewardtype = 1, type = 0, amount = 1, itemid = 18600,  quality=0, strong=0, bind=1 }, --40至150级玩家奖励
+					},
+					{
+						{ rewardtype = 1, type = 0, amount = 1, itemid = 18600,  quality=0, strong=0, bind=1 }, --40至150级玩家奖励
+					},
+					{
+						{ rewardtype = 1, type = 0, amount = 1, itemid = 18600,  quality=0, strong=0, bind=1 }, --40至150级玩家奖励
+					},
+
+			},
+		},
+		{ --奖励ID 19 60分钟在线时间奖励
+			{
+	                {
+						{ rewardtype = 1, type = 0, amount = 1, itemid = 60027,  quality=0, strong=0, bind=1 }, --1至19级玩家奖励
+	                },
+					{
+						{ rewardtype = 1, type = 0, amount = 1, itemid = 60027,  quality=0, strong=0, bind=1 }, --1至19级玩家奖励
+	                },
+					{
+						{ rewardtype = 1, type = 0, amount = 1, itemid = 60027,  quality=0, strong=0, bind=1 }, --1至19级玩家奖励
+	                },
+
+			},		
+			{
+	                {
+						{ rewardtype = 1, type = 0, amount = 1, itemid = 60027,  quality=0, strong=0, bind=1 }, --20至39级玩家奖励
+					},
+					{
+						{ rewardtype = 1, type = 0, amount = 1, itemid = 60027,  quality=0, strong=0, bind=1 }, --1至19级玩家奖励
+	                },
+					{
+						{ rewardtype = 1, type = 0, amount = 1, itemid = 60027,  quality=0, strong=0, bind=1 }, --1至19级玩家奖励
+	                },
+
+			},
+			{	
+					{
+						{ rewardtype = 1, type = 0, amount = 1, itemid = 60027,  quality=0, strong=0, bind=1 }, --40至150级玩家奖励	
+					},
+					{
+						{ rewardtype = 1, type = 0, amount = 1, itemid = 60027,  quality=0, strong=0, bind=1 }, --40至150级玩家奖励
+	                },
+					{
+						{ rewardtype = 1, type = 0, amount = 1, itemid = 60027,  quality=0, strong=0, bind=1 }, --40至150级玩家奖励
+	                },
+
+			},
+		},]]
+	},
+}

@@ -1,0 +1,228 @@
+--lua script
+
+function use_MiZongDongRewardBox( sysarg,itemIndex,itemPtr,useItemTbl )
+  local level = LActor.getIntProperty( sysarg, PROP_LEVEL )
+  if level < useItemTbl.mustLevel then
+    local tipMsg = string.format(Lang.TaskTalk.n00002,useItemTbl.mustLevel,useItemTbl.item_name) 
+    LActor.sendTipmsg( sysarg,tipMsg,ttDialog )
+    return false
+  end
+  if LActor.getItemCount(sysarg,useItemTbl.item_id) < 1 then
+    local tipMsg = string.format(Lang.TaskTalk.n00003,useItemTbl.item_name)
+    LActor.sendTipmsg( sysarg,tipMsg,ttDialog )
+    return false
+  end
+  if itemIndex == useItemTbl.item_id then
+    local count = Item.getBagEmptyGridCount(sysarg)
+    if useItemTbl.mustBag and count < useItemTbl.mustBag then
+      local tipMsg = string.format(Lang.TaskTalk.n00004,useItemTbl.mustBag)
+      LActor.sendTipmsg( sysarg,tipMsg,ttDialog )
+      return false
+    else
+	    if sysarg then
+        LActor.removeItem(sysarg,useItemTbl.item_id,1,-1,-1,-1,"MiZongDong",5)      --É¾³ýÐèÇóÎïÆ·
+        if useItemTbl.oneItem ~= nil then    
+	        local i
+	        local ItemPer1 = 0
+	        local rand1 = System.getRandomNumber(100)
+	        for i = 1, table.getn( useItemTbl.oneItem ) do
+	          ItemPer1 = ItemPer1 + useItemTbl.oneItem[i].percent
+	          if rand1 < ItemPer1 then
+	            LActor.addItem(sysarg,useItemTbl.oneItem[i].itemId,0,0,useItemTbl.oneItem[i].num,useItemTbl.oneItem[i].bind,"MiZongDong",1)
+	            if useItemTbl.oneItem[i].notice == true then
+	              local name = LActor.getName( sysarg )
+				        local str = string.format( Lang.TaskTalk.n00005, name,useItemTbl.item_name,useItemTbl.oneItem[i].name)
+	              --System.broadcastTipmsg(str,ttGmTip + ttTipmsgWindow)
+				      end
+	            break
+	          end
+	        end
+        end
+        if useItemTbl.twoItem ~= nil then
+	        local j
+	        local ItemPer2 = 0
+	        local rand2 = System.getRandomNumber(100)
+	        for j = 1, table.getn( useItemTbl.twoItem ) do
+	          ItemPer2 = ItemPer2 + useItemTbl.twoItem[j].percent
+	          if rand2 < ItemPer2 then
+	            LActor.addItem(sysarg,useItemTbl.twoItem[j].itemId,0,0,useItemTbl.twoItem[j].num,useItemTbl.twoItem[j].bind,"MiZongDong",1)
+	            if useItemTbl.twoItem[j].notice == true then
+	              local name = LActor.getName( sysarg )
+				        local str = string.format(Lang.TaskTalk.n00005 , name,useItemTbl.item_name,useItemTbl.twoItem[j].name)
+	              --System.broadcastTipmsg(str,ttGmTip + ttTipmsgWindow)
+				      end
+	            break
+	          end
+	        end
+        end
+        if useItemTbl.threeItem  ~= nil then 
+	        local k
+	        local ItemPer3 = 0
+	        local rand3 = System.getRandomNumber(100)
+	        for k = 1, table.getn( useItemTbl.threeItem ) do
+	          ItemPer3 = ItemPer3 + useItemTbl.threeItem[k].percent
+	          if rand3 < ItemPer3 then
+	            LActor.addItem(sysarg,useItemTbl.threeItem[k].itemId,0,0,useItemTbl.threeItem[k].num,useItemTbl.threeItem[k].bind,"MiZongDong",1)
+	            if useItemTbl.threeItem[k].notice == true then
+	              local name = LActor.getName( sysarg )
+				        local str = string.format( Lang.TaskTalk.n00005, name,useItemTbl.item_name,useItemTbl.threeItem[k].name)
+	              --System.broadcastTipmsg(str,ttGmTip + ttTipmsgWindow)
+				      end
+	            break
+	          end
+	        end
+        end
+	      if useItemTbl.extentItem.bindGold ~= nil then
+          LActor.changeMoney(sysarg,mtBindCoin,useItemTbl.extentItem.bindGold)
+	      end
+	      if useItemTbl.extentItem.bindGold ~= nil then
+          LActor.changeMoney(sysarg,mtCoin,useItemTbl.extentItem.gold)
+	      end 
+
+      end
+    end
+  end
+  --return true
+end
+
+
+--ÃÔ×Ù¶´ 
+MiZongDongRewardTbl = { 
+  --ÃÔ×Ù»Æ½ðÀñºÐ
+  {
+    func = use_MiZongDongRewardBox,
+    param = {
+	    item_id = 1629,
+	    item_name = Lang.Item.n1629,
+	    mustLevel = 0,
+	    mustBag = 3,
+	    extentItem =
+	    {
+        bindGold = 10000,
+        gold = 2000,
+	    },
+	    oneItem = 
+      {
+	      {itemId = 618, name = Lang.Item.n619, percent = 25, num = 1, bind = 1, notice = false },         --1°ó¶¨ 0²»°ó¶¨ 
+	      {itemId = 621, name = Lang.Item.n622, percent = 25, num = 1, bind = 1, notice = false },
+	      {itemId = 1588, name = Lang.Item.n1588, percent = 25, num = 1, bind = 1, notice = false },
+	      {itemId = 1441, name = Lang.Item.n1441, percent = 25, num = 1, bind = 1, notice = false },
+	    },
+	    twoItem = 
+      {
+        {itemId = 1559, name = Lang.Item.n1559, percent = 20, num = 1, bind = 1, notice = false },
+	      {itemId = 1442, name = Lang.Item.n1442, percent = 20, num = 1, bind = 1, notice = false },
+	      {itemId = 1589, name = Lang.Item.n1589, percent = 25, num = 1, bind = 1, notice = false },
+	      {itemId = 1555, name = Lang.Item.n1555, percent = 25, num = 1, bind = 1, notice = false },
+	    },
+	    threeItem = 
+      {
+        {itemId = 1002, name = Lang.Item.n1002, percent = 20, num = 1, bind = 1, notice = false },
+	      {itemId = 1646, name = Lang.Item.n1646, percent = 20, num = 1, bind = 1, notice = false },
+	      {itemId = 1003, name = Lang.Item.n1003, percent = 20, num = 1, bind = 1, notice = true },
+	      {itemId = 1004, name = Lang.Item.n1004, percent = 20, num = 1, bind = 1, notice = true },
+	      {itemId = 1005, name = Lang.Item.n1005, percent = 20, num = 1, bind = 1, notice = true },
+	      
+	    },
+	  },
+  },
+  --ÃÔ×Ù°×ÒøÀñºÐ
+  {
+    func = use_MiZongDongRewardBox,
+    param = {
+	    item_id = 1630,
+	    item_name = Lang.Item.n1630,
+	    mustLevel = 0,
+	    mustBag = 3,
+	    extentItem =
+	    {
+        bindGold = 8000,
+        gold = 1500,
+	    },
+	    oneItem =
+      {
+	      {itemId = 618, name = Lang.Item.n619, percent = 25, num = 1, bind = 1, notice = false },         --1°ó¶¨ 0²»°ó¶¨
+	      {itemId = 621, name = Lang.Item.n622, percent = 25, num = 1, bind = 1, notice = false },
+	      {itemId = 1588, name = Lang.Item.n1588, percent = 25, num = 1, bind = 1, notice = false },
+	      {itemId = 1441, name = Lang.Item.n1441, percent = 25, num = 1, bind = 1, notice = false },
+	    },
+	    twoItem =
+      {
+        {itemId = 1559, name = Lang.Item.n1559, percent = 20, num = 1, bind = 1, notice = false },
+	      {itemId = 1442, name = Lang.Item.n1442, percent = 20, num = 1, bind = 1, notice = false },
+	      {itemId = 1589, name = Lang.Item.n1589, percent = 25, num = 1, bind = 1, notice = false },
+	      {itemId = 1555, name = Lang.Item.n1555, percent = 25, num = 1, bind = 1, notice = false },
+	    },
+	    threeItem =
+      {
+        {itemId = 1002, name = Lang.Item.n1002, percent = 20, num = 1, bind = 1, notice = false },
+	      {itemId = 1646, name = Lang.Item.n1646, percent = 20, num = 1, bind = 1, notice = false },
+	      {itemId = 1003, name = Lang.Item.n1003, percent = 20, num = 1, bind = 1, notice = true },
+	      {itemId = 1004, name = Lang.Item.n1004, percent = 20, num = 1, bind = 1, notice = true },
+	      {itemId = 1005, name = Lang.Item.n1005, percent = 20, num = 1, bind = 1, notice = true },
+	    },
+	  },
+  },
+  --ÃÔ×ÙÇàÍ­ÀñºÐ
+  {
+    func = use_MiZongDongRewardBox,
+    param = {
+	    item_id = 1631,
+	    item_name = Lang.Item.n1631,
+	    mustLevel = 0,
+	    mustBag = 2,
+	    extentItem =
+	    {
+        bindGold = 5000,
+        gold = 1000,
+	    },
+	    oneItem =
+      {
+	      {itemId = 618, name = Lang.Item.n619, percent = 25, num = 1, bind = 1, notice = false },         --1°ó¶¨ 0²»°ó¶¨
+	      {itemId = 621, name = Lang.Item.n622, percent = 25, num = 1, bind = 1, notice = false },
+	      {itemId = 1588, name = Lang.Item.n1588, percent = 25, num = 1, bind = 1, notice = false },
+	      {itemId = 1441, name = Lang.Item.n1441, percent = 25, num = 1, bind = 1, notice = false },
+	    },
+	    twoItem =
+      {
+        {itemId = 1559, name = Lang.Item.n1559, percent = 20, num = 1, bind = 1, notice = false },
+	      {itemId = 1442, name = Lang.Item.n1442, percent = 20, num = 1, bind = 1, notice = false },
+	      {itemId = 1589, name = Lang.Item.n1589, percent = 25, num = 1, bind = 1, notice = false },
+	      {itemId = 1555, name = Lang.Item.n1555, percent = 25, num = 1, bind = 1, notice = false },
+	    },
+	  },
+  },
+  --ÃÔ×ÙÖÇÕßÀñºÐ
+  {
+    func = use_MiZongDongRewardBox,
+    param = {
+	    item_id = 1632,
+	    item_name = Lang.Item.n1632,
+	    mustLevel = 0,
+	    mustBag = 1,
+	    extentItem =
+	    {
+        bindGold = 5000,
+        gold = 1000,
+	    },
+	    oneItem =
+      {
+	      {itemId = 618, name = Lang.Item.n619, percent = 25, num = 1, bind = 1, notice = false },         --1°ó¶¨ 0²»°ó¶¨
+	      {itemId = 621, name = Lang.Item.n622, percent = 25, num = 1, bind = 1, notice = false },
+	      {itemId = 1588, name = Lang.Item.n1588, percent = 25, num = 1, bind = 1, notice = false },
+	      {itemId = 1441, name = Lang.Item.n1441, percent = 25, num = 1, bind = 1, notice = false },
+	    },
+	  },
+  },
+}
+
+function MiZongDongRewardTbl_Init(npcobj)
+  local i
+   for i = 1, table.getn(MiZongDongRewardTbl) do
+    local x = MiZongDongRewardTbl[i]
+    GlobalItemFn[MiZongDongRewardTbl[i].param.item_id] = { func = x.func, params = x.param }
+   end
+end
+
+
+table.insert( InitFnTable, MiZongDongRewardTbl_Init )

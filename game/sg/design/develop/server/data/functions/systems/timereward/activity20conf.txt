@@ -1,0 +1,22 @@
+--七夕活动
+--#include "..\..\..\language\LangCode.txt" once
+activity20Conf = {
+	activityId = 20,
+
+	activities ={
+		[82] = {
+			id = 82,		--七夕兑换活动
+			event = "#c5f34061.击杀协作类BOSS可获得#r#c5f34062.七夕活动期间累计登录可获得#r#c5f34063.七夕活动期间送花收花排行可获得",	--获得途径
+			items = {
+				--兑换的物品
+				-- {itemId 物品id，needItem 需要的物品id， needCount 需要物品数量，maxExchange 每天最大可兑换次数}
+				--type 哪个区域的（1伙伴，2材料）
+				{itemId = 25121, needItem = 27203, needCount = 60, maxExchange = 1, type = 1, typeStr = "伙伴"},
+				{itemId = 42007, needItem = 27203, needCount = 30, maxExchange = 1, type = 2, typeStr = "进阶材料"},
+				{itemId = 42006, needItem = 27203, needCount = 15, maxExchange = 2, type = 2, typeStr = "大量玉佩"},
+				{itemId = 30202, needItem = 27203, needCount = 10, maxExchange = 2, type = 2, typeStr = "2级宝石礼包"},
+				{itemId = 30201, needItem = 27203, needCount = 5, maxExchange = 2, type = 2, typeStr = "1级宝石礼包"},
+			},
+		},
+	}
+}

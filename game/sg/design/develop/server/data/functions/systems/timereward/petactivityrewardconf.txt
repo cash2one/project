@@ -1,0 +1,15 @@
+--开服活动套装搜集配置表
+
+PetActivityConf = {
+	activityId = 12,	--和activitycontrol.txt里应该一致
+	
+	--伙伴成长目标等级列表
+	aimlevel ={15,20,25,30,40},
+	rewardlist={
+		{id = 44439, count = 1, quality=0, strong=0, bind = 1},     --物品id，
+		{id = 44440, count = 1, quality=0, strong=0, bind = 1},     --物品id，
+		{id = 44441, count = 1, quality=0, strong=0, bind = 1},     --物品id，
+		{id = 44442, count = 1, quality=0, strong=0, bind = 1},     --物品id，
+		{id = 44443, count = 1, quality=0, strong=0, bind = 1},     --物品id，
+	},
+}

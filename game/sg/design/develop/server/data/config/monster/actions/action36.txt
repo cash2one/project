@@ -1,0 +1,22 @@
+{
+	id = 36,	--行为ID
+	trigger = 1,	--触发类型，血量为1，时间为2
+
+	isInit = 0 ,
+	--创建的时候会调用,和info里的sequence一样
+	initSequence =
+	{
+		
+	},
+
+	infos = 
+	{
+		{
+			sequId = 1,
+			param = 20 ,
+			sequence = {
+				{ type = 29, duration = 2, targetId = 1216, },
+		    }--设置一个怪物血量并让其现身
+		},
+	},
+},

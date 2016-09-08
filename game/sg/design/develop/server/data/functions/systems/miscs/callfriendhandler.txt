@@ -1,0 +1,361 @@
+--好友送钥匙
+
+--#include "data\config\misc\friendrelevantconfig.txt" once
+--#include "data\config\vip\vip.txt" once
+
+CallFriendFunc = {}
+
+
+--赠送次数给密友
+CallFriendFunc.GiveLotteryCount = function (sysarg,packet)
+    local num = DataPack.readInt(packet)
+    --print("---赠送钥匙 num="..num)
+    if num <= 0 or num >= 100 then
+        return
+    end
+    local tt = {}
+    for i=1,num do
+        local friend_id = DataPack.readInt(packet)
+        if friend_id ~= nil then
+           -- print("---friend_id",friend_id)
+            table.insert(tt, friend_id)
+        else
+            print("-赠送钥匙，收到客户端发来的玩家名称为nil")
+        end
+    end
+    if #tt <= 0 or #tt >= 100 then
+        return
+    end
+   -- print("----赠送钥匙 count="..#tt)
+    local var = LActor.getStaticVar(sysarg)
+    if not var then 
+        return
+    end
+
+    local vip = LActor.getVIPLevel(sysarg)
+    local Count = 0
+    if vip == 0 then
+        Count = friendconfig.maxCount
+    else
+        Count = VIPConfig.sendBoxKey[vip] + friendconfig.maxCount  --VIP增加送钥匙的数量
+    end
+    if var.di_count  >= Count then                           --判断是否超过今天的次数
+        LActor.sendTipmsg(sysarg,Lang.ScriptTips.key0007,ttMessage)
+        return
+    end
+    if var.zengsonglist1 == nil then
+        var.zengsonglist1 = {}
+    end
+    local atorid = LActor.getActorId(sysarg)
+    local time = System.getCurrMiniTime()                                --在钥匙列表中插入数据
+    local actorname = LActor.getName(sysarg)
+    local ret = {}
+    local error_code = {}
+    local tips = {}
+    tips[1] = Lang.ScriptTips.key0001
+    tips[2] = Lang.ScriptTips.key0002
+    tips[3] = Lang.ScriptTips.key0003
+    tips[8] = Lang.ScriptTips.key0008
+    
+    for i=1,#tt do
+        if var.di_count  >= Count then                           --判断是否超过今天的次数
+            LActor.sendTipmsg(sysarg,Lang.ScriptTips.key0007,ttMessage)
+            break
+        end
+        local friend_id = tt[i]
+        -- if name == nil then
+        --     print("---送钥匙，收到客户端发来的玩家名称为nil")
+        --     break
+        -- end
+        local ys = false
+
+        for i=1,#var.zengsonglist1 do
+             if friend_id == var.zengsonglist1[i] then
+                ys = true
+                break
+             end
+        end 
+        if not ys then
+            local actor = LActor.getActorById(friend_id)
+            if actor then
+                if LActor.isFriend(sysarg, LActor.getActorId(actor)) and LActor.isFriend(actor, LActor.getActorId(sysarg)) then
+                    local atorid1 = LActor.getActorId(actor)
+                    local str = LActor.getStaticVar(actor)
+                    if str == nil then
+                        return
+                    end
+                    local vip1 = LActor.getVIPLevel(actor)
+                    local get_Count = 0
+                    if vip1 == 0 then
+                        get_Count = friendconfig.maxgiveCount
+                    else
+                        get_Count = friendconfig.maxgiveCount + VIPConfig.receiveBoxKey[vip1]    --VIP玩家增加收取钥匙的的数量
+                    end
+                    --今天收取钥匙的次数已经达到上限
+                    if str.di_GetCount < get_Count then  
+                      
+                        if str.lingqulist == nil then
+                            str.lingqulist = {}
+                        end  
+                        local name = LActor.getName(actor) 
+                        str.lingqulist[#str.lingqulist+1] = {friend_id = atorid ,name = actorname,lq = 0}
+
+                        local npack = DataPack.allocPacket(actor, 138, 254)
+                        if npack == nil then return end
+                        DataPack.writeInt(npack,1)
+                        DataPack.writeInt(npack,atorid)
+                        DataPack.writeString(npack,actorname)
+                       -- DataPack.writeInt(npack,0)
+                        DataPack.flush(npack)
+
+                        var.zengsonglist1[#var.zengsonglist1+1] = friend_id
+
+                        var.di_count = var.di_count + 1   ---今天已赠送钥匙次数加1
+                        table.insert(ret,friend_id)
+                       -- print("----赠送成功",friend_id)
+                       -- print("---成功赠送",name)
+                       LActor.OnQuestEvent(qtSendKey, 0, 1, true, sysarg)
+                    else
+                         error_code[8] = 1
+                    end
+                else
+                    error_code[2] = 1 
+                end
+            else
+                error_code[1] =1
+            end           
+        else
+            error_code[3] = 1
+        end
+    end
+    local total_count = #ret
+    if total_count >= 1 then
+        LActor.sendTipmsg(sysarg,Lang.ScriptTips.key0006,ttMessage)
+          --送钥匙成就
+        LActor.SetAchieveProcessByType(sysarg,107,1,total_count)
+    end
+    for k,_ in pairs(error_code) do
+        if tips[k] then
+            LActor.sendTipmsg(sysarg,tips[k],ttMessage)
+        end
+    end
+    if total_count >= 1 then
+        local pack = DataPack.allocPacket(sysarg, 138, 253)
+        -- 返回数据
+        DataPack.writeInt(pack,var.di_count)
+        DataPack.writeInt(pack,total_count)
+        for i=1,total_count do
+            --DataPack.writeInt(pack,0)
+            DataPack.writeInt(pack,ret[i])
+        end
+        
+        DataPack.flush(pack)
+    end
+   
+end
+
+
+---------------收取好友钥匙
+MiscsImplement.getkeyHandler = function(sysarg,packet)
+    local num = DataPack.readInt(packet)
+   -- print("----领取钥匙 num="..num)
+    if not num then return end
+
+    local tt = {}
+    for i=1,num do
+        local friend_id = DataPack.readInt(packet)
+        if friend_id ~= nil then
+            table.insert(tt, friend_id)
+        else
+            print("--领钥匙，收到客户端发来的玩家名称为nil")
+        end
+    end
+
+    --print("----领取钥匙 count="..#tt)
+    if #tt <= 0 or #tt >= 100 then
+        return
+    end
+     local error_code = {}
+    local tips = {}
+    tips[9] = Lang.ScriptTips.key0009
+
+    local var = LActor.getStaticVar(sysarg)
+    if not var then return end
+
+    if var.lingqulist == nil then
+        var.lingqulist = {}
+    end  
+   
+    local vip = LActor.getVIPLevel(sysarg)
+    local Count = 0
+    if vip == 0 then
+        Count = friendconfig.maxgiveCount
+    else
+        Count = friendconfig.maxgiveCount + VIPConfig.receiveBoxKey[vip]    --VIP玩家增加收取钥匙的的数量
+    end
+    --print("======今天收取的钥匙"..var.di_GetCount..","..Count)
+    if var.di_GetCount  >= Count then  --今天收取钥匙的次数已经达到上限
+        LActor.sendTipmsg(sysarg,Lang.ScriptTips.key0004,ttMessage)
+        --print("=====钥匙到达最多"..var.di_GetCount)
+        return
+    end
+
+    local get_count = {}
+    for i=1,#tt do
+        if var.di_GetCount  >= Count then  --今天收取钥匙的次数已经达到上限
+            LActor.sendTipmsg(sysarg,Lang.ScriptTips.key0004,ttMessage)
+            break
+        end
+
+        local friend_id = tt[i]
+       -- print("----kkkkkkkkk  name",name)
+        local yl = false
+        local index = 0
+        for i=1,#var.lingqulist do
+            if friend_id == var.lingqulist[i].friend_id and var.lingqulist[i].lq == 0 then
+                yl = true
+                index = i
+                break
+            end
+        end
+        if yl then
+            var.di_GetCount = var.di_GetCount + 1
+            var.lingqulist[index].lq = 1
+            table.insert(get_count,{friend_id = friend_id, name =  var.lingqulist[index].name})  
+           -- print("---成功领取",var.lingqulist[index].name)     
+            local passkey = LActor.getIntProperty(sysarg, PROP_ACTOR_PASS_KEY)  --获取钥匙值
+            LActor.SetAchieveProcessByType(sysarg,108,1,1)
+            -- 奖励钥匙值
+            local id = LActor.getActorId(sysarg)
+           
+            System.logCounter(id, "", levelStr, "frined", tostring(1), rankStr, "passkey")
+
+        else
+            error_code[9] = 1 
+        end
+
+    end
+
+    if #get_count >= 1 then 
+            LActor.sendTipmsg(sysarg,Lang.ScriptTips.key0005,ttMessage)
+            LActor.giveAward(sysarg, qatPassKey,#get_count)
+    end
+    for k,_ in pairs(error_code) do
+        if tips[k] then
+            LActor.sendTipmsg(sysarg,tips[k],ttMessage)
+        end
+    end
+    if #get_count >= 1 then
+        local pack = DataPack.allocPacket(sysarg,138,254)
+        --返回数据
+        DataPack.writeInt(pack,2)
+        DataPack.writeInt(pack,var.di_GetCount)
+        DataPack.writeInt(pack,#get_count)
+        for i=1,#get_count do
+            DataPack.writeInt(pack,get_count[i].friend_id)
+            DataPack.writeString(pack,get_count[i].name)
+           -- DataPack.writeInt(pack,1)
+        end
+        DataPack.flush(pack)
+    end
+end
+
+
+--新的一天到来
+CallFriendFunc.Newday = function(sysarg)
+ 	local var = LActor.getStaticVar(sysarg)
+    if not var.di_count then
+   	   var.di_count = 0         
+    end
+
+    if not var.di_GetCount then 
+   	   var.di_GetCount = 0
+   	end
+
+    if var.zengsonglist1 == nil then
+        var.zengsonglist1 = {}
+    end
+    if var.lingqulist == nil then
+        var.lingqulist = {}
+    end
+    var.di_count = 0     
+    var.di_GetCount = 0  
+  
+    for i=1,#var.zengsonglist1 do
+        var.zengsonglist1[i] = nil
+    end
+    var.zengsonglist1 = nil
+    for i=1,#var.lingqulist do
+        var.lingqulist[i] = nil
+    end
+    var.lingqulist = nil
+end
+
+
+
+
+--玩家登录
+CallFriendFunc.onlogin = function(sysarg)
+	local var = LActor.getStaticVar(sysarg)
+    if var == nil then
+        return
+    end
+
+    if var.di_count == nil then
+    	var.di_count = 0
+    end
+
+    if var.di_GetCount == nil then
+    	var.di_GetCount = 0
+    end
+    
+    if var.zengsonglist1 == nil then
+        var.zengsonglist1 = {}
+    end
+    if var.lingqulist == nil then
+        var.lingqulist = {}
+    end
+    
+    
+
+    local npack = DataPack.allocPacket(sysarg, 138, 255)
+    if npack == nil then return end
+    
+    DataPack.writeInt(npack,var.di_count)
+    DataPack.writeInt(npack,var.di_GetCount)
+    DataPack.writeInt(npack,#var.zengsonglist1)
+    for i=1,#var.zengsonglist1 do
+        DataPack.writeInt(npack,var.zengsonglist1[i])
+    end
+    DataPack.writeInt(npack,#var.lingqulist)
+    for i=1,#var.lingqulist do
+        DataPack.writeInt(npack,var.lingqulist[i].friend_id)
+        DataPack.writeString(npack,var.lingqulist[i].name)
+        DataPack.writeInt(npack,var.lingqulist[i].lq)
+    end
+    DataPack.flush(npack)  
+end
+
+
+
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, CallFriendFunc.onlogin)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, CallFriendFunc.Newday)
+
+--返回是否可以赠送钥匙
+function CallFriendFunc.leftCount(sysarg)
+    local var = LActor.getStaticVar(sysarg)
+    if not var then return 0 end
+
+    local vip = LActor.getVIPLevel(sysarg)
+    local Count = 0
+    if vip == 0 then
+        Count = friendconfig.maxCount
+    else
+        Count = VIPConfig.sendBoxKey[vip] + friendconfig.maxCount
+    end
+    if var.di_count  >= Count then return 0 end
+
+    return 1
+end
+GetQuestTargetCount.register(qtSendKey, CallFriendFunc.leftCount)

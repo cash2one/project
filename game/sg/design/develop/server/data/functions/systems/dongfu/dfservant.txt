@@ -1,0 +1,107 @@
+
+DongfuManager.runAuto = function(dfData, curTime)
+	local info = dfData.info
+	local changed = false
+	local aInfo = info.autoInfo
+	if aInfo ~= nil then
+		local lInfo = info.list
+		for i = 1, 9 do
+			if aInfo.autoHarvest == 1 then
+				if lInfo[i] ~= nil and lInfo.plantFlag == 1 and lInfo.endTime <= curTime then
+					local pChar = LActor.getActorById(dfData.ownerId)
+					actualHarvest(pChar, dfData, i)
+
+					changed = true
+				end
+			end
+			if aInfo.autoPlant == 1 and aInfo.count > 0 then
+				if lInfo[i] == nil or lInfo.plantFlag == 0 then
+					actualPlant(dfData, i, aInfo.type, aInfo.color)
+					aInfo.count = aInfo.count - 1
+
+					changed = true
+				end
+			end
+		end
+	end
+	return changed
+end
+
+DongfuManager.sendAutoInfo = function(pChar, aInfo)
+	local dp = DataPack.allocPacket(pChar, 157, 21)
+	DataPack.writeByte(dp, aInfo and 1 or 0)
+	DataPack.writeByte(dp, aInfo and aInfo.autoHarvest or 0)
+	DataPack.writeByte(dp, aInfo and aInfo.autoPlant or 0)
+	DataPack.writeByte(dp, aInfo and aInfo.type or 0)
+	DataPack.writeByte(dp, aInfo and aInfo.color or 0)
+	DataPack.writeByte(dp, aInfo and aInfo.count or 0)
+	DataPack.flush(dp)
+end
+
+DongfuManager.getAutoInfo = function(pChar)
+	local atHome, ownerId = DongfuManager.isAtHome(pChar)
+	if not atHome then return end
+
+	local dfData = DongfuManager.getDongfuData(ownerId)
+	local info = dfData.info
+
+	local lvl = info.level or 1
+	if lvl < 3 then return end
+
+	DongfuManager.sendAutoInfo(pChar, info.autoInfo)
+end
+
+DongfuManager.saveAuto = function(pChar, autoHarvest, autoPlant, type, color, count, moneytype)
+	if count <= 0 then return end
+	local atHome, ownerId = DongfuManager.isAtHome(pChar)
+	if not atHome then return end
+
+	local dfData = DongfuManager.getDongfuData(ownerId)
+	local info = dfData.info
+
+	local lvl = info.level or 1
+	if lvl < 3 then return end
+
+	if info.autoInfo ~= nil then return end
+	local pConf = DongfuConf.plantType[type]
+	if pConf == nil or color ~= 1 and color ~= #pConf.awardValue then return end
+	local yb = DongfuConf.refreshBestYB * count
+
+	if not LActor.CheckMoneyEnough(pChar, moneytype, yb) then
+		return 
+	end
+	LActor.changeMoney(pChar, moneytype, -yb, 1, true, "dongfu", "saveAuto")
+
+	info.autoInfo = {
+		autoHarvest = autoHarvest,
+		autoPlant	= autoPlant,
+		type 		= type,
+		color 		= color,
+		count 		= count,
+	}
+	DongfuManager.onChanged(ownerId)
+	DongfuManager.sendAutoInfo(pChar, info.autoInfo)
+end
+
+DongfuManager.cancelAuto = function(pChar)
+	local atHome, ownerId = DongfuManager.isAtHome(pChar)
+	if not atHome then return end
+
+	local dfData = DongfuManager.getDongfuData(ownerId)
+	local info = dfData.info
+
+	local lvl = info.level or 1
+	if lvl < 3 then return end
+
+	if info == nil or info.autoInfo == nil then return end
+	local aInfo = info.autoInfo
+	if aInfo.count == 0 then return end
+
+	if aInfo.color ~= 1 then
+		local yb = DongfuConf.refreshBestYB * aInfo.count
+		System.sendGmMailOffLine(LActor.getActorId(pChar), Lang.ScriptTips.df008, 2, 3, yb, 0)
+	end
+	info.autoInfo = nil
+	DongfuManager.onChanged(ownerId)
+	DongfuManager.sendAutoInfo(pChar, aInfo)
+end

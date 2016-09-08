@@ -1,0 +1,403 @@
+--lua script
+
+--[[
+    函数名称：use_HuaShanLunJianRewardBox
+    函数描述：
+    参数 sysarg 的描述：
+    参数 itemIndex 的描述： 物品ID 
+    参数 itemPtr 的描述： 物品指针 
+    参数 useItemTbl 的描述：物品表 
+]]
+function use_HuaShanLunJianRewardBox( sysarg,itemIndex,itemPtr,useItemTbl )
+  local level = LActor.getIntProperty( sysarg, PROP_LEVEL )
+  if level < useItemTbl.mustLevel then
+    local tipMsg = string.format(Lang.TaskTalk.n00002,useItemTbl.mustLevel,useItemTbl.item_name) 
+    LActor.sendTipmsg( sysarg,tipMsg,ttDialog )
+    return false
+  end
+  if LActor.getItemCount(sysarg,useItemTbl.item_id) < 1 then
+    local tipMsg = string.format(Lang.TaskTalk.n00003,useItemTbl.item_name)
+    LActor.sendTipmsg( sysarg,tipMsg,ttDialog )
+    return false
+  end
+  if itemIndex == useItemTbl.item_id then
+    local count = Item.getBagEmptyGridCount(sysarg)
+    if useItemTbl.mustBag and count < useItemTbl.mustBag then
+      local tipMsg = string.format(Lang.TaskTalk.n00004,useItemTbl.mustBag)
+      LActor.sendTipmsg( sysarg,tipMsg,ttDialog )
+      return false
+    else
+	    if sysarg then
+        LActor.removeItem(sysarg,useItemTbl.item_id,1,-1,-1,-1,"HuaShanLunJian",5)      --删除需求物品
+        if useItemTbl.oneItem ~= nil then    
+	        local i
+	        local ItemPer1 = 0
+	        local rand1 = System.getRandomNumber(100)
+	        for i = 1, table.getn( useItemTbl.oneItem ) do
+	          ItemPer1 = ItemPer1 + useItemTbl.oneItem[i].percent
+	          if rand1 < ItemPer1 then
+	            LActor.addItem(sysarg,useItemTbl.oneItem[i].itemId,0,0,useItemTbl.oneItem[i].num,useItemTbl.oneItem[i].bind,"HuaShanLunJian",1)
+	            if useItemTbl.oneItem[i].notice == true then
+	              local name = LActor.getName( sysarg )
+				        local str = string.format( Lang.TaskTalk.n00005, name,useItemTbl.item_name,useItemTbl.oneItem[i].name)
+	              		--System.broadcastTipmsg(str,ttGmTip + ttTipmsgWindow)
+				      end
+	            break
+	          end
+	        end
+        end
+        if useItemTbl.twoItem ~= nil then
+	        local j
+	        local ItemPer2 = 0
+	        local rand2 = System.getRandomNumber(100)
+	        for j = 1, table.getn( useItemTbl.twoItem ) do
+	          ItemPer2 = ItemPer2 + useItemTbl.twoItem[j].percent
+	          if rand2 < ItemPer2 then
+	            LActor.addItem(sysarg,useItemTbl.twoItem[j].itemId,0,0,useItemTbl.twoItem[j].num,useItemTbl.twoItem[j].bind,"HuaShanLunJian",1)
+	            if useItemTbl.twoItem[j].notice == true then
+	              local name = LActor.getName( sysarg )
+				        local str = string.format(Lang.TaskTalk.n00005 , name,useItemTbl.item_name,useItemTbl.twoItem[j].name)
+	              --System.broadcastTipmsg(str,ttGmTip + ttTipmsgWindow)
+				      end
+	            break
+	          end
+	        end
+        end
+        if useItemTbl.threeItem  ~= nil then 
+	        local k
+	        local ItemPer3 = 0
+	        local rand3 = System.getRandomNumber(100)
+	        for k = 1, table.getn( useItemTbl.threeItem ) do
+	          ItemPer3 = ItemPer3 + useItemTbl.threeItem[k].percent
+	          if rand3 < ItemPer3 then
+	            LActor.addItem(sysarg,useItemTbl.threeItem[k].itemId,0,0,useItemTbl.threeItem[k].num,useItemTbl.threeItem[k].bind,"HuaShanLunJian",1)
+	            if useItemTbl.threeItem[k].notice == true then
+	              local name = LActor.getName( sysarg )
+				        local str = string.format( Lang.TaskTalk.n00005, name,useItemTbl.item_name,useItemTbl.threeItem[k].name)
+	              --System.broadcastTipmsg(str,ttGmTip + ttTipmsgWindow)
+				      end
+	            break
+	          end
+	        end
+        end
+	      if useItemTbl.extentItem.bindGold ~= nil then
+          LActor.changeMoney(sysarg,mtBindCoin,useItemTbl.extentItem.bindGold)
+	      end
+	      if useItemTbl.extentItem.bindGold ~= nil then
+          LActor.changeMoney(sysarg,mtCoin,useItemTbl.extentItem.gold)
+	      end 
+
+      end
+    end
+  end
+  --return true
+end
+
+--[[
+    函数名称：use_HuaShanLunJianRewardBox
+    函数描述：
+    参数 sysarg 的描述：
+    参数 itemIndex 的描述： 物品ID
+    参数 itemPtr 的描述： 物品指针
+    参数 useItemTbl 的描述：物品表
+]]
+function use_HuaShanLunJianWeekRewardBox( sysarg,itemIndex,itemPtr,useItemTbl )
+  local level = LActor.getIntProperty( sysarg, PROP_LEVEL )
+  if level < useItemTbl.mustLevel then
+    local tipMsg = string.format(Lang.TaskTalk.n00002,useItemTbl.mustLevel,useItemTbl.item_name)
+    LActor.sendTipmsg( sysarg,tipMsg,ttDialog )
+    return false
+  end
+  if LActor.getItemCount(sysarg,useItemTbl.item_id) < 1 then
+    local tipMsg = string.format(Lang.TaskTalk.n00003,useItemTbl.item_name)
+    LActor.sendTipmsg( sysarg,tipMsg,ttDialog )
+    return false
+  end
+  if itemIndex == useItemTbl.item_id then
+    local count = Item.getBagEmptyGridCount(sysarg)
+    if useItemTbl.mustBag and count < useItemTbl.mustBag then
+      local tipMsg = string.format(Lang.TaskTalk.n00004,useItemTbl.mustBag)
+      LActor.sendTipmsg( sysarg,tipMsg,ttDialog )
+      return false
+    else
+	    if sysarg then
+        LActor.removeItem(sysarg,useItemTbl.item_id,1,-1,-1,-1,"HuaShanLunJian",5)      --删除需求物品
+        if useItemTbl.giveItem ~= nil then
+	        local i
+	        local ItemPer = 0
+	        local giveItemTbl = useItemTbl.giveItem
+	        local rand = System.getRandomNumber(100)
+	        for i = 1, table.getn( giveItemTbl ) do
+	          ItemPer = ItemPer + giveItemTbl[i].percent
+	          if rand < ItemPer then
+	            LActor.addItem(sysarg,giveItemTbl[i].itemId,0,0,giveItemTbl[i].num,giveItemTbl[i].bind,"HuaShanLunJian",1)
+	            if giveItemTbl[i].notice == true then
+	              local name = LActor.getName( sysarg )
+				        local str = string.format( Lang.TaskTalk.n00005, name,useItemTbl.item_name,giveItemTbl[i].name)
+	              --System.broadcastTipmsg(str,ttGmTip + ttTipmsgWindow)
+				      end
+				      ---break
+	          end
+	        end
+        end
+        if useItemTbl.chiceItem ~= nil then
+	        local i
+	        local ItemPer = 0
+	        local vocation = LActor.getIntProperty( sysarg, PROP_VOCATION )
+	        local giveItemTbl = nil
+          if isInPower(vocation) == true then      --返回true 内功 
+            giveItemTbl = useItemTbl.chiceItem.inItem  
+          else
+            giveItemTbl = useItemTbl.chiceItem.outItem
+          end 
+	        local rand = System.getRandomNumber(100)
+	        for i = 1, table.getn( giveItemTbl ) do
+	          ItemPer = ItemPer + giveItemTbl[i].percent
+	          if rand < ItemPer then
+	            LActor.addItem(sysarg,giveItemTbl[i].itemId,0,0,giveItemTbl[i].num,giveItemTbl[i].bind,"HuaShanLunJian",1)
+	            if giveItemTbl[i].notice == true then
+	              local name = LActor.getName( sysarg )
+				        local str = string.format( Lang.TaskTalk.n00005, name,useItemTbl.item_name,giveItemTbl[i].name)
+	              --System.broadcastTipmsg(str,ttGmTip + ttTipmsgWindow)
+				      end
+				      break
+	          end
+	        end
+        end
+	      if useItemTbl.extentItem.bindGold ~= nil then
+          LActor.changeMoney(sysarg,mtBindCoin,useItemTbl.extentItem.bindGold)
+	      end
+	      if useItemTbl.extentItem.gold ~= nil then
+          LActor.changeMoney(sysarg,mtCoin,useItemTbl.extentItem.gold)
+	      end
+
+      end
+    end
+  end
+end
+
+--[[
+    函数名称：isInPower
+    函数描述：判断内外功 
+    参数 idx 的描述：职业ID 
+    返回：true内功 false外功 
+]]
+function isInPower(idx)
+  local inVocation = {2,3,4,6}   --内功职业ID 
+  local i
+  for i=1, #inVocation do
+    if idx == inVocation[i] then
+      return true
+    end
+  end
+  return false
+end
+
+--华山论剑 
+HuaShanLunJianRewardTbl = {
+  --华山论剑轮礼包 
+  --神武礼包
+  {
+    func = use_HuaShanLunJianRewardBox,
+    param = {
+	    item_id = 1648,
+	    item_name = Lang.Item.n1648, 
+	    mustLevel = 0,
+	    mustBag = 2,
+	    extentItem =
+	    {
+        bindGold = 10000,
+        gold = 3000,
+	    },
+	    oneItem = 
+      {
+	      {itemId = 1002, name = Lang.Item.n1002, percent = 100, num = 5, bind = 1, notice = false },
+	    },
+	    twoItem =
+      {
+        {itemId = 1588, name = Lang.Item.n1588, percent = 40, num = 2, bind = 1, notice = false },
+	      {itemId = 1442, name = Lang.Item.n1442, percent = 30, num = 2, bind = 1, notice = false },
+	      {itemId = 1590, name = Lang.Item.n1590, percent = 30, num = 2, bind = 1, notice = false },
+	    },
+	    threeItem =
+      {
+        {itemId = 2041, name = Lang.Item.n1588, percent = 100, num = 1, bind = 1, notice = false },
+	    },
+	  },
+  },
+  --明武礼包
+  {
+    func = use_HuaShanLunJianRewardBox,
+    param = {
+	    item_id = 1649,
+	    item_name = Lang.Item.n1649,
+	    mustLevel = 0,
+	    mustBag = 2,
+	    extentItem =
+	    {
+        bindGold = 8000,
+        gold = 2000,
+	    },
+	    oneItem =
+      {
+	      {itemId = 1002, name = Lang.Item.n1002, percent = 100, num = 3, bind = 1, notice = false }, 
+        --{itemId = 2041, name = Lang.Item.n2041, percent = 100, num = 1, bind = 1, notice = false },        --1绑定 0不绑定
+	    },
+	    twoItem =
+      {
+        {itemId = 1588, name = Lang.Item.n1588, percent = 40, num = 1, bind = 1, notice = false },
+	      {itemId = 1442, name = Lang.Item.n1442, percent = 30, num = 1, bind = 1, notice = false },
+	      {itemId = 1590, name = Lang.Item.n1590, percent = 30, num = 1, bind = 1, notice = false },
+	    },
+	    threeItem =
+      {
+        {itemId = 2041, name = Lang.Item.n1588, percent = 100, num = 1, bind = 1, notice = false },
+	    },
+	  },
+  },
+  --尚武礼包
+  {
+    func = use_HuaShanLunJianRewardBox,
+    param = {
+	    item_id = 1650,
+	    item_name = Lang.Item.n1650,
+	    mustLevel = 0,
+	    mustBag = 2,
+	    extentItem =
+	    {
+        bindGold = 5000,
+        gold = 2000,
+	    },
+	    oneItem =
+      {
+	      {itemId = 1002, name = Lang.Item.n1002, percent = 100, num = 2, bind = 1, notice = false },
+        --{itemId = 2041, name = Lang.Item.n2041, percent = 100, num = 1, bind = 1, notice = false },         --1绑定 0不绑定
+	    },
+	    twoItem =
+      {
+        {itemId = 1588, name = Lang.Item.n1588, percent = 40, num = 1, bind = 1, notice = false },
+	      {itemId = 1442, name = Lang.Item.n1442, percent = 30, num = 1, bind = 1, notice = false },
+	      {itemId = 1590, name = Lang.Item.n1590, percent = 30, num = 1, bind = 1, notice = false },
+	    },
+	    threeItem =
+      {
+        {itemId = 2041, name = Lang.Item.n1588, percent = 100, num = 1, bind = 1, notice = false },
+	    },
+	  },
+  },
+  --华山论剑周礼包 
+  --武神礼包
+  {
+    func = use_HuaShanLunJianWeekRewardBox,
+    param = {
+	    item_id = 1651,
+	    item_name = Lang.Item.n1651,
+	    mustLevel = 0,
+	    mustBag = 3,
+	    extentItem =        --固定金钱奖励
+	    {
+        bindGold = 50000,
+        gold = 10000,
+	    },
+	    giveItem =          --固定物品奖励 
+      {
+	      {itemId = 1646, name = Lang.Item.n1646, percent = 100, num = 5, bind = 1, notice = false },         --1绑定 0不绑定
+	      {itemId = 1462, name = Lang.Item.n1462, percent = 100, num = 1, bind = 1, notice = false },
+        {itemId = 2041, name = Lang.Item.n2041, percent = 100, num = 6, bind = 1, notice = false },         --1绑定 0不绑定
+	    },
+	    chiceItem =
+      {
+        inItem =     --内功奖励
+        {
+	        {itemId = 826, name = Lang.Item.n826, percent = 50, num = 1, bind = 1, notice = true },
+		      {itemId = 796, name = Lang.Item.n796, percent = 50, num = 1, bind = 1, notice = true },
+	      },
+	      outItem =    --外功奖励
+	      {
+	        {itemId = 816, name = Lang.Item.n816, percent = 50, num = 1, bind = 1, notice = true },
+		      {itemId = 806, name = Lang.Item.n806, percent = 50, num = 1, bind = 1, notice = true },
+	      },
+	    },
+	  },
+  },
+  --武尊礼包
+  {
+    func = use_HuaShanLunJianWeekRewardBox,
+    param = {
+	    item_id = 1652,
+	    item_name = Lang.Item.n1652,
+	    mustLevel = 0,
+	    mustBag = 3,
+	    extentItem =        --固定金钱奖励
+	    {
+        bindGold = 30000,
+        gold = 8000,
+	    },
+	    giveItem =          --固定物品奖励
+      {
+	      {itemId = 1646, name = Lang.Item.n1646, percent = 100, num = 3, bind = 1, notice = false },         --1绑定 0不绑定
+	      {itemId = 1556, name = Lang.Item.n1556, percent = 100, num = 1, bind = 1, notice = false }, 
+        {itemId = 2041, name = Lang.Item.n2041, percent = 100, num = 5, bind = 1, notice = false },        --1绑定 0不绑定
+	    },
+	    chiceItem =
+      {
+        inItem =     --内功奖励
+        {
+	        {itemId = 826, name = Lang.Item.n826, percent = 50, num = 1, bind = 1, notice = true },
+		      {itemId = 796, name = Lang.Item.n796, percent = 50, num = 1, bind = 1, notice = true },
+	      },
+	      outItem =    --外功奖励
+	      {
+	        {itemId = 816, name = Lang.Item.n816, percent = 50, num = 1, bind = 1, notice = true },
+		      {itemId = 806, name = Lang.Item.n806, percent = 50, num = 1, bind = 1, notice = true },
+	      },
+	    },
+	  },
+  },
+    --武宗礼包
+  {
+    func = use_HuaShanLunJianWeekRewardBox,
+    param = {
+	    item_id = 1653,
+	    item_name = Lang.Item.n1653,
+	    mustLevel = 0,
+	    mustBag = 3,
+	    extentItem =        --固定金钱奖励
+	    {
+        bindGold = 20000,
+        gold = 5000,
+	    },
+	    giveItem =          --固定物品奖励
+      {
+	      {itemId = 1646, name = Lang.Item.n1646, percent = 100, num = 2, bind = 1, notice = false },         --1绑定 0不绑定
+	      {itemId = 1654, name = Lang.Item.n1654, percent = 100, num = 1, bind = 1, notice = false },
+        {itemId = 2041, name = Lang.Item.n2041, percent = 100, num = 4, bind = 1, notice = false },         --1绑定 0不绑定
+	    },
+	    chiceItem =
+      {
+        inItem =     --内功奖励
+        {
+	        {itemId = 826, name = Lang.Item.n826, percent = 50, num = 1, bind = 1, notice = true },
+		      {itemId = 796, name = Lang.Item.n796, percent = 50, num = 1, bind = 1, notice = true },
+	      },
+	      outItem =    --外功奖励
+	      {
+	        {itemId = 816, name = Lang.Item.n816, percent = 50, num = 1, bind = 1, notice = true },
+		      {itemId = 806, name = Lang.Item.n806, percent = 50, num = 1, bind = 1, notice = true },
+	      },
+	    },
+	  },
+  },
+
+}
+
+function HuaShanLunJianRewardTbl_Init(npcobj)
+  local i
+   for i = 1, table.getn(HuaShanLunJianRewardTbl) do
+    local x = HuaShanLunJianRewardTbl[i]
+    GlobalItemFn[HuaShanLunJianRewardTbl[i].param.item_id] = { func = x.func, params = x.param }
+   end
+end
+
+
+table.insert( InitFnTable, HuaShanLunJianRewardTbl_Init )

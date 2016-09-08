@@ -1,0 +1,16 @@
+﻿{   --阵营战
+	--副本id
+  	fbid = 11,
+	--副本的适合等级(推荐等级)，
+	recommandLevel = 26,
+	--副本需要统计那些数据,0为经验,1为绑定天珠
+	caleType = {0,4,5,6,7,8}, 
+	--副本不动态调整
+	monsterDynProp = false, 
+	--这个副本需要用到的场景列表
+	
+	scenes =
+	{   
+--#include "scene91.txt"
+	},
+},

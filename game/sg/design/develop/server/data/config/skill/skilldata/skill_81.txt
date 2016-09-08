@@ -1,0 +1,21 @@
+
+-- 区域BOSS群攻扇形技能
+{
+	id=81,
+	name=Lang.Skill.s81Name,
+	desc=Lang.Skill.s81Desc,
+	vocation=0,	
+	skillClass =7,
+	skillType=6,
+	skillSpellType=0,
+	commonCd=0,
+	specialBuffCond =0,
+	skillSubLevel=
+	{
+--#include "Skill_81_1.txt"	
+	}
+},
+
+
+
+

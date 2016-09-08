@@ -1,0 +1,46 @@
+--历练副本boss普通攻击技能
+{
+	actions=
+	{
+		{act=0,effect=0,},
+	},
+	desc=Lang.Skill.s47L1Desc,
+	iconID=1,
+	actRange=
+	{
+		{
+			xStart=0,
+			xEnd=0,
+			yStart=0,
+			yEnd=0,
+			rangeType=0,
+			rangeCenter=0,
+			acts=
+			{
+				{
+					conds=
+					{
+						{cond=6,value=true},
+					},
+					results=
+					{
+						{mj=0,timeParam=1,type=27,delay=0,value={rate=10000,value=0}},
+					},
+					specialEffects=
+					{
+						{type=2,mj=0,id=6001,keepTime=0,delay=200,always=false,targetpos=true},
+					},
+				},
+			},
+		},
+	},
+	trainConds=
+	{
+	},	
+	spellConds=
+	{
+		{cond=13,value=3,consume=false},
+	},
+	singTime=0,
+	cooldownTime=1000,
+},

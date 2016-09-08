@@ -1,0 +1,285 @@
+---讨债
+--#include "data\config\taskgameplayconfig\taozhaiconfig.txt" once
+taozhai = { }
+
+--接收任务
+function taozhai.AcceptTask( actorobj, qid )
+	debug_print("----------------讨债任务接收------------------")
+end
+
+--提交任务
+function taozhai.CommitTask( actorobj, qid )
+	if not actorobj or not qid then return end
+
+	local nVar = LActor.getStaticVar( actorobj )
+	if nVar.TaoZhao_NPC_talk == nil then return end
+
+	if nVar.TaoZhai_Monster and nVar.TaoZhai_Monster[qid] then
+		Fuben.clearMonster(nVar.TaoZhai_Monster[qid])
+		nVar.TaoZhai_Monster[qid] = nil
+	end
+
+	nVar.TaoZhao_NPC_talk[qid] = nil
+end
+
+function taozhai.HuanQian(actorobj , taskid , npcid)
+	if taozhai.checkDialog( actorobj , taskid , npcid ) == nil then return end
+	
+	for k , v in pairs ( TaoZhai_config.task_list ) do
+		if tonumber( taskid ) == v.taskid then
+			if  LActor.hasQuest( actorobj , v.taskid ) == true then
+				LActor.addQuestValue( actorobj , v.taskid , v.targetid, 1 )
+				return
+			end
+		end
+	end
+end
+
+function taozhai.checkDialog(actorobj , taskid , npcid)
+	if not actorobj or not taskid  or not npcid then return nil end
+
+	local IsHasTask = false
+	for k , v in pairs ( TaoZhai_config.task_list) do
+		if taskid == v.taskid and npcid == v.npcid then
+			IsHasTask = true
+			break
+		end
+	end
+	if IsHasTask == false then
+		print("error taozhai checkDialog IsHasTask---")
+		return nil
+	end
+
+	local nVar = LActor.getStaticVar( actorobj )
+	local nFlage = false
+	if nVar.TaoZhao_NPC_talk == nil then
+		nVar.TaoZhao_NPC_talk = {}
+	end
+
+	if nVar.TaoZhao_NPC_talk[taskid] then
+		LActor.sendTipmsg(actorobj, "已经与NPC对过话了", ttWarmTip)
+		return nil
+	end
+
+	nVar.TaoZhao_NPC_talk[taskid] = 1
+	return true
+end
+
+function taozhai.HuanQianExtraAward( actorobj , taskid , npcid)
+	if taozhai.checkDialog( actorobj , taskid , npcid) == nil then return end
+
+	for k , v in pairs ( TaoZhai_config.task_award ) do
+		if tonumber(taskid ) == tonumber(v.taskid) then
+			if LActor.hasQuest( actorobj , taskid ) == true then
+				LActor.sendTipmsg(actorobj, "选项正确，获得额外奖励", ttMessage)
+				taozhai.AddAward( actorobj , v.award )
+			end
+		end
+	end
+	
+	for k , v in pairs ( TaoZhai_config.task_list ) do
+		if tonumber(taskid ) == tonumber(v.taskid) then
+			if  LActor.hasQuest( actorobj , v.taskid ) == true then
+				LActor.addQuestValue( actorobj , v.taskid , v.targetid, 1 )
+				break
+			end
+		end
+	end
+end
+
+function taozhai.AddAward( actorobj , awardlist )
+	if actorobj == nil or awardlist == nil or type( awardlist ) == 'table' then
+		local nActorId = LActor.getActorId( actorobj )
+		local str = "讨债任务遗失的奖励"
+		for k , v in pairs ( awardlist ) do
+			-- LActor.giveAward(actorobj, v.itemtype, v.num, 202, v.itemid, "taozhai", 1, true, "taozhai award")
+			if v.itemtype == 1 then -- 物品
+				local nAddItemNum = LActor.addItem(actorobj, v.itemid, 0, 0, v.num, v.bind, "add fuben award Item")
+				if nAddItemNum < v.num then
+					System.sendGmMailOffLine(nActorId, str , 1, v.itemid , v.num , v.bind)
+				end
+			elseif v.itemtype == 2 then --货币
+				LActor.changeMoney(actorobj, v.itemid, v.num, 1, true, "pack money", "gamereward")
+			elseif v.itemtype == 3 then --经验
+				LActor.addExp(actorobj, v.itemid, 202, 1)
+			end
+		end
+	end
+end
+
+function taozhai.zhandou( actorobj , taskid , npcid)
+	if taozhai.checkDialog( actorobj , taskid , npcid) == nil then return end
+
+	for k , v in pairs ( TaoZhai_config.task_list ) do
+		if tonumber(taskid) == tonumber( v.taskid ) then
+			if  LActor.hasQuest( actorobj , v.taskid ) == true then
+				local nSceneHandle = Fuben.getSceneHandleById(v.scenceid , 0)
+				local monsterobj = Fuben.createMonster(nSceneHandle, v.targetid, v.pos[1], v.pos[2], v.targetidtime)
+
+				if monsterobj == nil then
+					print(string.format("taozhai createmonster error! monsterid = %d posX = %d posY = %d",v.targetid,v.pos[1],v.pos[2]))	
+				else
+					local monsterHandle = LActor.getHandle( monsterobj )
+					LActor.setMonsterAttackTarget(monsterobj, actorobj)
+
+					-- 通知前端 怪出来了
+					ZhaoHuanFuncs.NoticeMonsterHandle(actorobj, taskid, 0, monsterHandle)
+
+					local nVar = LActor.getStaticVar( actorobj )
+					if nVar.TaoZhai_Monster == nil then
+						nVar.TaoZhai_Monster = {}
+					end
+					if nVar.TaoZhai_NoticeMonster == nil then
+						nVar.TaoZhai_NoticeMonster = {} --怪物通知前端
+					end
+					
+					nVar.TaoZhai_Monster[taskid] = monsterHandle
+					nVar.TaoZhai_NoticeMonster[taskid] = v.targetid
+
+					local nNpc = LActor.getNpcEntityByNpcId( npcid )
+					if nNpc ~= nil then
+						local nNpcHandel = LActor.getHandle(nNpc)
+						local npack = DataPack.allocPacket( actorobj , 172 , 4)
+						DataPack.writeInt64( npack , nNpcHandel)
+						DataPack.writeInt64( npack , monsterHandle)
+						DataPack.writeInt( npack , taskid)
+						DataPack.flush( npack )
+					end
+				end
+			end
+		end
+	end
+end
+
+function taozhai.updateQuest( actorobj , questid , targetid )
+	if not actorobj or not questid or not targetid then return end
+
+	local nVar = LActor.getStaticVar( actorobj )
+	if nVar.TaoZhao_NPC_talk == nil or not nVar.TaoZhao_NPC_talk[questid] then
+		debug_print("-------没有与NPC 对话-------")
+		return
+	end
+
+	if LActor.hasQuest( actorobj , questid ) == true then
+		LActor.addQuestValue( actorobj , questid , targetid , 1)
+
+		local npcid = 0
+		for k , v in pairs (TaoZhai_config.task_list) do
+			if questid == v.taskid then
+				npcid = v.npcid
+			end
+		end
+		if npcid == 0 then return end
+
+		local nNpc = LActor.getNpcEntityByNpcId( npcid )
+		if nNpc ~= nil then
+			local nNpcHandel = LActor.getHandle(nNpc)
+			local npack = DataPack.allocPacket( actorobj , 172 , 5)
+			DataPack.writeInt64( npack , nNpcHandel)
+			DataPack.flush( npack )
+		end
+	end
+end
+
+function taozhai.EntryScene( sid, sysarg, hdl)
+	taozhai.clearTaskValue( sysarg )
+end
+
+--清任务进度
+function taozhai.clearTaskValue( actorobj )
+	if actorobj == nil then return end
+
+	local nVar = LActor.getStaticVar( actorobj )
+	if not nVar.TaoZhao_NPC_talk then return end
+
+	for k , v in pairs ( TaoZhai_config.task_list ) do
+		if LActor.hasQuest( actorobj , v.taskid ) == true and not LActor.canFinishQuest(actorobj, v.taskid, false) then
+			LActor.clearOneQuestData( actorobj , v.taskid)
+			if nVar.TaoZhai_Monster and nVar.TaoZhai_Monster[v.taskid] then
+				Fuben.clearMonster(nVar.TaoZhai_Monster[v.taskid])
+				nVar.TaoZhai_Monster[v.taskid] = nil
+			end
+
+			nVar.TaoZhao_NPC_talk[v.taskid] = nil
+
+			local nNpc = LActor.getNpcEntityByNpcId( v.npcid )
+			if nNpc ~= nil then
+				local nNpcHandel = LActor.getHandle(nNpc)
+				local npack = DataPack.allocPacket( actorobj , 172 , 5)
+				DataPack.writeInt64( npack , nNpcHandel)
+				DataPack.flush( npack )
+			end
+		end
+	end
+end
+
+function taozhai.OverTime( actorobj , taskid)
+	if LActor.canFinishQuest(actorobj, taskid, false) then return end
+
+	LActor.clearOneQuestData(actorobj , taskid)
+
+	local nVar = LActor.getStaticVar(actorobj)
+	if nVar.TaoZhai_Monster and nVar.TaoZhai_Monster[taskid] then
+		Fuben.clearMonster(nVar.TaoZhai_Monster[taskid])
+		nVar.TaoZhai_Monster[taskid] = nil
+	end
+	
+	if nVar.TaoZhao_NPC_talk and nVar.TaoZhao_NPC_talk[taskid] then
+		nVar.TaoZhao_NPC_talk[taskid] = nil
+	end
+end
+
+function taozhai.networddealwith( actorobj , dp )
+	local cmd = tonumber(DataPack.readByte(dp))
+	local nTaskid = DataPack.readUInt(dp)
+	local npcid = DataPack.readUInt(dp)
+
+	if cmd == 1 then
+		taozhai.HuanQian( actorobj , nTaskid ,npcid)
+	elseif cmd == 2 then
+		taozhai.HuanQianExtraAward( actorobj , nTaskid,npcid)
+	elseif cmd == 3 then
+		taozhai.zhandou(actorobj , nTaskid,npcid)
+	end
+end
+
+--怪物死亡，通知前端
+function taozhai.onMonsterDie(monster, sysarg, monId)
+	-- 如果是伙伴打死的，找出主人
+	if LActor.isPet(sysarg) then
+		sysarg = LActor.getMonsterOwner(sysarg)
+		if sysarg == nil then
+			debug_print("taozhai Monster Killed By Pet No owner")
+			return 
+		end
+	end
+	if LActor.isActor(sysarg) == false then
+		debug_print("taozhai Monster Killed, Owner None")
+		return
+	end
+
+	local nVar = LActor.getStaticVar( sysarg )
+	if not nVar or not nVar.TaoZhao_NPC_talk or not nVar.TaoZhai_Monster then return end
+
+	for _ , v in pairs ( TaoZhai_config.task_list ) do
+		if nVar.TaoZhai_NoticeMonster[v.taskid] and monId == nVar.TaoZhai_NoticeMonster[v.taskid] then
+			nVar.TaoZhai_NoticeMonster[v.taskid] = nil	
+			local pack = DataPack.allocPacket(sysarg, 172, 11)
+			DataPack.writeUInt(pack, v.taskid)
+			DataPack.flush(pack)
+		end
+	end
+end
+
+for _, conf in pairs(TaoZhai_config.task_list) do
+	MonDieDispatcher.register(conf.targetid, taozhai.onMonsterDie)
+end
+
+lua_quest_system.Register( Lua_Quest_CMD.TaoZhai_NetWord , taozhai.networddealwith )
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeOnActorDeath, taozhai.clearTaskValue) -- 玩家死亡
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogout, taozhai.clearTaskValue) -- 玩家下线
+ActorQuestUpDataMsgHandle.register(BaseTypes.BaseQuestPlayType.qptDebt , BaseTypes.BaseQuestTargetType.qtMonster , taozhai.updateQuest)
+ActorQuestTimeOutClearData.register( BaseTypes.BaseQuestPlayType.qptDebt , taozhai.OverTime)
+ActorQuestCallDispatcher.registerPlayType(BaseTypes.BaseQuestAction.qaAccept, BaseTypes.BaseQuestPlayType.qptDebt, taozhai.AcceptTask) -- 注册接受任务的侦听
+ActorQuestCallDispatcher.registerPlayType(BaseTypes.BaseQuestAction.qaCommit, BaseTypes.BaseQuestPlayType.qptDebt, taozhai.CommitTask) -- 注册完成任务的侦听
+--QuestTypeCallDispatcher.register(BaseTypes.BaseQuestAction.qaUpdate, BaseTypes.BaseQuestPlayType.qptLatent, Simple_funcs.update_callback_function) -- 注册事件触发的侦听

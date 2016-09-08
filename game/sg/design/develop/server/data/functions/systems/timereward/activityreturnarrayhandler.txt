@@ -1,0 +1,898 @@
+--81协议 ，返回活动达到的目标数
+
+--#include "activityconf.txt" once
+--#include "activitycontrolhandler.txt" once
+--#include "dailyactivityhandler.txt" once
+--#include "numactivityhandler.txt" once
+--#include "normalactivitycontrolhandler.txt" once
+
+--#include "data\functions\actorevent\hetuleshuhandle.txt" 
+
+local getActivityReturnArrayObject={}
+ 
+--拉取面板信息
+activityFunc.getActivityReturnArrayNumInfo=function(sysarg, activeid,activitytype)
+
+	debug_print("拉取面板信息")
+	local arr_size=0    --数组大小
+	local arr={}          --返回的数组
+	local param1=0  --附加参数1
+	local param2=0 --附加参数2
+	
+	local CAN_GET_REWARD = -2 --能领取但是还没领取
+	local HAS_GET_REWARD= -3  --已经领取
+
+	local key_name=nil --key name 一定要在活动中定义！！
+
+	if activeid == nil or activitytype == nil then return end
+	debug_print("getActivityReturnArray activdid:"..activeid..",activitytype:"..activitytype)
+
+	--activeid = 5
+	--activitytype = 63 --  
+
+	if activityConf[activeid] == nil then return end
+	--该活动没有这个子活动
+	if activityConf[activeid].activities[activitytype] == nil or activityConf[activeid].activities[activitytype].id == nil then return end
+
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+
+	--活动是否开始
+	local state = ONLINEREWARD.GetActivityState(activityConf[activeid].activityId, var.download_from , sysarg)
+	--print("---activityFunc.getActivityInfo activeid:"..activeid..",activitytype:"..activitytype)
+	--print("=================",state)
+	if state ~= 0 then
+		--是否重置
+		ONLINEREWARD.CheckResetActivityInfo(sysarg, activityConf[activeid].activityId)
+	end
+
+	 
+	--活动列表
+	local actlist = activitytypelist
+
+	local oneConf = activityConf[activeid].activities[activitytype]
+
+	local week = System.getDayOfWeek()
+
+	if var.activityList == nil then var.activityList = {} end
+	if var.activityList[activeid] == nil then var.activityList[activeid] = {} end
+
+ 
+	if activitytype == actlist[53] then--伙伴收集
+		key_name='huoban_collect_num' --key 
+
+		if var.activityList[activeid][key_name] ==nil then 
+		   var.activityList[activeid][key_name]= {}   
+		end
+		---var.activityList[activeid][key_name]={} --测试时用，不测试千万去掉！！！！！！！！！
+		--[[
+		for i=1,#oneConf.target do 
+			----领取的记录或者领取状态（未领取-2，已经领取-3）
+
+			--为nil或者状态>=0才去查询,避免不必要的查询
+			if (var.activityList[activeid][key_name][i]==nil  or 	var.activityList[activeid][key_name][i] >=0 ) then 
+				var.activityList[activeid][key_name][i]=0 --init
+				 
+				local type=oneConf.target[i].type
+				 
+				if type == 1 then 
+					local huoban_color
+					if oneConf.target[i].huoban_color==0 then 
+						huoban_color=0
+					else 
+						huoban_color = oneConf.target[i].huoban_color -1 --应该减1，c++中从0开始
+					end
+					debug_print("huban_color"..huoban_color)
+					local curr_num=LActor.getPartnerCountAndSkillCountInfo(sysarg,type,huoban_color)
+					debug_print("curr_num:"..curr_num)
+					var.activityList[activeid][key_name][i]=curr_num --赋值
+
+					if curr_num >= oneConf.target[i].huoban_count  then 
+						var.activityList[activeid][key_name][i]=CAN_GET_REWARD
+					end
+
+				else 
+					local skill_type=oneConf.target[i].skill_type
+					local curr_num=LActor.getPartnerCountAndSkillCountInfo(sysarg,type,skill_type)
+					debug_print("skill curr_num:"..curr_num)
+					if curr_num >= oneConf.target[i].skill_count  then 
+						var.activityList[activeid][key_name][i]=CAN_GET_REWARD
+					end
+
+				end
+
+			end
+
+		end --end for
+		]]
+		local getnumFunc=LActor.getPartnerCountAndSkillCountInfo 
+		getActivityReturnArrayObject.handleactivityarraynumreward(sysarg,activeid,oneConf,key_name,"type","huoban_color","skill_type","count",getnumFunc)
+		                                               --function(sysarg,activeid,oneConf,key_name,type,type_1_subtype,type_2_subtype,countfield,func)
+ 
+
+	elseif activitytype == actlist[63] then--装备提升
+		key_name="equip_strong_and_level_record"
+		if var.activityList[activeid][key_name] ==nil then 
+		   var.activityList[activeid][key_name]= {}   
+		end
+
+		local getStrongLevelFunc=LActor.getEquipAllStrongLv
+		local  getEquipAllUserLevelFunc=LActor.getEquipAllUserLevel
+		getActivityReturnArrayObject.handleactivityarraynumreward(sysarg,activeid,oneConf,key_name,"type",nil,nil,"level",getStrongLevelFunc,getEquipAllUserLevelFunc)
+		--getActivityReturnArrayObject.handleactivityarraynumreward=function(sysarg,activeid,oneConf,key_name,type,type_1_subtype,type_2_subtype,countfield,func,func2)
+		 
+
+	elseif activitytype == actlist[55] then --武将收集
+		key_name="wujiang_collection_actity"
+		if var.activityList[activeid][key_name] ==nil then 
+		   var.activityList[activeid][key_name]= {}   
+		end
+
+		
+		local getCountByColor=HeTuLeShuFunc.getWuJiangCountByColor
+		local getMaxLevel=HeTuLeShuFunc.GetMaxWuJiangLevel
+		
+
+		getActivityReturnArrayObject.handleactivityarraynumreward(sysarg,activeid,oneConf,key_name,"type",nil,nil,"countOrLevel",getCountByColor,getMaxLevel)
+		--getActivityReturnArrayObject.handleactivityarraynumre  (sysarg,activeid,oneConf,key_name,type,type_1_subtype,type_2_subtype,countfield,func,func2)
+		 
+	elseif activitytype == actlist[56] then --玫瑰之约
+		key_name="flow_send_receive_count"
+
+		if var.activityList[activeid][key_name] ==nil then 
+		   var.activityList[activeid][key_name]= {}   
+		end
+
+		 if var.activityList[activeid].send_flower_count == nil then
+         	 var.activityList[activeid].send_flower_count = 0
+        end
+        if var.activityList[activeid].receive_flow_count == nil then 
+        	var.activityList[activeid].receive_flow_count=0
+        end
+
+		
+        local send_flower_count=var.activityList[activeid].send_flower_count
+        local receive_flow_count=var.activityList[activeid].receive_flow_count
+
+		getActivityReturnArrayObject.handleactivityarraynumreward(sysarg,activeid,oneConf,key_name,"type",send_flower_count,receive_flow_count,"count",nil,nil)
+
+
+
+	elseif activitytype ==actlist[57] then --宝石镶嵌
+		key_name="baoshi_xiangqian"
+		if var.activityList[activeid][key_name] ==nil then 
+		   var.activityList[activeid][key_name]= {}   
+		end
+
+		
+		local getGemCountByLevel=Item.getGemCountByLevel
+ 		
+		getActivityReturnArrayObject.handleactivityarraynumreward(sysarg,activeid,oneConf,key_name,"type",nil,nil,"count",getGemCountByLevel,nil)
+		--getActivityReturnArrayObject.handleactivityarraynumre  (sysarg,activeid,oneConf,key_name,type,type_1_subtype,type_2_subtype,countfield,func,func2)
+		
+
+
+	elseif activitytype == actlist[60] then --世族捐献
+		key_name="guild_contribute"
+		if var.activityList[activeid].guildcontribute_yuanbao == nil then
+         	 var.activityList[activeid].guildcontribute_yuanbao = 0
+        end
+        if var.activityList[activeid].guildcontribute_bindcoin == nil then
+         	 var.activityList[activeid].guildcontribute_bindcoin = 0
+        end
+        if var.activityList[activeid].guild_contribCount == nil then
+         	 var.activityList[activeid].guild_contribCount = 0
+        end
+
+  		local guild_contribute_yuanbao=var.activityList[activeid].guildcontribute_yuanbao
+  		local guild_contribute_bindcoin= var.activityList[activeid].guildcontribute_bindcoin
+
+  		debug_print("yuanbao:"..guild_contribute_yuanbao)
+  		debug_print("bindcoin:"..guild_contribute_bindcoin)
+
+		
+		getActivityReturnArrayObject.handleactivityarraynumreward(sysarg,activeid,oneConf,key_name,"type",guild_contribute_yuanbao,guild_contribute_bindcoin,"count",nil,nil)
+		--getActivityReturnArrayObject.handleactivityarraynumre  (sysarg,activeid,oneConf,key_name,type,type_1_subtype,type_2_subtype,countfield,func,func2)
+
+
+	end
+
+	--如果没定义，直接return
+	if key_name==nil then return end 
+
+	arr=var.activityList[activeid][key_name]
+
+
+	arr_size=#arr 
+
+	if arr_size==nil then arr_size=0 end
+	if arr==nil then arr={} end 
+	if param1==nil then param1=0 end 
+	if parma2==nil then param2=0 end 
+
+
+
+	local pack = DataPack.allocPacket(sysarg, 138, 155)
+	if pack == nil then return end
+	DataPack.writeInt(pack, activeid)
+	DataPack.writeInt(pack, activitytype)
+
+	DataPack.writeInt(pack,arr_size)
+	for i=1,arr_size do 
+		DataPack.writeInt(pack,var.activityList[activeid][key_name][i])
+		debug_print("index:"..i..","..var.activityList[activeid][key_name][i])
+	end
+
+	DataPack.writeInt(pack,param1)
+	DataPack.writeInt(pack,param2)
+	DataPack.flush(pack)
+
+	debug_print("flush end")
+
+
+end
+ 
+
+--领取奖励
+activityFunc.getActivityReturnArrayNumReward =function(sysarg,activeid, activitytype,index,param1)
+
+	debug_print("领取奖励getActivityReturnArrayNumReward")
+	
+	local key_name=nil --key name 一定要在活动中定义！！ 跟拉取活动面板定义的一样
+	local CAN_GET_REWARD = -2 --能领取但是还没领取
+	local HAS_GET_REWARD= -3  --已经领取
+
+
+	  
+	 --local activeid = 5
+	 --local activitytype = 52
+	 -- local index = 2
+	--index = 1
+	
+	debug_print("---领取活动奖励，activeid:"..activeid.."--activitytype:"..activitytype.."--index:"..index)
+ 	if activeid == nil or activitytype == nil then return end
+	--debug_print("activityFunc.getActivityReward activeid:"..activeid..",activitytype"..activitytype)
+	--local activeid = 23
+	--local activitytype = 6
+	--local index = 1
+	--没有这个活动id
+	if activityConf[activeid] == nil then return end
+	--该活动没有这个子活动
+	if activityConf[activeid].activities[activitytype] == nil or activityConf[activeid].activities[activitytype].id == nil then return end
+	--活动期间排行榜的奖励是发邮件的
+	if activitytype == activitytypelist[15] or activitytype == activitytypelist[17] then return end
+
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+
+	--活动是否开始
+	local state = ONLINEREWARD.GetActivityState(activityConf[activeid].activityId, var.download_from , sysarg)
+
+
+	if state ~= 0 then
+		--是否重置
+		ONLINEREWARD.CheckResetActivityInfo(sysarg, activityConf[activeid].activityId)
+	end
+	--活动列表
+	local actlist = activitytypelist
+
+	local tmpConf = activityConf[activeid].activities[activitytype]
+	local oneConf = nil
+
+	oneConf = activityConf[activeid].activities[activitytype]
+	
+
+	if oneConf == nil then return end
+
+	if var.activityList == nil then var.activityList = {} end
+	if var.activityList[activeid] == nil then var.activityList[activeid] = {} end
+
+	local record = 0
+	local reward = 0
+	local itemid = 0
+	local itemnum = 1
+	local rank
+	local rankItem
+ 
+	if activitytype == actlist[53] then--伙伴收集
+		key_name='huoban_collect_num' --key !!一定要有
+
+	    local open_at_whichday=activityFunc.activityid_map_to_which_day[activitytype] --在哪天开启
+  		local createday = ONLINEREWARD.getCreateActorDay( sysarg )
+
+  		local getnumFunc=LActor.getPartnerCountAndSkillCountInfo 
+  		getActivityReturnArrayObject.handleactivityarraynumreward(sysarg,activeid,oneConf,key_name,"type","huoban_color","skill_type","count",getnumFunc)
+
+  		--还要限制等几天领取
+  		if createday>= open_at_whichday and var.activityList[activeid][key_name][index]==CAN_GET_REWARD then 
+
+			itemid = oneConf.target[index].itemid
+			itemnum= oneConf.target[index].itemcount
+		else
+			if var.activityList[activeid][key_name][index] == HAS_GET_REWARD then 
+				debug_print("award has get!!!")
+			elseif createday < open_at_whichday then 
+				debug_print("award createday< open_at_whichday"..createday..','..open_at_whichday)
+
+			else 
+				debug_print("award can't get")
+			end
+
+			itemid=nil 
+			itemnum=0
+
+		end
+
+
+	elseif activitytype == actlist[63] then--装备提升
+		key_name="equip_strong_and_level_record"
+		local open_at_whichday=activityFunc.activityid_map_to_which_day[activitytype] --在哪天开启
+  		local createday = ONLINEREWARD.getCreateActorDay( sysarg )
+
+
+  		local getStrongLevelFunc=LActor.getEquipAllStrongLv
+		local  getEquipAllUserLevelFunc=LActor.getEquipAllUserLevel
+		getActivityReturnArrayObject.handleactivityarraynumreward(sysarg,activeid,oneConf,key_name,"type",nil,nil,"level",getStrongLevelFunc,getEquipAllUserLevelFunc)
+
+
+		if createday>= open_at_whichday and var.activityList[activeid][key_name][index]==CAN_GET_REWARD then 
+
+			itemid = oneConf.target[index].itemid
+			itemnum= oneConf.target[index].itemcount
+		else
+			if var.activityList[activeid][key_name][index] == HAS_GET_REWARD then 
+				debug_print("award has get!!!")
+			elseif createday < open_at_whichday then 
+				debug_print("award createday< open_at_whichday"..createday..','..open_at_whichday)
+
+			else 
+				debug_print("award can't get")
+			end
+
+			itemid=nil 
+			itemnum=0
+ 
+		end
+	elseif activitytype ==actlist[55] then --武将收集
+		key_name="wujiang_collection_actity"
+		local open_at_whichday=activityFunc.activityid_map_to_which_day[activitytype] --在哪天开启
+  		local createday = ONLINEREWARD.getCreateActorDay( sysarg )
+
+  		local getCountByColor=HeTuLeShuFunc.getWuJiangCountByColor
+		local getMaxLevel=HeTuLeShuFunc.GetMaxWuJiangLevel
+		
+
+		getActivityReturnArrayObject.handleactivityarraynumreward(sysarg,activeid,oneConf,key_name,"type",nil,nil,"countOrLevel",getCountByColor,getMaxLevel)
+		--getActivityReturnArrayObject.handleactivityarraynumre  (sysarg,activeid,oneConf,key_name,type,type_1_subtype,type_2_subtype,countfield,func,func2)
+
+		if createday>= open_at_whichday and var.activityList[activeid][key_name][index]==CAN_GET_REWARD then 
+
+			itemid = oneConf.target[index].itemid
+			itemnum= oneConf.target[index].itemcount
+		else
+			if var.activityList[activeid][key_name][index] == HAS_GET_REWARD then 
+				debug_print("award has get!!!")
+			elseif createday < open_at_whichday then 
+				debug_print("award createday< open_at_whichday"..createday..','..open_at_whichday)
+
+			else 
+				debug_print("award can't get")
+			end
+
+			itemid=nil 
+			itemnum=0
+
+		end
+	elseif activitytype==actlist[56] then  --玫瑰之约
+		key_name="flow_send_receive_count"
+
+		 if var.activityList[activeid].send_flower_count == nil then
+         	 var.activityList[activeid].send_flower_count = 0
+        end
+        if var.activityList[activeid].receive_flow_count == nil then 
+        	var.activityList[activeid].receive_flow_count=0
+        end
+        
+        local send_flower_count=var.activityList[activeid].send_flower_count
+         local receive_flow_count=var.activityList[activeid].receive_flow_count
+  		 
+
+  		debug_print("send flower count:"..send_flower_count)
+  		debug_print("receive_flow_count:"..receive_flow_count)
+
+		local open_at_whichday=activityFunc.activityid_map_to_which_day[activitytype] --在哪天开启
+  		local createday = ONLINEREWARD.getCreateActorDay( sysarg )
+
+  		
+		
+		getActivityReturnArrayObject.handleactivityarraynumreward(sysarg,activeid,oneConf,key_name,"type",send_flower_count,receive_flow_count,"count",nil,nil)
+		--getActivityReturnArrayObject.handleactivityarraynumre  (sysarg,activeid,oneConf,key_name,type,type_1_subtype,type_2_subtype,countfield,func,func2)
+
+		if createday>= open_at_whichday and var.activityList[activeid][key_name][index]==CAN_GET_REWARD then 
+
+			itemid = oneConf.target[index].itemid
+			itemnum= oneConf.target[index].itemcount
+		else
+			if var.activityList[activeid][key_name][index] == HAS_GET_REWARD then 
+				debug_print("award has get!!!")
+			elseif createday < open_at_whichday then 
+				debug_print("award createday< open_at_whichday"..createday..','..open_at_whichday)
+
+			else 
+				debug_print("award can't get")
+			end
+
+			itemid=nil 
+			itemnum=0
+
+		end
+
+	elseif activitytype==actlist[57] then  --宝石镶嵌
+		key_name="baoshi_xiangqian"
+
+		local open_at_whichday=activityFunc.activityid_map_to_which_day[activitytype] --在哪天开启
+  		local createday = ONLINEREWARD.getCreateActorDay( sysarg )
+
+  		local getGemCountByLevel=Item.getGemCountByLevel
+		
+		getActivityReturnArrayObject.handleactivityarraynumreward(sysarg,activeid,oneConf,key_name,"type",nil,nil,"count",getGemCountByLevel,nil)
+		--getActivityReturnArrayObject.handleactivityarraynumre  (sysarg,activeid,oneConf,key_name,type,type_1_subtype,type_2_subtype,countfield,func,func2)
+
+		if createday>= open_at_whichday and var.activityList[activeid][key_name][index]==CAN_GET_REWARD then 
+
+			itemid = oneConf.target[index].itemid
+			itemnum= oneConf.target[index].itemcount
+		else
+			if var.activityList[activeid][key_name][index] == HAS_GET_REWARD then 
+				debug_print("award has get!!!")
+			elseif createday < open_at_whichday then 
+				debug_print("award createday< open_at_whichday"..createday..','..open_at_whichday)
+
+			else 
+				debug_print("award can't get")
+			end
+
+			itemid=nil 
+			itemnum=0
+
+		end
+
+
+	elseif activitytype==actlist[60] then  --世族捐献
+		key_name="guild_contribute"
+
+		local open_at_whichday=activityFunc.activityid_map_to_which_day[activitytype] --在哪天开启
+  		local createday = ONLINEREWARD.getCreateActorDay( sysarg )
+
+  		if var.activityList[activeid].guildcontribute_yuanbao == nil then
+         	 var.activityList[activeid].guildcontribute_yuanbao = 0
+        end
+        if var.activityList[activeid].guildcontribute_bindcoin == nil then
+         	 var.activityList[activeid].guildcontribute_bindcoin = 0
+        end
+        if var.activityList[activeid].guild_contribCount == nil then
+         	 var.activityList[activeid].guild_contribCount = 0
+        end
+
+
+  		local guild_contribute_yuanbao=var.activityList[activeid].guildcontribute_yuanbao
+  		local guild_contribute_bindcoin= var.activityList[activeid].guildcontribute_bindcoin
+
+  		debug_print("yuanbao:"..guild_contribute_yuanbao)
+  		debug_print("bindcoin:"..guild_contribute_bindcoin)
+		
+		getActivityReturnArrayObject.handleactivityarraynumreward(sysarg,activeid,oneConf,key_name,"type",guild_contribute_yuanbao,guild_contribute_bindcoin,"count",nil,nil)
+		--getActivityReturnArrayObject.handleactivityarraynumre  (sysarg,activeid,oneConf,key_name,type,type_1_subtype,type_2_subtype,countfield,func,func2)
+
+		if createday>= open_at_whichday and var.activityList[activeid][key_name][index]==CAN_GET_REWARD then 
+
+			itemid = oneConf.target[index].itemid
+			itemnum= oneConf.target[index].itemcount
+		else
+			if var.activityList[activeid][key_name][index] == HAS_GET_REWARD then 
+				debug_print("award has get!!!")
+			elseif createday < open_at_whichday then 
+				debug_print("award createday< open_at_whichday"..createday..','..open_at_whichday)
+
+			else 
+				debug_print("award can't get")
+			end
+
+			itemid=nil 
+			itemnum=0
+
+		end
+
+
+
+
+	else
+		return
+	end
+
+	if itemid == nil then 
+		print("--取不到奖励--")
+		return 
+	end
+
+	debug_print("getActivityReturnArrayNumInfo itemid:"..itemid..",itemnum"..itemnum)
+	 
+
+	--检测是否有格子来放东西
+	local bagGrid = Item.getBagEmptyGridCount(sysarg)      --玩家身上有多少个格子
+	if bagGrid == 0 then
+		-- LActor.sendTipmsg(sysarg, Lang.ScriptTips.osa0005, ttMessage)
+		debug_print("bagGrid==0")
+		LActor.SendGeneralTips(sysarg, 7, 0, 0)
+		--[[
+		local npack = DataPack.allocPacket( sysarg , 0 , 56)
+		if npack == nil then
+			return
+		end
+		DataPack.flush( npack )
+		--]]
+		return
+	end
+
+	--设置已领取
+ 
+	if activitytype == actlist[53] then --伙伴收集
+		var.activityList[activeid][key_name][index]=HAS_GET_REWARD
+		debug_print("set has get")
+		debug_print("idnex:"..index)
+		debug_print(var.activityList[activeid][key_name][index])
+
+	elseif activitytype == actlist[63] then
+		var.activityList[activeid][key_name][index]=HAS_GET_REWARD
+
+	elseif activitytype == actlist[55] then
+		var.activityList[activeid][key_name][index]=HAS_GET_REWARD
+		 
+	elseif activitytype == actlist[56] then
+		var.activityList[activeid][key_name][index]=HAS_GET_REWARD
+		 
+	elseif activitytype == actlist[57] then
+		var.activityList[activeid][key_name][index]=HAS_GET_REWARD
+
+	elseif activitytype == actlist[60] then
+		var.activityList[activeid][key_name][index]=HAS_GET_REWARD
+	else
+		return
+	end
+
+	--给物品
+	LActor.addItem(sysarg, itemid, 0, 0, itemnum, 1, "getactivityReward"..activeid, 1)
+	--System.logCounter(LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), "activityreward",tostring(activeid) , tostring(activitytype), tostring(index), "", tostring(LActor.getName(sysarg)), "", "", lfDB)
+	System.logCounter(
+						LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), 
+					  	"activityreward",tostring(activeid) , tostring(activitytype), tostring(index), 
+					 	string.format("%s:%s",itemid,itemnum), tostring(LActor.getName(sysarg)), var.download_from, "", lfDB
+					 )
+	-- 播放特效
+	local effects = {}
+	local effect = {}
+	effect.type = 1  -- 1为物品,暂时只支持发物品所以写死
+	effect.id = itemid
+	effect.count = 1
+	effects[#effects+1] = effect
+	if #effects > 0 then
+		MiscFunc.PlayItemEffect(sysarg, 11, effects)
+	end
+
+	--重新下发界面
+
+	activityFunc.getActivityReturnArrayNumInfo(sysarg,activeid,activitytype)
+
+
+end
+
+
+
+
+--处理活动，得到数量或者领取状态
+--[[
+type:第一个条件 字段的名称
+subtyped:第二个条件 字段的名称
+type_1_subtype:type为1时对应的subtype类型
+type_2_subtype:type为2时的subtype类型
+countfield:哪个字段名是用来表示 需要达到的数量的，一般为count
+func:函数处理
+func2:type为2时是否采用不同处理函数,不传表示使用相同的 ,当func1,fun2都不为nil时，不传type给参数
+ ]]
+getActivityReturnArrayObject.handleactivityarraynumreward=function(sysarg,activeid,oneConf,key_name,type,type_1_subtype,type_2_subtype,countfield,func,func2)
+
+		local CAN_GET_REWARD = -2 --能领取但是还没领取
+		local HAS_GET_REWARD= -3  --已经领取
+
+		local var = LActor.getStaticVar(sysarg)
+
+		if var.activityList[activeid][key_name] ==nil then 
+		   var.activityList[activeid][key_name]= {}   
+		end
+
+
+		for i=1,#oneConf.target do 
+		
+			----领取的记录或者领取状态（未领取-2，已经领取-3）
+			--为nil或者状态>=0才去查询,避免不必要的查询
+			if  (var.activityList[activeid][key_name][i]==nil  or 	var.activityList[activeid][key_name][i] >=0 ) then 
+				debug_print("is nil or >0")
+
+				var.activityList[activeid][key_name][i]=0 --init
+				 
+				local lastFunc=nil --使用func还是func2
+				local subtype = nil 
+				local typeValue=oneConf.target[i][type]
+				debug_print("typeValue:"..typeValue)
+				if typeValue ==1 then 
+					subtype=type_1_subtype
+					lastFunc=func
+				elseif typeValue ==2 then 
+					subtype=type_2_subtype
+					lastFunc=func
+					--如果传入的func2不为nil
+					if func2 ~= nil then 
+						lastFunc=func2
+					end
+				else 
+					subtype=type_1_subtype
+					lastFunc=func
+
+				end
+				if subtype~=nil then
+					debug_print("subtype"..subtype)
+				else 
+					debug_print("subtype is nil")
+				end
+
+				local curr_num=0
+
+				if oneConf.id == 53 then --伙伴收集特殊处理
+						local huoban_color
+						if oneConf.target[i].huoban_color==0 then 
+							huoban_color=0
+						else 
+							huoban_color = oneConf.target[i].huoban_color -1   --应该减1，c++中从0开始
+						end
+						if typeValue==1 then 
+							curr_num=lastFunc(sysarg, oneConf.target[i][type],huoban_color)
+						elseif typeValue==2 then
+							curr_num=lastFunc(sysarg, oneConf.target[i][type],oneConf.target[i].skill_type) 
+						elseif typeValue==3 then 
+							curr_num=LActor.getNorPartnerMaxPotLevel(sysarg)
+						end
+				elseif oneConf.id==55 then --武将收集 特殊处理
+					 if typeValue==1 then  --收集
+					 	curr_num = lastFunc(sysarg,oneConf.target[i].wujiang_color)--传入颜色
+					 else
+					 	curr_num = lastFunc(sysarg) --最低等级，不用传从那时
+					 end
+				elseif oneConf.id==56 then --玫瑰之约
+					 if typeValue ==1  then -- 1赠送 2获赠 c
+					 	curr_num=type_1_subtype 
+					 else 
+					 	curr_num=type_2_subtype
+					 end
+
+				elseif oneConf.id==57 then --宝石镶嵌
+					 curr_num = lastFunc(sysarg,oneConf.target[i].type)--传入宝石等级
+					 --debug_print("-my curr_num"..curr_num)
+
+
+				elseif oneConf.id==60 then --世族捐献
+					 if typeValue ==1  then -- 1:元宝 ，2:铜钱 ,3:捐献获得的贡献值 4:帮派总贡献
+					 	curr_num=type_1_subtype 
+					 elseif typeValue==2 then 
+					 	curr_num=type_2_subtype
+					 elseif typeValue==3 then  --
+					 	if var.activityList[activeid].guild_contribCount ~= nil then 
+					 		curr_num = var.activityList[activeid].guild_contribCount 
+					 	end
+					 elseif typeValue==4 then 
+					 	 --是总贡献 curr_num=LActor.getIntProperty(sysarg,PROP_ACTOR_GUILDEXP)
+					 	 curr_num=LActor.getTotalGuildContrib(sysarg)
+					 	 
+					 end
+					 
+
+				elseif type_1_subtype==nil and type_2_subtype==nil and func2 ~= nil then
+				
+					curr_num=lastFunc(sysarg)
+
+				--比如玫瑰花数，赠送或获赠，只有type，没有subtype
+				elseif subtype==nil then 
+					curr_num=lastFunc(sysarg, oneConf.target[i][type])
+				else 
+					
+						--默认处理
+						debug_print("type:"..oneConf.target[i][type]..",subtype:"..  oneConf.target[i][subtype])
+						curr_num=lastFunc(sysarg, oneConf.target[i][type], oneConf.target[i][subtype])
+
+				end
+				var.activityList[activeid][key_name][i]=curr_num --赋值
+				 
+
+				if curr_num >= oneConf.target[i][countfield] then --满足需要的数量
+					var.activityList[activeid][key_name][i] = CAN_GET_REWARD
+				end
+ 
+			 end
+			 debug_print("-----------------index:"..i..",value:"..var.activityList[activeid][key_name][i])
+
+		end 
+end
+
+
+
+--60 世族捐献 contribCount：获得的贡献
+activityFunc.onAddGuildContribute=function(sysarg,type,count,contribCount)
+  debug_print("activityFunc.onAddGuildContribute type::"..type.." money:"..count..",contribCount:"..contribCount)
+  local var = LActor.getStaticVar(sysarg)
+   
+  if var == nil then return end
+
+  
+  for i,v in ipairs(activityidlist) do
+    local oneConf = activityConf[v]
+     
+    local huodongid = activitytypelist[59]
+
+    if huodongid == nil then return end 
+  
+    --local oneConf = activityConf[activeid].activities[activitytype]
+    local state = ONLINEREWARD.GetActivityState(oneConf.activityId, var.download_from , sysarg)
+
+    --活动中
+    if state ~= 0 then
+      --是否重置
+      ONLINEREWARD.CheckResetActivityInfo(sysarg, oneConf.activityId)
+
+
+      --是不是有这个活动
+      if oneConf.activities[huodongid] ~= nil and oneConf.activities[huodongid].id ~= nil then
+        if var.activityList[v] == nil then 
+          var.activityList[v] = {} 
+        end
+        
+        if var.activityList[v].guildcontribute_yuanbao == nil then
+         	 var.activityList[v].guildcontribute_yuanbao = 0
+        end
+        if var.activityList[v].guildcontribute_bindcoin == nil then
+         	 var.activityList[v].guildcontribute_bindcoin = 0
+        end
+        if var.activityList[v].guild_contribCount == nil then
+         	 var.activityList[v].guild_contribCount = 0
+        end
+
+        
+--[[
+        local open_at_whichday=activityFunc.activityid_map_to_which_day[huodongid] --在哪天开启
+		if open_at_whichday == nil then return end 
+
+		local createday = ONLINEREWARD.getCreateActorDay( sysarg )
+		if createday < open_at_whichday then
+			debug_print("createday,"..createday..",open at"..open_at_whichday..",not open") 
+			return 
+		end
+]]
+		var.activityList[v].guild_contribCount = var.activityList[v].guild_contribCount + contribCount
+
+
+        if type==0 then --铜钱
+        	var.activityList[v].guildcontribute_bindcoin = var.activityList[v].guildcontribute_bindcoin +count 
+        end 
+        if type ==3 then --元宝
+        	var.activityList[v].guildcontribute_yuanbao = var.activityList[v].guildcontribute_yuanbao +count 
+        end
+     
+         debug_print("a guildcontribute_yuanbao:"..var.activityList[v].guildcontribute_yuanbao)
+         debug_print("a guildcontribute_bindcoin:"..var.activityList[v].guildcontribute_bindcoin)
+
+      end
+    end
+  end
+	
+end
+--活动：玫瑰之约 count:玫瑰朵数
+activityFunc.onSendFlower=function(sysarg,receivedActor,count)
+  debug_print("activityFunc.onSendFlower count::"..count)
+  local var = LActor.getStaticVar(sysarg)
+   
+  if var == nil then return end
+
+  
+  for i,v in ipairs(activityidlist) do
+    local oneConf = activityConf[v]
+     
+    local huodongid = activitytypelist[59]
+
+    if huodongid == nil then return end 
+  
+    --local oneConf = activityConf[activeid].activities[activitytype]
+    local state = ONLINEREWARD.GetActivityState(oneConf.activityId, var.download_from , sysarg)
+    
+    --活动中
+    if state ~= 0 then
+      --是否重置
+      ONLINEREWARD.CheckResetActivityInfo(sysarg, oneConf.activityId)
+
+
+      --是不是有这个活动
+      if oneConf.activities[huodongid] ~= nil and oneConf.activities[huodongid].id ~= nil then
+        if var.activityList[v] == nil then 
+          var.activityList[v] = {} 
+        end
+        
+        if var.activityList[v].send_flower_count == nil then
+         	 var.activityList[v].send_flower_count = 0
+        end
+        if var.activityList[v].receive_flow_count == nil then 
+        	var.activityList[v].receive_flow_count=0
+        end
+
+        local receiveVar=LActor.getStaticVar(receivedActor)
+        if receiveVar.activityList == nil then receiveVar.activityList={} end 
+        if receiveVar.activityList[v] == nil then receiveVar.activityList[v]={} end
+        if receiveVar.activityList[v].send_flower_count == nil then
+         	 receiveVar.activityList[v].send_flower_count = 0
+        end
+        if receiveVar.activityList[v].receive_flow_count == nil then 
+        	receiveVar.activityList[v].receive_flow_count=0
+        end
+        var.activityList[v].send_flower_count = var.activityList[v].send_flower_count  + count
+        receiveVar.activityList[v].receive_flow_count = receiveVar.activityList[v].receive_flow_count + count
+
+     
+         debug_print("a var.activityList[v].send_flower_count:"..var.activityList[v].send_flower_count)
+         debug_print("a receiveVar.activityList[v].receive_flow_count:"..receiveVar.activityList[v].receive_flow_count)
+
+      end
+    end
+  end
+
+end
+function getActivityReturnArrayObject.gmFunc(sysarg,args)
+
+	local activeid=5
+
+	local activetype=56 --63
+
+	
+    local type=1
+	local index=1
+
+	if args[1] ~=nil then 
+		activetype=tonumber(args[1]) 
+	end
+
+	if args[2] ~= nil then 
+		type=tonumber(args[2])
+	end
+
+	if type == 1 then  --获得信息
+		activityFunc.getActivityReturnArrayNumInfo(sysarg,activeid,activetype)
+	elseif type==2 then 
+		
+		index=tonumber(args[3])
+		 
+		activityFunc.getActivityReturnArrayNumReward(sysarg,activeid,activetype,index,0)
+ 	end 
+	 
+
+end
+getActivityReturnArrayObject.gmFunc2=function(sysarg,args)
+ --[[local level=tonumber(args[1])
+	print("leveL:"..level)
+   print("lua level:")]]
+   --Item.getGemCountByLevel(sysarg,level) 
+    --local maxPotLevel=LActor.getNorPartnerMaxPotLevel(sysarg)
+   --print("lua max maxPotLevel"..maxPotLevel)
+
+
+
+end
+GmEventFuncList.register( "mstest", getActivityReturnArrayObject.gmFunc2,1)
+GmEventFuncList.register( "ms", getActivityReturnArrayObject.gmFunc,1)
+
+ 
+

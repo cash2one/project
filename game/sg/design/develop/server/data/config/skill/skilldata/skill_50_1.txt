@@ -1,0 +1,50 @@
+--塔防副本boss 加血buff
+{
+	actions=
+	{
+		{act=0,effect=1903,},
+	},
+	desc=Lang.Skill.s49L1Desc,--技能的描述
+	
+	iconID=1,
+	
+	--作用范围表
+	actRange=
+	{
+		{
+			xStart=-10,	--相对于中心点x左边的相对坐标
+			xEnd=10,	--相对于中心点x右边的相对坐标
+			yStart=-10,	--相对于中心点y上边的相对坐标
+			yEnd=10,	--相对于中心点y下边的相对坐标
+			rangeType=3,
+			rangeCenter=1,
+			acts=
+			{
+				{
+					conds=
+					{
+						{cond=2,value=true},
+					},
+
+					results=
+					{	
+						{mj=0,timeParam=1,type=1,delay=1000,value={type=21,id=80,rate=80,value=5000,buffRate=80,interval=3,vt=1}},
+						{mj=0,timeParam=1,type=1,delay=1000,value={type=22,id=80,rate=80,value=500000,buffRate=80,interval=3,vt=1}},
+					},
+					specialEffects=
+					{
+						
+					},
+				},
+			},
+		},
+	},
+	trainConds=
+	{
+	},	
+	spellConds=
+	{
+	},
+	singTime=0,
+	cooldownTime=20000,
+},

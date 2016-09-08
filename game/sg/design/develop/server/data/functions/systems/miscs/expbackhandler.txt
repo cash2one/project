@@ -1,0 +1,532 @@
+--lua script
+--经验找回系统相关逻辑
+
+--#include "data\config\misc\expbackconfig.txt" once
+
+ExpBackFunc = {}
+
+--================= 辅助函数 及结构 ======================
+ExpBackFunc.isClose = function()
+	if expBackConfig.SYSTEM_SWITCH ~= 1 then
+		return true
+	else
+		return false
+	end
+end
+
+ExpBackFunc.initData = function (sysarg)
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	if var.expBack == nil then
+		local dateStartTime = System.getToday()
+		var.expBack = {}
+		var.expBack.fubenTimes = {}
+		var.expBack.rcrwTimes = {}
+		var.expBack.lastFlushDataTime = dateStartTime
+		var.expBack.tmpFubenTimes = {}
+		var.expBack.tmpRcrwTimes = {}
+		var.expBack.lastFlushTmpTime = dateStartTime
+		--print("init var.expBack.rcrwTimes  size=====" .. #var.expBack.rcrwTimes)
+	end
+end
+
+
+-- 玩家上线时或者新的一天到来时把临时变量里的刷到正常数据里
+ExpBackFunc.flushData = function(sysarg)
+	ExpBackFunc.initData(sysarg)
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil or  var.expBack == nil then return end
+
+	-- 如果今天已经刷过，则不再刷
+	if var.expBack.lastFlushDataTime >= System.getToday() then
+		return
+	end
+
+	var.expBack.lastFlushDataTime = System.getToday()
+
+	local yesterdayStartTime = System.getYesterday()
+	local lastLogoutDate = LActor.getLastLogoutDate(sysarg)
+	if lastLogoutDate == 0 then --如果是首次登录
+		lastLogoutDate = LActor.getLoginDate(sysarg)
+	end
+	if lastLogoutDate == 0 then
+		return
+	end
+	--print("lastLogoutDate = "..lastLogoutDate)
+	local actorLevel = LActor.getIntProperty( sysarg, PROP_LEVEL )
+
+	-- 加上没在线的各天的副本及日常任务次数
+	for d=lastLogoutDate, yesterdayStartTime, 86400 do
+		--print("d="..d)
+		if d ~= var.expBack.lastFlushTmpTime then
+			--print("d ~= var.expBack.lastFlushTmpTime ======")
+			for i=1, #expBackConfig.fuben do
+				local kid = expBackConfig.fuben[i].kid
+				if actorLevel >= FuBen[kid].minLevel then
+					local idx = 0
+					for j=1, #var.expBack.fubenTimes do
+						if var.expBack.fubenTimes[j].kid == expBackConfig.fuben[i].kid then
+							idx = j
+							break
+						end
+					end
+					if idx == 0 then
+						idx = #var.expBack.fubenTimes + 1
+						var.expBack.fubenTimes[idx] = {}
+						var.expBack.fubenTimes[idx].kid = expBackConfig.fuben[i].kid
+						var.expBack.fubenTimes[idx].count = expBackConfig.fuben[i].dateMax
+					else
+						var.expBack.fubenTimes[idx].count = var.expBack.fubenTimes[idx].count + expBackConfig.fuben[i].dateMax
+					end
+				end
+			end
+
+			for i=1, #expBackConfig.rcrw do
+				local kid = expBackConfig.rcrw[i].kid
+				--print("========= kid="..kid)
+				local expConf = expBackConfig.rcrw[i].exp[1]		
+				if actorLevel >= expConf[1] and var.star ~= nil and var.star[kid] ~= nil and RefreshQuests[kid] ~= nil then
+					local idx = 0
+					for j=1, #var.expBack.rcrwTimes do
+						if var.expBack.rcrwTimes[j].kid == kid then
+							--print("========= var.expBack.rcrwTimes[j].kid="..var.expBack.rcrwTimes[j].kid)
+							idx = j
+							break
+						end
+					end
+
+					local times = 0
+					local vipLevel = LActor.getVIPLevel(sysarg) -- VIP用户和普通任务的总次数
+					if vipLevel > 0 then
+						times = RefreshQuests[kid].timesVips[vipLevel]
+					else
+						times = RefreshQuests[kid].times
+					end
+					--print("idx==========="..idx)
+					if idx == 0 then
+						idx = #var.expBack.rcrwTimes + 1
+						var.expBack.rcrwTimes[idx] = {}
+						var.expBack.rcrwTimes[idx].kid = kid
+						var.expBack.rcrwTimes[idx].count = times
+					else
+						--print("var.expBack.rcrwTimes idx ="..idx )
+						--print("var.expBack.rcrwTimes size =".. #var.expBack.rcrwTimes )
+						--print("var.expBack.rcrwTimes type ="..type(var.expBack.rcrwTimes))
+						--print("var.expBack.rcrwTimes[idx] type ="..type(var.expBack.rcrwTimes[idx]))
+						--print("var.expBack.rcrwTimes[idx].count type ="..type(var.expBack.rcrwTimes[idx].count))
+						--print("var.expBack.rcrwTimes[idx].count = "..var.expBack.rcrwTimes[idx].count)
+						var.expBack.rcrwTimes[idx].count = var.expBack.rcrwTimes[idx].count + times
+					end
+				end
+			end
+		end
+	end
+
+	-- 只可以刷昨天以前的
+	if var.expBack.lastFlushTmpTime < System.getToday() then
+		for i=1, #var.expBack.tmpFubenTimes do
+			local idx = 0
+			for j=1, #var.expBack.fubenTimes do
+				if var.expBack.fubenTimes[j].kid == var.expBack.tmpFubenTimes[i].kid then
+					idx = j
+					break
+				end
+			end
+			--print("idx aaaaaaaaa=="..idx)
+			if idx == 0 then
+				idx = #var.expBack.fubenTimes + 1
+				var.expBack.fubenTimes[idx] = {}
+				var.expBack.fubenTimes[idx].kid = var.expBack.tmpFubenTimes[i].kid
+				var.expBack.fubenTimes[idx].count = var.expBack.tmpFubenTimes[i].count
+			else
+				var.expBack.fubenTimes[idx].count = var.expBack.fubenTimes[idx].count + var.expBack.tmpFubenTimes[i].count
+			end
+		end
+
+		for i=1, #var.expBack.tmpRcrwTimes do
+			local idx = 0
+			--print("#var.expBack.rcrwTimes=======size======="..#var.expBack.rcrwTimes)
+			for j=1, #var.expBack.rcrwTimes do
+				--print("var.expBack.rcrwTimes[j] type ="..type(var.expBack.rcrwTimes[j]) )
+				--print("var.expBack.rcrwTimes[j].kid="..var.expBack.rcrwTimes[j].kid)
+				--print("var.expBack.tmpRcrwTimes[i].kid="..var.expBack.tmpRcrwTimes[i].kid)
+				if var.expBack.rcrwTimes[j].kid == var.expBack.tmpRcrwTimes[i].kid then
+					idx = j
+					break
+				end
+			end
+			--print("idx bbbbbbbb=="..idx)
+			if idx == 0 then
+				idx = #var.expBack.rcrwTimes + 1
+				var.expBack.rcrwTimes[idx] = {}
+				var.expBack.rcrwTimes[idx].kid = var.expBack.tmpRcrwTimes[i].kid
+				var.expBack.rcrwTimes[idx].count = var.expBack.tmpRcrwTimes[i].count
+			else
+				var.expBack.rcrwTimes[idx].count = var.expBack.rcrwTimes[idx].count + var.expBack.tmpRcrwTimes[i].count
+			end
+		end
+		var.expBack.tmpFubenTimes = {}
+		var.expBack.tmpRcrwTimes = {}
+	end
+
+	for i=1, #expBackConfig.fuben do
+		for j=1, #var.expBack.fubenTimes do
+			if var.expBack.fubenTimes[j].kid == expBackConfig.fuben[i].kid then
+				if var.expBack.fubenTimes[j].count > expBackConfig.fuben[i].totalMax then
+					var.expBack.fubenTimes[j].count = expBackConfig.fuben[i].totalMax
+				end
+				--print("flushData fuben kid="..expBackConfig.fuben[i].kid..", count="..var.expBack.fubenTimes[j].count)
+				break
+			end
+		end
+	end
+	local vipLevel = LActor.getVIPLevel(sysarg)
+	for i=1, #expBackConfig.rcrw do
+		local conf = expBackConfig.rcrw[i]
+		for j=1, #var.expBack.rcrwTimes do
+			if var.expBack.rcrwTimes[j].kid == conf.kid then
+				local totalMax = conf.totalMax -- 非VIP的，可累积次数
+				if vipLevel > 0 then
+					totalMax = conf.vipTotalMax[vipLevel]
+				end
+				if var.expBack.rcrwTimes[j].count > totalMax then
+					var.expBack.rcrwTimes[j].count = totalMax
+				end
+				--print("flushData rcrw kid="..var.expBack.rcrwTimes[j].kid..", count="..var.expBack.rcrwTimes[j].count)
+				break
+			end
+		end
+	end
+end
+
+-- 下线时或者在线跨天前把今日剩余下副本或日常任务次数刷到临时变量里
+ExpBackFunc.flushTmpData = function(sysarg, eventType)
+	ExpBackFunc.initData(sysarg)
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil or  var.expBack == nil then return end
+
+	var.expBack.tmpFubenTimes = {}
+	var.expBack.tmpRcrwTimes = {}
+	var.expBack.lastFlushTmpTime = System.getToday() --默认为eventType = 2时，即玩家下线时处理
+	if eventType == 1 then --若玩家跨天，则必须取昨天的时间
+		--print("eventType 1")
+		var.expBack.lastFlushTmpTime = System.getYesterday()
+	end
+	
+	for j=1, #expBackConfig.fuben do
+		local leaveTimes = 0 --剩下次数
+		local kid = expBackConfig.fuben[j].kid
+		local actorLevel = LActor.getIntProperty( sysarg, PROP_LEVEL )
+		if kid ~= nil and FuBen[kid] ~= nil and actorLevel >= FuBen[kid].minLevel then
+			local enterCount, addCount = Fuben.getEnterFubenInfo( sysarg, kid )
+			if enterCount ~= nil and addCount ~= nil and enterCount < expBackConfig.fuben[j].dateMax then
+				leaveTimes = expBackConfig.fuben[j].dateMax - enterCount
+			end
+			local idx = #var.expBack.tmpFubenTimes + 1
+			var.expBack.tmpFubenTimes[idx] = {}
+			var.expBack.tmpFubenTimes[idx].kid = kid
+			var.expBack.tmpFubenTimes[idx].count = leaveTimes
+			--print("flushTmpData fuben kid="..kid..", count="..leaveTimes)
+		end
+	end
+
+	for j=1, #expBackConfig.rcrw do
+		local leaveTimes = 0 --剩下次数
+		local kid = expBackConfig.rcrw[j].kid
+		local actorLevel = LActor.getIntProperty( sysarg, PROP_LEVEL )
+		local expConf = expBackConfig.rcrw[j].exp[1]		
+		
+		if actorLevel >= expConf[1] then
+			if var.star ~= nil and var.star[kid] ~= nil and RefreshQuests[kid] ~= nil then
+				leaveTimes = MiscsImplement.GetLeftRefreshQuestCount(sysarg, RefreshQuests[kid], var.star[kid] )
+			end
+			local idx = #var.expBack.tmpRcrwTimes + 1
+			var.expBack.tmpRcrwTimes[idx] = {}
+			var.expBack.tmpRcrwTimes[idx].kid = kid
+			var.expBack.tmpRcrwTimes[idx].count = leaveTimes
+			--print("flushTmpData rcrw kid="..kid..", count="..leaveTimes)
+		end
+	end
+end
+
+ExpBackFunc.getFubenTimes = function(sysarg)
+	ExpBackFunc.initData(sysarg)
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil or  var.expBack == nil then return end
+
+	local totalCnt = 0
+	local totalExp = 0
+	local fubenData = {}
+	for i=1, #expBackConfig.fuben do
+		local cnt = 0
+		local exp = 0
+		for j=1, #var.expBack.fubenTimes do
+			if var.expBack.fubenTimes[j].kid == expBackConfig.fuben[i].kid then
+				cnt = var.expBack.fubenTimes[j].count
+				exp = cnt * expBackConfig.fuben[i].exp
+				break
+			end
+		end
+
+		fubenData[#fubenData+1] = { kid=expBackConfig.fuben[i].kid, count=cnt, exp=exp }
+		totalCnt = totalCnt + cnt
+		totalExp = totalExp + exp
+		--print("getFubenTimes kid="..expBackConfig.fuben[i].kid..", count="..cnt..", totalExp="..totalExp)
+	end
+	return totalCnt, totalExp, fubenData
+end
+
+ExpBackFunc.getRcrwTimes = function(sysarg)
+	ExpBackFunc.initData(sysarg)
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil or  var.expBack == nil then return end
+
+	local actorLevel = LActor.getIntProperty( sysarg, PROP_LEVEL )
+	local totalCnt = 0
+	local totalExp = 0
+	local rcrwData = {}
+	for i=1, #expBackConfig.rcrw do
+		local cnt = 0
+		local exp = 0
+		for j=1, #var.expBack.rcrwTimes do
+			if var.expBack.rcrwTimes[j].kid == expBackConfig.rcrw[i].kid then
+				local expPerTimes = 0
+				for k=1, #expBackConfig.rcrw[i].exp do
+					if actorLevel >= expBackConfig.rcrw[i].exp[k][1] then
+						expPerTimes = expBackConfig.rcrw[i].exp[k][2]
+					end
+				end
+				cnt = var.expBack.rcrwTimes[j].count
+				exp = cnt * expPerTimes
+				break
+			end
+		end
+		rcrwData[#rcrwData+1] = { kid=expBackConfig.rcrw[i].kid, count=cnt, exp=exp }
+		totalCnt = totalCnt + cnt
+		totalExp = totalExp + exp
+		--print("getFubenTimes kid="..expBackConfig.rcrw[i].kid..", count="..cnt..", totalExp="..totalExp)
+	end
+	return totalCnt, totalExp, rcrwData
+end
+
+ExpBackFunc.clearData = function(sysarg, typeId)
+	ExpBackFunc.initData(sysarg)
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil or  var.expBack == nil then return end
+	if typeId == 1 then
+		var.expBack.fubenTimes = {}
+	elseif typeId == 2 then
+		var.expBack.rcrwTimes = {}
+	end
+	return true
+end
+--=============== end 辅助函数 ======================
+
+
+
+
+--======================协议=======================
+ExpBackFunc.getCostMoney = function ( sysarg, typeId, way )
+	local totalCnt = nil 
+	local totalExp = nil
+	local data = nil
+	if typeId == 1 then --副本
+		totalCnt, totalExp, data = ExpBackFunc.getFubenTimes(sysarg) 
+	elseif typeId == 2 then --日常任务
+		totalCnt, totalExp, data = ExpBackFunc.getRcrwTimes(sysarg) 
+	end
+	if totalCnt == nil or totalExp== nil or data == nil then
+		return
+	end
+
+	local tax = nil
+	if typeId == 1 and way == 1 then
+		tax =  expBackConfig.fubenTax[1]
+	elseif typeId == 1 and way == 2 then
+		tax =  expBackConfig.fubenTax[2]
+	elseif typeId == 2 and way == 1 then
+		tax =  expBackConfig.rcrwTax[1]
+	elseif typeId == 2 and way == 2 then
+		tax =  expBackConfig.rcrwTax[2]
+	end
+	if tax == nil then
+		return
+	end
+
+	local money = 0
+	if tax.type == 1 then
+		money =  math.floor( totalExp * tax.taxMoney / tax.exp )
+	end
+	return money
+end
+
+ExpBackFunc.sendExpBackInfo = function(sysarg, msgid, dp)
+	if ExpBackFunc.isClose() then
+		LActor.sendTipmsg( sysarg, Lang.ScriptTips.eb001, ttMessage )
+		return
+	end
+	--print("type(dp)="..type(dp))
+	local typeId = DataPack.readByte( dp )	--类型
+	--print("ExpBackFunc.sendExpBackInfo typeId="..typeId)
+	local totalCnt = nil 
+	local totalExp = nil
+	local data = nil
+	local flag = true
+
+	local totalCnt1, totalExp1, data1 = ExpBackFunc.getFubenTimes(sysarg) 
+	local totalCnt2, totalExp2, data2 = ExpBackFunc.getRcrwTimes(sysarg) 
+
+	if totalCnt1 == nil or totalExp1 == nil or data1 == nil then
+		flag = false
+	end
+	if totalCnt2 == nil or totalExp2 == nil or data2 == nil then
+		flag = false
+	end
+	if  not flag then
+		return
+	end
+
+	local status = 0
+	--status = System.bitOpSetMask(status, 0, (totalExp1 > 0))
+	--status = System.bitOpSetMask(status, 1, (totalExp2 > 0))
+	
+	local tax = nil
+	if typeId == 1 then --副本
+		totalCnt = totalCnt1
+		totalExp = totalExp1
+		data = data1
+		tax =  expBackConfig.fubenTax[2]
+	elseif typeId == 2 then --日常任务
+		totalCnt = totalCnt2
+		totalExp = totalExp2
+		data = data2
+		tax =  expBackConfig.rcrwTax[2]
+	end
+
+	local money = 0
+	if tax == nil then
+		return
+	end
+	if totalExp < tax.exp then
+		money = tax.taxMoney
+	else
+		money =  math.floor( totalExp * tax.taxMoney / tax.exp )
+	end
+
+	if totalExp > 0 then status = 1 end
+
+	local npack = DataPack.allocPacket(sysarg,139,70)
+	if npack == nil then return end
+	DataPack.writeByte(npack, typeId)
+	DataPack.writeByte(npack, status)
+	DataPack.writeInt(npack, totalExp)
+	DataPack.writeInt(npack, money)
+	--print("sendExpBackInfo money:"..money..",totalExp:"..totalExp)
+	DataPack.writeInt(npack, #data)
+	for i=1, #data do
+		DataPack.writeInt(npack, data[i].kid)
+		DataPack.writeInt(npack, data[i].count)
+	end
+	DataPack.flush(npack)
+end
+
+ExpBackFunc.getExpBackAward = function(sysarg, msgid, dp)
+	if ExpBackFunc.isClose() then
+		LActor.sendTipmsg( sysarg, Lang.ScriptTips.eb001, ttMessage )
+		return
+	end
+	local typeId = DataPack.readByte( dp )	--类型
+	local way = DataPack.readByte( dp )	--领取方式
+	--local force = DataPack.readByte( dp )	--领取方式
+	if typeId == nil or way == nil then
+		return
+	end
+	local moneytype = DataPack.readByte(dp)
+	--print("ExpBackFunc.getExpBackAward type="..typeId..",way="..way..",force="..force)
+	local totalCnt = nil 
+	local totalExp = nil
+	local data = nil
+	if typeId == 1 then --副本
+		totalCnt, totalExp, data = ExpBackFunc.getFubenTimes(sysarg) 
+	elseif typeId == 2 then --日常任务
+		totalCnt, totalExp, data = ExpBackFunc.getRcrwTimes(sysarg) 
+	end
+	if totalCnt == nil or totalExp== nil or data == nil then
+		return
+	end
+
+	local tax = nil
+	if typeId == 1 and way == 1 then
+		tax =  expBackConfig.fubenTax[1]
+	elseif typeId == 1 and way == 2 then
+		tax =  expBackConfig.fubenTax[2]
+	elseif typeId == 2 and way == 1 then
+		tax =  expBackConfig.rcrwTax[1]
+	elseif typeId == 2 and way == 2 then
+		tax =  expBackConfig.rcrwTax[2]
+	end
+	if tax == nil then
+		return
+	end
+
+	local expAward = math.floor( totalExp * tax.expRate/10000 )
+	--print("expAward ======================= "..expAward)
+	local flag = false
+	if tax.type == 1 then
+		local money = 0
+		if totalExp < tax.exp then
+			money = tax.taxMoney
+		else
+			money =  math.floor( totalExp * tax.taxMoney / tax.exp )
+		end
+		if moneytype == nil or moneytype ~= mtYuanbao and moneytype ~= mtBindYuanbao then return end
+		if not LActor.CheckMoneyEnough( sysarg, moneytype, money) then
+			return 
+		end
+		--[[if force ~= 1 then
+			local npack = DataPack.allocPacket(sysarg,139,77)
+			if npack == nil then return end
+			DataPack.writeInt(npack, money)
+			DataPack.flush(npack)
+			return
+		end]]
+		flag = LActor.changeMoney( sysarg, moneytype, -money , 1, true, "expback", "expback_100_percent" )
+	else
+		flag = true
+	end
+	local flag2 = ExpBackFunc.clearData(sysarg, typeId)
+	if flag and flag2 then
+		local add = LActor.addExp( sysarg, expAward, 0 , 0) --加经验
+		local npack = DataPack.allocPacket(sysarg,139,68)
+		if npack == nil then return end
+		DataPack.writeInt(npack, add)
+		DataPack.flush(npack)
+	end
+end
+
+--=================== end 协议=====================
+
+-- MiscsImplement.registerMsgHandler(70, ExpBackFunc.sendExpBackInfo )
+-- MiscsImplement.registerMsgHandler(71, ExpBackFunc.getExpBackAward )
+
+ExpBackFunc.dayEndEvent = function(sysarg)
+	ExpBackFunc.flushTmpData(sysarg, 1)
+end
+
+ExpBackFunc.logoutEvent = function(sysarg)
+	ExpBackFunc.flushTmpData(sysarg, 2)
+end
+
+-- EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogout, ExpBackFunc.logoutEvent)
+-- EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeDayEnd, ExpBackFunc.dayEndEvent)
+-- EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, ExpBackFunc.flushData)
+
+--=============== test ======================
+testsendExpBackInfo = function( sysarg )
+	ExpBackFunc.sendExpBackInfo(sysarg)
+end
+
+getExpBackAward = function( sysarg )
+	ExpBackFunc.getExpBackAward(sysarg)
+end
+--=============== end test ======================

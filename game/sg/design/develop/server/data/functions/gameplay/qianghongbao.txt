@@ -1,0 +1,2452 @@
+--抢红包
+--#include "data\language\zh-cn\scripttips.txt"
+--#include "data\config\gameplay\qianghongbaoconfig.txt" once
+--#include "data\functions\systems\timereward\activityautorun.txt" once
+
+CMD = {
+	HONGBAO_Gift = 1,		--发红包
+	HONGBAO_QIANG = 2,				--抢红包
+	HONGBAO_List = 3,				--请求红包列表
+	HONGBAO_Rizhi = 4,				--下发红包日志
+	HONGBAO_Getrizhi = 5,
+	-- QIN_QIU_PK_RESULT = 6,
+}
+
+HONGBAO = {              --红包的类型
+	ONE_HONGBAO = 1,	--个人红包
+	TEAM_HONGBAO = 2,    --组队红包
+	GUILD_HONGBAO = 3,   --宗门红包
+	WORLD_HONGBAO = 4,   --世界红包
+	SYSTEM_HONGBAO = 5,  --系统红包
+
+}
+
+
+
+qianghongbao = {}
+
+
+--定时器，用于返回2个小时后的金额
+qianghongbao.RefreshSystemHB = function ()
+	--print("==========进入了定时器")
+	local var = System.getStaticVar()
+	local ranks = {}
+	local money = 0         --红包剩余的金额
+	
+	local maxCount = var.LuckyMoneyCount
+	--print("=====定时器出错了"..maxCount)
+	if var.LuckyMoneyCount  then 
+		for i = 1,var.LuckyMoneyCount do
+			if var.LuckyMoneyList[i] ~= nil then	  --判断申请列中是否存在空值
+				ranks[i] = {}
+				ranks[i].time = var.LuckyMoneyList[i].time
+				ranks[i].aId = var.LuckyMoneyList[i].aId
+				ranks[i].pos = var.LuckyMoneyList[i].pos 
+				money = var.LuckyMoneyList[i].tMoney - var.LuckyMoneyList[i].uMoney
+				--print("=====定时器出错了"..ranks[i].time + 3600 * QiangHongBao.time,System.getCurrMiniTime())
+				if ranks[i].time + 3600 * QiangHongBao.time <= System.getCurrMiniTime() then       --超过2小时删掉信息
+					System.sendGmMailOffLine(ranks[i].aId, string.format(Lang.ScriptTips.qhb0012, rank), 2, mtYuanbao, money, 1, Lang.ScriptTips.qhb0013)
+					--print("=====定时器出错了"..ranks[i].pos)
+					qianghongbao.RefreshHB(var.LuckyMoneyList,ranks[i].pos,maxCount)
+					var.LuckyMoneyCount = var.LuckyMoneyCount - 1
+				end
+			end
+		end
+	end	
+	if var.HONGBAO_SystemListCount  then 
+		maxCount = var.HONGBAO_SystemListCount
+		for i = 1,var.HONGBAO_SystemListCount  do
+			if var.HONGBAO_SystemList[i] ~= nil then	  --ÅÐ¶ÏÉêÇëÁÐÖÐÊÇ·ñ´æÔÚ¿ÕÖµ
+				ranks[i] = {}
+				ranks[i].time = var.HONGBAO_SystemList[i].time
+				ranks[i].aId = var.HONGBAO_SystemList[i].aId
+				ranks[i].pos = var.HONGBAO_SystemList[i].pos 
+				money = var.HONGBAO_SystemList[i].tMoney - var.HONGBAO_SystemList[i].uMoney
+				--print("=====¶¨Ê±Æ÷³ö´íÁË"..ranks[i].time + 3600 * QiangHongBao.time,System.getCurrMiniTime())
+				if ranks[i].time + 3600 * QiangHongBao.time <= System.getCurrMiniTime() then       --³¬¹ý2Ð¡Ê±É¾µôÐÅÏ¢
+					--System.sendGmMailOffLine(ranks[i].aId, string.format(Lang.ScriptTips.qhb0012, rank), 2, mtYuanbao, money, 1, Lang.ScriptTips.qhb0013)
+					--print("=====¶¨Ê±Æ÷³ö´íÁË"..ranks[i].pos)
+					if var.HONGBAO_SystemListCount == 1 then
+						qianghongbao.ClearHB(var.HONGBAO_SystemList,maxCount)
+					else
+					 	qianghongbao.RefreshHB(var.HONGBAO_SystemList,ranks[i].pos,maxCount)
+					end
+					var.HONGBAO_SystemListCount = var.HONGBAO_SystemListCount - 1
+				end
+			end
+		end
+	end	
+end
+qianghongbao.RefreshactorHB = function (sysarg)
+	--print("==========进入了定时器")
+	local var = LActor.getStaticVar(sysarg)
+	local pGuild = LActor.getGuildPtr(sysarg)
+	local Gvar = LGuild.getStaticVar(pGuild)
+	local ranks = {}
+	local money = 0         --红包剩余的金额
+	if var.LuckyMoneyList and var.LuckyMoneyListCount ~= nil then 
+		local maxCount = var.LuckyMoneyListCount
+		if var.LuckyMoneyListCount > 0 then
+			for i = 1,var.LuckyMoneyListCount do
+				if var.LuckyMoneyList[i] ~= nil then	  --判断申请列中是否存在空值
+					ranks[i] = {}
+					ranks[i].time = var.LuckyMoneyList[i].time
+					ranks[i].aId = var.LuckyMoneyList[i].aId
+					ranks[i].pos = var.LuckyMoneyList[i].pos
+					--print("=====定时器里面的",dump(ranks[i])) 
+					money = var.LuckyMoneyList[i].tMoney - var.LuckyMoneyList[i].uMoney
+					if ranks[i].time + 3600 * QiangHongBao.time <= System.getCurrMiniTime() then       --超过2小时删掉信息
+						System.sendGmMailOffLine(ranks[i].aId, string.format(Lang.ScriptTips.qhb0012, rank), 2, mtYuanbao, money, 1, Lang.ScriptTips.qhb0013)
+						qianghongbao.RefreshHB(var.LuckyMoneyList,ranks[i].pos,maxCount)
+						var.LuckyMoneyListCount = var.LuckyMoneyListCount - 1
+					end
+				end
+			end
+		end
+	end
+	if not Gvar then return end
+	if not Gvar.LuckyMoneyList and not Gvar.LuckyMoneyCount then return end
+	maxCount = Gvar.LuckyMoneyCount
+	if Gvar.LuckyMoneyCount > 0 then
+		for i = 1,Gvar.LuckyMoneyCount do
+			if Gvar.LuckyMoneyList[i] ~= nil then	  --判断申请列中是否存在空值
+				ranks[i] = {}
+				ranks[i].time = Gvar.LuckyMoneyList[i].time
+				ranks[i].aId = Gvar.LuckyMoneyList[i].aId
+				ranks[i].pos = Gvar.LuckyMoneyList[i].pos 
+				money = Gvar.LuckyMoneyList[i].tMoney - Gvar.LuckyMoneyList[i].uMoney
+				if ranks[i].time + 3600 * QiangHongBao.time <= System.getCurrMiniTime() then       --超过2小时删掉信息
+					System.sendGmMailOffLine(ranks[i].aId, string.format(Lang.ScriptTips.qhb0012, rank), 2, mtYuanbao, money, 1, Lang.ScriptTips.qhb0013)
+					qianghongbao.RefreshHB(Gvar.LuckyMoneyList,ranks[i].pos,maxCount)
+					Gvar.LuckyMoneyCount = Gvar.LuckyMoneyCount - 1
+				end
+			end	
+		end	
+	end
+end
+--一分钟定时器
+table.insert(TimeFnTable, qianghongbao.RefreshSystemHB)
+table.insert(ActorTimeFnTable, qianghongbao.RefreshactorHB)
+
+
+qianghongbao.RefreshHB = function (HB_list,pos,maxCount)
+	for i=pos, maxCount - 1 do
+		HB_list[i].aId = HB_list[i + 1].aId
+		HB_list[i].tMoney = HB_list[i + 1].tMoney --ºì°üµÄÔ­Ê¼½ðÇ®ÊýÁ¿
+		HB_list[i].tCount = HB_list[i + 1].tCount --ºì°üµÄÔ­Ê¼ÊýÁ¿
+		HB_list[i].uMoney = HB_list[i + 1].uMoney --ÒÑ±»ÇÀµÄ½ðÇ®ÊýÁ¿
+		HB_list[i].uCount = HB_list[i + 1].uCount --ÒÑ±»ÇÀµÄºì°üÊýÁ¿
+		HB_list[i].Channel = HB_list[i + 1].Channel --ÄÇ¸öÆµµÀµÄºì°ü
+		HB_list[i].type = HB_list[i + 1].type     --ºì°üµÄÀàÐÍ
+		HB_list[i].pos = HB_list[i + 1].pos       --ºì°üµÄÎ»ÖÃ
+		HB_list[i].Scrambles = {}
+		HB_list[i].CScrambles = 0
+		for j=1, HB_list[i + 1].CScrambles do
+			HB_list[i].Scrambles[j] = HB_list[i + 1].Scrambles[j]
+		end
+		HB_list[i].CScrambles = HB_list[i + 1].CScrambles
+	end
+end
+
+qianghongbao.ClearHB = function (HB_list,pos)
+	--print("======ÔÙ´Î¿Óµù") 
+	HB_list[pos] = {}	
+	HB_list[pos].aId = 0
+	HB_list[pos].pos = 0 					
+	HB_list[pos].type = 0
+	HB_list[pos].Channel = 0
+	HB_list[pos].tMoney = 0
+	HB_list[pos].tCount = 0
+	HB_list[pos].uMoney = 0
+	HB_list[pos].uCount = 0
+	HB_list[pos].Scrambles = {}
+	HB_list[pos].CScrambles = 0
+	HB_list[pos].name = nil
+	HB_list[pos].context = nil
+	HB_list[pos].time = 0
+	HB_list[pos].Team = {}
+	HB_list[pos].TeamCount = 0
+end
+
+---------------------------------------------------------------------------------------
+----------------------------------业务分割线-------------------------------------------
+---------------------------------------------------------------------------------------
+
+
+
+function QHBHandleNetworkData(sysarg, sysid, msgid, dp)
+	local nCmd = msgid
+	if CMD.HONGBAO_Gift == nCmd then
+		qianghongbao.Gift(sysarg,dp)
+	elseif CMD.HONGBAO_QIANG == nCmd then
+		qianghongbao.Scramble(sysarg,dp)
+	elseif CMD.HONGBAO_Updata == nCmd then
+		qianghongbao.Gift(sysarg,dp)
+	elseif CMD.HONGBAO_Rizhi == nCmd then
+		qianghongbao.SendLogs(sysarg)
+	elseif CMD.HONGBAO_Getrizhi == nCmd then
+	 	qianghongbao.GetLogs(sysarg)
+	end
+end
+
+
+
+--发红包
+qianghongbao.Gift = function(sysarg,dp)
+	--封测只有gm才能发红包
+	-- if LActor.getGmLevel(sysarg) <= 0 then
+	-- 	LActor.sendTipmsg(sysarg, Lang.ScriptTips.qhb0018, ttMessage)
+	-- 	return
+	-- end
+	local id = DataPack.readInt(dp)     
+	local type = DataPack.readInt(dp)   --红包类型
+	local Channel = DataPack.readInt(dp)  --发红包的频道
+	local count = DataPack.readInt(dp)   --红包个数
+	local money = DataPack.readInt(dp)   --红包的金额
+	local context = DataPack.readString(dp)  --祝福语
+	local var = LActor.getStaticVar(sysarg)
+	--qianghongbao.create_rand_money(money,count)
+	if var == nil then return end
+	local MaxCount = 0     				--发红包限制个数
+
+	if not var.luckyMoneytime  then
+		var.luckyMoneytime = 0
+	end
+
+	if not var.HB_money then   		--记录红包金额总数
+		var.HB_money = 0
+	end
+
+	if not var.HB_Count then        --记录红包总数
+		var.HB_Count = 0
+	end
+
+	-- 限制发红包金额
+	if var.hongbao_max_recharge == nil then
+		var.hongbao_max_recharge = 0
+	end
+	if var.HB_money + money > var.hongbao_max_recharge then
+		--LActor.sendTipmsg(sysarg, Lang.ScriptTips.qhb0017, ttMessage)
+		local count = var.hongbao_max_recharge - var.HB_money
+		if count > LActor.getMoneyCount(sysarg, mtYuanbao) then
+			count = LActor.getMoneyCount(sysarg, mtYuanbao)
+		end
+		if count <= 0 then
+			count = 0
+		end
+		LActor.SendGeneralTips(sysarg, 8, 0, count)
+		return
+	end
+	
+	if var then
+
+		if var.LuckyMoneyList == nil then
+			var.LuckyMoneyList = {}
+		end
+		if var.LuckyMoneyCount == nil then
+			var.LuckyMoneyCount = 0
+		end
+
+		if Channel == HONGBAO.ONE_HONGBAO then                                     --对方不在线
+			local actor = LActor.getActorById(id)
+			if not actor then                          
+				LActor.sendTipmsg(sysarg,Lang.ScriptTips.qhb0015,ttMessage)  
+				return
+			end
+			if count > 1 then
+				LActor.sendTipmsg(sysarg,Lang.ScriptTips.qhb0016,ttMessage)   
+				return
+			end 
+
+			if LActor.getLevel(actor) < QiangHongBao.minilevel then
+				LActor.sendTipmsg(sysarg,Lang.scripttips.qhb0017,ttMessage)
+				return
+			end
+			MaxCount = 1
+		elseif Channel == 2 then
+			local teamid = LActor.getTeamId(sysarg)
+			local teamptr = TeamFun.getTeam(teamid)
+			MaxCount = TeamFun.getMemberCount(teamptr) - 1	
+		elseif Channel == 3 then
+			local guildId = LActor.getGuildId(sysarg)
+			local pGuild = LActor.getGuildPtr(sysarg)
+			MaxCount = LGuild.getGuildMemberCount(pGuild) - 1	
+		elseif Channel == 4 then
+			MaxCount = QiangHongBao.count
+		end
+
+		if count > MaxCount then
+			LActor.sendTipmsg(sysarg,Lang.ScriptTips.qhb0016,ttMessage) 	--各种类型红包的个数上限限制
+			return
+		end
+
+		if money > LActor.getMoneyCount(sysarg, mtYuanbao) then
+			--LActor.sendTipmsg(sysarg,Lang.ScriptTips.qhb0001,ttMessage)		--元宝不足
+			LActor.SendGeneralTips(sysarg, 8, 0, LActor.getMoneyCount(sysarg, mtYuanbao))
+			return
+		end
+		-- local enough = LActor.CheckMoneyEnough(sysarg, mtYuanbao, money, true)
+		-- if enough == false then 
+		-- 	print("---ggggggggg")
+		-- 	LActor.SendGeneralTips(sysarg, 8, 0, shengyu)
+		-- 	return 
+		-- end
+
+		if LActor.getLevel(sysarg) < QiangHongBao.levelLimit then
+			LActor.sendTipmsg(sysarg,Lang.scripttips.qhb0008,ttMessage)      --等级不足
+			return
+		end
+
+		if money < count then
+			LActor.sendTipmsg(sysarg,Lang.scripttips.qhb0010,ttMessage)     --不能发小于红包个数的天珠数
+			return
+		end
+
+		if money > QiangHongBao.maxmoeny then
+			LActor.sendTipmsg(sysarg,Lang.scripttips.qhb0011,ttMessage)     --天珠过大
+			return
+		end
+
+		if type == 2 then
+			local temp_add = math.mod(money,count)
+			money = money - temp_add
+			if temp_add > 0 then
+				System.sendGmMailOffLine(LActor.getActorId(sysarg), string.format(Lang.ScriptTips.qhb0012), 2, mtYuanbao, temp_add, 1, Lang.ScriptTips.qhb0013)
+			end
+		end
+		
+		if var.luckyMoneytime > QiangHongBao.maxCount then
+			LActor.sendTipmsg(sysarg,Lang.ScriptTips.qhb0004,ttMessage)      --每天发送红包的次数已达上限
+			return
+		end
+
+		if money > QiangHongBao.maxmoeny then
+			LActor.sendTipmsg(sysarg,Lang.ScriptTips.qhb0005,ttMessage)      --不能超过金额上限
+		end
+
+		if LActor.changeMoney(sysarg, mtYuanbao, -money, 1, true, "qianghongbao", "Gift") then
+
+			if Channel == HONGBAO.ONE_HONGBAO then
+				qianghongbao.addLuckyMoney(sysarg,id, Channel, type, money, count, context)     --发送个人红包
+			elseif Channel == 2 then
+				qianghongbao.addteamLuckyMoney(sysarg,id,Channel,type,money,count,context)  	--发送组队红包
+			elseif Channel == 3 or Channel == 4 then
+				qianghongbao.addmenyLuckyMoney(sysarg,id, Channel,type, money, count, context)		--发送宗门和世界红包
+			end
+			if Channel == 4 then
+				local aName = LActor.getName(sysarg) or ""
+				-- print("=====抢红包世界提示",ScriptTips.qhb0002)
+				local tips = string.format(ScriptTips.qhb0014, aName)   --抢红包世界发提示
+				System.broadcastTipmsg(tips, ttGmTip)
+				
+				activityFunc.onSendHongBaoRebate(sysarg,money)
+			end
+			
+			-- local tip = 
+			-- LActor.sendTipmsg(sysarg,Lang.ScriptTips.)
+			if not var.HB_page then  --第一次发红包给个标记
+				var.HB_page = 0 
+			end
+			var.HB_Count = var.HB_Count + 1  --记录该玩家的发红包的
+			var.HB_money = var.HB_money + money   
+			var.luckyMoneytime = var.luckyMoneytime + 1     --每天发红包的次数
+			local HB_money = var.HB_money  --记录该玩家的发红包的金额
+			local time = System.getCurrMiniTime()  --记录发红包的时间
+			if var.HB_page == 0 then
+			    --保存玩家发送红包的金额
+				System.SendToDb(1, 95, 4, 
+					dtInt, LActor.getActorId(sysarg),
+					dtInt, 1,
+					dtInt, HB_money,
+					dtInt, time)
+				var.HB_page = 1
+			elseif var.HB_page == 1 then
+				System.SendToDb(1, 95, 4, 
+					dtInt, LActor.getActorId(sysarg),
+					dtInt, 2,
+					dtInt, HB_money,
+					dtInt, time)
+			end
+		end
+
+		LActor.OnQuestEvent(qtSendRedPacket, 0, 1, true, sysarg)
+	end
+end
+
+
+--抢红包
+qianghongbao.Scramble = function(sysarg,dp)
+
+	local aId = DataPack.readInt(dp)    
+	local Channel = DataPack.readInt(dp)  --红包所在的频道
+	local type = DataPack.readInt(dp)     --红包的类型
+	local position = DataPack.readInt(dp) --红包的索引
+	
+	local key = DataPack.readInt(dp)     
+	local final = DataPack.readString(dp)
+	local name = LActor.getName(sysarg)
+	local nvar = LActor.getStaticVar(sysarg)
+	local var = nil 
+	local maxCount = 0     --红包列表的数量
+	local HB_list = nil
+	local Money_type = 0
+
+	--print("=======客户端的",position,Channel)
+	if Channel == HONGBAO.ONE_HONGBAO or Channel == HONGBAO.TEAM_HONGBAO then   --抢个人红包和组队红包
+
+		var = LActor.getStaticVar(sysarg)
+
+		if not var.LuckyMoneyListCount then
+			var.LuckyMoneyListCount = 0
+		end
+
+		if var.LuckyMoneyList == nil then
+			var.LuckyMoneyList = {}
+		end
+
+		maxCount = var.LuckyMoneyListCount
+		HB_list = var.LuckyMoneyList
+		Money_type = 3
+	elseif Channel == HONGBAO.GUILD_HONGBAO then  				--抢宗门红包
+
+		local guildId = LActor.getGuildId(sysarg)
+		local pGuild = LActor.getGuildPtr(sysarg)
+		var = LGuild.getStaticVar(pGuild)
+
+		if not var.LuckyMoneyCount then
+			var.LuckyMoneyCount = 0
+		end
+
+		if var.LuckyMoneyList == nil then
+			var.LuckyMoneyList = {}
+		end
+
+		maxCount = var.LuckyMoneyCount
+		HB_list = var.LuckyMoneyList
+		Money_type = 3
+	elseif Channel == HONGBAO.WORLD_HONGBAO then    			--抢世界红包
+		var = System.getStaticVar()
+
+		if not var.LuckyMoneyCount then
+			var.LuckyMoneyCount = 0
+		end
+
+		if var.LuckyMoneyList == nil then
+			var.LuckyMoneyList = {}
+		end
+
+		maxCount = var.LuckyMoneyCount
+		HB_list = var.LuckyMoneyList
+		Money_type = 3
+	elseif Channel == 5 then
+		var = System.getStaticVar()
+		if not var.HONGBAO_SystemListCount then
+			var.HONGBAO_SystemListCount = 0
+		end
+
+		if var.HONGBAO_SystemList == nil then
+			var.HONGBAO_SystemList = {}
+		end
+
+		maxCount = var.HONGBAO_SystemListCount
+		HB_list = var.HONGBAO_SystemList
+		Money_type = 0
+	end
+
+	if not nvar.HB_Getmoney then 
+		nvar.HB_Getmoney = 0 
+	end
+	if not nvar.HB_Getcount then
+		nvar.HB_Getcount = 0
+	end
+
+	if not var then return end
+
+	if LActor.getLevel(sysarg) < QiangHongBao.levelLimit then
+		LActor.sendTipmsg(sysarg,Lang.ScriptTips.qhb0009,ttMessage)
+		return
+	end
+
+	local count = 0
+	for i = 1,maxCount do
+		if HB_list[i].Channel == Channel then
+			if HB_list[i].pos == position then
+				count = i
+				--print("=====又到这里么？")
+			end
+		end
+	end
+
+	local myselfId = LActor.getActorId(sysarg)
+	local sign = true
+
+	if HB_list[count] then
+
+	if HB_list[count].Scrambles then
+		for j=1, HB_list[count].CScrambles do
+			if HB_list[count].Scrambles[j] == myselfId then
+				sign = false
+				break
+			end
+		end
+	end 
+	local temp_m = HB_list[count].tCount - HB_list[count].uCount
+	local over_m = HB_list[count].tMoney - HB_list[count].uMoney 
+	local id = HB_list[count].aId
+	local job = HB_list[count].job or 0
+	-- if id ~= nil and LActor.getActorById(id) ~= nil then
+	-- 	job =  LActor.getIntProperty(LActor.getActorById(id),PROP_VOCATION)
+	-- end
+	--print("---抢红包 job",job)
+	
+	if sign == true then
+		if temp_m >= 1 then
+			if (HB_list[count].tCount - HB_list[count].uCount) > 1 then	
+				local add_m = 0
+				if HB_list[count].type == 1 then
+					if Channel == 3 or Channel == 4 then
+						if HB_list[count].rand_money ~= nil then
+							add_m = HB_list[count].rand_money[HB_list[count].uCount+1] or 1
+						else
+							add_m = System.getRandomNumber(over_m - temp_m + 1) 
+						end
+					else
+						add_m = System.getRandomNumber(over_m - temp_m + 1) 
+					end
+					if add_m < 1 then
+						add_m = 1
+					end	
+				else
+					add_m = math.floor(HB_list[count].tMoney/HB_list[count].tCount)
+				end
+				if Channel ~= 5 then	
+					nvar.HB_Getmoney = nvar.HB_Getmoney + add_m    --记录抢红包总数量和总金额,贝币红包不记录
+					nvar.HB_Getcount = nvar.HB_Getcount + 1
+				end
+
+				if LActor.changeMoney(sysarg, Money_type, add_m, 1, true, "qianghongbao", "Scramble", tostring(aId)) then
+
+					
+					local npack = DataPack.allocPacket(sysarg, 173, 2)
+					if npack == nil then return end
+						DataPack.writeInt(npack,type)
+						DataPack.writeInt(npack,Channel)
+						DataPack.writeInt(npack, add_m)
+						DataPack.writeInt(npack, job)
+						DataPack.writeString(npack, HB_list[count].context or "")
+						DataPack.writeString(npack, HB_list[count].name or "")
+						DataPack.writeInt(npack, aId)
+						DataPack.writeInt(npack,key)
+						DataPack.writeString(npack,final)
+						DataPack.flush(npack)
+						--print("========发给客户端的",type,add_m,var.LuckyMoneyList[count].context,var.LuckyMoneyList[count].name,aId)
+						local totalMoney = HB_list[count].tMoney
+					
+
+						if Channel == 5 then    					
+							qianghongbao.UpdataSystemHB(sysarg,id,type,Channel,position, 1, add_m)  --更新组队红包
+						else
+							qianghongbao.ScrambleLog(sysarg,type, add_m,HB_list[count].tCount,HB_list[count].uCount,position,Channel,HB_list[count].name)
+							qianghongbao.UpdataSendlog(sysarg,aId,name,add_m,position,Channel)    --更新发送红包记录
+							--qianghongbao.UpdataScrambleLog(sysarg,name,add_m,position,Channel)
+							qianghongbao.UpdataScrambleLog(sysarg,HB_list[count].name,add_m,position,Channel)
+							--print("=====111111111")
+							qianghongbao.updateLuckyMoney(sysarg,id,type,Channel,position, 1, add_m,count)
+						end
+						-- for i=1,maxCount do
+						-- 	local info = HB_list[i]
+						-- 	if info then
+						-- 		print("--222 info  aId:"..info.aId.." Channel:"..info.Channel.." tMoney:"..info.tMoney.." tCount:"..info.tCount.." uCount:"..info.uCount.." pos:"..info.pos)
+						-- 	end
+						-- end
+						--print("=====添加到红包日志",type, money,var.LuckyMoneyList[count].tCount,var.LuckyMoneyList[count].uCount,position)		
+						return
+					end
+				elseif (HB_list[count].tCount - HB_list[count].uCount) == 1 then
+					local add_m = HB_list[count].tMoney - HB_list[count].uMoney
+					if Channel ~= 5 then
+						nvar.HB_Getmoney = nvar.HB_Getmoney + add_m    --记录抢红包总数量和总金额
+						nvar.HB_Getcount = nvar.HB_Getcount + 1
+					end
+					if LActor.changeMoney(sysarg, Money_type, add_m, 1, true, "qianghongbao", "Scramble", tostring(aId)) then
+						
+						local npack = DataPack.allocPacket(sysarg, 173, 2)
+						if npack == nil then return end
+						DataPack.writeInt(npack,type)
+						DataPack.writeInt(npack,Channel)
+						DataPack.writeInt(npack, add_m)
+						DataPack.writeInt(npack, job)
+						DataPack.writeString(npack, HB_list[count].context or "")
+						DataPack.writeString(npack, HB_list[count].name or "")
+						DataPack.writeInt(npack, aId)
+						DataPack.writeInt(npack,key)
+						DataPack.writeString(npack,final)
+						DataPack.flush(npack)
+						
+						
+						if Channel == 5 then
+							qianghongbao.UpdataSystemHB(sysarg,id,type,Channel,position, 1, add_m)
+						else
+							qianghongbao.ScrambleLog(sysarg,type, add_m,HB_list[count].tCount,HB_list[count].uCount,position,Channel,HB_list[count].name)
+							qianghongbao.UpdataSendlog(sysarg,aId,name,add_m,position,Channel)    --更新发送红包记录
+							--qianghongbao.UpdataScrambleLog(sysarg,name,add_m,position,Channel)
+							qianghongbao.UpdataScrambleLog(sysarg,HB_list[count].name,add_m,position,Channel)
+							--print("=====222222222")
+							qianghongbao.updateLuckyMoney(sysarg, id,type,Channel,position, 1, add_m,count)
+						end
+						-- for i=1,maxCount do
+						-- 	local info = HB_list[i]
+						-- 	if info then
+						-- 		print("--222 info  aId:"..info.aId.." Channel:"..info.Channel.." tMoney:"..info.tMoney.." tCount:"..info.tCount.." uCount:"..info.uCount.." pos:"..info.pos)
+						-- 	end
+						-- end
+						return
+					elseif (HB_list[count].tCount - HB_list[count].uCount) < 1 then
+						LActor.sendTipmsg(sysarg,Lang.ScriptTips.qhb0007,ttMessage)
+					end
+				end
+			end
+		end
+	end
+
+	local npack = DataPack.allocPacket(sysarg,173,1)
+	if npack == nil then return end
+	DataPack.writeChar(npack, 1)
+	DataPack.writeInt(npack, position)
+	DataPack.writeInt(npack, aId)
+	DataPack.writeInt(npack,type)
+	DataPack.writeInt(npack,Channel)
+	--DataPack.writeInt(npack, job)
+	DataPack.writeInt(npack, 0)
+	DataPack.writeInt(npack, 0)
+	DataPack.writeString(npack, name)
+	DataPack.flush(npack)
+
+	--print("+========抢红包提示")
+
+	local npack = DataPack.allocPacket(sysarg, 173, 2)
+	if npack == nil then return end
+	DataPack.writeInt(npack,type)
+	DataPack.writeInt(npack, position)
+	DataPack.writeInt(npack, -1)
+	DataPack.writeInt(npack, 0)
+	DataPack.writeString(npack,nil)
+	DataPack.writeString(npack,name)
+	DataPack.writeInt(npack, 0)
+	DataPack.writeInt(npack,key)
+	DataPack.writeString(npack,final)
+	DataPack.flush(npack)
+	--print("====count:"..count.." uCount:"..HB_list[count].uCount.." position:"..position)
+	
+end
+
+--发送红包列表
+qianghongbao.SendLuckyMoneys = function(sysarg)
+	local var = LActor.getStaticVar(sysarg)
+	local guildId = LActor.getGuildId(sysarg)
+	local pGuild = LActor.getGuildPtr(sysarg)
+	local Pvar = LGuild.getStaticVar(pGuild)
+	local Svar = System.getStaticVar()
+	local myselfId = LActor.getActorId(sysarg)
+	local level = LActor.getLevel(sysarg)
+	local sigh = true    --标识是否被抢过的红包
+
+	--print("=====玩家的id"..myselfId)
+	if QiangHongBao.minilevel > level then   --小于最小等级则不下发
+		--print("+====难道是这里return掉？",level,QiangHongBao.minilevel)
+		return
+	end
+
+	if not var.LuckyMoneyList then
+		var.LuckyMoneyList = {}
+	end
+
+	if Pvar then
+		if not Pvar.LuckyMoneyList then
+			Pvar.LuckyMoneyList = {}
+		end
+	end
+
+	if not Svar.LuckyMoneyList then
+		Svar.LuckyMoneyList = {}
+	end
+
+	if not var.LuckyMoneyListCount then
+		var.LuckyMoneyListCount = 0
+	end
+
+	if Pvar then
+		if not Pvar.LuckyMoneyCount then
+			Pvar.LuckyMoneyCount = 0
+		end
+	end
+
+	if not Svar.LuckyMoneyCount then
+		Svar.LuckyMoneyCount = 0
+	end
+
+	local count = 0
+	local count1 = 0
+	local count2 = 0
+	local count3 = 0
+
+	for i = 1,var.LuckyMoneyListCount do 
+		if var.LuckyMoneyList[i] ~= nil then
+			count1 = count + 1
+		end
+	end
+
+	if Pvar then
+		for i = 1,Pvar.LuckyMoneyCount do 
+			if Pvar.LuckyMoneyList[i] ~= nil then
+				count2 = count + 1
+			end
+		end
+	end
+
+	if Svar.LuckyMoneyCount ~= 0 then
+		for i = 1,Svar.LuckyMoneyCount do 
+			if Svar.LuckyMoneyList[i] ~= nil then
+				count3 = count + 1
+			end
+		end
+	end
+	
+	count = count1 + count2 + count3
+	local m = 0
+	local tmp = {}
+	for i = 1,var.LuckyMoneyListCount do
+		if var.LuckyMoneyList[i] then
+			if var.LuckyMoneyList[i].aId ~= myselfId then
+				if var.LuckyMoneyList[i].Scrambles then
+					for j=1, var.LuckyMoneyList[i].CScrambles do
+						if var.LuckyMoneyList[i].Scrambles[j] == myselfId then
+							sigh = false
+							break
+						end
+					end
+				end
+				if sigh == true then
+					m = m + 1
+					tmp[m] = {}
+					tmp[m].pos = var.LuckyMoneyList[i].pos
+					tmp[m].aId = var.LuckyMoneyList[i].aId
+					tmp[m].type = var.LuckyMoneyList[i].type
+					tmp[m].Channel = var.LuckyMoneyList[i].Channel
+					tmp[m].tMoney = var.LuckyMoneyList[i].tMoney
+					tmp[m].tCount = var.LuckyMoneyList[i].tCount
+					tmp[m].uMoney = var.LuckyMoneyList[i].uMoney
+					tmp[m].uCount = var.LuckyMoneyList[i].uCount
+					tmp[m].Scrambles = var.LuckyMoneyList[i].Scrambles
+					tmp[m].CScrambles = var.LuckyMoneyList[i].CScrambles
+					tmp[m].name = var.LuckyMoneyList[i].name 
+					tmp[m].context = var.LuckyMoneyList[i].context
+				end
+			end
+		end
+	end
+	
+	sigh = true
+	if Pvar then
+		for i = 1,Pvar.LuckyMoneyCount do
+			if Pvar.LuckyMoneyList[i] then
+				if Pvar.LuckyMoneyList[i].aId ~= myselfId then
+					if Pvar.LuckyMoneyList[i].Scrambles then
+						for j=1, Pvar.LuckyMoneyList[i].CScrambles do
+		 					if Pvar.LuckyMoneyList[i].Scrambles[j] == myselfId then
+		 						sigh = false
+		 						break
+		 					end
+		 				end
+		 			end
+		 			if sigh == true then
+		 				m = m + 1
+						tmp[m] = {}
+						tmp[m].pos = Pvar.LuckyMoneyList[i].pos
+						tmp[m].aId = Pvar.LuckyMoneyList[i].aId
+						tmp[m].type = Pvar.LuckyMoneyList[i].type
+						tmp[m].Channel = Pvar.LuckyMoneyList[i].Channel
+						tmp[m].tMoney = Pvar.LuckyMoneyList[i].tMoney
+						tmp[m].tCount = Pvar.LuckyMoneyList[i].tCount
+						tmp[m].uMoney = Pvar.LuckyMoneyList[i].uMoney
+						tmp[m].uCount = Pvar.LuckyMoneyList[i].uCount
+						tmp[m].Scrambles = Pvar.LuckyMoneyList[i].Scrambles
+						tmp[m].CScrambles = Pvar.LuckyMoneyList[i].CScrambles
+						tmp[m].name = Pvar.LuckyMoneyList[i].name 
+						tmp[m].context = Pvar.LuckyMoneyList[i].context
+					end
+				end
+			end
+		end
+	end
+
+	sigh = true
+	if Svar.LuckyMoneyList then
+		for i = 1, Svar.LuckyMoneyCount do
+			if Svar.LuckyMoneyList[i] then
+				if Svar.LuckyMoneyList[i].Scrambles then
+					for k=1, Svar.LuckyMoneyList[i].CScrambles do					
+					 	if Svar.LuckyMoneyList[i].Scrambles[k] == myselfId then
+					 		sigh = false
+					 		break
+					 	end
+					end
+				end
+				if sigh == true then
+					m = m + 1
+					tmp[m] = {}
+					tmp[m].pos = Svar.LuckyMoneyList[i].pos
+					tmp[m].aId = Svar.LuckyMoneyList[i].aId
+					tmp[m].type = Svar.LuckyMoneyList[i].type
+					tmp[m].Channel = Svar.LuckyMoneyList[i].Channel
+					tmp[m].tMoney = Svar.LuckyMoneyList[i].tMoney
+					tmp[m].tCount = Svar.LuckyMoneyList[i].tCount
+					tmp[m].uMoney = Svar.LuckyMoneyList[i].uMoney
+					tmp[m].uCount = Svar.LuckyMoneyList[i].uCount
+					tmp[m].Scrambles = Svar.LuckyMoneyList[i].Scrambles
+					tmp[m].CScrambles = Svar.LuckyMoneyList[i].CScrambles
+					tmp[m].name = Svar.LuckyMoneyList[i].name 
+					tmp[m].context = Svar.LuckyMoneyList[i].context
+				end
+			end
+		end
+	end
+		
+	if var then
+		local npack = DataPack.allocPacket(sysarg, 173, 3)
+		if npack == nil then return end
+		DataPack.writeInt(npack, m)
+		for i=1,m  do
+			-- local luckyMoney = gChildVar.LuckyMoneyList[i]
+			if tmp[i] then
+				DataPack.writeInt(npack, tmp[i].pos)
+				DataPack.writeInt(npack, tmp[i].aId)
+				DataPack.writeInt(npack,tmp[i].type)
+				DataPack.writeInt(npack,tmp[i].Channel)
+				DataPack.writeInt(npack, tmp[i].tCount)
+				DataPack.writeInt(npack, tmp[i].uCount)
+				DataPack.writeString(npack,tmp[i].name)
+
+				--print("=========红包的列表",dump(tmp[i])) 
+			end
+		end
+		DataPack.flush(npack)
+	end
+end
+--生成随机红包
+qianghongbao.create_rand_money = function ( var,money, count)
+    local allmoney = money
+    local mannumber = count
+   --print("=======生成随机红包 money:"..money.."  count:"..count)
+    if var.rand_money == nil then
+    	var.rand_money = {}
+    end
+    allmoney = allmoney - mannumber;
+    local x = 1
+    local total = 0
+    for i = mannumber,1,-1 do
+    	local min = 1
+    	local max = allmoney / i * 2
+    	local money = 0
+    	if i == 1 then
+    		money = 1 + allmoney
+    		allmoney = 0
+    	else
+    		money = math.floor((System.getRandomNumber(1000)+1)/1000 * max)
+    		allmoney = allmoney - money
+    		money = money + 1
+    		if money <= min then
+    			money = 1
+    		end
+    	end
+    	var.rand_money[#var.rand_money + 1] = money
+    	print("--随机红包 i="..x.."  money:"..money)
+    	x = x + 1
+    	total = total + money
+    end
+    --print("--total="..total)
+end
+
+
+qianghongbao.find_myselfId = function (sysarg,HB_list,count,myselfId)
+	if HB_list[count].Scrambles then
+		for j=1, HB_list[count].CScrambles do
+			if HB_list[count].Scrambles[j] == myselfId then
+				return false
+			end
+		end
+	end 
+	return true
+end
+
+--增加组队红包
+qianghongbao.addteamLuckyMoney = function (sysarg,id,Channel,type,money,count,context)
+	local id = LActor.getTeamId(sysarg)
+	local teamptr = TeamFun.getTeam(id)
+	local members = TeamFun.getMemberList(teamptr)
+	local teamcount = TeamFun.getMemberCount(teamptr)
+	local aId = LActor.getActorId(sysarg)
+	local aName = LActor.getName(sysarg)
+	local job = LActor.getIntProperty(sysarg,PROP_VOCATION)
+	local pos = 0
+	local m = 1
+	local pid = 0       --队友id
+	local var = nil
+
+	if count == 1 then    --在队伍发一个红包的时候
+		local ptr = nil
+		for i = 1,table.getn(members) do
+			if TeamFun.getMemberActor(members[i]) ~= sysarg then
+				ptr = TeamFun.getMemberActor(members[i])
+				pid = LActor.getActorId(ptr)
+				var = LActor.getStaticVar(ptr)
+				--print("=====var",ptr)
+				if not var.LuckyMoneyList then
+					var.LuckyMoneyList = {}
+				end
+				if not var.LuckyMoneyListCount then
+					var.LuckyMoneyListCount = 0
+				end
+
+				pos = var.LuckyMoneyListCount + 1		
+				var.LuckyMoneyList[pos] = {}
+				var.LuckyMoneyList[pos].pos = pos	
+				var.LuckyMoneyList[pos].aId = aId 					--往两个玩家添加红包记录
+				var.LuckyMoneyList[pos].job = job
+				var.LuckyMoneyList[pos].type = type
+				var.LuckyMoneyList[pos].Channel = Channel
+				var.LuckyMoneyList[pos].tMoney = money
+				var.LuckyMoneyList[pos].tCount = 1
+				var.LuckyMoneyList[pos].uMoney = 0
+				var.LuckyMoneyList[pos].uCount = 0
+				var.LuckyMoneyList[pos].Scrambles = {}
+				var.LuckyMoneyList[pos].CScrambles = 0
+				var.LuckyMoneyList[pos].name = aName
+				var.LuckyMoneyList[pos].context = context
+				var.LuckyMoneyList[pos].time = System.getCurrMiniTime()            --记录该红包时间
+				var.LuckyMoneyList[pos].Team = {}
+				var.LuckyMoneyList[pos].TeamCount = 0
+				var.LuckyMoneyListCount = pos
+
+				local npack = DataPack.allocPacket(ptr,173,1)
+				if npack == nil then return end
+				DataPack.writeChar(npack, 0)
+				DataPack.writeInt(npack, pos)
+				DataPack.writeInt(npack, aId)
+				DataPack.writeInt(npack,type)
+				DataPack.writeInt(npack,Channel)
+				--DataPack.writeInt(npack,job)
+				DataPack.writeInt(npack, 1)
+				DataPack.writeInt(npack, 0)
+				DataPack.flush(npack)
+			end
+		end
+		for i = 1,table.getn(members) do
+			if TeamFun.getMemberActor(members[i]) ~= sysarg then
+				ptr = TeamFun.getMemberActor(members[i])
+				pid = LActor.getActorId(ptr)
+				var = LActor.getStaticVar(ptr)
+				for k = 1,table.getn(members) do 
+	 				if TeamFun.getMemberActor(members[k]) ~= sysarg then
+	 					pid = LActor.getActorId(TeamFun.getMemberActor(members[k]))		
+			 			var.LuckyMoneyList[pos].TeamCount = var.LuckyMoneyList[pos].TeamCount +1
+			 			var.LuckyMoneyList[pos].Team[var.LuckyMoneyList[pos].TeamCount] = pid
+			 			--print("=====经过多少轮这个",TeamFun.getMemberActor(members[k]),sysarg,pos,var.LuckyMoneyList[pos].Team[var.LuckyMoneyList[pos].TeamCount])
+			 		end
+			 	end
+			end	 
+		end
+	elseif count == 2 then    --在队伍发两个红包的额时候先把天珠随机好
+		local ptr = nil
+		local pid = 0
+		local var = nil
+		
+		local randommoney = math.max(System.getRandomNumber(money),1)
+		for i = 1,table.getn(members) do
+			if TeamFun.getMemberActor(members[i]) ~= sysarg then
+				ptr = TeamFun.getMemberActor(members[i])
+				pid = LActor.getActorId(ptr)
+				var = LActor.getStaticVar(ptr)
+				if not var.LuckyMoneyList then
+					var.LuckyMoneyList = {}
+				end
+
+				if not var.LuckyMoneyListCount then
+					var.LuckyMoneyListCount = 0
+				end
+				--print("====钱",randommoney)
+				pos = var.LuckyMoneyListCount + 1		
+				var.LuckyMoneyList[pos] = {}
+				var.LuckyMoneyList[pos].pos = pos	
+				var.LuckyMoneyList[pos].aId = aId 					--往两个玩家添加红包记录
+				var.LuckyMoneyList[pos].type = type
+				var.LuckyMoneyList[pos].Channel = Channel
+				var.LuckyMoneyList[pos].tMoney = randommoney
+				var.LuckyMoneyList[pos].tCount = 1
+				var.LuckyMoneyList[pos].uMoney = 0
+				var.LuckyMoneyList[pos].uCount = 0
+				var.LuckyMoneyList[pos].Scrambles = {}
+				var.LuckyMoneyList[pos].CScrambles = 0
+				var.LuckyMoneyList[pos].Team = {}
+				var.LuckyMoneyList[pos].TeamCount = 0
+				var.LuckyMoneyList[pos].name = aName
+				var.LuckyMoneyList[pos].context = context
+				var.LuckyMoneyList[pos].time = System.getCurrMiniTime()            --记录该红包时间
+				var.LuckyMoneyListCount = pos
+
+				local npack = DataPack.allocPacket(ptr,173,1)
+				if npack == nil then return end
+				DataPack.writeChar(npack, 0)
+				DataPack.writeInt(npack, pos)
+				DataPack.writeInt(npack, aId)
+				DataPack.writeInt(npack,type)
+				DataPack.writeInt(npack,Channel)
+				--DataPack.writeInt(npack,job)
+				DataPack.writeInt(npack, 1)
+				DataPack.writeInt(npack, 0)
+				DataPack.flush(npack)
+			end
+			randommoney = money - randommoney 
+		end
+	end
+	local npack = DataPack.allocPacket(sysarg,173,1)
+	if npack == nil then return end
+	DataPack.writeChar(npack, 0)
+	DataPack.writeInt(npack, pos)
+	DataPack.writeInt(npack, aId)
+	DataPack.writeInt(npack,type)
+	DataPack.writeInt(npack,Channel)
+	--DataPack.writeInt(npack,job)
+	DataPack.writeInt(npack, 1)
+	DataPack.writeInt(npack, 0)
+	DataPack.flush(npack)
+
+	qianghongbao.Sendlog(sysarg,type, money,count,0,pos,Channel)			--添加发红包记录	
+	
+	-- local dp = LDataPack.allocPacket()
+	-- if not dp then return end
+	-- LDataPack.writeByte(dp, 173) 
+	-- LDataPack.writeByte(dp, 1)
+	-- LDataPack.writeChar(dp, 0)	--添加红包
+	-- LDataPack.writeInt(dp, pos)
+	-- LDataPack.writeInt(dp, aId)
+	-- LDataPack.writeInt(dp,type)
+	-- LDataPack.writeInt(dp,Channel)
+	-- LDataPack.writeInt(dp, 1)
+	-- LDataPack.writeInt(dp, 0)
+	-- LDataPack.writeString(dp, aName)
+	-- TeamFun.broadcast(teamptr, dp)
+end						
+
+--添加个人红包
+qianghongbao.addLuckyMoney = function(sysarg,id,Channel, type, money, count, context)
+	 --发送个人红包的时候往对方插一条记录
+	local ptr = LActor.getActorById(id)
+	local var = LActor.getStaticVar(ptr)
+	if not var then 
+		LActor.sendTipmsg(sysarg,Lang.ScriptTips.key0001,ttMessage)
+		return
+	end
+
+	if var.LuckyMoneyList == nil then
+		var.LuckyMoneyList = {}
+	end
+	if var.LuckyMoneyListCount == nil then
+		var.LuckyMoneyListCount = 0
+	end
+
+
+	local id = var.HB_id
+	local aId = LActor.getActorId(sysarg)
+	local aName = LActor.getName(sysarg)
+	local job = LActor.getIntProperty(sysarg,PROP_VOCATION)
+	local pos = var.LuckyMoneyListCount + 1
+--	print("+=======",pos)
+	var.LuckyMoneyList[pos] = {}
+	var.LuckyMoneyList[pos].pos = pos
+	var.LuckyMoneyList[pos].aId = aId
+	var.LuckyMoneyList[pos].job = job
+	var.LuckyMoneyList[pos].type = type
+	var.LuckyMoneyList[pos].Channel = Channel
+	var.LuckyMoneyList[pos].tMoney = money
+	var.LuckyMoneyList[pos].tCount = count
+	var.LuckyMoneyList[pos].uMoney = 0
+	var.LuckyMoneyList[pos].uCount = 0
+	var.LuckyMoneyList[pos].Scrambles = {}
+	var.LuckyMoneyList[pos].CScrambles = 0
+	var.LuckyMoneyList[pos].Team = {}
+	var.LuckyMoneyList[pos].TeamCount = 0
+	var.LuckyMoneyList[pos].name = aName
+	var.LuckyMoneyList[pos].context = context
+	var.LuckyMoneyList[pos].time = System.getCurrMiniTime()            --记录该红包时间
+	var.LuckyMoneyListCount = pos
+
+	qianghongbao.Sendlog(sysarg,type, money,count,0,pos,Channel)			--添加发红包记录
+	local Dvar = System.getDyanmicVar()    
+	if Dvar then
+		if Dvar.Contexts == nil then
+			Dvar.Contexts = {}
+		end
+		Dvar.Contexts[pos] = {}
+		Dvar.Contexts[pos].aName = aName
+		Dvar.Contexts[pos].context = context
+	end
+	rank = {}
+	rank[pos] = {}
+	rank[pos].aName = Dvar.Contexts[pos].aName
+	rank[pos].context = Dvar.Contexts[pos].context
+
+	local npack = DataPack.allocPacket(ptr,173,1)
+	if npack == nil then return end
+	DataPack.writeChar(npack, 0)
+	DataPack.writeInt(npack, pos)
+	DataPack.writeInt(npack, aId)
+	DataPack.writeInt(npack,type)
+	DataPack.writeInt(npack,Channel)
+	--DataPack.writeInt(npack,job)
+	DataPack.writeInt(npack, count)
+	DataPack.writeInt(npack, var.LuckyMoneyList[pos].uCount)
+	DataPack.writeString(npack,aName)
+	DataPack.flush(npack)
+
+	local npack = DataPack.allocPacket(sysarg,173,1)
+	if npack == nil then return end
+	DataPack.writeChar(npack, 0)
+	DataPack.writeInt(npack, pos)
+	DataPack.writeInt(npack, aId)
+	DataPack.writeInt(npack,type)
+	DataPack.writeInt(npack,Channel)
+	--DataPack.writeInt(npack,job)
+	DataPack.writeInt(npack, count)
+	DataPack.writeInt(npack, var.LuckyMoneyList[pos].uCount)
+	DataPack.flush(npack)
+
+end
+
+
+
+
+
+--添加多人红包
+qianghongbao.addmenyLuckyMoney = function(sysarg,id,Channel, type, money, count, context)
+	local pGuild = 0
+	local var = nil 
+	if Channel == 3 then
+		pGuild = LActor.getGuildPtr(sysarg)
+		var = LGuild.getStaticVar(pGuild)
+	elseif Channel == 4 then
+		var = System.getStaticVar()
+	end
+
+    if pGuild == nil then 
+    	print("======没有加入宗门")
+    	return 
+    end
+  
+	local aId = LActor.getActorId(sysarg)
+	local name = LActor.getName(sysarg)
+	local job = LActor.getIntProperty(sysarg,PROP_VOCATION)
+	local nvar = LActor.getStaticVar(sysarg)
+
+	if not nvar.HB_id then
+		nvar.HB_id = 0
+	end
+	local id = nvar.HB_id
+	if not var then 
+		--print("=======宗门var出错=======")
+		return
+	end
+	if not var.LuckyMoneyCount then
+			var.LuckyMoneyCount = 0
+	end
+
+	
+
+	if not var.LuckyMoneyList then
+		var.LuckyMoneyList = {}
+	end
+	local pos = var.LuckyMoneyCount + 1
+	--print("========红包个数"..pos)
+	var.LuckyMoneyList[pos] = {}
+	-- local luckyMoney = gChildVar.LuckyMoneyList[pos]
+	var.LuckyMoneyList[pos].pos = pos
+	var.LuckyMoneyList[pos].aId = aId
+	var.LuckyMoneyList[pos].job = job
+	var.LuckyMoneyList[pos].type = type
+	var.LuckyMoneyList[pos].Channel = Channel
+	var.LuckyMoneyList[pos].tMoney = money --红包的原始金钱数量
+	var.LuckyMoneyList[pos].tCount = count --红包的原始数量
+	var.LuckyMoneyList[pos].uMoney = 0 --已被抢的金钱数量
+	var.LuckyMoneyList[pos].uCount = 0 --已被抢的红包数量
+	var.LuckyMoneyList[pos].Scrambles = {}
+	var.LuckyMoneyList[pos].CScrambles = 0
+	var.LuckyMoneyList[pos].Team = {}
+	var.LuckyMoneyList[pos].TeamCount = 0
+	var.LuckyMoneyList[pos].name = name
+	var.LuckyMoneyList[pos].context = context
+	var.LuckyMoneyList[pos].time = System.getCurrMiniTime()
+	var.LuckyMoneyCount = pos
+	if type == 1 then
+		qianghongbao.create_rand_money(var.LuckyMoneyList[pos],money,count)
+	end
+	
+	qianghongbao.Sendlog(sysarg,type, money,count,0,pos,Channel)			--添加发红包记录
+
+	if var then
+		if var.Contexts == nil then
+			var.Contexts = {}
+		end
+		var.Contexts[pos] = {}
+		var.Contexts[pos].aName = name
+		var.Contexts[pos].context = context
+	end
+	if Channel == 3 then
+		local dp = LDataPack.allocPacket()
+		if dp == nil then return end
+		LDataPack.writeByte(dp, 173)
+		LDataPack.writeByte(dp, 1)
+		LDataPack.writeChar(dp, 0)
+		LDataPack.writeInt(dp, pos)
+		LDataPack.writeInt(dp, aId)
+		LDataPack.writeInt(dp,type)
+		LDataPack.writeInt(dp,Channel)
+		--LDataPack.writeInt(dp,job)
+		LDataPack.writeInt(dp, count)
+		LDataPack.writeInt(dp, var.LuckyMoneyList[pos].uCount)
+		LDataPack.writeString(dp, name)
+		LGuild.broadcastData(pGuild,dp)
+
+		local npack = DataPack.allocPacket(sysarg,173,1)
+		if npack == nil then return end
+		DataPack.writeChar(npack, 0)
+		DataPack.writeInt(npack, pos)
+		DataPack.writeInt(npack, aId)
+		DataPack.writeInt(npack,type)
+		DataPack.writeInt(npack,Channel)
+		--DataPack.writeInt(npack,job)
+		DataPack.writeInt(npack, count)
+		DataPack.writeInt(npack, 0)
+		DataPack.flush(npack)
+
+	elseif Channel == 4 then
+		local dp = LDataPack.allocPacket()
+		if dp == nil then return end
+		LDataPack.writeByte(dp, 173)
+		LDataPack.writeByte(dp, 1)
+		LDataPack.writeChar(dp, 0)
+		LDataPack.writeInt(dp, pos)
+		LDataPack.writeInt(dp, aId)
+		LDataPack.writeInt(dp,type)
+		LDataPack.writeInt(dp,Channel)
+		--LDataPack.writeInt(dp,job)
+		LDataPack.writeInt(dp, count)
+		LDataPack.writeInt(dp, var.LuckyMoneyList[pos].uCount)
+		LDataPack.writeString(dp, name)
+		System.broadcastData(dp)
+
+		local npack = DataPack.allocPacket(sysarg,173,1)
+		if npack == nil then return end
+		DataPack.writeChar(npack, 0)
+		DataPack.writeInt(npack, pos)
+		DataPack.writeInt(npack, aId)
+		DataPack.writeInt(npack,type)
+		DataPack.writeInt(npack,Channel)
+		--DataPack.writeInt(npack,job)
+		DataPack.writeInt(npack, count)
+		DataPack.writeInt(npack, 0)
+		DataPack.flush(npack)
+	end
+end
+
+
+
+--更新红包
+qianghongbao.updateLuckyMoney = function(sysarg,id,type,Channel,position, uCount, uMoney, count)	
+	--print("===更新红包："..Channel.." position:"..position)
+	local var = nil 
+	local maxCount = 0
+--	local count = 0
+	if Channel == 1 or Channel == 2 then
+		var = LActor.getStaticVar(sysarg)
+		maxCount = var.LuckyMoneyListCount
+	elseif Channel == 3 then
+		local guildId = LActor.getGuildId(sysarg)
+		local pGuild = LActor.getGuildPtr(sysarg)
+		var = LGuild.getStaticVar(pGuild)
+		maxCount = var.LuckyMoneyCount
+	elseif Channel == 4 then
+		var = System.getStaticVar()
+		maxCount = var.LuckyMoneyCount
+	end
+
+
+	-- for i = 1,maxCount do
+	-- 	if var.LuckyMoneyList[i].Channel == Channel then
+	-- 		if var.LuckyMoneyList[i].pos == position then
+	-- 			count = i
+	-- 			break
+	-- 		end
+	-- 	end
+	-- end
+
+	var.LuckyMoneyList[count].uCount = var.LuckyMoneyList[count].uCount + uCount
+	var.LuckyMoneyList[count].uMoney = var.LuckyMoneyList[count].uMoney + uMoney
+
+	local id = var.LuckyMoneyList[count].aId
+	local name = var.LuckyMoneyList[count].name
+	local over_m = var.LuckyMoneyList[count].tMoney - var.LuckyMoneyList[count].uMoney
+	local over_c = var.LuckyMoneyList[count].tCount - var.LuckyMoneyList[count].uCount
+	local Dvar = LActor.getDyanmicVar(sysarg)
+	--print("====maxCount:"..maxCount.." count:"..count)
+	
+	if over_m < 1 or over_c < 1 then
+		--组队红包的特殊处理
+		if Channel == 2 then
+			--print("==1")
+			local pid = 0
+			--print("======",var.LuckyMoneyList[count].TeamCount,sysarg)
+			if var.LuckyMoneyList[count].TeamCount > 1 then
+				--print("==2")
+				if var.LuckyMoneyList[count].Team then
+					for i = 1, var.LuckyMoneyList[count].TeamCount do 
+						
+						if var.LuckyMoneyList[count].Team[i] ~= LActor.getActorId(sysarg) then
+							pid = var.LuckyMoneyList[count].Team[i]	
+						end
+					end
+				end
+				local ptr = LActor.getActorById(pid)
+				if not ptr then return end
+				--print("====")
+				local Pvar = LActor.getStaticVar(ptr)
+				local teamHB = Pvar.LuckyMoneyListCount
+				if maxCount ==1 then
+					
+					Pvar.LuckyMoneyList[teamHB] = {}	
+					Pvar.LuckyMoneyList[teamHB].aId = 0
+					Pvar.LuckyMoneyList[teamHB].pos = 0 					
+					Pvar.LuckyMoneyList[teamHB].type = 0
+					Pvar.LuckyMoneyList[teamHB].Channel = 0
+					Pvar.LuckyMoneyList[teamHB].tMoney = 0
+					Pvar.LuckyMoneyList[teamHB].tCount = 0
+					Pvar.LuckyMoneyList[teamHB].uMoney = 0
+					Pvar.LuckyMoneyList[teamHB].uCount = 0
+					Pvar.LuckyMoneyList[teamHB].Scrambles = {}
+					Pvar.LuckyMoneyList[teamHB].CScrambles = 0
+					Pvar.LuckyMoneyList[teamHB].name = nil
+					Pvar.LuckyMoneyList[teamHB].context = nil
+					Pvar.LuckyMoneyList[teamHB].time = 0
+					Pvar.LuckyMoneyList[teamHB].Team = {}
+					Pvar.LuckyMoneyList[teamHB].TeamCount = 0
+					--Pvar.LuckyMoneyList[teamHB].rand_money = {}
+					Pvar.LuckyMoneyListCount = 0
+				else
+					--print("==3")	
+					for i=count, teamHB - 1 do
+						Pvar.LuckyMoneyList[i].aId = Pvar.LuckyMoneyList[i + 1].aId
+						Pvar.LuckyMoneyList[i].tMoney = Pvar.LuckyMoneyList[i + 1].tMoney --红包的原始金钱数量
+						Pvar.LuckyMoneyList[i].tCount = Pvar.LuckyMoneyList[i + 1].tCount --红包的原始数量
+						Pvar.LuckyMoneyList[i].uMoney = Pvar.LuckyMoneyList[i + 1].uMoney --已被抢的金钱数量
+						Pvar.LuckyMoneyList[i].uCount = Pvar.LuckyMoneyList[i + 1].uCount --已被抢的红包数量
+						Pvar.LuckyMoneyList[i].Channel = Pvar.LuckyMoneyList[i + 1].Channel --那个频道的红包
+						Pvar.LuckyMoneyList[i].type = Pvar.LuckyMoneyList[i + 1].type     --红包的类型
+						Pvar.LuckyMoneyList[i].time = Pvar.LuckyMoneyList[i + 1].time     --红包的类型
+						Pvar.LuckyMoneyList[i].pos = Pvar.LuckyMoneyList[i + 1].pos       --红包的位置
+						-- Pvar.LuckyMoneyList[i].rand_money = {}
+						-- for j=1,#Pvar.LuckyMoneyList[i+1].rand_money do
+						-- 	Pvar.LuckyMoneyList[i].rand_money[j] = Pvar.LuckyMoneyList[i+1].rand_money[j]
+						-- 	--print("====wwwww:"..var.LuckyMoneyList[i+1].rand_money[j])
+						-- end
+						Pvar.LuckyMoneyList[i].Scrambles = {}
+						Pvar.LuckyMoneyList[i].CScrambles = 0
+						for j=1, Pvar.LuckyMoneyList[i + 1].CScrambles do
+							Pvar.LuckyMoneyList[i].Scrambles[j] = Pvar.LuckyMoneyList[i + 1].Scrambles[j]
+						end
+						var.LuckyMoneyList[i].CScrambles = var.LuckyMoneyList[i + 1].CScrambles
+						for j=1, var.LuckyMoneyList[i + 1].TeamCount do
+							var.LuckyMoneyList[i].Team[j] = var.LuckyMoneyList[i + 1].Team[j]
+						end
+						Pvar.LuckyMoneyList[i].CScrambles = Pvar.LuckyMoneyList[i + 1].CScrambles
+						Pvar.LuckyMoneyList[Pvar.LuckyMoneyListCount] = nil
+						Pvar.LuckyMoneyListCount = Pvar.LuckyMoneyListCount - 1
+					end
+				end
+			end
+		end
+		--print("=======删除的个数",count,maxCount)	
+		if 	maxCount == 1 then
+			--print("==4")
+			var.LuckyMoneyList[1] = {}	
+			var.LuckyMoneyList[maxCount].aId = 0 
+			var.LuckyMoneyList[maxCount].pos = 0 					
+			var.LuckyMoneyList[maxCount].type = 0
+			var.LuckyMoneyList[maxCount].Channel = 0
+			var.LuckyMoneyList[maxCount].tMoney = 0
+			var.LuckyMoneyList[maxCount].tCount = 0
+			var.LuckyMoneyList[maxCount].uMoney = 0
+			var.LuckyMoneyList[maxCount].uCount = 0
+			var.LuckyMoneyList[maxCount].Scrambles = {}
+			var.LuckyMoneyList[maxCount].CScrambles = 0
+			var.LuckyMoneyList[maxCount].name = nil
+			var.LuckyMoneyList[maxCount].context = nil
+			var.LuckyMoneyList[maxCount].time = 0
+			var.LuckyMoneyList[maxCount].Team = {}
+			var.LuckyMoneyList[maxCount].TeamCount = 0
+			if var.LuckyMoneyList[maxCount].rand_money ~= nil then
+				var.LuckyMoneyList[maxCount].rand_money = {}
+			end
+			if Channel == 1 or Channel == 2 then
+				var.LuckyMoneyListCount = 0
+			else
+				var.LuckyMoneyCount = 0
+			end
+		else
+			--print("==5")
+			for i=count, maxCount - 1 do
+				var.LuckyMoneyList[i].aId = var.LuckyMoneyList[i + 1].aId
+				var.LuckyMoneyList[i].tMoney = var.LuckyMoneyList[i + 1].tMoney --红包的原始金钱数量
+				var.LuckyMoneyList[i].tCount = var.LuckyMoneyList[i + 1].tCount --红包的原始数量
+				var.LuckyMoneyList[i].uMoney = var.LuckyMoneyList[i + 1].uMoney --已被抢的金钱数量
+				var.LuckyMoneyList[i].uCount = var.LuckyMoneyList[i + 1].uCount --已被抢的红包数量
+				--print("========:"..var.LuckyMoneyList[i + 1].uCount)
+				var.LuckyMoneyList[i].Channel = var.LuckyMoneyList[i + 1].Channel --那个频道的红包
+				var.LuckyMoneyList[i].type = var.LuckyMoneyList[i + 1].type     --红包的类型
+				var.LuckyMoneyList[i].time = var.LuckyMoneyList[i + 1].time     --红包的类型
+				var.LuckyMoneyList[i].pos = var.LuckyMoneyList[i + 1].pos       --红包的位置
+				if var.LuckyMoneyList[i+1].rand_money ~= nil then
+					var.LuckyMoneyList[i].rand_money = {}
+					for j=1,#var.LuckyMoneyList[i+1].rand_money do
+						var.LuckyMoneyList[i].rand_money[j] = var.LuckyMoneyList[i+1].rand_money[j]
+						--print("====rrrrrrr:"..var.LuckyMoneyList[i+1].rand_money[j])
+					end
+				end
+				--print("========111:"..var.LuckyMoneyList[i].uCount)
+				var.LuckyMoneyList[i].Scrambles = {}
+				var.LuckyMoneyList[i].CScrambles = 0
+				for j=1, var.LuckyMoneyList[i + 1].CScrambles do
+					var.LuckyMoneyList[i].Scrambles[j] = var.LuckyMoneyList[i + 1].Scrambles[j]
+				end
+				var.LuckyMoneyList[i].CScrambles = var.LuckyMoneyList[i + 1].CScrambles
+				for j=1, var.LuckyMoneyList[i + 1].TeamCount do
+					var.LuckyMoneyList[i].Team[j] = var.LuckyMoneyList[i + 1].Team[j]
+				end
+				var.LuckyMoneyList[i].TeamCount = var.LuckyMoneyList[i + 1].TeamCount
+			end
+			if Channel == 1 or Channel == 2 then
+				var.LuckyMoneyList[var.LuckyMoneyListCount] = nil
+				var.LuckyMoneyListCount = var.LuckyMoneyListCount - 1
+			elseif Channel == 3 or Channel == 4 then			
+				var.LuckyMoneyList[var.LuckyMoneyCount] = nil
+				var.LuckyMoneyCount = var.LuckyMoneyCount - 1
+				--print("====666666666")
+			end
+		end
+		local Sysvar = System.getStaticVar(sysarg)
+		if not Sysvar.HBCount then
+			Sysvar.HBCount = 0
+		end
+		Sysvar.HBCount = Sysvar.HBCount + 1
+
+			
+			
+		local npack = DataPack.allocPacket(sysarg,173,1)
+		--print("======在这里删除红包")
+		if npack == nil then return end
+		DataPack.writeChar(npack, 1)
+		DataPack.writeInt(npack, position)
+		DataPack.writeInt(npack, id)
+		DataPack.writeInt(npack, type)
+		DataPack.writeInt(npack, Channel)
+		--DataPack.writeInt(npack, 0)
+		DataPack.writeInt(npack, 0)
+		DataPack.writeInt(npack, 0)
+		DataPack.writeString(npack, name)
+		DataPack.flush(npack)
+	else
+		--print("====6")
+		local aId = var.LuckyMoneyList[count].aId
+		local myselfId = LActor.getActorId(sysarg)
+
+		if var.LuckyMoneyList[count].Scrambles == nil then
+			var.LuckyMoneyList[count].Scrambles = {}
+			var.LuckyMoneyList[count].CScrambles = 0
+		end
+		var.LuckyMoneyList[count].CScrambles = var.LuckyMoneyList[count].CScrambles + 1
+		var.LuckyMoneyList[count].Scrambles[var.LuckyMoneyList[count].CScrambles] = myselfId
+		--print("======在这里删除红包")
+		local npack = DataPack.allocPacket(sysarg,173,1)
+		if npack == nil then return end
+		DataPack.writeChar(npack, 1)
+		DataPack.writeInt(npack, position)
+		DataPack.writeInt(npack, aId)
+		DataPack.writeInt(npack, type)
+		DataPack.writeInt(npack, Channel)
+		--DataPack.writeInt(npack,  0)
+		DataPack.writeInt(npack,  0)
+		DataPack.writeInt(npack,  0)
+		DataPack.writeString(npack,name)
+		DataPack.flush(npack)
+	end
+	--print("=====LuckyMoneyCount:"..var.LuckyMoneyCount) 
+
+	local effects = {}
+    local effect = {}
+    effect.type = 2  -- 2为金钱
+    effect.id = mtYuanbao
+    effect.count = uMoney
+    effects[#effects+1] = effect
+    if #effects > 0 then
+       	MiscFunc.PlayItemEffect(sysarg, 11, effects)
+    end
+end
+
+
+--添加发送红包日志
+qianghongbao.Sendlog = function (sysarg,type, money,count,ucount,pos,Channel)
+	local var = System.getStaticVar()
+	if not var then return end
+	if Channel == HONGBAO.SYSTEM_HONGBAO then return end
+
+	if not var.sendlogs then 
+		var.sendlogs = {}
+	end
+
+	if not var.sendLogsCount then
+		var.sendLogsCount = 0
+	end
+
+	var.sendlogs[var.sendLogsCount + 1] = {}                       --初始化发送红包日志
+	local sendlogs = var.sendlogs[var.sendLogsCount + 1]
+	sendlogs.aId = LActor.getActorId(sysarg)
+	sendlogs.type = type 								
+	sendlogs.count = count 
+	sendlogs.time = System.getCurrMiniTime()
+	sendlogs.money = money  
+	sendlogs.uCount = ucount
+	sendlogs.pos = pos
+	sendlogs.Channel = Channel                           --添加pos，channel作为唯一标记
+	var.sendLogsCount = var.sendLogsCount + 1
+	--print("======sendLogsCount  count:"..var.sendLogsCount.."  pos:"..pos.." money:"..money.."  uCount:"..ucount.."  count:"..count)
+
+
+end
+
+ 
+--更新发送红包日志
+qianghongbao.UpdataSendlog = function (sysarg,aId,name,add_m,position,Channel)
+	local var = System.getStaticVar()
+	local count = 0
+	if not var then return end
+	if Channel == HONGBAO.SYSTEM_HONGBAO then return end
+
+	if not var.sendlogs then
+		var.sendlogs = {}
+	end
+
+	if not var.sendlogs.uCount then
+		var.sendlogs.uCount = 0
+	end
+
+	if not var.sendLogsCount then
+		var.sendLogsCount = 0 
+	end
+	
+	if Channel == 1 or Channel == 2 then
+		for i = 1,var.sendLogsCount do
+			if var.sendlogs[i].Channel == Channel and var.sendlogs[i].pos == position  and var.sendlogs[i].aId == aId then
+				if var.sendlogs[i].uCount < var.sendlogs[i].count then
+					count = i
+					--print("===========ggg"..i)
+					break
+				end
+			end
+		end
+	else
+		for i = 1,var.sendLogsCount do
+			if var.sendlogs[i].Channel == Channel and var.sendlogs[i].pos == position and var.sendlogs[i].aId == aId  then
+				if var.sendlogs[i].uCount < var.sendlogs[i].count then
+					count = i
+					--print("===========ppp"..i)
+					break
+				end
+
+			end
+		end
+	end
+	if count == 0 then return end
+
+	if not var.sendlogs[count].list then
+		var.sendlogs[count].list = {}
+	end
+
+	local index = var.sendlogs[count].uCount + 1
+	--var.sendlogs[count].list = {}
+	var.sendlogs[count].list[index] = {}
+	var.sendlogs[count].list[index].name = name 
+	var.sendlogs[count].list[index].time = System.getCurrMiniTime()
+	var.sendlogs[count].list[index].memony = add_m
+	var.sendlogs[count].uCount = var.sendlogs[count].uCount + 1
+	--print("========>>>>>>var.sendlogs[count].uCount:"..var.sendlogs[count].uCount.." name"..var.sendlogs[count].list[index].name)
+	--print("===count:"..count.."  position"..position)
+	-- if not var.Logs[position] then
+	-- 	var.Logs[position] = {}
+	-- end
+	-- if not var.Logs.uCount then
+	-- 	var.Logs.uCount = 0
+	-- end
+
+	-- if not var.LogsCount then
+	-- 	var.LogsCount = 0 
+	-- end
+
+	
+	-- local index = var.Logs[count].uCount + 1
+	-- var.Logs[count].list = {}
+	-- var.Logs[count].list[index] = {}
+	-- var.Logs[count].list[index].name = name 
+	-- var.Logs[count].list[index].time = System.getCurrMiniTime()
+	-- var.Logs[count].list[index].memony = add_m
+	-- var.Logs[count].list[index].id = LActor.getActorId(sysarg)
+	-- var.Logs[count].uCount = var.Logs[count].uCount + 1
+
+end
+
+
+
+
+--添加抢红包日志,sysarg=抢红包者,被抢的位置
+qianghongbao.ScrambleLog = function(sysarg,type, money,maxcount,uCount,pos,Channel,send_name)
+	local Svar = System.getStaticVar()
+	local nvar = LActor.getStaticVar(sysarg)
+	local sing = true
+	local HBCount = nvar.HBCount
+
+	if Channel == HONGBAO.SYSTEM_HONGBAO then return end
+	if Channel == HONGBAO.ONE_HONGBAO or Channel == HONGBAO.TEAM_HONGBAO then   --抢个人红包和组队红包
+
+		var = LActor.getStaticVar(sysarg)
+		maxCount = var.LuckyMoneyListCount
+	elseif Channel == HONGBAO.GUILD_HONGBAO then  				--抢宗门红包
+
+		local guildId = LActor.getGuildId(sysarg)
+		local pGuild = LActor.getGuildPtr(sysarg)
+		var = LGuild.getStaticVar(pGuild)
+		maxCount = var.LuckyMoneyCount
+	elseif Channel == HONGBAO.WORLD_HONGBAO then    			--抢世界红包
+		var = System.getStaticVar()
+		maxCount = var.LuckyMoneyCount
+	end
+	for i = 1,maxCount do
+		if var.LuckyMoneyList[i].Channel == Channel then
+			if var.LuckyMoneyList[i].pos == pos then
+				count = i
+			end
+		end
+	end
+	--print("====>>>>.count:"..count)
+	if var.LuckyMoneyList[count] then                    --如果这个红包没有被抢过的话就添加一条记录
+		if var.LuckyMoneyList[count].CScrambles ~= 0 then
+			sing = false
+		end
+	end
+
+
+
+	if Svar then
+		if Svar.Logs == nil then
+			Svar.Logs = {}
+		end
+		if Svar.LogsCount == nil then
+			Svar.LogsCount = 0
+		end
+		if not nvar.HB_Getmoney then
+			nvar.HB_Getmoney = 0
+		end
+		if not nvar.HB_Getcount then
+			nvar.HB_Getcount = 0
+		end
+		
+	
+		if sing == true then
+			local index = Svar.LogsCount + 1
+			Svar.Logs[index] = {}
+			Svar.Logs[index].aId = LActor.getActorId(sysarg)
+			Svar.Logs[index].type = type
+			Svar.Logs[index].count = maxcount
+			Svar.Logs[index].time = System.getCurrMiniTime()
+			Svar.Logs[index].money = money 
+			Svar.Logs[index].uCount = 0
+			Svar.Logs[index].pos = pos
+			Svar.Logs[index].Channel = Channel
+			Svar.Logs[index].HBCount = HBCount
+			Svar.Logs[index].name = send_name
+			Svar.LogsCount = Svar.LogsCount + 1
+			--var.Hb_Log_sigh = 1
+		
+		end
+	end
+end
+
+
+--更新红包日志
+qianghongbao.UpdataScrambleLog = function (sysarg,name,money,position,Channel)
+	--print("=======>>>>>>>>>position:"..position.."Channel:"..Channel)
+	local var = System.getStaticVar()
+	if not var then return end
+	if Channel == HONGBAO.SYSTEM_HONGBAO then return end
+
+	if not var.Logs[position] then
+		--print("---kkkkkkk")
+		var.Logs[position] = {}
+	end
+	if not var.Logs.uCount then
+		var.Logs.uCount = 0
+		--print("---ttttttt")
+	end
+
+	if not var.LogsCount then
+		var.LogsCount = 0 
+		--print("---gggggg")
+	end
+	local count = 0
+	for i = 1,var.LogsCount do
+		if var.Logs[i].Channel == Channel then
+			if var.Logs[i].pos == position then
+				count = i
+				--print("---jjjjjj")
+			end
+		end
+	end
+	--print("+========>>count:"..count)
+	if count == 0 then return end
+	if not var.Logs[count].list then
+		var.Logs[count].list = {}
+		--print("---wwwwwww")
+	end
+	--print("---count",count)
+	local index = var.Logs[count].uCount + 1
+	--print("---index",index)
+	var.Logs[count].list[index] = {}
+	--var.Logs[count].list[index].send_name = name 
+	var.Logs[count].list[index].time = System.getCurrMiniTime()
+	var.Logs[count].list[index].memony = money
+	var.Logs[count].list[index].id = LActor.getActorId(sysarg)
+	var.Logs[count].list[index].name = LActor.getName(sysarg)
+	var.Logs[count].uCount = var.Logs[count].uCount + 1
+	--print("--添加抢红包日志",name,LActor.getName(sysarg),var.Logs[count].uCount)
+end
+	
+
+--获取发红包日志
+qianghongbao.SendLogs = function(sysarg)
+	local var = System.getStaticVar()
+	local Pvar = LActor.getStaticVar(sysarg)
+	local aId = LActor.getActorId(sysarg)
+	if var == nil then return end
+	if var and var.sendLogsCount then
+		if not Pvar.HB_money then
+			Pvar.HB_money = 0
+		end
+		if not Pvar.HB_Count then
+			Pvar.HB_Count = 0
+		end
+		local money = Pvar.HB_money
+		local count = Pvar.HB_Count
+		local total = 0
+		local SendCount = 0
+		for i=1, var.sendLogsCount do
+			if var.sendlogs[i] then
+				if var.sendlogs[i].aId == aId then   --记录日志条数
+					total = total + 1
+				end
+			end
+		end
+		local npack = DataPack.allocPacket(sysarg, 173,4)
+		if npack == nil then return end
+		DataPack.writeInt(npack, total)
+		DataPack.writeInt(npack, money)--money)
+		DataPack.writeInt(npack, count)
+		--print("======发红包数据1",count,var.sendLogsCount)
+		for i=1, var.sendLogsCount do
+			if var.sendlogs[i] then
+				if var.sendlogs[i].aId == aId then
+					DataPack.writeInt(npack,var.sendlogs[i].type)
+					DataPack.writeInt(npack, var.sendlogs[i].time)
+					DataPack.writeInt(npack, var.sendlogs[i].money)
+					DataPack.writeInt(npack, var.sendlogs[i].count)
+					SendCount = var.sendlogs[i].uCount
+					--print("========>>>>>SendCount："..SendCount.."  count"..i)
+					if not var.sendlogs[i].list then SendCount = 0 end
+					DataPack.writeInt(npack,SendCount)				
+					--print("======发红包数据2",SendCount,var.sendlogs[i].count,var.sendlogs[i].money)
+					for j = 1,SendCount do
+						if  var.sendlogs[i].list[j] then
+							DataPack.writeString(npack,var.sendlogs[i].list[j].name)
+							DataPack.writeInt(npack,var.sendlogs[i].list[j].time)
+							DataPack.writeInt(npack,var.sendlogs[i].list[j].memony)
+						end
+					end
+				end
+			end
+		end
+		DataPack.flush(npack)
+	end
+end
+
+--获取抢红包日志
+qianghongbao.GetLogs = function(sysarg)
+	local var = System.getStaticVar()
+	local Pvar = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	if not Pvar then return end
+	local aId = LActor.getActorId(sysarg)
+	if var and var.LogsCount then
+		if not Pvar.HB_Getmoney then 
+			Pvar.HB_Getmoney = 0
+		end
+		if not Pvar.HB_Getcount then
+			Pvar.HB_Getcount = 0
+		end
+		local money = Pvar.HB_Getmoney
+		local count = Pvar.HB_Getcount
+		local total = 0
+		local GetCount = 0
+		for i=1, var.LogsCount do
+			if var.Logs[i] then
+				for k = 1,var.Logs[i].uCount do
+					if var.Logs[i].list[k] then
+						if var.Logs[i].list[k].id == aId then
+							total = total + 1
+						end
+					end
+				end
+			end
+		end
+		local npack = DataPack.allocPacket(sysarg, 173,5)
+		if npack == nil then return end
+		DataPack.writeInt(npack, money)
+		DataPack.writeInt(npack, count)
+		DataPack.writeInt(npack, total)
+		for i=1, var.LogsCount do			
+			if var.Logs[i] then				
+				for k = 1,var.Logs[i].uCount do					
+					if var.Logs[i].list[k] then
+						if var.Logs[i].list[k].id == aId then
+							DataPack.writeInt(npack, var.Logs[i].type)      --红包类型
+							DataPack.writeInt(npack, var.Logs[i].time)     --抢红包时间
+							DataPack.writeInt(npack, var.Logs[i].list[k].memony)   --红包金额
+							DataPack.writeInt(npack, var.Logs[i].count)    --红包总个数
+							DataPack.writeString(npack, var.Logs[i].name)
+							DataPack.writeInt(npack, var.Logs[i].uCount)   --红包已抢个数
+							--DataPack.writeString(npack, var.Logs[i].name)
+							--需要增加一个发送者的名字给前端，前端也要加上去
+							GetCount = var.Logs[i].uCount
+							--print("=====ggggggggg  GetCount  send_name money count uCount",GetCount,var.Logs[i].name,var.Logs[i].money,var.Logs[i].count,var.Logs[i].uCount)
+							if not var.Logs[i].list then GetCount = 0 end
+							for j = 1,GetCount do
+								if var.Logs[i].list[j] then
+									DataPack.writeString(npack,var.Logs[i].list[j].name)    --抢红包名字
+									DataPack.writeInt(npack,var.Logs[i].list[j].time)       --抢红包时间
+									DataPack.writeInt(npack,var.Logs[i].list[j].memony)     --抢到的钱
+									--print("===mmmm",var.Logs[i].list[j].name)
+								end
+							end
+						end
+					end
+				end
+			end
+		end
+		DataPack.flush(npack)
+	end
+end
+
+
+
+--触发系统发红包
+qianghongbao.AwayId = function (sysarg,arg)
+	local id = arg[1]
+	local type = arg[2]
+
+	qianghongbao.SystemHB(sysarg,id,type)
+end
+
+
+qianghongbao.SystemHB = function (sysarg,id,type,sendtips)
+	--print("=====id"..id,type)
+	-- type = 1
+	-- if true then
+	-- 	--print("---红包功能已屏蔽--")
+	-- 	return
+	-- end
+	local flag = true
+	if sendtips == false then
+		flag = false
+	end
+	
+	local var = LActor.getStaticVar(sysarg)
+	local nvar = System.getStaticVar()
+	local name = LActor.getName(sysarg)
+	local str = nil 
+	local tips = nil 
+	local HB_type = tonumber(type)
+	if not var.HONGBAO_list then
+		var.HONGBAO_list = {}
+	end
+	if not nvar.HONGBAO_SystemList then
+		nvar.HONGBAO_SystemList = {}
+	end
+	if not nvar.HONGBAO_SystemListCount then
+		nvar.HONGBAO_SystemListCount = 0
+	end
+
+	local money = 0
+	local conf = QiangHongBao.AwardId
+
+	if id > #conf then 
+		print("not systemhb"..id)
+		return
+	end
+
+	for i = 1,#conf do 
+		if conf[i].id == id then
+			HB_type = conf[i].type
+			str = string.format(conf[i].decs,name) 
+			tips = string.format(conf[i].text,name) 
+		end
+	end
+	
+
+	if not  var.HONGBAO_list[id] then 
+		var.HONGBAO_list[id] = 0
+	end
+
+	
+	if HB_type == 0 then
+		if var.HONGBAO_list[id] ~= 1 then
+			
+			for i = 1,#conf do 
+				if conf[i].id == id then
+					money = conf[i].AwardCount
+					count = conf[i].Count 
+				end
+			end
+
+			if not money and count then 
+				print("+++++++==id不合法"..id)
+				return
+			end
+			qianghongbao.AddSystemhongbao(sysarg,money,count,str,tips,flag)
+			var.HONGBAO_list[id] = 1
+		end
+	elseif HB_type == 1 then
+		for i = 1,#conf do
+			if conf[i].id == id then
+				money = conf[i].AwardCount
+				count = conf[i].Count
+			end
+			i = i + 1
+		end
+		if not money and count then 
+			print("+++++++==id不合法"..id)
+			return
+		end
+		qianghongbao.AddSystemhongbao(sysarg,money,count,str,tips,flag)
+	end
+end
+
+
+--增加系统红包
+qianghongbao.AddSystemhongbao = function(sysarg,money,count,text,tips,flag)
+	
+	local var = System.getStaticVar()
+
+	if not var.HONGBAO_SystemList then
+		var.HONGBAO_SystemList = {}
+	end
+	if not var.HONGBAO_SystemListCount then
+		var.HONGBAO_SystemListCount = 0
+	end
+	local aId = LActor.getActorId(sysarg)
+	local type = 2
+	local Channel = 5
+	local aName = "系统"
+
+	
+	if flag then
+		System.broadcastTipmsg(tips, ttGmTip)
+	end
+
+	if var.HONGBAO_SystemListCount >= QiangHongBao.SysMaxcount then
+		return
+	end
+
+	--增加红包
+
+	local pos = var.HONGBAO_SystemListCount + 1
+	var.HONGBAO_SystemList[pos] = {}
+	var.HONGBAO_SystemList[pos].pos = pos
+	var.HONGBAO_SystemList[pos].aId = aId
+	var.HONGBAO_SystemList[pos].type = type
+	var.HONGBAO_SystemList[pos].Channel = Channel
+	var.HONGBAO_SystemList[pos].tMoney = money
+	var.HONGBAO_SystemList[pos].tCount = count
+	var.HONGBAO_SystemList[pos].uMoney = 0
+	var.HONGBAO_SystemList[pos].uCount = 0
+	var.HONGBAO_SystemList[pos].Scrambles = {}
+	var.HONGBAO_SystemList[pos].CScrambles = 0
+	var.HONGBAO_SystemList[pos].Team = {}
+	var.HONGBAO_SystemList[pos].TeamCount = 0
+	var.HONGBAO_SystemList[pos].name = aName
+	var.HONGBAO_SystemList[pos].context = text
+	var.HONGBAO_SystemList[pos].time = System.getCurrMiniTime() 
+	var.HONGBAO_SystemListCount = pos
+
+	--通知客户端
+		local dp = LDataPack.allocPacket()
+		if dp == nil then return end
+		LDataPack.writeByte(dp, 173)
+		LDataPack.writeByte(dp, 1)
+		LDataPack.writeChar(dp, 0)
+		LDataPack.writeInt(dp, pos)
+		LDataPack.writeInt(dp, aId)
+		LDataPack.writeInt(dp,type)
+		LDataPack.writeInt(dp,Channel)
+		--LDataPack.writeInt(dp, 0)
+		LDataPack.writeInt(dp, count)
+		LDataPack.writeInt(dp, var.HONGBAO_SystemList[pos].uCount)
+		LDataPack.writeString(dp, aName)
+		System.broadcastData(dp)
+
+	
+end
+
+--更新系统红包
+qianghongbao.UpdataSystemHB = function (sysarg,id,type,Channel,position, uCount, uMoney)
+
+	local var = nil 
+	local maxCount = 0
+	local count = 0
+	
+	var = System.getStaticVar()
+	maxCount = var.HONGBAO_SystemListCount
+	
+
+
+	for i = 1,maxCount do
+		if var.HONGBAO_SystemList[i].Channel == Channel then
+			if var.HONGBAO_SystemList[i].pos == position then
+				count = i
+			end
+		end
+	end
+
+	var.HONGBAO_SystemList[count].uCount = var.HONGBAO_SystemList[count].uCount + uCount
+	var.HONGBAO_SystemList[count].uMoney = var.HONGBAO_SystemList[count].uMoney + uMoney
+
+	local id = var.HONGBAO_SystemList[count].aId
+	local name = var.HONGBAO_SystemList[count].name
+	local over_m = var.HONGBAO_SystemList[count].tMoney - var.HONGBAO_SystemList[count].uMoney
+	local over_c = var.HONGBAO_SystemList[count].tCount - var.HONGBAO_SystemList[count].uCount
+	
+
+	
+	if over_m < 1 or over_c < 1 then
+		for i=count, maxCount - 1 do
+			var.HONGBAO_SystemList[i].aId = var.HONGBAO_SystemList[i + 1].aId
+			var.HONGBAO_SystemList[i].tMoney = var.HONGBAO_SystemList[i + 1].tMoney --红包的原始金钱数量
+			var.HONGBAO_SystemList[i].tCount = var.HONGBAO_SystemList[i + 1].tCount --红包的原始数量
+			var.HONGBAO_SystemList[i].uMoney = var.HONGBAO_SystemList[i + 1].uMoney --已被抢的金钱数量
+			var.HONGBAO_SystemList[i].uCount = var.HONGBAO_SystemList[i + 1].uCount --已被抢的红包数量
+			var.HONGBAO_SystemList[i].Channel = var.HONGBAO_SystemList[i + 1].Channel --那个频道的红包
+			var.HONGBAO_SystemList[i].type = var.HONGBAO_SystemList[i + 1].type     --红包的类型
+			var.HONGBAO_SystemList[i].time = var.HONGBAO_SystemList[i + 1].time     --红包的类型
+			var.HONGBAO_SystemList[i].pos = var.HONGBAO_SystemList[i + 1].pos       --红包的位置
+			var.HONGBAO_SystemList[i].Scrambles = {}
+			var.HONGBAO_SystemList[i].CScrambles = 0
+			for j=1, var.HONGBAO_SystemList[i + 1].CScrambles do
+				var.HONGBAO_SystemList[i].Scrambles[j] = var.HONGBAO_SystemList[i + 1].Scrambles[j]
+			end
+			var.HONGBAO_SystemList[i].CScrambles = var.HONGBAO_SystemList[i + 1].CScrambles
+		end
+						
+		var.HONGBAO_SystemList[var.HONGBAO_SystemListCount] = nil
+		var.HONGBAO_SystemListCount = var.HONGBAO_SystemListCount - 1
+		
+		local npack = DataPack.allocPacket(sysarg,173,1)
+		--print("======在这里删除红包")
+		if npack == nil then return end
+		DataPack.writeChar(npack, 1)
+		DataPack.writeInt(npack, position)
+		DataPack.writeInt(npack, id)
+		DataPack.writeInt(npack, type)
+		DataPack.writeInt(npack, Channel)
+		--DataPack.writeInt(npack, 0)
+		DataPack.writeInt(npack, 0)
+		DataPack.writeInt(npack, 0)
+		DataPack.writeString(npack, name)
+		DataPack.flush(npack)
+	else
+		--print("====难道是这个")
+		local aId = var.HONGBAO_SystemList[count].aId
+		local myselfId = LActor.getActorId(sysarg)
+
+		if var.HONGBAO_SystemList[count].Scrambles == nil then
+			var.HONGBAO_SystemList[count].Scrambles = {}
+			var.HONGBAO_SystemList[count].CScrambles = 0
+		end
+		var.HONGBAO_SystemList[count].CScrambles = var.HONGBAO_SystemList[count].CScrambles + 1
+		var.HONGBAO_SystemList[count].Scrambles[var.HONGBAO_SystemList[count].CScrambles] = myselfId
+		--print("======在这里删除红包")
+		local npack = DataPack.allocPacket(sysarg,173,1)
+		if npack == nil then return end
+		DataPack.writeChar(npack, 1)
+		DataPack.writeInt(npack, position)
+		DataPack.writeInt(npack, aId)
+		DataPack.writeInt(npack, type)
+		DataPack.writeInt(npack, Channel)
+		--DataPack.writeInt(npack,  0)
+		DataPack.writeInt(npack,  0)
+		DataPack.writeInt(npack,  0)
+		DataPack.writeString(npack,name)
+		DataPack.flush(npack)
+	end
+
+	local effects = {}
+    local effect = {}
+    effect.type = 2  -- 2为金钱
+    effect.id = mtBindCoin
+    effect.count = uMoney
+    effects[#effects+1] = effect
+    if #effects > 0 then
+       	MiscFunc.PlayItemEffect(sysarg, 11, effects)
+    end
+	-- local var = System.getStaticVar()
+	-- var.HONGBAO_SystemList[pos].uCount = var.HONGBAO_list[pos].uCount + uCount
+	-- var.HONGBAO_SystemList[pos].uMoney = var.HONGBAO_list[pos].uMoney + uMoney
+
+	-- local over_m = var.HONGBAO_SystemList[pos].uCount - var.HONGBAO_SystemList[pos].uMoney
+	-- local over_c = var.HONGBAO_SystemList[pos].uMoney - var.HONGBAO_SystemList[pos].uMoney
+
+	-- if over_m < 1 or over_c < 1 then
+	-- 	for i = pos,var.HONGBAO_SystemListCount do
+	-- 		var.HONGBAO_SystemList[i].tMoney = var.HONGBAO_SystemList[i + 1].tMoney
+	-- 		var.HONGBAO_SystemList[i].tCount = var.HONGBAO_SystemList[i + 1].tCount
+	-- 		var.HONGBAO_SystemList[i].uMoney = var.HONGBAO_SystemList[i + 1].uMoney
+	-- 		var.HONGBAO_SystemList[i].uCount = var.HONGBAO_SystemList[i + 1].uCount
+
+	-- 		var.HONGBAO_SystemList[i].Scrambles = {}
+	-- 		var.HONGBAO_SystemList[i].CScrambles = 0
+	-- 		for j = 1,var.HONGBAO_SystemList[i + 1].Scrambles do
+	-- 			var.HONGBAO_SystemList[i].Scrambles[j] = var.HONGBAO_SystemList[i + 1].Scrambles[j]
+	-- 		end
+
+	-- 		var.HONGBAO_SystemList[i].CScrambles = var.HONGBAO_SystemList[i + 1].CScrambles
+	-- 	end
+	-- 	var.HONGBAO_SystemList[var.HONGBAO_SystemListCount] = nil
+	-- 	var.HONGBAO_SystemListCount = var.HONGBAO_SystemListCount - 1
+
+	-- 	local npack = DataPack.allocPacket(sysarg,173,8)
+	-- 	if npack == nil then return end
+	-- 	DataPack.writeChar(npack, 2)
+	-- 	--print("========删除红包")
+	-- 	DataPack.writeShort(npack, position)
+	-- 	LGuild.broadcastData(pGuild, npack)
+	-- else
+	-- 	local myselfId = LActor.getActorId(sysarg)
+	-- 	if var.HONGBAO_SystemList[pos].Scrambles == nil then
+	-- 		var.HONGBAO_SystemList[pos].Scrambles = {}
+	-- 		vsr.HONGBAO_SystemList[pos].CScrambles = 0
+	-- 	end
+	-- 	var.HONGBAO_SystemList[pos].CScrambles = var.HONGBAO_SystemList[pos].CScrambles + 1
+	-- 	var.HONGBAO_SystemList[pos].Scrambles[var.HONGBAO_SystemList[pos].CScrambles] = myselfId
+
+	-- 	local npack = DataPack.allocPacket(sysarg,173,8)
+	-- 	if npack == nil then return end
+	-- 	DataPack.writeInt(npack,pos)
+	-- 	DataPack.writeInt(npack,var.HONGBAO_SystemList[pos].tCount)
+	-- 	DataPack.writeInt(npack,var.HONGBAO_SystemList[pos].uCount)
+	-- 	DataPack.writeInt(npack,var.HONGBAO_SystemList[pos].type)
+	-- 	DataPack.flush(npack) 
+	-- end
+end
+
+qianghongbao.Newday = function (sysarg)
+	local  var = LActor.getStaticVar(sysarg)
+	if not var.luckyMoneytime then
+		var.luckyMoneytime = 0
+	end
+
+	var.luckyMoneytime = 0   --每天发红包重置
+end
+
+
+
+qianghongbao.OnLogin = function(sysarg)
+	qianghongbao.SendLuckyMoneys(sysarg)
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, qianghongbao.OnLogin)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeSysHongbao, qianghongbao.AwayId)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, qianghongbao.Newday)
+SystemHandlerDispatcher.registerSystemHander(BaseTypes.SystemId.cscy_qianghongbao, QHBHandleNetworkData)
+
+
+
+
+-- ---------------GM测试
+QiangHongBao.init = function (sysarg)
+	
+	local guildId = LActor.getGuildId(sysarg)
+	local pGuild = LActor.getGuildPtr(sysarg)
+	local var = LGuild.getStaticVar(pGuild)
+	for i = 1, var.LuckyMoneyCount do
+	var.LuckyMoneyList[i] = {}
+	var.LuckyMoneyList[i].aId = 0
+	var.LuckyMoneyList[i].type = 0
+	var.LuckyMoneyList[i].tMoney = 0
+	var.LuckyMoneyList[i].tCount = 0
+	var.LuckyMoneyList[i].uMoney = 0
+	var.LuckyMoneyList[i].uCount = 0
+	var.LuckyMoneyList[i].Scrambles = {}
+	var.LuckyMoneyList[i].CScrambles = 0
+	end
+	var.LuckyMoneyCount = 0
+--	print("=====初始化红包======")
+end
+
+QiangHongBao.init2 = function (sysarg)
+	position = 1
+	local nvar = LActor.getStaticVar(sysarg)
+	local var = System.getStaticVar()
+	for i = 1, var.LuckyMoneyCount do
+		var.LuckyMoneyList[i] = {}
+		var.LuckyMoneyList[i].aId = 0
+		var.LuckyMoneyList[i].type = 0
+		var.LuckyMoneyList[i].Channel = 0
+		var.LuckyMoneyList[i].tMoney = 0
+		var.LuckyMoneyList[i].tCount = 0
+		var.LuckyMoneyList[i].uMoney = 0
+		var.LuckyMoneyList[i].uCount = 0
+		var.LuckyMoneyList[i].Scrambles = {}
+		var.LuckyMoneyList[i].CScrambles = 0
+		var.LuckyMoneyList[i].name = nil
+		var.LuckyMoneyList[i].context = nil
+	end
+	var.LuckyMoneyCount = 0
+	print("====初始化世界红包=======")
+end
+QiangHongBao.init3 = function (sysarg)
+	local var = LActor.getStaticVar(sysarg)
+	for i = 1, var.LuckyMoneyListCount do
+		var.LuckyMoneyList[i] = {}	
+		var.LuckyMoneyList[i].aId = 0 					
+		var.LuckyMoneyList[i].type = 0
+		var.LuckyMoneyList[i].Channel = 0
+		var.LuckyMoneyList[i].tMoney = 0
+		var.LuckyMoneyList[i].tCount = 0
+		var.LuckyMoneyList[i].uMoney = 0
+		var.LuckyMoneyList[i].uCount = 0
+		var.LuckyMoneyList[i].Scrambles = {}
+		var.LuckyMoneyList[i].CScrambles = 0
+		var.LuckyMoneyList[i].name = nil
+		var.LuckyMoneyList[i].context = nil
+		var.LuckyMoneyList[i].Team = {}
+		var.LuckyMoneyList[i].TeamCount = 0
+	end
+		var.LuckyMoneyListCount = 0
+	--print("====初始化个人红包=======")
+end
+
+QiangHongBao.init1 = function (sysarg)
+	local var = System.getStaticVar()
+	for i = 1, var.HONGBAO_SystemListCount do
+	var.HONGBAO_SystemList[i] = {}
+	var.HONGBAO_SystemList[i].pos = 0
+	var.HONGBAO_SystemList[i].aId = 0
+	var.HONGBAO_SystemList[i].type = 0
+	var.HONGBAO_SystemList[i].Channel = 0
+	var.HONGBAO_SystemList[i].tMoney = 0
+	var.HONGBAO_SystemList[i].tCount = 0
+	var.HONGBAO_SystemList[i].uMoney = 0
+	var.HONGBAO_SystemList[i].uCount = 0
+	var.HONGBAO_SystemList[i].Scrambles = {}
+	var.HONGBAO_SystemList[i].CScrambles = 0
+	var.HONGBAO_SystemList[i].name = nil
+	var.HONGBAO_SystemList[i].context = nil
+	end
+	var.HONGBAO_SystemListCount = 0
+	--print("====初始化系统红包=======")
+end
+
+QiangHongBao.init4 = function (sysarg)
+	--print("+====还是")
+	local Svar = System.getStaticVar()
+	for i = 1, Svar.Teamcount do
+		Svar.TeamMoneyList[i].id[i] = {} 
+		Svar.TeamMoneyList[i].id[i].id = 0
+		Svar.TeamMoneyList[i].id[i].Count = 0
+		Svar.TeamMoneyList[i].id[i].Channel = 0
+		Svar.TeamMoneyList[i].id[i].pos = 0
+		
+	end
+	Svar.Teamcount = 0
+	--print("====初始化组队红包=======")
+end
+
+
+QiangHongBao.initrz = function (sysarg)
+	local Pvar = LActor.getStaticVar(sysarg)
+	local var = System.getStaticVar()
+	for i = 1, var.sendLogsCount do
+	var.sendlogs[i] = {}
+	var.sendlogs[i].type = 0
+	var.sendlogs[i].count = 0
+	var.sendlogs[i].time = 0
+	var.sendlogs[i].Channel = 0
+	var.sendlogs[i].money = 0
+	var.sendlogs[i].uCount = 0
+	var.sendlogs[i].pos = 0
+	var.sendlogs[i].Channel = 0
+	end
+	Pvar.HB_Getmoney = 0
+	Pvar.HB_Getcount = 0
+	var.sendLogsCount = 0
+	--print("====初始化系统红包=======")
+end
+
+QiangHongBao.initrz2 = function (sysarg)
+	local Pvar = LActor.getStaticVar(sysarg)
+	local var = System.getStaticVar()
+	for i = 1, var.LogsCount do
+	var.Logs[i] = {}
+	var.Logs[i].type = 0
+	var.Logs[i].count = 0
+	var.Logs[i].time = 0
+	var.Logs[i].Channel = 0
+	var.Logs[i].money = 0
+	var.Logs[i].uCount = 0
+	var.Logs[i].pos = 0
+	var.Logs[i].Channel = 0
+	end
+	var.LogsCount = 0
+	Pvar.HB_money = 0
+ 	Pvar.HB_Count = 0
+ -- local var = LActor.getStaticVar(sysarg)
+ -- 	if not var.luckyMoneytime then
+ -- 		var.luckyMoneytime = 0
+ -- 	end
+ -- 	var.luckyMoneytime = 0
+--	print("====初始化系统红包=======")
+end
+
+ QiangHongBao.clearhbcount = function (sysarg)
+ 	local var = LActor.getStaticVar(sysarg)
+ 	if not var.luckyMoneytime then
+ 		var.luckyMoneytime = 0
+ 	end
+ 	var.luckyMoneytime = 0
+ end
+
+-- QiangHongBao.hblist = function (sysarg)
+-- 	print("=====红包的数据")
+-- 	local var = System.getStaticVar()
+-- 	local ranks = {}
+-- 	local dom = {}
+-- 	for i = 1, var.LogsCount do
+-- 		ranks[i] = {} 
+-- 		ranks[i].count = var.Logs[i].count
+-- 		ranks[i].Channel = var.Logs[i].Channel
+-- 		ranks[i].pos = var.Logs[i].pos
+-- 		ranks[i].uCount = var.Logs[i].uCount
+-- 		print("======红包数据",dump(ranks[i]))
+-- 		--print("========",var.Logs[i].list[1].name)
+-- 		for k =1,ranks[i].uCount do
+-- 			dom[k] = {}
+-- 			dom[k].name = var.Logs[i].list[k].name
+-- 			dom[k].id = var.Logs[i].list[k].id
+-- 			dom[k].memony = var.Logs[i].list[k].memony
+-- 			print("=========里面的数据",dump(dom[k]))
+-- 		end	
+-- 	end
+-- end
+-- QiangHongBao.hblist = function (sysarg)
+-- 	local var = LActor.getStaticVar(sysarg)
+--     print(var.LuckyMoneyList[1].TeamCount)
+--    	print(var.LuckyMoneyList[1].Team[1])
+--    	print(var.LuckyMoneyList[1].Team[2])
+   
+-- end
+
+	
+
+-- QiangHongBao.hblist = function (sysarg)
+	
+-- 	local var = System.getStaticVar()
+-- 	local ranks = {}
+-- 	local dom = {}
+-- 	for i = 1, var.sendLogsCount do
+-- 		ranks[i] = {} 
+-- 		ranks[i].count = var.sendlogs[i].count
+-- 		ranks[i].Channel = var.sendlogs[i].Channel
+-- 		ranks[i].pos = var.sendlogs[i].pos
+-- 		ranks[i].uCount = var.sendlogs[i].uCount
+-- 		print("======红包数据",dump(ranks[i]))
+-- 		--print("========",var.sendlogs[i].list[1].name)
+-- 		for k =1,ranks[i].uCount do
+-- 			dom[k] = {}
+-- 			dom[k].name = var.sendlogs[i].list[k].name
+-- 			dom[k].id = var.sendlogs[i].list[k].id
+-- 			dom[k].memony = var.sendlogs[i].list[k].memony
+-- 			print("=========里面的数据",dump(dom[k]))
+-- 		end	
+-- 	end
+-- end
+QiangHongBao.hblist = function (sysarg)
+	--print("=====红包的数据")
+	local var = System.getStaticVar()
+	local ranks = {}
+	local kings = {}
+	for i = 1, var.LuckyMoneyCount do
+		ranks[i] = {} 
+		ranks[i].pos = var.LuckyMoneyList[i].pos
+		ranks[i].Channel = var.LuckyMoneyList[i].Channel
+		ranks[i].uCount = var.LuckyMoneyList[i].uCount
+		for k = 1, var.LuckyMoneyList[i].CScrambles do 
+			kings[i] = {}
+			kings[i].id = var.LuckyMoneyList[i].Scrambles[k]
+			--print("========里面的数据",dump(kings[i]))
+		end
+		--print("======红包数据",dump(ranks[i]))
+	end
+
+end
+QiangHongBao.SystemHBGM = function (sysarg)
+	qianghongbao.SystemHB(sysarg,1,1)
+end
+QiangHongBao.actorRecharge = function (sysarg,arg)
+	local val = arg[1]
+	if val == nil or val == 0 then return end
+	--debug_print("activityFunc.actorRecharge ..."..val)
+
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	if var.hongbao_max_recharge == nil then
+		var.hongbao_max_recharge = 0
+	end
+	var.hongbao_max_recharge = var.hongbao_max_recharge + val
+end
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeRecharge, QiangHongBao.actorRecharge)
+
+-- QiangHongBao.hblist = function (sysarg)
+-- 	print("=====红包的数据")
+-- 	local var = LActor.getStaticVar(sysarg)
+-- 	local ranks = {}
+-- 	for i = 1, var.LuckyMoneyListCount do
+-- 		ranks[i] = {} 
+-- 		ranks[i].pos = var.LuckyMoneyList[i].pos
+-- 		ranks[i].Channel = var.LuckyMoneyList[i].Channel
+-- 		print("======红包数据",dump(ranks[i]))
+-- 	end
+-- end
+
+ 

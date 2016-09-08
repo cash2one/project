@@ -1,0 +1,8 @@
+﻿-- 世界等级配置
+
+WorldLevel = {
+	worldLevelLimit = 50, -- 世界等级最小等级限制
+	worldActorLevel = 30, -- 世界等级经验加成需要的玩家等级
+	worldLevelRate = 0.5, -- 世界等级经验加成
+	worldLevelReward = { item = 18609, count = 2, bind = 1, context = "热烈祝贺：经众大侠的一致努力，本服成功开启世界等级功能。比世界等级低5级之内的大侠将获得9朵玫瑰*2。比世界等级低5级以上的大侠将自动获得50%的世界等级经验加成。" },
+}

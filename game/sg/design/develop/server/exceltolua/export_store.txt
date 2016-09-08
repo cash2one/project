@@ -1,0 +1,138 @@
+--导出商城配置表
+
+local strLangTemplate = "n%d=\"%s\",i%d=\"%s\","
+
+local strTemplete = [[
+{						
+	id = %d,
+	item = %d,
+	quality = %d,
+	strong = %d,
+	singleBuyLimit = %d,
+	price = 					
+	{
+		{ spid = "*", type = %d, price = %d, bind = %s, oldPrice = %d }, 
+	},
+},
+
+]]
+
+
+function ReadStore(index, storefile)
+	local objexcel = CExcelReader:new()
+	if not objexcel then
+		print("objexcel is null")
+		return
+	end
+
+	objexcel:Init_App()
+	objexcel:OpenRead()
+
+	local obj = objexcel:LoadSheetByIndex(index)
+	if not obj then
+		print("LoadSheetByIndex失败!")
+		objexcel:Close()
+		objexcel:Quit_App()
+		return
+	end
+
+	local nCount = objexcel:GetCurrentSheetColCount()
+	local mCount = objexcel:GetCurrentSheetRowCount()
+
+
+	print("nCount", nCount)
+	print("mCount", mCount)
+
+	local strComment = objexcel:ReadComment(1)
+	print("============strComment "..strComment)
+
+
+	local strAllLang = ""
+	local strAllConcent = strComment .. "\n\nitems = \n{\n"
+	
+	local itemfile = storefile--"newhot.txt"
+	print(itemfile)
+
+	for i = 2, mCount do
+
+		--local strTemp = objexcel:ReadCommentAsString(i, 1)
+		--print(strTemp)
+
+		local concent = {} --第一行构造成一个table
+
+		local strValue = objexcel:ReadCellAsString(i, 1)
+		concent.id = tonumber(strValue)
+
+		strValue = objexcel:ReadCellAsString(i, 2)
+		concent.item = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 3)
+		concent.quality = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 4)
+		concent.strong = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 5)
+		concent.singleBuyLimit = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 6) --货币类型
+		concent.type = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 7)--价格
+		concent.price = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 8)--原价
+		concent.oldPrice = tonumber(strValue) or 0
+
+		strValue = objexcel:ReadCellAsString(i, 9)--购买后是否绑定
+		local bind = tonumber(strValue) or 0
+		if bind == 0 then
+			concent.bind = 'false'
+		else
+			concent.bind = 'true'
+		end
+
+--{ spid = "*", type = 3, price =	6	, bind = true,oldPrice=	20 }, 
+
+		local str = string.format(strTemplete, 
+										concent.id,
+										concent.item,
+										concent.quality,
+										concent.strong,
+										concent.singleBuyLimit,
+										concent.type,
+										concent.price,
+										concent.bind,
+										concent.oldPrice
+										)
+
+		--写文件
+		--writeConfig(itemfile, str)
+
+		print(str)
+
+		strAllConcent = strAllConcent .. str
+		if mCount == i then
+			strAllConcent = strAllConcent .. "\n},\n},"
+			objexcel:WriteFile(itemfile, strAllConcent)
+		end
+		
+		--语言包
+		--[[
+		local strLang = string.format(strLangTemplate, concent.id, concent.name, concent.id, concent.desc)
+		strAllLang = strAllLang..strLang.."\n"
+		if mCount == i then
+			objexcel:WriteFile("Title_lang.txt", strAllLang)
+		end
+		]]
+	end
+
+
+	objexcel:Close()
+	objexcel:Quit_App()
+	objexcel:delete()
+end
+----------------------------------------------------------------------------------------
+
+
+

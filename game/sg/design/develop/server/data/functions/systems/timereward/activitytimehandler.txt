@@ -1,0 +1,695 @@
+--通用活动控制，时间控制
+--#include "activityconf.txt" once
+--#include "activitycontrolhandler.txt" once
+--#include "normalactivitycontrolhandler.txt" once
+
+activityFunc.fbNpcState = {}
+
+activityFunc.CheckDoubleExpState = function ()
+	--print("activityFunc.CheckDoubleExpState")
+	local var_sys_d = System.getDyanmicVar()
+	if var_sys_d == nil then return end
+
+	local nowTime = System.getCurrMiniTime() 
+
+	--先把状态都清掉
+	local if_doublefuben = 0
+
+	local doublestate = {0,0,0,0,0,0,0}
+	local year=0
+	local month=0
+	local day=0
+	year,month,day= System.getDate(year,month,day)  
+
+	for i,v in ipairs(activityidlist) do
+		--print("activityFunc.CheckDoubleExpState id:"..v)
+		local oneConf = activityConf[v]
+		if oneConf.double_exps ~= nil or oneConf.doubleRewardFuben ~= nil then
+			local state = ONLINEREWARD.GetActivityState(oneConf.activityId)
+
+			--print("activityFunc.CheckDoubleExpState id:"..oneConf.activityId..",state:"..state)
+
+			--活动期间
+			if state ~= 0 then
+				--print("activityFunc.CheckDoubleExpState id:"..oneConf.activityId)
+				if oneConf.doubleRewardFuben ~= nil then
+					if_doublefuben = oneConf.doubleRewardFuben
+				end
+				if oneConf.double_exps ~= nil then
+					for i=1,#doublestate do
+						if doublestate[i] == 0 and oneConf.double_exps[i] ~= nil then
+							for j=1,#oneConf.double_exps[i],2 do
+								local temp_tm = oneConf.double_exps[i][j]
+								local startTime = System.timeEncode(year, month, day, temp_tm[1], temp_tm[2], temp_tm[3])  --encode一个时间
+								temp_tm = oneConf.double_exps[i][j+1]
+								local endTime = System.timeEncode(year, month, day, temp_tm[1], temp_tm[2], temp_tm[3])  --encode一个时间
+								if nowTime >= startTime and nowTime <= endTime then
+									doublestate[i] = 1
+								end
+							end
+						end
+					end
+				end
+			end
+		end
+
+	end
+	if var_sys_d.FubenDoubelReward == nil or  var_sys_d.FubenDoubelReward ~= if_doublefuben then
+		var_sys_d.FubenDoubelReward = if_doublefuben
+		System.SetDoubleFuben(if_doublefuben)
+	end
+
+	var_sys_d.ZhongqiuDoubleExpOne = doublestate[1]
+	var_sys_d.ZhongqiuDoubleExpTwo = doublestate[2]
+	var_sys_d.ZhongqiuDoubleExpThree = doublestate[3]
+	var_sys_d.AnswerQuestionDouble = doublestate[4]
+	var_sys_d.ZhongqiuDoubleExpFive = doublestate[5]
+	var_sys_d.ZhongqiuDoubleExpSix = doublestate[6]
+	if doublestate[7] == 1 then
+		System.setPracticeState(1)
+	else
+		System.setPracticeState(0)
+	end
+	
+end
+
+-- 出来魅力排行榜,这个是一分钟定时器
+activityFunc.CheckEnd = function(oneConf)
+	local activityControlConf = ActivityControl[oneConf.activityId]
+	-- for i=1,#ActivityControl do
+	-- 	if ActivityControl[i] ~= nil and ActivityControl[i].id == oneConf.activityId then
+	-- 		activityControlConf = ActivityControl[i]
+	-- 	end
+	-- end
+
+	if activityControlConf == nil then return 1 end
+
+	local confendtime = 0
+
+	local sysvar = System.getStaticVar()
+	if activityControlConf.timetype == 3 and sysvar.activityControl ~= nil and sysvar.activityControl[oneConf.activityId] == nil then return 1 end
+	if activityControlConf.timetype == 5 then return 0 end
+	if sysvar.activityControl ~= nil and sysvar.activityControl[oneConf.activityId] ~= nil then
+		confendtime = sysvar.activityControl[oneConf.activityId].endtime
+	else
+		if activityControlConf.timetype == 1 then
+			if activityControlConf.endtime ~= "" then
+				confendtime = System.toMiniTime(activityControlConf.endtime)
+			end
+		elseif activityControlConf.timetype == 2 then
+			if activityControlConf.endtime > 0 then
+				confendtime = System.getOpenServerStartDateTime() + (activityControlConf.endtime - 1) * 86400
+			end
+		elseif activityControlConf.timetype == 4 then
+			if activityControlConf.endtime[1] > 0 then
+				confendtime = System.getOpenServerStartDateTime() + (activityControlConf.endtime[1] - 1) * 86400 + activityControlConf.endtime[2] * 3600 + activityControlConf.endtime[3] * 60
+			end
+		end
+	end
+
+	confendtime = confendtime - (confendtime % 60)
+
+	local nowsec = System.getCurrMiniTime()
+
+	nowsec = nowsec - (nowsec % 60)
+
+	--print("activityFunc.CheckEnd activeid:"..oneConf.activityId..",confendtime:"..confendtime..",nowsec:"..nowsec)
+
+	if nowsec ~= confendtime then
+		if nowsec > confendtime then
+			if oneConf.fbnpc ~= nil then
+				local scene = Fuben.getSceneHandleById(oneConf.fbnpc.scene, 0)
+				local fbnpc = Fuben.getNpcPtrByName(scene, oneConf.fbnpc.name)
+				if fbnpc then
+					print("oneConf.fbnpc")
+				    Fuben.deleteEntity(oneConf.fbnpc.scene,0,oneConf.fbnpc.name)					
+				end
+			end
+			if nowsec <= confendtime + 60 then 
+				local serverId = System.getServerId()
+				local openServer = false
+				if activityControlConf.serveropen then
+					for j=1,#activityControlConf.serveropen do
+						if serverId >= activityControlConf.serveropen[j][1] and serverId <= activityControlConf.serveropen[j][2] then
+							openServer = true
+							break
+						end 
+					end
+				else
+					openServer = true
+				end
+				--解除监听BOSS
+				if oneConf.bossConfig and openServer then
+					for i = 1, #oneConf.bossConfig do
+							local bossSet = oneConf.bossConfig[i]
+							MonDieDispatcher.unregister(bossSet.monsterId, activityFunc.WorldBossDie)
+							--print("______________________bossSet.monsterId"..bossSet.monsterId)
+					end
+				end
+			end
+			return 1
+		else
+			return 0
+		end
+	end
+
+	--排行榜活动
+	local rankactiveid = activitytypelist[6]
+	local activeConf = oneConf.activities[rankactiveid]
+
+	--是不是有这个活动
+	if activeConf ~= nil and activeConf.id ~= nil then
+		for p,k in ipairs(activeConf.rankactivities) do
+			local rankConf = k
+
+			--拉取排行榜的前十名
+			local rank = Ranking.getRanking(rankConf.CharmRankName)
+
+			if rank == nil then
+				rank = MiscFunc.InitRank(rankConf.CharmRankName, rankConf.CharmRankName, 5, {"aname", "get"})
+			end
+
+			if rank ~= nil then
+				Ranking.clearRanking(rank)
+				local count = Ranking.getRankActorCountFromDbRank(rankConf.rankid)
+				if count > rankConf.charmcount then
+					count = rankConf.charmcount
+				end
+
+				--print("activityFunc.CheckEnd count:"..count)
+
+				for i=1,count do
+					local aid = Ranking.getActorIdFromDbRank(rankConf.rankid, i - 1)
+					local name = Ranking.getActorNameFromDbRank(rankConf.rankid, i - 1)
+					local point = Ranking.getPointFromDbRank(rankConf.rankid, i - 1)
+					local item = Ranking.addItem(rank, aid, point)	-- 名次越高，分值要相应的高，才可以排到前面
+					Ranking.setSub(item, 0, name)
+					--Ranking.setSub(rankItem, 1, "1") -- 未领取
+					--print("activityFunc.CheckEnd index:"..i..",name:"..name)
+				end
+				Ranking.save(rank, rankConf.CharmRankName)
+			end
+		end
+	end
+
+	--排行榜活动
+	local rankactiveid2 = activitytypelist[15]
+	--print("排行榜活动:".. activitytypelist[15])
+	--print("oneConf.activities[rankactiveid2].id"..oneConf.activities[rankactiveid2].id)
+	if oneConf.activities[rankactiveid2] ~= nil and oneConf.activities[rankactiveid2].id ~= nil then
+		print("activityFunc.CheckEnd rankactiveid2")
+		local rankConf = oneConf.activities[rankactiveid2].rankactivities
+
+		--拉取排行榜的前十名
+		local rank = Ranking.getRanking(rankConf.rankname)
+
+		if rank ~= nil then
+			local count = Ranking.getRankItemCount(rank)
+			if count > rankConf.rankcount then count = rankConf.rankcount end
+
+			--存底排行榜
+			if count > 0 then
+				local rankback = Ranking.getRanking(rankConf.rankname..".1")
+				if rankback ~= nil then
+					Ranking.clearRanking(rankback)
+				else
+					rankback = MiscFunc.InitRank(rankConf.rankname..".1", rankConf.rankname..".1", 5, {"aname", "get"})
+				end
+			end
+
+			print("activityFunc.CheckEnd rankname:"..rankConf.rankname..",count:"..count)
+
+			for i=1,count do
+				local rankItem = Ranking.getItemFromIndex(rank, i-1)
+				local actorid = Ranking.getId(rankItem)
+				print("activityFunc.CheckEnd rankactiveid2:"..i..",actorid:"..actorid)
+				local content = string.format(Lang.ActivityMail.content, Lang.ActivityMail.activityName[oneConf.activityId], Lang.ActivityMail.childrenName[6])
+				System.sendGmMailOffLine(actorid, content, 1, rankConf.awards[i], 1, 1)
+
+				--存底排行榜
+				local aname = Ranking.getSub(rankItem, 0)
+				local point = Ranking.getPoint(rankItem)
+				local item = Ranking.addItem(rankback, actorid, point)	-- 名次越高，分值要相应的高，才可以排到前面
+				Ranking.setSub(item, 0, aname)
+				Ranking.save(rankback, rankConf.CharmRankName)
+				--print("发邮件成功")
+			end
+
+			--清空当前排行榜
+			if count > 0 then
+				Ranking.clearRanking(rank)
+				Ranking.save(rank, rankConf.CharmRankName)
+			end
+		end
+	end
+
+	--充值返利,活动结束后按日返利
+	local act17 = activitytypelist[17]
+	if oneConf.activities[act17] ~= nil and oneConf.activities[act17].id ~= nil then
+		local actors = LuaHelp.getAllActorList()
+		if actors ~= nil then
+		    for i=1,#actors do
+				local actor = actors[i]
+				local avar = LActor.getStaticVar(actor)
+				if avar ~= nil and avar.activityList ~= nil and avar.activityList[id] ~= nil and avar.activityList[id].record ~= nil and 
+					avar.activityList[id].record >= oneConf.activities[act17].awards[1][1] and avar.activityList[id].reward == nil then
+					for i=#oneConf.activities[act17].awards,1,-1 do
+						if avar.activityList[id].record >= oneConf.activities[act17].awards[i][1] then
+							activityFunc.BuyDaysRewards(sysarg, oneConf.activities[act17].awards[i][2])
+							break
+						end
+					end
+					avar.activityList[id].reward = 1
+				end
+			end
+		end
+	end
+
+	if oneConf.fbnpc ~= nil then
+		Fuben.deleteEntity(oneConf.fbnpc.scene,0,oneConf.fbnpc.name)
+	end
+
+	--print("activityFunc.CheckEnd end")
+	return 1
+end
+
+-- 检测活动是否已开始
+activityFunc.CheckStart = function(ifEnd, oneConf)
+	--print("检测活动是否已开始:"..ifEnd)
+	if ifEnd == 1 then return end
+	local activityControlConf = ActivityControl[oneConf.activityId]
+	-- for i=1,#ActivityControl do
+	-- 	if ActivityControl[i] ~= nil and ActivityControl[i].id == oneConf.activityId then
+	-- 		activityControlConf = ActivityControl[i]
+	-- 	end
+	-- end
+
+	if activityControlConf == nil then return 1 end
+
+	local confstarttime = 0
+
+	local sysvar = System.getStaticVar()
+	if activityControlConf.timetype == 3 and (sysvar.activityControl == nil or sysvar.activityControl[oneConf.activityId] == nil) then return end
+	if activityControlConf.timetype == 5 then return end
+	if sysvar.activityControl ~= nil and sysvar.activityControl[oneConf.activityId] ~= nil then
+		confstarttime = sysvar.activityControl[oneConf.activityId].starttime
+	else
+		if activityControlConf.timetype == 1 then
+			if activityControlConf.starttime ~= "" then
+				confstarttime = System.toMiniTime(activityControlConf.starttime)
+			end
+		elseif activityControlConf.timetype == 2 then
+			if activityControlConf.starttime > 0 then
+				confstarttime = System.getOpenServerStartDateTime() + (activityControlConf.starttime - 1) * 86400
+			end
+		elseif activityControlConf.timetype == 4 then
+			if activityControlConf.starttime[1] > 0 then
+				confstarttime = System.getOpenServerStartDateTime() + (activityControlConf.starttime[1] - 1) * 86400 + activityControlConf.starttime[2] * 3600 + activityControlConf.starttime[3] * 60
+			end
+		end
+	end
+
+	confstarttime = confstarttime
+
+	local nowsec = System.getCurrMiniTime()
+
+	local serverId = System.getServerId()
+	local openServer = false
+	if activityControlConf.serveropen then
+		for j=1,#activityControlConf.serveropen do
+			if serverId >= activityControlConf.serveropen[j][1] and serverId <= activityControlConf.serveropen[j][2] then
+				openServer = true
+				break
+			end 
+		end
+	else
+		openServer = true
+	end
+
+	if nowsec >= confstarttime and activityFunc.fbNpcState[oneConf.activityId] == nil and oneConf.fbnpc ~= nil then
+		local fbnpc = Fuben.getNpcPtrByName(oneConf.fbnpc.scene, oneConf.fbnpc.name)
+		if fbnpc then
+			activityFunc.fbNpcState[oneConf.activityId] = 1
+			--print("guoqingFunc.CheckStart confstarttime fbNpcState == 1")
+		else
+			System.createnpc(oneConf.fbnpc.name, oneConf.fbnpc.script, oneConf.fbnpc.scene,
+				oneConf.fbnpc.posx, oneConf.fbnpc.posy, oneConf.fbnpc.modelid, oneConf.fbnpc.icon)
+			activityFunc.fbNpcState[oneConf.activityId] = 1
+			--print("guoqingFunc.CheckStart confstarttime fbNpc create")
+		end
+	end
+	--print("activityFunc.CheckStart activeid:"..oneConf.activityId..", confstarttime:"..confstarttime..",nowsec:"..nowsec)
+
+	if nowsec >= confstarttime and nowsec < (confstarttime + 60) then
+		--print("activityFunc.CheckStart start init")
+		--登陆活动
+		local loginId = activitytypelist[1]
+		local loginId2 = activitytypelist[11]
+		local loginId3 = activitytypelist[13]
+		--是不是有这个活动
+		if (oneConf.activities[loginId] ~= nil and oneConf.activities[loginId].id ~= nil) or 
+			(oneConf.activities[loginId2] ~= nil and oneConf.activities[loginId2].id ~= nil) then
+			local actors = LuaHelp.getAllActorList()
+			if actors ~= nil then
+			    for i=1,#actors do
+					local actor = actors[i]
+					local avar = LActor.getStaticVar(actor)
+					--是否重置
+					ONLINEREWARD.CheckResetActivityInfo(actor, oneConf.activityId)
+					ONLINEREWARD.GetActivityList(actor)
+					if avar ~= nil then
+						if oneConf.activities[loginId] ~= nil and oneConf.activities[loginId].id ~= nil then 
+						  	if avar.activityList[oneConf.activityId] == nil then avar.activityList[oneConf.activityId] = {} end
+						  	if avar.activityList[oneConf.activityId].loginnum == nil then avar.activityList[oneConf.activityId].loginnum = 1 end
+						end
+						if oneConf.activities[loginId2] ~= nil and oneConf.activities[loginId2].id ~= nil then 
+						  	if avar.activityList[oneConf.activityId] == nil then avar.activityList[oneConf.activityId] = {} end
+							if avar.activityList[oneConf.activityId].onceloginreward == nil then
+								local level = LActor.getLevel(actor)
+								if level >= oneConf.activities[loginId2].level then 
+									avar.activityList[oneConf.activityId].onceloginreward = 1 
+								elseif oneConf.activities[loginId2].iffirst then
+									avar.activityList[oneConf.activityId].onceloginreward = 0
+								end
+							end
+						end
+						--每日登陆有礼,多礼包
+						if oneConf.activities[loginId3] ~= nil and oneConf.activities[loginId3].id ~= nil then
+							local level = LActor.getLevel(sysarg)
+							if level >= oneConf.activities[loginId3].level then
+								if avar.activityList[oneConf.activityId] == nil then avar.activityList[oneConf.activityId] = {} end
+								local runDays = ONLINEREWARD.GetActivityRunDays(oneConf.activityId, avar.download_from)
+								if runDays >= 1 then
+									if avar.activityList[oneConf.activityId].dailyloginrecord == nil then avar.activityList[oneConf.activityId].dailyloginrecord = 0 end
+									avar.activityList[oneConf.activityId].dailyloginrecord = System.bitOpSetMask(avar.activityList[oneConf.activityId].dailyloginrecord, runDays - 1, true)
+								end
+							end
+						end
+					end
+			    end
+			end
+		end
+
+		--监听BOSS被杀死
+		if oneConf.bossConfig and openServer then
+			for i = 1, #oneConf.bossConfig do
+				local bossSet = oneConf.bossConfig[i]
+				MonDieDispatcher.register(bossSet.monsterId, activityFunc.WorldBossDie)
+				--print("______________________bossSet.monsterId"..bossSet.monsterId)
+			end
+		end
+	end
+
+	--活动快开始
+	if nowsec >= (confstarttime - 60) and nowsec < confstarttime + 36000 then
+		--排行榜活动
+		local rankactiveid = activitytypelist[6]
+		--是不是有这个活动
+		if oneConf.activities[rankactiveid] ~= nil and oneConf.activities[rankactiveid].id ~= nil then
+			for p,k in ipairs(oneConf.activities[rankactiveid].rankactivities) do
+				local rankConf = k
+				--排行榜活动
+				local rankName = rankConf.CharmRankName
+				local thisRank = Ranking.getRanking(rankName) --通过排行名称获取排行对象
+				local count = Ranking.getRankItemCount(thisRank)
+				if count > 0 then
+					local awards = rankConf.awards
+					for i=1,count do
+						local rankItem = Ranking.getItemFromIndex(thisRank, i-1)
+						local aname = Ranking.getSub(rankItem, 0)
+						local gt = Ranking.getSubInt(rankItem, 1)
+						if gt ~= 2 then -- 未领取，邮件
+							local rankindex = 0
+							for j=1,#awards do
+								if i <= awards[j][1] then 
+									rankindex = j
+									break
+								end
+							end	
+							local content = string.format(Lang.ActivityMail.content, Lang.ActivityMail.activityName[oneConf.activityId], Lang.ActivityMail.childrenName[rankactiveid])
+							System.sendGmMailOffLine(aname, content, 1, awards[rankindex][2], 1, 1)
+							Ranking.setSub(rankItem, 1, "2") -- 已领取
+						end
+					end
+					Ranking.clearRanking(thisRank)
+					Ranking.save(thisRank, rankConf.CharmRankName)
+				end
+			end
+		end
+	end
+end
+
+
+--天降宝箱处理
+activityFunc.dropBox = function(oneConf)
+	local activityID = oneConf.activityId
+	local state = ONLINEREWARD.GetActivityState(activityID)
+	if state ~= 0 then
+		local activityControlConf = ActivityControl[oneConf.activityId]
+		-- for i=1,#ActivityControl do
+		-- 	if ActivityControl[i] ~= nil and ActivityControl[i].id == oneConf.activityId then
+		-- 		activityControlConf = ActivityControl[i]
+		-- 	end
+		-- end
+
+		if activityControlConf == nil then return 1 end
+		--print("__________________activityID = "..activityID..", state = "..state)
+		local serverId = System.getServerId()
+		local openServer = false
+		if activityControlConf.serveropen then
+			for j=1,#activityControlConf.serveropen do
+				if serverId >= activityControlConf.serveropen[j][1] and serverId <= activityControlConf.serveropen[j][2] then
+					openServer = true
+					break
+				end 
+			end
+		else
+			openServer = true
+		end
+		if not openServer then return end
+		if oneConf.giftBoxConf then
+			local sysHour,sysMin,sysSecond = 0,0,0
+			sysHour,sysMin,sysSecond = System.getTime(sysHour, sysMin, sysSecond)
+			for i = 1, #oneConf.giftBoxConf.refreshTime do
+				local timeConf = oneConf.giftBoxConf.refreshTime[i]
+				if timeConf[1] == sysHour and timeConf[2] == sysMin and timeConf[3] == sysSecond then
+					local boxConf = oneConf.giftBoxConf.boxConf
+					if boxConf then
+						local ptrTmp = nil
+						local x, y = 0, 0
+						local hScene = Fuben.getSceneHandleById(boxConf.sceneId, 0)
+						--print("_______boxConf.sceneId"..boxConf.sceneId)
+						--print(hScene)
+						for i=1, boxConf.boxCount do
+							 x = Fuben.getSceneMovePosX(hScene);
+							 y = Fuben.getSceneMovePosY(hScene);
+							local test = 0
+							while Fuben.canMove(hScene, x , y) == false do
+								x = Fuben.getSceneMovePosX(hScene);
+								y = Fuben.getSceneMovePosY(hScene);
+								test = test + 1
+								if test > 100 then
+									break
+								end
+							end
+							print("____刷新宝箱")
+							local ptr = Fuben.createMonster( hScene, boxConf.boxID, x, y, boxConf.liveTime*60 )
+								  print("x===============:"..x)
+								  print("y================:"..y)
+							if ptrTmp == nil and ptr ~= nil then
+								ptrTmp = ptr
+							end
+						end
+						if ptrTmp ~= nil then
+							local str = string.format(Lang.TaskTalk.wb08, LActor.getName(ptrTmp), LActor.getSceneName(ptrTmp, x, y))
+							--System.broadcastLevelTipmsg(str, boxConf.level, ttGmTip)
+							System.broadcastLevelTipmsg(str, boxConf.level, ttChatWindow)
+						end
+					end
+				end
+			end
+		end
+	end
+end
+
+--BOSS袭礼
+activityFunc.RefreshNewYearMonster = function(oneConf)
+	local activityID = oneConf.activityId
+	local state = ONLINEREWARD.GetActivityState(activityID)
+	if state ~= 0 then
+		local activityControlConf = ActivityControl[oneConf.activityId]
+		-- for i=1,#ActivityControl do
+		-- 	if ActivityControl[i] ~= nil and ActivityControl[i].id == oneConf.activityId then
+		-- 		activityControlConf = ActivityControl[i]
+		-- 	end
+		-- end
+
+		if activityControlConf == nil then return 1 end
+		--print("__________________activityID = "..activityID..", state = "..state)
+		local serverId = System.getServerId()
+		local openServer = false
+		if activityControlConf.serveropen then
+			for j=1,#activityControlConf.serveropen do
+				if serverId >= activityControlConf.serveropen[j][1] and serverId <= activityControlConf.serveropen[j][2] then
+					openServer = true
+					break
+				end 
+			end
+		else
+			openServer = true
+		end
+		if not openServer then return end
+		if oneConf.MonsterConf then
+			local sysHour,sysMin,sysSecond = 0,0,0
+			sysHour,sysMin,sysSecond = System.getTime(sysHour, sysMin, sysSecond)
+			for i = 1, #oneConf.MonsterConf.bossfreshtime do
+				local timeConf = oneConf.MonsterConf.bossfreshtime[i]
+				if timeConf[1] == sysHour and timeConf[2] == sysMin and timeConf[3] == sysSecond then
+					local bossconf = oneConf.MonsterConf.bossconf
+					if bossconf then
+						local x, y = 0, 0
+						local ptrTmp = nil
+						local hdl = Fuben.getSceneHandleById(bossconf.sceneId, 0)
+						for i=1, bossconf.count do
+							local x = Fuben.getSceneMovePosX(hdl);
+							local y = Fuben.getSceneMovePosY(hdl);
+							local test = 0
+							while Fuben.canMove(hdl, x , y) == false and test < 300 do
+								test = test + 1
+								x = Fuben.getSceneMovePosX(hdl);
+								y = Fuben.getSceneMovePosY(hdl);				
+							end
+							if Fuben.canMove(hdl, x , y) then
+								local ptr = Fuben.createMonster( hdl, bossconf.monsterId, x, y, bossconf.liveTime )
+								--print("BOSS袭礼")
+							--	print("x====================:"..x)
+								--print("y======================:"..y)
+								if ptrTmp == nil and ptr ~= nil then
+									ptrTmp = ptr
+								end
+							end
+						end
+						if ptrTmp ~= nil then
+							local str = string.format(Lang.TaskTalk.wb07, LActor.getName(ptrTmp), LActor.getSceneName(ptrTmp, x, y))
+							--System.broadcastLevelTipmsg(str, bossconf.level, ttGmTip)
+							System.broadcastLevelTipmsg(str, bossconf.level, ttChatWindow)
+						end
+					end
+				end
+			end
+		end
+	end
+end
+
+--BOSS死亡跟踪
+activityFunc.WorldBossDie = function(monster,sysarg,monId)
+	--print("___________________activityFunc = "..monId..",name = "..LActor.getName(sysarg))
+	local serverId = System.getServerId()
+	for i,v in ipairs(activityidlist) do
+		local state = ONLINEREWARD.GetActivityState(v)
+		if state ~= 0 then
+			local activityControlConf = ActivityControl[v]
+			-- for i=1,#ActivityControl do
+			-- 	if ActivityControl[i] ~= nil and ActivityControl[i].id == v then
+			-- 		activityControlConf = ActivityControl[i]
+			-- 	end
+			-- end
+			if activityControlConf then  
+				--print("__________________activityID = "..activityID..", state = "..state)
+				local openServer = false
+				if activityControlConf.serveropen then
+					for j=1,#activityControlConf.serveropen do
+						if serverId >= activityControlConf.serveropen[j][1] and serverId <= activityControlConf.serveropen[j][2] then
+							openServer = true
+							break
+						end 
+					end
+				else
+					openServer = true
+				end
+				if openServer then 
+					local bossConfig = activityConf[v].bossConfig
+					if bossConfig then
+						for i = 1, #bossConfig do
+							if bossConfig[i].monsterId == monId then
+								local x = 0
+								local y = 0
+								x, y = LActor.getEntityPosition(monster, x, y)
+								--如果需要刷新采集物，则刷新
+								local hScene = Fuben.getSceneHandleById(bossConfig[i].sceneId, 0)
+								--生成随机+-2上下坐标的宝箱
+								for j=1, bossConfig[i].boxCount do
+									Fuben.createMonster( hScene, bossConfig[i].boxID, math.random(x-4,x+4), math.random(y-1,y+2), bossConfig[i].liveTime*60 )
+								end
+								break
+							end
+						end
+					end
+				end
+			end
+		end
+	end
+	
+end
+
+
+--重启服务器时检查BOSS监听
+for i,v in ipairs(activityidlist) do
+	local oneConf = activityConf[v]
+	if oneConf then
+		local activityControlConf = ActivityControl[oneConf.activityId]
+		-- for i=1,#ActivityControl do
+		-- 	if ActivityControl[i] ~= nil and ActivityControl[i].id == oneConf.activityId then
+		-- 		activityControlConf = ActivityControl[i]
+		-- 	end
+		-- end
+
+		if activityControlConf then 
+			local serverId = System.getServerId()
+			local openServer = false
+			if activityControlConf.serveropen then
+				for j=1,#activityControlConf.serveropen do
+					if serverId >= activityControlConf.serveropen[j][1] and serverId <= activityControlConf.serveropen[j][2] then
+						openServer = true
+						break
+					end 
+				end
+			else
+				openServer = true
+			end 
+			if openServer then
+				local state = ONLINEREWARD.GetActivityState(v)
+				if state ~= 0 then
+					if oneConf.bossConfig and openServer then
+						for i = 1, #oneConf.bossConfig do
+								local bossSet = oneConf.bossConfig[i]
+								MonDieDispatcher.register(bossSet.monsterId, activityFunc.WorldBossDie)
+								--print("______________________bossSet.monsterId"..bossSet.monsterId)
+						end
+					end
+				end
+			end
+		end
+	end
+end
+
+
+
+activityFunc.ActivityOnTime = function()
+	activityFunc.CheckDoubleExpState()
+
+	for i,v in ipairs(activityidlist) do
+		--print("activityFunc.ActivityOnTime activeid:"..activityConf[v].activityId)
+		--检测活动是否已结束
+		local ifEnd = activityFunc.CheckEnd(activityConf[v])
+		--检测活动是否已开始
+		activityFunc.CheckStart(ifEnd, activityConf[v])
+		--天降宝箱
+		-- activityFunc.dropBox(activityConf[v])
+		--BOSS袭礼
+		-- activityFunc.RefreshNewYearMonster(activityConf[v])
+	end
+end
+
+
+table.insert(TimeFnTable, activityFunc.ActivityOnTime)

@@ -1,0 +1,20 @@
+
+-- 世界BOSS群体秒杀技能
+{
+	id=63,
+	name=Lang.Skill.s63Name,
+	desc=Lang.Skill.s63Desc,
+	vocation=0,	
+	skillClass =7,
+	skillType=6,
+	skillSpellType=0,
+	commonCd=0,
+	specialBuffCond =0,
+	skillSubLevel=
+	{
+--#include "Skill_63_1.txt"	
+	}
+},
+
+
+

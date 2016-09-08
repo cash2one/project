@@ -1,0 +1,786 @@
+require 'config/lang'
+
+
+NewEntrustConf = {
+	--fblistid 副本id
+	--daycount 该副本每天次数，本来副本配置中有，为了程序方便，这里也配一个
+	--level 委托需要的等级
+	--minfloor 需要通关的副本数，
+	--ljyb 立即完成每剩余300秒需要的天珠
+	--time 每一个副本需要的时间(秒)
+	--[[
+	-- 所有子副本的信息
+	fubens = 
+	{
+		-- 第一个
+		{
+			-- 触发的活跃奖励ID,没有就不填
+			actid = 8, 
+			-- 该层获得的奖励
+			--type 0：表示银两 1：表示贝币 2：表示绑定天珠 3：表示天珠 4: 表示历练值 5: 表示经验
+			--count 数量
+			rewards =
+			{
+
+				{ type = 4, count = 2000 },
+				{ type = 5, count = 2888 },
+			},
+			--获得的物品
+				itemid:道具id
+				bind:表示是否绑定,同一个道具id不支持既有绑定，又有不绑定
+				count:数量
+				mob:每次随机掉落概率,万分比
+				randnum：随机次数
+			items = 
+			{
+				{ itemid = 18540, mob=1250,randnum=1,bind=1,count = 1 },
+				{ itemid = 18520, mob=1250,randnum=1,bind=1,count = 1 },
+				{ itemid = 18530, mob=1250,randnum=1,bind=1,count = 1 },
+				{ itemid = 18600, mob=1250,randnum=1,bind=1,count = 1 },
+			},
+		},
+	},]]
+
+	{-- 历练副本
+		fblistid = 0,
+		daycount = 2,
+		level = 28,
+		minfloor = 1,
+		ljyb = 2,
+		time = 300,
+
+		fubens =
+		{
+			{ -- 第一关
+				actid = 8,
+				rewards =
+				{
+
+					{ type = 4, count = 2000 },
+					{ type = 5, count = 2888 },
+				},
+				items = 
+				{
+
+				},
+			},
+		},
+	},
+
+
+	{-- 一骑当千
+		fblistid = 1,
+		daycount = 2,
+		level = 40,
+		minfloor = 1,
+		ljyb = 2,
+		time = 300,
+
+		fubens =
+		{
+			{ -- 第一关
+				rewards =
+				{
+					{ type = 5, count = 210900 },
+				},
+				items = 
+				{
+				{ itemid = 18540, mob=1250,randnum=1,bind=1,count = 1 },
+				{ itemid = 18520, mob=1250,randnum=1,bind=1,count = 1 },
+				{ itemid = 18530, mob=1250,randnum=1,bind=1,count = 1 },
+				{ itemid = 18600, mob=1250,randnum=1,bind=1,count = 1 },
+				},
+			},
+
+			{ -- 第二关
+				rewards =
+				{
+
+					{ type = 5, count = 221400 },
+				},
+				items = 
+				{
+
+				{ itemid = 18540, mob=1250,randnum=1,bind=1,count = 1 },
+				{ itemid = 18520, mob=1250,randnum=1,bind=1,count = 1 },
+				{ itemid = 18530, mob=1250,randnum=1,bind=1,count = 1 },
+				{ itemid = 18600, mob=1250,randnum=1,bind=1,count = 1 },
+
+				},
+			},
+
+			{ -- 第三关
+				rewards =
+				{
+
+					{ type = 5, count = 232000 },
+				},
+				items = 
+				{
+
+			    { itemid = 18540, mob=1250,randnum=1,bind=1,count = 1 },
+				{ itemid = 18520, mob=1250,randnum=1,bind=1,count = 1 },
+				{ itemid = 18530, mob=1250,randnum=1,bind=1,count = 1 },
+				{ itemid = 18600, mob=1250,randnum=1,bind=1,count = 1 },
+
+				},
+			},
+
+			{ -- 第四关
+				rewards =
+				{
+
+
+					{ type = 5, count = 242500 },
+				},
+				items = 
+				{
+
+			    { itemid = 18540, mob=1250,randnum=1,bind=1,count = 1 },
+				{ itemid = 18520, mob=1250,randnum=1,bind=1,count = 1 },
+				{ itemid = 18530, mob=1250,randnum=1,bind=1,count = 1 },
+				{ itemid = 18600, mob=1250,randnum=1,bind=1,count = 1 },
+
+				},
+			},
+
+			{ -- 第五关
+				rewards =
+				{
+
+
+					{ type = 5, count = 253100 },
+				},
+				items = 
+				{
+
+				{ itemid = 18540, mob=1250,randnum=1,bind=1,count = 1 },
+				{ itemid = 18520, mob=1250,randnum=1,bind=1,count = 1 },
+				{ itemid = 18530, mob=1250,randnum=1,bind=1,count = 1 },
+				{ itemid = 18600, mob=1250,randnum=1,bind=1,count = 1 },
+
+				},
+			},
+
+			{ -- 第六关
+				rewards =
+				{
+
+
+					{ type = 5, count = 263600 },
+				},
+				items = 
+				{
+
+				{ itemid = 18540, mob=1250,randnum=1,bind=1,count = 1 },
+				{ itemid = 18520, mob=1250,randnum=1,bind=1,count = 1 },
+				{ itemid = 18530, mob=1250,randnum=1,bind=1,count = 1 },
+				{ itemid = 18600, mob=1250,randnum=1,bind=1,count = 1 },
+
+				},
+			},
+
+			{ -- 第七关
+				rewards =
+				{
+
+
+					{ type = 5, count = 274200 },
+				},
+				items = 
+				{
+
+				{ itemid = 18540, mob=1250,randnum=1,bind=1,count = 1 },
+				{ itemid = 18520, mob=1250,randnum=1,bind=1,count = 1 },
+				{ itemid = 18530, mob=1250,randnum=1,bind=1,count = 1 },
+				{ itemid = 18600, mob=1250,randnum=1,bind=1,count = 1 },
+
+				},
+			},
+
+			{ -- 第八关
+				rewards =
+				{
+
+
+					{ type = 5, count = 284700 },
+				},
+				items = 
+				{
+
+				{ itemid = 18540, mob=1250,randnum=1,bind=1,count = 1 },
+				{ itemid = 18520, mob=1250,randnum=1,bind=1,count = 1 },
+				{ itemid = 18530, mob=1250,randnum=1,bind=1,count = 1 },
+				{ itemid = 18600, mob=1250,randnum=1,bind=1,count = 1 },
+				{ itemid = 18720, mob=10000,randnum=1,bind=1,count = 1 },
+				},
+			},
+		},
+	},
+
+	{ -- 伙伴岛
+		fblistid = 2,
+		daycount = 2,
+		level = 28,
+		minfloor = 1,
+		ljyb = 2,
+		time = 300,
+
+
+		fubens =
+		{
+			{ -- 第一关
+				rewards =
+				{
+                 
+					{ type = 5, count = 1000 },
+				},
+				items = 
+				{
+
+				{ itemid = 28230, mob=1667,randnum=1,bind=1,count = 1 },
+				{ itemid = 28220, mob=1667,randnum=1,bind=1,count = 1 },
+				{ itemid = 28250, mob=3334,randnum=1,bind=0,count = 1 },
+				{ itemid = 28251, mob=834,randnum=1,bind=0,count = 1 },
+				{ itemid = 28252, mob=3334,randnum=1,bind=0,count = 1 },
+				{ itemid = 28253, mob=834,randnum=1,bind=0,count = 1 },
+
+
+
+				},
+			},
+
+			{ -- 第二关
+				rewards =
+				{
+
+					{ type = 5, count = 2000},
+				},
+				items = 
+				{
+
+
+				{ itemid = 28230, mob=1667,randnum=1,bind=1,count = 1 },
+				{ itemid = 28220, mob=1667,randnum=1,bind=1,count = 1 },
+				{ itemid = 28254, mob=3334,randnum=1,bind=0,count = 1 },
+				{ itemid = 28255, mob=834,randnum=1,bind=0,count = 1 },
+				{ itemid = 28256, mob=3334,randnum=1,bind=0,count = 1 },
+				{ itemid = 28257, mob=834,randnum=1,bind=0,count = 1 },
+
+				},
+			},
+
+			{ -- 第三关
+				rewards =
+				{
+                
+					{ type = 5, count = 3000 },
+				},
+				items = 
+				{
+
+				{ itemid = 28230, mob=2825,randnum=2,bind=1,count = 1 },
+				{ itemid = 28220, mob=2825,randnum=2,bind=1,count = 1 },
+				{ itemid = 28259, mob=834,randnum=3,bind=0,count = 1 },
+				{ itemid = 28288, mob=834,randnum=3,bind=0,count = 1 },
+				{ itemid = 60102, mob=440,randnum=1,bind=0,count = 1 },
+
+				},
+			},
+
+
+		},
+	},
+
+	{ -- 赏金副本
+		fblistid = 3,
+		daycount = 2,
+		level = 28,
+		minfloor = 1,
+		ljyb = 2,
+		time = 300,
+
+
+		fubens =
+		{
+			{ -- 第一关
+				rewards =
+				{
+                 	{ type = 0, count = 5000 },
+					{ type = 1, count = 10000 },
+					{ type = 5, count = 1000 },
+				},
+				items = 
+				{
+
+				},
+			},
+
+			{ -- 第二关
+				rewards =
+				{
+                 	{ type = 0, count = 6850 },
+					{ type = 1, count = 14000 },
+					{ type = 5, count = 1500 },
+				},
+				items = 
+				{
+
+				},
+			},
+
+			{ -- 第三关
+				rewards =
+				{
+                 	{ type = 0, count = 8700 },
+					{ type = 1, count = 18000 },
+					{ type = 5, count = 2000 },
+				},
+				items = 
+				{
+
+				},
+			},
+
+			{ -- 第四关
+				rewards =
+				{
+                 	{ type = 0, count = 10550 },
+					{ type = 1, count = 22000 },
+					{ type = 5, count = 2500 },
+				},
+				items = 
+				{
+
+				},
+			},
+
+			{ -- 第五关
+				rewards =
+				{
+                 	{ type = 0, count = 12400 },
+					{ type = 1, count = 26000 },
+					{ type = 5, count = 3000 },
+				},
+				items = 
+				{
+
+				},
+			},
+		},
+	},
+
+
+	{ -- 神树秘境
+		fblistid = 4,
+		daycount = 2,
+		level = 40,
+		minfloor = 1,
+		ljyb = 2,
+		time = 300,
+
+
+		fubens =
+		{
+			{ -- 第一关
+				rewards =
+				{
+              
+					{ type = 5, count = 69300 },
+				},
+				items = 
+				{
+
+				{ itemid = 48280, mob=3000,randnum=5,bind=1,count = 1 },
+                { itemid = 48281, mob=3000,randnum=5,bind=1,count = 1 },
+                { itemid = 48282, mob=6000,randnum=5,bind=1,count = 1 },
+                { itemid = 48279, mob=5300,randnum=3,bind=1,count = 1 },
+
+				},
+			},
+
+			{ -- 第二关
+				rewards =
+				{
+                 
+					{ type = 5, count = 71400 },
+				},
+				items = 
+				{
+
+				{ itemid = 48280, mob=3000,randnum=5,bind=1,count = 1 },
+                { itemid = 48281, mob=3000,randnum=5,bind=1,count = 1 },
+                { itemid = 48282, mob=6000,randnum=5,bind=1,count = 1 },
+                { itemid = 48279, mob=5300,randnum=3,bind=1,count = 1 },
+
+				},
+			},
+
+			{ -- 第三关
+				rewards =
+				{
+
+					{ type = 5, count = 73400 },
+				},
+				items = 
+				{
+
+				{ itemid = 48280, mob=3000,randnum=5,bind=1,count = 1 },
+                { itemid = 48281, mob=3000,randnum=5,bind=1,count = 1 },
+                { itemid = 48282, mob=6000,randnum=5,bind=1,count = 1 },
+                { itemid = 48279, mob=5300,randnum=3,bind=1,count = 1 },
+
+				},
+			},
+
+			{ -- 第四关
+				rewards =
+				{
+
+					{ type = 5, count = 75500 },
+				},
+				items = 
+				{
+
+				{ itemid = 48280, mob=3000,randnum=5,bind=1,count = 1 },
+                { itemid = 48281, mob=3000,randnum=5,bind=1,count = 1 },
+                { itemid = 48282, mob=6000,randnum=5,bind=1,count = 1 },
+                { itemid = 48279, mob=5300,randnum=3,bind=1,count = 1 },
+
+				},
+			},
+
+			{ -- 第五关
+				rewards =
+				{
+
+					{ type = 5, count = 77600 },
+				},
+				items = 
+				{
+
+				{ itemid = 48280, mob=3000,randnum=5,bind=1,count = 1 },
+                { itemid = 48281, mob=3000,randnum=5,bind=1,count = 1 },
+                { itemid = 48282, mob=6000,randnum=5,bind=1,count = 1 },
+                { itemid = 48279, mob=5300,randnum=3,bind=1,count = 1 },
+
+				},
+			},
+
+			{ -- 第六关
+				rewards =
+				{
+
+					{ type = 5, count = 79700 },
+				},
+				items = 
+				{
+
+				{ itemid = 48280, mob=3000,randnum=5,bind=1,count = 1 },
+                { itemid = 48281, mob=3000,randnum=5,bind=1,count = 1 },
+                { itemid = 48282, mob=6000,randnum=5,bind=1,count = 1 },
+                { itemid = 48279, mob=5300,randnum=3,bind=1,count = 1 },
+
+				},
+			},
+		},
+	},
+
+
+	{ -- 破狱之战
+		fblistid = 6,
+		daycount = 2,
+		level = 40, 
+		minfloor = 1,
+		ljyb = 2,
+		time = 300,
+
+
+		fubens =
+		{
+			{ -- 第一关
+				rewards =
+				{
+              
+					{ type = 5, count = 277500 },
+				},
+				items = 
+				{
+
+				{ itemid = 18810, mob=10000,randnum=1,bind=1,count = 1 },
+                { itemid = 18810, mob=4500,randnum=5,bind=1,count = 1 },
+
+
+				},
+			},
+
+			{ -- 第二关
+				rewards =
+				{
+                 
+					{ type = 5, count = 285800 },
+				},
+				items = 
+				{
+
+				{ itemid = 18810, mob=10000,randnum=1,bind=1,count = 1 },
+                { itemid = 18810, mob=4500,randnum=5,bind=1,count = 1 },
+
+
+				},
+			},
+
+			{ -- 第三关
+				rewards =
+				{
+
+					{ type = 5, count = 294200 },
+				},
+				items = 
+				{
+
+				{ itemid = 18810, mob=10000,randnum=1,bind=1,count = 1 },
+                { itemid = 18810, mob=4500,randnum=5,bind=1,count = 1 },
+
+
+				},
+			},
+
+			{ -- 第四关
+				rewards =
+				{
+
+					{ type = 5, count = 302500 },
+				},
+				items = 
+				{
+
+				{ itemid = 18810, mob=10000,randnum=1,bind=1,count = 1 },
+                { itemid = 18810, mob=4500,randnum=5,bind=1,count = 1 },
+
+
+				},
+			},
+
+			{ -- 第五关
+				rewards =
+				{
+
+					{ type = 5, count = 310800 },
+				},
+				items = 
+				{
+
+				{ itemid = 18810, mob=10000,randnum=1,bind=1,count = 1 },
+                { itemid = 18810, mob=4500,randnum=5,bind=1,count = 1 },
+
+
+				},
+			},
+
+			{ -- 第六关
+				rewards =
+				{
+
+					{ type = 5, count = 319100 },
+				},
+				items = 
+				{
+
+				{ itemid = 18810, mob=3000,randnum=1,bind=1,count = 1 },
+                { itemid = 18810, mob=3000,randnum=5,bind=1,count = 1 },
+                
+				},
+			},
+		},
+	},
+
+
+
+	{-- 决战雁门关
+		fblistid = 7,
+		daycount = 2,
+		level = 42,
+		minfloor = 1,
+		ljyb = 2,
+		time = 300,
+
+		fubens =
+		{
+			{ -- 第一关
+				rewards =
+				{
+
+					{type = 5, count = 107200},
+
+				},
+				items = 
+				{
+
+				{ itemid = 18623, mob=8000,randnum=4,bind=0,count = 1 },
+                { itemid = 18624, mob=3000,randnum=4,bind=0,count = 1 },
+                { itemid = 18625, mob=3000,randnum=4,bind=0,count = 1 },
+                { itemid = 18626, mob=3000,randnum=4,bind=0,count = 1 },
+                { itemid = 18302, mob=3000,randnum=28,bind=0,count = 1 },
+                { itemid = 18312, mob=3000,randnum=28,bind=0,count = 1 },
+                { itemid = 18622, mob=3000,randnum=3,bind=0,count = 1 },
+                { itemid = 18622, mob=3000,randnum=8,bind=0,count = 1 },
+                
+				},
+			},
+			{ -- 第二关
+				rewards =
+				{
+
+					{type = 5, count = 109400},
+
+				},
+				items = 
+				{
+
+				{ itemid = 18623, mob=8000,randnum=4,bind=0,count = 1 },
+                { itemid = 18624, mob=3000,randnum=4,bind=0,count = 1 },
+                { itemid = 18625, mob=3000,randnum=4,bind=0,count = 1 },
+                { itemid = 18626, mob=3000,randnum=4,bind=0,count = 1 },
+                { itemid = 18302, mob=3000,randnum=28,bind=0,count = 1 },
+                { itemid = 18312, mob=3000,randnum=28,bind=0,count = 1 },
+                { itemid = 18622, mob=3000,randnum=3,bind=0,count = 1 },
+                { itemid = 18622, mob=3000,randnum=8,bind=0,count = 1 },
+
+				},
+			},
+
+			{ -- 第三关
+				rewards =
+				{
+
+					{type = 5, count = 111500},
+				},
+				items = 
+				{
+
+				{ itemid = 18623, mob=8000,randnum=4,bind=0,count = 1 },
+                { itemid = 18624, mob=3000,randnum=4,bind=0,count = 1 },
+                { itemid = 18625, mob=3000,randnum=4,bind=0,count = 1 },
+                { itemid = 18626, mob=3000,randnum=4,bind=0,count = 1 },
+                { itemid = 18302, mob=3000,randnum=28,bind=0,count = 1 },
+                { itemid = 18312, mob=3000,randnum=28,bind=0,count = 1 },
+                { itemid = 18622, mob=3000,randnum=3,bind=0,count = 1 },
+                { itemid = 18622, mob=3000,randnum=8,bind=0,count = 1 },
+
+				},
+			},
+
+			{ -- 第四关
+				rewards =
+				{
+
+					{type = 5, count = 113600},
+				},
+				items = 
+				{
+
+				{ itemid = 18623, mob=8000,randnum=4,bind=0,count = 1 },
+                { itemid = 18624, mob=3000,randnum=4,bind=0,count = 1 },
+                { itemid = 18625, mob=3000,randnum=4,bind=0,count = 1 },
+                { itemid = 18626, mob=3000,randnum=4,bind=0,count = 1 },
+                { itemid = 18302, mob=3000,randnum=28,bind=0,count = 1 },
+                { itemid = 18312, mob=3000,randnum=28,bind=0,count = 1 },
+                { itemid = 18622, mob=3000,randnum=3,bind=0,count = 1 },
+                { itemid = 18622, mob=3000,randnum=8,bind=0,count = 1 },
+
+				},
+			},
+
+
+			{ -- 第五关
+				rewards =
+				{
+
+					{type = 5, count = 115800},
+
+				},
+				items = 
+				{
+
+				{ itemid = 18623, mob=8000,randnum=4,bind=0,count = 1 },
+                { itemid = 18624, mob=3000,randnum=4,bind=0,count = 1 },
+                { itemid = 18625, mob=3000,randnum=4,bind=0,count = 1 },
+                { itemid = 18626, mob=3000,randnum=4,bind=0,count = 1 },
+                { itemid = 18302, mob=3000,randnum=28,bind=0,count = 1 },
+                { itemid = 18312, mob=3000,randnum=28,bind=0,count = 1 },
+                { itemid = 18622, mob=3000,randnum=3,bind=0,count = 1 },
+                { itemid = 18622, mob=3000,randnum=8,bind=0,count = 1 },
+
+				},
+			},
+
+			{ -- 第六关
+				rewards =
+				{
+
+					{type = 5, count = 117900},
+				},
+				items = 
+				{
+
+				{ itemid = 18623, mob=8000,randnum=4,bind=0,count = 1 },
+                { itemid = 18624, mob=3000,randnum=4,bind=0,count = 1 },
+                { itemid = 18625, mob=3000,randnum=4,bind=0,count = 1 },
+                { itemid = 18626, mob=3000,randnum=4,bind=0,count = 1 },
+                { itemid = 18302, mob=3000,randnum=28,bind=0,count = 1 },
+                { itemid = 18312, mob=3000,randnum=28,bind=0,count = 1 },
+                { itemid = 18622, mob=3000,randnum=3,bind=0,count = 1 },
+                { itemid = 18622, mob=3000,randnum=8,bind=0,count = 1 },
+				},
+			},
+
+			{ -- 第七关
+				rewards =
+				{
+
+			      {type = 5, count = 120100},
+				},
+				items = 
+				{
+
+				{ itemid = 18623, mob=8000,randnum=4,bind=0,count = 1 },
+                { itemid = 18624, mob=3000,randnum=4,bind=0,count = 1 },
+                { itemid = 18625, mob=3000,randnum=4,bind=0,count = 1 },
+                { itemid = 18626, mob=3000,randnum=4,bind=0,count = 1 },
+                { itemid = 18302, mob=3000,randnum=28,bind=0,count = 1 },
+                { itemid = 18312, mob=3000,randnum=28,bind=0,count = 1 },
+                { itemid = 18622, mob=3000,randnum=3,bind=0,count = 1 },
+                { itemid = 18622, mob=3000,randnum=8,bind=0,count = 1 },
+				},
+			},
+
+			{ -- 第八关
+				rewards =
+				{
+
+					{type = 5, count = 122200},
+
+				},
+				items = 
+				{
+
+				{ itemid = 18623, mob=8000,randnum=4,bind=0,count = 1 },
+                { itemid = 18624, mob=3000,randnum=4,bind=0,count = 1 },
+                { itemid = 18625, mob=3000,randnum=4,bind=0,count = 1 },
+                { itemid = 18626, mob=3000,randnum=4,bind=0,count = 1 },
+                { itemid = 18302, mob=3000,randnum=28,bind=0,count = 1 },
+                { itemid = 18312, mob=3000,randnum=28,bind=0,count = 1 },
+                { itemid = 18622, mob=3000,randnum=3,bind=0,count = 1 },
+                { itemid = 18622, mob=3000,randnum=8,bind=0,count = 1 },
+				},
+			},
+
+		},
+	},
+
+
+
+
+
+}

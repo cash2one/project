@@ -1,0 +1,29 @@
+﻿{
+	id = 19301,
+	name = Lang.Item.n19301,
+	desc = Lang.Item.i19301,
+	type = 93,
+	sellType = 31,
+	icon = 347,
+	shape = {0,0,0,0,0,0,0,0},
+	color = 3,
+	dura = 0,
+	dup = 99,
+	colGroup = 0,
+	dealType = 0,
+	dealPrice = 0,
+	time = 0,
+	suitId = 0,
+	staitcAttrs = {  
+	{type=11,value =1000000},
+	},
+	strongAttrs = {  
+	},
+	flags = { 
+		recordLog = true, 
+		batchUse = true,
+	},
+	conds = { 
+		{ cond = 1, value = 1, }, 
+	},
+},

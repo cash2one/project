@@ -1,0 +1,37 @@
+--BOSSID=1
+{
+	id = 99,	--行为ID
+	trigger = 1,	--触发类型，血量为1，时间为2
+	infos = 
+	{
+		--血量50%
+		{
+			sequId = 2,
+			param = 50,
+			sequence = 
+			{
+				{ type = 10, duration = 2, msg=Lang.Actions.boss0991, msgType=2, tipType=2 },	--屏幕公告 msg表示公告内容
+			} 
+		},
+
+		--血量50%
+		{
+			sequId = 2,
+			param = 30,
+			sequence = 
+			{
+				{ type = 10, duration = 2, msg=Lang.Actions.boss0992, msgType=2, tipType=2 },	--屏幕公告 msg表示公告内容
+			} 
+		},
+
+		--血量50%
+		{
+			sequId = 2,
+			param = 10,
+			sequence = 
+			{
+				{ type = 10, duration = 2, msg=Lang.Actions.boss0993, msgType=2, tipType=2 },	--屏幕公告 msg表示公告内容
+			} 
+		},
+	},
+},

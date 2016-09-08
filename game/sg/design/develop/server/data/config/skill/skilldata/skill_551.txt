@@ -1,0 +1,31 @@
+{
+	id = 551,
+	name = Lang.Skill.s551Name,
+	desc = Lang.Skill.s551Desc,
+	vocation = 0,
+	skillType = 1,
+	skillSpellType = 0,
+	skillClass = 6,
+	commonCd = 0,
+	canbeDefault = false,
+	specialBuffCond = 0,
+	notAutoUse = false,
+ 	actions=
+{
+
+	{act=2,effect=1601,type=2},
+		
+},
+	skillSubLevel = { 
+--#include "Skill_551_1.txt"
+--#include "Skill_551_2.txt"
+--#include "Skill_551_3.txt"
+--#include "Skill_551_4.txt"
+--#include "Skill_551_5.txt" 
+--#include "Skill_551_6.txt"
+--#include "Skill_551_7.txt"
+--#include "Skill_551_8.txt"
+--#include "Skill_551_9.txt"
+--#include "Skill_551_10.txt" 
+	},
+},

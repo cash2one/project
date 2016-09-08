@@ -1,0 +1,47 @@
+﻿-- 合服相关配置
+
+
+-- 需要合服的时候打开这些配置
+
+-- 王城之战个人排行榜文件,分别是排行榜名称和文件名
+-- ty_m1 和 ty_m1.txt中的1对应的是源区几区
+MergeTianYuanRankFiles =
+{
+	{ "ty_m1", "ty_m1.txt" }, -- 从1区合过来的排行榜
+	-- 如果还有其它区按上面格式在这里加
+}
+
+-- 王城之战帮派排行榜文件,分别是排行榜名称和文件名
+-- tyg_m1 和 tyg_m1.txt中的1对应的是源区几区
+MergeTianYuanGuildRankFiles =
+{
+	{ "tyg_m1", "tyg_m1.txt" }, -- 从1区合过来的排行榜
+	-- 如果还有其它区按上面格式在这里加
+}
+
+-- 天元城主ID，可以通过SQL语句在actor库中获得
+-- select conv(CONCAT(substr(hex(globalmisc),15,2), substr(hex(globalmisc),13,2), substr(hex(globalmisc),11,2), substr(hex(globalmisc),9,2)), 16, 10) from globalvariable where serverid = 5
+-- 上面语句的serverid = 5改成对应的区号
+MergeTianYuanLeader =
+{
+	1111, 2222
+}
+
+-- 合服的各个主宰军团的ID
+MergeTianYuanGuild = 
+{
+	1111, 3333
+}
+
+-- 阵营之战排行榜,分别是排行榜名称和文件名
+-- camp_m1 和 camp_m1.txt中的1对应的是源区几区
+MergeCampRank =
+{
+	{ "camp_m1", "camp_m1.txt" }, -- 从1区合过来的排行榜
+	-- 如果还有其它区按上面格式在这里加
+}
+
+MergeConf = {
+	-- times = "2012-9-26 0:0:30", -- 合服时间，不需要准确值，只要每次合服用不同的值就行，不配或空字符表示不需要合服
+	srcArea = {20, 21}, -- 源区,暂时不需要
+}

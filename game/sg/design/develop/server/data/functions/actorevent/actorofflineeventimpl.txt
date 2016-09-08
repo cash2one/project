@@ -1,0 +1,52 @@
+-- 玩家离线消失 aeOfflineMsg
+
+local OffLineMsgDispatcher = {}
+
+OffLineMsgDispatcher.registerEventCall = function( eid, proc )
+	local eid = tonumber(eid)
+
+	local callTable = OffLineMsgDispatcher[eid]
+	if not callTable or type(callTable) ~= "table" then
+		OffLineMsgDispatcher[eid] = {}
+	else
+		for i=1,#callTable do
+			if callTable[i] == proc then
+				return false
+			end
+		end
+	end
+
+	table.insert(OffLineMsgDispatcher[eid], proc)
+	return true
+end
+
+OffLineMsgDispatcher.unregisterEventCall = function( eid, proc )
+	local eid = tonumber(eid)
+
+	local callTable = OffLineMsgDispatcher[eid]
+	if callTable then
+		for i=1,#callTable do
+			if callTable[i] == proc then
+				table.remove(OffLineMsgDispatcher[eid], i)
+				return
+			end
+		end
+	end
+	return false
+end
+
+OffLineMsgDispatcher.dispatch = function( sysarg, arg )
+	local msgType = arg[1]
+	local dp = arg[2]
+	local num = arg[3]
+	if msgType == nil or dp == nil then return end
+	
+	local fnTable = OffLineMsgDispatcher[msgType]
+	if fnTable then
+		for i=1,#fnTable do
+			fnTable[i](sysarg, msgType, dp, num)
+		end
+	end
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeOfflineMsg, OffLineMsgDispatcher.dispatch)

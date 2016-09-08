@@ -1,0 +1,65 @@
+--#include "..\..\..\language\LangCode.txt"
+--itemid 活动id cout数量  type 类型 ( 1  物品 2 货币 3 宗门贡献值 6 经验 10 威望 16 荣誉值 17 钥匙)
+CreateActorRecharge_Conf =
+{
+	day = 10,-- 活动的天数
+	continue_day = 7,--连续充值奖励的天数
+	--充值额外奖励
+	recharge_cout = 60,--此处需要转成天珠数量
+	recharge_award ={
+		--[1] 第一天的充值奖励
+		[1] = { 
+			{itemid = 0 , count = 50000,type = 2},
+			{itemid = 26151 , count = 2,type = 1},
+			},
+
+		[2] = {
+		{itemid = 0 , count = 50000,type = 2},
+		{itemid = 26151 , count = 2,type = 1},
+				},
+
+		[3] = {
+		{itemid = 0 , count = 50000,type = 2},
+		{itemid = 26151 , count = 2,type = 1},
+		},
+
+		[4] = {
+		{itemid = 0 , count = 50000,type = 2},
+		{itemid = 26151 , count = 2,type = 1},
+		},
+
+		[5] = {
+		{itemid = 0 , count = 50000,type = 2},
+		{itemid = 26151 , count = 2,type = 1},
+		{itemid = 26152 , count = 1,type = 1},
+		},
+
+		[6] = {
+		{itemid = 0 , count = 50000,type = 2},
+		{itemid = 26151 , count = 2,type = 1},
+		{itemid = 26152 , count = 1,type = 1},
+		},
+
+		[7] = {
+		{itemid = 23101 , count = 1,type = 1},
+		{itemid = 0 , count = 50000,type = 2},
+		{itemid = 26151 , count = 2,type = 1},
+		{itemid = 26152 , count = 1,type = 1},
+		},
+
+
+	},
+	-- --连续充值奖励
+	-- countinuerechar = {
+	-- --	[5] 5是连续充值天数 获得的奖励  支持多个
+	-- 	[5] = {
+	-- 			{ itemid = 15001 , count = 1, type = 1 },
+	-- 			{ itemid = 15002 , count = 1, type = 1 },
+	-- 		},
+	-- 	[7] = {
+	-- 			{ itemid = 15001 , count = 1, type = 1 },
+	-- 			{ itemid = 15002 , count = 1, type = 1 },
+	-- 			{ itemid = 21409 , count = 1, type = 1 },
+	-- 	},
+	-- },
+}

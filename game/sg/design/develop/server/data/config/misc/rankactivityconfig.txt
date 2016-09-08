@@ -1,0 +1,241 @@
+--排行榜活动
+--#include "..\..\language\LangCode.txt" once
+
+RankActivityConfig = {
+	[11] = {
+		-- openDay = 5,	--活动时间，开服时间开始第几天结束（如果配了这个字段，就不会读startTime 和 endTime了）
+		startTime = "2016-7-27 0:0:0",
+		endTime = "2016-7-31 23:59:59",
+
+		title = Lang.ScriptTips.levelrank006,
+		context = Lang.ScriptTips.levelrank005,
+		finalTitle = Lang.ScriptTips.levelrank008,
+		finalContext = Lang.ScriptTips.levelrank007,
+		
+		everyDayAwards = {
+			--每日等级排行奖励
+			{
+				rank = {1, 1} ,
+				item = {
+					--type按邮件的奖励类型
+					{type = 2, id = 3, count = 250, bind = 1},
+					{type = 10, id = 0, count = 20000, bind = 1},
+				}, 			
+			},
+			{
+				rank = {2, 3} ,
+				item = {
+					{type = 2, id = 3, count = 200, bind = 1},
+					{type = 10, id = 0, count = 17500, bind = 1},
+				}
+			},
+			{
+				rank = {4, 10} ,
+				item = {
+					{type = 2, id = 3, count = 175, bind = 1},
+					{type = 10, id = 0, count = 15000, bind = 1},
+				}
+			},
+		},
+		everyDayActorCount = 10,	--每日奖励人数
+		-- finalAwards = {
+		-- 	--终极奖励
+		-- 	{
+		-- 		rank = {1, 1} ,
+		-- 		item = { 
+		-- 			{type = 2, id = 3, count = 2000,  bind = 0},
+		-- 			{type = 1, id = 26103, count = 20, bind = 1},
+		-- 		}, 
+		-- 	},
+		-- 	{
+		-- 		rank = {2, 2} ,
+		-- 		item = { 
+		-- 			{type = 2, id = 3, count = 1500,  bind = 0},
+		-- 			{type = 1, id = 26103, count = 15, bind = 1},
+		-- 		}, 
+		-- 	},
+		-- 	{
+		-- 		rank = {3, 3} ,
+		-- 		item = { 
+		-- 			{type = 2, id = 3, count = 1000,  bind = 0},
+		-- 			{type = 1, id = 26103, count = 10, bind = 1},
+		-- 		}, 
+		-- 	},
+		-- 	{
+		-- 		rank = {4, 5} ,
+		-- 		item = { 
+		-- 			{type = 2, id = 3, count = 800,  bind = 0},
+		-- 		}, 
+		-- 	},
+		-- 	{
+		-- 		rank = {6, 10} ,
+		-- 		item = { 
+		-- 			{type = 2, id = 3, count = 500,  bind = 0},
+		-- 		}, 
+		-- 	},
+		-- 	{
+		-- 		rank = {11, 20} ,
+		-- 		item = { 
+		-- 			{type = 2, id = 3, count = 300,  bind = 0},
+		-- 		}, 
+		-- 	},
+		-- 	{
+		-- 		rank = {21, 30} ,
+		-- 		item = { 
+		-- 			{type = 2, id = 3, count = 200,  bind = 0},
+		-- 		}, 
+		-- 	},
+		-- 	{
+		-- 		rank = {31, 50} ,
+		-- 		item = { 
+		-- 			{type = 2, id = 3, count = 100,  bind = 0},
+		-- 		}, 
+		-- 	},
+		-- },
+		-- finalActorCount = 50,	--记录的终极奖励人数
+	},
+	[13] = {
+		-- openDay = 5,	--活动时间，开服时间开始第几天结束（如果配了这个字段，就不会读startTime 和 endTime了）
+		startTime = "2016-08-09 0:0:0",
+		endTime = "2016-08-14 22:01:30",
+
+		title = Lang.ScriptTips.levelrank014,		--发每天奖励的邮件内容
+		context = Lang.ScriptTips.levelrank013,		--发每天奖励的邮件题目
+		finalTitle = Lang.ScriptTips.levelrank016,	--发最终奖励的邮件内容
+		finalContext = Lang.ScriptTips.levelrank015,	--发最终奖励的邮件题目
+		
+		everyDayAwards = {
+			--每日等级排行奖励
+			{
+				rank = {1, 1} ,
+				item = {
+					--type按邮件的奖励类型
+					{type = 2, id = 3, count = 100, bind = 1},
+					{type = 1, id = 27203, count = 10, bind = 1},
+					{type = 1, id = 30304, count = 1, bind = 1},
+
+				}, 			
+			},
+			{
+				rank = {2, 3} ,
+				item = {
+					{type = 2, id = 3, count = 80, bind = 1},
+					{type = 1, id = 27203, count = 8, bind = 1},
+					{type = 1, id = 30304, count = 1, bind = 1},
+				}
+			},
+			{
+				rank = {4, 5} ,
+				item = {
+					{type = 2, id = 3, count = 50, bind = 1},
+					{type = 1, id = 27203, count = 8, bind = 1},
+					{type = 1, id = 30304, count = 1, bind = 1},
+				}
+			},
+			{
+				rank = {6, 10} ,
+				item = {
+					{type = 1, id = 27203, count = 5, bind = 1},
+					{type = 1, id = 30304, count = 1, bind = 1},
+				}
+			},
+		},
+		everyDayActorCount = 10,	--每日奖励人数
+		finalAwards = {
+			--终极奖励
+			{
+				rank = {1, 1},
+				item = { 
+					{type = 1, id = 42020, count = 1,  bind = 1},
+					{type = 1, id = 42021, count = 1, bind = 1},
+				}, 
+			},
+			{
+				rank = {2, 2},
+				item = { 
+					{type = 1, id = 26131, count = 8, bind = 1},
+				}, 
+			},
+			{
+				rank = {3, 3},
+				item = { 
+					{type = 1, id = 26131, count = 5, bind = 1},
+				}, 
+			},
+		},
+		finalOnlyOne = 1,	--前几名的最终奖励只能选一个
+		finalActorCount = 3,	--记录的终极奖励人数
+	},
+	[14] = {
+		-- openDay = 5,	--活动时间，开服时间开始第几天结束（如果配了这个字段，就不会读startTime 和 endTime了）
+		startTime = "2016-08-09 0:0:0",
+		endTime = "2016-08-14 22:01:30",
+
+		title = Lang.ScriptTips.levelrank014,		--发每天奖励的邮件内容
+		context = Lang.ScriptTips.levelrank013,		--发每天奖励的邮件题目
+		finalTitle = Lang.ScriptTips.levelrank016,	--发最终奖励的邮件内容
+		finalContext = Lang.ScriptTips.levelrank015,	--发最终奖励的邮件题目
+		
+		everyDayAwards = {
+			--每日等级排行奖励
+			{
+				rank = {1, 1} ,
+				item = {
+					--type按邮件的奖励类型
+					{type = 2, id = 3, count = 100, bind = 1},
+					{type = 1, id = 27203, count = 10, bind = 1},
+					{type = 1, id = 30304, count = 1, bind = 1},
+
+				}, 			
+			},
+			{
+				rank = {2, 3} ,
+				item = {
+					{type = 2, id = 3, count = 80, bind = 1},
+					{type = 1, id = 27203, count = 8, bind = 1},
+					{type = 1, id = 30304, count = 1, bind = 1},
+				}
+			},
+			{
+				rank = {4, 5} ,
+				item = {
+					{type = 2, id = 3, count = 50, bind = 1},
+					{type = 1, id = 27203, count = 8, bind = 1},
+					{type = 1, id = 30304, count = 1, bind = 1},
+				}
+			},
+			{
+				rank = {6, 10} ,
+				item = {
+					{type = 1, id = 27203, count = 5, bind = 1},
+					{type = 1, id = 30304, count = 1, bind = 1},
+				}
+			},
+		},
+		everyDayActorCount = 10,	--每日奖励人数
+		finalAwards = {
+			--终极奖励
+			{
+				rank = {1, 1},
+				item = { 
+					{type = 1, id = 42020, count = 1,  bind = 1},
+					{type = 1, id = 42021, count = 1, bind = 1},
+				}, 
+			},
+			{
+				rank = {2, 2},
+				item = { 
+					{type = 1, id = 26131, count = 8, bind = 1},
+				}, 
+			},
+			{
+				rank = {3, 3},
+				item = { 
+					{type = 1, id = 26131, count = 5, bind = 1},
+				}, 
+			},
+		},
+		finalOnlyOne = 1,	--前几名的最终奖励只能选一个
+		finalActorCount = 3,	--记录的终极奖励人数
+	},
+}

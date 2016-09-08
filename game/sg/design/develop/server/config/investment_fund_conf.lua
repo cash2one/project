@@ -1,0 +1,65 @@
+require 'config/lang'
+
+
+--投资基金系统config
+InvestmentFundConf = 
+{
+	need_level = 25,	--系统开启所需等级
+	need_yuanbao = 200,
+	awards = 
+	{
+		{
+			days=1,	--第几天领取
+			money = {type = 3, count = 50},	--没有则不写
+			--item = {id = 24499, count = 1, bind = 1},	--没有则不写
+		},
+		{
+			days=2,	--第几天领取
+			---money = {type = 3, count = 50},	--没有则不写
+			--item = {id = 60058, count = 1, bind = 1},	--没有则不写
+			money = {type = 3, count = 50},
+		},
+		{
+			days=3,	--第几天领取
+			--money = {type = 1, count = 30000},	--没有则不写
+			money = {type = 3, count = 100},
+			--item = {id = 24499, count = 1, bind = 1},	--没有则不写
+		},
+		{
+			days=5,	--第几天领取
+			money = {type = 0, count = 100000},	--没有则不写
+			--item = {id = 24499, count = 1, bind = 1},	--没有则不写
+		},
+		{
+			days=7,	--第几天领取
+			--money = {type = 0, count = 10000},	--没有则不写
+			item = {id = 60058, count = 1, bind = 1},	--没有则不写
+		},
+		{
+			days=10,	--第几天领取
+			money = {type = 0, count = 150000},	--没有则不写
+			--item = {id = 24499, count = 1, bind = 1},	--没有则不写
+		},
+		{
+			days=14,	--第几天领取
+			--money = {type = 0, count = 10000},	--没有则不写
+			item = {id = 48278, count = 1, bind = 1},	--没有则不写
+		},
+		{
+			days=18,	--第几天领取
+			--money = {type = 0, count = 10000},	--没有则不写
+			item = {id = 58213, count = 1, bind = 1},	--没有则不写
+		},
+		{
+			days=23,	--第几天领取
+			money = {type = 0, count = 200000},	--没有则不写
+			--item = {id = 24499, count = 1, bind = 1},	--没有则不写
+		},
+		{
+			days=31,	--第几天领取
+			--money = {type = 0, count = 10000},	--没有则不写
+			item = {id = 34878, count = 1, bind = 1},	--没有则不写
+		},
+	},
+
+}

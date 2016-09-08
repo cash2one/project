@@ -1,0 +1,151 @@
+﻿--在线奖励以及新手奖励系统中于登录登出相关联的事件处理
+
+--#include "TimeReward_Const.txt" once 
+--#include "data\functions\NormalItem\NormalItemRewards.txt" once
+--#include "data\config\achieve\titles.txt" once
+--#include "data/config/vip/online_reward.txt" once
+
+
+EventCallDispatcher.SendRewardMsg = function (sysarg, protoid, idx, times, leftCount)
+	local npack = DataPack.allocPacket(sysarg,138,protoid)  --申请一个数据包
+	if npack == nil then return end
+	DataPack.writeByte(npack, idx) -- 下次是第几次领奖
+	DataPack.writeUInt(npack, times) -- 剩余领奖时间
+	DataPack.writeInt(npack, leftCount) -- 剩余领奖次数
+	DataPack.flush(npack)
+end
+
+
+--上线奖励
+--[[
+leaveReward
+1 : 下次领奖是第几次
+2 ：下次领奖剩余时间
+3
+4 ：上次领奖时间
+5 ：第几个奖品
+]]
+
+-- 用户登录发送在线奖励信息
+EventCallDispatcher._NoviceLoginReward = function ( sysarg )
+	local t = System.getCurrMiniTime()
+     
+     --获得上次剩余的在线奖励记录
+	local var = LActor.getStaticVar( sysarg )
+	local leaveReward = var.leaveReward	
+	local rand = 0
+	if leaveReward == nil then --初始化
+		var.leaveReward = {}
+		leaveReward = var.leaveReward
+		leaveReward[1] = 1 
+		leaveReward[2] = LOGINTIMEINTERVALS[1]
+		leaveReward[3] = 0
+		leaveReward[4] = t -- 还没领过奖，将上次领奖时间设为登录时间
+	end
+
+	--跨日处理
+	if System.isSameDay(leaveReward[4], t) == false then--第二天初始化
+		--print("next day -------")
+		leaveReward[1] = 1 
+		leaveReward[2] = LOGINTIMEINTERVALS[1]
+		leaveReward[3] = 0
+		leaveReward[4] = t
+	end
+
+	-- if leaveReward[1] > #LOGINTIMEINTERVALS then return end   --领奖次数限制，防止发送多余次数给客户端
+
+	leaveReward[3] = t -- 开始累加在线时间
+
+	EventCallDispatcher.SendRewardMsg(sysarg, 1, leaveReward[1], leaveReward[2], #LOGINTIMEINTERVALS - leaveReward[1] + 1)
+end
+
+--在线奖励的情况的下线存储
+EventCallDispatcher._LogoutRecordAwardTime = function ( sysarg )
+	local leaveReward = LActor.getStaticVar( sysarg ).leaveReward	--获得上次剩余的在线奖励记录
+	if leaveReward == nil then return end
+
+	if leaveReward[1] > #LOGINTIMEINTERVALS then return end -- 可能是领奖次数已经用完
+
+	local t = System.getCurrMiniTime()
+
+	-- 保存剩余领奖时间，下次登录时候继续使用这个时间
+	leaveReward[2] = leaveReward[2] - (t - leaveReward[3])
+	if leaveReward[2] < 0 then
+		leaveReward[2] = 0
+	end
+end
+
+-- 新一天到来的处理
+EventCallDispatcher.NewDayAcrriveTimeReward = function (sysarg, arg)
+	if arg == nil or arg[1] == nil then return end
+
+	if arg[1] == 1 then return end -- 登录时的检查，不在这里处理
+
+	local var = LActor.getStaticVar(sysarg)
+	local leaveReward = var.leaveReward
+
+	if leaveReward == nil then return end
+
+	local tm = System.getCurrMiniTime()
+
+	if leaveReward[1] > #LOGINTIMEINTERVALS then -- 上次全部奖品已经领完, 初始值
+		leaveReward[1] = 1 
+		leaveReward[2] = LOGINTIMEINTERVALS[1]
+		leaveReward[3] = tm
+		leaveReward[4] = tm
+		EventCallDispatcher.SendRewardMsg(sysarg, 1, leaveReward[1], leaveReward[2], #LOGINTIMEINTERVALS - leaveReward[1] + 1)
+	end
+end
+
+	--第一次登入游戏的新手玩家奖励
+EventCallDispatcher._CheckSetFirstLoginTimeAward = function (sysarg, arg)
+	if arg == nil then return end
+	local isFirstLogin = arg[1]
+	--print("arg[1]:"..arg[1])
+	if (isFirstLogin == 1) then
+	
+		local pid = LActor.getIntProperty( sysarg, PROP_ENTITY_ID )
+		
+		--首次登录送新手礼包
+		--doReward( sysarg, LocalDT.TimeRewardConst.FIRSTLOGINREWARD )	--2011.8.10 zac:改成任务送
+		
+		--二次封测修改为绑定天珠 
+		--LActor.changeMoney(sysarg,mtBindYuanbao,1888)
+		--记录第一次登录日期，用于判断从第二日算起，角色每日登录可获得188绑定天珠 
+		local nYear,nMonth,nDay = System.getDate(0,0,0)
+		local var = LActor.getStaticVar(sysarg)
+		local loginDay = var.loginDay  --获得前一次上线日期
+		if loginDay == nil then
+			var.loginDay = {}
+			loginDay = var.loginDay
+		end
+		if loginDay[1] ~= nMonth then loginDay[1] = nMonth end
+		if loginDay[2] ~= nDay then loginDay[2] = nDay end
+	else
+		--从第二日算起，角色每日登录可获得188绑定天珠
+		local nYear,nMonth,nDay = System.getDate(0,0,0)
+		local var = LActor.getStaticVar(sysarg)
+		local loginDay = var.loginDay  --获得前一次上线日期 
+		if loginDay == nil then
+			var.loginDay = {}
+			loginDay = var.loginDay
+			loginDay[1] = nMonth
+			loginDay[2] = nDay
+		end
+		--当上次登录日期跟本次登录不同则给予188绑定天珠 
+		if loginDay[1] ~= nMonth or loginDay[2] ~= nDay then
+			--LActor.changeMoney(sysarg,mtBindYuanbao,188)
+		end
+		--记录上线日期 
+		loginDay[1] = nMonth
+		loginDay[2] = nDay
+	end
+	--print("first login end")
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, EventCallDispatcher._CheckSetFirstLoginTimeAward)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, EventCallDispatcher._NoviceLoginReward)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogout, EventCallDispatcher._LogoutRecordAwardTime)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, EventCallDispatcher.NewDayAcrriveTimeReward)
+
+

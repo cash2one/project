@@ -1,0 +1,1873 @@
+﻿-- 技能1的秘籍配置
+--actionType= 1  0代表已有的效果，1代表新效果   
+-- tp : 作用类型
+-- prob : 触发概率
+-- param : 根据不同的类型不同
+-- event : 触发事件
+
+--[[ tp 定义
+1 : 加被动属性 
+	-- 未用到
+2 : 给玩家加buff
+	target : 目标
+	attrtype
+	attrvalue
+	attrgroup
+	times
+	interval
+3 : 改变技能冷却时间
+	skillid : 技能ID，0表示当前技能，默认为0
+	value : 正数表示增加，负数表示减少，0表示清空，单位：秒
+4 : 额外伤害(万分之几)
+	rate : 伤害比例
+5 : 叠加buff时间
+	times :
+	interval :
+6 : 修改秘籍相关属性
+	attrtype : 秘籍属性类型
+	attrvalue : 秘籍属性值 (整数)
+
+7 ：
+
+8 ：使用技能
+	skillid : 技能ID
+	skilllevel : 技能等级
+
+9 ：伤害加成
+	rate : 加成比例
+]]
+
+-- event : 效果触发事件
+--[[
+1 : 释放技能
+2 : 计算伤害
+3 : buff 自动消失
+4 : 添加buff
+5 : buff 被动消失
+6 : 扣除目标玩家血量
+]]
+
+--[[
+参数
+target : 目标，
+	1 表示选择目标
+	2 表示全体
+	3 特殊分类，眩晕，减速，定身，沉默的玩家
+	4 血量低于%x的玩家(百分之几)
+	5 表示自己
+	6 表示有某类buff的玩家, 参数是buff类型
+tparam : 目标参数,根据目标不同而不同
+effect :
+	1 : 上浮秘籍名
+	2 : 
+	3 : 
+	4 : 添加标记特效
+]]
+
+--[[
+   秘籍升级效果配置
+	同技能配置
+
+]]
+
+{ -- 绿
+	id = 19600, -- 秘籍ID
+
+	basics = {
+		-- 等级1
+		{
+			score = 1000,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=4,delay=0,value={rate=15000,value=12}},	
+			},
+		},
+		-- 等级
+		{
+			score = 2000,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=4,delay=0,value={rate=16000,value=12}},	
+			},
+		},
+		-- 等级
+		{
+			score = 3000,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=4,delay=0,value={rate=17000,value=12}},	
+			},
+		},
+		-- 等级
+		{
+			score = 4000,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=4,delay=0,value={rate=18000,value=12}},	
+			},
+		},
+		-- 等级
+		{
+			score = 5000,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=4,delay=0,value={rate=19000,value=12}},	
+			},
+		},
+		-- 等级
+		{
+			score = 6000,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=4,delay=0,value={rate=19100,value=12}},	
+			},
+		},
+		-- 等级
+		{
+			score = 7000,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=4,delay=0,value={rate=19200,value=12}},	
+			},
+		},
+		-- 等级
+		{
+			score = 8000,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=4,delay=0,value={rate=19300,value=12}},	
+			},
+		},
+		-- 等级
+		{
+			score = 9000,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=4,delay=0,value={rate=19400,value=12}},	
+			},
+		},
+	},
+
+	extras = {
+		-- 重数 1
+		{
+			score = 100, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 1, attrvalue = 1 },
+			},
+
+			actions = 
+			{
+				-- 突雷
+				{ event = 6, tp = 9, target = 3, rate = 1000 },  -- 类似离炎引
+			},
+		},
+		-- 重数 2
+		{
+			score = 200, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 1, attrvalue = 2 },
+			},
+
+			actions = 
+			{
+				-- 突雷
+				{ event = 2, tp = 4, target = 3, rate = 5000 },  -- 类似离炎引
+			},
+		},
+		-- 重数 3
+		{
+			score = 300, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 1, attrvalue = 3 },
+			},
+
+			actions = 
+			{
+				-- 突雷
+				{ event = 2, tp = 4, target = 3, rate = 10000 },  -- 类似离炎引
+			},
+		},
+		-- 重数 4
+		{
+			score = 400, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 1, attrvalue = 4 },
+			},
+
+			actions = 
+			{
+				-- 突雷
+				{ event = 2, tp = 4, target = 3, rate = 15000 },  -- 类似离炎引
+			},
+		},
+		-- 重数 5
+		{
+			score = 500, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 1, attrvalue = 5 },
+			},
+
+			actions = 
+			{
+				-- 突雷
+				{ event = 2, tp = 4, target = 3, rate = 20000 },  -- 类似离炎引
+			},
+		},
+		-- 重数 6
+		{
+			score = 600, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 1, attrvalue = 6 },
+			},
+
+			actions = 
+			{
+				-- 突雷
+				{ event = 2, tp = 4, target = 3, rate = 25000 },  -- 类似离炎引
+			},
+		},
+		-- 重数 7
+		{
+			score = 700, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 1, attrvalue = 7 },
+			},
+
+			actions = 
+			{
+				-- 突雷
+				{ event = 2, tp = 4, target = 3, rate = 30000 },  -- 类似离炎引
+			},
+		},
+		-- 重数 8
+		{
+			score = 800, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 1, attrvalue = 8 },
+			},
+
+			actions = 
+			{
+				-- 突雷
+				{ event = 2, tp = 4, target = 3, rate = 35000 },  -- 类似离炎引
+			},
+		},
+		-- 重数 9
+		{
+			score = 900, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 1, attrvalue = 9 },
+			},
+
+			actions = 
+			{
+				-- 突雷
+				{ event = 2, tp = 4, target = 3, rate = 40000 },  -- 类似离炎引
+			},
+		},
+	},
+},
+
+{ -- 绿
+	id = 19605, -- 秘籍ID
+
+	basics = {
+		-- 等级
+		{
+			score = 100,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=2,delay=0,value={type=1,id=2}},	
+			},
+		},
+		-- 等级
+		{
+			score = 2000,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=2,delay=0,value={type=1,id=2}},	
+			},
+		},
+		-- 等级
+		{
+			score = 3000,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=2,delay=0,value={type=1,id=2}},	
+			},
+		},
+		-- 等级
+		{
+			score = 4000,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=2,delay=0,value={type=1,id=2}},	
+			},
+		},
+		-- 等级
+		{
+			score = 5000,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=2,delay=0,value={type=1,id=2}},	
+			},
+		},
+		-- 等级
+		{
+			score = 6000,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=2,delay=0,value={type=1,id=2}},	
+			},
+		},
+		-- 等级
+		{
+			score = 7000,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=2,delay=0,value={type=1,id=2}},	
+			},
+		},
+		-- 等级
+		{
+			score = 8000,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=2,delay=0,value={type=1,id=2}},	
+			},
+		},
+		-- 等级
+		{
+			score = 9000,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=2,delay=0,value={type=1,id=2}},	
+			},
+		},
+	},
+
+	extras = {
+		-- 重数 1
+		{
+			score = 100, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 1, attrvalue = 1 },
+			},
+
+			actions = 
+			{
+				-- 突雷
+				{ event = 2, tp = 4, target = 3, rate = 1000 },  -- 类似离炎引
+			},
+		},
+		-- 重数 2
+		{
+			score = 200, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 1, attrvalue = 2 },
+			},
+
+			actions = 
+			{
+				-- 突雷
+				{ event = 2, tp = 4, target = 3, rate = 5000 },  -- 类似离炎引
+			},
+		},
+		-- 重数 3
+		{
+			score = 300, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 1, attrvalue = 3 },
+			},
+
+			actions = 
+			{
+				-- 突雷
+				{ event = 2, tp = 4, target = 3, rate = 10000 },  -- 类似离炎引
+			},
+		},
+		-- 重数 4
+		{
+			score = 400, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 1, attrvalue = 4 },
+			},
+
+			actions = 
+			{
+				-- 突雷
+				{ event = 2, tp = 4, target = 3, rate = 15000 },  -- 类似离炎引
+			},
+		},
+		-- 重数 5
+		{
+			score = 500, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 1, attrvalue = 5 },
+			},
+
+			actions = 
+			{
+				-- 突雷
+				{ event = 2, tp = 4, target = 3, rate = 20000 },  -- 类似离炎引
+			},
+		},
+		-- 重数 6
+		{
+			score = 600, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 1, attrvalue = 6 },
+			},
+
+			actions = 
+			{
+				-- 突雷
+				{ event = 2, tp = 4, target = 3, rate = 25000 },  -- 类似离炎引
+			},
+		},
+		-- 重数 7
+		{
+			score = 700, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 1, attrvalue = 7 },
+			},
+
+			actions = 
+			{
+				-- 突雷
+				{ event = 2, tp = 4, target = 3, rate = 30000 },  -- 类似离炎引
+			},
+		},
+		-- 重数 8
+		{
+			score = 800, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 1, attrvalue = 8 },
+			},
+
+			actions = 
+			{
+				-- 突雷
+				{ event = 2, tp = 4, target = 3, rate = 35000 },  -- 类似离炎引
+			},
+		},
+		-- 重数 9
+		{
+			score = 900, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 1, attrvalue = 9 },
+			},
+
+			actions = 
+			{
+				-- 突雷
+				{ event = 2, tp = 4, target = 3, rate = 40000 },  -- 类似离炎引
+			},
+		},
+	},
+},
+
+
+{ -- 绿
+	id = 19610, -- 秘籍ID
+
+	basics = {
+		-- 等级
+		{
+			score = 1000,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=2,delay=0,value={type=1,id=2}},	
+			},
+		},
+		-- 等级
+		{
+			score = 2000,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=2,delay=0,value={type=1,id=2}},	
+			},
+		},
+		-- 等级
+		{
+			score = 3000,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=2,delay=0,value={type=1,id=2}},	
+			},
+		},
+		-- 等级
+		{
+			score = 4000,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=2,delay=0,value={type=1,id=2}},	
+			},
+		},
+		-- 等级
+		{
+			score = 5000,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=2,delay=0,value={type=1,id=2}},	
+			},
+		},
+		-- 等级
+		{
+			score = 6000,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=2,delay=0,value={type=1,id=2}},	
+			},
+		},
+		-- 等级
+		{
+			score = 7000,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=2,delay=0,value={type=1,id=2}},	
+			},
+		},
+		-- 等级
+		{
+			score = 8000,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=2,delay=0,value={type=1,id=2}},	
+			},
+		},
+		-- 等级
+		{
+			score = 9000,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=2,delay=0,value={type=1,id=2}},	
+			},
+		},
+	},
+
+	extras = {
+		-- 重数 1
+		{
+			score = 100, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 1, attrvalue = 1 },
+			},
+
+			actions = 
+			{
+				-- 突雷
+				{ event = 2, tp = 4, target = 3, rate = 1000 },  -- 类似离炎引
+			},
+		},
+		-- 重数 2
+		{
+			score = 200, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 1, attrvalue = 2 },
+			},
+
+			actions = 
+			{
+				-- 突雷
+				{ event = 2, tp = 4, target = 3, rate = 5000 },  -- 类似离炎引
+			},
+		},
+		-- 重数 3
+		{
+			score = 300, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 1, attrvalue = 3 },
+			},
+
+			actions = 
+			{
+				-- 突雷
+				{ event = 2, tp = 4, target = 3, rate = 10000 },  -- 类似离炎引
+			},
+		},
+		-- 重数 4
+		{
+			score = 400, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 1, attrvalue = 4 },
+			},
+
+			actions = 
+			{
+				-- 突雷
+				{ event = 2, tp = 4, target = 3, rate = 15000 },  -- 类似离炎引
+			},
+		},
+		-- 重数 5
+		{
+			score = 500, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 1, attrvalue = 5 },
+			},
+
+			actions = 
+			{
+				-- 突雷
+				{ event = 2, tp = 4, target = 3, rate = 20000 },  -- 类似离炎引
+			},
+		},
+		-- 重数 6
+		{
+			score = 600, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 1, attrvalue = 6 },
+			},
+
+			actions = 
+			{
+				-- 突雷
+				{ event = 2, tp = 4, target = 3, rate = 25000 },  -- 类似离炎引
+			},
+		},
+		-- 重数 7
+		{
+			score = 700, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 1, attrvalue = 7 },
+			},
+
+			actions = 
+			{
+				-- 突雷
+				{ event = 2, tp = 4, target = 3, rate = 30000 },  -- 类似离炎引
+			},
+		},
+		-- 重数 8
+		{
+			score = 800, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 1, attrvalue = 8 },
+			},
+
+			actions = 
+			{
+				-- 突雷
+				{ event = 2, tp = 4, target = 3, rate = 35000 },  -- 类似离炎引
+			},
+		},
+		-- 重数 9
+		{
+			score = 900, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 1, attrvalue = 9 },
+			},
+
+			actions = 
+			{
+				-- 突雷
+				{ event = 2, tp = 4, target = 3, rate = 40000 },  -- 类似离炎引
+			},
+		},
+	},
+},
+
+{ -- 绿
+	id = 19615, -- 秘籍ID
+
+	basics = {
+		-- 等级
+		{
+			score = 100,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=2,delay=0,value={type=1,id=2}},	
+			},
+		},
+	},
+
+	extras = {
+		-- 重数 
+		{
+			score = 100, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 2, attrvalue = 5 },
+			},
+
+			actions = 
+			{
+				-- 离恨刺
+				{ event = 1, tp = 2, attrtype = 48, attrvalue = 0.5, attrgroup = 0, times = 1000, interval = 1, effect = 1 }, -- ？？？　需要增加属性，使用技能玩家持续对目标玩家伤害增加
+			},
+		},
+	},
+},
+
+{ -- 绿
+	id = 19620, -- 秘籍ID
+
+	basics = {
+		-- 等级
+		{
+			score = 100,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=2,delay=0,value={type=1,id=2}},	
+			},
+		},
+	},
+
+	extras = {
+		-- 重数 
+		{
+			score = 100, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 2, attrvalue = 5 },
+			},
+
+			actions = 
+			{
+				-- 化云斩
+				{ event = 2, tp = 2, prop = 10000, attrtype = 109, attrvalue = 0.5, attrgroup = 0, times = 1000, interval = 1, effect = 1 }, -- 需要新的buff
+			},
+		},
+	},
+},
+
+{ -- 绿
+	id = 19625, -- 秘籍ID
+
+	basics = {
+		-- 等级
+		{
+			score = 100,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=2,delay=0,value={type=1,id=2}},	
+			},
+		},
+	},
+
+	extras = {
+		-- 重数 
+		{
+			score = 100, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 2, attrvalue = 5 },
+			},
+
+			actions = 
+			{
+				-- 皓月斩
+				{ event = 1, tp = 2, attrtype = 48, attrvalue = 0.5, attrgroup = 0, times = 1000, interval = 1, effect = 1 }, -- 新的buff
+			},
+		},
+	},
+},
+
+{ -- 绿
+	id = 19630, -- 秘籍ID
+
+	basics = {
+		-- 等级
+		{
+			score = 100,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=2,delay=0,value={type=1,id=2}},	
+			},
+		},
+	},
+
+	extras = {
+		-- 重数 
+		{
+			score = 100, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 3, attrvalue = 5 },
+			},
+
+			actions = 
+			{
+				-- 擒龙手
+				{ event = 1, tp = 2, attrtype = 28, attrvalue = 0.5, attrgroup = 0, times = 1000, interval = 1, effect = 1 },
+			},
+		},
+	},
+},
+
+{ -- 绿
+	id = 19635, -- 秘籍ID
+
+	basics = {
+		-- 等级
+		{
+			score = 100,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=2,delay=0,value={type=1,id=2}},	
+			},
+		},
+	},
+
+	extras = {
+		-- 重数 
+		{
+			score = 100, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 3, attrvalue = 5 },
+			},
+
+			actions = 
+			{
+				-- 酒仙斩
+				{ event = 1, tp = 2, prop = 500, target = 5, attrtype = 48, attrvalue = 0.5, attrgroup = 0, times = 1000, interval = 1 }, -- 概率给自己增加攻击速度
+			},
+		},
+	},
+},
+
+{ -- 绿
+	id = 19640, -- 秘籍ID
+
+	basics = {
+		-- 等级
+		{
+			score = 100,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=2,delay=0,value={type=1,id=2}},	
+			},
+		},
+	},
+
+	extras = {
+		-- 重数 
+		{
+			score = 100, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 3, attrvalue = 5 },
+			},
+
+			actions = 
+			{
+				-- 隐遁
+				{ event = 5, tp =2, prop = 9000, attrtype = 48, attrvalue = 0.5, attrgroup = 0, times = 1000, interval = 1, effect = 1 },
+			},
+		},
+	},
+},
+
+{ -- 绿
+	id = 19645, -- 秘籍ID
+
+	basics = {
+		-- 等级
+		{
+			score = 100,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=2,delay=0,value={type=1,id=2}},	
+			},
+		},
+	},
+
+	extras = {
+		-- 重数 
+		{
+			score = 100, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 4, attrvalue = 5 },
+			},
+
+			actions = 
+			{
+				-- 天威煌炎 
+				{ event = 1, tp = 2, attrtype = 48, attrvalue = 0.5, attrgroup = 0, times = 1000, interval = 1 },
+				{ event = 2, tp = 8, target = 6, tparam = 106, skillid = 113, skilllevel = 1 }, -- 对有标记的玩家使用技能
+			},
+		},
+	},
+},
+
+{ -- 绿
+	id = 19650, -- 秘籍ID
+
+	basics = {
+		-- 等级
+		{
+			score = 100,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=2,delay=0,value={type=1,id=2}},	
+			},
+		},
+	},
+
+	extras = {
+		-- 重数 
+		{
+			score = 100, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 4, attrvalue = 5 },
+			},
+
+			actions = 
+			{
+				-- 万剑归宗
+				{ event = 1, tp = 2, prop = 9000, attrtype = 48, attrvalue = 0.5, attrgroup = 0, times = 1000, interval = 1 }, -- 需要新的buff
+			},
+		},
+	},
+},
+
+{ -- 绿
+	id = 19655, -- 秘籍ID
+
+	basics = {
+		-- 等级
+		{
+			score = 100,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=2,delay=0,value={type=1,id=2}},	
+			},
+		},
+	},
+
+	extras = {
+		-- 重数 
+		{
+			score = 100, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 4, attrvalue = 5 },
+			},
+
+			actions = 
+			{
+				-- 环定乾坤
+				{ event = 2, tp = 4, target = 3, rate = 400  }, 
+			},
+		},
+	},
+},
+
+{ -- 绿
+	id = 19660, -- 秘籍ID
+
+	basics = {
+		-- 等级
+		{
+			score = 100,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=2,delay=0,value={type=1,id=2}},	
+			},
+		},
+	},
+
+	extras = {
+		-- 重数 
+		{
+			score = 100, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 5, attrvalue = 5 },
+			},
+
+			actions = 
+			{
+				-- 苍雷狂啸
+				{ event = 1, tp = 2, target = 5, attrtype = 106, attrvalue = 0.1, attrgroup = 0, times = 1000, interval = 1, effect = 1 },  -- 给自己加个buff
+			},
+		},
+	},
+},
+
+{ -- 绿
+	id = 19665, -- 秘籍ID
+
+	basics = {
+		-- 等级
+		{
+			score = 100,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=2,delay=0,value={type=1,id=2}},	
+			},
+		},
+	},
+
+	extras = {
+		-- 重数 
+		{
+			score = 100, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 5, attrvalue = 5 },
+			},
+
+			actions = 
+			{
+				-- 傲天剑意
+				{ event = 1, tp = 2, attrtype = 48, attrvalue = 0.5, attrgroup = 0, times = 1000, interval = 1, effect = 1 },
+			},
+		},
+	},
+},
+
+{ -- 绿
+	id = 19670, -- 秘籍ID
+
+	basics = {
+		-- 等级
+		{
+			score = 100,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=2,delay=0,value={type=1,id=2}},	
+			},
+		},
+	},
+
+	extras = {
+		-- 重数 
+		{
+			score = 100, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 5, attrvalue = 5 },
+			},
+
+			actions = 
+			{
+				-- 踏云无痕
+				{ event = 2, tp =2, prop = 9000, attrtype = 48, attrvalue = 0.5, attrgroup = 0, times = 1000, interval = 1, effect = 1 },
+			},
+		},
+	},
+},
+
+{ -- 绿
+	id = 19675, -- 秘籍ID
+
+	basics = {
+		-- 等级
+		{
+			score = 100,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=2,delay=0,value={type=1,id=2}},	
+			},
+		},
+	},
+
+	extras = {
+		-- 重数 
+		{
+			score = 100, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 6, attrvalue = 5 },
+			},
+
+			actions = 
+			{
+				-- 诛心仙疡 -- 同云海飘渺
+				{ event = 4, tp = 5, attrtype = 62, times = 1000, interval = 1 },
+				{ event = 1, tp = 3, skillid = 0, value = -5 },
+			},
+		},
+	},
+},
+
+{ -- 绿
+	id = 19680, -- 秘籍ID
+
+	basics = {
+		-- 等级
+		{
+			score = 100,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=2,delay=0,value={type=1,id=2}},	
+			},
+		},
+	},
+
+	extras = {
+		-- 重数 
+		{
+			score = 100, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 6, attrvalue = 5 },
+			},
+
+			actions = 
+			{
+				-- 天道有情 -- 同云海飘渺
+				{ event = 4, tp = 5, times = 1000, interval = 1 },
+				{ event = 1, tp = 3, skillid = 0, value = -5 },
+			},
+		},
+	},
+},
+
+{ -- 绿
+	id = 19685, -- 秘籍ID
+
+	basics = {
+		-- 等级
+		{
+			score = 100,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=2,delay=0,value={type=1,id=2}},	
+			},
+		},
+	},
+
+	extras = {
+		-- 重数 
+		{
+			score = 100, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 6, attrvalue = 5 },
+			},
+
+			actions = 
+			{
+				-- 镜花水月 -- 同云海飘渺
+				{ event = 4, tp = 5, times = 1000, interval = 1 },
+				{ event = 1, tp = 3, skillid = 0, value = -5 },
+			},
+		},
+	},
+},
+
+{ -- 绿
+	id = 19690, -- 秘籍ID
+
+	basics = {
+		-- 等级
+		{
+			score = 100,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=2,delay=0,value={type=1,id=2}},	
+			},
+		},
+	},
+
+	extras = {
+		-- 重数 
+		{
+			score = 100, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 7, attrvalue = 5 },
+			},
+
+			actions = 
+			{
+				-- 紫电炼体诀
+				{ event = 6, tp = 6, attrtype = 1, attrvalue = 40 },
+				{ event = 6, tp = 6, attrtype = 2, attrvalue = 10 },
+			},
+		},
+	},
+},
+
+{ -- 绿
+	id = 19695, -- 秘籍ID
+
+	basics = {
+		-- 等级
+		{
+			score = 100,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=2,delay=0,value={type=1,id=2}},	
+			},
+		},
+	},
+
+	extras = {
+		-- 重数 
+		{
+			score = 100, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 7, attrvalue = 5 },
+			},
+
+			actions = 
+			{
+				-- 斩妖灭法诀 -- 同九天玄灵诀
+				{ event = 2, tp = 4, target = 4, tparam = 40, rate = 1000, effect = 1 },
+			},
+		},
+	},
+},
+
+{ -- 绿
+	id = 29600, -- 秘籍ID
+
+	basics = {
+		-- 等级
+		{
+			score = 100,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=2,delay=0,value={type=1,id=2}},	
+			},
+		},
+	},
+
+	extras = {
+		-- 重数 
+		{
+			score = 100, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype =7, attrvalue = 5 },
+			},
+
+			actions = 
+			{
+				-- 凌虚飞仙诀
+				{ event = 6, tp = 6, attrtype = 1, attrvalue = 40 },
+				{ event = 6, tp = 6, attrtype = 2, attrvalue = 10 },
+			},
+		},
+	},
+},
+
+{ -- 绿
+	id = 29605, -- 秘籍ID
+
+	basics = {
+		-- 等级
+		{
+			score = 100,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=2,delay=0,value={type=1,id=2}},	
+			},
+		},
+	},
+
+	extras = {
+		-- 重数 
+		{
+			score = 100, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 8, attrvalue = 5 },
+			},
+
+			actions = 
+			{
+				-- 怒海狂雷功 -- 同九天玄灵诀
+				{ event = 2, tp = 4, target = 4, tparam = 40, rate = 1000, effect = 1 },
+			},
+		},
+	},
+},
+
+{ -- 绿
+	id = 29610, -- 秘籍ID
+
+	basics = {
+		-- 等级
+		{
+			score = 100,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=2,delay=0,value={type=1,id=2}},	
+			},
+		},
+	},
+
+	extras = {
+		-- 重数 
+		{
+			score = 100, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 8, attrvalue = 5 },
+			},
+
+			actions = 
+			{
+				-- 乾坤混元功
+				{ event = 6, tp = 6, attrtype = 1, attrvalue = 40 },
+				{ event = 6, tp = 6, attrtype = 2, attrvalue = 10 },
+			},
+		},
+	},
+},
+
+{ -- 绿
+	id = 29615, -- 秘籍ID
+
+	basics = {
+		-- 等级
+		{
+			score = 100,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=2,delay=0,value={type=1,id=2}},	
+			},
+		},
+	},
+
+	extras = {
+		-- 重数 
+		{
+			score = 100, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 9, attrvalue = 5 },
+			},
+
+			actions = 
+			{
+				-- 赤月战神功
+				{ event = 2, tp = 4, target = 4, tparam = 40, rate = 1000, effect = 1 },
+			},
+		},
+	},
+},
+
+{ -- 绿
+	id = 29620, -- 秘籍ID
+
+	basics = {
+		-- 等级
+		{
+			score = 1000,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=2,delay=0,value={type=1,id=2}},	
+			},
+		},
+		-- 等级
+		{
+			score = 200,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=2,delay=0,value={type=1,id=2}},	
+			},
+		},
+		-- 等级
+		{
+			score = 3000,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=2,delay=0,value={type=1,id=2}},	
+			},
+		},
+		-- 等级
+		{
+			score = 4000,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=2,delay=0,value={type=1,id=2}},	
+			},
+		},
+		-- 等级
+		{
+			score = 5000,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=2,delay=0,value={type=1,id=2}},	
+			},
+		},
+		-- 等级
+		{
+			score = 6000,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=2,delay=0,value={type=1,id=2}},	
+			},
+		},
+		-- 等级
+		{
+			score = 7000,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=2,delay=0,value={type=1,id=2}},	
+			},
+		},
+		-- 等级
+		{
+			score = 8000,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=2,delay=0,value={type=1,id=2}},	
+			},
+		},
+		-- 等级
+		{
+			score = 9000,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=2,delay=0,value={type=1,id=2}},	
+			},
+		},
+	},
+
+	extras = {
+		-- 重数 1
+		{
+			score = 100, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 1, attrvalue = 1 },
+			},
+
+			actions = 
+			{
+				-- 突雷
+				{ event = 2, tp = 4, target = 3, rate = 1000 },  -- 类似离炎引
+			},
+		},
+		-- 重数 2
+		{
+			score = 200, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 1, attrvalue = 2 },
+			},
+
+			actions = 
+			{
+				-- 突雷
+				{ event = 2, tp = 4, target = 3, rate = 5000 },  -- 类似离炎引
+			},
+		},
+		-- 重数 3
+		{
+			score = 300, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 1, attrvalue = 3 },
+			},
+
+			actions = 
+			{
+				-- 突雷
+				{ event = 2, tp = 4, target = 3, rate = 10000 },  -- 类似离炎引
+			},
+		},
+		-- 重数 4
+		{
+			score = 400, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 1, attrvalue = 4 },
+			},
+
+			actions = 
+			{
+				-- 突雷
+				{ event = 2, tp = 4, target = 3, rate = 15000 },  -- 类似离炎引
+			},
+		},
+		-- 重数 5
+		{
+			score = 500, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 1, attrvalue = 5 },
+			},
+
+			actions = 
+			{
+				-- 突雷
+				{ event = 2, tp = 4, target = 3, rate = 20000 },  -- 类似离炎引
+			},
+		},
+		-- 重数 6
+		{
+			score = 600, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 1, attrvalue = 6 },
+			},
+
+			actions = 
+			{
+				-- 突雷
+				{ event = 2, tp = 4, target = 3, rate = 25000 },  -- 类似离炎引
+			},
+		},
+		-- 重数 7
+		{
+			score = 700, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 1, attrvalue = 7 },
+			},
+
+			actions = 
+			{
+				-- 突雷
+				{ event = 2, tp = 4, target = 3, rate = 30000 },  -- 类似离炎引
+			},
+		},
+		-- 重数 8
+		{
+			score = 800, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 1, attrvalue = 8 },
+			},
+
+			actions = 
+			{
+				-- 突雷
+				{ event = 2, tp = 4, target = 3, rate = 35000 },  -- 类似离炎引
+			},
+		},
+		-- 重数 9
+		{
+			score = 900, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 1, attrvalue = 9 },
+			},
+
+			actions = 
+			{
+				-- 突雷
+				{ event = 2, tp = 4, target = 3, rate = 40000 },  -- 类似离炎引
+			},
+		},
+	},
+},
+
+{ -- 绿
+	id = 29625, -- 秘籍ID
+
+	basics = {
+		-- 等级
+		{
+			score = 100,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=2,delay=0,value={type=1,id=2}},	
+			},
+		},
+	},
+
+	extras = {
+		-- 重数 
+		{
+			score = 100, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 2, attrvalue = 5 },
+			},
+
+			actions = 
+			{
+				-- 玄冰掌
+				{ event = 1, tp = 3, skillid = 11, value = 11, effect = 1, },
+			},
+		},
+	},
+},
+
+{ -- 绿
+	id = 29630, -- 秘籍ID
+
+	basics = {
+		-- 等级
+		{
+			score = 100,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=2,delay=0,value={type=1,id=2}},	
+			},
+		},
+	},
+
+	extras = {
+		-- 重数 
+		{
+			score = 100, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 3, attrvalue = 5 },
+			},
+
+			actions = 
+			{
+				-- 冰龙天道
+				{ event = 1, tp = 2, prop = 9000, target = 5, attrtype = 48, attrvalue = 0.5, attrgroup = 0, times = 1000, interval = 1 }, -- 概率给自己增加攻击速度
+			},
+		},
+	},
+},
+
+{ -- 绿
+	id = 29635, -- 秘籍ID
+
+	basics = {
+		-- 等级
+		{
+			score = 100,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=2,delay=0,value={type=1,id=2}},	
+			},
+		},
+	},
+
+	extras = {
+		-- 重数 
+		{
+			score = 100, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 4, attrvalue = 5 },
+			},
+
+			actions = 
+			{
+				-- 苍澜吟
+				{ event = 2, tp = 4, target = 1, rate = 50, effect = 2, effparam = { type=6,mj=0,id=55,time=500,delay=500 } },
+			},
+		},
+	},
+},
+
+{ -- 绿
+	id = 29640, -- 秘籍ID
+
+	basics = {
+		-- 等级
+		{
+			score = 100,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=2,delay=0,value={type=1,id=2}},	
+			},
+		},
+	},
+
+	extras = {
+		-- 重数 
+		{
+			score = 100, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 5, attrvalue = 5 },
+			},
+
+			actions = 
+			{
+				-- 太虚灵盾
+				{ event = 3, tp = 2, attrtype = 48, attrvalue = 0.5, attrgroup = 0, times = 1000, interval = 1, effect = 1 },
+			},
+		},
+	},
+},
+
+{ -- 绿
+	id = 29645, -- 秘籍ID
+
+	basics = {
+		-- 等级
+		{
+			score = 100,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=2,delay=0,value={type=1,id=2}},	
+			},
+		},
+	},
+
+	extras = {
+		-- 重数 
+		{
+			score = 100, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 6, attrvalue = 5 },
+			},
+
+			actions = 
+			{
+				-- 云海飘渺
+				{ event = 4, tp = 5, times = 1000, interval = 1 },
+				{ event = 1, tp = 3, skillid = 0, value = -5 },
+			},
+		},
+	},
+},
+
+{ -- 绿
+	id = 29650, -- 秘籍ID
+
+	basics = {
+		-- 等级
+		{
+			score = 100,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=2,delay=0,value={type=1,id=2}},	
+			},
+		},
+	},
+
+	extras = {
+		-- 重数 
+		{
+			score = 100, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 7, attrvalue = 5 },
+			},
+
+			actions = 
+			{
+				-- 九天玄灵诀
+				{ event = 2, tp = 4, target = 4, tparam = 40, rate = 1000, effect = 1 },
+			},
+		},
+	},
+},
+
+{ -- 绿
+	id = 29655, -- 秘籍ID
+
+	basics = {
+		-- 等级
+		{
+			score = 100,
+			attrs = 
+			{
+			--target 此处的，1表示目标，，0或者不填表示自己
+				 {skillid=0,target = 1, timeParam=1,type=2,delay=0,value={type=1,id=2}},	
+			},
+		},
+	},
+
+	extras = {
+		-- 重数 
+		{
+			score = 100, -- 战斗力
+			attrs = -- 额外属性
+			{
+				{ attrtype = 8, attrvalue = 5 },
+			},
+
+			actions = 
+			{
+				-- 昆仑会心诀
+				{ event = 6, tp = 6, attrtype = 1, attrvalue = 40 },
+				{ event = 6, tp = 6, attrtype = 2, attrvalue = 10 },
+			},
+		},
+	},
+},

@@ -1,0 +1,882 @@
+﻿--lua script
+--处理宝物相关的操作
+
+-- 语言包
+--#include "..\..\language\LangCode.txt" once
+--#include "data\config\quest\GemQuest.txt" once --任务相关的配置
+--#include "data\config\gem\gemconfig.txt" once --法宝配置
+--#include "..\Systems\timereward\gemactivityhandler.txt" once
+--#include "data\config\vip\vip.txt" once -- VIP系统配置
+
+GemOpFuncList = {}
+
+local sysGemId          = 33    -- 法宝系统对应系统id
+
+local sGemAttr          = 255   -- 服务端初始化属性
+local sGemInit          = 0     -- 服务端初始化法宝信息
+local cQueryList        = 1     -- 客户端请求法宝列表
+local sQueryList        = 1     -- 服务端返回法宝列表信息
+local cGetGem           = 2     -- 客户端请求获取法宝
+local sGetGem           = 2     -- 服务端返回获取法宝结果
+local cSetSelect        = 3     -- 客户端选择法宝出战
+local sSetSelect        = 3     -- 服务端返回法宝出战结果
+local cGemUpgrade       = 4     -- 客户端请求法宝修炼
+local sGemUpgrade       = 4     -- 服务端返回法宝修炼结果
+local cGemSkillUp       = 5     -- 客户端请求法宝技能升级
+local sGemSkillUp       = 5     -- 服务端返回法宝技能升级结果
+local cGemSkillReset    = 6     -- 客户端请求法宝技能重置
+local sGemSkillReset    = 6     -- 服务端返回法宝技能重置结果
+
+-- 领取条件函数处理table表
+local GemGetConditionFuncs = {}
+
+-- 法宝领取条件
+local getCondition = {
+    gcNormal = 1,       -- 普通条件 即需要等级、金钱、道具来领取
+    gcRecharge = 2,     -- 通过充值方式获得
+    gcFromVip = 3,      -- 通过vip等级
+    gcFromQuest = 4,    -- 通过任务
+}
+
+-- 消耗金钱类型
+local coinType = {
+    mtBindCoin = 0, -- 绑定货币
+    mtYuanbao = 3,  -- 天珠
+}
+
+-- 法宝状态
+local gemState = {
+    gsNormal = 0,   -- 未激活
+    gsActive = 1,   -- 已激活但未出战
+    gsSelect = 2,   -- 已出战
+}
+
+-- 战斗力权值
+local gem_fight_val = {
+    gfvhp = 0.17, -- 生命权值
+    gfvAtk = 3, -- 物理攻击权值
+    gfvPdef = 1, -- 物理防御权值
+    gfvMdef = 1, -- 道法防御权值
+    gfvChit = 1.5, -- 会心权值
+}
+
+-- 法宝属性加成个数
+local gemAttrCount = 5
+
+-- 法宝系统涉及到发红包的配置
+local gem_add_will_give_hongbao = { -- system_param_def.h
+    [8] = 12, -- 女娲石
+    [9] = 13, -- 伏羲琴
+    [10] = 14, -- 轩辕剑
+}
+
+-- @param sysarg 法宝系统对象
+-- @param args[1] cmd 指令
+-- @param args[2] DataPacketReader包
+EventCallDispatcher.HandlerGemOp = function (sysarg, args)
+  if true then return end
+  if args[1] == nil then return end
+  local func = GemOpFuncList[args[1]]
+  if func ~= nil and type(func) == "function" then
+    func(sysarg, args[2])
+  end
+end
+
+-- table的拷贝
+function GemOpFuncList.tableCopy(src)
+    local dst = {}
+    for k, v in pairs(src) do
+        dst[k] = v
+    end
+    return dst
+end
+
+-- 统计table的容量 仅一层
+function GemOpFuncList.tableLength(tab)
+    local len = 0
+    if not tab or type(tab) ~= "table" then return len end
+    for k, v in pairs(tab) do
+        len = len + 1
+    end
+    return len
+end
+
+-- 检查配置文件合法性
+function GemOpFuncList.checkConfig()
+    if GemConfig ~= nil and type(GemConfig) == "table" then
+        if GemConfig.GemInit ~= nil and type(GemConfig.GemInit) == "table" and #GemConfig.GemInit > 0 then
+            return true
+        end
+    end
+    return false
+end
+
+-- 查询法宝配置数据
+function GemOpFuncList.queryGemConfig(gemId)
+    if GemOpFuncList.checkConfig() then
+        for k, v in ipairs(GemConfig.GemInit) do
+            if v.gemId == gemId then
+                return GemOpFuncList.tableCopy(v)
+            end
+        end
+    end
+    return nil
+end
+
+-- 查询法宝修炼配置数据
+function GemOpFuncList.queryGemAttrsConfig(gemId)
+    for k, v in pairs(GemConfig.GemAttrs) do
+        if v.gemId == gemId then
+            return GemOpFuncList.tableCopy(v)
+        end
+    end
+    return nil
+end
+
+-- 查询法宝存储数据
+function GemOpFuncList.queryGemInfo(obj, gemId)
+    local info = {}
+    -- 取数据
+    local ret, level, state, skillId, slevel, progress, retnum, fightScore
+    level = 0
+    state = 0
+    skillId = 0
+    slevel = 0
+    progress = 0
+    retnum = 0
+    fightScore = 0
+    ret, level, state, skillId, slevel, progress, retnum, fightScore = LActor.getGemInfo(obj, gemId, level, state, skillId, slevel, progress, retnum, fightScore)
+    if ret then
+        info.id = gemId
+        info.level = level
+        info.state = state
+        info.skillId = skillId
+        info.slevel = slevel
+        info.progress = progress
+        info.retnum = retnum
+        info.fightScore = fightScore
+    end
+    return info
+end
+
+-- 计算用户vip等级对应每日最高修炼次数
+function GemOpFuncList.getVipUpgradeCount(obj)
+    local upgradeCount = GemConfig.upgradeCount
+    local add = 0
+    local vip = LActor.getVIPLevel(obj)
+    if vip > 0 then
+        if vip > #GemConfig.vipUpgradeCount then
+            add = GemConfig.vipUpgradeCount[#GemConfig.vipUpgradeCount]
+        else
+            add = GemConfig.vipUpgradeCount[vip]
+        end
+        upgradeCount = upgradeCount + add
+    end
+    return upgradeCount
+end
+
+function GemOpFuncList.getSkillConfig(skillId)
+    for k, v in ipairs(GemConfig.GemSkills) do
+        if v.skillId == skillId then
+            return GemOpFuncList.tableCopy(v)
+        end
+    end
+    return nil
+end
+
+-- 计算对应进度是否能升级
+function GemOpFuncList.canSkillLevelUp(skillId, slevel, progress)
+-- 读取技能配置
+    local skillConfig = GemOpFuncList.getSkillConfig(skillId)
+    if not skillConfig then
+        return false
+    end
+    local needProgress = skillConfig.progress[slevel]
+    if progress >= needProgress then
+        return true
+    end
+    return false
+end
+
+-- 检查是否存在的法宝 并且已获取
+function GemOpFuncList.isValidGemInfo(obj, gemId)    
+    -- 判断是否有该法宝
+    local info = GemOpFuncList.queryGemInfo(obj, gemId)
+    if not info.id then
+        LActor.sendTipmsg(obj, Lang.Gem.t002, ttMessage)
+        return false, nil
+    end
+    -- 判断该法宝是否已获得
+    if info.state == gemState.gsNormal then
+        LActor.sendTipmsg(obj, Lang.Gem.t004, ttMessage)
+        return false, nil
+    end
+    return true, info
+end
+
+-- 通过属性值计算战斗力 生命 0.17,攻击 3,物防 1,道防 1,会心 1.5
+function GemOpFuncList.calFightScore(hp, atk, pdef, mdef, chit)
+    hp = hp or 0
+    atk = atk or 0
+    pdef = pdef or 0
+    mdef = mdef or 0
+    chit = chit or 0
+    return (hp * gem_fight_val.gfvhp + atk * gem_fight_val.gfvAtk + pdef * gem_fight_val.gfvPdef + mdef * gem_fight_val.gfvMdef + chit * gem_fight_val.gfvChit)
+end
+
+-- 设置法宝属性变化而引起属性计算器的重新计算
+-- 但是在lua层仅需做配置收集即可
+function GemOpFuncList.setAttrChange(obj)
+    local attrTable = {
+        types = {},
+        values = {},
+    }
+    -- 遍历所有已激活的法宝
+    if GemOpFuncList.checkConfig() then
+        for idx = 1, #GemConfig.GemInit do
+            local v = GemConfig.GemInit[idx]
+            local info = GemOpFuncList.queryGemInfo(obj, v.gemId)
+            -- 存在并且已激活      
+            if info.id and info.state ~= gemState.gsNormal then
+                -- -- 属性类型定义
+                -- local attrTypes = { -- 生命,攻击,物防,道防,会心
+                --     17, 27, 23, 33, 63
+                -- }
+                -- 存储当前法宝的数值
+                local fightValue = {
+                    types = {},
+                    values = {},
+                }
+                -- 获取对应属性数据
+                local gemAttrsConfig = GemOpFuncList.queryGemAttrsConfig(info.id)
+                if gemAttrsConfig then
+                    local upgradesConfig = gemAttrsConfig.upgrades[info.level + 1]
+                    local attrs = upgradesConfig.attrs
+                    for k, v in ipairs(attrs) do
+                        local key = string.format("%d", v.type)
+                        if not attrTable.types[key] then
+                            -- 记录type
+                            attrTable.types[key] = 1
+                            attrTable.values[key] = 0
+                        end
+                        -- 记录type对应的value总和
+                        attrTable.values[key] = attrTable.values[key] + v.value
+                        if not fightValue.types[key] then
+                            fightValue.types[key] = 1
+                            fightValue.values[key] = 0
+                        end
+                        fightValue.values[key] = fightValue.values[key] + v.value
+                    end
+                end
+                local fightScore = GemOpFuncList.calFightScore(fightValue.values["17"], fightValue.values["27"], fightValue.values["23"], fightValue.values["33"], fightValue.values["63"])
+                -- 设置战斗力回去
+                LActor.setGemInfo(obj, info.id, info.level, info.skillId, info.slevel, info.progress, info.state, info.retnum, fightScore)
+            end
+        end
+        -- 属性type数量
+        local count = GemOpFuncList.tableLength(attrTable.types)
+        -- 属性加成数量错误的话返回false
+        if count ~= gemAttrCount then return false end
+        local sType = {}
+        local sValue = {}
+        for k, v in pairs(attrTable.types) do
+            table.insert(sType, tonumber(k))
+            table.insert(sValue, tonumber(attrTable.values[k]))
+        end
+        LActor.setAttrsChange(obj, count, sType[1],  sType[2], sType[3], sType[4], sType[5], sValue[1], sValue[2], sValue[3], sValue[4], sValue[5])
+        return true
+    end
+    return false
+end
+
+-- 专门转换商城道具id
+function GemOpFuncList.getShangChengItemId(itemId)
+    local store_items = GameStore[7].items
+    for k, v in pairs(store_items) do
+        if v.item == itemId then
+            return v.id
+        end
+    end
+    return -1
+end
+
+----------------------------------------------------------------------------------
+--------------------------------- 领取条件分割线 ---------------------------------
+----------------------------------------------------------------------------------
+-- 注册法宝道具使用的方法回调
+function gemItemInit ()
+    for k, v in ipairs(GemConfig.GemInit) do -- 注册下使用道具添加伙伴的
+        if v.condId > 1 and v.getFromItemId ~= nil and v.getFromItemId > 0 then
+            GlobalItemFn[v.getFromItemId] = { func = GemOpFuncList.useItemForAddGem, params = v.gemId } -- 参数是需要添加的法宝ID
+        end
+    end
+end
+-- table.insert(InitFnTable, gemItemInit)
+
+-- 道具激活法宝 参数是需要添加的法宝ID
+GemOpFuncList.useItemForAddGem = function (obj, itemId, itemObj, params, useCnt, param)
+    if type(params) ~= "number" then
+        return
+    end
+    local info = GemOpFuncList.queryGemInfo(obj, params)
+    if info.id ~= nil and info.state > gemState.gsNormal then -- 存在的情况
+        LActor.sendTipmsg(obj, Lang.Gem.t001, ttMessage)
+    else -- 不存在的情况
+        -- 激活法宝
+        local gemConfig = GemOpFuncList.queryGemConfig(params)
+        if not gemConfig then
+            LActor.sendTipmsg(obj, Lang.Gem.t002, ttMessage)
+            return
+        end
+        -- 重置数据
+        info = {}
+        info.id = gemConfig.gemId
+        info.level = gemConfig.gemLevel
+        info.skillId = gemConfig.gemSkillId
+        info.slevel = gemConfig.gemSkillLevel
+        info.progress = 0
+        info.state = gemState.gsActive
+        info.retnum = 0
+
+        -- 扣除物品
+        LActor.removeItemByPtr(obj, itemObj, 1, true,"add_gem_item", 650) -- 650对应gameworld里面的log_def.h定义
+
+        local isFirst = LActor.isFirstGetGem(obj)
+        if isFirst then
+            info.state = gemState.gsSelect
+        end
+        LActor.setGemInfo(obj, info.id, info.level, info.skillId, info.slevel, info.progress, info.state, info.retnum)
+
+        -- 成就事件
+        LActor.SetAchieveProcessByType(obj, 97, 1, 1); -- aAchieveEventGemNum
+
+        -- 设置属性
+        GemOpFuncList.setAttrChange(obj)
+        -- 激活完成
+        LActor.sendTipmsg(obj, Lang.Gem.t016, ttMessage)
+
+        --增加伙伴完成之后打印log
+        System.logCounter(LActor.getActorId(obj), LActor.getAccountName(obj), tostring(LActor.getLevel(obj)), "gemId", tostring(params), "", "addgem")
+
+        -- 发红包
+        for k, v in pairs(gem_add_will_give_hongbao) do
+            if tonumber(k) == info.id then
+                qianghongbao.SystemHB(obj, tonumber(v), 2)
+            end
+        end
+    end
+end
+
+GemGetConditionFuncs[getCondition.gcNormal] = function (obj, gemId)
+    local gemConfig = GemOpFuncList.queryGemConfig(gemId)
+    -- 需要消耗道具的id
+    local needItemId = gemConfig.active.itemId
+    -- 需要消耗道具的数量
+    local needItemNum = gemConfig.active.itemNum
+    -- 需要消耗的金钱数量
+    local needCoinNum = gemConfig.active.coinNum
+
+    -- 获得玩家等级
+    local actorLevel = LActor.getLevel(obj)
+    -- 对应道具数量
+    local itemNum = LActor.getItemCount(obj, needItemId)
+    -- 对应类型货币数量
+    local coinNum = LActor.getMoneyCount(obj, coinType.mtBindCoin)
+
+    local ret = false
+
+    if actorLevel < gemConfig.active.needLevel then
+        LActor.sendTipmsg(obj, Lang.Gem.t003, ttMessage)
+        return ret
+    end
+
+    if coinNum < needCoinNum then
+        LActor.sendTipmsg(obj, Lang.Gem.t012, ttMessage)
+        return ret
+    end
+
+    if itemNum < needItemNum then
+        LActor.sendTipmsg(obj, Lang.Gem.t013, ttMessage)
+        return ret
+    end
+
+    -- 扣钱
+    LActor.changeMoney(obj, coinType.mtBindCoin, -needCoinNum, 1, true, "gemhandle", "GetGem")
+    -- 扣材料
+    LActor.removeItem(obj, needItemId, needItemNum, -1, -1, -1, "GetGem")
+
+    ret = true
+
+    return ret
+end
+
+GemGetConditionFuncs[getCondition.gcRecharge] = function (obj, gemId)
+    LActor.sendTipmsg(obj, "充值活动激活方式", ttMessage)
+    return false
+end
+
+GemGetConditionFuncs[getCondition.gcFromVip] = function (obj, gemId)
+    LActor.sendTipmsg(obj, "达到VIP等级激活方式", ttMessage)
+    return false
+end
+
+GemGetConditionFuncs[getCondition.gcFromQuest] = function (obj, gemId)
+    LActor.sendTipmsg(obj, "任务达成激活方式", ttMessage)
+    return false
+end
+----------------------------------------------------------------------------------
+----------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------
+--------------------------------- 业务处理分割线 ---------------------------------
+----------------------------------------------------------------------------------
+
+-- 服务端初始化法宝属性
+GemOpFuncList[sGemAttr] = function (obj)
+    GemOpFuncList.setAttrChange(obj)
+end
+
+-- 初始化法宝信息列表
+GemOpFuncList[sGemInit] = function (obj)
+    if GemOpFuncList.checkConfig() then
+        for idx = 1, #GemConfig.GemInit do
+            local v = GemConfig.GemInit[idx]
+            LActor.setGemInfo(obj, v.gemId, v.gemLevel, v.gemSkillId, v.gemSkillLevel, 0, gemState.gsNormal, 0)
+        end
+    end
+    -- 每日修炼次数
+    -- 获取角色静态保存变量
+    local var = LActor.getStaticVar(obj)
+    if var == nil then return end
+    if not var.upgradeCount then
+        var.upgradeCount = GemOpFuncList.getVipUpgradeCount(obj)
+    end
+end
+
+-- 查询法宝信息列表
+GemOpFuncList[cQueryList] = function (obj, packet)
+    -- 获取角色静态保存变量
+    local var = LActor.getStaticVar(obj)
+    if var == nil then return end
+    local t = {}
+    -- 获取剩余修炼次数
+    local lessNum = var.upgradeCount
+    if GemOpFuncList.checkConfig() then
+        for idx = 1, #GemConfig.GemInit do
+            -- 获取法宝数据
+            local info = GemOpFuncList.queryGemInfo(obj, GemConfig.GemInit[idx].gemId)
+            if info.id ~= nil then
+                table.insert(t, info)
+            end
+        end
+    end
+    -- 发送返回数据
+    -- 申请数据包
+    local pack = DataPack.allocPacket(obj, sysGemId, sQueryList)
+    DataPack.writeUInt(pack, lessNum)
+    DataPack.writeUInt(pack, #t)
+    for k, v in ipairs(t) do
+        DataPack.writeUInt(pack, v.id)
+        DataPack.writeUInt(pack, v.level)
+        DataPack.writeUInt(pack, v.state)
+        DataPack.writeUInt(pack, v.slevel)
+        DataPack.writeUInt(pack, v.progress)
+        DataPack.writeUInt(pack, v.retnum)
+        DataPack.writeUInt(pack, v.fightScore)
+    end
+    DataPack.flush(pack)
+end
+
+-- 玩家领取法宝
+GemOpFuncList[cGetGem] = function (obj, packet)
+    -- 读取法宝id
+    local gemId = DataPack.readInt(packet)
+    local info = GemOpFuncList.queryGemInfo(obj, gemId)
+    local gemConfig = GemOpFuncList.queryGemConfig(gemId)
+    if not info.id then -- 如果数据中不存在
+        if not gemConfig then
+            LActor.sendTipmsg(obj, Lang.Gem.t002, ttMessage)
+            return
+        end
+        -- 重置数据
+        info = {}
+        info.id = gemConfig.gemId
+        info.level = gemConfig.gemLevel
+        info.skillId = gemConfig.gemSkillId
+        info.slevel = gemConfig.gemSkillLevel
+        info.progress = 0
+        info.state = gemState.gsNormal
+        info.retnum = 0
+    end
+    if info.state ~= gemState.gsNormal then
+        LActor.sendTipmsg(obj, Lang.Gem.t001, ttMessage)
+        return
+    end
+
+    -- 判断法宝的领取条件
+    if type(GemGetConditionFuncs[gemConfig.condId]) ~= "function" then
+        LActor.sendTipmsg(obj, Lang.Gem.t011, ttMessage)
+        return
+    end
+
+    if not GemGetConditionFuncs[gemConfig.condId](obj, gemId) then
+        return
+    end
+
+    -- 领取成功
+    info.state = gemState.gsActive
+    local isFirst = LActor.isFirstGetGem(obj)
+    if isFirst then
+        info.state = gemState.gsSelect
+    end
+    LActor.setGemInfo(obj, info.id, info.level, info.skillId, info.slevel, info.progress, info.state, info.retnum)
+    -- 成就事件
+    LActor.SetAchieveProcessByType(obj, 97, 1, 1); -- aAchieveEventGemNum
+
+    -- 设置属性
+    GemOpFuncList.setAttrChange(obj)
+
+    -- 申请数据包
+    local pack = DataPack.allocPacket(obj, sysGemId, sGetGem)
+    DataPack.writeInt(pack, gemId)
+    DataPack.writeUInt(pack, info.state)
+    DataPack.flush(pack)
+
+    -- 发红包
+    for k, v in pairs(gem_add_will_give_hongbao) do
+        if tonumber(k) == info.id then
+            qianghongbao.SystemHB(obj, tonumber(v), 2)
+        end
+    end
+end
+
+-- 法宝出战或休息
+GemOpFuncList[cSetSelect] = function (obj, packet)
+    -- 法宝id
+    local gemId = DataPack.readInt(packet)
+
+    -- 法宝检查是否存在并且已获取
+    local ret, info = GemOpFuncList.isValidGemInfo(obj, gemId)
+    if not ret then return end
+
+    -- c++层执行
+    LActor.setGemSelect(obj, gemId)
+    GemOpFuncList.setAttrChange(obj)
+
+    -- 重新获取信息
+    local newInfo = GemOpFuncList.queryGemInfo(obj, gemId)
+
+    -- 申请数据包
+    local pack = DataPack.allocPacket(obj, sysGemId, sSetSelect)
+    -- 返回数据
+    DataPack.writeInt(pack, gemId)
+    DataPack.writeUInt(pack, newInfo.state)
+    DataPack.flush(pack)
+end
+
+-- 法宝修炼升级
+GemOpFuncList[cGemUpgrade] = function (obj, packet)    
+    -- 获取角色静态保存变量
+    local var = LActor.getStaticVar(obj)
+    if var == nil then return end
+    -- 法宝id
+    local gemId = DataPack.readInt(packet)
+    -- 是否自动购买材料
+    local auto = tonumber(DataPack.readByte(packet))
+
+    -- 法宝检查是否存在并且已获取
+    local ret, info = GemOpFuncList.isValidGemInfo(obj, gemId)
+    if not ret then return end
+
+    local gemAttrsConfig = GemOpFuncList.queryGemAttrsConfig(info.id)
+    if not gemAttrsConfig then return end
+
+    -- 判断是否已经到了最高级 默认出事等级是0 所以1table对应0级
+    local maxLevel = #gemAttrsConfig.upgrades
+    if info.level >= maxLevel - 1 then
+        LActor.sendTipmsg(obj, Lang.Gem.t006, ttMessage)
+        return
+    end
+
+    -- 判断修炼剩余次数是否足够
+    if var.upgradeCount <= 0 then
+        LActor.sendTipmsg(obj, Lang.Gem.t005, ttMessage)
+        return
+    end
+
+    local upgradesConfig = gemAttrsConfig.upgrades[info.level + 1]
+
+    local needCoinNum = upgradesConfig.coinNum
+    local needItemId = upgradesConfig.upgradeItemId
+    local needItemNum = upgradesConfig.upgradeItemNum
+
+    -- 开始判断材料
+    local coinNum = LActor.getMoneyCount(obj, mtBindCoin)
+    local itemNum = LActor.getItemCount(obj, needItemId)
+
+    -- 预设结果
+    local ret = false
+    -- 金钱不足
+    if coinNum < needCoinNum then
+        --LActor.sendTipmsg(obj, Lang.Gem.t009, ttMessage)
+        LActor.SendGeneralTips(obj, 1, mtBindCoin, needCoinNum-coinNum)
+        return
+    end
+    -- 材料不足
+    if itemNum < needItemNum then
+        -- 不自动购买
+        if auto ~= 1 then
+            --LActor.sendTipmsg(obj, Lang.Gem.t007, ttMessage)
+            LActor.SendGeneralTips(obj, 2, needItemId, needItemNum-itemNum)
+            return
+        else
+            -- 计算需要购买的量
+            local needBuyItemNum = needItemNum - itemNum
+            local price = Item.getItemPrice(GemOpFuncList.getShangChengItemId(needItemId)) * needBuyItemNum
+            if price <= 0 then -- 商城没这个价格
+                ret = false
+                return
+            end
+            local hasyuanbao = LActor.getMoneyCount(obj, coinType.mtYuanbao)
+            if hasyuanbao < price then
+                    --LActor.sendTipmsg(obj, Lang.Gem.t008, ttMessage)
+                LActor.SendGeneralTips(obj, 1, coinType.mtYuanbao, price-hasyuanbao)
+                return
+            end
+            -- 扣钱
+            LActor.changeMoney(obj, coinType.mtBindCoin, -needCoinNum, 1, true, "gemhandle", "upgradeGem")
+            LActor.changeMoney(obj, coinType.mtYuanbao, -price, 1, true, "gemhandle", "upgradeGem")
+            -- 如果不需要全部购买 则需要扣除当前拥有的数量
+            if itemNum > 0 then
+                LActor.removeItem(obj, needItemId, itemNum, -1, -1, -1, "upgradeGem")
+            end
+            ret = true
+        end
+    else -- 材料金钱都足
+        -- 扣钱
+        LActor.changeMoney(obj, mtBindCoin, -needCoinNum, 1, true, "gemhandle", "upgradeGem")
+        -- 扣材料
+        LActor.removeItem(obj, needItemId, needItemNum, -1, -1, -1, "upgradeGem")
+        ret = true
+    end
+
+    -- 设置属性
+    if ret then
+        -- 消耗次数1次
+        var.upgradeCount = var.upgradeCount - 1
+
+        info.level = info.level + 1
+        LActor.setGemInfo(obj, info.id, info.level, info.skillId, info.slevel, info.progress, info.state, info.retnum, info.fightScore)
+        info = nil
+        local result, info = GemOpFuncList.isValidGemInfo(obj, gemId)
+
+        GemOpFuncList.setAttrChange(obj)
+
+        -- 申请数据包
+        local pack = DataPack.allocPacket(obj, sysGemId, sGemUpgrade)
+        -- 返回数据
+        DataPack.writeInt(pack, gemId)
+        DataPack.writeUInt(pack, info.level)
+        DataPack.writeUInt(pack, var.upgradeCount)
+        DataPack.writeUInt(pack, info.fightScore)
+        DataPack.flush(pack)
+
+        -- 任务事件触发
+        LActor.OnQuestEvent(qtUpgradeGem, 0, 1, true, obj)
+        -- 成就事件
+        LActor.SetAchieveProcessByType(obj, 98, 1, 1); -- aAchieveEventGemXiulian
+    end
+end
+
+-- 法宝技能升级
+GemOpFuncList[cGemSkillUp] = function (obj, packet)
+    -- 法宝id
+    local gemId = DataPack.readInt(packet)
+    -- 是否自动购买材料
+    local auto = tonumber(DataPack.readByte(packet))
+
+    -- 法宝检查是否存在并且已获取
+    local ret, info = GemOpFuncList.isValidGemInfo(obj, gemId)
+    if not ret then return end
+
+    -- 读取技能配置
+    local skillConfig = GemOpFuncList.getSkillConfig(info.skillId)
+    if not skillConfig then
+        return
+    end
+
+    -- 判断是否已经到了最高级 默认出事等级是0 所以1table对应0级
+    local maxLevel = #skillConfig.progress + 1
+    if info.slevel >= maxLevel then
+        LActor.sendTipmsg(obj, Lang.Gem.t010, ttMessage)
+        return
+    end
+
+    -- 开始判断材料
+
+    local needCoinNum = skillConfig.coinNum[info.slevel]
+    local needItemId = skillConfig.upgradeSkillItemId
+    local needItemNum = 1
+    
+    local coinNum = LActor.getMoneyCount(obj, mtBindCoin)
+    local itemNum = LActor.getItemCount(obj, needItemId)
+
+    -- 预设结果
+    local ret = false
+    -- 金钱不足
+    if coinNum < needCoinNum then
+        --LActor.sendTipmsg(obj, Lang.Gem.t009, ttMessage)
+        LActor.SendGeneralTips(obj, 1, mtBindCoin, needCoinNum-coinNum)
+        return
+    end
+    -- 材料不足
+    if itemNum < needItemNum then
+        -- 不自动购买
+        if auto ~= 1 then
+            --LActor.sendTipmsg(obj, Lang.Gem.t007, ttMessage)
+            LActor.SendGeneralTips(obj, 2, needItemId, needItemNum-itemNum)
+            return
+        else
+            local needBuyItemNum = needItemNum - itemNum
+            local price = Item.getItemPrice(GemOpFuncList.getShangChengItemId(needItemId)) * needBuyItemNum
+            if price <= 0 then -- 商城没这个价格
+                ret = false
+                return
+            end
+            local hasyuanbao = LActor.getMoneyCount(obj, coinType.mtYuanbao)
+            if hasyuanbao < price then
+                --    LActor.sendTipmsg(obj, Lang.Gem.t008, ttMessage)
+                LActor.SendGeneralTips(obj, 1, coinType.mtYuanbao, price-hasyuanbao)
+                return
+            end
+            -- 扣钱
+            LActor.changeMoney(obj, coinType.mtBindCoin, -needCoinNum, 1, true, "gemhandle", "upgradeGemSkill")
+            LActor.changeMoney(obj, coinType.mtYuanbao, -price, 1, true, "gemhandle", "upgradeGemSkill")
+            -- 如果不需要全部购买 则需要扣除当前拥有的数量
+            if itemNum > 0 then
+                LActor.removeItem(obj, needItemId, itemNum, -1, -1, -1, "upgradeGem")
+            end
+            ret = true
+        end
+    else -- 材料金钱都足
+        -- 扣钱
+        LActor.changeMoney(obj, mtBindCoin, -needCoinNum, 1, true, "gemhandle", "upgradeGemSkill")
+        -- 扣材料
+        LActor.removeItem(obj, needItemId, needItemNum, -1, -1, -1, "upgradeGemSkill")
+        ret = true
+    end
+
+    -- 设置属性
+    if ret then
+        info.progress = info.progress + 1
+        if GemOpFuncList.canSkillLevelUp(info.skillId, info.slevel, info.progress) then
+            info.slevel = info.slevel + 1
+            info.progress = 0
+        end
+        LActor.setGemInfo(obj, info.id, info.level, info.skillId, info.slevel, info.progress, info.state, info.retnum)
+
+        GemOpFuncList.setAttrChange(obj)
+
+        -- 申请数据包
+        local pack = DataPack.allocPacket(obj, sysGemId, sGemSkillUp)
+        -- 返回数据
+        DataPack.writeInt(pack, gemId)
+        DataPack.writeUInt(pack, info.slevel)
+        DataPack.writeUInt(pack, info.progress)
+        DataPack.flush(pack)
+
+        -- 成就事件
+        LActor.SetAchieveProcessByType(obj, 99, 1, 1); -- aAchieveEventGemUpSkill
+    end
+end
+
+-- 技能重置
+GemOpFuncList[cGemSkillReset] = function(obj, packet)
+    -- 法宝id
+    local gemId = DataPack.readInt(packet)
+
+    -- 法宝检查是否存在并且已获取
+    local ret, info = GemOpFuncList.isValidGemInfo(obj, gemId)
+    if not ret then return end
+
+    -- 均为初始化的情况不允许重置
+    if info.slevel == 1 and info.progress == 0 then
+        LActor.sendTipmsg(obj, Lang.Gem.t014, ttMessage)
+        return
+    end
+
+    -- 技能配置    
+    local skillConfig = GemOpFuncList.getSkillConfig(info.skillId)
+    if not skillConfig then
+        return
+    end
+
+    -- 计算降级材料数量
+    local itemNum = 0
+    local lvl = info.slevel
+    while(lvl > 0) do
+        -- 当前进度值
+        if lvl == info.slevel then
+            itemNum = itemNum + info.progress
+        else
+            -- 计算lvl级别的进度值总量
+            local progress = skillConfig.progress[lvl]
+            itemNum = itemNum + progress
+        end
+        lvl = lvl - 1
+    end
+
+    local needGird = math.ceil(itemNum / 99)
+
+    if Item.getBagEmptyGridCount(obj) < needGird then
+        LActor.sendTipmsg(obj, Lang.Gem.t015, ttMessage)
+        return
+    end
+
+    -- 判断是否需要消耗
+    if info.retnum >= GemConfig.skillResetFreeNum then
+        local needCoinNum = GemConfig.skillResetCost
+        local hasyuanbao = LActor.getMoneyCount(obj, coinType.mtYuanbao)
+        if hasyuanbao < needCoinNum then
+            --LActor.sendTipmsg(obj, Lang.Gem.t008, ttMessage)
+            LActor.SendGeneralTips(obj, 1, coinType.mtYuanbao, needCoinNum-hasyuanbao)
+            return
+        end
+        -- 扣钱
+        LActor.changeMoney(obj, coinType.mtYuanbao, -needCoinNum, 1, true, "gemhandle", "resetGemSkill")
+    end
+
+    info.slevel = 1
+    info.progress = 0
+    info.retnum = info.retnum + 1
+    -- 设置数据
+    LActor.setGemInfo(obj, info.id, info.level, info.skillId, info.slevel, info.progress, info.state, info.retnum)
+    local itemId = skillConfig.upgradeSkillItemId
+    -- 返回物品
+    LActor.addItem(obj, itemId, 0, 0, itemNum, 1, "resetGemSkill")
+
+    -- 设置属性
+    GemOpFuncList.setAttrChange(obj)
+    
+    -- 申请数据包
+    local pack = DataPack.allocPacket(obj, sysGemId, sGemSkillReset)
+    -- 返回数据
+    DataPack.writeInt(pack, gemId)
+    DataPack.writeUInt(pack, info.slevel)
+    DataPack.writeUInt(pack, info.progress)
+    DataPack.flush(pack)
+end
+
+-- 新的一天需要重置的数据
+EventCallDispatcher.NewDayAcrriveVipUpgradeCount = function(obj, arg)
+    local var = LActor.getStaticVar(obj)
+    if var == nil then return end
+    -- 重置修炼次数
+    var.upgradeCount = GemOpFuncList.getVipUpgradeCount(obj)
+end
+
+-- 注册法宝系统的时间处理回调
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeGem, EventCallDispatcher.HandlerGemOp)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, EventCallDispatcher.NewDayAcrriveVipUpgradeCount)
+
+GmEventFuncList.register( "rsgemnum", EventCallDispatcher.NewDayAcrriveVipUpgradeCount, 1) 

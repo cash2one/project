@@ -1,0 +1,301 @@
+﻿-- 一些杂七杂八的函数
+
+
+-- 保存当时的排行榜数据
+function DbRankTakeSnapShot(id1, id2)
+	-- 保存每个排行榜的前10名玩家的数据，包括名称，角色id,每个榜一个文件
+	print("*********************************************")
+	for i=1,6 do
+		local rankName = string.format("%s%d", "DbRankTakeSnapShot", i)
+		local thisRank = Ranking.getRanking(rankName) --通过排行名称获取排行对象
+		if thisRank ~= nil then  
+			-- 原来有的删除，按道理原来不应该有这个的
+			Ranking.removeRanking(rankName)
+		end
+
+	   	thisRank = Ranking.add(rankName,10,0)	--创建排行榜
+	   
+		--加载排行榜，如果加载失败则表示没有此数据，此时进行标题初始化
+		if thisRank ~= nil then
+			Ranking.addColumn(thisRank, "name") --添加一个标题列  --姓名
+		end
+		local count = Ranking.getRankActorCountFromDbRank(i)
+
+		if count > 10 then count = 10 end
+
+		for j=1,count do
+			local aid = Ranking.getActorIdFromDbRank(i, j - 1)
+			local name = Ranking.getActorNameFromDbRank(i, j - 1)
+			local item = Ranking.addItem(thisRank, aid, 1000 - j)	-- 名次越高，分值要相应的高，才可以排到前面
+			Ranking.setSub(item, 0, name)
+		end
+		Ranking.save(thisRank, rankName)
+	end
+end
+
+
+local DbRankActivityFunc = {}
+
+DbRankActivityFunc.getActorHasAward = function ( sysarg )
+	-- 检查玩家是否上榜
+	local st = LActor.getStaticVar(sysarg)
+	if st.rankactivityHasAward ~= nil then return end
+
+	local ret = 0
+	local aid = LActor.getActorId(sysarg)
+	for i=1,6 do
+		local rankName = string.format("%s%d", "DbRankTakeSnapShot", i)
+		local thisRank = Ranking.getRanking(rankName) --通过排行名称获取排行对象
+		-- 还没有排行榜的数据，可能是时间没到
+		if thisRank == nil then  
+			return
+		end
+		local idx = Ranking.getItemIndexFromId(thisRank, aid)
+		if idx >= 0 then
+			-- 在排行榜上，把对应的位变为1
+			ret = System.bitOpSetMask(ret, i-1, true)
+		end
+	end
+
+	st.rankactivityHasAward = ret
+end
+
+
+local MiscFunc = {}
+
+-- 播放获得物品特效
+-- src : 来源
+-- items : 物品信息列表(type, id, count)
+
+MiscFunc.PlayItemEffect = function(sysarg, src, items)
+	local npack = DataPack.allocPacket(sysarg,139,67)  --申请一个数据包
+    if npack == nil then return end
+
+    DataPack.writeInt( npack, src )
+	DataPack.writeInt( npack, #items )
+	for i=1,#items do
+		local item = items[i]
+		if item.count > 0 then
+			DataPack.writeInt(npack, item.type)
+			DataPack.writeInt(npack, item.id)
+			DataPack.writeInt(npack, item.count)
+		end
+	end
+
+    DataPack.flush(npack)
+end
+
+--播放专属特效，鲜花特效
+MiscFunc.PlayFlowerEffect = function(sysarg, id,secs)
+	local npack = DataPack.allocPacket(sysarg,139,141)  --申请一个数据包
+    if npack == nil then return end
+
+    DataPack.writeInt( npack, id )
+    DataPack.writeInt( npack, secs )
+
+    DataPack.flush(npack)
+end
+
+-- 获取排行榜数字
+function GetRankNum(val)
+	local num = tonumber(val)
+	if num == nil then
+		return 0
+	end
+
+	return num
+end
+
+
+-- 初始化排行榜,add wupeng 移植
+MiscFunc.InitRank = function(rankName, rankFile, maxNum, coloumns)
+	local rank = Ranking.getRanking(rankName)
+	if rank == nil then
+		rank = Ranking.add(rankName, maxNum, 0)
+		if rank == nil then
+			print("can not add rank:"..rankName..","..rankFile)
+			return 
+		end
+		if Ranking.load(rank, rankFile) == false then
+			-- 创建排行榜
+			for i=1, #coloumns do
+				Ranking.addColumn( rank, coloumns[i] )
+			end
+		end
+	end
+
+	local col = Ranking.getColumnCount(rank)
+	for i=col+1,#coloumns do
+		Ranking.addColumn(rank, coloumns[i])
+	end
+
+	Ranking.addRef(rank)
+
+	return rank
+end
+
+function divorce(sysarg, arg, notic)
+	local st = LActor.getStaticVar(sysarg)
+	arg = tonumber(arg)
+	if arg == 1 then
+		if st == nil or st.marry == nil then return end
+		if st.marry.candivtime ~= nil and st.marry.candivtime > System.getCurrMiniTime() then
+			return Lang.ScriptTips.mry44
+		end
+
+		local aid = st.marry.actorid
+		if aid == nil or aid == 0 then
+			return Lang.ScriptTips.n00110
+		else
+			return Lang.ScriptTips.n00108
+		end
+	elseif arg == 2 then
+		if st == nil or st.marry == nil then return end
+		local aid = st.marry.actorid
+		if aid == nil or aid == 0 then
+			return Lang.ScriptTips.n00110
+		else
+			return Lang.ScriptTips.n00109
+		end
+	else
+		if st == nil or st.marry == nil then return end
+		local aid = st.marry.actorid
+		if aid == nil or aid == 0 then
+			return Lang.ScriptTips.n00110
+		end
+		-- 真正离婚
+		if notic == nil then
+			if LActor.getMoneyCount(sysarg, marryConf.divorceMoneyType) < 
+			marryConf.divorceMoney then
+				LActor.sendTipmsg(sysarg, Lang.ScriptTips.n00111, ttMessage)
+				return
+			end
+		end
+
+		-- 删除戒指
+		local item = Item.getEquipByPos(sysarg, marryConf.ringEquipPos)
+		if item == nil then
+			LActor.closeNPCDialog(sysarg)
+			print("divorce:no ring")
+			return  -- 某种异常
+		end
+
+		local strong = Item.getItemProperty( sysarg, item, Item.ipItemStrong, 0 )
+		local itemid = Item.getItemId(item)
+
+		-- 补回情缘
+		local conf
+		local i
+		for j=1,#marryConf.ringItemId do
+			if itemid == marryConf.ringItemId[j] then
+				conf = marryConf.ringItemId[j]
+				i = j
+				break
+			end
+		end
+		if conf == nil then 
+			print("divorce:no ring conf")
+			return -- 异常
+		end
+
+		-- 删除戒指和扣取金钱
+		Item.removeEquip(sysarg, item, "divorce", 94)
+		if notic == nil then
+			LActor.changeMoney(sysarg, marryConf.divorceMoneyType,
+			-marryConf.divorceMoney, 1, true, "marry", "divorce")
+		end
+		local count = marryConf.divRingQY[i][strong]
+		st.marry.qy = st.marry.qy + count
+		LActor.sendTipmsg(sysarg, string.format(Lang.ScriptTips.mry36, count), ttTipmsgWindow)
+		
+		local npack = DataPack.allocPacket(sysarg, 148, 1)
+		if npack == nil then return end
+		DataPack.writeInt(npack, st.marry.qm)
+		DataPack.writeInt(npack, st.marry.qy)
+		DataPack.writeInt(npack, st.marry.actorid)
+		DataPack.writeString(npack, st.marry.name)
+		DataPack.flush(npack)
+
+		-- 发个邮件通知
+		local aid = st.marry.actorid
+		local name = st.marry.name
+
+		local myid = LActor.getActorId(sysarg)
+		local str = string.format(Lang.ScriptTips.mry41, name, count)
+		System.sendGmMailOffLine(myid, str, 0, 0, 0,0)
+		LActor.sendTipmsg(sysarg, str, ttMessage)
+
+		st.marry.actorid = 0
+		st.marry.name = ""
+
+		-- 通知对方离婚
+		if notic ~= nil then 
+			LActor.closeNPCDialog(sysarg)
+			return 
+		end
+
+		local actorPtr = System.getEntityPtrByActorID(aid)
+		if actorPtr ~= nil then
+			print("hahahhahahahahaha")
+			divorce(actorPtr, arg, false)
+		else
+			-- 发离线消息
+			local dp = LDataPack.allocPacket()
+			if dp == nil then return end
+			LDataPack.writeInt(dp, LActor.getActorId(sysarg)) 
+			System.addOfflineMsg(aid, omDivorceEvent, dp, 0)
+		end
+	end
+
+	LActor.closeNPCDialog(sysarg)
+end
+
+function urlencode(str)
+   if (str) then
+      str = string.gsub (str, "\n", "\r\n")
+      str = string.gsub (str, "([^%w ])",
+         function (c) return string.format ("%%%02X", string.byte(c)) end)
+      str = string.gsub (str, " ", "+")
+   end
+   return str    
+end
+
+--获取任务目标 今天是否还能完成
+GetQuestTargetCount = {}
+
+function GetQuestTargetCount.register(questTarget, func)
+	if GetQuestTargetCount[questTarget] then
+		print("has register this questTarget         "..questTarget)
+		return
+	end
+
+	GetQuestTargetCount[questTarget] = func
+end
+
+function OnGetQuestTargetCount(sysarg, questTarget, index)
+	if not GetQuestTargetCount[questTarget] then
+		print("没有注册这个        "..questTarget) return 0 end
+
+	return GetQuestTargetCount[questTarget](sysarg, index)
+end
+
+--保存到actors里面的数据
+function GetActorSaveValue(sysarg)
+	if not sysarg then return 0, 0 end
+	local var = LActor.getStaticVar(sysarg)
+	if not var then return 0, 0 end
+
+	local wujiangFight = 0
+	local calc = LActor.getAttrCalc(sysarg, actHeTuLeShu)
+	if calc and var.HeTuLeShuData then
+		wujiangFight = LActor.getCalcFight(sysarg, calc)
+		if  var.HeTuLeShuData.equipSkill and var.HeTuLeShuData.equipSkill ~= 0 and CollectCardConfig.seriesConfig[var.HeTuLeShuData.equipSkill] then
+			wujiangFight = wujiangFight + LActor.getSkillFight(sysarg, CollectCardConfig.seriesConfig[var.HeTuLeShuData.equipSkill].skillId)
+		end
+	end
+
+	local tongtianshilianFight = var.TongTiansShiLian_history_top_index or 0
+	local tongtianshilianTime = var.TongTiansShiLian_history_top_time or 0
+
+	return wujiangFight, tongtianshilianFight, tongtianshilianTime
+end

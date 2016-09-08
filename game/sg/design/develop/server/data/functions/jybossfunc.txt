@@ -1,0 +1,49 @@
+﻿-- 精英boss创建和提示的相关函数
+
+--#include "data\config\activity\jyboss.txt" once
+
+function OnJYBossCreate()
+	local boss = sdBoss.jyboss
+	if boss == nil then return end
+	
+	local nyear, nmon, nday, nhour, nmin, nsec = unpack(boss.startTime)
+	local startTime = System.timeEncode(nyear, nmon, nday, nhour, nmin, nsec)  --encode一个时间
+
+	local nyear, nmon, nday, nhour, nmin, nsec = unpack(boss.endTime)
+	local   endTime = System.timeEncode(nyear, nmon, nday, nhour, nmin, nsec)  --encode一个时间
+	local nowTime = System.getCurrMiniTime() 
+
+	for j=1, #JYBoss do
+		local conf = JYBoss[j]
+		for k, bossId in ipairs(boss.bossId) do
+			if bossId == conf.monsterId and (nowTime < startTime or nowTime > endTime) then
+				--是圣诞期间的怪，而且活动已经过则直接返回
+				return
+			end
+		end
+		local x, y = 0, 0
+		local ptrTmp = nil
+		local hdl = Fuben.getSceneHandleById(conf.sceneId, 0)
+		for i=1, conf.count do
+			local x = Fuben.getSceneMovePosX(hdl);
+			local y = Fuben.getSceneMovePosY(hdl);
+			local test = 0
+			while Fuben.canMove(hdl, x , y) == false and test < 300 do
+				test = test + 1
+				x = Fuben.getSceneMovePosX(hdl);
+				y = Fuben.getSceneMovePosY(hdl);				
+			end
+			if Fuben.canMove(hdl, x , y) then
+				local ptr = Fuben.createMonster( hdl, conf.monsterId, x, y, conf.liveTime )
+				if ptrTmp == nil and ptr ~= nil then
+					ptrTmp = ptr
+				end
+			end
+		end
+		if ptrTmp ~= nil then
+			local str = string.format(Lang.TaskTalk.wb07, LActor.getName(ptrTmp), LActor.getSceneName(ptrTmp, x, y))
+			--System.broadcastLevelTipmsg(str, conf.level, ttScreenCenter)
+			System.broadcastLevelTipmsg(str, conf.level, ttChatWindow)
+		end
+	end
+end

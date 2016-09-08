@@ -1,0 +1,36 @@
+﻿{
+  maxLevel = 40,
+  
+  --接受任务后引导小箭头引导自动寻路
+  trigger = 
+  { 
+    type = 1,
+    value = 319,
+  },
+
+  --引导中锁定的窗口ID
+  lockUI = 
+  {
+  },
+
+  --引导的步骤 
+  steps = 
+  {
+
+	--第1步 判定任务追踪是否已经有任务
+    {
+      cond = { type = 1, helpId = 53, data = 0 },
+
+      action = { type = 5, helpId = 319, data = Lang.GuideLang.npc68, desc = Lang.GuideLang.desc158, showType = 1 },
+	  
+	  hideCond = { type = 2, helpId = 53, data = 0 },
+    },
+
+	--第3步 引导结束
+    {
+      cond = { type = 17, helpId = 0, data = 319 },
+
+      action = { type = 0, helpId = 0, data = 0, desc = "" },
+    },
+  } 
+}

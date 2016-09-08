@@ -1,0 +1,20 @@
+--小活动配置表
+--#include "..\..\..\language\LangCode.txt" once
+
+activity22Conf = {
+	activityId = 22,
+
+	activities =
+	{
+	 
+		[38] = {
+			id = 38,		--限量购买
+		 	items =
+		 	{
+		 		--moneyType = 购买消耗的金钱类型, price = 现在购买需要的金钱个数, old_price = 原来需要的金钱个数, itemid = 物品id, maxCount = 最大总购买个数	 		
+		 		{moneyType = mtYuanbao, price = 8888, old_price = 20000, itemid = 39037, maxCount = 50},
+		 	},
+ 		},
+ 		 
+	}
+}

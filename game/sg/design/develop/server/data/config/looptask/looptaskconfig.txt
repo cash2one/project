@@ -1,0 +1,638 @@
+﻿--#include "..\..\language\langCode.txt" once
+loopTaskConfig = {
+	SYSTEM_SWITCH = 1, 		--系统开关 1开,0关
+	OPEN_LEVEL = 31,  		--角色等级限制
+	maxLoopId = 200, 		--最大环数
+	delay = 0, 			--延迟多少毫秒领取经验(即播放骰子动画时长)
+	grade = {
+		[1] = {
+		--简单
+			{
+				minLv = 31,
+				tasks = {
+				         {qid=10001,rate=2 },--商城购买任意商品,
+				         {qid=10003,rate=2 },--寻宝,
+				         {qid=10004,rate=2 },--背包商店购买道具,
+				         {qid=10006,rate=5 },
+				         {qid=10007,rate=5 },
+				         {qid=10008,rate=5 },
+				         {qid=10009,rate=5 },
+				         {qid=10010,rate=5 },
+				         {qid=10011,rate=5 },
+				         {qid=10012,rate=5 },
+				         {qid=10013,rate=5 },
+				         {qid=10014,rate=5 },
+				         {qid=10015,rate=5 },
+				         {qid=10016,rate=5 },
+				         {qid=10017,rate=5 },
+				         {qid=10018,rate=5 },
+				         {qid=10019,rate=5 },
+				         {qid=10020,rate=5 },
+				         {qid=10021,rate=5 },
+				         {qid=10022,rate=5 },
+				         {qid=10023,rate=5 },
+				         {qid=10024,rate=5 },
+				         {qid=10025,rate=5 },
+				         {qid=10026,rate=5 },
+				         {qid=10027,rate=5 },
+				         {qid=10028,rate=5 },
+				         {qid=10029,rate=5 },
+				         {qid=10030,rate=5 },
+				         {qid=10031,rate=5 },
+				         {qid=10032,rate=5 },
+				         {qid=10033,rate=5 },
+				         {qid=10034,rate=5 },
+				         {qid=10035,rate=5 },
+				         {qid=10036,rate=5 },
+				         {qid=10048,rate=5 },
+				         {qid=10049,rate=5 },
+				         {qid=10050,rate=5 },	
+				},--普通杀怪采集任务
+			},
+			{
+				minLv = 40,
+				tasks = {
+				        {qid=10001,rate= 2 },--商城购买任意商品,
+				        {qid=10003,rate= 2 },--寻宝,
+				        {qid=10004,rate= 2 },--背包商店购买道具,
+				        {qid=10051,rate = 5},--
+						{qid=10052,rate = 5},--
+						{qid=10053,rate = 5},--
+						{qid=10054,rate = 5},--
+						{qid=10055,rate = 5},--
+						{qid=10056,rate = 5},--
+						{qid=10057,rate = 5},--
+						{qid=10058,rate = 5},--
+						{qid=10059,rate = 5},--
+						{qid=10060,rate = 5},--
+						{qid=10061,rate = 5},--
+						{qid=10062,rate = 5},--
+						{qid=10063,rate = 5},--
+						{qid=10064,rate = 5},--
+						{qid=10065,rate = 5},--
+						{qid=10066,rate = 5},--
+						{qid=10067,rate = 5},--
+						{qid=10068,rate = 5},--
+						{qid=10069,rate = 5},--
+						{qid=10070,rate = 5},--
+						{qid=10071,rate = 5},--
+						{qid=10072,rate = 5},--
+						{qid=10073,rate = 5},--
+						{qid=10074,rate = 5},--
+						{qid=10075,rate = 5},--
+						{qid=10076,rate = 5},--
+						{qid=10077,rate = 5},--
+						{qid=10078,rate = 5},--
+						{qid=10079,rate = 5},--
+						{qid=10080,rate = 5},--
+						{qid=10081,rate = 5},--
+						{qid=10082,rate = 5},--
+						{qid=10083,rate = 5},--
+						{qid=10084,rate = 5},--
+						{qid=10085,rate = 5},--
+						{qid=10086,rate = 5},--
+						{qid=10087,rate = 5},--
+						{qid=10088,rate = 5},--
+						{qid=10089,rate = 5},--
+				},--普通杀怪采集任务
+			},
+			{
+				minLv = 50,
+				tasks = {
+				        {qid=10001,rate=2 },--商城购买任意商品,
+				        {qid=10003,rate=2 },--寻宝,
+				        {qid=10004,rate=2 },--背包商店购买道具,
+				        {qid=10101,rate = 5},--
+						{qid=10102,rate = 5},--
+						{qid=10103,rate = 5},--
+						{qid=10104,rate = 5},--
+						{qid=10105,rate = 5},--
+						{qid=10106,rate = 5},--
+						{qid=10107,rate = 5},--
+						{qid=10108,rate = 5},--
+						{qid=10109,rate = 5},--
+						{qid=10110,rate = 5},--
+						{qid=10111,rate = 5},--
+						{qid=10112,rate = 5},--
+						{qid=10113,rate = 5},--
+						{qid=10114,rate = 5},--
+						{qid=10115,rate = 5},--
+						{qid=10116,rate = 5},--
+						{qid=10117,rate = 5},--
+						{qid=10118,rate = 5},--
+						{qid=10119,rate = 5},--
+						{qid=10120,rate = 5},--
+						{qid=10121,rate = 5},--
+						{qid=10122,rate = 5},--
+						{qid=10123,rate = 5},--
+						{qid=10124,rate = 5},--
+						{qid=10125,rate = 5},--
+						{qid=10126,rate = 5},--
+						{qid=10127,rate = 5},--
+						{qid=10128,rate = 5},--
+						{qid=10129,rate = 5},--
+						{qid=10130,rate = 5},--
+						{qid=10131,rate = 5},--
+						{qid=10132,rate = 5},--
+						{qid=10133,rate = 5},--
+						{qid=10134,rate = 5},--
+						{qid=10135,rate = 5},--
+						{qid=10136,rate = 5},--
+						{qid=10137,rate = 5},--
+						{qid=10138,rate = 5},--
+						{qid=10139,rate = 5},--	
+				},--普通杀怪采集任务
+			},
+			{
+				minLv = 60,
+				tasks = {
+				        {qid=10001,rate=2 },--商城购买任意商品,
+				        {qid=10003,rate=2 },--寻宝,
+				        {qid=10004,rate=2 },--背包商店购买道具,
+				        {qid=10151,rate = 5},--
+						{qid=10152,rate = 5},--
+						{qid=10153,rate = 5},--
+						{qid=10154,rate = 5},--
+						{qid=10155,rate = 5},--
+						{qid=10156,rate = 5},--
+						{qid=10157,rate = 5},--
+						{qid=10158,rate = 5},--
+						{qid=10159,rate = 5},--
+						{qid=10160,rate = 5},--
+						{qid=10161,rate = 5},--
+						{qid=10162,rate = 5},--
+						{qid=10163,rate = 5},--
+						{qid=10164,rate = 5},--
+						{qid=10165,rate = 5},--
+						{qid=10166,rate = 5},--
+						{qid=10167,rate = 5},--
+						{qid=10168,rate = 5},--
+						{qid=10169,rate = 5},--
+						{qid=10170,rate = 5},--
+						{qid=10171,rate = 5},--
+						{qid=10172,rate = 5},--
+						{qid=10173,rate = 5},--
+						{qid=10174,rate = 5},--
+						{qid=10175,rate = 5},--
+						{qid=10176,rate = 5},--
+						{qid=10177,rate = 5},--
+						{qid=10178,rate = 5},--
+						{qid=10179,rate = 5},--
+						{qid=10180,rate = 5},--
+						{qid=10181,rate = 5},--
+						{qid=10182,rate = 5},--
+						{qid=10183,rate = 5},--
+						{qid=10184,rate = 5},--
+						{qid=10185,rate = 5},--
+						{qid=10186,rate = 5},--
+						{qid=10187,rate = 5},--
+						{qid=10188,rate = 5},--
+						{qid=10189,rate = 5},--	
+				},--普通杀怪采集任务
+			},
+		},
+		[2] = {
+			--中等
+			{
+				minLv = 31,
+				tasks = {
+						{qid=10037,rate = 5},--
+						{qid=10038,rate = 5},--
+						{qid=10039,rate = 5},--
+						{qid=10040,rate = 5},--
+						{qid=10041,rate = 5},--
+						{qid=10042,rate = 5},--
+				},--普通杀怪采集任务
+			},
+			{
+				minLv = 40,
+				tasks = {
+						{qid=10090,rate = 5},--
+						{qid=10091,rate = 5},--
+						{qid=10092,rate = 5},--
+						{qid=10093,rate = 5},--
+						{qid=10094,rate = 5},--
+						{qid=10095,rate = 5},--		
+				},--普通杀怪采集任务
+			},
+			{
+				minLv = 50,
+				tasks = {
+						{qid=10140,rate = 5},--
+						{qid=10141,rate = 5},--
+						{qid=10142,rate = 5},--
+						{qid=10143,rate = 5},--
+						{qid=10144,rate = 5},--
+						{qid=10145,rate = 5},--	
+				},--普通杀怪采集任务
+			},
+			{
+				minLv = 60,
+				tasks = {
+						{qid=10190,rate = 5},--
+						{qid=10191,rate = 5},--
+						{qid=10192,rate = 5},--
+						{qid=10193,rate = 5},--
+						{qid=10194,rate = 5},--
+						{qid=10195,rate = 5},--
+				},--普通杀怪采集任务
+			},
+		},
+		[3] = {
+			--困难
+			{
+				minLv = 31,
+				tasks = {
+						{qid=10043,rate = 5},--
+						{qid=10044,rate = 5},--
+						{qid=10045,rate = 5},--
+						{qid=10046,rate = 5},--
+						{qid=10047,rate = 5},--
+				},--普通杀怪采集任务
+			},
+			{
+				minLv = 40,
+				tasks = {
+						{qid=10096,rate = 5},--
+						{qid=10097,rate = 5},--
+						{qid=10098,rate = 5},--
+						{qid=10099,rate = 5},--
+						{qid=10100,rate = 5},--	
+				},--普通杀怪采集任务
+			},
+			{
+				minLv = 50,
+				tasks = {
+						{qid=10146,rate = 5},--
+						{qid=10147,rate = 5},--
+						{qid=10148,rate = 5},--
+						{qid=10149,rate = 5},--
+						{qid=10150,rate = 5},--	
+				},--普通杀怪采集任务
+			},
+			{
+				minLv = 60,
+				tasks = {
+						{qid=10196,rate = 5},--
+						{qid=10197,rate = 5},--
+						{qid=10198,rate = 5},--
+						{qid=10199,rate = 5},--
+						{qid=10200,rate = 5},--	
+				},--普通杀怪采集任务
+			},
+		},
+	},
+	
+--额外的任务id
+	extraQuestId = {
+		level = {
+			--根据等级开启的
+			-- [等级] = {任务id,任务id}
+			[31] = {
+				{qid=10002,rate=2},--强化任意装备
+			},
+
+		},
+
+		specialQuest = {
+			--根据任务目标判断是否可接的
+			{
+				MinLevel  = 1,	
+				HigthLevel = 39,
+				list = {
+					-- [任务目标type id] = {qid 任务id，target目标的具体信息，没有的就不用填了（例如通关通天试练第target层）}
+					[43] =  {qid=10005, rate = 2},--聚宝盆
+					-- [120] =  {qid=10003, rate = 5},--赠好友钥匙
+					-- [38] =  {qid=22004, rate = 5, target = 1},
+				},
+			},
+			{
+				MinLevel  = 40,	
+				HigthLevel = 49,
+				list = {
+					-- [任务目标type id] = {qid 任务id，target目标的具体信息，没有的就不用填了（例如通关通天试练第target层）}
+					[43] =  {qid=10005, rate = 2},--聚宝盆
+					-- [120] =  {qid=10003,rate = 5},--赠好友钥匙
+					-- [38] = {qid=22004, rate = 5, target = 1},
+				},
+			},
+			{
+				MinLevel  = 50,	
+				HigthLevel = 59,
+				list = {
+					-- [任务目标type id] = {qid 任务id，target目标的具体信息，没有的就不用填了（例如通关通天试练第target层）}
+					[43] =  {qid=10005, rate = 2},--聚宝盆
+				},
+			},
+			{
+				MinLevel  = 60,	
+				HigthLevel = 100,
+				list = {
+					-- [任务目标type id] = {qid 任务id，target目标的具体信息，没有的就不用填了（例如通关通天试练第target层）}
+					[43] =  {qid=10005, rate = 2},--聚宝盆
+				},
+			},
+		},
+	},
+
+
+	-- --额外的任务id
+	-- extraQuestId = {
+	-- 	noLimit = {
+	-- 		--没限制的 直接填任务id
+	-- 		--商城购买商品，分享游戏到微信/微博，参与击杀世界BOSS(造成伤害即可)，击杀世界boss
+	-- 		-- 22005,22130,--商城购买任意商品
+	-- 		-- 22073,--参与击杀世界boss
+	-- 		-- 22082,22083,22084,22085,22126,22127,--背包商店购买道具
+	-- 		-- 22060,--寻宝
+
+	-- 		10001,--商城购买任意商品
+	-- 		10004,--背包商店购买道具
+	-- 	},	
+	-- 	level = {
+	-- 		--根据等级开启的
+	-- 		-- [等级] = {任务id}
+	-- 		-- [27] = {}, 	--八卦地宫
+	-- 		-- [36] = {22004,22075,},	--强化任意装备
+	-- 		-- [38] = {22064},--伙伴成长
+	-- 		-- [39] = {22065},--伙伴资质
+	-- 		-- [41] = {22056},	--坐骑培养
+	-- 		-- [56] = {22063},--赠好友玫瑰
+	-- 		-- [116] = {22061}, --添加好友
+	-- 		-- [108] = {22076},--洗练装备
+	-- 		-- [64] = {22077},--进阶装备
+	-- 		-- [105] = {22078},--镶嵌宝石
+	-- 		-- [122] = {22079},--升级武将
+	-- 		-- [123] = {22080},--进阶武将
+	-- 		-- [126] = {22128},--伙伴亲密度
+	-- 		-- [114] = {22129},--武将图鉴
+
+	-- 		[36] = {10002,},--强化任意装备
+	-- 		[120] = {10003,},--赠好友钥匙
+	-- 	},
+
+	-- 	specialQuest = {
+	-- 		-- [任务目标] = {任务id}
+	-- 		-- [43] = {22002,22059},--聚宝盆
+	-- 		-- [45] = {22003},	--琴棋书画
+	-- 		-- [46] = {22067},--武力试炼
+	-- 		-- [49] = {22069},--天机奇缘
+	-- 		-- [50] = {22066},--神驹猎狩
+	-- 		-- [51] = {22070},--守卫昆阳
+	-- 		-- [52] = {22071},--无尽秘藏
+	-- 		-- [53] = {22068},--云台将录
+	-- 		-- [55] = {22001,22057}, --剧情副本
+	-- 		-- [106] = {22058}, --精英剧情副本
+	-- 		-- [120] = {22062,},--赠好友钥匙
+	-- 		-- [47] = {22072},--演武场
+	-- 		-- [54] = {22074},--世族祈福
+
+	-- 		[60] = {10005},--悬赏任务
+	-- 	},
+	-- 	specialQuest2 = {
+	-- 		--有具体的任务目标的，例如 通关通天试练第N层
+	-- 		-- [61] = {
+	-- 		-- 	--通关通天试练第N层
+	-- 		-- 	-- {任务id， 第x层}
+	-- 		-- 	{1001, 1},
+	-- 		-- 	{1002, 2},
+	-- 		-- },
+	-- 		-- [55] = {
+	-- 		-- 	{1001, 1},
+	-- 		-- 	{1002, 2}
+	-- 		-- },
+
+	-- 	},
+	-- 	--[任务目标type] = { 任务id}
+	-- 	{
+	-- 		-- qtUpStar = 35,				//任务升星
+	-- 		-- qtEquipStrength = 36,		//强化任意装备
+	-- 		-- qtEquipDestroy = 37,		//分解装备
+	-- 		-- qtPartnerTalent = 39,		//伙伴资质提升
+	-- 		-- qtUpgradeGem = 40,			// 法宝修炼
+	-- 		-- qtMountFoster = 41,			//坐骑培养
+	-- 		-- qtWingFoster = 42,			//翅膀培养
+	-- 		-- /*
+	-- 		-- 所有副本中
+	-- 		-- 目标id 0 表示进入副本即可给任务加1次
+	-- 		-- 目标id 1 表示通关副本即可给任务加1次
+	-- 		-- */
+	-- 		-- qtJuQingFuBen = 55,			//完成剧情副本
+	-- 		-- qtZengSongMeiGui = 56,		//赠送好友玫瑰
+	-- 		-- qtFinishRiChang = 59,		//完成日常任务
+	-- 		-- qtFinishXuanShang = 60,		//完成悬赏任务
+	-- 		-- qtEquipUpFloor = 64,		// 装备进阶
+	-- 		-- qtAddFriend, //添加好友 116
+	-- 		-- qtSendRedPacket, //发红包 117
+	-- 		-- qtSendKey, //赠送钥匙 120 
+	-- 		-- qtDayPlotEvent, //每日剧情事件 121
+	-- 	}
+	-- },
+
+	--环数对应的难度
+	loopDiff = {
+		1, 1, 1, 1, 2, 1, 1, 1, 1, 3,1, 1, 1, 1, 2, 1, 1, 1, 1, 3,1, 1, 1, 1, 2, 1, 1, 1, 1, 3,1, 1, 1, 1, 2, 1, 1, 1, 1, 3,1, 1, 1, 1, 2, 1, 1, 1, 1, 3,1, 1, 1, 1, 2, 1, 1, 1, 1, 3,1, 1, 1, 1, 2, 1, 1, 1, 1, 3,1, 1, 1, 1, 2, 1, 1, 1, 1, 3,1, 1, 1, 1, 2, 1, 1, 1, 1, 3,1, 1, 1, 1, 2, 1, 1, 1, 1, 3,1, 1, 1, 1, 2, 1, 1, 1, 1, 3,1, 1, 1, 1, 2, 1, 1, 1, 1, 3,1, 1, 1, 1, 2, 1, 1, 1, 1, 3,1, 1, 1, 1, 2, 1, 1, 1, 1, 3,1, 1, 1, 1, 2, 1, 1, 1, 1, 3,1, 1, 1, 1, 2, 1, 1, 1, 1, 3,1, 1, 1, 1, 2, 1, 1, 1, 1, 3,1, 1, 1, 1, 2, 1, 1, 1, 1, 3,1, 1, 1, 1, 2, 1, 1, 1, 1, 3,1, 1, 1, 1, 2, 1, 1, 1, 1, 3
+	},
+
+	--奖励倍数
+	awardsRate = {
+		{
+			maxLoopId = 10,
+			--0到10环的奖励概率
+			-- {probability 概率，rate 倍数}
+			rate = {
+				{probability = 100, rate = 1},
+			}
+		},
+		{
+			maxLoopId = 20,
+			rate = {
+				{probability = 100, rate = 1.1},
+			},
+		},
+		{
+			maxLoopId = 30,
+			rate = {
+				{probability = 100, rate = 1.2},
+			},
+		},
+		{
+			maxLoopId = 40,
+			rate = {
+				{probability = 100, rate = 1.3},
+			},
+		},
+		{
+			maxLoopId = 50,
+			rate = {
+				{probability = 100, rate = 1.4},
+			},
+		},
+		{
+			maxLoopId = 60,
+			rate = {
+				{probability = 100, rate = 1.5},
+			},
+		},
+		{
+			maxLoopId = 70,
+			rate = {
+				{probability = 100, rate = 1.6},
+			},
+		},
+		{
+			maxLoopId = 80,
+			rate = {
+				{probability = 100, rate = 1.7},
+			},
+		},
+		{
+			maxLoopId = 90,
+			rate = {
+				{probability = 100, rate = 1.8},
+			},
+		},
+		{
+			maxLoopId = 100,
+			rate = {
+				{probability = 100, rate = 1.9},
+			}
+		},
+		{
+			maxLoopId = 110,
+			rate = {
+				{probability = 100, rate = 2},
+			},
+		},
+		{
+			maxLoopId = 120,
+			rate = {
+				{probability = 100, rate = 2.1},
+			},
+		},
+		{
+			maxLoopId = 130,
+			rate = {
+				{probability = 100, rate = 2.2},
+			},
+		},
+		{
+			maxLoopId = 140,
+			rate = {
+				{probability = 100, rate = 2.3},
+			},
+		},
+		{
+			maxLoopId = 150,
+			rate = {
+				{probability = 100, rate = 2.4},
+			},
+		},
+		{
+			maxLoopId = 160,
+			rate = {
+				{probability = 100, rate = 2.5},
+			},
+		},
+		{
+			maxLoopId = 170,
+			rate = {
+				{probability = 100, rate = 2.6},
+			},
+		},
+		{
+			maxLoopId = 180,
+			rate = {
+				{probability = 100, rate = 2.7},
+			},
+		},
+		{
+			maxLoopId = 190,
+			rate = {
+				{probability = 100, rate = 2.8},
+			},
+		},
+		{
+			maxLoopId = 200,
+			rate = {
+				{probability = 100, rate = 3},
+			},
+		},
+	},
+	-- 环任务礼包奖励
+	awards = {
+		{ loopId =  20, itemid = 30521 },
+		{ loopId =  50, itemid = 30522 },
+		{ loopId =  80, itemid = 30523 },
+		{ loopId = 110, itemid = 30524 },
+		{ loopId = 140, itemid = 30525 },
+		{ loopId = 170, itemid = 30526 },
+		{ loopId = 200, itemid = 30527 },
+	},
+	task_explain ="#c501f041.每周最多可完成200环任务，每周一0点重置任务次数，同时当前任务环数重置为第一环；#r#c501f042.完成指定数量的跑环任务后将获得额外奖励，请在任务重置前领取奖励；#r#c501f043.任务接取后可放弃,放弃后当前任务将重新从第一环开始。",
+--客户端用
+      --[[
+          qatEquipment=0,//0、装备，道具
+      		qatXiuwei = 1,	//1、修为
+	        qatExp = 2,	//2、角色经验值
+	        qatGuildContribution = 3,	//3、帮派贡献值
+	        qatZYContribution = 4,//4、阵营贡献
+	        qatBindMoney = 5,	//5、贝币
+	        qatMoney = 6,	//6、银两
+	        qatLiJin = 7,	//7、绑定天珠
+	        qatTitle = 8,	//8、称谓
+	        qatSkill = 9,	//9奖励技能
+      		qatZhanhun = 10,	//10奖励战魂
+        127：自定义奖励，id必须为nil，count必须为nil，data为奖励描述字符串，用于客户端显示。自定义奖励的给予是通过脚本完成的；
+      --]]
+      --活动的奖励，奖励的类型上面的类型,id，如果是物品或者称号的话就id,否则填0，count表示数量
+	--奖励
+	--effect = 1表示物品发光 =0表示不光
+	itemAwards = {
+		{
+			{ type = 2, id = 0, count = 20000,bind = 1,effect = 0,},
+			{ type = 0, id = 26121, count = 4,bind = 1,effect = 0,},
+			{ type = 0, id = 26123, count = 1,bind = 1,effect = 0,},
+			{ type = 0, id = 26125, count = 1,bind = 1,effect = 0,},
+			
+		},	
+		{
+			{ type = 2, id = 0, count = 25000,bind = 1,effect = 0,},
+			{ type = 0, id = 26121, count = 4,bind = 1,effect = 0,},
+			{ type = 0, id = 26123, count = 2,bind = 1,effect = 0,},
+			{ type = 0, id = 26125, count = 2,bind = 1,effect = 0,},
+			
+		},
+		{
+			{ type = 2, id = 0, count = 30000,bind = 1,effect = 0,},
+			{ type = 0, id = 26121, count = 5,bind = 1,effect = 0,},
+			{ type = 0, id = 26123, count = 2,bind = 1,effect = 0,},
+			{ type = 0, id = 26125, count = 2,bind = 1,effect = 0,},
+	
+		},
+		{
+			{ type = 2, id = 0, count = 35000,bind = 1,effect = 0,},
+			{ type = 0, id = 26121, count = 6,bind = 1,effect = 0,},
+			{ type = 0, id = 26123, count = 3,bind = 1,effect = 0,},
+			{ type = 0, id = 26125, count = 3,bind = 1,effect = 0,},
+		},
+		{
+			{ type = 2, id = 0, count = 40000,bind = 1,effect = 0,},
+			{ type = 0, id = 26121, count = 7,bind = 1,effect = 0,},
+			{ type = 0, id = 26123, count = 4,bind = 1,effect = 0,},
+			{ type = 0, id = 26125, count = 4,bind = 1,effect = 0,},
+		},
+		{
+		    { type = 2, id = 0, count = 50000,bind = 1,effect = 0,},
+			{ type = 0, id = 26121, count = 8,bind = 1,effect = 0,},
+			{ type = 0, id = 26123, count = 4,bind = 1,effect = 0,},
+			{ type = 0, id = 26125, count = 4,bind = 1,effect = 0,},
+		},
+		{
+		    { type = 2, id = 0, count = 60000,bind = 1,effect = 0,},
+			{ type = 0, id = 26121, count = 9,bind = 1,effect = 0,},
+			{ type = 0, id = 26123, count = 4,bind = 1,effect = 0,},
+			{ type = 0, id = 26125, count = 4,bind = 1,effect = 0,},
+		},
+	}
+}

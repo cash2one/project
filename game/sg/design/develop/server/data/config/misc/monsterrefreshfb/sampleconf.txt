@@ -1,0 +1,60 @@
+﻿-- 皇陵秘境副本配置
+{
+	fbid = 65,
+
+	fubenlistid = 4,
+
+	sceneid = 1106, -- 场景ID
+
+	--初始化怒气值
+	initanger = 96,
+
+	--打死一波怪,是否要下发方向指引
+	ifgonext = false,
+
+	--怪物总数量
+	monsternum = 11,
+
+	monsters =
+	{
+		--第一波怪
+		{
+			{
+				monsterId = 404, --怪物id
+				posX1 = 5, --怪物x坐标范围
+				posX2 = 45,
+				posY1 = 20,
+				posY2 = 26,
+				anger = 4,	--所加怒气值,不是特殊处理的,不用填这项
+				num = 5,
+			},
+			{
+				monsterId = 405, --怪物id
+				posX1 = 48, --怪物x坐标范围
+				posX2 = 51,
+				posY1 = 22,
+				posY2 = 25,
+				num = 1,
+			}, 
+		},
+		--第二波怪
+		{
+			{
+				monsterId = 404, --怪物id
+				posX1 = 5, --怪物x坐标范围
+				posX2 = 45,
+				posY1 = 20,
+				posY2 = 26,
+				num = 5,
+			},
+			{
+				monsterId = 405, --怪物id
+				posX1 = 48, --怪物x坐标范围
+				posX2 = 51,
+				posY1 = 22,
+				posY2 = 25,
+				num = 1,
+			}, 
+		},
+	},
+}

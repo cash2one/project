@@ -1,0 +1,193 @@
+﻿--#include "data\config\item\RewardConfig.txt" once
+
+--时间 新手奖励
+REWARDLIMLEVEL = 30  --上线奖励等级上限
+
+MONEYTYPE = {
+[0] = Lang.ScriptTips.x00004, 
+[1] = Lang.ScriptTips.x00005,
+[2] = Lang.ScriptTips.x00006, 
+[3] = Lang.ScriptTips.x00007,
+}
+--当前开奖励需求不大的时候把这个模块独立出来可便于扩展
+--奖励行为将会是个量非常大的需求 开物品不仅开金钱物品 还可能开出其它点数奖励
+--从扩展性和可维护性的角度看 有必要把这个配置独立出来
+--rewardCheck	作为专门对应该配置的工具方法 用于检测奖励的可添加状况并返回不同结果
+--doReward	作为专门对应该配置的工具方法 用于执行奖励行为
+--以上两个工具方法使用时 可先rewardCheck后根据返回进行其它处理 确定奖励时再以doReward进行奖励
+local Rewards = RewardConfig
+
+--通过奖励表进行奖励检查
+function rewardConfigCheck (sysarg,rewardConfig)
+  if rewardConfig == nil then return 2 end
+  local needspace = 0
+	for i,c in ipairs(rewardConfig) do
+		if ( c.rewardtype == 1 ) then
+			needspace = needspace + Item.getAddItemNeedGridCount( sysarg, c.itemid, c.amount )
+		end
+  end
+  if ( needspace > Item.getBagEmptyGridCount( sysarg ) ) then
+	----print("---Reward config bag space lack."..needspace)
+	return 2 , needspace
+  end
+  return 0 , needspace
+end
+
+--通过奖励列表进行奖励
+function doRewardConfig (sysarg,rewardConfig)
+	if rewardConfig == nil then return end
+	for i = 1, #rewardConfig do
+		local c = rewardConfig[i]
+		if ( c.rewardtype == 1 ) then
+			LActor.addItem(sysarg,c.itemid,c.quality,c.strong, c.amount,c.bind,"GlobalNPC ",57)
+			local itemname = Item.getItemName(c.itemid)
+			local allmsg = string.format(Lang.ScriptTips.q00037,itemname,c.amount)
+			--LActor.sendTipmsg(sysarg,allmsg,ttGmTip)  
+		elseif ( c.rewardtype == 2 ) then
+			LActor.changeMoney( sysarg, c.type, c.amount )
+			local moneystr = MONEYTYPE[c.type]
+			local allmsg = string.format(moneystr,c.amount)  
+			--LActor.sendTipmsg(sysarg,allmsg,ttGmTip)
+		end
+	end
+end
+--奖励检查
+function rewardCheck( sysarg, rewardID )
+ 
+  local rewardconfig = Rewards[rewardID]
+  
+  if ( rewardconfig == nil ) then
+	--print("---Reward config empty."..rewardID)
+	return 1,0
+  end
+  local sex = LActor.getIntProperty(sysarg,PROP_SEX)
+  local job = LActor.getIntProperty(sysarg,PROP_VOCATION)
+  local needspace = 0  --物品所需空格
+  if rewardID == 1 then 
+	  for i,c in ipairs(rewardconfig) do
+			if ( c.rewardtype == 1 ) then
+				needspace = needspace + Item.GetAddItemNeedGridCount( sysarg, c.itemid, c.amount )
+			end
+  	end
+  else 
+  	local rewardDB = {}
+    table.foreachi( rewardconfig, function( i, v )  if ((v.job == job or v.job == 0) and (v.sex == sex or v.sex == 2)) then  index,rewardDB = i, v end end ) 
+    if table.getn(rewardDB) < 1 then return 1 ,0 end
+    for i,c in ipairs(rewardDB) do
+    	if (c.rewardtype == 1) then
+    		needspace = needspace + Item.getAddItemNeedGridCount( sysarg, c.itemid, c.amount )
+			end
+		end
+	end
+  if ( needspace > Item.getBagEmptyGridCount( sysarg ) ) then
+	--print("---Reward config bag space lack."..needspace)
+	return 2,needspace
+  end
+  return 0,needspace
+end
+
+--获取索引值和奖励列表
+function getRewardOnlineRand(sysarg,rewardID)
+	local rewardconf = Rewards[rewardID]
+	local level = LActor.getIntProperty(sysarg,PROP_LEVEL)
+	local rewardconfig = {}
+	if level < 20 then --10-19
+		rewardconfig = rewardconf[1]
+	elseif level < 40 then -- 20 - 39
+		rewardconfig = rewardconf[2]
+	else -- 40 - 150
+		rewardconfig = rewardconf[3]
+	end
+	if (( rewardconfig == nil ) or (table.getn(rewardconfig) <= 0)) then
+		print("---Reward config empty."..rewardID)
+		return 1 ,{}
+	end
+	local rand = math.random(1,table.getn(rewardconfig))
+	local rewardconfigdata = rewardconfig[rand]
+	return rand,rewardconfigdata
+end
+
+--通过索引值获取奖励列表
+function getRewardOnlineConfig(sysarg,rewardID,rand)
+	local rewardconf = Rewards[rewardID]
+	local level = LActor.getIntProperty(sysarg,PROP_LEVEL)
+	local rewardconfig = {}
+	if level < 20 then
+		rewardconfig = rewardconf[1]
+	elseif level < 40 then
+		rewardconfig = rewardconf[2]
+	else
+		rewardconfig = rewardconf[3]
+	end
+
+	if (( rewardconfig == nil ) or (table.getn(rewardconfig) <= 0)) then
+		print("---Reward config empty."..rewardID)
+		return {}
+	end
+	local rewardconfigdata = rewardconfig[rand]
+	return rewardconfigdata
+end
+
+
+
+--[[
+ --奖励类型--
+//物品或者装备	rewardtype: 1
+//修为	rewardtype: 5
+//角色经验值	rewardtype: 6
+//帮派贡献值	rewardtype: 3
+//阵营贡献	rewardtype: 4
+//绑定银两 rewardtype: 2
+//银两	rewardtype: 2
+//绑定天珠	rewardtype: 2
+//称谓	rewardtype: 8	itemid: 称号ID
+//技能	rewardtype: 9	itemid：技能ID  amount：技能等级	
+//战魂	rewardtype: 10	
+//成就点	rewardtype: 11 
+//威望	rewardtype: 12
+--]]
+
+--奖励
+function doReward( sysarg, rewardID )
+  local rewardconfig = Rewards[rewardID]
+  ----print("lang:"..table.getn(rewardconfig))
+  local sex = LActor.getIntProperty(sysarg,PROP_SEX)
+  local job = LActor.getIntProperty(sysarg,PROP_VOCATION)
+  if rewardID == 1 then 
+			for i = 1,#rewardconfig do 
+				local a = rewardconfig[i]
+				LActor.addItem(sysarg,a.itemid,a.quality,a.strong, a.amount,a.bind,"GlobalNPC",56)
+			end
+  else 
+  	local rewardDB = {}
+		table.foreachi( rewardconfig, function( i, v ) if ((v.job == job or v.job == 0) and (v.sex == sex or v.sex == 2)) then index,rewardDB = i, v end end ) 
+		if table.getn(rewardDB) < 1 then
+			print("rewardDB is nil !") 
+		end
+		for i = 1 ,#rewardDB do 
+			local c = rewardDB[i]
+			if ( c.rewardtype == 1 ) then
+				----print("c.bind:"..c.bind)
+				LActor.addItem(sysarg,c.itemid,c.quality,c.strong, c.amount,c.bind,"GlobalNPC ",56)
+			elseif ( c.rewardtype == 2 ) then
+				--print("c.type:"..c.type.." "..c.amount )
+				LActor.changeMoney( sysarg, c.type, c.amount )
+			elseif (c.rewardtype == 3) or (c.rewardtype == 4) then
+				LActor.giveAward(sysarg, c.rewardtype, c.amount, 1, 0, "GlobalNPC")
+			elseif (c.rewardtype == 5) then
+				LActor.giveAward(sysarg, 1, c.amount, 1, 0, "GlobalNPC")
+			elseif (c.rewardtype == 6) then
+				LActor.giveAward(sysarg, 2, c.amount, 1, 0, "GlobalNPC")
+			elseif ( c.rewardtype == 8 ) then
+				if LActor.HasTitle(sysarg, c.itemid) == false then
+					LActor.GiveTitle(sysarg, c.itemid )
+				end
+			elseif (c.rewardtype == 9) then
+				LActor.giveAward(sysarg, 9, c.itemid, 1, c.amount, "GlobalNPC")
+			elseif (c.rewardtype == 10) or (c.rewardtype == 11) or (c.rewardtype == 12) then
+				LActor.giveAward(sysarg, c.rewardtype, c.amount, 1, 0, "GlobalNPC")
+			end
+	  end
+  end
+  ----print("Reward finished.")
+end

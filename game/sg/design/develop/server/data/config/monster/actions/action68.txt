@@ -1,0 +1,24 @@
+--玩法7，C怪物AI
+{
+	id = 68,	--行为ID
+	trigger = 1,	--触发类型，血量为1，时间为2
+	isInit = 1 , --是否执行initSequence的操作
+
+	--与sequence定义相同
+	initSequence =
+	{
+		{ type = 24, duration = 2, addBuffConfigId = 18, } , --向怪物自身添加buff
+	},
+	infos = 
+	{
+		----血量0%
+		{
+			sequId = 1,
+			param = 0,
+			sequence = 
+			{
+				{ type = 20, duration = 2, target= { { monsterId = 1116, addBuffConfigId = 4}, { monsterId = 1117, addBuffConfigId = 4},{ monsterId = 1118, addBuffConfigId = 4},},  },
+			}
+		},
+	},
+},

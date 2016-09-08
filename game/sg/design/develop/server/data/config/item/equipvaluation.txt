@@ -1,0 +1,21 @@
+﻿--装备的评价的配置,表示每种属性一单位的评估分数
+--attrId表示属性的id，unitVal表示属性的单位分数
+--#include "..\..\language\LangCode.txt"
+EquipValuation = 
+{
+{attrId = 17, unitVal = 0.12},
+{attrId = 19, unitVal = 0.60},
+{attrId = 21, unitVal = 3.00},
+{attrId = 27, unitVal = 3.00},
+{attrId = 31, unitVal = 3.00},
+{attrId = 23, unitVal = 1.00},
+{attrId = 33, unitVal = 1.00},
+{attrId = 39, unitVal = 1.00},
+{attrId = 37, unitVal = 1.00},
+{attrId = 35, unitVal = 1.00},
+{attrId = 25, unitVal = 1.00},
+{attrId = 63, unitVal = 1.50},
+{attrId = 41, unitVal = 30000.00},
+{attrId = 51, unitVal = 15000.00},
+{attrId = 49, unitVal = 15000.00},
+}

@@ -1,0 +1,167 @@
+--杂七杂八活动
+
+--#include "miscactivityconf.txt" once
+
+MiscActFunc = {}
+
+-- 7日留存礼包信息
+MiscActFunc.sendSeveAwardInfo = function (sysarg)
+	local st = LActor.getStaticVar(sysarg)
+	if st == nil then return end
+
+	if st.SevenInfo == nil then
+		st.SevenInfo = {}
+		st.SevenInfo.firsttick = System.getToday()
+		st.SevenInfo.lastdays = 0
+ 		st.SevenInfo.seveninfo = {}
+ 		for i = 1, #miscActConf.SevenAward do
+ 			st.SevenInfo.seveninfo[i] = 0
+ 		end
+	end
+
+	if st.SevenInfo.lastdays == 0 then st.SevenInfo.lastdays = 1 end
+
+	local left = st.SevenInfo.firsttick + 7*24*3600 - System.getCurrMiniTime()
+
+ 	for i=1,st.SevenInfo.lastdays do
+ 		if st.SevenInfo.seveninfo[i] == 0 then
+ 			st.SevenInfo.seveninfo[i] = 1
+ 		end
+ 	end
+
+ 	local flag = 0 
+	for i = 1, #miscActConf.SevenAward do
+		if st.SevenInfo.seveninfo[i] ~= 2 then
+			flag = 1
+			break
+		end
+	end
+	if left > 0 then
+		flag = 1
+	end
+
+	if flag == 0 then
+		return
+	end
+
+	local npack = DataPack.allocPacket(sysarg, 149, 9)
+	if npack == nil then return end
+	if left < 0 then
+		left = 0
+	end
+	DataPack.writeInt(npack, left)
+	local count = #st.SevenInfo.seveninfo
+	DataPack.writeInt(npack, count)
+	for i=1,count do
+		DataPack.writeInt(npack, i)
+		DataPack.writeInt(npack, st.SevenInfo.seveninfo[i])
+	end
+	DataPack.flush(npack)
+end
+
+MiscActFunc.sendSeveAwardNewDay = function (sysarg)
+	local st = LActor.getStaticVar(sysarg)
+	if st == nil then return end
+
+	if st.SevenInfo == nil then
+		st.SevenInfo = {}
+		st.SevenInfo.firsttick = System.getToday()
+		st.SevenInfo.lastdays = 0
+ 		st.SevenInfo.seveninfo = {}
+ 		 for i = 1, #miscActConf.SevenAward do
+ 			st.SevenInfo.seveninfo[i] = 0
+ 		end
+	end
+
+	local left = st.SevenInfo.firsttick + 7*24*3600 - System.getCurrMiniTime()
+
+	if st.SevenInfo.lastdays < #miscActConf.SevenAward and left >= 0 then
+		st.SevenInfo.lastdays = st.SevenInfo.lastdays + 1
+		MiscActFunc.sendSeveAwardInfo(sysarg)
+	end
+end
+
+-- 7日留存礼包
+MiscActFunc.getSeveAward = function ( sysarg, dp )
+	--print("MiscActFunc.getSeveAward ")
+ 	local st = LActor.getStaticVar(sysarg)
+ 	if st == nil then return end
+
+	if st.SevenInfo == nil then
+		st.SevenInfo = {}
+		st.SevenInfo.firsttick = System.getToday()
+		st.SevenInfo.lastdays = 0
+ 		st.SevenInfo.seveninfo = {}
+ 		for i = 1, #miscActConf.SevenAward do
+ 			st.SevenInfo.seveninfo[i] = 0
+ 		end
+	end
+
+	if st.SevenInfo.lastdays == 0 then 
+		st.SevenInfo.lastdays = 1 
+		if st.SevenInfo.seveninfo[1] == 0 then st.SevenInfo.seveninfo[1] = 1 end
+	end
+
+	local ty = DataPack.readInt(dp)
+	--print("MiscActFunc.getSeveAward ty:"..ty)
+	if ty == 1 then
+		local index = DataPack.readInt(dp)
+		if index < 1 or index > #st.SevenInfo.seveninfo then
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.fchd001, ttMessage)
+			return
+		end
+
+		if st.SevenInfo.seveninfo[index] ~= 1 then
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.fchd003, ttMessage)
+			return
+		end
+
+		if LActor.addItem(sysarg, miscActConf.SevenAward[index], 0, 0, 1, 1, "SevenAward", 1) >= 1 then
+			-- 播放特效
+		   	local effects = {}
+			local effect = {}
+			effect.type = 1  -- 1为物品,暂时只支持发物品所以写死
+		    effect.id = miscActConf.SevenAward[index]
+		    effect.count = 1
+		    effects[#effects+1] = effect
+			if #effects > 0 then
+				MiscFunc.PlayItemEffect(sysarg, 1, effects)
+			end
+			--设置已领
+			st.SevenInfo.seveninfo[index] = 2
+		else
+			--背包已满
+			LActor.sendTipmsg(sysarg, Lang.ScriptTips.fchd004, ttMessage)
+		end
+	end		
+
+	local pack = DataPack.allocPacket(sysarg, 149, 9)
+	if pack == nil then return end
+	local left = st.SevenInfo.firsttick + 7*24*3600 - System.getCurrMiniTime()
+	if left < 0 then
+		left = 0
+	end
+	DataPack.writeInt(pack, left)
+	local count = #st.SevenInfo.seveninfo
+	DataPack.writeInt(pack, count)
+	for i = 1, count do
+		DataPack.writeInt(pack, i)
+		DataPack.writeInt(pack, st.SevenInfo.seveninfo[i])
+	end
+	DataPack.flush(pack)
+end
+
+MiscActFunc.OnNewDayArrive = function ( sysarg )
+	MiscActFunc.sendSeveAwardNewDay(sysarg)
+
+end
+
+
+MiscActFunc.OnActorLogin = function ( sysarg )
+	MiscActFunc.sendSeveAwardInfo(sysarg)
+
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, MiscActFunc.OnNewDayArrive)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, MiscActFunc.OnActorLogin)
+

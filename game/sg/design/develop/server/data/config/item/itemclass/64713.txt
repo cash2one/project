@@ -1,0 +1,28 @@
+﻿{
+	id = 64713,
+	name = Lang.Item.n64713,
+	desc = Lang.Item.i64713,
+	type = 82,
+	sellType = 33,
+	icon = 616,
+	shape = {0,0,0,0,0,0,0,0},
+	color = 3,
+	dura = 0,
+	dup = 99,
+	colGroup = 0,
+	dealType = 0,
+	dealPrice = 10000,
+	time = 0,
+	suitId = 0,
+	staitcAttrs = {  
+	},
+	strongAttrs = {  
+	},
+	flags = { 
+		recordLog = true,		
+	},
+	conds = {  
+ 
+                { cond = 2, value = 2 ,},
+	},
+},

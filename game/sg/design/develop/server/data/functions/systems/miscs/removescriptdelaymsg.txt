@@ -1,0 +1,10 @@
+
+MiscsImplement.removeScriptDelayMsg = function (sysarg,msgid, packet)
+	local postint = DataPack.readInt(packet)
+	--print("postint:"..postint)
+	if postint ~= nil then 
+	  LActor.removeEntityScriptDelayMsg(sysarg,postint)
+	end
+end
+
+MiscsImplement.registerMsgHandler(8, MiscsImplement.removeScriptDelayMsg)

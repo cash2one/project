@@ -1,0 +1,41 @@
+--消息系统ID号定义
+SystemId = 
+{
+   autoFightSystem = 129,   --挂机系统 
+   subJobSystem = 130,      --副职系统 
+   interactiveSystem = 131, --交互系统
+   npcTradeSystem = 133,    --NPC交易系统
+   shortCutSystem = 134,    --快捷键系统 
+   storageExtSystem = 135,  --仓库扩展系统
+   npcRepairSystem = 136,   --NPC修理系统
+   meridianceSystem = 137,  --经脉系统
+   timeRewardSystem = 138,  --在线奖励系统
+   miscsSystem = 139,       --杂项
+   archiveSystem = 140,     --成就系统 
+   --gemSystem = 141,					--宝物系统
+   answerSystem = 141,              --答题系统
+   slaveSystem = 144,       --地主苦工系统
+   recentTargetSystem = 145,        --短期目标系统
+   loopTaskSystem = 146,        --周跑环任务
+   arenaSystem = 147,      --竞技场
+   marrySystem = 148,      -- 结婚系统
+   activitySystem = 149,      -- 活动系统
+   qrjSystem = 151,        -- 情人节活动
+   teamfbSystem = 154,     -- 组队副本系统
+   dongfuSystem   = 157, --洞府系统
+   offlinefbSystem = 158,  --离线副本系统
+   goldOreSystem = 160,     -- 金矿活动
+   rootSystem = 161,     -- 真气修炼
+   heTuLeShuSystem = 164, --美人后宫(河图洛书)
+   magicTree = 165,     -- 昆仑神树
+   takeCard = 166,     -- 美人抽卡
+   tongtiantaSystem = 48,  --过关斩将副本
+   cscy_CopySystemMrg = 167, --副本管理
+   playFubenSystem = 168,     --剧情副本
+   cscy_QinQiShuHua = 169, --琴棋书画
+   cscy_DanRenTianTi = 170, --单人天梯
+   cscy_QuestNPC = 171,--任务npc
+   cscy_Quest = 172, -- lua任务系统
+   cscy_qianghongbao = 173, --抢红包
+   activationSystem = 174, --活跃度系统
+}

@@ -1,0 +1,102 @@
+--[[
+    objexcel:为CExcelReader:new()获得的userdata
+    config_note:配置的前置说明
+    table_name:写入的table的名字
+    file:要写入的文件路径
+    data:需要写入的table
+    number_index_flag:数字下表是否写入(默认是写入的)
+--]]
+function dump_to_file(objexcel , config_note , table_name , file , data , number_index_flag)
+
+    if type(config_note) ~= "string" then
+        config_note = ""
+    end
+
+    if type(table_name) ~= "string" then
+        print("传入的参数错误，table_name要是一个字符串")
+        return
+    end
+
+    if type(file) ~= "string" then
+        print("传入的参数错误，文件路径必须是一个字符串")
+        return
+    end
+
+    local pre_str = "--"..config_note..'\n--#include '..'"..\\..\\language\\langCode.txt" once\n\n'..table_name.." = "
+    objexcel:WriteFile(file,pre_str)
+
+    print("dump_to_file:"..type(number_index_flag))
+    var_dump(objexcel , file , data , number_index_flag , 1)
+end
+
+
+--[[
+    objexcel:为CExcelReader:new()获得的userdata
+    file:要写入的文件路径
+    data:需要写入的table
+    number_index_flag:数字下表是否写入(默认是写入的)
+    max_level:使用的时候传入一个为true的值就行
+    prefix为缩进用，调用的时候什么都不用传
+--]]
+function var_dump(objexcel , file, data,number_index_flag, max_level, prefix)
+    if type(prefix) ~= "string" then
+        prefix = ""
+    end
+    if type(data) ~= "table" then
+         objexcel:WriteFile(file,prefix .. tostring(data) , 'a')
+    else
+        if max_level ~= 0 then
+            local prefix_next = prefix .. "    "
+            objexcel:WriteFile(file,"\n"..prefix .. "{\n" , 'a')
+            for k,v in pairs(data) do
+                if type(k) == "string" then
+                    objexcel:WriteFile(file,prefix_next .. k .. " = ", 'a')
+                elseif type(k) == "number" then
+                    if number_index_flag then
+                        objexcel:WriteFile(file,prefix_next, 'a')
+                    else
+                        objexcel:WriteFile(file,prefix_next .. "["..k.."]" .. " = ", 'a')
+                    end
+                end
+                if type(v) ~= "table" then
+
+                    if type(v) == "string" then
+                        local s1 , e1 = string.find(v,'{')
+                        local s2 , e2 = string.find(v,'Lang')
+                        if s1 or s2 then
+                            objexcel:WriteFile(file,v..",\n", 'a')
+                        else
+                            objexcel:WriteFile(file,"'"..v.."'"..",\n", 'a')
+                        end
+                    else
+                        objexcel:WriteFile(file,v..',\n', 'a')
+                    end
+                else
+                    var_dump(objexcel, file , v,number_index_flag, nil, prefix_next)
+                end
+            end
+            if nil ~= max_level then
+                objexcel:WriteFile(file,prefix .. "}\n", 'a')
+            else
+                objexcel:WriteFile(file,prefix .. "}"..',\n', 'a')
+            end
+        end
+    end
+    return prefix
+end
+
+--切割字符串
+function split(str, splitChar)
+    local subStrTab = {};
+    while true do
+        local pos = string.find(str, splitChar);
+        if (not pos) then
+            subStrTab[#subStrTab + 1] = str;
+            break;
+        end
+        local subStr = string.sub(str, 1, pos - 1);
+        subStrTab[#subStrTab + 1] = subStr;
+        str = string.sub(str, pos + 1, #str);
+    end
+    return subStrTab;
+end

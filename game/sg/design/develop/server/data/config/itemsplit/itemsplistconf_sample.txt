@@ -1,0 +1,7 @@
+--#include "..\..\language\LangCode.txt" once
+ItemSplitConf = {
+    [25101] = { -- 可以分解的道具id
+        { id = 26174, count = 1, rate = 10000 }, -- 分解出来第一个的道具配置 rate 概率
+        { id = 26174, count = 1, rate = 7000 }, -- 分解出来第二个的道具配置 rate 概率
+    },
+}

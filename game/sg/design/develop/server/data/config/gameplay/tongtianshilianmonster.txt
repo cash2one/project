@@ -1,0 +1,4004 @@
+﻿--#include "..\..\language\LangCode.txt" 
+TTSL_Monster = 
+{
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1501,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1501,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1501,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1501,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 1,
+		Fight = 4800,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1502,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1502,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1502,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1502,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 2,
+		Fight = 7800,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1503,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1503,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1503,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1503,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 3,
+		Fight = 9000,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1504,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1504,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1504,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1504,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 4,
+		Fight = 10000,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1505,
+				pos = {
+					37,
+					36,
+					14,
+					16,
+				},
+			},
+		},
+		layer = 5,
+		Fight = 12000,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1506,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1506,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1506,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1506,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 6,
+		Fight = 15000,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1507,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1507,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1507,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1507,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 7,
+		Fight = 16000,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1508,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1508,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1508,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1508,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 8,
+		Fight = 18000,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1509,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1509,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1509,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1509,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 9,
+		Fight = 20000,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1510,
+				pos = {
+					37,
+					36,
+					14,
+					16,
+				},
+			},
+		},
+		layer = 10,
+		Fight = 22000,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1511,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1511,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1511,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1511,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 11,
+		Fight = 26000,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1512,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1512,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1512,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1512,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 12,
+		Fight = 28000,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1513,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1513,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1513,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1513,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 13,
+		Fight = 35000,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1514,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1514,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1514,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1514,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 14,
+		Fight = 37000,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1515,
+				pos = {
+					37,
+					36,
+					14,
+					16,
+				},
+			},
+		},
+		layer = 15,
+		Fight = 45000,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1516,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1516,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1516,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1516,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 16,
+		Fight = 52200,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1517,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1517,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1517,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1517,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 17,
+		Fight = 55800,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1518,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1518,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1518,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1518,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 18,
+		Fight = 61600,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1519,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1519,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1519,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1519,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 19,
+		Fight = 69300,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1520,
+				pos = {
+					37,
+					36,
+					14,
+					16,
+				},
+			},
+		},
+		layer = 20,
+		Fight = 77200,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1521,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1521,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1521,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1521,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 21,
+		Fight = 85300,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1522,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1522,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1522,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1522,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 22,
+		Fight = 93500,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1523,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1523,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1523,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1523,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 23,
+		Fight = 101800,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1524,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1524,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1524,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1524,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 24,
+		Fight = 110300,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1525,
+				pos = {
+					37,
+					36,
+					14,
+					16,
+				},
+			},
+		},
+		layer = 25,
+		Fight = 118900,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1526,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1526,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1526,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1526,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 26,
+		Fight = 127700,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1527,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1527,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1527,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1527,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 27,
+		Fight = 136700,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1528,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1528,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1528,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1528,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 28,
+		Fight = 145800,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1529,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1529,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1529,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1529,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 29,
+		Fight = 155000,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1530,
+				pos = {
+					37,
+					36,
+					14,
+					16,
+				},
+			},
+		},
+		layer = 30,
+		Fight = 164400,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1531,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1531,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1531,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1531,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 31,
+		Fight = 173900,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1532,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1532,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1532,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1532,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 32,
+		Fight = 183600,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1533,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1533,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1533,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1533,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 33,
+		Fight = 193500,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1534,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1534,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1534,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1534,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 34,
+		Fight = 203500,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1535,
+				pos = {
+					37,
+					36,
+					14,
+					16,
+				},
+			},
+		},
+		layer = 35,
+		Fight = 213600,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1536,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1536,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1536,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1536,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 36,
+		Fight = 223900,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1537,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1537,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1537,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1537,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 37,
+		Fight = 234300,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1538,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1538,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1538,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1538,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 38,
+		Fight = 244900,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1539,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1539,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1539,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1539,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 39,
+		Fight = 255700,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1540,
+				pos = {
+					37,
+					36,
+					14,
+					16,
+				},
+			},
+		},
+		layer = 40,
+		Fight = 266600,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1541,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1541,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1541,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1541,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 41,
+		Fight = 277600,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1542,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1542,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1542,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1542,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 42,
+		Fight = 288800,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1543,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1543,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1543,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1543,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 43,
+		Fight = 300100,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1544,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1544,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1544,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1544,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 44,
+		Fight = 311600,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1545,
+				pos = {
+					37,
+					36,
+					14,
+					16,
+				},
+			},
+		},
+		layer = 45,
+		Fight = 323300,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1546,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1546,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1546,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1546,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 46,
+		Fight = 335100,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1547,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1547,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1547,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1547,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 47,
+		Fight = 347000,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1548,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1548,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1548,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1548,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 48,
+		Fight = 359100,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1549,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1549,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1549,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1549,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 49,
+		Fight = 371400,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1550,
+				pos = {
+					37,
+					36,
+					14,
+					16,
+				},
+			},
+		},
+		layer = 50,
+		Fight = 383700,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1551,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1551,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1551,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1551,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 51,
+		Fight = 396300,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1552,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1552,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1552,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1552,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 52,
+		Fight = 409000,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1553,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1553,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1553,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1553,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 53,
+		Fight = 421800,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1554,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1554,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1554,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1554,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 54,
+		Fight = 434800,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1555,
+				pos = {
+					37,
+					36,
+					14,
+					16,
+				},
+			},
+		},
+		layer = 55,
+		Fight = 448000,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1556,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1556,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1556,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1556,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 56,
+		Fight = 461200,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1557,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1557,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1557,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1557,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 57,
+		Fight = 474700,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1558,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1558,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1558,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1558,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 58,
+		Fight = 488300,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1559,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1559,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1559,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1559,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 59,
+		Fight = 502000,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1560,
+				pos = {
+					37,
+					36,
+					14,
+					16,
+				},
+			},
+		},
+		layer = 60,
+		Fight = 515900,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1561,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1561,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1561,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1561,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 61,
+		Fight = 530000,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1562,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1562,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1562,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1562,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 62,
+		Fight = 544100,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1563,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1563,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1563,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1563,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 63,
+		Fight = 558500,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1564,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1564,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1564,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1564,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 64,
+		Fight = 573000,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1565,
+				pos = {
+					37,
+					36,
+					14,
+					16,
+				},
+			},
+		},
+		layer = 65,
+		Fight = 587600,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1566,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1566,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1566,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1566,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 66,
+		Fight = 602400,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1567,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1567,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1567,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1567,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 67,
+		Fight = 617400,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1568,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1568,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1568,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1568,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 68,
+		Fight = 632400,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1569,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1569,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1569,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1569,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 69,
+		Fight = 647700,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1570,
+				pos = {
+					37,
+					36,
+					14,
+					16,
+				},
+			},
+		},
+		layer = 70,
+		Fight = 663100,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1571,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1571,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1571,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1571,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 71,
+		Fight = 678600,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1572,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1572,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1572,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1572,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 72,
+		Fight = 694300,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1573,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1573,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1573,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1573,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 73,
+		Fight = 710200,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1574,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1574,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1574,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1574,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 74,
+		Fight = 726200,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1575,
+				pos = {
+					37,
+					36,
+					14,
+					16,
+				},
+			},
+		},
+		layer = 75,
+		Fight = 742300,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1576,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1576,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1576,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1576,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 76,
+		Fight = 758600,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1577,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1577,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1577,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1577,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 77,
+		Fight = 775000,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1578,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1578,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1578,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1578,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 78,
+		Fight = 791600,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1579,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1579,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1579,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1579,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 79,
+		Fight = 808400,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1580,
+				pos = {
+					37,
+					36,
+					14,
+					16,
+				},
+			},
+		},
+		layer = 80,
+		Fight = 825300,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1581,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1581,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1581,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1581,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 81,
+		Fight = 842300,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1582,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1582,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1582,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1582,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 82,
+		Fight = 859500,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1583,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1583,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1583,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1583,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 83,
+		Fight = 876800,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1584,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1584,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1584,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1584,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 84,
+		Fight = 894300,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1585,
+				pos = {
+					37,
+					36,
+					14,
+					16,
+				},
+			},
+		},
+		layer = 85,
+		Fight = 912000,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1586,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1586,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1586,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1586,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 86,
+		Fight = 929800,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1587,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1587,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1587,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1587,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 87,
+		Fight = 947700,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1588,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1588,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1588,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1588,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 88,
+		Fight = 965800,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1589,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1589,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1589,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1589,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 89,
+		Fight = 984000,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1590,
+				pos = {
+					37,
+					36,
+					14,
+					16,
+				},
+			},
+		},
+		layer = 90,
+		Fight = 1002400,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1591,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1591,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1591,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1591,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 91,
+		Fight = 1021000,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1592,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1592,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1592,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1592,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 92,
+		Fight = 1039700,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1593,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1593,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1593,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1593,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 93,
+		Fight = 1058500,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1594,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1594,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1594,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1594,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 94,
+		Fight = 1077500,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1595,
+				pos = {
+					37,
+					36,
+					14,
+					16,
+				},
+			},
+		},
+		layer = 95,
+		Fight = 1096600,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1596,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1596,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1596,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1596,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 96,
+		Fight = 1115900,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1597,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1597,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1597,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1597,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 97,
+		Fight = 1135400,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1598,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1598,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1598,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1598,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 98,
+		Fight = 1155000,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1599,
+				pos = {
+					34,
+					35,
+					21,
+					22,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1599,
+				pos = {
+					45,
+					46,
+					16,
+					15,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1599,
+				pos = {
+					34,
+					35,
+					12,
+					11,
+				},
+			},
+			{
+				num = 1,
+				monsterid = 1599,
+				pos = {
+					24,
+					25,
+					16,
+					17,
+				},
+			},
+		},
+		layer = 99,
+		Fight = 1174700,
+	},
+	{
+		monster_list = {
+			{
+				num = 1,
+				monsterid = 1600,
+				pos = {
+					37,
+					36,
+					14,
+					16,
+				},
+			},
+		},
+		layer = 100,
+		Fight = 1194600,
+	},
+}

@@ -1,0 +1,242 @@
+--#include "data\config\activity\discountconf.txt" once
+--#include "data\config\activity\discountconf1.txt" once
+--#include "data\config\activity\discountconf2.txt" once
+--#include "data\config\activity\discountconf3.txt" once
+Discounthandler = {}
+
+--活动配置汇总
+Discountconf = 
+{   
+    --分套配置
+    --activityID:活动ID
+    [Discountconf112.activityID] = Discountconf112,
+    [Discountconf113.activityID] = Discountconf113,
+    [Discountconf114.activityID] = Discountconf114,
+    [Discountconf115.activityID] = Discountconf115, 
+    
+}
+
+
+--获得活动标签
+Discounthandler.getActivityType = function(sysarg, packet)
+	local activityID = DataPack.readInt(packet)
+	if not activityID then return end
+	local type = 0
+	local sysvar = System.getStaticVar()
+	if not sysvar then return end
+	if sysvar.activityControl == nil then
+		sysvar.activityControl = {}
+	end
+	if sysvar.activityControl[activityID] and sysvar.activityControl[activityID].type then
+		type = sysvar.activityControl[activityID].type
+	end
+	if activityID == Discountconf112.activityID then type = 5 end
+	if activityID == Discountconf113.activityID then type = 5 end
+	if activityID == Discountconf114.activityID then type = 5 end
+	if activityID == Discountconf115.activityID then type = 5 end
+	--下面是发协议
+	local npack = DataPack.allocPacket(sysarg, 138, 239)
+	if npack == nil then return end 
+	local nowdaycounts = ONLINEREWARD.GetActivityRunDays(activityID)
+	DataPack.writeInt(npack, activityID) 
+	DataPack.writeInt(npack, type) 
+	DataPack.writeInt(npack, nowdaycounts or 0) 
+	print("_________________tpye = "..type)
+	DataPack.flush(npack)
+end
+
+--分标签
+Discounthandler.getConfig = function(activityID)
+	local sysvar = System.getStaticVar()
+	if not sysvar then return end
+
+	-- 春餐
+	if activityID == Discountconf112.activityID then
+		local nowdaycounts = ONLINEREWARD.GetActivityRunDays(activityID)
+		nowdaycounts = nowdaycounts or 1
+		--print(string.format("==activityID: %d, nowdaycounts:  %d",activityID,nowdaycounts))
+		return Discountconf[activityID].sellItemList[5][nowdaycounts]
+	end
+
+	-- 情人节
+	if activityID == Discountconf113.activityID then
+		local nowdaycounts = ONLINEREWARD.GetActivityRunDays(activityID)
+		nowdaycounts = nowdaycounts or 1
+		--print(string.format("==activityID: %d, nowdaycounts:  %d",activityID,nowdaycounts))
+		return Discountconf[activityID].sellItemList[5][nowdaycounts]
+	end
+
+	-- 妇女节活动
+	if activityID == Discountconf114.activityID then
+		local nowdaycounts = ONLINEREWARD.GetActivityRunDays(activityID)
+		nowdaycounts = nowdaycounts or 1
+		--print(string.format("==activityID: %d, nowdaycounts:  %d",activityID,nowdaycounts))
+		return Discountconf[activityID].sellItemList[5][nowdaycounts]
+	end
+
+	-- 劳动节
+	if activityID == Discountconf115.activityID then
+		local nowdaycounts = ONLINEREWARD.GetActivityRunDays(activityID)
+		nowdaycounts = nowdaycounts or 1
+		--print(string.format("==activityID: %d, nowdaycounts:  %d",activityID,nowdaycounts))
+		return Discountconf[activityID].sellItemList[5][nowdaycounts]
+	end
+	if sysvar.activityControl == nil then
+		sysvar.activityControl = {}
+	end
+	if sysvar.activityControl[activityID] and sysvar.activityControl[activityID].type then
+		local nowdaycounts = ONLINEREWARD.GetActivityRunDays(activityID)
+		if Discountconf[activityID].sellItemList[sysvar.activityControl[activityID].type][nowdaycounts] then
+			return Discountconf[activityID].sellItemList[sysvar.activityControl[activityID].type][nowdaycounts]
+		end
+	else
+		if Discountconf[activityID] == nil then
+			return nil
+		end
+		return Discountconf[activityID].sellItemList
+	end
+end
+
+Discounthandler.handler_getDiscountCount = function(sysarg, packet)
+ 	local activityID = tonumber(DataPack.readInt(packet))
+ 	Discounthandler.getDiscountCount(sysarg,activityID)
+end
+
+--获取限购商品数量
+Discounthandler.getDiscountCount = function(sysarg, activityID)
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then return end
+	if not var.composepoint then var.composepoint = 0 end
+	if not activityID then return end
+	local listConf = Discounthandler.getConfig(activityID)
+	if not listConf then print("_______无配置") return end
+	ONLINEREWARD.CheckResetActivityInfo(sysarg, activityID)
+	if not var.discountInfo then var.discountInfo = {} end
+	if not var.discountInfo[activityID] then 
+		var.discountInfo[activityID] = {} 
+		--如果有折扣，初始化限量物品
+		for i = 1, #listConf do
+			if listConf[i].isLimite then
+				var.discountInfo[activityID][listConf[i].itemID] = listConf[i].sellcount
+			end
+		end
+	end
+	--下面是发协议
+	local npack = DataPack.allocPacket(sysarg, 138, 235)
+	if npack == nil then return end 
+	DataPack.writeInt(npack, activityID) 
+	--总数
+	DataPack.writeByte(npack, #listConf) 
+	for i = 1, #listConf do
+		DataPack.writeInt(npack, var.discountInfo[activityID][listConf[i].itemID])
+		print("________________itemCount = "..var.discountInfo[activityID][listConf[i].itemID])
+	end
+	DataPack.flush(npack)
+end
+
+--购买折扣物品
+Discounthandler.buyDiscountItem = function(sysarg, packet)
+	local activityID = DataPack.readInt(packet)
+
+	local itemID = DataPack.readInt(packet)
+	print(string.format("activityID:  %d, itemID:  %d",activityID,itemID))
+	if not itemID then return end
+	local state = ONLINEREWARD.GetActivityState(activityID)
+	--print("=========1")
+	if state == 0 then return end
+	--print("=========2")
+	ONLINEREWARD.CheckResetActivityInfo(sysarg, activityID)
+	local var = LActor.getStaticVar(sysarg)
+	--print("=========3")
+	if var == nil then return end
+	--print("=========4")
+	local conf = Discountconf[activityID]
+	local listConf = Discounthandler.getConfig(activityID)
+	if not conf or not listConf then print("_______无配置") return end
+	if not var.discountInfo then var.discountInfo = {} end
+	if not var.discountInfo[activityID] then 
+		var.discountInfo[activityID] = {} 
+		--如果有折扣，初始化限量物品
+		--print("=========5")
+		for i = 1, #listConf do
+			if listConf[i].isLimite then
+				var.discountInfo[activityID][listConf[i].itemID] = listConf[i].sellcount
+			end
+		end
+	end
+	--print("========6")
+	--查找购买物品配置
+	for i = 1, #listConf do
+		--print("========:::  "..i)
+		print("listConf[i].itemID==========:"..listConf[i].itemID)
+		if itemID == listConf[i].itemID then
+			--如果是限量，查看是否还能够购买
+			if var.discountInfo[activityID] and var.discountInfo[activityID][itemID] and var.discountInfo[activityID][itemID] == 0 then
+				LActor.sendTipmsg( sysarg, Lang.ScriptTips.thc001, ttMessage )
+				return
+			end
+			print("_________________________折扣 itemID = "..itemID)
+			print(var.discountInfo[activityID][itemID] and var.discountInfo[activityID][itemID])
+			--判断背包
+			--判断背包格子
+			if Item.getBagEmptyGridCount(sysarg) < 1 then
+				LActor.sendTipmsg( sysarg, Lang.ScriptTips.sclib03, ttMessage )
+				return
+			end
+			--判断天珠
+			if listConf[i].consumeMoney > LActor.getMoneyCount( sysarg, 3 ) then
+				LActor.sendTipmsg(sysarg, Lang.ScriptTips.sx011, ttMessage)
+				return
+			end
+			LActor.changeMoney(sysarg, 3, -listConf[i].consumeMoney, 1, true, "discount")
+			--塞物品
+			--限购单独做个BI
+			local BIStr = "discount_"..activityID.."-"..i
+			if activityID == Discountconf112.activityID or activityID == Discountconf113.activityID then
+				BIStr = "discount_daily-"..i
+			end
+			LActor.addItem(sysarg,itemID,0,0,listConf[i].count,listConf[i].isBind,BIStr,1)
+			--如果是限量则扣除数量1
+			if var.discountInfo[activityID][itemID] then
+				var.discountInfo[activityID][itemID] = var.discountInfo[activityID][itemID] - 1
+			end
+			--是否广播
+			if listConf[i].isbroadcast then
+				local str = string.format(Lang.ScriptTips.xzs001,LActor.getName(sysarg),conf.activityname,Item.getColorName(itemID))
+				System.broadcastLevelTipmsg(str, 31, ttScreenCenter)
+				local str1 = string.format(Lang.ScriptTips.xzs002,conf.activityname,conf.textbuttonID)
+				-- System.broadcastLevelTipmsg(str..str1, 30, ttHearsay)
+			end
+			local effects = {}
+			local effect = {}
+			effect.type = 1  
+			effect.id = itemID
+			effect.count = listConf[i].count
+			effects[#effects+1] = effect
+			if #effects > 0 then
+				MiscFunc.PlayItemEffect(sysarg, 1, effects)
+			end
+			Discounthandler.getDiscountCount(sysarg, activityID)
+			break
+		end
+	end
+	print("========7")
+
+end
+
+--新的一天到来
+Discounthandler.newDayforActivity = function(sysarg)
+	for activityID, conf in pairs(Discountconf or {}) do
+		local state = ONLINEREWARD.GetActivityState(activityID)
+		if state ~= 0 then
+			local var = LActor.getStaticVar(sysarg)
+			if var == nil then return end
+			--是否需要重置限购数量
+			if conf.isResetDiscount then
+				if var.discountInfo and var.discountInfo[activityID] then var.discountInfo[activityID] = nil end
+			end
+		end
+	end
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, Discounthandler.newDayforActivity)

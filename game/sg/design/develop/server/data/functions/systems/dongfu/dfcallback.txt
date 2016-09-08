@@ -1,0 +1,184 @@
+
+
+DongfuManager.onDbDataReturn = function(charId, charName, hdlVar)
+	DongfuManager.initDongfu(charId, charName, hdlVar)
+end
+
+DongfuManager.runOne = function()
+	local runLingquan = DongfuManager.runLingquan
+	local runLand = DongfuManager.runLand
+	local runSummon = DongfuManager.runSummon
+	local runAuto = DongfuManager.runAuto
+	local onChanged = DongfuManager.onChanged
+
+	local list = _G.__DongfuIdList
+	local var = _G.__DongfuVar
+
+	return function(curTime)
+		local total = #list
+		local startIndex = DongfuManager._startIndex or 1
+		if startIndex > total then
+			startIndex = 1
+		end
+		local endIndex = startIndex + 300
+		if endIndex > total then
+			endIndex = total
+		end
+		for i = startIndex, endIndex do 
+			local ownerId = list[i]
+			local dfData = var[ownerId]
+			local info = dfData.info
+
+			local lqChanged = runLingquan(dfData, curTime)
+			runLand(ownerId, info.list, curTime)
+			local suChanged = runSummon(info, curTime)
+			local auChanged = runAuto(dfData, curTime)
+
+			if lqChanged or suChanged or auChanged then
+				onChanged(ownerId)
+			end	
+		end
+		DongfuManager._startIndex = endIndex + 1
+
+		if DongfuManager._saveTime == nil then
+			DongfuManager._saveTime = curTime + 60 * 90
+		elseif DongfuManager._saveTime < curTime then
+			DongfuManager._saveTime = curTime + 60 * 90
+			DongfuManager.save()
+		end	
+	end
+end
+
+function Dongfu_OnNewDay()
+	local var = _G.__DongfuVar
+	if var == nil then return end
+	for ownerId, dfData in pairs(var) do
+		local info = dfData.info
+		local isChanged = info.usedXianluValue ~= nil
+					or info.selfLingquanCount ~= nil
+					or info.otherLingquanCount ~= nil
+					or info.killSickCount ~= nil
+					or info.lingquanAward ~= nil
+		if isChanged then
+			info.usedXianluValue = nil
+			info.selfLingquanCount = nil
+			info.otherLingquanCount = nil
+			info.killSickCount = nil
+			if info.lingquanAward ~= nil then
+				info.lingquanAward = nil
+				info.lingquanValue = nil
+				-- 灵泉可充能状态
+				DongfuManager.setStateFlag(dfData, 0, true)
+			end
+			
+			DongfuManager.onChanged(ownerId)
+
+			local refreshNoti = function(pChar)
+				local dp = DataPack.allocPacket(pChar, 157, 23)
+				DataPack.writeInt(dp, ownerId)
+				DataPack.writeShort(dp, info.lingquanValue or 0)
+				DataPack.writeByte(dp, 0)
+				DataPack.flush(dp)
+			end
+			DongfuManager.broadcast(dfData.playerSet, refreshNoti)
+
+			DongfuManager.notiInfoToSelf(dfData)
+		end
+	end
+end
+
+DongfuManager.onLogin = function(pChar)
+	local cId = LActor.getActorId(pChar)
+	local dfData = DongfuManager.getDongfuData(cId)
+	if dfData == nil or dfData.info == nil then return end
+	local info = dfData.info
+	
+	local list = info.awardList
+	if list ~= nil then
+		for i = 1, #list do
+			local aInfo = list[i]
+			if aInfo[1] ~= nil and aInfo[2] ~= nil then
+				LActor.giveAward(pChar, aInfo[1], aInfo[2])
+			end
+		end
+		info.awardList = nil
+		DongfuManager.onChanged(cId)
+	end
+
+	-- 发送自己的洞府状态
+	local dp = DataPack.allocPacket(pChar, 157, 11)
+	DataPack.writeByte(dp, info.stateFlags or 0)
+	DataPack.flush(dp)
+end
+
+DongfuManager.onFinal = function()
+	DongfuManager.save()
+
+	local st = tonumber(System.getUnixTime())
+	-- print("DongfuManager.onFinal... 	1")
+	local var = _G.__DongfuVar
+	if var == nil then return end
+	
+	local sId = SystemIdList.dongfu
+	local tb = {}
+	for ownerId, dfData in pairs(var) do
+		local playerSet = dfData.playerSet
+		for id, _ in pairs(playerSet) do
+			table.insert(tb, {sysId = sId, type = 1, ownerId = ownerId, id = id})
+		end
+
+		local friendSet = dfData.friendSet or {}
+		for id, _ in pairs(friendSet) do
+			table.insert(tb, {sysId = sId, type = 2, ownerId = ownerId, id = id})
+		end
+
+		local olFriendSet = dfData.olFriendSet
+		for id, _ in pairs(olFriendSet) do
+			table.insert(tb, {sysId = sId, type = 3, ownerId = ownerId, id = id})
+		end
+	end
+
+	local olFriendSet = DongfuManager.__friendSet
+	for ownerId, set in pairs(olFriendSet) do
+		for id, _ in pairs(set) do
+			table.insert(tb, {sysId = sId, type = 3, ownerId = ownerId, id = id})
+		end
+	end
+	System.saveSysTmpVar(tb)
+	-- print("DongfuManager.onFinal... 	2", tonumber(System.getUnixTime()) - st)
+end
+
+DongfuManager.onLoadTmpVar = function()
+	local var = _G.__DongfuVar
+	local gFriendSet = DongfuManager.__friendSet
+
+	return function(data)
+		local type = tonumber(data.type)
+		if type == 1 then
+			local playerSet = var[tonumber(data.ownerId)].playerSet
+			playerSet[tonumber(data.id)] = 1
+		elseif type == 2 then
+			local dfData = var[tonumber(data.ownerId)]
+			if dfData.friendSet == nil then
+				dfData.friendSet = {}
+			end
+			dfData.friendSet[tonumber(data.id)] = 1
+		elseif type == 3 then
+			local ownerId = tonumber(data.ownerId)
+			if var[ownerId] ~= nil then
+				var[ownerId].olFriendSet[tonumber(data.id)] = 1
+			else
+				if gFriendSet[ownerId] == nil then
+					gFriendSet[ownerId] = {}
+				end
+				gFriendSet[ownerId][tonumber(data.id)] = 1
+			end
+		end
+	end
+end
+
+
+SystemVarDispatcher.register(SystemIdList.dongfu, DongfuManager.onDbDataReturn)
+SystemVarDispatcher.registerTmpVar(SystemIdList.dongfu, DongfuManager.onLoadTmpVar())
+table.insert(PrecisionTimeFnTable, DongfuManager.runOne())
+table.insert(FinaFnTable, DongfuManager.onFinal)

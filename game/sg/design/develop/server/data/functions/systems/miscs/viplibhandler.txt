@@ -1,0 +1,215 @@
+--VIP礼包处理
+--#include "data\config\misc\viplibconf.txt" once
+MiscsImplement.vipNewDay = function (sysarg)
+	--print("--VIP礼包处理，新的一天到来--")
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then
+		return
+	end
+	local vip_level =  LActor.getVIPLevel(sysarg)
+	if vip_level == 0 then
+		var.vipCanGet = 0
+		return
+	end
+	var.vipCanGet = 1
+	--print("---设置vip礼包可以领取--")
+end
+MiscsImplement.getVipLibInfo = function(sysarg, msgid, packet)
+	--print("---获取vip礼包信息")
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then
+		return
+	end
+	if var.viplibinfo == nil then
+		var.viplibinfo = {}
+	end
+	local vip_level = LActor.getVIPLevel(sysarg)
+	local npack = DataPack.allocPacket(sysarg,139,214)  --申请一个数据包	
+	if npack == nil then return end
+	DataPack.writeInt(npack,#ViplibConf)
+	for i,v in ipairs(ViplibConf) do
+		DataPack.writeInt(npack,v.vip_level)
+		if vip_level < v.vip_level then
+			DataPack.writeInt(npack,1)
+		elseif var.viplibinfo[v.vip_level] == nil then
+			DataPack.writeInt(npack,2)
+		else
+			DataPack.writeInt(npack,3)
+		end
+	end
+	DataPack.flush(npack)
+end
+
+MiscsImplement.buyVipLib = function(sysarg, msgid, packet)
+
+	local buy_level = DataPack.readInt(packet)
+	--local buy_level = 2
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then
+		return
+	end
+	if ViplibConf[buy_level] == nil then
+		print("---配置错误")
+		return
+	end
+	local vip_level = LActor.getVIPLevel(sysarg)
+	--vip_level = 6
+	if buy_level > vip_level then
+		print("--vip等级不符--")
+		return
+	end
+	if var.viplibinfo == nil then
+		var.viplibinfo = {}
+	end
+	if var.viplibinfo[buy_level] ~= nil then
+		print("--已经购买过了-")
+	end
+
+	local price = ViplibConf[buy_level].price
+	if price > LActor.getMoneyCount(sysarg, mtYuanbao) then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.yueka001, ttMessage)
+		print("--天珠不夠")
+		return
+	end
+	var.viplibinfo[buy_level] = buy_level
+	local itemid,itemnum = ViplibConf[buy_level].vipBuyLib[1],ViplibConf[buy_level].vipBuyLib[2] or 1
+	--print("---itemid:"..itemid.."   itemnum:"..itemnum)
+	if Item.getBagEmptyGridCount( sysarg ) < 1 then --获取背包剩格子数
+        local aid = LActor.getActorId(sysarg)
+        System.sendGmMailOffLine(aid, Lang.ScriptTips.viplib001, 1, itemid, itemnum, 1, "vip礼包")
+	else
+		LActor.addItem(sysarg, itemid, 0, 0, itemnum, 1, "buyviplib", 1)
+    end
+	LActor.changeMoney(sysarg, 3, -price, 1, true, "buyviplib", "")
+	local npack = DataPack.allocPacket(sysarg,139,215)  --申请一个数据包	
+	if npack == nil then return end
+	DataPack.writeInt(npack,1)
+	DataPack.writeInt(npack,buy_level)
+	DataPack.flush(npack)
+end
+MiscsImplement.getVipDailyRewardInfo = function(sysarg, msgid, packet)
+	--print("---获取vip礼包信息--")
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then
+		return
+	end
+	local canGet = var.vipCanGet
+
+	local npack = DataPack.allocPacket(sysarg,139,214)  --申请一个数据包
+	if npack == nil then return end
+
+	DataPack.writeByte(npack,canGet) 
+	DataPack.flush(npack)
+end
+MiscsImplement.getVipDailyReward = function(sysarg)
+	--print("--领取vip礼包--")
+	local var = LActor.getStaticVar(sysarg)
+	if var == nil then
+		return
+	end
+	--print("=================",var.vipCanGet)
+	if var.vipCanGet == 0 then
+		print("---今日vip礼包已经领取过了--")
+		return
+	end
+	local vip_level =  LActor.getVIPLevel(sysarg)
+
+	--print("--vip_level:"..vip_level)
+	if viplibconf[vip_level] == nil then
+		print("error:vip礼包配置错误，没有对应的vip等级")
+		return
+	end
+	local oneconf = viplibconf[vip_level]
+	local libCount = #oneconf.dailyReward
+	local bagGrid = Item.getBagEmptyGridCount(sysarg)      --玩家身上有多少个格子
+	if bagGrid < libCount then
+		LActor.sendTipmsg(sysarg, Lang.ScriptTips.osa0005, ttMessage)
+		return
+	end
+	for _,v in ipairs(oneconf.dailyReward) do
+		local itemid,itemnum = v[1],v[2] or 1
+		--print("---itemid:"..itemid.."   itemnum:"..itemnum)
+		LActor.addItem(sysarg, itemid, 0, 0, itemnum, 1, "vipdailyReward"..vip_level, 1)
+	end
+	var.vipCanGet = 0
+	--print("---llllllll")
+end
+
+
+-- function HeTuLeShuFunc.initCalc(actor)
+-- 	local var = HeTuLeShuFunc.getActorVar(actor)
+-- 	if var == nil or var.cardsCount <= 0  then return end
+
+-- 	LActor.openAttrCalc(actor, actHeTuLeShu, true)
+-- 	local calc = LActor.getAttrCalc(actor, actHeTuLeShu)
+-- 	if calc == nil then return end
+-- 	LActor.resetAttrCalc(calc)
+
+-- 	local attrRate = CollectCardConfig.tujianConfig[var.tujian].attrRate
+
+-- 	local cardConf = CollectCardConfig.cardConfig
+-- 	for idx, conf in pairs(cardConf) do
+-- 		if var.cards[idx] then
+-- 			local cardVar = var.cards[idx]		
+-- 			if conf.levelAttrs and conf.levelAttrs[cardVar.level] then
+-- 				local levelPropertys = conf.levelAttrs[cardVar.level]
+-- 				for _, attr in pairs(levelPropertys) do
+-- 					LActor.addCalcAttr(calc, attr.type, attr.value * attrRate)
+-- 				end
+-- 			else
+-- 				print("card level ERROR    "..idx)
+-- 				print(cardVar.level)
+-- 			end
+
+-- 			if conf.stageAttrs and conf.stageAttrs[cardVar.stage] then
+-- 				local stagePropertys = conf.stageAttrs[cardVar.stage]
+-- 				for _, attr in pairs(stagePropertys) do
+-- 					LActor.addCalcAttr(calc, attr.type, attr.value * attrRate)
+-- 				end
+-- 			else
+-- 				print("card stage ERROR    "..idx.."   level "..cardVar.stage)
+-- 			end
+-- 		end
+-- 	end
+-- 	LActor.refreshActor(actor)
+-- end
+MiscsImplement.loginAddSvipAttr = function ( sysarg )
+	local vip_level =  LActor.getVIPLevel(sysarg)
+	if vip_level == 11 then
+		MiscsImplement.addSvipattr(sysarg)
+	end
+end
+MiscsImplement.addSvipattr = function ( sysarg )
+	
+	LActor.openAttrCalc(sysarg, actVip, true)
+	local calc = LActor.getAttrCalc(sysarg, actVip)
+	if calc == nil then return end
+	LActor.resetAttrCalc(calc)
+	for _, v in pairs(VIPConfig.attr) do
+		LActor.addCalcAttr(calc, v.type, v.value)
+	end
+	LActor.refreshActor(sysarg)
+end
+MiscsImplement.OnVipLevelUpdate = function (sysarg, arg)
+	if (arg == nil or table.getn(arg) < 2) then 
+		print("OnActorVipUpdate param count not match")
+		return 
+	end
+	local newLevel = arg[1]
+  	local oldLevel = arg[2]
+  	if newLevel == oldLevel then
+    	return 
+  	end
+  	MiscsImplement.getVipLibInfo(sysarg)
+  	if newLevel == 11 then
+  		MiscsImplement.addSvipattr(sysarg)
+  	end
+  	System.logCounter(LActor.getActorId(sysarg), LActor.getAccountName(sysarg), tostring(LActor.getLevel(sysarg)), 
+	 		"viplevelupdate", tostring(oldLevel), tostring(newLevel), LActor.getAccountName(sysarg),"", "", "", "", lfDB)
+end
+--EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, MiscsImplement.vipNewDay)
+
+MiscsImplement.registerMsgHandler(214, MiscsImplement.getVipLibInfo)
+MiscsImplement.registerMsgHandler(215, MiscsImplement.buyVipLib)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUpdateVipInfo, MiscsImplement.OnVipLevelUpdate)
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, MiscsImplement.loginAddSvipAttr)

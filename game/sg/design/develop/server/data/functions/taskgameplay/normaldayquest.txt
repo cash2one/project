@@ -1,0 +1,503 @@
+-- 日常任务模块
+
+    --#include "data\config\taskgameplayconfig\normaldayquestconfig.txt" once
+    --#include "data\config\levelopenplaysys.txt" once
+
+-- local dayQuestFuncs = {}
+
+-- local sysId = 6 -- 系统id
+
+-- local responseId = {
+--     getQuestList = 50, -- C/S - 获取任务列表
+--     getQuestAward = 51, -- C/S - 领取日常任务奖励
+--     setQuestStar = 52, -- C - 日常任务升星
+--     commQuestStar = 99, -- S - 任务升星结果公共协议
+-- }
+
+-- local typeOfPanel = 1 -- 日常面板类型 协议编辑器定义99接口
+
+-- -- 任务状态
+-- local questState = {
+--     onDoing = 0, -- 进行中
+--     onDone = 1, -- 已完成
+--     onCommit = 2, -- 已提交
+-- }
+
+-- -- 消耗类型
+-- local costType = {
+--     cItem = 0,
+--     cMoney = 1,
+-- }
+
+-- -- 奖励类型
+-- local awardType = {
+--     aMoney = 0, -- 金钱
+--     aItem = 1, -- 道具
+--     aExp = 2, -- 经验
+-- }
+
+-- -- 星级对应的奖励加成
+-- local star_rates = {
+--     1, 4 / 3, 5 / 3, 2, 2.5,
+-- }
+
+-- -- 最大星级
+-- local max_star_num = 5
+
+-- -- @param sysarg 玩家对象
+-- -- @param args[1] cmd 指令
+-- -- @param args[2] DataPacketReader包
+-- EventCallDispatcher.dayQuestHandle = function (actorobj, args)
+--     if args[1] == nil or args[2] == nil then
+--         return
+--     end
+--     local func = dayQuestFuncs[args[1]]
+--     if func ~= nil and type(func) == "function" then
+--         if dayQuestFuncs.isSystemOpen(actorobj) == true then
+--             func(actorobj, args[2])
+--         else
+--             LActor.sendTipmsg(actorobj, Lang.ScriptTips.rcrw001, ttMessage)
+--         end
+--     end
+-- end
+
+-- -- ======================== 网络消息处理↓ ========================
+
+-- -- 获取任务列表
+-- dayQuestFuncs[responseId.getQuestList] = function (actorobj, packet)
+--     local aVar = LActor.getStaticVar(actorobj)
+--     if aVar == nil then
+--         return
+--     end
+--     -- 用户登录时已经做了初始化
+--     local count = #aVar.dayQuestModule.questList
+--     for i = 1, count do -- 计算实际的数量
+--         if aVar.dayQuestModule.questList[i] == nil or aVar.dayQuestModule.questList[i].state == questState.onCommit then
+--             count = count - 1
+--         end
+--     end
+--     local pack = DataPack.allocPacket(actorobj, sysId, responseId.getQuestList)
+--     DataPack.writeUInt(pack, aVar.dayQuestModule.nextDayTime - System.getCurrMiniTime())
+--     DataPack.writeUInt(pack, count)
+--     for i = 1, #aVar.dayQuestModule.questList do
+--         if aVar.dayQuestModule.questList[i] ~= nil and aVar.dayQuestModule.questList[i].state ~= questState.onCommit then
+--             DataPack.writeUInt(pack, aVar.dayQuestModule.questList[i].qid)
+--             DataPack.writeUInt(pack, aVar.dayQuestModule.questList[i].star)
+--             local tCount, tVals = LActor.getQuestTargetValues(actorobj, aVar.dayQuestModule.questList[i].qid)
+--             if tCount ~= nil then
+--                 DataPack.writeUInt(pack, tCount)
+--                 local finish = true
+--                 local state = aVar.dayQuestModule.questList[i].state
+--                 for k, v in pairs(tVals) do
+--                     local num = LActor.getQuestTargetNeedVal(actorobj, tonumber(aVar.dayQuestModule.questList[i].qid), tonumber(k))
+--                     if state == questState.onCommit then
+--                         v = num
+--                     end
+--                     if tonumber(v) < num then
+--                         finish = false
+--                     end
+--                     DataPack.writeUInt(pack, tonumber(k))
+--                     DataPack.writeUInt(pack, tonumber(v))
+--                 end
+--                 if state ~= questState.onCommit then
+--                     if finish == false then
+--                         state = questState.onDoing
+--                     else
+--                         state = questState.onDone
+--                     end
+--                 end
+--                 aVar.dayQuestModule.questList[i].state = state
+--                 DataPack.writeUInt(pack, state)
+--                 debug_print(string.format("======================> qid = %d star = %d state = %d tVals = %s", aVar.dayQuestModule.questList[i].qid, aVar.dayQuestModule.questList[i].star, state, dump(tVals)))
+--             else
+--                 debug_print("==================> error!!!!!!!!!!!!!!!!")
+--             end
+--         end
+--     end
+--     DataPack.flush(pack)
+-- end
+
+-- -- 领取日常任务奖励
+-- dayQuestFuncs[responseId.getQuestAward] = function (actorobj, packet)
+--     local aVar = LActor.getStaticVar(actorobj)
+--     if aVar == nil then
+--         return
+--     end
+--     local qid = DataPack.readUInt(packet)
+--     if qid == 0 then
+--         LActor.sendTipmsg(actorobj, Lang.ScriptTips.quest0001, ttMessage)
+--         return
+--     end
+--     -- 已经完成过了的不能继续领取奖励
+--     for i = 1, #aVar.dayQuestModule.questList do
+--         if aVar.dayQuestModule.questList[i] ~= nil and aVar.dayQuestModule.questList[i].qid == qid and aVar.dayQuestModule.questList[i].state == questState.onCommit then
+--             LActor.sendTipmsg(actorobj, Lang.ScriptTips.quest0006, ttMessage)
+--             return
+--         end
+--     end
+--     -- 需要检查是否能领取
+--     if LActor.canFinishQuest(actorobj, qid) ~= true then
+--         LActor.sendTipmsg(actorobj, Lang.ScriptTips.quest0002, ttMessage)
+--         return
+--     end
+--     local result = 0
+--     if LActor.finishQuest(actorobj, qid) == true then
+--         result = 1 -- 成功
+--     end
+--     local pack = DataPack.allocPacket(actorobj, sysId, responseId.getQuestAward)
+--     DataPack.writeUInt(pack, qid)
+--     DataPack.writeUInt(pack, result)
+--     DataPack.flush(pack)
+
+--     -- 设置状态
+--     for i = 1, #aVar.dayQuestModule.questList do
+--         if aVar.dayQuestModule.questList[i] ~= nil and aVar.dayQuestModule.questList[i].qid == qid and result == 1 then
+--             aVar.dayQuestModule.questList[i].state = questState.onCommit
+--             -- 同时领奖
+--             local conf = dayQuestFuncs.findQuestConfByQid(tonumber(qid))
+--             local star = aVar.dayQuestModule.questList[i].star
+--             local s_rate = star_rates[star] or 1
+--             for k , v in ipairs(conf.awards) do
+--                 local cnt = math.floor(v.count * s_rate / 100) * 100
+--                 if v.type == awardType.aMoney then
+--                     if v.count > 0 then
+--                         LActor.changeMoney(actorobj, mtBindCoin, cnt, 1, true, "normaldayquest", "getQuestAward")
+--                     end
+--                 elseif v.type == awardType.aItem then
+--                     if v.id > 0 and v.count > 0 then
+--                         LActor.addItem(actorobj, v.id, 0, 0, v.count, 1, "getNormalDayQuestAward")
+--                     end
+--                 elseif v.type == awardType.aExp then
+--                     if v.count > 0 then
+--                         LActor.giveAward(actorobj, qatExp, cnt)
+--                     end
+--                 else
+--                     debug_print(string.format("==> 存在非法的日常任务奖励配置: 任务ID[%d] 任务奖励索引INDEX[%d]", qid, k))
+--                 end
+--             end
+--         end
+--     end
+-- end
+
+-- -- 日常任务升星
+-- dayQuestFuncs[responseId.setQuestStar] = function (actorobj, packet)
+--     local aVar = LActor.getStaticVar(actorobj)
+--     if aVar == nil then
+--         return
+--     end
+--     local qid = DataPack.readUInt(packet)
+--     local ctype = DataPack.readUInt(packet) -- 消耗类型
+--     local oneKey = DataPack.readByte(packet) -- 是否一键升星
+--     if qid == 0 then
+--         LActor.sendTipmsg(actorobj, Lang.ScriptTips.quest0001, ttMessage)
+--         return
+--     end
+--     local result = 0
+--     local star = 0
+--     local add = 0
+--     local costItemNum = 0
+--     local costYuanbaoNum = 0
+--     local questVal = nil
+--     local mMoneyCount = LActor.getMoneyCount(actorobj, mtYuanbao)
+
+--     for i = 1, #aVar.dayQuestModule.questList do
+--         if aVar.dayQuestModule.questList[i] ~= nil and aVar.dayQuestModule.questList[i].qid == qid then
+--             questVal = aVar.dayQuestModule.questList[i]
+--         end
+--     end
+--     local baseStar = 1
+--     if questVal == nil then
+--         return
+--     end
+--     star = questVal.star
+--     local itemId = NormalDayQuestConfig.upStar.itemId
+--     local itemNum = NormalDayQuestConfig.upStar.itemNum
+--     local defMoney = NormalDayQuestConfig.upStar.costMoney
+
+--     if LActor.hasQuest(actorobj, qid) ~= true then
+--         LActor.sendTipmsg(actorobj, Lang.ScriptTips.quest0001, ttMessage)
+--     else
+--         local tType = ctype
+
+--         local money = Item.getItemPrice(dayQuestFuncs.getShangChengItemId(itemId))
+--         if money <= 0 then
+--             money = defMoney or 10
+--         end
+
+--         while true do
+--             if star >= max_star_num then
+--                 break
+--             end
+--             local ret = true
+--             -- 判断道具或者钱够不够
+--             if tType == costType.cItem then
+--                 local mItemNum = LActor.getItemCount(actorobj, itemId)
+--                 if mItemNum >= costItemNum + itemNum then
+--                     costItemNum = costItemNum + itemNum
+--                 else
+--                     tType = costType.cMoney
+--                     ret = false
+
+--                     if oneKey ~= 1 then
+--                         LActor.sendTipmsg(actorobj, string.format(Lang.ScriptTips.quest0004, Item.getItemName(itemId)), ttMessage)
+--                         break
+--                     end
+--                 end
+--             elseif tType == costType.cMoney then
+--                 if mMoneyCount >= costYuanbaoNum + money then
+--                     costYuanbaoNum = costYuanbaoNum + money
+--                 else
+--                     if oneKey ~= 1 then
+--                         LActor.sendTipmsg(actorobj, Lang.ScriptTips.quest0005, ttMessage)
+--                     end
+--                     break
+--                 end
+--             else
+--                 break
+--             end
+
+--             if ret == true then
+--                 -- 低于3星的 直接就可以升星3星以上
+--                 if star < 3 then
+--                     star = 3
+--                 end
+--                 add = dayQuestFuncs.calcRateStarAdd(star)
+--                 star = star + add
+--                 debug_print(string.format("日常任务升星打印信息:===========> add:%d, star:%d", add, star))
+--             end
+
+--             if oneKey ~= 1 then
+--                 break
+--             end
+--         end
+--     end
+--     debug_print(string.format("日常任务升星打印信息:===========> costItemNum:%d, costYuanbaoNum:%d", costItemNum, costYuanbaoNum))
+--     if costItemNum > 0 or costYuanbaoNum > 0 then
+--         if costItemNum > 0 then
+--             LActor.removeItem(actorobj, itemId, costItemNum)
+--         end
+--         if costYuanbaoNum > 0 then
+--             LActor.changeMoney(actorobj, mtYuanbao, -costYuanbaoNum, 1, true, "normaldayquest", "upStar")
+--         end
+--         if questVal.star < star then
+--             questVal.star = star
+--             LActor.sendTipmsg(actorobj, string.format(Lang.ScriptTips.quest0010, star), ttMessage)
+--         else
+--             LActor.sendTipmsg(actorobj, Lang.ScriptTips.quest0011, ttMessage)
+--         end
+--     else
+--         if star < max_star_num then
+--             if ctype == costType.cItem then
+--                 LActor.sendTipmsg(actorobj, string.format(Lang.ScriptTips.quest0004, Item.getItemName(itemId)), ttMessage)
+--             elseif ctype == costType.cMoney then
+--                 LActor.sendTipmsg(actorobj, Lang.ScriptTips.quest0005, ttMessage)
+--             else
+--                 LActor.sendTipmsg(actorobj, Lang.ScriptTips.quest0012, ttMessage)
+--             end
+--         else
+--             LActor.sendTipmsg(actorobj, Lang.ScriptTips.quest0003, ttMessage)
+--         end
+--     end
+
+--     -- 返回客户端
+--     local pack = DataPack.allocPacket(actorobj, sysId, responseId.commQuestStar)
+--     DataPack.writeByte(pack, 0)
+--     DataPack.writeByte(pack, typeOfPanel)
+--     DataPack.writeUInt(pack, qid)
+--     DataPack.writeByte(pack, star)
+--     DataPack.writeByte(pack, oneKey)
+--     DataPack.flush(pack)
+-- end
+
+-- -- ======================== 网络消息处理↑ ========================
+
+-- -- ======================== 公共处理函数↓ ========================
+
+-- -- 专门转换商城其他道具id
+-- function dayQuestFuncs.getShangChengItemId(itemId)
+--     local store_items = GameStore[5].items
+--     for k, v in pairs(store_items) do
+--         if v.item == itemId then
+--             return v.id
+--         end
+--     end
+--     return -1
+-- end
+
+-- function dayQuestFuncs.isSystemOpen(actorobj)
+--     if LActor.getLevel(actorobj) >= LevelOpenPlaySys.rc_rw_lvl then
+--         return true
+--     else
+--         return false
+--     end
+-- end
+
+-- -- table的拷贝
+-- function dayQuestFuncs.tableCopy(srcTab)
+--     local retTab = {}
+--     if srcTab and type(srcTab) == "table" then
+--         for k, v in pairs(srcTab) do
+--             if type(v) ~= "table" then
+--                 retTab[k] = v
+--             else
+--                 retTab[k] = PartnerOpFuncList.tableCopy(v)
+--             end
+--         end
+--     end
+--     return retTab
+-- end
+
+-- function dayQuestFuncs.findQuestConfByQid(qid)
+--     if qid == nil or type(qid) ~= "number" then
+--         return nil
+--     end
+--     for k, v in pairs(NormalDayQuestConfig.questList) do
+--         if v.qid == tonumber(qid) then
+--             return dayQuestFuncs.tableCopy(v)
+--         end
+--     end
+--     return nil
+-- end
+
+-- function dayQuestFuncs.randomQuestStar(qid)
+--     if qid == nil then
+--         return nil
+--     end
+--     local conf = dayQuestFuncs.findQuestConfByQid(qid)
+--     if conf == nil then
+--         return nil
+--     end
+--     local rand = System.getRandomNumber(10000)
+--     local pre_rand_num = 0
+--     for k, v in ipairs(conf.rates) do
+--         if rand <= (pre_rand_num + tonumber(v)) then
+--             return tonumber(k)
+--         end
+--         pre_rand_num = tonumber(v)
+--     end
+--     return nil
+-- end
+
+-- -- 玩家登录检测
+-- function dayQuestFuncs.onUserLogin (actorobj, args, gm)
+--     if dayQuestFuncs.isSystemOpen(actorobj) == false then
+--         return
+--     end
+--     local aVar = LActor.getStaticVar(actorobj)
+--     if aVar == nil then
+--         return
+--     end
+--     local isFirst = false
+--     -- aVar.dayQuestModule = nil
+--     if aVar.dayQuestModule == nil then -- 日常任务模块的数据
+--         aVar.dayQuestModule = {}
+--         aVar.dayQuestModule.nextDayTime = System.getTomorrow() -- 存储明日0点的时间
+--         aVar.dayQuestModule.questList = {} -- 任务列表
+--         isFirst = true
+--     end
+
+--     if gm or aVar.dayQuestModule.fixErrData == nil or isFirst == true or System.getCurrMiniTime() > aVar.dayQuestModule.nextDayTime then -- 已经过了明日了 需要刷新任务了
+--         aVar.dayQuestModule.fixErrData = true -- 用于修复错误数据
+--         aVar.dayQuestModule.nextDayTime = System.getTomorrow() -- 存储明日0点的时间
+--         -- 需要放弃掉昨天接取的任务
+--         for i = 1, #aVar.dayQuestModule.questList do
+--             if aVar.dayQuestModule.questList[i] ~= nil then
+--                 local ret = LActor.GiveUpQuest(actorobj, aVar.dayQuestModule.questList[i].qid) -- 放弃任务
+--                 if ret == false then
+--                     debug_print(string.format("================================> 任务[%d]放弃失败 草草草草草草草", aVar.dayQuestModule.questList[i].qid))
+--                 else
+--                     debug_print(string.format("================================> 任务[%d]放弃成功 草草草草草草草", aVar.dayQuestModule.questList[i].qid))
+--                 end
+--                 aVar.dayQuestModule.questList[i] = nil
+--             end
+--         end
+
+--         local index = 1
+--         local show_num = NormalDayQuestConfig.dayQuestNum
+--         if #NormalDayQuestConfig.refreshList < show_num then
+--             debug_print("====================> error: 任务配置展示数量过大")
+--             show_num = #NormalDayQuestConfig.refreshList
+--         end
+
+--         local nTable = {}
+--         for i = 1, #NormalDayQuestConfig.refreshList do
+--             nTable[i] = i
+--         end
+--         local rTable = dayQuestFuncs.randFromNumberTable(nTable, show_num)
+
+--         for k, v in ipairs(rTable) do
+--             local n = #NormalDayQuestConfig.refreshList[v]
+--             local r = System.getRandomNumber(n) + 1
+--             local qid = NormalDayQuestConfig.refreshList[v][r]
+--             -- 默认接任务
+--             local ret = LActor.addQuest(actorobj, qid, true)
+--             if ret == false then
+--                 debug_print(string.format("================================> 任务[%d]接取失败 草草草草草草草", qid))
+--             else
+--                 debug_print(string.format("================================> 任务[%d]接取成功 草草草草草草草", qid))
+--                 aVar.dayQuestModule.questList[index] = {}
+--                 aVar.dayQuestModule.questList[index].qid = qid -- 任务id
+--                 aVar.dayQuestModule.questList[index].star = dayQuestFuncs.randomQuestStar(qid) or 1 -- 任务星级
+--                 aVar.dayQuestModule.questList[index].state = questState.onDoing -- 任务状态
+--                 index = index + 1
+--             end
+--         end
+--     end
+-- end
+
+-- -- 从纯数字table中随机包含rand_num个不重复数字的table返回
+-- function dayQuestFuncs.randFromNumberTable (nTable, rand_num)
+--     local rTable = {}
+--     if nTable == nil or type(nTable) ~= "table" or #nTable == 0 then
+--         return rTable
+--     end
+--     local len = #nTable
+--     local num = tonumber(rand_num) or 0
+--     if num > len then
+--         return rTable
+--     end
+
+--     local t = {}
+--     for i = 1, len do
+--         t[i] = nTable[i]
+--     end
+--     -- 开始随机
+--     for i = 1, num do
+--         local rNum = len - i + 1
+--         local r = System.getRandomNumber(rNum) + 1
+--         t[r], t[rNum] = t[rNum], t[r]
+--         table.insert(rTable, t[rNum])
+--     end
+--     return rTable
+-- end
+
+-- function dayQuestFuncs.calcRateStarAdd (baseStar)
+--     local rates = NormalDayQuestConfig.upStar.rates
+--     local len = 5 - baseStar + 1 -- 实际的循环数
+--     local rand_total = 0 -- 计算实际的rand总值
+--     for i = 1, len do
+--         rand_total = rand_total + rates[i].rate
+--     end
+--     local pre_rate, add = 0, 0
+--     local rand = System.getRandomNumber(rand_total)
+--     for i = 1, len do
+--         if rand <= (rates[i].rate + pre_rate) then
+--             add = rates[i].add
+--             break
+--         end
+--         pre_rate = rates[i].rate
+--     end
+--     return add
+-- end
+
+-- -- ======================== 公共处理函数↑ ========================
+
+-- EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeQuest, EventCallDispatcher.dayQuestHandle)
+-- EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, dayQuestFuncs.onUserLogin)
+-- EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeNewDayArrive, dayQuestFuncs.onUserLogin)
+-- EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeLevel, dayQuestFuncs.onUserLogin)
+
+
+-- GmEventFuncList.register( "rfqday", function (actorobj)
+--     dayQuestFuncs.onUserLogin(actorobj, nil, true)
+-- end, 1)

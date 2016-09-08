@@ -1,0 +1,64 @@
+﻿-- 赏金副本配置
+{
+	fbid = 97,
+
+	fubenlistid = 3,
+
+	sceneid = 1052, -- 场景ID
+
+	--初始化怒气值
+
+	--打死一波怪,是否要下发方向指引
+	ifgonext = true,
+
+	--怪物总数量
+	monsternum = 16,
+
+	monsters =
+	{
+		--第一波怪
+		[1] = {
+			{
+				monsterId = 420, --怪物id
+				posX1 = 9, --怪物x坐标范围
+				posX2 = 13,
+				posY1 = 22,
+				posY2 = 25,
+				num = 5,
+			},
+
+		},
+		--第二波怪
+		[2] = {
+			{
+				monsterId = 421, --怪物id
+				posX1 = 28, --怪物x坐标范围
+				posX2 = 34,
+				posY1 = 21,
+				posY2 = 25,
+				num = 5,
+			},
+			
+		},
+        --第三波怪
+        [3] = {
+			{
+				monsterId = 422, --怪物id
+				posX1 = 51, --怪物x坐标范围
+				posX2 = 57,
+				posY1 = 23,
+				posY2 = 26,
+				num = 5,
+			},
+
+			{
+				monsterId = 423, --怪物id
+				posX1 = 54, --怪物x坐标范围
+				posX2 = 54,
+				posY1 = 25,
+				posY2 = 25,
+				num = 1,
+			},
+		},
+	},
+}

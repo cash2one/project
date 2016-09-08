@@ -1,0 +1,19 @@
+local GlobalPf = {}
+
+
+ GlobalPf.checkpf = function (str)
+	if str == "YYB1" then			
+ 		return "/TencentOpen"
+ 	else
+ 		return ""
+ 	end
+ end
+
+
+  GlobalPf.checkcdkeypf = function (str)
+	if str == "YYB1" then		
+ 		return "/TencentOpen"
+ 	else
+ 		return ""
+ 	end
+ end

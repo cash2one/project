@@ -1,0 +1,742 @@
+﻿--#include "..\..\language\LangCode.txt" 
+
+Titles = {
+{
+	id = 1,
+	name = Lang.Title.name1,
+	type = 1,
+	resid = 1,
+	groupId = 1,
+	groupName = Lang.Title.groupName1,
+	desc = Lang.Title.desc1,
+	time = 0,
+	staticAttrs = {
+		
+		{type = 17, value = 2016,},
+
+	},
+},
+
+{
+	id = 2,
+	name = Lang.Title.name2,
+	type = 1,
+	resid = 2,
+	groupId = 1,
+	groupName = Lang.Title.groupName2,
+	desc = Lang.Title.desc2,
+	time = 0,
+	staticAttrs = {
+		
+		{type = 17, value = 2822,},
+
+	},
+},
+
+{
+	id = 3,
+	name = Lang.Title.name3,
+	type = 1,
+	resid = 3,
+	groupId = 1,
+	groupName = Lang.Title.groupName3,
+	desc = Lang.Title.desc3,
+	time = 0,
+	staticAttrs = {
+		
+		{type = 17, value = 3628,},
+
+	},
+},
+
+{
+	id = 4,
+	name = Lang.Title.name4,
+	type = 1,
+	resid = 4,
+	groupId = 1,
+	groupName = Lang.Title.groupName4,
+	desc = Lang.Title.desc4,
+	time = 0,
+	staticAttrs = {
+		
+		{type = 17, value = 4435,},
+
+	},
+},
+
+{
+	id = 5,
+	name = Lang.Title.name5,
+	type = 1,
+	resid = 5,
+	groupId = 1,
+	groupName = Lang.Title.groupName5,
+	desc = Lang.Title.desc5,
+	time = 0,
+	staticAttrs = {
+		
+		{type = 17, value = 5241,},
+
+	},
+},
+
+{
+	id = 6,
+	name = Lang.Title.name6,
+	type = 1,
+	resid = 6,
+	groupId = 2,
+	groupName = Lang.Title.groupName6,
+	desc = Lang.Title.desc6,
+	time = 0,
+	staticAttrs = {
+		
+		{type = 27, value = 257,},
+		{type = 39, value = 55,},
+		{type = 37, value = 55,},
+
+	},
+},
+
+{
+	id = 7,
+	name = Lang.Title.name7,
+	type = 1,
+	resid = 7,
+	groupId = 2,
+	groupName = Lang.Title.groupName7,
+	desc = Lang.Title.desc7,
+	time = 0,
+	staticAttrs = {
+		
+		{type = 27, value = 418,},
+		{type = 35, value = 55,},
+		{type = 25, value = 55,},
+
+	},
+},
+
+{
+	id = 8,
+	name = Lang.Title.name8,
+	type = 1,
+	resid = 8,
+	groupId = 3,
+	groupName = Lang.Title.groupName8,
+	desc = Lang.Title.desc8,
+	time = 0,
+	staticAttrs = {
+		
+		{type = 23, value = 86,},
+		{type = 33, value = 86,},
+		{type = 17, value = 1008,},
+
+	},
+},
+
+{
+	id = 9,
+	name = Lang.Title.name9,
+	type = 1,
+	resid = 9,
+	groupId = 3,
+	groupName = Lang.Title.groupName9,
+	desc = Lang.Title.desc9,
+	time = 0,
+	staticAttrs = {
+		
+		{type = 23, value = 100,},
+		{type = 33, value = 100,},
+		{type = 17, value = 1512,},
+
+	},
+},
+
+{
+	id = 10,
+	name = Lang.Title.name10,
+	type = 1,
+	resid = 10,
+	groupId = 3,
+	groupName = Lang.Title.groupName10,
+	desc = Lang.Title.desc10,
+	time = 0,
+	staticAttrs = {
+		
+		{type = 23, value = 129,},
+		{type = 33, value = 129,},
+		{type = 17, value = 2016,},
+
+	},
+},
+
+{
+	id = 11,
+	name = Lang.Title.name11,
+	type = 1,
+	resid = 11,
+	groupId = 3,
+	groupName = Lang.Title.groupName11,
+	desc = Lang.Title.desc11,
+	time = 0,
+	staticAttrs = {
+		
+		{type = 23, value = 172,},
+		{type = 33, value = 172,},
+		{type = 17, value = 2520,},
+
+	},
+},
+
+{
+	id = 12,
+	name = Lang.Title.name12,
+	type = 1,
+	resid = 12,
+	groupId = 3,
+	groupName = Lang.Title.groupName12,
+	desc = Lang.Title.desc12,
+	time = 0,
+	staticAttrs = {
+		
+		{type = 23, value = 229,},
+		{type = 33, value = 229,},
+		{type = 17, value = 3024,},
+
+	},
+},
+
+{
+	id = 13,
+	name = Lang.Title.name13,
+	type = 1,
+	resid = 13,
+	groupId = 3,
+	groupName = Lang.Title.groupName13,
+	desc = Lang.Title.desc13,
+	time = 0,
+	staticAttrs = {
+		
+		{type = 23, value = 286,},
+		{type = 33, value = 286,},
+		{type = 17, value = 3528,},
+
+	},
+},
+
+{
+	id = 14,
+	name = Lang.Title.name14,
+	type = 1,
+	resid = 14,
+	groupId = 3,
+	groupName = Lang.Title.groupName14,
+	desc = Lang.Title.desc14,
+	time = 0,
+	staticAttrs = {
+		
+		{type = 23, value = 343,},
+		{type = 33, value = 343,},
+		{type = 17, value = 4031,},
+
+	},
+},
+
+{
+	id = 15,
+	name = Lang.Title.name15,
+	type = 1,
+	resid = 15,
+	groupId = 4,
+	groupName = Lang.Title.groupName15,
+	desc = Lang.Title.desc15,
+	time = 0,
+	staticAttrs = {
+		
+		{type = 27, value = 42,},
+		{type = 17, value = 2218,},
+
+	},
+},
+
+{
+	id = 16,
+	name = Lang.Title.name16,
+	type = 1,
+	resid = 16,
+	groupId = 4,
+	groupName = Lang.Title.groupName16,
+	desc = Lang.Title.desc16,
+	time = 0,
+	staticAttrs = {
+		
+		{type = 27, value = 52,},
+		{type = 17, value = 2721,},
+
+	},
+},
+
+{
+	id = 17,
+	name = Lang.Title.name17,
+	type = 1,
+	resid = 17,
+	groupId = 4,
+	groupName = Lang.Title.groupName17,
+	desc = Lang.Title.desc17,
+	time = 0,
+	staticAttrs = {
+		
+		{type = 27, value = 65,},
+		{type = 17, value = 3225,},
+
+	},
+},
+
+{
+	id = 18,
+	name = Lang.Title.name18,
+	type = 1,
+	resid = 18,
+	groupId = 4,
+	groupName = Lang.Title.groupName18,
+	desc = Lang.Title.desc18,
+	time = 0,
+	staticAttrs = {
+		
+		{type = 27, value = 78,},
+		{type = 17, value = 3729,},
+
+	},
+},
+
+{
+	id = 19,
+	name = Lang.Title.name19,
+	type = 1,
+	resid = 19,
+	groupId = 4,
+	groupName = Lang.Title.groupName19,
+	desc = Lang.Title.desc19,
+	time = 0,
+	staticAttrs = {
+		
+		{type = 27, value = 94,},
+		{type = 17, value = 4233,},
+
+	},
+},
+
+{
+	id = 20,
+	name = Lang.Title.name20,
+	type = 1,
+	resid = 20,
+	groupId = 4,
+	groupName = Lang.Title.groupName20,
+	desc = Lang.Title.desc20,
+	time = 0,
+	staticAttrs = {
+		
+		{type = 27, value = 113,},
+		{type = 17, value = 4737,},
+
+	},
+},
+
+{
+	id = 21,
+	name = Lang.Title.name21,
+	type = 1,
+	resid = 21,
+	groupId = 4,
+	groupName = Lang.Title.groupName21,
+	desc = Lang.Title.desc21,
+	time = 0,
+	staticAttrs = {
+		
+		{type = 27, value = 135,},
+		{type = 17, value = 5241,},
+
+	},
+},
+
+{
+	id = 22,
+	name = Lang.Title.name22,
+	type = 1,
+	resid = 22,
+	groupId = 4,
+	groupName = Lang.Title.groupName22,
+	desc = Lang.Title.desc22,
+	time = 0,
+	staticAttrs = {
+		
+		{type = 27, value = 164,},
+		{type = 17, value = 5745,},
+
+	},
+},
+
+{
+	id = 23,
+	name = Lang.Title.name23,
+	type = 1,
+	resid = 23,
+	groupId = 4,
+	groupName = Lang.Title.groupName23,
+	desc = Lang.Title.desc23,
+	time = 0,
+	staticAttrs = {
+		
+		{type = 27, value = 200,},
+		{type = 17, value = 6249,},
+
+	},
+},
+
+{
+	id = 24,
+	name = Lang.Title.name24,
+	type = 1,
+	resid = 24,
+	groupId = 4,
+	groupName = Lang.Title.groupName24,
+	desc = Lang.Title.desc24,
+	time = 0,
+	staticAttrs = {
+		
+		{type = 27, value = 241,},
+		{type = 17, value = 6752,},
+
+	},
+},
+
+{
+	id = 25,
+	name = Lang.Title.name25,
+	type = 1,
+	resid = 25,
+	groupId = 5,
+	groupName = Lang.Title.groupName25,
+	desc = Lang.Title.desc25,
+	time = 0,
+	staticAttrs = {
+		
+		{type = 23, value = 115,},
+		{type = 33, value = 115,},
+		{type = 37, value = 109,},
+		{type = 25, value = 109,},
+
+	},
+},
+
+{
+	id = 26,
+	name = Lang.Title.name26,
+	type = 1,
+	resid = 26,
+	groupId = 5,
+	groupName = Lang.Title.groupName26,
+	desc = Lang.Title.desc26,
+	time = 0,
+	staticAttrs = {
+		
+		{type = 23, value = 200,},
+		{type = 33, value = 200,},
+		{type = 39, value = 109,},
+		{type = 35, value = 109,},
+
+	},
+},
+
+{
+	id = 27,
+	name = Lang.Title.name27,
+	type = 3,
+	resid = 27,
+	groupId = 6,
+	groupName = Lang.Title.groupName27,
+	desc = Lang.Title.desc27,
+	time = 604800,
+	staticAttrs = {
+		
+		{type = 27, value = 42,},
+		{type = 23, value = 229,},
+		{type = 33, value = 229,},
+		{type = 39, value = 28,},
+		{type = 37, value = 28,},
+		{type = 35, value = 28,},
+		{type = 25, value = 28,},
+
+	},
+},
+
+{
+	id = 28,
+	name = Lang.Title.name28,
+	type = 2,
+	resid = 28,
+	groupId = 7,
+	groupName = Lang.Title.groupName28,
+	desc = Lang.Title.desc28,
+	time = 86400,
+	staticAttrs = {
+		
+		{type = 23, value = 514,},
+		{type = 33, value = 514,},
+		{type = 39, value = 82,},
+		{type = 37, value = 82,},
+		{type = 35, value = 82,},
+		{type = 25, value = 82,},
+
+	},
+},
+
+{
+	id = 29,
+	name = Lang.Title.name29,
+	type = 3,
+	resid = 29,
+	groupId = 8,
+	groupName = Lang.Title.groupName29,
+	desc = Lang.Title.desc29,
+	time = 604800,
+	staticAttrs = {
+		
+		{type = 27, value = 161,},
+		{type = 17, value = 3528,},
+		{type = 39, value = 82,},
+		{type = 37, value = 82,},
+		{type = 35, value = 82,},
+		{type = 25, value = 82,},
+
+	},
+},
+
+{
+	id = 30,
+	name = Lang.Title.name30,
+	type = 3,
+	resid = 30,
+	groupId = 9,
+	groupName = Lang.Title.groupName30,
+	desc = Lang.Title.desc30,
+	time = 604800,
+	staticAttrs = {
+		
+		{type = 23, value = 109,},
+		{type = 33, value = 109,},
+		{type = 17, value = 5039,},
+		{type = 39, value = 55,},
+		{type = 37, value = 55,},
+		{type = 35, value = 55,},
+		{type = 25, value = 55,},
+
+	},
+},
+
+{
+	id = 31,
+	name = Lang.Title.name31,
+	type = 3,
+	resid = 31,
+	groupId = 10,
+	groupName = Lang.Title.groupName31,
+	desc = Lang.Title.desc31,
+	time = 604800,
+	staticAttrs = {
+		
+		{type = 27, value = 257,},
+		{type = 23, value = 257,},
+		{type = 33, value = 257,},
+		{type = 39, value = 55,},
+		{type = 37, value = 55,},
+		{type = 35, value = 55,},
+		{type = 25, value = 55,},
+
+	},
+},
+
+{
+	id = 32,
+	name = Lang.Title.name32,
+	type = 2,
+	resid = 32,
+	groupId = 11,
+	groupName = Lang.Title.groupName32,
+	desc = Lang.Title.desc32,
+	time = 86400,
+	staticAttrs = {
+		
+		{type = 27, value = 209,},
+		{type = 17, value = 2520,},
+		{type = 39, value = 82,},
+
+	},
+},
+
+{
+	id = 33,
+	name = Lang.Title.name33,
+	type = 2,
+	resid = 33,
+	groupId = 12,
+	groupName = Lang.Title.groupName33,
+	desc = Lang.Title.desc33,
+	time = 86400,
+	staticAttrs = {
+		
+		{type = 27, value = 209,},
+		{type = 17, value = 2520,},
+		{type = 37, value = 82,},
+
+	},
+},
+
+{
+	id = 34,
+	name = Lang.Title.name34,
+	type = 2,
+	resid = 34,
+	groupId = 13,
+	groupName = Lang.Title.groupName34,
+	desc = Lang.Title.desc34,
+	time = 86400,
+	staticAttrs = {
+		
+		{type = 27, value = 209,},
+		{type = 17, value = 2520,},
+		{type = 35, value = 82,},
+
+	},
+},
+
+{
+	id = 35,
+	name = Lang.Title.name35,
+	type = 2,
+	resid = 35,
+	groupId = 14,
+	groupName = Lang.Title.groupName35,
+	desc = Lang.Title.desc35,
+	time = 86400,
+	staticAttrs = {
+		
+		{type = 27, value = 209,},
+		{type = 17, value = 2520,},
+		{type = 25, value = 82,},
+
+	},
+},
+
+{
+	id = 100,
+	name = Lang.Title.name100,
+	type = 1,
+	resid = 100,
+	groupId = 15,
+	groupName = Lang.Title.groupName100,
+	desc = Lang.Title.desc100,
+	time = 0,
+	staticAttrs = {
+		
+		{type = 27, value = 88,},
+		{type = 23, value = 66,},
+		{type = 33, value = 66,},
+		{type = 17, value = 1314,},
+
+	},
+},
+
+{
+	id = 101,
+	name = Lang.Title.name101,
+	type = 1,
+	resid = 104,
+	groupId = 16,
+	groupName = Lang.Title.groupName101,
+	desc = Lang.Title.desc101,
+	time = 0,
+	staticAttrs = {
+		
+		{type = 27, value = 220,},
+		{type = 17, value = 2825,},
+
+	},
+},
+
+{
+	id = 102,
+	name = Lang.Title.name102,
+	type = 1,
+	resid = 101,
+	groupId = 16,
+	groupName = Lang.Title.groupName102,
+	desc = Lang.Title.desc102,
+	time = 0,
+	staticAttrs = {
+		
+		{type = 27, value = 135,},
+		{type = 17, value = 1500,},
+
+	},
+},
+
+{
+	id = 103,
+	name = Lang.Title.name103,
+	type = 1,
+	resid = 102,
+	groupId = 16,
+	groupName = Lang.Title.groupName103,
+	desc = Lang.Title.desc103,
+	time = 0,
+	staticAttrs = {
+		
+		{type = 27, value = 151,},
+		{type = 17, value = 2045,},
+
+	},
+},
+
+{
+	id = 104,
+	name = Lang.Title.name104,
+	type = 1,
+	resid = 103,
+	groupId = 16,
+	groupName = Lang.Title.groupName104,
+	desc = Lang.Title.desc104,
+	time = 0,
+	staticAttrs = {
+		
+		{type = 27, value = 217,},
+		{type = 17, value = 2525,},
+
+	},
+},
+
+{
+	id = 106,
+	name = Lang.Title.name106,
+	type = 1,
+	resid = 106,
+	groupId = 17,
+	groupName = Lang.Title.groupName106,
+	desc = Lang.Title.desc106,
+	time = 0,
+	staticAttrs = {
+		
+		{type = 23, value = 92,},
+		{type = 33, value = 92,},
+		{type = 17, value = 2800,},
+		{type = 37, value = 20,},
+		{type = 25, value = 20,},
+
+	},
+},
+
+
+}

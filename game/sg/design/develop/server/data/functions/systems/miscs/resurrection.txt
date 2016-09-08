@@ -1,0 +1,97 @@
+﻿
+
+--[[
+Resurrecttype
+1:复活点复活
+2:原地复活(需要复活石)
+3:原地复活(消耗5天珠代替)
+--]]
+local resurrectType = {
+	backResurrection = 1,
+	situResurrectionByItem = 2,
+	situResurrectionByIMoney = 3,
+}
+
+function MiscsImplement.ResurrectMain (obj, msgid, packet)
+
+	local nFubenid = LActor.getFubenId( obj )
+	if nFubenid > 0 then
+		local nFubenData = FuBen[nFubenid]
+		if nFubenData ~= nil and nFubenData.canRelive ~= nil and  nFubenData.canRelive == 0 then
+			--在某些特定的副本中不能复活
+			return
+		end
+	end 
+	local Resurrecttype = DataPack.readInt(packet)
+	local moneytype = DataPack.readByte(packet)
+
+	if Resurrecttype == resurrectType.backResurrection then 
+		actorResurrection(obj)
+	else
+		actorSituResurrection(obj, Resurrecttype, moneytype)
+	end
+end
+
+--[[
+复活功能
+situTyp 是否原地复活
+0 / nil : 否
+1 : 是
+--]]
+function actorResurrection(obj, situType)
+	if LActor.getIntProperty(obj, PROP_HP) == 0 then
+		local maxhp = LActor.getIntProperty(obj, PROP_MAXHP)
+		LActor.changeHp(obj,maxhp) -- 满血复活
+		local maxmp = LActor.getIntProperty(obj, PROP_MAXMP)
+		LActor.changeMp(obj, maxmp)
+		LActor.addBuff(obj, 69, 1, 0, 1, 8, Lang.ScriptTips.b00009) -- 安全复活buff
+		LActor.clearReliveTimeOut(obj)
+		if situType == 1 then
+			LActor.onRelive(obj) -- 原地复活
+		else
+			LActor.relive(obj) -- 复活点复活
+		end
+	end	
+end
+
+--点击原地复活按钮
+function actorSituResurrection(obj, Resurrectiontype, moneytype)
+	local reviveItemId = 28101
+	local reviveItemNum = 1
+	local liveTime = LActor.getReliveTimeOut(obj)
+
+	restype = tonumber(Resurrectiontype)
+	if restype == resurrectType.situResurrectionByItem then	
+		if LActor.getItemCount(obj, reviveItemId, -1, -1) < reviveItemNum then   --itemid为复活石的ID		
+			LActor.sendTipmsg(obj, Lang.ScriptTips.f00003, ttTipmsgWindow)
+			return 
+		else 
+			LActor.removeItem(obj, reviveItemId, reviveItemNum, -1, -1, -1, "relive")
+			actorResurrection(obj, 1)
+		end
+	end
+	if restype == resurrectType.situResurrectionByIMoney then
+		if moneytype == nil or moneytype ~= mtYuanbao and moneytype ~= mtBindYuanbao then
+			return
+		end
+
+		local storeId
+		for k, v in pairs(GameStore[5].items) do
+			if v.item == reviveItemId then
+				storeId = v.id
+			end
+		end
+		if not storeId then
+			print("fuhuo error, actorSituResurrection  not find item in store")
+			return
+		end
+
+		local reviveMoneyNum = Item.getItemPrice(storeId)
+		if LActor.CheckMoneyEnough(obj, moneytype, reviveMoneyNum) then
+			LActor.changeMoney(obj, moneytype, -reviveMoneyNum, 1, true, "relive")
+			actorResurrection(obj, 1)
+		end
+	end	
+end
+
+MiscsImplement.registerMsgHandler(LogicCmd.miscSys.sub.cResurrec , MiscsImplement.ResurrectMain)

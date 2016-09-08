@@ -1,0 +1,135 @@
+--[[
+救援任务
+1.跟A NPC对话接取任务
+2.去监牢跟B NPC对话 B告诉需要去击杀守卫获得钥匙
+3.击杀守卫获得钥匙
+4.钥匙达到需求后会B NPC对话 B被释放出来
+5.玩家陪同B NPC一块回到A或者其他NPC处进行对话 完成任务
+--]]
+
+local JiuYuanFuncs = {}
+local JiuYuanGlobalFuncs = {} -- 公共函数
+
+local is_quest_target = 3 -- 目标属于任务需求
+
+EventCallDispatcher.HandlerQuestOp = function (actorobj, args)
+    if args[1] == nil then
+        return
+    end
+    local func = JiuYuanFuncs[args[1]]
+    if func ~= nil and type(func) == "function" then
+        func(actorobj, args[2])
+    end
+end 
+
+-- ========================== 公共函数↓ ==========================
+function JiuYuanGlobalFuncs.initJiuYuanVal(actorobj)
+    if not actorobj or type(actorobj) ~= "userdata" then
+        return false
+    end
+    local nVal = LActor.getStaticVar(actorobj)
+    if not nVal then
+        return false
+    end
+    if nVal.JiuYuan_quest_val == nil then
+        nVal.JiuYuan_quest_val = {}
+    end
+    return true
+end
+-- ========================== 公共函数↑ ==========================
+
+-- 接救援任务时会触发调用接取默认第一个任务目标的任务
+function JiuYuanFuncs.accept_callback_function (actorobj, qid)
+
+    qid = tonumber(qid) or 0
+    if not actorobj or qid <= 0 then
+        return
+    end
+    debug_print(string.format("成功进入玩法接受任务处理函数... [%d]", qid))
+
+    -- 初始化变量
+    if JiuYuanGlobalFuncs.initJiuYuanVal(actorobj) == true then
+        local nVal = LActor.getStaticVar(actorobj)
+
+        if nVal.JiuYuan_quest_val[qid] == nil then
+            nVal.JiuYuan_quest_val[qid] = {}
+            nVal.JiuYuan_quest_val[qid].step = 1 -- 当前进行中的子目标进度 默认是第一步  
+        end
+
+        local targets = LActor.getQuestAllTargetConf(qid) -- 获取qid任务的所有目标配置 顺序的
+        if targets[nVal.JiuYuan_quest_val[qid].step] ~= nil then -- 第一步不能为空
+            if LActor.addQuest(actorobj, targets[nVal.JiuYuan_quest_val[qid].step].id, true) ~= true then
+                debug_print(string.format("===>>> JiuYuan accept quest failed! qid = [%d]", targets[nVal.JiuYuan_quest_val[qid].step].id))
+                return
+            end
+            debug_print(string.format("===>>> 接取救援第一个任务成功 qid = [%d]", targets[nVal.JiuYuan_quest_val[qid].step].id))
+        end
+    end
+end
+
+function JiuYuanFuncs.commit_callback_function (actorobj, qid)
+    qid = tonumber(qid) or 0
+    if not actorobj or qid <= 0 then
+        return
+    end
+    local nVal = LActor.getStaticVar(actorobj)
+    if not nVal then return end
+    if not nVal.JiuYuan_quest_val or not nVal.JiuYuan_quest_val[qid] then return end
+    nVal.JiuYuan_quest_val[qid] = nil
+    debug_print(string.format("成功进入玩法完成任务处理函数... [%d]", qid))
+end
+
+-- 放弃任务
+function JiuYuanFuncs.giveup_callback_function (actorobj, qid)
+    qid = tonumber(qid) or 0
+    -- 放弃任务需要清除掉所有已接的子系列任务
+    if not actorobj or qid <= 0 then
+        return
+    end
+    debug_print(string.format("成功进入玩法放弃任务处理函数... [%d]", qid))
+    local nVal = LActor.getStaticVar(actorobj)
+    if not nVal then return end
+    if not nVal.JiuYuan_quest_val or not nVal.JiuYuan_quest_val[qid] then return end
+    -- 开始放弃当前步骤的任务
+    local targets = LActor.getQuestAllTargetConf(qid) -- 获取qid任务的所有目标配置 顺序的
+    if targets[nVal.JiuYuan_quest_val[qid].step] ~= nil then -- 第一步不能为空
+        if LActor.GiveUpQuest(actorobj, targets[nVal.JiuYuan_quest_val[qid].step].id) ~= true then
+            debug_print(string.format("===>>> JiuYuan giveup quest failed! qid = [%d]", targets[nVal.JiuYuan_quest_val[qid].step].id))
+            return
+        end
+    end
+
+end
+
+-- 当任务的某个目标型任务完成时会触发
+function JiuYuanFuncs.update_callback_function (actorobj, qid, targetid)
+    qid = tonumber(qid) or 0
+    targetid = tonumber(targetid) or 0
+    if not actorobj or qid <= 0 then
+        return
+    end
+    debug_print(string.format("成功进入玩法更新下一个任务处理函数... [%d]", qid))
+    local nVal = LActor.getStaticVar(actorobj)
+    if not nVal then return end
+    if not nVal.JiuYuan_quest_val or not nVal.JiuYuan_quest_val[qid] then return end
+
+    -- 说明完成了某个目标 需要往前进一步
+    nVal.JiuYuan_quest_val[qid].step = nVal.JiuYuan_quest_val[qid].step + 1
+
+    local targets = LActor.getQuestAllTargetConf(qid) -- 获取qid任务的所有目标配置 顺序的
+    if targets[nVal.JiuYuan_quest_val[qid].step] ~= nil then -- 第一步不能为空
+        if LActor.addQuest(actorobj, targets[nVal.JiuYuan_quest_val[qid].step].id, true) ~= true then
+            debug_print(string.format("===>>> JiuYuan update quest failed! qid = [%d]", targets[nVal.JiuYuan_quest_val[qid].step].id))
+            return
+        end
+        debug_print(string.format("成功处理完救援任务下一步 qid = [%d]", targets[nVal.JiuYuan_quest_val[qid].step].id))
+    end
+end
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeQuest, EventCallDispatcher.HandlerQuestOp) -- 注册网络消息事件
+-- basequesttype.txt 定义类型
+ActorQuestCallDispatcher.registerPlayType(BaseTypes.BaseQuestAction.qaAccept, BaseTypes.BaseQuestPlayType.qptRescue, JiuYuanFuncs.accept_callback_function) -- 注册接受任务的侦听
+ActorQuestCallDispatcher.registerPlayType(BaseTypes.BaseQuestAction.qaCommit, BaseTypes.BaseQuestPlayType.qptRescue, JiuYuanFuncs.commit_callback_function) -- 注册完成任务的侦听
+ActorQuestCallDispatcher.registerPlayType(BaseTypes.BaseQuestAction.qaGiveUp, BaseTypes.BaseQuestPlayType.qptRescue, JiuYuanFuncs.giveup_callback_function) -- 注册放弃任务的侦听
+
+ActorQuestUpDataMsgHandle.register(BaseTypes.BaseQuestPlayType.qptRescue , BaseTypes.BaseQuestTargetType.qtQuest, JiuYuanFuncs.update_callback_function) -- 注册目标型任务完成时回调

@@ -1,0 +1,561 @@
+﻿--lua script
+--#include "data\envir\FuBen.txt" once
+--#include "data\functions\config\FubenConfig\FubenCountConfig.txt" once
+--#include "OnEnterFubenFunc.txt" once
+
+
+
+
+
+--[[键入'ss'并按分号即可按模板生成脚本]]--
+function NormalNpcFubenFunc(sysarg)
+  local str = ""
+  if NPCFubenTable ~= nil then
+    if table.getn(NPCFubenTable) == 0 then 
+      return "" 
+    end
+    for i=1,#NPCFubenTable do
+      local fbid = NPCFubenTable[i]
+      local fbdata = FuBen[fbid]
+      if fbdata == nil then return "" end
+      local level = LActor.getIntProperty(sysarg, PROP_LEVEL) 
+      if level >= fbdata.minLevel then 
+         --str = str.."\\".."#cfff000"..fbdata.fbname
+  	     str = str.."\\"..fbdata.fbname
+        --print("-------333333333-------"..str)
+        --单人模式或组队
+        if FuBen[fbid].minPlayCount ~= nil and fbdata.minPlayCount > 1 then
+          str = str..Lang.ScriptTips.f00066
+        else
+          str = str..Lang.ScriptTips.f00067
+        end
+       -- print("-------44444444-------"..str)
+        -- 显示进入次数
+        local daycount = fbdata.daycount
+        if daycount == nil then daycount = 0 end
+        if daycount > 0 then
+          local enterCount, addCount = Fuben.getEnterFubenInfo( sysarg, fbid )
+          if enterCount ~= nil and addCount ~= nil then
+            local dux = daycount+addCount - enterCount
+            str = str.."  ("..dux.."/"..daycount+addCount..")"
+          end
+        end
+
+        str = str.."/@OnEnterFubenFunc,"..fbid
+        --print("-------55555555-------"..str)
+   	--str = str.."/@OnEnterFubenFunc,"..fbid
+      end
+    end
+  end
+
+  if NPCSpeFubenTable ~= nil and FubenLinkConfig[NPCSpeFubenTable] ~= nil then
+    str = str.."\\".."#cfff000"..FubenLinkName[NPCSpeFubenTable].."/@ShowFubenList,"..NPCSpeFubenTable
+  end
+ -- print("-------6666666666-------"..str)
+  return str
+end
+
+function fubenenter(sysarg,fbid , diff)
+  LActor.exitTeam(sysarg)
+  EnterCopy(sysarg, tonumber(fbid ), tonumber(diff))
+end
+
+function fubenCancel(sysarg)
+end
+
+function resetFubenList(sysarg, fubenlistid)
+  --print("resetFubenList fubenlistid:"..fubenlistid)
+  fubenlistid = tonumber(fubenlistid)
+  local var = LActor.getStaticVar(sysarg)
+  if FubenLinkConfig[fubenlistid] == nil then return end
+  if var.fubenlistprocess ~= nil and var.fubenlistprocess[fubenlistid] ~= nil and var.fubenlistprocess[fubenlistid].process ~= nil then
+    var.fubenlistprocess[fubenlistid].process = nil
+  end
+  ShowFubenList(sysarg, fubenlistid)
+end
+
+function useFubenAddExpItem(sysarg, itemid)
+  if sysarg == nil or itemid == nil then return end
+  --print("useFubenAddExpItem itemid:"..itemid)
+  local var = LActor.getStaticVar(sysarg)
+  if var == nil then return end
+  itemid = tonumber(itemid)
+  if FubenAddExpItems[itemid] == nil then return end
+  if LActor.removeItem(sysarg, itemid, 1, -1, -1, -1, "useFubenAddExpItem", 5) == 1 then 
+    var.fubenjiesuandoubleexp = FubenAddExpItems[itemid]
+    --print("useFubenAddExpItem itemid:"..itemid..",succ")
+  end
+end
+
+function ShowFubenList(sysarg, fubenlistid)
+  print("ShowFubenList fubenlistid:"..fubenlistid)
+
+  --此函数没用到
+ --[[
+  fubenlistid = tonumber(fubenlistid)
+  local var = LActor.getStaticVar(sysarg)
+  if FubenLinkConfig[fubenlistid] == nil then return end
+
+  local fubenlistprocess = nil
+  local fubenprocess = 0
+  local topfubenprocess = 0
+  local ifcant = 0
+  if var.fubenlistprocess ~= nil then
+    fubenlistprocess = var.fubenlistprocess[fubenlistid]
+  end
+  if fubenlistprocess ~= nil then
+    fubenprocess = fubenlistprocess.process or 0
+    topfubenprocess = fubenlistprocess.topprocess or 0
+    ifcant = fubenlistprocess.ifcant and 1 or 0
+  end
+  local npack = DataPack.allocPacket(sysarg, 139, 128)
+  local fubennum = #FubenLinkConfig[fubenlistid]
+  DataPack.writeByte(npack, fubennum)
+  --print("ShowFubenList fubennum:"..fubennum)
+  for i,v in ipairs(FubenLinkConfig[fubenlistid]) do
+    --副本id
+    DataPack.writeInt(npack, v)
+  end
+  DataPack.writeInt(npack, fubenprocess)
+  --print("ShowFubenList fubenprocess:"..fubenprocess)
+  DataPack.writeInt(npack, topfubenprocess)
+  --print("ShowFubenList topfubenprocess:"..topfubenprocess)
+  DataPack.writeInt(npack, fubenlistid)
+  --print("ShowFubenList fubenlistid:"..fubenlistid)
+  local vipLevel = LActor.getVIPLevel(sysarg)
+  local remainnum = 0
+  local totalnum = 0
+  if speFubenDayNum[fubenlistid] == nil then
+    --print("ShowFubenList not speFubenDayNum")
+    DataPack.writeChar(npack, 1)
+    DataPack.writeChar(npack, #FubenLinkConfig[fubenlistid])
+    --print("ShowFubenList not speFubenDayNum fubennum:"..#FubenLinkConfig[fubenlistid])
+    for i,v in ipairs(FubenLinkConfig[fubenlistid]) do
+      local enterCount, addCount = Fuben.getEnterFubenInfo( sysarg, v)
+      local fbdata = FuBen[v]
+      --副本剩余次数
+      DataPack.writeShort(npack, fbdata.daycount + addCount - enterCount)
+      --副本总次数
+      DataPack.writeShort(npack, fbdata.daycount + addCount)
+      if i == 1 then
+        if vipLevel < 1 or addCount >= vipFubenAddCounts[vipLevel] then ifcant = ifcant + 2 end
+      end
+      --print("ShowFubenList not speFubenDayNum i:"..i..",fubenid:"..v..",addCount:"..addCount..",enterCount:"..enterCount)
+    end
+  else
+    --print("ShowFubenList speFubenDayNum")
+    DataPack.writeChar(npack, 2)
+    DataPack.writeChar(npack, 1)
+    remainnum = speFubenDayNum[fubenlistid]
+    totalnum = speFubenDayNum[fubenlistid]
+    local addCount = 0
+    if fubenlistprocess ~= nil then
+      if fubenlistprocess.addCount ~= nil then
+        addCount = fubenlistprocess.addCount
+        remainnum = remainnum + addCount
+        totalnum = totalnum + addCount
+      end
+      if fubenlistprocess.enterCount ~= nil then
+        remainnum = remainnum - fubenlistprocess.enterCount
+      end
+
+      if remainnum <= 0 and fubenprocess == 0 then ifcant = 1 end
+
+      if speFubenDayCanbuyNum[fubenlistid] == nil or speFubenDayCanbuyNum[fubenlistid][vipLevel] == nil or 
+        addCount >= speFubenDayCanbuyNum[fubenlistid][vipLevel] then
+        ifcant = ifcant + 2
+      end
+    end
+    --副本剩余次数
+    DataPack.writeShort(npack, remainnum)
+    --副本总次数
+    DataPack.writeShort(npack, totalnum)
+    --print("ShowFubenList speFubenDayNum remainnum:"..remainnum..",totalnum:"..totalnum)
+  end
+  --委托后，不能再操作
+  DataPack.writeChar(npack, ifcant)
+  --print("ShowFubenList ifcant:"..ifcant)
+  if var.newentrust ~= nil and var.newentrust[fubenlistid] ~= nil and var.newentrust[fubenlistid].state ~= nil then
+    DataPack.writeChar(npack, var.newentrust[fubenlistid].state)
+    --print("ShowFubenList state:"..var.newentrust[fubenlistid].state)
+    local remaintime = var.newentrust[fubenlistid].endtime - System.getCurrMiniTime()
+    if remaintime < 0 then remaintime = 0 end
+    DataPack.writeInt(npack, remaintime)
+    --print("ShowFubenList remaintime:"..remaintime)
+    if var.newentrust[fubenlistid].rewards ~= nil and var.newentrust[fubenlistid].rewards.num ~= nil then
+      DataPack.writeChar(npack, var.newentrust[fubenlistid].rewards.num)
+      --print("ShowFubenList rewardnum:"..var.newentrust[fubenlistid].rewards.num)
+      for i = 0, 5 do
+        if var.newentrust[fubenlistid].rewards[i] ~= nil then
+          DataPack.writeChar(npack, i)
+          DataPack.writeInt(npack, var.newentrust[fubenlistid].rewards[i])
+          --print("ShowFubenList rewards i:"..i..",reward:"..var.newentrust[fubenlistid].rewards[i])
+        end
+      end
+    else
+      DataPack.writeChar(npack, 0)
+    end
+  else
+    DataPack.writeChar(npack, 0)
+    DataPack.writeInt(npack, 0)
+    DataPack.writeChar(npack, 0)
+  end
+
+  DataPack.flush(npack)
+  --print("ShowFubenList rewards end")
+--]]
+
+end
+
+
+
+function OnEnterFubenFunc(sysarg,fbid,expitemid) 
+  --print("OnEnterFubenFunc: "..fbid)
+  local fbid = tonumber(fbid)
+  local fbdata = FuBen[fbid]
+
+  --print("fbid ", fbid);
+  if fbdata == nil then
+    print( "fbdata is nil:"..fbid )
+    return 
+  end
+  --print(get_table_fstr(fbdata))
+  --print_table(fbdata)
+
+  --是否在副本中
+  if LActor.isInFuben(sysarg) then
+    LActor.sendTipmsg(sysarg, Lang.ScriptTips.f00013, ttMessage)
+    return
+  end
+
+  local var = LActor.getStaticVar(sysarg)
+
+ -- print("grouplist: "..fbdata.grouplist)
+  if fbdata.grouplist ~= nil then
+    local fubenprocess = 0
+    if var.fubenlistprocess ~= nil and var.fubenlistprocess[fbdata.grouplist] ~= nil and var.fubenlistprocess[fbdata.grouplist].process ~= nil then
+      fubenprocess = var.fubenlistprocess[fbdata.grouplist].process
+    end
+    --特殊副本判断总次数
+    if speFubenDayNum[fbdata.grouplist] ~= nil then
+      if LActor.getEntrustItemCount(sysarg) > 0 then
+        LActor.sendTipmsg(sysarg, Lang.ScriptTips.wt019, ttDialog )
+        return
+      end
+      if fbid == FubenLinkConfig[fbdata.grouplist][1] then
+        local remainnum = speFubenDayNum[fbdata.grouplist]
+        if var.fubenlistprocess ~= nil and var.fubenlistprocess[fbdata.grouplist] ~= nil then
+          if var.fubenlistprocess[fbdata.grouplist].addCount ~= nil then
+            remainnum = remainnum + var.fubenlistprocess[fbdata.grouplist].addCount
+          end
+          if var.fubenlistprocess[fbdata.grouplist].enterCount ~= nil then
+            remainnum = remainnum - var.fubenlistprocess[fbdata.grouplist].enterCount
+          end
+        end
+        --print("remainnum: "..remainnum)
+        if remainnum < 1 then 
+          LActor.sendTipmsg( sysarg, Lang.ScriptTips.f00085, ttDialog )
+          return
+        end
+      end
+    end
+    --print("fubenprocess: "..fubenprocess)
+    local fb_index = 0
+    for i,v in ipairs(FubenLinkConfig[fbdata.grouplist]) do
+      if v == fbid then
+        fb_index = i
+        break
+      end
+    end
+    --print("fb_index: "..fb_index..",fubenprocess:"..fubenprocess..",fubenid:"..fbid)
+    if fb_index ~= (fubenprocess+1) then
+      --LActor.sendTipmsg(sysarg, Lang.ScriptTips.f00077, ttMessage)
+      --return 
+    end
+  end
+  if LActor.hasState(sysarg, esProtection) then
+    LActor.sendTipmsg(sysarg, Lang.ScriptTips.sx019, ttMessage)
+    return 
+  end
+  --print( "1" )
+
+  --判断副本人数
+  local players = nil
+  local minPlayer = fbdata.minPlayCount
+  local maxPlayer = fbdata.maxPlayCount
+  local minLevel = fbdata.minLevel      --等级
+  local daycount = fbdata.daycount      --当天进入次数
+  if daycount == nil then daycount = 0 end
+  if minPlayer == nil or minPlayer < 1 then
+    minPlayer = 1
+  end
+
+  -- daycount = 0 -- 测试不限制次数
+  -- minPlayer = 1
+  --print( "2" )
+  if minPlayer == 1 then  --单人副本
+    players = { sysarg }
+    -- 判断等级
+    if minLevel ~= nil and minLevel > 0 then
+      local playerlevel = LActor.getIntProperty(sysarg,PROP_LEVEL)
+      if playerlevel < minLevel then
+        LActor.sendTipmsg( sysarg, Lang.ScriptTips.f00011, ttDialog )
+        return 
+      end
+    end
+    -- 判断次数
+    if daycount > 0 then
+      local enterCount, addCount = Fuben.getEnterFubenInfo( sysarg, fbid )
+      if enterCount == nil or addCount == nil or enterCount >= daycount+addCount then
+        LActor.sendTipmsg( sysarg, Lang.ScriptTips.f00015, ttDialog )
+        return 
+      end
+    end
+    local teamid = LActor.getTeamId(sysarg)
+		if teamid > 0 then
+			LActor.messageBox(sysarg,LActor.getNpc(sysarg),0,Lang.TaskTalk.ShJin002,Lang.TaskTalk.ShJin003.."/fubenenter,"..fbid,Lang.TaskTalk.ShJin004.."/fubenCancel",nil)
+			return
+		end
+  else  --多人副本
+    if not LActor.isInTeam( sysarg ) then
+      LActor.sendTipmsg( sysarg, Lang.ScriptTips.f00062, ttWarmTip )
+      return 
+    end
+    -- 队长才能点击进入
+    if not TeamFun.isCaptain(sysarg) then
+      LActor.sendTipmsg( sysarg, Lang.ScriptTips.f00068, ttWarmTip )
+      return 
+    end
+    local nplayer = LActor.getTeamMemberCount(sysarg) -- TODO: 这个可能要获取在线玩家个数
+    -- 判断人数
+    if nplayer < minPlayer then
+      local tips = string.format( Lang.ScriptTips.f00001, minPlayer )
+      LActor.sendTipmsg( sysarg, tips, ttDialog)
+      return 
+    elseif nplayer > maxPlayer then
+       local tips = string.format( Lang.ScriptTips.f00002, maxPlayer )
+      LActor.sendTipmsg( sysarg, tips, ttDialog)
+      return 
+    end
+    players = LuaHelp.getTeamMemberList(sysarg)   --获取队伍玩家列表
+    if players == nil or #players ~= nplayer then
+      LActor.sendTipmsg(sysarg,Lang.ScriptTips.f00010,ttDialog)
+      return 
+    end
+    local timeoutSecond = 10  --队长邀请超时时间
+    local lastInviteTime = TeamFun.getTeamMemberMsgTime(sysarg) -- 能执行到此，那么本人一定是队长，获取队长上一次发出邀请的时间
+    local nowTime = System.getCurrMiniTime()
+    local allready = true
+    for i = 1,table.getn(players) do
+      local player = players[i]
+      local status = TeamFun.getTeamMemberStatus(player, fbid)
+      if status ~= 1 then
+        allready = false
+        break
+      end
+    end
+    if (nowTime - lastInviteTime < timeoutSecond)  and not allready then
+      return
+    end
+    TeamFun.setTeamMemberStatus(sysarg, fbid, 1) --队长 设置为确认状态
+
+    -- 判断每个玩家是否满足条件
+    local noNearText = nil -- 不在附近的玩家名称
+    local notComfirmText = nil --未确认是否参加多人副本的玩家名称
+    local canEnterFuben = true
+    local actorNameStr = ""
+    for i = 1,table.getn(players) do
+      local player = players[i]
+      -- 等级
+      if minLevel ~= nil and minLevel > 0 then
+        local playerlevel = LActor.getIntProperty(player,PROP_LEVEL)
+        if playerlevel < minLevel then
+          LActor.sendTipmsg( sysarg, Lang.ScriptTips.f00069, ttDialog )
+          return 
+        end
+      end
+
+      -- 天数
+      if daycount > 0 then
+        local enterCount, addCount = Fuben.getEnterFubenInfo(player, fbid)
+        if enterCount == nil or addCount == nil or enterCount >= daycount+addCount then
+          -- LActor.sendTipmsg( sysarg, string.format(Lang.ScriptTips.f00006, LActor.getName(player), fbdata.fbname), ttMessage )
+          -- return
+          actorNameStr = string.format("%s 【%s】", actorNameStr, LActor.getName(player))
+          canEnterFuben = false 
+        end
+      end
+
+      if canEnterFuben == true then
+        -- 护送任务状态
+        if LActor.hasState(player, esProtection) then
+          LActor.sendTipmsg(sysarg, Lang.ScriptTips.f00070, ttMessage)
+          return 
+        end
+
+        --是否在副本中
+        if LActor.isInFuben(player) then
+          local tips = string.format( Lang.ScriptTips.f00079, LActor.getName( player ) )
+          LActor.sendTipmsg(sysarg, tips, ttMessage)
+          return
+        end
+
+        -- 是否跟NPC同屏
+        local globalNPC = System.getGlobalNpc()
+        if thisNPC ~= nil and thisNPC ~= globalNPC and not LActor.isInSameScreen( thisNPC, player ) then
+          if noNearText == nil then
+            noNearText = LActor.getName( player )
+          else
+            noNearText = noNearText.."/"..LActor.getName( player )
+          end
+        end
+        -- 是否确定参加副本
+        if not TeamFun.isCaptain(player) then
+          local status = TeamFun.getTeamMemberStatus(player, fbid)   --获取队伍玩家列表
+          if status ~= 1 then
+            TeamFun.setTeamMemberStatus(player, fbid, 0) --初始化为未确认状态
+            if notComfirmText == nil then
+              notComfirmText = LActor.getName( player )
+            else
+              notComfirmText = notComfirmText.."/"..LActor.getName( player )
+            end
+            -- 发送确认信息
+            local npcHandle = LActor.getHandle( thisNPC )
+            local tips = string.format( Lang.ScriptTips.f00071,  fbdata.fbname)
+            LActor.messageBox(player,npcHandle,0,tips,Lang.ScriptTips.x00050.."/joinIntoFubenOk,"..fbid,Lang.ScriptTips.x00051.."/joinIntoFubenCancel,"..fbid,"",timeoutSecond, 0, "", 0, 1)
+          end
+        end
+      end
+    end
+
+    if canEnterFuben == false then
+      LActor.sendTipmsg( sysarg, string.format(Lang.ScriptTips.f00006, actorNameStr), ttMessage )
+      return
+    end
+
+    if noNearText ~= nil then -- 判断有没有不在附近的玩家
+      local tips = string.format( Lang.ScriptTips.f00064, noNearText )
+      LActor.sendTipmsg( sysarg, tips, ttDialog )
+      return 
+    end
+
+    if notComfirmText ~= nil then -- 判断是否有玩家未确认进入
+      local tips = string.format( Lang.ScriptTips.f00072, notComfirmText )
+      LActor.sendTipmsg( sysarg, tips, ttMessage )
+      return
+    else
+      for i = 1,table.getn(players) do
+        TeamFun.setTeamMemberStatus(players[i], fbid, 0) -- 副本状态设为 0，（策划要求每次进入副本都要确认）
+      end
+    end
+  end
+
+  LActor.closeNPCDialog( sysarg ) --关闭NPC窗口
+
+  -- 创建副本
+  local hFuben = Fuben.createFuBen(fbid,0)
+  if hFuben == nil then
+    LActor.sendTipmsg( sysarg, Lang.ScriptTips.f00065, ttDialog )
+    return 
+  end
+
+  -- 进入副本
+  local enterFunc = NPCFunc.OnEnterCopyMap[fbid]
+  local rs = 0
+  if enterFunc == nil then
+    print("-----OnEnterFubenFunc no deal ------ ")
+    --默认处理将队伍的成员逐个传送到副本场景
+    for i = 1,table.getn( players ) do
+      LActor.enterFuBen( players[i], hFuben, -1, -1, -1 )
+    end
+  else
+    print("----------OnEnterFubenFunc self deal =-===")
+    -- 自己处理进入副本
+    if #players == 1 then
+      rs = enterFunc( players[1], hFuben ) -- 单人副本传入玩家指针
+    elseif #players > 1 then
+      -- 多人副本传人玩家指针列表 TODO: 传人队伍句柄会不会好点
+      enterFunc( players, hFuben )
+    end
+  end
+
+  for i = 1,table.getn( players ) do
+    print(string.format("%d enter fuben %d", LActor.getActorId(players[i]), fbid)) -- 输出进入副本消息到日志文件
+    if daycount > 0 then -- 限制次数的副本则增加进入副本的次数,TODO: 不限次数的要不要设置
+      if rs ~= nil and rs == 2 then
+        print("not -1")
+      else
+        Fuben.changeEnterCount( players[i], fbid, 1 )
+      end
+    end
+    LActor.triggerAchieveEvent(sysarg, 14, fbid) -- 触发进入副本成就
+
+    if expitemid ~= nil then
+      expitemid = tonumber(expitemid)
+      useFubenAddExpItem(players[i], expitemid)
+    end
+
+    --下发进入副本协议
+    local npack = DataPack.allocPacket(players[i], 20, 10)
+    DataPack.writeInt(npack, fbid)
+    DataPack.flush(npack)
+  end
+
+  --print("OnEnterFubenFunc .."..fbid)
+
+  --检测是否下发新手指引
+  for i,v in ipairs(fubenconfig.xszylist) do
+    if v == fbid then
+      for p = 1,table.getn( players ) do
+        local var = LActor.getStaticVar(players[p])
+        if var.fubenxszy == nil then var.fubenxszy = 0 end
+        --print("OnEnterFubenFunc self1.."..var.fubenxszy)
+        --没有指引过,下发通知,要指引
+        if not System.bitOPMask(var.fubenxszy, i - 1) then
+          local npack = DataPack.allocPacket(players[p], 20, 8)
+          DataPack.writeInt(npack, fbid)
+          DataPack.flush(npack)
+          var.fubenxszy = System.bitOpSetMask(var.fubenxszy, i - 1, true)
+          --print("OnEnterFubenFunc self2.."..var.fubenxszy)
+        end
+        --print("OnEnterFubenFunc self3.."..var.fubenxszy)
+        break
+      end
+    end
+  end
+
+end
+
+function joinIntoFubenOk(sysarg, fbid)
+  TeamFun.setTeamMemberStatus(sysarg, fbid, 1) --设置为确认状态
+  local players = LuaHelp.getTeamMemberList(sysarg)   --获取队伍玩家列表
+  if players == nil then -- 已经不在队伍中
+    LActor.sendTipmsg(sysarg, Lang.ScriptTips.f00074, ttMessage)
+    return 
+  end
+  for i = 1,table.getn(players) do
+      local player = players[i]
+      if TeamFun.isCaptain(player) then
+        OnEnterFubenFunc(player, fbid)
+        break
+      end
+  end
+end
+
+function joinIntoFubenCancel(sysarg, fbid)
+  TeamFun.setTeamMemberStatus(sysarg, fbid, 0) --设置为未确认状态
+  local players = LuaHelp.getTeamMemberList(sysarg)   --获取队伍玩家列表
+  if players == nil then -- 已经不在队伍中
+    LActor.sendTipmsg(sysarg, Lang.ScriptTips.f00074, ttMessage)
+    return 
+  end
+  for i = 1,table.getn(players) do
+      local player = players[i]
+      if LActor.getActorId( player ) ~= LActor.getActorId( sysarg ) then
+        local tips = string.format( Lang.ScriptTips.f00073, LActor.getName( sysarg ) )
+        LActor.sendTipmsg( player, tips, ttMessage )
+      end
+  end
+end
+
+table.insert(MainFnTable,NormalNpcFubenFunc)

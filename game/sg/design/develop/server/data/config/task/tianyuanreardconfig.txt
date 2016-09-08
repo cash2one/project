@@ -1,0 +1,306 @@
+﻿--lua script
+
+-- 这个已经放到GlobalConfig的masterEquipId
+-- TianYuanLeaderReward = {item={11500,1,1},} --王城之战军团积分第1名的军团宗主奖励物品id,
+
+-- TianYuanGuildReward = {
+--         100000, --王城之战结束后，各军团按照排名领取的灵石奖励,前20名不一样，后面皆一样
+-- 		90000,
+-- 		80000,
+-- 		75000,
+-- 		70000,
+-- 		65000,
+-- 		60000,
+-- 		55000,	
+-- 		50000,
+-- 		45000,
+-- 		40000,
+-- 		40000,
+-- 		40000,
+-- 		40000,
+-- 		40000,
+-- 		35000,
+-- 		35000,
+-- 		35000,
+-- 		35000,
+-- 		35000,
+-- 		30000,
+-- 		30000,
+-- 		30000,
+-- 		30000,
+-- 		30000,
+-- 		30000,
+-- 		30000,
+-- 		30000,
+-- 		30000,
+-- 		30000,
+-- 		25000,
+-- 		25000,
+-- 		25000,
+-- 		25000,
+-- 		25000,
+-- 		25000,
+-- 		25000,
+-- 		25000,
+-- 		25000,
+-- 		25000,
+-- 		20000,
+-- 		20000,
+-- 		20000,
+-- 		20000,
+-- 		20000,
+-- 		20000,
+-- 		20000,
+-- 		20000,
+-- 		20000,
+-- 		20000,
+-- 		15000,
+-- }
+
+-- TianYuanGuildmemberReward = {
+-- 	{
+-- 		ranklevel = {25,70},--领取奖励的等级段
+-- 		pos = 4,  --帮主位置
+-- 		yingliang = 60000, --绑定银两
+-- 	},
+-- 	{
+-- 		ranklevel = {25,70},--领取奖励的等级段
+-- 		pos = 3,  --帮主位置
+-- 		yingliang = 48000, --绑定银两
+-- 	},
+-- 	{
+-- 		ranklevel = {25,70},--领取奖励的等级段
+-- 		pos = 2,  --帮主位置
+-- 		yingliang = 42000, --绑定银两
+-- 	},
+-- 	{
+-- 		ranklevel = {25,70},--领取奖励的等级段
+-- 		pos = 1,  --帮主位置
+-- 		yingliang = 36000, --绑定银两
+-- 	},
+-- 	{
+-- 		ranklevel = {25,70},--领取奖励的等级段
+-- 		pos = 0,  --帮主位置
+-- 		yingliang = 30000, --绑定银两
+-- 	},
+-- }
+--[[键入'ss'并按分号即可按模板生成脚本]]--
+--每轮奖励表 
+--奖励类型 按照正式配置表的 奖励说明.txt
+
+
+--#include "..\..\language\LangCode.txt"
+
+TianYuanReward = {
+	--宗门财产、宗门繁荣度奖励，奖给宗门的 23财产 22繁荣
+	guild_reward = {
+					{
+						rankRange = { 1,1 } , 
+						award = { 
+						{type = 22, id = 0, count = 250000,  bind = 0},--繁荣度
+						{type = 23, id = 0, count = 400000,  bind = 0},--财产
+						 }, 
+						 }, 
+						{
+						rankRange = { 2,2 } , 
+						award = { 
+						{type = 22, id = 0, count = 200000,  bind = 0},--繁荣度
+						{type = 23, id = 0, count = 350000,  bind = 0},--财产
+						 }, 
+						 }, 
+						{
+						rankRange = { 3,3 } , 
+						award = { 
+						{type = 22, id = 0, count = 150000,  bind = 0},--繁荣度
+						{type = 23, id = 0, count = 300000,  bind = 0},--财产
+						 }, 
+						 }, 
+						{
+						rankRange = { 4,4 } , 
+						award = { 
+						{type = 22, id = 0, count = 120000,  bind = 0},--繁荣度
+						{type = 23, id = 0, count = 250000,  bind = 0},--财产
+						 }, 
+						 }, 
+						{
+						rankRange = { 5,5 } , 
+						award = { 
+						{type = 22, id = 0, count = 110000,  bind = 0},--繁荣度
+						{type = 23, id = 0, count = 220000,  bind = 0},--财产
+						 }, 
+						 }, 
+						{
+						rankRange = { 6,6 } , 
+						award = { 
+						{type = 22, id = 0, count = 100000,  bind = 0},--繁荣度
+						{type = 23, id = 0, count = 200000,  bind = 0},--财产
+						 }, 
+						 }, 
+						{
+						rankRange = { 7,7 } , 
+						award = { 
+						{type = 22, id = 0, count = 90000,  bind = 0},--繁荣度
+						{type = 23, id = 0, count = 190000,  bind = 0},--财产
+						 }, 
+						 }, 
+						{
+						rankRange = { 8,8 } , 
+						award = { 
+						{type = 22, id = 0, count = 80000,  bind = 0},--繁荣度
+						{type = 23, id = 0, count = 180000,  bind = 0},--财产
+						 }, 
+						 }, 
+						{
+						rankRange = { 9,9 } , 
+						award = { 
+						{type = 22, id = 0, count = 70000,  bind = 0},--繁荣度
+						{type = 23, id = 0, count = 170000,  bind = 0},--财产
+						 }, 
+						 }, 
+						{
+						rankRange = { 10,10 } , 
+						award = { 
+						{type = 22, id = 0, count = 60000,  bind = 0},--繁荣度
+						{type = 23, id = 0, count = 160000,  bind = 0},--财产
+						 }, 
+						 }, 
+						{
+						rankRange = { 11,20 } , 
+						award = { 
+						{type = 22, id = 0, count = 60000,  bind = 0},--繁荣度
+						{type = 23, id = 0, count = 150000,  bind = 0},--财产
+						 }, 
+						 }, 
+						{
+						rankRange = { 21,10000 } , 
+						award = { 
+						{type = 22, id = 0, count = 50000,  bind = 0},--繁荣度
+						{type = 23, id = 0, count = 140000,  bind = 0},--财产
+						 }, 
+						 }, 
+
+	},
+	--个人排名奖励，奖给个人的
+	personal_rank_reward = {
+							{
+								rankRange = { 1,1 } , 
+								award = { 
+								{type = 3, id = 0, count = 2000,  bind = 0},--世族贡献
+								{type = 1, id = 26112, count = 18,  bind = 0},--洗炼石
+								}, 
+						 }, 
+						{
+						rankRange = { 2,2 } , 
+						award = { 
+						{type = 3, id = 0, count = 1500,  bind = 0},--世族贡献
+						{type = 1, id = 26112, count = 15,  bind = 0},--洗炼石
+						 }, 
+						 }, 
+						{
+						rankRange = { 3,3 } , 
+						award = { 
+						{type = 3, id = 0, count = 1200,  bind = 0},--世族贡献
+						{type = 1, id = 26112, count = 12,  bind = 0},--洗炼石
+						 }, 
+						 }, 
+						{
+						rankRange = { 4,5 } , 
+						award = { 
+						{type = 3, id = 0, count = 1000,  bind = 0},--世族贡献
+						{type = 1, id = 26112, count = 9,  bind = 0},--洗炼石
+						 }, 
+						 }, 
+						{
+						rankRange = { 6,10 } , 
+						award = { 
+						{type = 3, id = 0, count = 900,  bind = 0},--世族贡献
+						{type = 1, id = 26112, count = 7,  bind = 0},--洗炼石
+						 }, 
+						 }, 
+						{
+						rankRange = { 11,20 } , 
+						award = { 
+						{type = 3, id = 0, count = 800,  bind = 0},--世族贡献
+						{type = 1, id = 26112, count = 6,  bind = 0},--洗炼石
+						 }, 
+						 }, 
+						{
+						rankRange = { 21,30 } , 
+						award = { 
+						{type = 3, id = 0, count = 700,  bind = 0},--世族贡献
+						{type = 1, id = 26112, count = 5,  bind = 0},--洗炼石
+						 }, 
+						 }, 
+						{
+						rankRange = { 31,50 } , 
+						award = { 
+						{type = 3, id = 0, count = 500,  bind = 0},--世族贡献
+						{type = 1, id = 26112, count = 4,  bind = 0},--洗炼石
+						 }, 
+						 }, 
+						{
+						rankRange = { 51,100 } , 
+						award = { 
+						{type = 3, id = 0, count = 400,  bind = 0},--世族贡献
+						{type = 1, id = 26112, count = 3,  bind = 0},--洗炼石
+						 }, 
+						 }, 
+						{
+						rankRange = { 101,150 } , 
+						award = { 
+						{type = 3, id = 0, count = 300,  bind = 0},--世族贡献
+						{type = 1, id = 26112, count = 2,  bind = 0},--洗炼石
+						 }, 
+						 }, 
+						{
+						rankRange = { 151,200 } , 
+						award = { 
+						{type = 3, id = 0, count = 200,  bind = 0},--世族贡献
+						{type = 1, id = 26112, count = 1,  bind = 0},--洗炼石
+						 }, 
+						 }, 
+						{
+						rankRange = { 201,10000 } , 
+						award = { 
+						{type = 3, id = 0, count = 200,  bind = 0},--世族贡献
+						{type = 1, id = 26112, count = 1,  bind = 0},--洗炼石
+						 }, 
+						 }, 
+
+						 }, 
+
+	--最强宗门奖励
+	top_guild_day_reward = {
+		{
+			levelRange = {1,30}, 				--人物等级区间
+			award = {
+		    	{ type = 2 , id = 0 , count = 10000 }, 	--贝币
+		    	{ type = 1 , id = 26111 , count = 2 }, 	--紫色洗练石
+		  	},
+		},
+		{
+			levelRange = {31,50},
+			award = {
+		    	{ type = 2 , id = 0 , count = 13000 }, 	--贝币
+		    	{ type = 1 , id = 26111 , count = 3 }, 	--紫色洗练石
+		  	},
+		},
+		{
+			levelRange = {51,70},
+			award = {
+		    	{ type = 2 , id = 0 , count = 16000 }, 	--贝币
+		    	{ type = 1 , id = 26111 , count = 4 }, 	--紫色洗练石
+		  	},
+		},
+		{
+			levelRange = {71,100},
+			award = {
+		    	{ type = 2 , id = 0 , count = 20000 }, 	--贝币
+		    	{ type = 1 , id = 26111 , count = 5 }, 	--紫色洗练石
+		  	},
+		},
+	},
+
+}
+
+--每周奖励表

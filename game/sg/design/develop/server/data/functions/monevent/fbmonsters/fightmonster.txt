@@ -1,0 +1,40 @@
+﻿-- 竞技场怪物脚本
+--#include "data\config\fight\fightconf.txt" once
+
+-- 怪物死亡，挑战者胜
+MonDieDispatcher.OnFightMonsterDie = function(monster, sysarg, monId)
+	if sysarg == nil then
+		print("OnFightMonsterDie error : sysarg is nil")
+		return
+	end
+
+	-- 如果是伙伴打死的，找出主人
+	if LActor.isPet(sysarg) then
+		sysarg = LActor.getMonsterOwner(sysarg)
+		if sysarg == nil then
+			print("OnFightMonsterDie error : sysarg is pet, but owner is nil")
+			return 
+		end
+	end
+
+	local var_d = LActor.getDyanmicVar(sysarg)
+	if var_d == nil then return end
+
+	local enid = var_d.fightRival
+	if enid == nil then
+		print("fight rival is null")
+		return 
+	end
+
+	local pfb = LActor.getFubenPrt(sysarg)
+	if pfb == nil then return end
+	if Fuben.getFubenProgress(pfb) == 100 then return end -- 胜负已分出，不用再处理
+	-- 设置副本进度
+	Fuben.setFubenProgress(pfb, 100)
+
+	debug_print("==================================> 触发了演武场对手死亡")
+	-- 通知对战结果
+	FightFun.notifyFightResult(sysarg, enid, 1)
+end
+
+MonDieDispatcher.register(FightConf.monsterId, MonDieDispatcher.OnFightMonsterDie)

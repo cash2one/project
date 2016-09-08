@@ -1,0 +1,94 @@
+--导出累计登陆奖励配置表
+----------------------------------------------------------------------------------------
+--写文件
+function writeConfig(configname, concent)
+	if not concent then
+		print("concent is null")
+		return
+	end
+
+	if not configname then
+		print("configname is null")
+		return
+	end
+
+	local f = io.open(configname, "w")
+	f:write(concent)
+	f:close()
+end
+
+
+--切割字符串
+local function split(str, splitChar)
+    local subStrTab = {};
+    while true do
+        local pos = string.find(str, splitChar);
+        if (not pos) then
+            subStrTab[#subStrTab + 1] = str;
+            break;
+        end
+        local subStr = string.sub(str, 1, pos - 1);
+        subStrTab[#subStrTab + 1] = subStr;
+        str = string.sub(str, pos + 1, #str);
+    end
+    return subStrTab;
+end
+
+
+
+
+
+
+local function getVipDouble(str)
+    local oneDouble = split(str,',')
+    local retVipDouble = {}
+
+    for i , v in ipairs(oneDouble) do
+        local oneConfig = split(v,'_')
+        retVipDouble[tonumber(oneConfig[1])] = tonumber(oneConfig[2])
+    end
+    return retVipDouble
+end
+
+function ReadTotalLoginReward()
+    local objexcel = CExcelReader:new()
+    if not objexcel then
+        print("objexcel is null")
+        return
+    end
+    print("start1")
+    objexcel:Init_App()
+    objexcel:OpenRead()
+    print("start2")
+    local obj = objexcel:LoadSheetByIndex(1)
+    print("start3")
+    if not obj then
+        print("LoadSheetByIndex失败!")
+        objexcel:Close()
+        objexcel:Quit_App()
+        return
+    end
+    local nCount = objexcel:GetCurrentSheetColCount()
+    local mCount = objexcel:GetCurrentSheetRowCount()
+
+
+    print("nCount", nCount)
+    print("mCount", mCount)
+
+
+    local TotalLoginReward = {}
+    for i = 2, mCount do
+        local currId = tonumber(objexcel:ReadCellAsString(i, 1))
+        TotalLoginReward[currId] = {}
+        TotalLoginReward[currId].DayNum = tonumber(objexcel:ReadCellAsString(i, 2))
+        TotalLoginReward[currId].reward = objexcel:ReadCellAsString(i, 3)
+    end
+
+    dump_to_file(objexcel , "total_login_reward_config" , 'TotalLoginReward' , "data/config/vip/total_login_reward.txt" , TotalLoginReward)
+
+    objexcel:Close()
+    objexcel:Quit_App()
+    objexcel:delete()
+
+
+end

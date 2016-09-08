@@ -1,0 +1,379 @@
+-- 召唤玩法
+--#include "data\config\taskgameplayconfig\zhaohuanconfig.txt" once
+
+ZhaoHuanFuncs = {}
+
+-- 召唤进度状态
+local zh_quest_state = {
+    not_vaild = 0, -- 无效
+    not_appear = 1, -- 等待出现
+    has_appear = 2, -- 已经出现
+}
+
+-- 查找staticVal可用的位置
+function ZhaoHuanFuncs.findCanUseValIndex (actorobj)
+    local nVal = LActor.getStaticVar(actorobj)
+    if not nVal then
+        return 0
+    end
+    if nVal.ZhaoHuan_Value == nil then
+        return 0
+    end
+    local len = #nVal.ZhaoHuan_Value
+    if len > 0 then
+        for i = 1, len do
+            if nVal.ZhaoHuan_Value[i].state == zh_quest_state.not_vaild then
+                return i
+            end
+        end
+    end
+    return len + 1
+end
+
+-- 查找qid所在的staticVal的位置
+function ZhaoHuanFuncs.findValIndexByQid (actorobj, qid)
+    qid = tonumber(qid) or 0
+    local nVal = LActor.getStaticVar(actorobj)
+    if not nVal or qid <= 0 then
+        return -1
+    end
+    if nVal.ZhaoHuan_Value == nil then
+        return -1
+    end
+    local len = #nVal.ZhaoHuan_Value
+    if len > 0 then
+        for i = 1, len do
+            if nVal.ZhaoHuan_Value[i].state ~= zh_quest_state.not_vaild and nVal.ZhaoHuan_Value[i].qid == qid then
+                return i
+            end
+        end
+    end
+    return 0
+end
+
+-- 是否所有召唤任务都做完了
+function ZhaoHuanFuncs.isAllClean (actorobj)
+    local nVal = LActor.getStaticVar(actorobj)
+    if not nVal then
+        return false
+    end
+    if nVal.ZhaoHuan_Value == nil then
+        return true
+    end
+    local len = #nVal.ZhaoHuan_Value
+    if len > 0 then
+        for i = 1, len do
+            if nVal.ZhaoHuan_Value[i].state ~= zh_quest_state.not_vaild then
+                return false
+            end
+        end
+    end
+    return true
+end
+
+-- 召唤区域触发函数
+function OnZhaoHuanArea (actorobj, qid)
+    -- qid = tonumber(qid) or 0
+    -- if qid <= 0 then
+    --     return
+    -- end
+    -- local nVal = LActor.getStaticVar(actorobj)
+    -- if not nVal then return end
+    -- if nVal.ZhaoHuan_Value == nil then return end -- 完全没有召唤任务任何数据
+    -- local index = ZhaoHuanFuncs.findValIndexByQid(actorobj, qid)
+    -- debug_print(string.format("===>>>  区域触发了召唤任务的检查 qid[%d] index[%d]", qid, index))
+    -- if index <= 0 then
+    --     return
+    -- end
+    -- -- 只有未出现才会触发召唤的进度条
+    -- if nVal.ZhaoHuan_Value[index].state == zh_quest_state.not_appear then
+    --     debug_print(string.format("==========> 触发召唤怪物 通知前端 index = [%d]", index))
+    --     ZhaoHuanFuncs.OnWaitTargetAppear(actorobj, qid)
+    -- end
+end
+
+-- 进入场景
+function ZhaoHuanFuncs.OnEnterScene (actorobj)
+    ZhaoHuanFuncs.OnDestoryTarget(actorobj)
+end
+
+-- 玩家死亡
+function ZhaoHuanFuncs.OnActorDie (actorobj)
+    ZhaoHuanFuncs.OnDestoryTarget(actorobj)
+end
+
+-- 玩家上线
+function ZhaoHuanFuncs.OnActorLogin (actorobj)
+    if ZhaoHuanFuncs.isAllClean(actorobj) == true then
+        return
+    end
+    local nVal = LActor.getStaticVar(actorobj)
+    if nVal == nil then
+        return
+    end
+    -- 添加特别任务状态
+    -- LActor.addState(actorobj, esStateSpecialQuest)
+end
+
+-- 玩家下线
+function ZhaoHuanFuncs.OnActorLogout (actorobj)
+    ZhaoHuanFuncs.OnDestoryTarget(actorobj)
+end
+
+-- 创建目标怪
+function ZhaoHuanFuncs.OnCreateTarget (actorobj, monsterid, x, y, livetime)
+    local monster = LActor.createMonster(actorobj, monsterid, x, y, livetime,false)
+    if monster == nil then
+        debug_print("===>>> 创建召唤怪物失败 注意查找原因!")
+        return 0
+    end
+    LActor.setMonsterAttackTarget(monster, actorobj)
+    return LActor.getHandle(monster)
+end
+
+-- 销毁目标怪
+function ZhaoHuanFuncs.OnDestoryTarget (actorobj)
+    local nVal = LActor.getStaticVar(actorobj)
+    if not nVal then return end
+    if nVal.ZhaoHuan_Value == nil then return end -- 完全没有召唤任务任何数据
+    local len = #nVal.ZhaoHuan_Value
+    if len > 0 then
+        for i = 1, len do
+            if nVal.ZhaoHuan_Value[i].state ~= zh_quest_state.not_vaild then
+                local isDeath = LActor.ActorIsDie(actorobj)
+                if LActor.canFinishQuest(actorobj, nVal.ZhaoHuan_Value[i].qid, isDeath) ~= true then
+                    debug_print("=============> 执行销毁召唤实体")
+                    -- 删除怪物实体
+                    Fuben.clearMonster(nVal.ZhaoHuan_Value[i].monHandle)
+                    nVal.ZhaoHuan_Value[i].monHandle = 0
+                    nVal.ZhaoHuan_Value[i].monsterid = 0
+                    nVal.ZhaoHuan_Value[i].state = zh_quest_state.not_appear -- 标记为未出现
+                end
+            end
+        end
+    end
+end
+
+-- 通知前端怪物召唤读条
+function ZhaoHuanFuncs.OnWaitTargetAppear (actorobj, qid)
+    qid = tonumber(qid) or 0
+    if qid <= 0 then
+        debug_print("===>>> 无效的qid 导致无法发送<通知前端怪物召唤读条>!")
+        return
+    end
+    local pack = DataPack.allocPacket(actorobj, 172, 7)
+    DataPack.writeUInt(pack, qid)
+    DataPack.flush(pack)
+end
+
+-- 响应前端目标出现
+function ZhaoHuanFuncs.OnTargetAppear (actorobj, packet)
+    local qid = DataPack.readUInt(packet)
+    if qid == 0 then return end
+    local nVal = LActor.getStaticVar(actorobj)
+    if not nVal then return end
+    if nVal.ZhaoHuan_Value == nil then return end -- 完全没有召唤任务任何数据
+    local index = ZhaoHuanFuncs.findValIndexByQid(actorobj, qid)
+    if index <= 0 then
+        return
+    end
+    local conf = ZhaoHuan_Config[qid]
+    if not conf then
+        debug_print(string.format("===>>>[OnTargetAppear] 召唤任务qid[%d]并未配置到召唤配置表里面!", qid))
+        return
+    end
+    if nVal.ZhaoHuan_Value[index].state == zh_quest_state.not_vaild then return end -- 没有对应任务id的召唤数据
+    if nVal.ZhaoHuan_Value[index].state ~= zh_quest_state.not_appear then
+        debug_print("===>> 请先触发区域召唤怪物 然后再进行召唤!")
+        return
+    end
+    -- 有对应的召唤数据就需要召唤怪物了
+    nVal.ZhaoHuan_Value[index].state = zh_quest_state.has_appear -- 标记已出现
+    nVal.ZhaoHuan_Value[index].monsterid = conf.monsterid
+    nVal.ZhaoHuan_Value[index].monHandle = ZhaoHuanFuncs.OnCreateTarget(actorobj, conf.monsterid, conf.monterposx, conf.monterposy, conf.monsterlivetime)
+    -- 通知前端 怪出来了
+    ZhaoHuanFuncs.NoticeMonsterHandle(actorobj, qid, 0, nVal.ZhaoHuan_Value[index].monHandle)
+end
+
+-- 接取任务前检查
+function ZhaoHuanFuncs.OnCheckAccept (actorobj, qid)
+    qid = tonumber(qid) or 0
+    debug_print(string.format("===>>> ZhaoHuanFuncs [check] qid[%d]", qid))
+    if not actorobj or qid <= 0 then return false end
+    local nVal = LActor.getStaticVar(actorobj)
+    if not nVal then return false end
+    if nVal.ZhaoHuan_Value == nil then
+        nVal.ZhaoHuan_Value = {}
+    end
+    if ZhaoHuan_Config[qid] == nil then
+        debug_print(string.format("===>>>[check] 召唤任务qid[%d]并未配置到召唤配置表里面!", qid))
+        return false
+    end
+    local index = ZhaoHuanFuncs.findValIndexByQid(actorobj, qid)
+    if index == -1 then
+        return false
+    end
+    if index > 0 then
+        debug_print(string.format("===>>> [check] qid[%d], index[%d] state[%d]", qid, index, nVal.ZhaoHuan_Value[index].state))
+        if nVal.ZhaoHuan_Value[index].state ~= zh_quest_state.not_vaild then
+            debug_print("===>>>[check] 不可多次接取相同召唤任务!")
+            return false
+        end
+    end
+    debug_print(string.format("===>>> 通过召唤任务检查 qid[%d]", qid))
+    return true
+end
+
+-- 响应接取任务
+function ZhaoHuanFuncs.OnAcceptQuest (actorobj, qid)
+    qid = tonumber(qid) or 0
+    if not actorobj or qid <= 0 then return end
+    local nVal = LActor.getStaticVar(actorobj)
+    if not nVal then return end
+    if nVal.ZhaoHuan_Value == nil then
+        nVal.ZhaoHuan_Value = {}
+    end
+    local index = ZhaoHuanFuncs.findValIndexByQid(actorobj, qid)
+    if index == -1 then
+        return
+    end
+    if index > 0 and nVal.ZhaoHuan_Value[index].state ~= zh_quest_state.not_vaild then
+        debug_print("===>>>[accept] 不可多次接取相同召唤任务!")
+        return
+    end
+    index = ZhaoHuanFuncs.findCanUseValIndex(actorobj)
+    debug_print(string.format("===>>> 接受召唤任务 qid[%d], index[%d]", qid, index))
+
+    nVal.ZhaoHuan_Value[index] = {}
+    nVal.ZhaoHuan_Value[index].qid = qid -- 设置qid
+    nVal.ZhaoHuan_Value[index].state = zh_quest_state.not_appear -- 标记未出现
+    nVal.ZhaoHuan_Value[index].monsterid = 0 -- 怪物的id
+    nVal.ZhaoHuan_Value[index].monHandle = 0 -- 怪物的handle
+    debug_print(string.format("===>>> 接受召唤任务 qid[%d], index[%d] state[%d]", qid, index, nVal.ZhaoHuan_Value[index].state))
+
+    -- 添加特别任务状态
+    -- LActor.addState(actorobj, esStateSpecialQuest)
+end
+
+-- 响应完成任务
+function ZhaoHuanFuncs.OnCommitQuest (actorobj, qid)
+    ZhaoHuanFuncs.doInvalidVal(actorobj, qid)
+end
+
+-- 响应放弃任务
+function ZhaoHuanFuncs.OnGiveupQuest (actorobj, qid)
+    ZhaoHuanFuncs.doInvalidVal(actorobj, qid)
+end
+
+-- 响应任务超时 需要清除数据
+function ZhaoHuanFuncs.OnOverTime(actorobj, qid)
+    qid = tonumber(qid) or 0
+    if qid <= 0 then
+        return
+    end
+    local nVal = LActor.getStaticVar(actorobj)
+    if not nVal then return end
+    if nVal.ZhaoHuan_Value == nil then return end -- 完全没有召唤任务任何数据
+    local index = ZhaoHuanFuncs.findValIndexByQid(actorobj, qid)
+    if index <= 0 then
+        return
+    end
+    debug_print(string.format("===>>>  召唤任务已经超时 数据重置 qid[%d]", qid))
+    LActor.sendTipmsg(actorobj, Lang.ScriptTips.quest0008, ttMessage)
+    nVal.ZhaoHuan_Value[index].state = zh_quest_state.not_appear -- 标记为未出现
+    if nVal.ZhaoHuan_Value[index].monHandle ~= 0 then
+        Fuben.clearMonster(nVal.ZhaoHuan_Value[index].monHandle)
+    end
+    nVal.ZhaoHuan_Value[index].monsterid = 0
+    nVal.ZhaoHuan_Value[index].monHandle = 0
+end
+
+-- 通知前端怪物对象
+function ZhaoHuanFuncs.NoticeMonsterHandle (actorobj, qid, npcid, handle)
+    qid = tonumber(qid) or 0
+    npcid = tonumber(npcid) or 0
+    if qid <= 0 then
+        debug_print("===>>> 无效的qid 导致无法发送<通知前端召唤对象需要冒泡>!")
+        return
+    end
+    local pack = DataPack.allocPacket(actorobj, 172, 9)
+    DataPack.writeUInt(pack, qid)
+    DataPack.writeUInt(pack, npcid)
+    DataPack.writeInt64(pack, handle)
+    DataPack.flush(pack)
+end
+
+-- 通知前端任务(讨债、召唤、追捕等）这类任务已经击杀了对应handle的怪 可以提交任务了
+function ZhaoHuanFuncs.NoticeMonsterHasDeath (actorobj, qid)
+    local pack = DataPack.allocPacket(actorobj, 172, 11)
+    DataPack.writeUInt(pack, qid)
+    DataPack.flush(pack)
+end
+
+-- 把对应任务id的数据标记为无效了
+function ZhaoHuanFuncs.doInvalidVal (actorobj, qid)
+    qid = tonumber(qid) or 0
+    if not actorobj or qid <= 0 then return end
+    local nVal = LActor.getStaticVar(actorobj)
+    if not nVal then return end
+    if nVal.ZhaoHuan_Value == nil then
+        nVal.ZhaoHuan_Value = {}
+    end
+    local index = ZhaoHuanFuncs.findValIndexByQid(actorobj, qid)
+    if index == -1 then
+        return
+    end
+    if index > 0 and nVal.ZhaoHuan_Value[index].state ~= zh_quest_state.not_vaild then
+        -- 清除怪物
+        Fuben.clearMonster(nVal.ZhaoHuan_Value[index].monHandle)
+        nVal.ZhaoHuan_Value[index].state = zh_quest_state.not_vaild -- 清空 标记为无效
+        nVal.ZhaoHuan_Value[index].qid = 0
+        nVal.ZhaoHuan_Value[index].monsterid = 0
+        nVal.ZhaoHuan_Value[index].monHandle = 0
+    end
+    -- 如果没有召唤任务了 移除状态
+    if ZhaoHuanFuncs.isAllClean(actorobj) == true then
+        debug_print("=========================> 清除无法速传标记")
+        LActor.removeState(actorobj, esStateSpecialQuest)
+    end
+end
+
+function ZhaoHuanFuncs.onMonsterDeath (monsterEntity, killerEntity, monsterId)
+    if LActor.isActor(killerEntity) and LActor.isMonster(monsterEntity) and monsterId ~= nil then
+        local nVal = LActor.getStaticVar(killerEntity)
+        if nVal == nil or nVal.ZhaoHuan_Value == nil then
+            return
+        end
+        local len = #nVal.ZhaoHuan_Value
+        if len > 0 then
+            for i = 1, len do
+                if nVal.ZhaoHuan_Value[i].state ~= zh_quest_state.not_vaild then -- 不是无效标记
+                    if nVal.ZhaoHuan_Value[i].monsterid == monsterId then
+                        -- 发送
+                        ZhaoHuanFuncs.NoticeMonsterHasDeath(killerEntity, nVal.ZhaoHuan_Value[i].qid)
+                    end
+                end
+            end
+        end
+    end
+end
+
+function ZhaoHuanFuncs.registerMonsters ()
+    for k, v in pairs(ZhaoHuan_Config) do
+        MonDieDispatcher.register(v.monsterid, ZhaoHuanFuncs.onMonsterDeath)
+    end
+end
+
+-- basequesttype.txt 定义类型
+ZhaoHuanFuncs.registerMonsters() -- 注册怪物死亡
+ActorQuestCallDispatcher.registerCheck(BaseTypes.BaseQuestAction.qaAccept, BaseTypes.BaseQuestPlayType.qptSummon , ZhaoHuanFuncs.OnCheckAccept) -- 注册接受任务前检查
+ActorQuestCallDispatcher.registerPlayType(BaseTypes.BaseQuestAction.qaAccept, BaseTypes.BaseQuestPlayType.qptSummon, ZhaoHuanFuncs.OnAcceptQuest) -- 注册接受任务的侦听
+ActorQuestCallDispatcher.registerPlayType(BaseTypes.BaseQuestAction.qaCommit, BaseTypes.BaseQuestPlayType.qptSummon, ZhaoHuanFuncs.OnCommitQuest) -- 注册完成任务的侦听
+ActorQuestCallDispatcher.registerPlayType(BaseTypes.BaseQuestAction.qaGiveUp, BaseTypes.BaseQuestPlayType.qptSummon, ZhaoHuanFuncs.OnGiveupQuest) -- 注册放弃任务的侦听
+ActorQuestCallDispatcher.registerPlayType(BaseTypes.BaseQuestAction.qaTimeOut, BaseTypes.BaseQuestPlayType.qptSummon, ZhaoHuanFuncs.OnOverTime) -- 注册任务超时的侦听 防止因配置任务配错了而导致数据异常
+ActorQuestTimeOutClearData.register(BaseTypes.BaseQuestPlayType.qptSummon, ZhaoHuanFuncs.OnOverTime) -- 注册任务超时自动清理数据
+lua_quest_system.Register(Lua_Quest_CMD.ZhaoHuan_Target_Appear, ZhaoHuanFuncs.OnTargetAppear) -- 注册171,7事件处理
+
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeOnActorDeath, ZhaoHuanFuncs.OnActorDie) -- 注册玩家死亡
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogin, ZhaoHuanFuncs.OnActorLogin) -- 玩家上线线事件
+EventCallDispatcher.registerEventCall(BaseTypes.ActorEventId.aeUserLogout, ZhaoHuanFuncs.OnActorLogout) -- 玩家下线事件

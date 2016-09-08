@@ -1,0 +1,55 @@
+﻿{
+  maxLevel = 40,
+  
+  --伙伴岛副本引导
+  trigger = 
+  { 
+    type = 1,
+    value = 321,
+  },
+
+  --引导中锁定的窗口ID
+  lockUI = 
+  {
+  210,
+  },
+
+  --引导的步骤 
+  steps = 
+  {
+
+	--第1步 自动寻路寻找伙伴岛NPC
+    {
+      cond = { type = 16,  helpId = 0, data = 321 },
+
+      action = { type = 16, helpId = 1, data = Lang.GuideLang.func57, desc = "" },
+    },
+
+	--第2步 点击进入伙伴岛
+    {
+      cond = { type = 1, helpId = 210, data = 0 },
+
+      action = { type = 10, helpId = 210, data = Lang.GuideLang.npc69, desc = "" },
+
+      hideCond = { type = 2, helpId = 210, data = 0 },
+    },
+	--第3步 引导点击挂机
+    {
+      cond = { type = 27, helpId = 0, data = 1082 },
+
+      action = { type = 16, helpId = 0, data = Lang.GuideLang.func58 },
+    },
+
+    {
+      cond = { type = 2, helpId = 243, data = 0 },
+
+      action = { type = 0, helpId = 0, data = 0, desc = "" },
+    },
+	--第4步 自动寻路寻找芷云
+	{
+      cond = { type = 27, helpId = 0, data = 11 },
+
+      action = { type = 16, helpId = 0, data = Lang.GuideLang.func35, desc = "" },
+    },
+  } 
+}

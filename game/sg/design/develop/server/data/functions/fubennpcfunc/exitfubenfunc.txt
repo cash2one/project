@@ -1,0 +1,85 @@
+﻿ --lua script
+--#include "data\envir\FuBen.txt" once
+--#include "normalfubennpcfunc.txt" once
+
+--退出副本的函数
+function exitFubenFunc(sysarg)
+	local FbID = LActor.getFubenId(sysarg)
+	local fbPtr = LActor.getFubenPrt(sysarg)
+	if FbID == nil then 
+		LActor.exitFuben(sysarg)
+		return
+	end
+	local fbdata = FuBen[FbID]
+ 
+	if fbdata == nil then return end
+	if not LActor.isInTeam(sysarg) then 			--如果是单人副本，直接退出副本
+		LActor.exitFuben(sysarg)
+	else
+	if Fuben.getFubenProgress(fbPtr) == FB_FS_GETAWARD then
+		local teamid = LActor.getTeamId(sysarg)
+		LActor.exitFuben(sysarg)
+		TeamFun.setTeamFubenId(teamid,0)
+	else 
+		LActor.exitTeam(sysarg)				--如果是队伍副本，就退出队伍
+		LActor.exitFuben(sysarg)
+	end
+	end
+end
+
+function exitQuickFubenFunc(sysarg)
+	local FbID = LActor.getFubenId(sysarg)
+	local fbPtr = LActor.getFubenPrt(sysarg)
+	if FbID == nil then 
+		LActor.exitQuickFuben(sysarg)
+		return
+	end
+	local fbdata = FuBen[FbID]
+ 
+	if fbdata == nil then return end
+	if not LActor.isInTeam(sysarg) then 			--如果是单人副本，直接退出副本
+		LActor.exitQuickFuben(sysarg)
+	else
+	if Fuben.getFubenProgress(fbPtr) == FB_FS_GETAWARD then
+		local teamid = LActor.getTeamId(sysarg)
+		LActor.exitQuickFuben(sysarg)
+		TeamFun.setTeamFubenId(teamid,0)
+	else 
+		LActor.exitTeam(sysarg)				--如果是队伍副本，就退出队伍
+		LActor.exitQuickFuben(sysarg)
+	end
+	end
+end
+
+function reEnterFubenFunc(sysarg,fbid,cale1,cale2,cale3)
+	--连续性的副本，要把统计值累加起来
+	--先记录下来上一个副本需要累加的值
+	local cale1Value,cale2Value,cale3Value
+	if cale1 ~= nil then
+		cale1 = tonumber(cale1)
+		cale1Value = LActor.getCaleData(sysarg, cale1)
+		print("reEnterFubenFunc cale1:"..cale1..",cale1Value:"..cale1Value)
+		if cale1Value == 0 then cale1Value = nil end
+	end
+	if cale2 ~= nil then
+		cale2 = tonumber(cale2)
+		cale2Value = LActor.getCaleData(sysarg, cale2)
+		print("reEnterFubenFunc cale2:"..cale2..",cale2Value:"..cale2Value)
+		if cale2Value == 0 then cale2Value = nil end
+	end
+	if cale3 ~= nil then
+		cale3 = tonumber(cale3)
+		cale3Value = LActor.getCaleData(sysarg, cale3)
+		print("reEnterFubenFunc cale3:"..cale3..",cale3Value:"..cale3Value)
+		if cale3Value == 0 then cale3Value = nil end
+	end
+
+	exitQuickFubenFunc(sysarg)
+
+	OnEnterFubenFunc(sysarg,fbid)
+
+	--传给下一个副本
+	if cale1Value ~= nil then LActor.SendAndChangeCaleValue(sysarg, cale1, cale1Value, false) end
+	if cale2Value ~= nil then LActor.SendAndChangeCaleValue(sysarg, cale2, cale2Value, false) end
+	if cale3Value ~= nil then LActor.SendAndChangeCaleValue(sysarg, cale3, cale3Value, false) end
+end
